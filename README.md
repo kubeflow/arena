@@ -1,5 +1,9 @@
 # Arena
 
+[![Build Status](https://travis-ci.org/AliyunContainerService/arena.svg?branch=master)](https://travis-ci.org/AliyunContainerService/arena) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/AliyunContainerService/arena)](https://goreportcard.com/report/github.com/AliyunContainerService/arena)
+
+
 ## Overview
 
 Arena is a command-line interface for the data scientists to run and monitor the machine learning training jobs and check their results in an easy way. Currently it supports solo/distributed TensorFlow training. In the backend, it is based on Kubernetes, helm and Kubeflow. But the data scientists can have very little knowledge about kubernetes.
