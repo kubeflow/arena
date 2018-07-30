@@ -1,0 +1,223 @@
+{{- $gpuCount := .Values.gpuCount -}}
+{{- $syncMode := .Values.syncMode -}}
+{{- $dataDirs := .Values.dataDirs -}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "horovod.fullname" . }}-job
+  labels:
+    app: {{ template "horovod.name" . }}
+    chart: {{ template "horovod.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: mpimaster
+spec:
+  backoffLimit: {{ .Values.retry }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "horovod.name" . }}
+        release: {{ .Release.Name }}
+        role: mpimaster
+    spec:
+      {{- if .Values.useHostNetwork }}
+      hostNetwork: {{ .Values.useHostNetwork }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      {{- if .Values.useHostPID }}
+      hostPID: {{ .Values.useHostPID }}
+      {{- end }}
+      restartPolicy: Never
+      volumes:
+      {{- if .Values.syncMode }}
+      - name: code-sync
+        emptyDir: {}
+      {{- end}}
+      {{- if .Values.nvidiaPath }}
+      - hostPath:
+          path: "{{ .Values.nvidiaPath }}"
+        name: nvidia
+      {{- end }}
+      {{- if .Values.dataset }}   
+      {{- range $pvcName, $destPath := .Values.dataset }}
+      - name: "{{ $pvcName }}"
+        persistentVolumeClaim:
+          claimName: "{{ $pvcName }}"
+      {{- end }}
+      {{- end }}
+      {{- if .Values.shmSize }}
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: {{ .Values.shmSize }}
+      {{- end }}
+      - name: {{ template "horovod.fullname" . }}-cm
+        configMap:
+          name: {{ template "horovod.fullname" . }}-cm
+          items:
+          - key: hostfile.config
+            path: hostfile
+            mode: 438
+          - key: master.waitWorkerReady
+            path: waitWorkersReady.sh
+            mode: 365
+          - key: master.runMPI
+            path: runMPI.sh
+            mode: 365
+      {{- if $dataDirs }}
+      {{- range $dataDirs }}
+      - hostPath:
+          path: {{ .hostPath }}
+        name: {{ .name }}
+      {{- end }}
+      {{- end }}     
+{{- if .Values.volumes }}
+{{ toYaml .Values.volumes | indent  6 }}
+{{- end }}
+      containers:
+      - name: {{ template "horovod.fullname" . }}-master
+        image: "{{ .Values.image }}"
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        {{- if .Values.workingDir }}
+        workingDir: {{ .Values.workingDir }}
+        {{- end }}
+        env:
+         - name: targetport
+           value: "{{ .Values.sshPort }}"
+        {{- if .Values.mpiMaster.jupyter.password }}
+         - name: PASSWORD
+           value: "{{ .Values.mpiMaster.jupyter.password }}"
+       {{- end -}}
+       {{- if .Values.envs }}            
+       {{- range $key, $value := .Values.envs }}
+         - name: "{{ $key }}"
+           value: "{{ $value }}"
+       {{- end }}
+       {{- end }}
+{{- if .Values.privileged }}
+        securityContext:
+          privileged: true
+{{- end }}
+        ports:
+        - containerPort: {{ .Values.sshPort }}
+{{- if .Values.mpiMaster.jupyter.enabled }}
+        - containerPort: 8888
+{{- end }}
+        volumeMounts:
+        {{- if .Values.syncMode }}
+        {{- if .Values.workingDir }}
+        - name: code-sync
+          mountPath: {{ .Values.workingDir }}/code
+        {{- else }}
+        - name: code-sync
+          mountPath: /code
+        {{- end}}
+        {{- end}}
+        {{- if .Values.nvidiaPath }}
+        - mountPath: /usr/local/nvidia
+          name: nvidia
+        {{- end }}
+        {{- if .Values.dataset }}   
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          mountPath: "{{ $destPath }}"
+        {{- end }}
+        {{- end }}
+        - name: {{ template "horovod.fullname" . }}-cm
+          mountPath: /openmpi/generated
+        {{- if .Values.dataDir }}
+        - mountPath: {{ .Values.dataDir }}
+          name: training-data
+        {{- end }}
+        {{- if .Values.shmSize }}
+        - mountPath: /dev/shm
+          name: dshm
+        {{- end }}
+{{- if .Values.volumeMounts }}
+{{ toYaml .Values.volumeMounts | indent 8 }}
+{{- end }}
+        {{- if $dataDirs }}
+        {{- range $dataDirs }}
+        - mountPath: {{ .containerPath }}
+          name: {{ .name }}
+        {{- end }}
+        {{- end }}
+        command: 
+          - /openmpi/generated/runMPI.sh
+{{- if .Values.mpiMaster.jupyter.enabled }}
+        args:
+          - /run_jupyter.sh
+          - --allow-root
+{{- if .Values.mpiMaster.jupyter.workdir }}
+          - {{ .Values.mpiMaster.jupyter.workdir }}
+{{- end }}
+{{- else }}
+        args:
+          - "{{ .Values.command }}"
+{{- end }}        
+        resources:
+          requests:
+            {{- if gt (int $gpuCount) 0}}
+            {{- if .Values.nvidiaPath }}
+            alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+            {{- else}}
+            nvidia.com/gpu: {{ $gpuCount | quote }}
+            {{- end}}
+            {{- end}}
+            {{- if .Values.cpu }}
+            cpu: {{ .Values.cpu | quote }}
+            {{- end}}
+            {{- if .Values.memory }}
+            memory: {{ .Values.memory | quote }}
+            {{- end}}
+          limits:
+            {{- if gt (int $gpuCount) 0}}
+            {{- if .Values.nvidiaPath }}
+            alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+            {{- else}}
+            nvidia.com/gpu: {{ $gpuCount | quote }}
+            {{- end}}
+            {{- end}}
+            {{- if .Values.cpu }}
+            cpu: {{ .Values.cpu | quote }}
+            {{- end}}
+            {{- if .Values.memory }}
+            memory: {{ .Values.memory | quote }}
+            {{- end}}
+      initContainers:
+        {{- if .Values.syncMode }}
+        - name: init-job
+          {{- if eq "rsync" $syncMode }}
+          image: "{{ .Values.syncImage }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
+          {{- end }}
+          env:        
+          {{- range $key, $value := .Values.envs }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          volumeMounts:
+            - name: code-sync
+              mountPath: /code
+        {{- end}}
+        - name: wait-workers
+          image: "{{ .Values.image }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: targetport
+              value: "{{ .Values.sshPort }}"
+          {{- if .Values.envs }}            
+          {{- range $key, $value := .Values.envs }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          command: 
+            - /openmpi/generated/waitWorkersReady.sh
+          args:
+            - /openmpi/generated/hostfile
+          volumeMounts:
+          - name: {{ template "horovod.fullname" . }}-cm
+            mountPath: /openmpi/generated

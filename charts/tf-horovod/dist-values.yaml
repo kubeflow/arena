@@ -1,0 +1,16 @@
+# Default values for openmpi.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+useHostNetwork: false
+useHostPID: false
+gpuCount: 0 # user define
+#cpu: 1 # user define
+#memory: 1Gi # user define
+sshPort: 23 # user define
+dataDir: /data0 #user define
+number: 2
+podManagementPolicy: Parallel
+image: registry-vpc.cn-zhangjiakou.aliyuncs.com/ai_zhangbei/deep-learning:gpu-tf-1.6.0
+
+nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81

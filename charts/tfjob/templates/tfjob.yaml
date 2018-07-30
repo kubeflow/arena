@@ -1,0 +1,340 @@
+{{- $gpuCount := .Values.gpuCount -}}
+{{- $syncMode := .Values.syncMode -}}
+{{- $cleanPodPolicy := .Values.cleanPodPolicy -}}
+{{- $dataDirs := .Values.dataDirs -}}
+apiVersion: "kubeflow.org/v1alpha2"
+kind: "TFJob"
+metadata:
+  name: {{ template "tfjob.fullname" . }}
+  labels:
+    app: {{ template "tfjob.name" . }}
+    chart: {{ template "tfjob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "TFJob"
+spec:
+{{- if .Values.cleanPodPolicy }}
+{{- if eq "None" $cleanPodPolicy }}
+  cleanPodPolicy: None
+{{- end }}
+{{- if eq "Running" $cleanPodPolicy }}
+  cleanPodPolicy: Running
+{{- end }}
+{{- end }}
+  tfReplicaSpecs:
+{{- if .Values.ps }}
+    PS:
+      replicas: {{ .Values.ps }}
+      restartPolicy: Never
+      template:
+        metadata:
+          labels:
+            app: {{ template "tfjob.name" . }}
+            chart: {{ template "tfjob.chart" . }}
+            release: {{ .Release.Name }}
+            heritage: {{ .Release.Service }}
+            createdBy: "TFJob"
+        spec:
+          {{- if .Values.useHostNetwork }}
+          hostNetwork: {{ .Values.useHostNetwork }}
+          dnsPolicy: ClusterFirstWithHostNet
+          {{- end }}
+          {{- if .Values.useHostPID }}
+          hostPID: {{ .Values.useHostPID }}
+          {{- end }}
+          {{- if .Values.useHostIPC }}
+          hostIPC: {{ .Values.useHostIPC }}
+          {{- end }}
+          volumes:
+            {{- if .Values.syncMode }}
+            - name: code-sync
+              emptyDir: {}
+            {{- end}}
+            {{- if .Values.nvidiaPath }}
+            - hostPath:
+                path: "{{ .Values.nvidiaPath }}"
+              name: nvidia
+            {{- end }}
+            {{- if .Values.dataset }}   
+            {{- range $pvcName, $destPath := .Values.dataset }}
+            - name: "{{ $pvcName }}"
+              persistentVolumeClaim:
+                claimName: "{{ $pvcName }}"
+            {{- end }}
+            {{- end }}
+            {{- if $dataDirs }}
+            {{- range $dataDirs }}
+            - hostPath:
+                path: {{ .hostPath }}
+              name: {{ .name }}
+            {{- end }}
+            {{- end }}
+          {{- if .Values.syncMode }}
+          initContainers:
+          - name: init-code
+            {{- if .Values.syncImage }}
+            image: "{{ .Values.syncImage }}"
+            {{- else }}
+            {{- if eq .Values.syncMode "rsync" }}
+            image: "{{ .Values.rsyncImage }}"
+            {{- end }}
+            {{- if eq .Values.syncMode "git" }}
+            image: "{{ .Values.gitImage }}"
+            {{- end }}
+            {{- end }}
+            imagePullPolicy: {{ .Values.imagePullPolicy }}
+            {{- if eq "rsync" $syncMode }}
+            command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
+            {{- end }}
+            env:
+            {{- range $key, $value := .Values.envs }}
+              - name: "{{ $key }}"
+                value: "{{ $value }}"
+            {{- end }}
+            {{- if eq "git" $syncMode }}
+              - name: GIT_SYNC_REPO
+                value: {{ .Values.syncSource}}
+              - name: GIT_SYNC_DEST
+                value: {{ .Values.syncGitProjectName}}
+              - name: GIT_SYNC_ROOT
+                value: /code
+              - name: GIT_SYNC_ONE_TIME
+                value: "true"
+            {{- end }}
+            volumeMounts:
+              - name: code-sync
+                mountPath: /code
+          {{- end}}
+          containers:
+            - name: tensorflow
+              image: {{ .Values.psImage }}
+              imagePullPolicy: {{ .Values.imagePullPolicy }}
+              {{- if .Values.workingDir }}
+              workingDir: {{ .Values.workingDir }}
+              {{- end }}
+              resources:             
+                requests:
+                  {{- if .Values.psCpu }}
+                  cpu: {{ .Values.psCpu | quote }}
+                  {{- end}}
+                  {{- if .Values.psMemory }}
+                  memory: {{ .Values.psMemory | quote }}
+                  {{- end}}
+                limits:
+                  {{- if .Values.psCpu }}
+                  cpu: {{ .Values.psCpu | quote }}
+                  {{- end}}
+                  {{- if .Values.psMemory }}
+                  memory: {{ .Values.psMemory | quote }}
+                  {{- end}}
+              {{- if .Values.psPort }}
+              ports:
+                - containerPort: {{ .Values.psPort }}
+                  name: tfjob-port
+              {{- end}}
+              command:
+                - "sh"
+                - "-c"
+                - {{ .Values.command }}
+              env:        
+              {{- range $key, $value := .Values.envs }}
+                - name: "{{ $key }}"
+                  value: "{{ $value }}"
+              {{- end }}
+              volumeMounts:
+                {{- if .Values.syncMode }}
+                {{- if .Values.workingDir }}
+                - name: code-sync
+                  mountPath: {{ .Values.workingDir }}/code
+                {{- else }}
+                - name: code-sync
+                  mountPath: /code
+                {{- end}}
+                {{- end}}
+                {{- if .Values.dataset }}   
+                {{- range $pvcName, $destPath := .Values.dataset }}
+                - name: "{{ $pvcName }}"
+                  mountPath: "{{ $destPath }}"
+                {{- end }}
+                {{- end }}
+                {{- if $dataDirs }}
+                {{- range $dataDirs }}
+                - mountPath: {{ .containerPath }}
+                  name: {{ .name }}
+                {{- end }}
+                {{- end }}
+{{- end }}
+{{- if .Values.workers }}
+    Worker:
+      replicas: {{ .Values.workers }}
+      restartPolicy: Never
+      template:
+        metadata:
+          labels:
+            app: {{ template "tfjob.name" . }}
+            chart: {{ template "tfjob.chart" . }}
+            release: {{ .Release.Name }}
+            heritage: {{ .Release.Service }}
+            createdBy: "TFJob"
+        spec:
+          {{- if .Values.useHostNetwork }}
+          hostNetwork: {{ .Values.useHostNetwork }}
+          dnsPolicy: ClusterFirstWithHostNet
+          {{- end }}
+          {{- if .Values.useHostPID }}
+          hostPID: {{ .Values.useHostPID }}
+          {{- end }}
+          {{- if .Values.useHostIPC }}
+          hostIPC: {{ .Values.useHostIPC }}
+          {{- end }}
+          volumes:
+            {{- if .Values.useTensorboard }}
+            - hostPath:
+                path: "{{ .Values.hostLogPath }}"
+              name: training-logs-volume
+            {{- end}}
+            {{- if .Values.syncMode }}
+            - name: code-sync
+              emptyDir: {}
+            {{- end}}
+            {{- if gt (int $gpuCount) 0}}  
+            {{- if .Values.nvidiaPath }}
+            - hostPath:
+                path: "{{ .Values.nvidiaPath }}"
+              name: nvidia
+            {{- end }}
+            {{- end }}
+            {{- if .Values.dataset }}   
+            {{- range $pvcName, $destPath := .Values.dataset }}
+            - name: "{{ $pvcName }}"
+              persistentVolumeClaim:
+                claimName: "{{ $pvcName }}"
+            {{- end }}
+            {{- end }}
+            {{- if $dataDirs }}
+            {{- range $dataDirs }}
+            - hostPath:
+                path: {{ .hostPath }}
+              name: {{ .name }}
+            {{- end }}
+            {{- end }}
+          {{- if .Values.syncMode }}
+          initContainers:
+          - name: init-code
+            {{- if .Values.syncImage }}
+            image: "{{ .Values.syncImage }}"
+            {{- else }}
+            {{- if eq .Values.syncMode "rsync" }}
+            image: "{{ .Values.rsyncImage }}"
+            {{- end }}
+            {{- if eq .Values.syncMode "git" }}
+            image: "{{ .Values.gitImage }}"
+            {{- end }}
+            {{- end }}
+            imagePullPolicy: {{ .Values.imagePullPolicy }}
+            {{- if eq "rsync" $syncMode }}
+            command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
+            {{- end }}
+            env:
+            {{- range $key, $value := .Values.envs }}
+              - name: "{{ $key }}"
+                value: "{{ $value }}"
+            {{- end }}
+            {{- if eq "git" $syncMode }}
+              - name: GIT_SYNC_REPO
+                value: {{ .Values.syncSource}}
+              - name: GIT_SYNC_DEST
+                value: {{ .Values.syncGitProjectName}}
+              - name: GIT_SYNC_ROOT
+                value: /code
+              - name: GIT_SYNC_ONE_TIME
+                value: "true"
+            {{- end }}
+            volumeMounts:
+              - name: code-sync
+                mountPath: /code
+          {{- end}}
+          containers:
+            - name: tensorflow
+              image: {{ .Values.workerImage }}
+              imagePullPolicy: {{ .Values.imagePullPolicy }}
+              {{- if .Values.workingDir }}
+              workingDir: {{ .Values.workingDir }}
+              {{- end }}
+              resources:             
+                requests:
+                  {{- if gt (int $gpuCount) 0}}   
+                  {{- if .Values.nvidiaPath }}
+                  alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+                  {{- else}}
+                  nvidia.com/gpu: {{ $gpuCount | quote }}
+                  {{- end}}
+                  {{- end}}
+                  {{- if .Values.workerCPU }}
+                  cpu: {{ .Values.workerCPU | quote }}
+                  {{- end}}
+                  {{- if .Values.workerMemory }}
+                  memory: {{ .Values.workerMemory | quote }}
+                  {{- end}}
+                limits:
+                  {{- if gt (int $gpuCount) 0}}   
+                  {{- if .Values.nvidiaPath }}
+                  alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+                  {{- else}}
+                  nvidia.com/gpu: {{ $gpuCount | quote }}
+                  {{- end}}
+                  {{- end}}
+                  {{- if .Values.workerCPU }}
+                  cpu: {{ .Values.workerCPU | quote }}
+                  {{- end}}
+                  {{- if .Values.workerMemory }}
+                  memory: {{ .Values.workerMemory | quote }}
+                  {{- end}}
+              {{- if .Values.workerPort }}
+              ports:
+                - containerPort: {{ .Values.workerPort }}
+                  name: tfjob-port
+              {{- end}}
+              command:
+                - "sh"
+                - "-c"
+                - {{ .Values.command }}
+              env:        
+              {{- range $key, $value := .Values.envs }}
+                - name: "{{ $key }}"
+                  value: "{{ $value }}"
+              {{- end }}
+              volumeMounts:
+                {{- if .Values.useTensorboard }}
+                - mountPath: {{ .Values.trainingLogdir }}
+                  name: training-logs-volume
+                {{- end}}
+                {{- if .Values.syncMode }}
+                {{- if .Values.workingDir }}
+                - name: code-sync
+                  mountPath: {{ .Values.workingDir }}/code
+                {{- else }}
+                - name: code-sync
+                  mountPath: /code
+                {{- end}}
+                {{- end}}
+                {{- if .Values.dataset }}   
+                {{- range $pvcName, $destPath := .Values.dataset }}
+                - name: "{{ $pvcName }}"
+                  mountPath: "{{ $destPath }}"
+                {{- end }}
+                {{- end }}
+                {{- if gt (int $gpuCount) 0}}  
+                {{- if .Values.nvidiaPath }}
+                - mountPath: /usr/local/nvidia
+                  name: nvidia
+                {{- end }}
+                {{- end }}
+                {{- if $dataDirs }}
+                {{- range $dataDirs }}
+                - mountPath: {{ .containerPath }}
+                  name: {{ .name }}
+                {{- end }}
+                {{- end }}
+
+{{- end }}

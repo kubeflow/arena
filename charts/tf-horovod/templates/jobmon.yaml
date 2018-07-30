@@ -1,0 +1,39 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "horovod.fullname" . }}-jobmon
+  namespace: arena-system
+  labels:
+    app: {{ template "horovod.name" . }}
+    chart: {{ template "horovod.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: jobmon
+spec:
+  # backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: {{ template "horovod.name" . }}
+        release: {{ .Release.Name }}
+        role: jobmon
+    spec:
+      serviceAccountName: jobmon
+      {{- if .Values.useHostNetwork }}
+      hostNetwork: {{ .Values.useHostNetwork }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      restartPolicy: Never
+      containers:
+      - name: {{ template "horovod.fullname" . }}-jobmon
+        image: "{{ .Values.jobmon.image }}"
+        imagePullPolicy: {{ .Values.jobmon.imagePullPolicy }}
+        env:
+         - name: NAMESPACE
+           value: "{{ .Release.Namespace }}"
+         - name: JOBNAME
+           value: "{{ template "horovod.fullname" . }}-job"
+         - name: STATEFULSETNAME
+           value: "{{ template "horovod.fullname" . }}"
+        

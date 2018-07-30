@@ -1,0 +1,25 @@
+{{- if .Values.tensorboard.enabled }}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: tensorboard
+  name: tensorboard
+spec:
+  template:
+    metadata:
+      labels:
+        app: tensorboard
+    spec: 
+      containers:
+      - name: tensorboard      
+        command: ["tensorboard", "--logdir", "/data/logs",  "--host",  "0.0.0.0"]
+        image: {{ .Values.tensorboard.image }}
+        imagePullPolicy: {{ .Values.tensorboard.imagePullPolicy }}
+        ports:
+        - containerPort: 6006
+        volumeMounts:
+        - mountPath: /output/training_logs
+          name: training-logs-volume
+{{- end }}

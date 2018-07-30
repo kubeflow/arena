@@ -1,0 +1,84 @@
+{{- $workerNum := .Values.workers -}}
+{{- $openmpiName := include "horovod.fullname" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "horovod.fullname" . }}-cm
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "horovod.chart" . }}
+    app: {{ template "horovod.fullname" . }}
+data:
+  hostfile.config: |
+    {{ $openmpiName }}-master
+    {{- range $i, $none := until (int $workerNum) }}
+    {{ $openmpiName }}-{{ $i }}.{{ $openmpiName }}
+    {{- end }}
+  ssh.readiness: |
+    #!/bin/bash
+    set -xev
+    ssh localhost ls
+  master.waitWorkerReady: |
+    #!/bin/bash
+    set -xev
+    function updateSSHPort() {
+      if [ -n "$targetport" ]; then
+        sed -i "s/^Port.*/Port $targetport /g" /root/.ssh/config
+        echo "StrictHostKeyChecking no" >> /root/.ssh/config
+      fi
+    }
+
+    function runCheckSSH() {
+      for i in `cat $1`;do
+        if [[ "$i" != *"master" ]];then
+           retry 300 ssh -o ConnectTimeout=2 -v $i exit
+        fi
+      done
+    }
+
+    function retry()
+    {
+        local n=0;local try=$1
+        local cmd="${@: 2}"
+        [[ $# -le 1 ]] && {
+            echo "Usage $0 <retry_number> <Command>";
+        }
+        set +e
+        until [[ $n -ge $try ]]
+        do
+          $cmd && break || {
+                  echo "Command Fail.."
+                  ((n++))
+                  echo "retry $n :: [$cmd]"
+                  sleep 1;
+                  }
+        done
+        sleep 1
+        $cmd
+        if [ $? -ne 0 ]; then
+          dig +trace +norecurse $i.`cat /etc/resolv.conf | grep search |awk '{print $2}'`
+          exit 1
+        fi
+        set -e   
+    }
+    updateSSHPort
+    runCheckSSH $1
+  master.runMPI: |
+     #! /bin/sh
+     set -x
+     sleep 5
+
+     if [ -n "$targetport" ]; then
+        sed -i "s/^Port.*/Port $targetport /g" /root/.ssh/config
+        echo "StrictHostKeyChecking no" >> /root/.ssh/config
+        sed -ri "s/Port 22/Port ${targetport}/g" /etc/ssh/sshd_config
+     fi
+
+     /usr/sbin/sshd
+
+     if [ $# -eq 0 ]; then
+          sleep infinity
+        else
+          bash -c "$*"
+     fi

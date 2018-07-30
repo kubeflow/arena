@@ -1,0 +1,44 @@
+# Default values for tfjob.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+useHostNetwork: true
+useHostPID: true
+useHostIPC: true
+gpuCount: 0 # user define
+
+chief: 0
+# chiefPort: 2221
+
+workers: 1
+workerImage: kubeflow/tf-dist-mnist-test:1.0
+# workerCpu: 1
+# workerMemory: 1 Gi
+# workPort: 2222
+
+ps: 0
+psImage: kubeflow/tf-dist-mnist-test:1.0
+# psCpu: 1
+# psMemory: 1 Gi
+# psPort: 2223
+
+evaluator: 0
+evaluatorImage: kubeflow/tf-dist-mnist-test:1.0
+
+# rsync image
+rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
+# git sync image
+gitImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/git-sync:v2.0.6
+
+imagePullPolicy: Always
+
+useTensorboard: false
+tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel
+tensorboardImagePullpolicy: Always
+tensorboardServiceType: NodePort
+
+trainingLogdir: /output/training_logs
+
+# hostLogPath: /training_logs/112345_logs
+
+# nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81

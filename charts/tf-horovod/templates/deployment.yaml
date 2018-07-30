@@ -1,0 +1,54 @@
+{{- if .Values.tensorboard.enabled }}
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "horovod.fullname" . }}-tensorboard
+  labels:
+    app: {{ template "horovod.name" . }}
+    chart: {{ template "horovod.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: tensorboard
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "horovod.name" . }}
+      release: {{ .Release.Name }}
+      role: tensorboard
+  template:
+    metadata:
+      labels:
+        app: {{ template "horovod.name" . }}
+        release: {{ .Release.Name }}
+        role: tensorboard
+    spec:
+      containers:
+      - name: tensorboard
+        image: "{{ .Values.tensorboard.image }}"
+        imagePullPolicy: {{ .Values.tensorboard.imagePullPolicy }}
+        ports:
+          - containerPort: 6006
+            name: tensorboard
+        command:
+          - tensorboard
+          - --logdir
+          - {{ .Values.tensorboard.logDir }}
+          - --host
+          - 0.0.0.0
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 6006
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 6006
+        volumeMounts:
+{{- if .Values.volumeMounts }}
+{{ toYaml .Values.volumeMounts | indent 8 }}
+{{- end }}
+      volumes:
+{{- if .Values.volumes }}
+{{ toYaml .Values.volumes | indent  6 }}
+{{- end }}
+{{- end }}

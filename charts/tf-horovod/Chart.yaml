@@ -1,0 +1,9 @@
+apiVersion: v1
+appVersion: "1.0"
+description: Horovod is a distributed training framework for TensorFlow.
+home: https://github.com/uber/horovod
+maintainers:
+- email: cheyang@163.com
+  name: cheyang
+name: tf-horovod
+version: 0.10.0

@@ -1,0 +1,48 @@
+# Default values for openmpi.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+useHostNetwork: true
+useHostPID: false
+gpuCount: 0 # user define
+#cpu: 1 # user define
+#memory: 1Gi # user define
+sshPort: 33 # user define
+# dataDir: /data0 #user define
+workers: 2
+podManagementPolicy: Parallel
+image: registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/ali-horovod:gpu-tf-1.6.0
+imagePullPolicy: Always
+
+# nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81
+
+shmSize: 2Gi
+privileged: true
+
+mpiMaster:
+  jupyter:
+    enabled: false
+    serviceType: NodePort
+    password: tensorflow
+    workdir: /root
+
+tensorboard:
+  enabled: false
+  # NodePort, LoadBalancer
+  serviceType: NodePort
+  logDir: /output/training_logs
+  image:
+    repository: registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/tensorboard
+    tag: 1.1.0
+    pullPolicy: Always
+
+jobmon:
+  image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/jobmon:latest
+  pullPolicy: Always
+
+syncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
+# imagePullPolicy: Always
+
+
+retry: 0
+

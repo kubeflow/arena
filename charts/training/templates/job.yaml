@@ -1,0 +1,145 @@
+{{- $gpuCount := .Values.gpuCount -}}
+{{- $syncMode := .Values.syncMode -}}
+{{- $nvidiaPath := .Values.nvidiaPath -}}
+{{- $dataDirs := .Values.dataDirs -}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "training.fullname" . }}
+  labels:
+    app: {{ template "training.name" . }}
+    chart: {{ template "training.chart" . }}
+    release: {{ .Release.Name }}
+    role: job
+spec:
+  backoffLimit: {{ .Values.retry }}
+  template:
+    metadata:
+      name: {{ template "training.fullname" . }}
+      labels:
+        app: {{ template "training.name" . }}
+        chart: {{ template "training.chart" . }}
+        release: {{ .Release.Name }}
+        role: job
+    spec:
+      #hostPID: true
+      {{- if .Values.useHostNetwork }}
+      hostNetwork: {{ .Values.useHostNetwork }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      restartPolicy: Never
+      containers:
+        - name: job
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          workingDir: {{ .Values.workingDir }}
+          resources:             
+            requests:
+              {{- if gt (int $gpuCount) 0}}   
+              {{- if .Values.nvidiaPath }}
+              alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+              {{- else}}
+              nvidia.com/gpu: {{ $gpuCount | quote }}
+              {{- end}}
+              {{- end}}
+              {{- if .Values.cpu }}
+              cpu: {{ .Values.cpu | quote }}
+              {{- end}}
+              {{- if .Values.memory }}
+              memory: {{ .Values.memory | quote }}
+              {{- end}}
+            limits:
+              {{- if gt (int $gpuCount) 0}}   
+              {{- if .Values.nvidiaPath }}
+              alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+              {{- else}}
+              nvidia.com/gpu: {{ $gpuCount | quote }}
+              {{- end}}
+              {{- end}}
+              {{- if .Values.cpu }}
+              cpu: {{ .Values.cpu | quote }}
+              {{- end}}
+              {{- if .Values.memory }}
+              memory: {{ .Values.memory | quote }}
+              {{- end}}
+          command:
+            - "sh"
+            - "-c"
+            - {{ .Values.command }}
+          env:        
+          {{- range $key, $value := .Values.envs }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.syncMode }}
+            {{- if .Values.workingDir }}
+            - name: code-sync
+              mountPath: {{ .Values.workingDir }}/code
+            {{- else }}
+            - name: code-sync
+              mountPath: /code
+            {{- end}}
+            {{- end}}
+            {{- if .Values.dataset }}   
+            {{- range $pvcName, $destPath := .Values.dataset }}
+            - name: "{{ $pvcName }}"
+              mountPath: "{{ $destPath }}"
+            {{- end }}
+            {{- end }} 
+            {{- if .Values.tensorboard.enabled }}
+            - mountPath: /output/training_logs
+              name: training-logs-volume
+            {{- end}}
+            {{- if .Values.nvidiaPath }}
+            - mountPath: /usr/local/nvidia
+              name: nvidia
+            {{- end }}
+            {{- if $dataDirs }}
+            {{- range $dataDirs }}
+            - mountPath: {{ .containerPath }}
+              name: {{ .name }}
+            {{- end }}
+            {{- end }}
+{{- if .Values.syncMode }}
+      initContainers:
+        - name: init-job
+          {{- if eq "rsync" $syncMode }}
+          image: "{{ .Values.syncImage }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
+          {{- end }}
+          env:        
+          {{- range $key, $value := .Values.envs }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          volumeMounts:
+            - name: code-sync
+              mountPath: /code
+{{- end}}
+      volumes:
+      {{- if .Values.syncMode }}
+      - name: code-sync
+        emptyDir: {}
+      {{- end}}
+       {{- if .Values.nvidiaPath }}
+      - hostPath:
+          path: "{{ .Values.nvidiaPath }}"
+        name: nvidia
+      {{- end }}
+      {{- if .Values.dataset }}   
+      {{- range $pvcName, $destPath := .Values.dataset }}
+      - name: "{{ $pvcName }}"
+        persistentVolumeClaim:
+          claimName: "{{ $pvcName }}"
+      {{- end }}
+      {{- end }}
+      {{- if $dataDirs }}
+      {{- range $dataDirs }}
+      - hostPath:
+          path: {{ .hostPath }}
+        name: {{ .name }}
+      {{- end }}
+      {{- end }}

@@ -1,0 +1,39 @@
+# Default values for training.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+useHostNetwork: true
+
+retry: 0
+
+gpuCount: 0
+# cpu: 1
+# memory: 1Gi
+
+image: registry.api.weibo.com/weibo_rd_algorithmplatform/deepwide:tf1.4.3
+imagePullPolicy: Always
+command: "unzip logoRecoTrain.zip;cd LOGOTest;python finetune_all_layers.py"
+envs: {}
+
+
+workingDir: /root
+
+# supported mode: rsync, hdfs, git
+# syncMode: rsync
+# syncSource: 10.77.29.68::backup/data/logoRecoTrain.zip
+
+syncImage: registry-vpc.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
+# imagePullPolicy: Always
+
+
+tensorboard:
+  enable: false
+  image: registry-vpc.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorboard:1.1.0
+  imagePullPolicy: Always
+
+nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81
+
+volumeMounts:
+ - mountPath: /data0
+   name: data0
+

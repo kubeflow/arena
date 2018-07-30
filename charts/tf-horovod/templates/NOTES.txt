@@ -1,0 +1,6 @@
+Getting Started:
+
+*** NOTE: It may take a few minutes for the statefulset to be avaialble
+
+*** you can watch the status of statefulset by running 'kubectl get sts --namespace {{ .Release.Namespace }} -w {{ template "horovod.fullname" . }}' ***
+

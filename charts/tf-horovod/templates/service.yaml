@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "horovod.fullname" . }}
+  labels:
+    app: {{ template "horovod.name" . }}
+    chart: {{ template "horovod.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  clusterIP: None
+  ports:
+  - name: ssh 
+    port: {{ .Values.sshPort }}
+    targetPort: {{ .Values.sshPort }}
+  selector:
+    app: {{ template "horovod.name" . }}
+    release: {{ .Release.Name }}
+    role: mpiworker
+
+---
+
+{{- if .Values.tensorboard.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "horovod.fullname" . }}-tensorboard
+  labels:
+    app: {{ template "horovod.name" . }}
+    chart: {{ template "horovod.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.tensorboard.serviceType }}
+  ports:
+  - name: tensorboard 
+    port: 6006
+    targetPort: 6006
+  selector:
+    app: {{ template "horovod.name" . }}
+    release: {{ .Release.Name }}
+    role: tensorboard
+{{- end }}
+
+---
+
+{{- if .Values.mpiMaster.jupyter.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "horovod.fullname" . }}-jupyter
+  labels:
+    app: {{ template "horovod.name" . }}
+    chart: {{ template "horovod.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.mpiMaster.jupyter.serviceType }}
+  ports:
+  - name: jupyter 
+    port: 8888
+    targetPort: 8888
+  selector:
+    app: {{ template "horovod.name" . }}
+    release: {{ .Release.Name }}
+    role: mpimaster
+{{- end }}

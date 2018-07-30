@@ -1,0 +1,22 @@
+{{- if .Values.tensorboard.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "training.fullname" . }}
+  labels:
+    app: {{ template "training.name" . }}
+    chart: {{ template "training.chart" . }}
+    release: {{ .Release.Name }}
+    role: tensorboard
+spec:
+  ports:
+  - port: 80
+    targetPort: 6006
+  selector:
+    app: {{ template "training.name" . }}
+    chart: {{ template "training.chart" . }}
+    release: {{ .Release.Name }}
+    role: tensorboard
+  type: {{ .Values.tensorboard.serviceType }}
+  {{- end }}
