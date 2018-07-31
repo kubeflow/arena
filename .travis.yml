@@ -1,0 +1,14 @@
+language: go
+
+go:
+  - "1.10"
+
+go_import_path: github.com/kubeflow/arena
+
+# let us have speedy Docker-based Travis workers
+sudo: false
+
+script:
+  - go build -o bin/arena cmd/arena/*.go
+  - go vet ./...
+  - go test ./...

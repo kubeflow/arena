@@ -40,19 +40,19 @@ Then run `helm list` to check if the the kubernetes can be managed successfully 
 
 ```
 mkdir /charts
-git clone ****
+git clone https://github.com/AliyunContainerService/arena.git
 cp -r arena/charts/* /charts
 ```
 
 5\. Install TFJob Controller
 
 ```
-kubectl create -f arena/kubernetes/jobmon/jobmon-role.yaml
-kubectl create -f arena/kubernetes/tf-operator/tf-operator.yaml
+kubectl create -f arena/kubernetes-artifacts/jobmon/jobmon-role.yaml
+kubectl create -f arena/kubernetes-artifacts/tf-operator/tf-operator.yaml
 ```
 
 6\. Install Dashboard
 
 ```
-kubectl create -f arena/kubernetes/dashboard/dashboard.yaml
+kubectl create -f arena/kubernetes-artifacts/dashboard/dashboard.yaml
 ```
