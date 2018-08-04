@@ -133,9 +133,9 @@ var (
 	submitLong = `Submit a training job.
 
 Available Commands:
-  tfjob,tf          Submit a TFJob.
-  mpijob,mpi        Submit a MPIJob.
-  standalonejob,sj  Submit a standalone Job.
+  tfjob,tf             Submit a TFJob.
+  horovod,hj           Submit a Horovod Job.
+  standalonejob,sj     Submit a standalone Job.
     `
 )
 

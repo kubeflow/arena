@@ -10,28 +10,28 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// MPI Job Information
-type MPIJob struct {
+// Horovod Job Information
+type HorovodJob struct {
 	*JobInfo
 }
 
 // Get the chief Pod of the Job.
-func (mj *MPIJob) ChiefPod() v1.Pod {
-	return mj.jobPod
+func (hj *HorovodJob) ChiefPod() v1.Pod {
+	return hj.jobPod
 }
 
 // Get the name of the Training Job
-// func (mj *MPIJob) Name() string {
+// func (hj *HorovodJob) Name() string {
 // 	return
 // }
 
 // Get all the pods of the Training Job
-func (mj *MPIJob) AllPods() []v1.Pod {
-	return mj.pods
+func (hj *HorovodJob) AllPods() []v1.Pod {
+	return hj.pods
 }
 
 // Get Dashboard url of the job
-func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
+func (hj *HorovodJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
 	urls := []string{}
 	dashboardURL, err := dashboard(client, arenaNamespace, "kubernetes-dashboard")
 
@@ -48,12 +48,12 @@ func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, erro
 		return urls, fmt.Errorf("No LOGVIEWER Installed.")
 	}
 
-	spec := mj.jobPod.Spec
-	job := mj.job
+	spec := hj.jobPod.Spec
+	job := hj.job
 	url := fmt.Sprintf("%s/#!/log/%s/%s/%s?namespace=%s\n",
 		dashboardURL,
 		job.Namespace,
-		mj.jobPod.Name,
+		hj.jobPod.Name,
 		spec.Containers[0].Name,
 		job.Namespace)
 
@@ -63,38 +63,38 @@ func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, erro
 }
 
 // Get the hostIP of the chief Pod
-func (mj *MPIJob) HostIPOfChief() (hostIP string) {
+func (hj *HorovodJob) HostIPOfChief() (hostIP string) {
 	hostIP = "N/A"
-	if mj.GetStatus() == "RUNNING" {
-		hostIP = mj.jobPod.Status.HostIP
+	if hj.GetStatus() == "RUNNING" {
+		hostIP = hj.jobPod.Status.HostIP
 	}
 
 	return hostIP
 }
 
-// MPI Job trainer
-type MPIJobTrainer struct {
+// Horovod Job trainer
+type HorovodJobTrainer struct {
 	client      *kubernetes.Clientset
 	trainerType string
 }
 
-func NewMPIJobTrainer(client *kubernetes.Clientset) Trainer {
-	log.Debugf("Init MPI job trainer")
+func NewHorovodJobTrainer(client *kubernetes.Clientset) Trainer {
+	log.Debugf("Init Horovod job trainer")
 
-	return &MPIJobTrainer{
+	return &HorovodJobTrainer{
 		client:      client,
-		trainerType: "mpijob",
+		trainerType: "Horovod",
 	}
 }
 
-// check if it's mpi job
-func (m *MPIJobTrainer) IsSupported(name, ns string) bool {
-	isMPI := false
+// check if it's Horovod job
+func (m *HorovodJobTrainer) IsSupported(name, ns string) bool {
+	isHorovod := false
 
 	if len(allJobs) > 0 {
 		for _, job := range allJobs {
-			if isMPIJob(name, ns, job) {
-				isMPI = true
+			if isHorovodJob(name, ns, job) {
+				isHorovod = true
 				log.Debugf("the job %s for %s in namespace %s is found.", job.Name, name, ns)
 				break
 			}
@@ -111,18 +111,18 @@ func (m *MPIJobTrainer) IsSupported(name, ns string) bool {
 		}
 
 		if len(jobList.Items) > 0 {
-			isMPI = true
+			isHorovod = true
 		}
 	}
 
-	return isMPI
+	return isHorovod
 }
 
-func (m *MPIJobTrainer) Type() string {
+func (m *HorovodJobTrainer) Type() string {
 	return m.trainerType
 }
 
-func (m *MPIJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
+func (m *HorovodJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
 	if len(allPods) > 0 {
 		tj, err = m.getTrainingJobFromCache(name, namespace)
 	} else {
@@ -132,7 +132,7 @@ func (m *MPIJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, 
 	return tj, err
 }
 
-func (m *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
+func (m *HorovodJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
 	var (
 		jobPod v1.Pod
 		job    batchv1.Job
@@ -206,7 +206,7 @@ func (m *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, err
 
 	pods = append(pods, jobPod)
 
-	return &MPIJob{
+	return &HorovodJob{
 		JobInfo: &JobInfo{
 			job:         job,
 			jobPod:      jobPod,
@@ -219,7 +219,7 @@ func (m *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, err
 }
 
 // Get the training job from Cache
-func (m *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, error) {
+func (m *HorovodJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, error) {
 
 	var (
 		jobPod v1.Pod
@@ -231,7 +231,7 @@ func (m *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, e
 
 	// 1. Find the batch job
 	for _, item := range allJobs {
-		if isMPIJob(name, ns, item) {
+		if isHorovodJob(name, ns, item) {
 			job = item
 			break
 		}
@@ -240,7 +240,7 @@ func (m *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, e
 	// 2. Find the pods, and determine the pod of the job
 	for _, item := range allPods {
 
-		if !isMPIPod(name, ns, item) {
+		if !isHorovodPod(name, ns, item) {
 			continue
 		}
 
@@ -281,7 +281,7 @@ func (m *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, e
 
 	pods = append(pods, jobPod)
 
-	return &MPIJob{
+	return &HorovodJob{
 		JobInfo: &JobInfo{
 			job:         job,
 			jobPod:      jobPod,
@@ -292,7 +292,7 @@ func (m *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, e
 	}, nil
 }
 
-func isMPIJob(name, ns string, item batchv1.Job) bool {
+func isHorovodJob(name, ns string, item batchv1.Job) bool {
 
 	if val, ok := item.Labels["release"]; ok && (val == name) {
 		log.Debugf("the job %s with labels %s", item.Name, val)
@@ -312,7 +312,7 @@ func isMPIJob(name, ns string, item batchv1.Job) bool {
 	return true
 }
 
-func isMPIPod(name, ns string, item v1.Pod) bool {
+func isHorovodPod(name, ns string, item v1.Pod) bool {
 	if val, ok := item.Labels["release"]; ok && (val == name) {
 		log.Debugf("the pod %s with labels %s", item.Name, val)
 	} else {

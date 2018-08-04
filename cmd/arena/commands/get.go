@@ -114,7 +114,7 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", job.Name(),
 			strings.ToUpper(string(pod.Status.Phase)),
-			job.Trainer(),
+			strings.ToUpper(job.Trainer()),
 			job.Age(),
 			pod.Name,
 			hostIP)
