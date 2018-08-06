@@ -19,15 +19,15 @@ func gpuInNode(node v1.Node) int64 {
 	val, ok := node.Status.Capacity[NVIDIAGPUResourceName]
 
 	if !ok {
-		return gpuInNodeDepricated(node)
+		return gpuInNodeDeprecated(node)
 	}
 
 	return val.Value()
 }
 
 // The way to get GPU Count of Node: alpha.kubernetes.io/nvidia-gpu
-func gpuInNodeDepricated(node v1.Node) int64 {
-	val, ok := node.Status.Capacity[DepricatedNVIDIAGPUResourceName]
+func gpuInNodeDeprecated(node v1.Node) int64 {
+	val, ok := node.Status.Capacity[DeprecatedNVIDIAGPUResourceName]
 
 	if !ok {
 		return 0
@@ -62,14 +62,14 @@ func gpuInContainer(container v1.Container) int64 {
 	val, ok := container.Resources.Limits[NVIDIAGPUResourceName]
 
 	if !ok {
-		return gpuInContainerDepricated(container)
+		return gpuInContainerDeprecated(container)
 	}
 
 	return val.Value()
 }
 
-func gpuInContainerDepricated(container v1.Container) int64 {
-	val, ok := container.Resources.Limits[DepricatedNVIDIAGPUResourceName]
+func gpuInContainerDeprecated(container v1.Container) int64 {
+	val, ok := container.Resources.Limits[DeprecatedNVIDIAGPUResourceName]
 
 	if !ok {
 		return 0

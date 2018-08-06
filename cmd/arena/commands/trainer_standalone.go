@@ -115,7 +115,7 @@ func (s *StandaloneJobTrainer) getTrainingJob(name, namespace string) (TrainingJ
 		latest metav1.Time
 	)
 
-	// 1. Get the batchJob of trainig Job
+	// 1. Get the batchJob of training Job
 	pods := []v1.Pod{}
 	jobList, err := s.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{

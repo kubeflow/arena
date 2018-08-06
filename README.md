@@ -45,7 +45,7 @@ cd arena
 make
 ```
 
-`arena` binary is located in directory `arena/bin`. You may want add the dirctory to `$PATH`.
+`arena` binary is located in directory `arena/bin`. You may want add the directory to `$PATH`.
 
 ## RoadMap
 

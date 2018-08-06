@@ -151,7 +151,7 @@ func NewSubmitCommand() *cobra.Command {
 
 	command.AddCommand(NewSubmitTFJobCommand())
 	command.AddCommand(NewSubmitHorovodJobCommand())
-	// This will be deprcated soon.
+	// This will be deprecated soon.
 	command.AddCommand(NewSubmitStandaloneJobCommand())
 
 	return command

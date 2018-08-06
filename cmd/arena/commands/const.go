@@ -6,7 +6,7 @@ const (
 	// this uses the device plugin mechanism
 	NVIDIAGPUResourceName = "nvidia.com/gpu"
 
-	DepricatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
+	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
 
 	masterLabelRole = "node-role.kubernetes.io/master"
 )

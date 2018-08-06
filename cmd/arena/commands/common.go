@@ -18,7 +18,7 @@ var (
 	restConfig   *rest.Config
 	clientConfig clientcmd.ClientConfig
 	clientset    *kubernetes.Clientset
-	// To reduce client-go API call, for 'arena list' secnario
+	// To reduce client-go API call, for 'arena list' scenario
 	allPods        []v1.Pod
 	allJobs        []batchv1.Job
 	name           string

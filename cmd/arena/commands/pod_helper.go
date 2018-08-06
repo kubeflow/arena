@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// acqurie all active pods from all namespaces
+// acquire all active pods from all namespaces
 func acquireAllActivePods(client *kubernetes.Clientset) ([]v1.Pod, error) {
 	allPods := []v1.Pod{}
 

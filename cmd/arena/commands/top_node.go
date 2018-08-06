@@ -113,7 +113,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 
 	fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tGPU(Total)\tGPU(Allocated)\n")
 	for _, nodeInfo := range nodeInfos {
-		totalGPU, allocatedGPU := caculateNodeGPU(nodeInfo)
+		totalGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
 
@@ -165,7 +165,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 
 	fmt.Fprintf(w, "\n")
 	for _, nodeInfo := range nodeInfos {
-		totalGPU, allocatedGPU := caculateNodeGPU(nodeInfo)
+		totalGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
 
@@ -228,8 +228,8 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 	_ = w.Flush()
 }
 
-// cacalute the GPU count of each node
-func caculateNodeGPU(nodeInfo NodeInfo) (totalGPU int64, allocatedGPU int64) {
+// calculate the GPU count of each node
+func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU int64, allocatedGPU int64) {
 	node := nodeInfo.node
 	totalGPU = gpuInNode(node)
 	// allocatedGPU = gpuInPod()
