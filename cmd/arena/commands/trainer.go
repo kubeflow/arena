@@ -11,7 +11,7 @@ func NewTrainers(client *kubernetes.Clientset) []Trainer {
 
 	trainers := []Trainer{}
 	trainerInits := []func(client *kubernetes.Clientset) Trainer{
-		NewMPIJobTrainer,
+		NewHorovodJobTrainer,
 		NewStandaloneJobTrainer,
 		NewTensorFlowJobTrainer}
 
