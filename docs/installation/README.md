@@ -16,7 +16,7 @@ Arena doesn't have to run can be run within Kubernetes cluster. It can also be r
 
 ### Steps
 
-1. Prepare kubeconfig file by using `export KUBECONFIG=/etc/kubernetes/admin.conf` or creating a `~/.kube/config`
+1\. Prepare kubeconfig file by using `export KUBECONFIG=/etc/kubernetes/admin.conf` or creating a `~/.kube/config`
 
 2\. Install kubectl client
 
@@ -71,4 +71,4 @@ cd arena
 make
 ```
 
-`arena` binary is located in directory `arena/bin`. You may want add the dirctory to `$PATH`.
+`arena` binary is located in directory `arena/bin`. You may want add the directory to `$PATH`.

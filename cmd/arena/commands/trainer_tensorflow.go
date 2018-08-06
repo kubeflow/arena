@@ -260,7 +260,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 		tfjob    tfv1alpha2.TFJob
 	)
 
-	// 1. Get the batchJob of trainig Job
+	// 1. Get the batchJob of training Job
 	pods := []v1.Pod{}
 
 	tfjobList, err := tt.tfjobClient.KubeflowV1alpha2().TFJobs(namespace).List(metav1.ListOptions{
