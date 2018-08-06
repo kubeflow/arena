@@ -38,14 +38,14 @@ Prerequisites:
 - Go >= 1.8
 
 ```
-mkdir -p $GOPATH/github.com/kubeflow
-cd $GOPATH/github.com/kubeflow
+mkdir -p $GOPATH/src/github.com/kubeflow
+cd $GOPATH/src/github.com/kubeflow
 git clone https://github.com/AliyunContainerService/arena.git
 cd arena
 make
 ```
 
-Then you can get `arena` binary from `arena/bin`
+`arena` binary is located in directory `arena/bin`. You may want add the dirctory to `$PATH`.
 
 ## RoadMap
 
