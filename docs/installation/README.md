@@ -56,3 +56,19 @@ kubectl create -f arena/kubernetes-artifacts/tf-operator/tf-operator.yaml
 ```
 kubectl create -f arena/kubernetes-artifacts/dashboard/dashboard.yaml
 ```
+
+7\. Install arena
+
+Prerequisites:
+
+- Go >= 1.8
+
+```
+mkdir -p $GOPATH/src/github.com/kubeflow
+cd $GOPATH/src/github.com/kubeflow
+git clone https://github.com/AliyunContainerService/arena.git
+cd arena
+make
+```
+
+`arena` binary is located in directory `arena/bin`. You may want add the dirctory to `$PATH`.
