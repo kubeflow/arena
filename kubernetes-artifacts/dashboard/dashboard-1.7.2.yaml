@@ -70,7 +70,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: kubernetes-dashboard
-        image: registry-vpc.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/kubernetes-dashboard-amd64:v1.6.0
+        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/kubernetes-dashboard-amd64:v1.6.0
         imagePullPolicy: Always
         ports:
         - containerPort: 9090
