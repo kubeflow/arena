@@ -135,6 +135,7 @@ var (
 Available Commands:
   tfjob,tf             Submit a TFJob.
   horovod,hj           Submit a Horovod Job.
+  mpijob,mpi           Submit a MPIJob.
   standalonejob,sj     Submit a standalone Job.
     `
 )
@@ -150,6 +151,7 @@ func NewSubmitCommand() *cobra.Command {
 	}
 
 	command.AddCommand(NewSubmitTFJobCommand())
+	command.AddCommand(NewSubmitMPIJobCommand())
 	command.AddCommand(NewSubmitHorovodJobCommand())
 	// This will be deprecated soon.
 	command.AddCommand(NewSubmitStandaloneJobCommand())

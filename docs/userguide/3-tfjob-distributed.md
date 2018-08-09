@@ -1,6 +1,6 @@
 
 
-Arena supports and simplifies distributed TensorFlow Training(ps/worker mode). This example
+Arena supports and simplifies distributed TensorFlow Training(ps/worker mode). 
 
 
 1. To run a distributed Tensorflow Training, you need to specify:
