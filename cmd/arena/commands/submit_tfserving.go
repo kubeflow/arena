@@ -65,7 +65,6 @@ func NewSubmitTFServingJobCommand() *cobra.Command {
 	command.Flags().IntVar(&submitArgs.Port, "port", 9000, "")
 	command.Flags().StringVar(&submitArgs.VersionPolicy, "versionPolicy", "latest", "")
 	command.Flags().StringVar(&submitArgs.Vhost, "vhost", "", "")
-	command.Flags().IntVar(&submitArgs.GPUCount, "gpus", 0, "")
 	command.Flags().StringVar(&submitArgs.Cpu, "cpu", "", "")
 	command.Flags().StringVar(&submitArgs.Memory, "memory", "", "")
 
