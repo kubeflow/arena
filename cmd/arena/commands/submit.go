@@ -130,19 +130,20 @@ func init() {
 }
 
 var (
-	submitLong = `Submit a training job.
+	submitLong = `Submit a job.
 
 Available Commands:
   tfjob,tf             Submit a TFJob.
   horovod,hj           Submit a Horovod Job.
   standalonejob,sj     Submit a standalone Job.
+  serving,serving		Submit a Serving Job.
     `
 )
 
 func NewSubmitCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "submit",
-		Short: "Submit a training job.",
+		Short: "Submit a job.",
 		Long:  submitLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
@@ -153,6 +154,7 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewSubmitHorovodJobCommand())
 	// This will be deprecated soon.
 	command.AddCommand(NewSubmitStandaloneJobCommand())
+	command.AddCommand(NewSubmitTFServingJobCommand())
 
 	return command
 }
