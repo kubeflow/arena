@@ -36,7 +36,9 @@ spec:
             - "--port={{ .Values.port }}"
             - "--model_name={{ .Values.modelName }}"
             - "--model_base_path={{ .Values.modelPath }}"
+            if {{- .Values.modelConfigFile }}
             - "--model_config_file={{ .Values.modelConfigFile }}"
+            {{- end }}
           ports:
             - containerPort: {{ .Values.port }}
               name: serving
@@ -47,14 +49,10 @@ spec:
             initialDelaySeconds: 15
             timeoutSeconds: 1
           resources:
-            limits:
-              cpu:
-              memory:
-              nvidia.com/gpu:
             requests:
-              cpu:
-              memory:
-              nvidia.com/gpu:
+              cpu: {{ .Values.cpu }}
+              memory: {{ .Values.cpu }}
+              nvidia.com/gpu: {{ .Values.cpu }}
           volumeMounts:
           {{- if .Values.mountPath }}
             - mountPath: {{ .Values.mountPath }}

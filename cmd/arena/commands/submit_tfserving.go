@@ -27,10 +27,10 @@ func NewSubmitTFServingJobCommand() *cobra.Command {
 		Short:   "Submit tfserving job to deploy a online model.",
 		Aliases: []string{"tfserving"},
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
+			/*if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
-			}
+			}*/
 
 			util.SetLogLevel(logLevel)
 			setupKubeconfig()
@@ -78,10 +78,10 @@ type submitTFServingJobArgs struct {
 	Port     		int		`yaml:"port"`     		// --pot
 	VersionPolicy 	string	`yaml:"versionPolicy"`	// --versionPolicy
 	ModelConfigFile	string	`yaml:"modelConfigFile"`// --modelConfigFile
-	ModelConfigFileContent string `yaml:"modelConfigFileConteng"`
+	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
 	Vhost   		string 	`yaml:"vhost"`   		// --vhost
 	Cpu				string	`yaml:"cpu"`			// --cpu
-	Memory			string	`yaml:""`				// --memory
+	Memory			string	`yaml:"memory"`				// --memory
 	// for common args
 	submitArgs `yaml:",inline"`
 }
