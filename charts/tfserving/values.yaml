@@ -39,6 +39,7 @@ persistence:
   storageClass: ""
   size: 10Gi
   accessMode: ReadWriteOnce
+  existingClaim: tf-serving-pvc
  # matchLabels: {}
 
 

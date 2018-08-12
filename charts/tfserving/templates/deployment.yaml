@@ -36,7 +36,7 @@ spec:
             - "--port={{ .Values.port }}"
             - "--model_name={{ .Values.modelName }}"
             - "--model_base_path={{ .Values.modelPath }}"
-            if {{- .Values.modelConfigFile }}
+            {{- if .Values.modelConfigFile }}
             - "--model_config_file={{ .Values.modelConfigFile }}"
             {{- end }}
           ports:
