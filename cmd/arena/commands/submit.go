@@ -101,7 +101,7 @@ func (submitArgs *submitArgs) addJobInfoToEnv() {
 	submitArgs.Envs["gpus"] = strconv.Itoa(submitArgs.GPUCount)
 }
 
-func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
+func (submitArgs *submitArgs)  addCommonFlags(command *cobra.Command) {
 
 	// create subcommands
 	command.Flags().StringVar(&name, "name", "", "override name")
@@ -136,7 +136,7 @@ Available Commands:
   tfjob,tf             Submit a TFJob.
   horovod,hj           Submit a Horovod Job.
   standalonejob,sj     Submit a standalone Job.
-  serving,serving		Submit a Serving Job.
+  tfserving,tfserving  Submit a Serving Job.
     `
 )
 

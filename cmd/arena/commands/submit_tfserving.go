@@ -123,13 +123,13 @@ func (submitTFServingArgs submitTFServingJobArgs) check() error {
 	}
 
 	// check version policy
-	versionPolicyName := strings.Split(submitTFServingArgs.VersionPolicy, ":")
+/*	versionPolicyName := strings.Split(submitTFServingArgs.VersionPolicy, ":")
 	switch versionPolicyName[0] {
 	case "latest", "specific", "all":
 		log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
 	default:
 		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
-	}
+	}*/
 
 	// check model-name
 	if submitTFServingArgs.ModelName != "" {
