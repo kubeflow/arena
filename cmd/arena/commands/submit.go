@@ -101,7 +101,7 @@ func (submitArgs *submitArgs) addJobInfoToEnv() {
 	submitArgs.Envs["gpus"] = strconv.Itoa(submitArgs.GPUCount)
 }
 
-func (submitArgs *submitArgs)  addCommonFlags(command *cobra.Command) {
+func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 
 	// create subcommands
 	command.Flags().StringVar(&name, "name", "", "override name")
