@@ -7,13 +7,13 @@ import (
 
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
-	"github.com/spf13/cobra"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"io/ioutil"
 )
 
 var (
-	tfserving_chart = "/charts/tfserving"
+	tfserving_chart       = "/charts/tfserving"
 	defaultTfServingImage = "tensorflow/serving:1.5.0-devel-gpu"
 )
 
@@ -72,16 +72,16 @@ func NewSubmitTFServingJobCommand() *cobra.Command {
 }
 
 type submitTFServingJobArgs struct {
-	Replicas		int		`yaml:"replicas"`		// --replicas
-	ModelName		string	`yaml:"modelName"`    	// --modelName
-	ModelPath		string	`yaml:"modelPath"`		// --modelPath
-	Port     		int		`yaml:"port"`     		// --pot
-	VersionPolicy 	string	`yaml:"versionPolicy"`	// --versionPolicy
-	ModelConfigFile	string	`yaml:"modelConfigFile"`// --modelConfigFile
+	Replicas               int    `yaml:"replicas"`        // --replicas
+	ModelName              string `yaml:"modelName"`       // --modelName
+	ModelPath              string `yaml:"modelPath"`       // --modelPath
+	Port                   int    `yaml:"port"`            // --pot
+	VersionPolicy          string `yaml:"versionPolicy"`   // --versionPolicy
+	ModelConfigFile        string `yaml:"modelConfigFile"` // --modelConfigFile
 	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
 	// Vhost   		string 	`yaml:"vhost"`   		// --vhost
-	Cpu				string	`yaml:"cpu"`			// --cpu
-	Memory			string	`yaml:"memory"`				// --memory
+	Cpu    string `yaml:"cpu"`    // --cpu
+	Memory string `yaml:"memory"` // --memory
 	// for common args
 	submitArgs `yaml:",inline"`
 }
@@ -123,20 +123,20 @@ func (submitTFServingArgs submitTFServingJobArgs) check() error {
 	}
 
 	// check version policy
-/*	versionPolicyName := strings.Split(submitTFServingArgs.VersionPolicy, ":")
-	switch versionPolicyName[0] {
-	case "latest", "specific", "all":
-		log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
-	default:
-		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
-	}*/
+	/*	versionPolicyName := strings.Split(submitTFServingArgs.VersionPolicy, ":")
+		switch versionPolicyName[0] {
+		case "latest", "specific", "all":
+			log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
+		default:
+			log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
+		}*/
 
 	// check model-name
 	if submitTFServingArgs.ModelName != "" {
 		if submitTFServingArgs.ModelPath == "" {
 			return fmt.Errorf("If model-name: %s has been set, the model-path must be set too.", submitTFServingArgs.ModelName)
 		}
-		if  submitTFServingArgs.ModelConfigFile != "" {
+		if submitTFServingArgs.ModelConfigFile != "" {
 			return fmt.Errorf("If model-name: %s has been set, model-config-file connt be set.", submitTFServingArgs.ModelName)
 		}
 	}
@@ -146,7 +146,7 @@ func (submitTFServingArgs submitTFServingJobArgs) check() error {
 		if submitTFServingArgs.ModelName == "" {
 			return fmt.Errorf("If model-path: %s has been set, the model-name must be set too.", submitTFServingArgs.ModelPath)
 		}
-		if  submitTFServingArgs.ModelConfigFile != "" {
+		if submitTFServingArgs.ModelConfigFile != "" {
 			return fmt.Errorf("If model-path: %s has been set, model-config-file cannt be set.", submitTFServingArgs.ModelPath)
 		}
 	}
