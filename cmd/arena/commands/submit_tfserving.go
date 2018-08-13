@@ -14,7 +14,7 @@ import (
 
 var (
 	tfserving_chart = "/charts/tfserving"
-	defaultTfServingImage = "tensorflow/serving:1.8.0-devel-gpu"
+	defaultTfServingImage = "tensorflow/serving:1.5.0-devel-gpu"
 )
 
 func NewSubmitTFServingJobCommand() *cobra.Command {
@@ -58,15 +58,15 @@ func NewSubmitTFServingJobCommand() *cobra.Command {
 	//submitArgs.addSyncFlags(command)
 
 	// TFServingJob
-	command.Flags().IntVar(&submitArgs.Replicas, "replicas", 1, "")
-	command.Flags().StringVar(&submitArgs.ModelConfigFile, "modelConfigFile", "", "")
-	command.Flags().StringVar(&submitArgs.ModelName, "modelName", "", "")
-	command.Flags().StringVar(&submitArgs.ModelPath, "modelPath", "", "")
-	command.Flags().IntVar(&submitArgs.Port, "port", 9000, "")
-	command.Flags().StringVar(&submitArgs.VersionPolicy, "versionPolicy", "latest", "")
-	command.Flags().StringVar(&submitArgs.Vhost, "vhost", "", "")
-	command.Flags().StringVar(&submitArgs.Cpu, "cpu", "", "")
-	command.Flags().StringVar(&submitArgs.Memory, "memory", "", "")
+	command.Flags().IntVar(&submitArgs.Replicas, "replicas", 1, "TensorFLow serving replicas")
+	command.Flags().StringVar(&submitArgs.ModelConfigFile, "modelConfigFile", "", "Corresponding with --model_config_file in tensorflow serving")
+	command.Flags().StringVar(&submitArgs.ModelName, "modelName", "", "Corresponding with --model_name in tensorflow serving")
+	command.Flags().StringVar(&submitArgs.ModelPath, "modelPath", "", "Corresponding with --model_path in tensorflow serving")
+	command.Flags().IntVar(&submitArgs.Port, "port", 9000, "Corresponding with --port in tensorflow serving")
+	command.Flags().StringVar(&submitArgs.VersionPolicy, "versionPolicy", "latest", "support latest, latest:N, specific:N, all")
+	//command.Flags().StringVar(&submitArgs.Vhost, "vhost", "", "")
+	command.Flags().StringVar(&submitArgs.Cpu, "cpu", "", "the cpu resource to request for the tensorflow serving container")
+	command.Flags().StringVar(&submitArgs.Memory, "memory", "", "the memory resource to request for the tensorflow serving container")
 
 	return command
 }
@@ -79,7 +79,7 @@ type submitTFServingJobArgs struct {
 	VersionPolicy 	string	`yaml:"versionPolicy"`	// --versionPolicy
 	ModelConfigFile	string	`yaml:"modelConfigFile"`// --modelConfigFile
 	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
-	Vhost   		string 	`yaml:"vhost"`   		// --vhost
+	// Vhost   		string 	`yaml:"vhost"`   		// --vhost
 	Cpu				string	`yaml:"cpu"`			// --cpu
 	Memory			string	`yaml:"memory"`				// --memory
 	// for common args

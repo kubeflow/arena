@@ -12,7 +12,7 @@ port: 9000
 replicas: 1
 
 # repository: "cheyang/tf-model-server-gpu"
-image: "cheyang/tf-model-server:1.4"
+image: "tensorflow/serving:1.8.0-devel-gpu"
 
 imagePullPolicy: "IfNotPresent"
 
