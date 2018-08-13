@@ -1,3 +1,4 @@
+{{- if ne Values.modelConfigFileContent "" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,7 +9,6 @@ metadata:
     chart: {{ template "tensorflow-serving.chart" . }}
     app: {{ template "tensorflow-serving.name" . }}
 data:
-{{- if .Values.modelConfigFileContent }}
   modelConfigFileContent: |
     {{ .Values.modelConfigFileContent }}
 {{- end }}

@@ -5,11 +5,13 @@ import (
 	"os"
 	"strings"
 
+	"bytes"
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io/ioutil"
+	"encoding/json"
 )
 
 var (
@@ -112,6 +114,16 @@ func (submitTFServingArgs *submitTFServingJobArgs) prepare(args []string) (err e
 		submitTFServingArgs.ModelConfigFileContent = string(modelConfigFileContentBytes)
 	}
 
+	// generate model-config-file content according modelName, modelPath, versionPolicy
+	if submitTFServingArgs.ModelConfigFile != "" {
+		submitTFServingArgs.ModelConfigFileContent = generateModelConfigFileContent(submitTFServingArgs.ModelName, submitTFServingArgs.ModelPath, submitTFServingArgs.VersionPolicy)
+	}
+
+	// check modelConfigFileContent whether a valid json object
+	if !json.Valid([]byte(submitTFServingArgs.ModelConfigFileContent)) {
+		return fmt.Errorf("modelConfigFileContent is not a valid json object")
+	}
+
 	return nil
 }
 
@@ -123,38 +135,44 @@ func (submitTFServingArgs submitTFServingJobArgs) check() error {
 	}
 
 	// check version policy
-	/*	versionPolicyName := strings.Split(submitTFServingArgs.VersionPolicy, ":")
-		switch versionPolicyName[0] {
-		case "latest", "specific", "all":
-			log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
-		default:
-			log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
-		}*/
+	versionPolicyName := strings.Split(submitTFServingArgs.VersionPolicy, ":")
+	switch versionPolicyName[0] {
+	case "latest", "specific", "all":
+		log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
+	default:
+		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
+	}
+
+	if submitTFServingArgs.VersionPolicy != "" {
+		if submitTFServingArgs.ModelName == "" {
+			log.Error("versionPolicy has been set %s, modelName cannt be none.")
+		}
+	}
 
 	// check model-name
 	if submitTFServingArgs.ModelName != "" {
 		if submitTFServingArgs.ModelPath == "" {
-			return fmt.Errorf("If model-name: %s has been set, the model-path must be set too.", submitTFServingArgs.ModelName)
+			return fmt.Errorf("If modelName: %s has been set, the modelPath must be set too.", submitTFServingArgs.ModelName)
 		}
 		if submitTFServingArgs.ModelConfigFile != "" {
-			return fmt.Errorf("If model-name: %s has been set, model-config-file connt be set.", submitTFServingArgs.ModelName)
+			return fmt.Errorf("If modelName: %s has been set, modelConfigFile connt be set.", submitTFServingArgs.ModelName)
 		}
 	}
 
 	// check model-path
 	if submitTFServingArgs.ModelPath != "" {
 		if submitTFServingArgs.ModelName == "" {
-			return fmt.Errorf("If model-path: %s has been set, the model-name must be set too.", submitTFServingArgs.ModelPath)
+			return fmt.Errorf("If modelPath: %s has been set, the modelName must be set too.", submitTFServingArgs.ModelPath)
 		}
 		if submitTFServingArgs.ModelConfigFile != "" {
-			return fmt.Errorf("If model-path: %s has been set, model-config-file cannt be set.", submitTFServingArgs.ModelPath)
+			return fmt.Errorf("If modelPath: %s has been set, modelConfigFile cannt be set.", submitTFServingArgs.ModelPath)
 		}
 	}
 
 	// check model-config-file
 	if submitTFServingArgs.ModelConfigFile != "" {
 		if submitTFServingArgs.ModelName != "" || submitTFServingArgs.ModelPath != "" {
-			return fmt.Errorf("If model-config-file: %s has been set, model-name or model-path cannt be set.", submitTFServingArgs.ModelConfigFile)
+			return fmt.Errorf("If modelConfigFile: %s has been set, modelName or modelPath cannt be set.", submitTFServingArgs.ModelConfigFile)
 		}
 	}
 
@@ -180,4 +198,34 @@ func submitTFServingJob(args []string, submitArgs *submitTFServingJobArgs) (err 
 	}
 
 	return helm.InstallRelease(name, namespace, submitArgs, tfserving_chart)
+}
+
+func generateModelConfigFileContent(modelName, modelPath, versionPolicy string) string {
+	versionPolicyName := strings.Split(versionPolicy, ":")
+	var buffer bytes.Buffer
+	buffer.WriteString("model_config_list: {\n\tconfig: {\n\t\tname: \"")
+	buffer.WriteString(modelName + "\",\n\t\tbase_path: \"")
+	buffer.WriteString(modelPath + "\",\n\t\tmodel_platform: \"")
+	buffer.WriteString("tensorflow" + "\",\n\t\tmodel_version_policy: {\n\t\t\t")
+	switch versionPolicyName[0] {
+	case "all":
+		buffer.WriteString(versionPolicyName[0] + ": {}\n\t\t}\n\t}\n}")
+	case "specific":
+		if len(versionPolicyName) > 1 {
+			buffer.WriteString(versionPolicyName[0] + ": {\n\t\t\t\t" + "versions: " + versionPolicyName[1] + "\n\t\t\t}\n\t\t}\n\t}\n}")
+		} else {
+			log.Errorf("[specific] version policy scheme should be specific:N")
+		}
+	case "latest":
+		if len(versionPolicyName) > 1 {
+			buffer.WriteString(versionPolicyName[0] + ": {\n\t\t\t\t" + "num_versions: " + versionPolicyName[1] + "\n\t\t\t}\n\t\t}\n\t}\n}")
+		} else {
+			buffer.WriteString(versionPolicyName[0] + ": {\n\t\t\t\t" + "num_versions: 1\n\t\t\t}\n\t\t}\n\t}\n}")
+		}
+	default:
+		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
+		buffer.Reset()
+	}
+	log.Debug("generateModelConfigFileContent: %s", buffer.String())
+	return buffer.String()
 }
