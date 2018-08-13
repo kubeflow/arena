@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	"encoding/json"
 )
 
 var (
@@ -115,14 +114,14 @@ func (submitTFServingArgs *submitTFServingJobArgs) prepare(args []string) (err e
 	}
 
 	// generate model-config-file content according modelName, modelPath, versionPolicy
-	if submitTFServingArgs.ModelConfigFile != "" {
+	if submitTFServingArgs.VersionPolicy != "" {
 		submitTFServingArgs.ModelConfigFileContent = generateModelConfigFileContent(submitTFServingArgs.ModelName, submitTFServingArgs.ModelPath, submitTFServingArgs.VersionPolicy)
 	}
 
 	// check modelConfigFileContent whether a valid json object
-	if !json.Valid([]byte(submitTFServingArgs.ModelConfigFileContent)) {
+	/*if !json.Valid([]byte(submitTFServingArgs.ModelConfigFileContent)) {
 		return fmt.Errorf("modelConfigFileContent is not a valid json object")
-	}
+	}*/
 
 	return nil
 }
@@ -226,6 +225,7 @@ func generateModelConfigFileContent(modelName, modelPath, versionPolicy string) 
 		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
 		buffer.Reset()
 	}
-	log.Debug("generateModelConfigFileContent: %s", buffer.String())
+	log.Debugf("generateModelConfigFileContent: \n%s", buffer.String())
+
 	return buffer.String()
 }
