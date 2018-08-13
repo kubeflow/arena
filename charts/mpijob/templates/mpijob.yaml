@@ -24,6 +24,7 @@ spec:
         heritage: {{ .Release.Service }}
         createdBy: "MPIJob"
     spec:
+      restartPolicy: Never
       {{- if .Values.useHostNetwork }}
       hostNetwork: {{ .Values.useHostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet

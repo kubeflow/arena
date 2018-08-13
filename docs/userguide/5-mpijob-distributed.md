@@ -26,31 +26,30 @@ The following command is an example. In this example, it defines 2 workers and 1
 2\. Get the details of the specific job
 
 ```
-# arena get tf-dist-git
-NAME         STATUS   TRAINER  AGE  INSTANCE                            NODE                   
-tf-dist-git  RUNNING  tfjob    55s  tf-dist-git-tfjob-594d59789c-lrfsk  192.168.1.119
-tf-dist-git  RUNNING  tfjob    55s  tf-dist-git-tfjob-ps-0              192.168.1.118
-tf-dist-git  RUNNING  tfjob    55s  tf-dist-git-tfjob-worker-0          192.168.1.119
-tf-dist-git  RUNNING  tfjob    55s  tf-dist-git-tfjob-worker-1          192.168.1.120
+# arena get mpi-dist
+NAME      STATUS   TRAINER  AGE  INSTANCE                        NODE
+mpi-dist  RUNNING  MPIJOB   1d   mpi-dist-mpijob-launcher-ndnw8  192.168.1.120
+mpi-dist  RUNNING  MPIJOB   1d   mpi-dist-mpijob-worker-0        192.168.1.119
+mpi-dist  RUNNING  MPIJOB   1d   mpi-dist-mpijob-worker-1        192.168.1.120
 
 Your tensorboard will be available on:
-192.168.1.117:32298
+192.168.1.117:32559
 ```
 
 3\. Check the tensorboard
 
-![](3-tensorboard.jpg)
+![](5-mpi-tensorboard.jpg)
 
 
-4\. Get the TFJob dashboard
+4\. Get the MPI dashboard
 
 ```
-# arena logviewer tf-dist-git
+# arena logviewer mpi-dist
 Your LogViewer will be available on:
-192.168.1.120:8080/tfjobs/ui/#/default/tf-dist-git-tfjob
+192.168.1.119:9090/#!/log/default/mpi-dist-mpijob-launcher-ndnw8/mpi?namespace=default
 ```
 
 
-![](4-tfjob-logviewer-distributed.jpg)
+![](5-mpijob-logviewer.jpg)
 
-Congratulations! You've run the distributed training job with `arena` successfully. 
+Congratulations! You've run the distributed MPI training job with `arena` successfully. 
