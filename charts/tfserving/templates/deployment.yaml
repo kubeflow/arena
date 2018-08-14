@@ -36,10 +36,14 @@ spec:
             - "/usr/bin/tensorflow_model_server"
           args:
             - "--port={{ .Values.port }}"
+            {{- if .Values.modelName }}
             - "--model_name={{ .Values.modelName }}"
+            {{- end }}
+            {{- if .Values.modelPath }}
             - "--model_base_path={{ .Values.modelPath }}"
+            {{- end }}
             {{- if .Values.modelConfigFile }}
-            - "--model_config_file={{ .Values.modelConfigFile }}"
+            - "--model_config_file=/tmp/config"
             {{- end }}
           ports:
             - containerPort: {{ .Values.port }}
@@ -56,25 +60,25 @@ spec:
               memory: {{ .Values.cpu }}
               nvidia.com/gpu: {{ .Values.cpu }}
           volumeMounts:
-          {{- if .Values.mountPath }}
-            - mountPath: {{ .Values.mountPath }}
-          {{- else }}
-            - mountPath: /data
-          {{- end }}
-              name: model-volume
-            - mountPath: /tmp
-              name: config
+            - name: model-volume
+            {{- if .Values.mountPath }}
+              mountPath: {{ .Values.mountPath }}
+            {{- else }}
+              mountPath: /data
+            {{- end }}
+            - name: config
+              mountPath: /tmp
       volumes:
         - name: model-volume
-      {{- if .Values.persistence.enabled }}
+        {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
-              claimName: {{ .Values.persistence.existingClaim | default (include "tensorflow-serving.fullname" .) }}
-      {{- else }}
+            claimName: {{ .Values.persistence.existingClaim | default (include "tensorflow-serving.fullname" .) }}
+        {{- else }}
           emptyDir: {}
-      {{- end }}
+        {{- end }}
         - name: config
           configMap:
             name: {{ template "tensorflow-serving.fullname" . }}-cm
-              items:
-              - key: modelConfigFileContent
-                path: config
+            items:
+            - key: modelConfigFileContent
+              path: config
