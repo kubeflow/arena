@@ -1,4 +1,4 @@
-{{- if ne Values.modelConfigFileContent "" }}
+{{- if ne .Values.modelConfigFileContent "" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

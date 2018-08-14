@@ -110,6 +110,7 @@ func (submitTFServingArgs *submitTFServingJobArgs) prepare(args []string) (err e
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Debugf("The content of %s is: %s", submitTFServingArgs.ModelConfigFile, string(modelConfigFileContentBytes))
 		submitTFServingArgs.ModelConfigFileContent = string(modelConfigFileContentBytes)
 	}
 
@@ -179,6 +180,9 @@ func (submitTFServingArgs submitTFServingJobArgs) check() error {
 }
 
 func (submitTFServingArgs *submitTFServingJobArgs) transform() error {
+	if submitTFServingArgs.ModelName == "" {
+		submitTFServingArgs.VersionPolicy = ""
+	}
 	return nil
 }
 
@@ -199,7 +203,7 @@ func submitTFServingJob(args []string, submitArgs *submitTFServingJobArgs) (err 
 	return helm.InstallRelease(name, namespace, submitArgs, tfserving_chart)
 }
 
-func generateModelConfigFileContent(modelName, modelPath, versionPolicy string) string {
+/*func generateModelConfigFileContent(modelName, modelPath, versionPolicy string) string {
 	versionPolicyName := strings.Split(versionPolicy, ":")
 	var buffer bytes.Buffer
 	buffer.WriteString("model_config_list: {\n\tconfig: {\n\t\tname: \"")
@@ -227,5 +231,38 @@ func generateModelConfigFileContent(modelName, modelPath, versionPolicy string) 
 	}
 	log.Debugf("generateModelConfigFileContent: \n%s", buffer.String())
 
-	return buffer.String()
+	return fmt.Sprintf(buffer.String())
+}*/
+
+func generateModelConfigFileContent(modelName, modelPath, versionPolicy string) string {
+	versionPolicyName := strings.Split(versionPolicy, ":")
+	var buffer bytes.Buffer
+	buffer.WriteString("model_config_list: { config: {name: \"")
+	buffer.WriteString(modelName + "\" base_path: \"")
+	buffer.WriteString(modelPath + "\" model_platform: \"")
+	buffer.WriteString("tensorflow" + "\" model_version_policy: { ")
+	switch versionPolicyName[0] {
+	case "all":
+		buffer.WriteString(versionPolicyName[0] + ": {} } } }")
+	case "specific":
+		if len(versionPolicyName) > 1 {
+			buffer.WriteString(versionPolicyName[0] + ": { " + "versions: " + versionPolicyName[1] + " } } } }")
+		} else {
+			log.Errorf("[specific] version policy scheme should be specific:N")
+		}
+	case "latest":
+		if len(versionPolicyName) > 1 {
+			buffer.WriteString(versionPolicyName[0] + ": { " + "num_versions: " + versionPolicyName[1] + " } } } }")
+		} else {
+			buffer.WriteString(versionPolicyName[0] + ": { " + "num_versions: 1 } } } }")
+		}
+	default:
+		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
+		buffer.Reset()
+	}
+	log.Debugf("generateModelConfigFileContent: \n%s", buffer.String())
+
+	return fmt.Sprintf(buffer.String())
 }
+
+//model_config_list: { config: { name: "mnist", base_path: "/tmp/monitored/_model", model_platform: "tensorflow",	model_version_policy: { all: {}	} } }
