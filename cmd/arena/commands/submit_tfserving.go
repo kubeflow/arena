@@ -111,7 +111,9 @@ func (submitTFServingArgs *submitTFServingJobArgs) prepare(args []string) (err e
 			log.Fatal(err)
 		}
 		log.Debugf("The content of %s is: %s", submitTFServingArgs.ModelConfigFile, string(modelConfigFileContentBytes))
-		submitTFServingArgs.ModelConfigFileContent = string(modelConfigFileContentBytes)
+		tmpstr := strings.Replace(string(modelConfigFileContentBytes), "\n", " ", -1)
+		submitTFServingArgs.ModelConfigFileContent = strings.Replace(tmpstr, "\t", " ", -1)
+		log.Debugf("The content of ModelConfigFileContent is: %s", submitTFServingArgs.ModelConfigFileContent)
 	}
 
 	// generate model-config-file content according modelName, modelPath, versionPolicy
