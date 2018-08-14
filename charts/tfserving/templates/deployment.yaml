@@ -62,6 +62,8 @@ spec:
             - mountPath: /data
           {{- end }}
               name: model-volume
+            - mountPath: /tmp
+              name: config
       volumes:
         - name: model-volume
       {{- if .Values.persistence.enabled }}
@@ -70,3 +72,9 @@ spec:
       {{- else }}
           emptyDir: {}
       {{- end }}
+        - name: config
+          configMap:
+            name: {{ template "tensorflow-serving.fullname" . }}-cm
+              items:
+              - key: modelConfigFileContent
+                path: config
