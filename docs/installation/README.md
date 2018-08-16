@@ -57,7 +57,13 @@ kubectl create -f arena/kubernetes-artifacts/tf-operator/tf-operator.yaml
 kubectl create -f arena/kubernetes-artifacts/dashboard/dashboard.yaml
 ```
 
-7\. Install arena
+7\. Install MPIJob Controller
+
+```
+kubectl create -f arena/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
+```
+
+8\. Install arena
 
 Prerequisites:
 

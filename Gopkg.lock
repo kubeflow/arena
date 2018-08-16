@@ -14,6 +14,12 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/emicklei/go-restful"
   packages = [
     ".",
@@ -43,8 +49,8 @@
 [[projects]]
   name = "github.com/go-openapi/spec"
   packages = ["."]
-  revision = "bce47c9386f9ecd6b86f450478a80103c3fe1402"
-  version = "0.15.0"
+  revision = "384415f06ee238aae1df5caad877de6ceac3a5c4"
+  version = "0.16.0"
 
 [[projects]]
   name = "github.com/go-openapi/swag"
@@ -109,6 +115,15 @@
     "diskcache"
   ]
   revision = "9cad4c3443a7200dd6400aef47183728de563a38"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/golang-lru"
+  packages = [
+    ".",
+    "simplelru"
+  ]
+  revision = "0fb14efe8c47ae851c0034ed7a448854d3d34cf3"
 
 [[projects]]
   branch = "master"
@@ -215,6 +230,7 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = [
+    "context",
     "http/httpguts",
     "http2",
     "http2/hpack",
@@ -307,6 +323,7 @@
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
+    "pkg/apis/meta/internalversion",
     "pkg/apis/meta/v1",
     "pkg/apis/meta/v1/unstructured",
     "pkg/apis/meta/v1alpha1",
@@ -324,7 +341,9 @@
     "pkg/runtime/serializer/versioning",
     "pkg/selection",
     "pkg/types",
+    "pkg/util/cache",
     "pkg/util/clock",
+    "pkg/util/diff",
     "pkg/util/errors",
     "pkg/util/framer",
     "pkg/util/intstr",
@@ -346,6 +365,7 @@
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "discovery/fake",
     "kubernetes",
     "kubernetes/scheme",
     "kubernetes/typed/admissionregistration/v1alpha1",
@@ -379,14 +399,18 @@
     "pkg/version",
     "rest",
     "rest/watch",
+    "testing",
     "tools/auth",
+    "tools/cache",
     "tools/clientcmd",
     "tools/clientcmd/api",
     "tools/clientcmd/api/latest",
     "tools/clientcmd/api/v1",
     "tools/metrics",
+    "tools/pager",
     "tools/reference",
     "transport",
+    "util/buffer",
     "util/cert",
     "util/flowcontrol",
     "util/homedir",
@@ -404,6 +428,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "dbc8d381d9bd552fbde13abee5742657e1378362a6e81aa8df0986b6a078f9e5"
+  inputs-digest = "cb6050e11381518109a9c2427b4ea330c23d1aa150d0bf13236c8bed9899afa9"
   solver-name = "gps-cdcl"
   solver-version = 1

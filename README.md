@@ -25,6 +25,7 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [2. Run a training Job with tensorboard](docs/userguide/2-tfjob-tensorboard.md)
 - [3. Run a distributed training Job](docs/userguide/3-tfjob-distributed.md)
 - [4. Run a distributed training Job with external data](docs/userguide/4-tfjob-distributed-data.md)
+- [5. Run a distributed training Job based on MPI](docs/userguide/5-mpijob-distributed.md)
 
 ## Demo
 

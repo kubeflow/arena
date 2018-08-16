@@ -1,0 +1,25 @@
+{{- if .Values.useTensorboard }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "mpijob.fullname" . }}
+  labels:
+    app: {{ template "mpijob.name" . }}
+    chart: {{ template "mpijob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: tensorboard
+    createdBy: "mpijob"
+spec:
+  type: {{ .Values.tensorboardServiceType }}
+  ports:
+    - port: 6006
+      targetPort: 6006
+      protocol: TCP
+      name: tensorboard
+  selector:
+    app: {{ template "mpijob.name" . }}
+    chart: {{ template "mpijob.chart" . }}
+    release: {{ .Release.Name }}
+    role: tensorboard
+{{- end }}
