@@ -21,6 +21,7 @@ var output string
 
 var dashboardURL string
 
+// NewGetCommand
 func NewGetCommand() *cobra.Command {
 	var (
 		output string
