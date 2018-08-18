@@ -48,6 +48,10 @@ make
 
 `arena` binary is located in directory `arena/bin`. You may want add the directory to `$PATH`.
 
+## CLI Document
+
+Please refer to [arena.md](docs/cli/arena.md)
+
 ## RoadMap
 
 See [RoadMap](ROADMAP.md)
