@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewSubmitHorovodJobCommand
 func NewSubmitHorovodJobCommand() *cobra.Command {
 	var (
 		submitArgs submitHorovodJobArgs

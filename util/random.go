@@ -14,6 +14,7 @@ func reseed() uint32 {
 	return uint32(time.Now().UnixNano() + int64(os.Getpid()))
 }
 
+// RandomInt32 just generates a random string of int32
 func RandomInt32() string {
 	randmu.Lock()
 	r := rand

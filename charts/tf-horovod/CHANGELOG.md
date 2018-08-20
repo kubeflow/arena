@@ -1,3 +1,8 @@
+### 0.11.0
+
+* disable privileged by default
+
+
 ### 0.10.0
 
 * support multiple dataDirs 
