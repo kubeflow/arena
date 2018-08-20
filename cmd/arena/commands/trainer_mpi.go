@@ -85,6 +85,7 @@ func (mj *MPIJob) GetStatus() (status string) {
 	return status
 }
 
+// Get the start time
 func (mj *MPIJob) StartTime() *metav1.Time {
 	return &mj.mpijob.CreationTimestamp
 }
@@ -174,6 +175,7 @@ type MPIJobTrainer struct {
 	enabled bool
 }
 
+// NewMPIJobTrainer
 func NewMPIJobTrainer(client *kubernetes.Clientset) Trainer {
 	log.Debugf("Init MPI job trainer")
 	mpijobClient, err := initMPIJobClient()
@@ -209,6 +211,7 @@ func NewMPIJobTrainer(client *kubernetes.Clientset) Trainer {
 	}
 }
 
+// Get the type
 func (tt *MPIJobTrainer) Type() string {
 	return tt.trainerType
 }
@@ -246,6 +249,7 @@ func (tt *MPIJobTrainer) IsSupported(name, ns string) bool {
 	return isMPI
 }
 
+// Get the training job from cache or directly
 func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
 	if len(allMPIjobs) > 0 {
 		tj, err = tt.getTrainingJobFromCache(name, namespace)

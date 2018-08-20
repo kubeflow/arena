@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewDeleteCommand
 func NewDeleteCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "delete a training job",
@@ -19,7 +20,7 @@ func NewDeleteCommand() *cobra.Command {
 
 			setupKubeconfig()
 			for _, jobName := range args {
-				DeleteTrainingJob(jobName)
+				deleteTrainingJob(jobName)
 			}
 		},
 	}
@@ -27,6 +28,6 @@ func NewDeleteCommand() *cobra.Command {
 	return command
 }
 
-func DeleteTrainingJob(jobName string) error {
+func deleteTrainingJob(jobName string) error {
 	return helm.DeleteRelease(jobName)
 }

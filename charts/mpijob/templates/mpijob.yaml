@@ -13,6 +13,10 @@ metadata:
     heritage: {{ .Release.Service }}
     createdBy: "MPIJob"
 spec:
+  {{- if .Values.launcherOnMaster }}
+  launcherOnMaster: {{ .Values.launcherOnMaster }}
+  {{- end }}
+  BackoffLimit: {{ .Values.retry }}
   replicas: {{ .Values.workers }}
   template:
     metadata:

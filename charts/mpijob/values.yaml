@@ -13,9 +13,12 @@ rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
 gitImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/git-sync:v2.0.6
 
 shmSize: 2Gi
-privileged: true
+privileged: false
 
 useTensorboard: false
 tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel
 tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
+
+launcherOnMaster: true
+retry: 0

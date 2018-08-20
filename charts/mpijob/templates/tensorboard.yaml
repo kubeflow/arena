@@ -28,7 +28,7 @@ spec:
               - key: mpi_job_name
                 operator: In
                 values: 
-                  - {{ template "mpijob.fullname" . }}-worker
+                  - {{ template "mpijob.fullname" . }}
             topologyKey: kubernetes.io/hostname
           - labelSelector:
               matchExpressions:
