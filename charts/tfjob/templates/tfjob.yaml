@@ -35,6 +35,42 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
         spec:
+          {{- if .Values.binpack }}
+          affinity:
+            podAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchExpressions:
+                      - key: release
+                        operator: In
+                        values:
+                          - "{{ .Release.Name }}"
+                      - key: group_name
+                        operator: In
+                        values:
+                          - "kubeflow.org"
+              - weight: 60
+                podAffinityTerm:
+                  topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchExpressions:
+                      - key: tf-replica-type
+                        operator: In
+                        values:
+                          - worker
+              - weight: 30
+                podAffinityTerm:
+                  topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchExpressions:
+                      - key: tf-replica-type
+                        operator: In
+                        values:
+                          - ps      
+          {{- end }}
           {{- if .Values.useHostNetwork }}
           hostNetwork: {{ .Values.useHostNetwork }}
           dnsPolicy: ClusterFirstWithHostNet
@@ -177,9 +213,49 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
         spec:
+          {{- if .Values.ps }}
+          {{- if .Values.binpack }}
+          affinity:
+            podAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchExpressions:
+                      - key: release
+                        operator: In
+                        values:
+                          - "{{ .Release.Name }}"
+                      - key: group_name
+                        operator: In
+                        values:
+                          - "kubeflow.org"
+              - weight: 60
+                podAffinityTerm:
+                  topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchExpressions:
+                      - key: tf-replica-type
+                        operator: In
+                        values:
+                          - ps
+              - weight: 30
+                podAffinityTerm:
+                  topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchExpressions:
+                      - key: tf-replica-type
+                        operator: In
+                        values:
+                          - worker      
+          {{- end }}
+          {{- end }}
+          {{- if .Values.ps }}
           {{- if .Values.useHostNetwork }}
           hostNetwork: {{ .Values.useHostNetwork }}
           dnsPolicy: ClusterFirstWithHostNet
+          {{- end }}
           {{- end }}
           {{- if .Values.useHostPID }}
           hostPID: {{ .Values.useHostPID }}
