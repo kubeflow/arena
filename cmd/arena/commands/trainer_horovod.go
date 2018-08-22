@@ -78,6 +78,7 @@ type HorovodJobTrainer struct {
 	trainerType string
 }
 
+// Create HorovodJob Trainer
 func NewHorovodJobTrainer(client *kubernetes.Clientset) Trainer {
 	log.Debugf("Init Horovod job trainer")
 

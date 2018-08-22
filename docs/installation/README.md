@@ -10,7 +10,7 @@ Arena doesn't have to run can be run within Kubernetes cluster. It can also be r
 
 ### Requirements
 
-  * Kubernetes >= 1.8 [tf-operator requriements](https://github.com/kubeflow/tf-operator#requirements)
+  * Kubernetes >= 1.10
   * helm version [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) or later 
   * tiller with ths same version of helm should be also installed (https://docs.helm.sh/using_helm/#installing-tiller)
 
@@ -57,7 +57,13 @@ kubectl create -f arena/kubernetes-artifacts/tf-operator/tf-operator.yaml
 kubectl create -f arena/kubernetes-artifacts/dashboard/dashboard.yaml
 ```
 
-7\. Install arena
+7\. Install MPIJob Controller
+
+```
+kubectl create -f arena/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
+```
+
+8\. Install arena
 
 Prerequisites:
 

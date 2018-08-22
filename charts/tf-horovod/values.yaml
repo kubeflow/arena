@@ -17,7 +17,7 @@ imagePullPolicy: Always
 # nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81
 
 shmSize: 2Gi
-privileged: true
+privileged: false
 
 mpiMaster:
   jupyter:
