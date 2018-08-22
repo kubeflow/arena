@@ -206,6 +206,7 @@ spec:
     kind: TFJob
     plural: tfjobs
     singular: tfjob
+  scope: Namespaced
   validation:
     openAPIV3Schema:
       properties:
