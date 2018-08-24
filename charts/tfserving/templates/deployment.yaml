@@ -71,7 +71,7 @@ spec:
               memory: {{ .Values.cpu }}
               nvidia.com/gpu: {{ .Values.cpu }}
           volumeMounts:
-            {{ if ne .Values.PvcName "" }}
+            {{ if ne .Values.pvcName "" }}
             - name: model-volume
             {{- if .Values.mountPath }}
               mountPath: {{ .Values.mountPath }}
@@ -82,10 +82,10 @@ spec:
             - name: config
               mountPath: /tmp
       volumes:
-        {{ if ne .Values.PvcName "" }}
+        {{ if ne .Values.pvcName "" }}
         - name: model-volume
           persistentVolumeClaim:
-            claimName: {{ .Values.PvcName }}
+            claimName: {{ .Values.pvcName }}
         {{- end }}
         - name: config
           configMap:
