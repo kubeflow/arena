@@ -46,13 +46,7 @@ spec:
             - "/usr/bin/tensorflow_model_server"
           args:
             - "--port={{ .Values.port }}"
-            {{- if ne .Values.modelName "" }}
-            - "--model_name={{ .Values.modelName }}"
-            {{- end }}
-            {{- if ne .Values.mountPath "" }}
-            - "--model_base_path={{ .Values.mountPath }}"
-            {{- end }}
-            {{- if .Values.modelConfigFile }}
+            {{- if ne .Values.modelConfigFileContent "" }}
             - "--model_config_file=/tmp/config"
             {{- end }}
           {{- end }}

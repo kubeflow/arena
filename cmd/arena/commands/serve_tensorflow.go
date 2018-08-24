@@ -192,11 +192,13 @@ func serverTensorFlow(args []string, serveTensorFlowArgs *ServeTensorFlowArgs) (
 }
 
 func generateModelConfigFileContent(modelName, mountPath, versionPolicy string) string {
+	mountPath = strings.Trim(mountPath, " ")
+	mountPath = strings.TrimRight(mountPath, "/")
 	versionPolicyName := strings.Split(versionPolicy, ":")
 	var buffer bytes.Buffer
 	buffer.WriteString("model_config_list: { config: {name: \"")
 	buffer.WriteString(modelName + "\" base_path: \"")
-	buffer.WriteString(mountPath + "\" model_platform: \"")
+	buffer.WriteString(mountPath + "/" + modelName + "\" model_platform: \"")
 	buffer.WriteString("tensorflow" + "\" model_version_policy: { ")
 	switch versionPolicyName[0] {
 	case "all":
