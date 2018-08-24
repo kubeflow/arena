@@ -148,23 +148,6 @@ func (serveTensorFlowArgs ServeTensorFlowArgs) check() error {
 		}
 	}
 
-	// check model-path
-	if serveTensorFlowArgs.ModelPath != "" {
-		if serveTensorFlowArgs.ModelName == "" {
-			return fmt.Errorf("If modelPath: %s has been set, the modelName must be set too.", serveTensorFlowArgs.ModelPath)
-		}
-		if serveTensorFlowArgs.ModelConfigFile != "" {
-			return fmt.Errorf("If modelPath: %s has been set, modelConfigFile cannt be set.", serveTensorFlowArgs.ModelPath)
-		}
-	}
-
-	// check model-config-file
-	if serveTensorFlowArgs.ModelConfigFile != "" {
-		if serveTensorFlowArgs.ModelName != "" || serveTensorFlowArgs.ModelPath != "" {
-			return fmt.Errorf("If modelConfigFile: %s has been set, modelName or modelPath cannt be set.", serveTensorFlowArgs.ModelConfigFile)
-		}
-	}
-
 	return nil
 }
 
