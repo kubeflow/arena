@@ -60,7 +60,7 @@ func NewServeTensorFlowCommand() *cobra.Command {
 
 	// TFServingJob
 	command.Flags().StringVar(&serveTensorFlowArgs.ModelConfigFile, "modelConfigFile", "", "Corresponding with --model_config_file in tensorflow serving")
-	command.Flags().StringVar(&serveTensorFlowArgs.VersionPolicy, "versionPolicy", "latest", "support latest, latest:N, specific:N, all")
+	command.Flags().StringVar(&serveTensorFlowArgs.VersionPolicy, "versionPolicy", "", "support latest, latest:N, specific:N, all")
 
 	return command
 }
