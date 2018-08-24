@@ -28,10 +28,10 @@ func NewServeTensorFlowCommand() *cobra.Command {
 		Short:   "Submit tensorflow serving job to deploy online model.",
 		Aliases: []string{"tf"},
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
+			/*if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
-			}
+			}*/
 
 			util.SetLogLevel(logLevel)
 			setupKubeconfig()
