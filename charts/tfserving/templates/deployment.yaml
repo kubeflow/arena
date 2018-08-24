@@ -32,19 +32,30 @@ spec:
         - name: serving
           image: "{{ .Values.image }}"
           imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+          env:
+          {{- if .Values.envs }}
+          {{- range $key, $value := .Values.envs }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne .Values.commmand "" }}
+          command: {{ .Values.command }}
+          {{- else }}
           command:
             - "/usr/bin/tensorflow_model_server"
           args:
             - "--port={{ .Values.port }}"
-            {{- if .Values.modelName }}
+            {{- if ne .Values.modelName "" }}
             - "--model_name={{ .Values.modelName }}"
             {{- end }}
-            {{- if .Values.modelPath }}
-            - "--model_base_path={{ .Values.modelPath }}"
+            {{- if ne .Values.mountPath "" }}
+            - "--model_base_path={{ .Values.mountPath }}"
             {{- end }}
             {{- if .Values.modelConfigFile }}
             - "--model_config_file=/tmp/config"
             {{- end }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.port }}
               name: serving
@@ -60,21 +71,21 @@ spec:
               memory: {{ .Values.cpu }}
               nvidia.com/gpu: {{ .Values.cpu }}
           volumeMounts:
+            {{ if ne .Values.PvcName "" }}
             - name: model-volume
             {{- if .Values.mountPath }}
               mountPath: {{ .Values.mountPath }}
             {{- else }}
               mountPath: /data
             {{- end }}
+            {{- end }}
             - name: config
               mountPath: /tmp
       volumes:
+        {{ if ne .Values.PvcName "" }}
         - name: model-volume
-        {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim | default (include "tensorflow-serving.fullname" .) }}
-        {{- else }}
-          emptyDir: {}
+            claimName: {{ .Values.PvcName }}
         {{- end }}
         - name: config
           configMap:

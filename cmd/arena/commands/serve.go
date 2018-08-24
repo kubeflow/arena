@@ -26,7 +26,7 @@ type ServeArgs struct {
 	ModelName string            `yaml:"modelName"` // --modelName
 	ModelPath string            `yaml:"modelPath"` // --modelPath
 	PvcName   string            `yaml:"pvcName"`
-	mountPath string            `yaml:"mountPath"`
+	MountPath string            `yaml:"mountPath"`
 }
 
 func (s ServeArgs) check() error {
@@ -48,7 +48,9 @@ func (s *ServeArgs) transform() (err error) {
 	if strings.Index(s.ModelPath, modelPathSeparator) > 0 {
 		modelPathSplitArray := strings.Split(s.ModelPath, modelPathSeparator)
 		s.PvcName = modelPathSplitArray[0]
-		s.mountPath = modelPathSplitArray[1]
+		s.MountPath = modelPathSplitArray[1]
+	} else {
+		s.MountPath = s.ModelPath
 	}
 
 	return nil

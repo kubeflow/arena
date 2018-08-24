@@ -5,7 +5,7 @@
 ## Kubernetes configuration
 ## support NodePort, LoadBalancer
 ##
-serviceType: NodePort
+serviceType: LoadBalancer
 
 ## expose the service to the grpc client
 port: 9000
@@ -28,8 +28,8 @@ resources: {}
 
 
 ## The command and args to run the pod
-modelName: "inception"
-modelPath: "/serving/inception-export"
+#modelName: "inception"
+#modelPath: "/serving/inception-export"
 
 ## the mount path inside the container
 # mountPath: /serving/inception-export
