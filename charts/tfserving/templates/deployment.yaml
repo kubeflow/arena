@@ -39,7 +39,7 @@ spec:
               value: "{{ $value }}"
           {{- end }}
           {{- end }}
-          {{- if ne .Values.commmand "" }}
+          {{- if ne .Values.command "" }}
           command: {{ .Values.command }}
           {{- else }}
           command:

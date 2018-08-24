@@ -104,7 +104,7 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) prepare(args []string) (err erro
 
 	// generate model-config-file content according modelName, modelPath, versionPolicy
 	if serveTensorFlowArgs.VersionPolicy != "" {
-		serveTensorFlowArgs.ModelConfigFileContent = generateModelConfigFileContent(serveTensorFlowArgs.ModelName, serveTensorFlowArgs.ModelPath, serveTensorFlowArgs.VersionPolicy)
+		serveTensorFlowArgs.ModelConfigFileContent = generateModelConfigFileContent(serveTensorFlowArgs.ModelName, serveTensorFlowArgs.MountPath, serveTensorFlowArgs.VersionPolicy)
 	}
 
 	// valid modelConfigFileContent
@@ -191,12 +191,12 @@ func serverTensorFlow(args []string, serveTensorFlowArgs *ServeTensorFlowArgs) (
 	return helm.InstallRelease(name, namespace, serveTensorFlowArgs, tfserving_chart)
 }
 
-func generateModelConfigFileContent(modelName, modelPath, versionPolicy string) string {
+func generateModelConfigFileContent(modelName, mountPath, versionPolicy string) string {
 	versionPolicyName := strings.Split(versionPolicy, ":")
 	var buffer bytes.Buffer
 	buffer.WriteString("model_config_list: { config: {name: \"")
 	buffer.WriteString(modelName + "\" base_path: \"")
-	buffer.WriteString(modelPath + "\" model_platform: \"")
+	buffer.WriteString(mountPath + "\" model_platform: \"")
 	buffer.WriteString("tensorflow" + "\" model_version_policy: { ")
 	switch versionPolicyName[0] {
 	case "all":
