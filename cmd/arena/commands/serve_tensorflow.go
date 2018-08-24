@@ -125,11 +125,15 @@ func (serveTensorFlowArgs ServeTensorFlowArgs) check() error {
 
 	// check version policy
 	versionPolicyName := strings.Split(serveTensorFlowArgs.VersionPolicy, ":")
-	switch versionPolicyName[0] {
-	case "latest", "specific", "all":
-		log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
-	default:
-		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
+	if len(versionPolicyName) < 2 {
+		log.Debug("VersionPolicy is nill from command.")
+	} else {
+		switch versionPolicyName[0] {
+		case "latest", "specific", "all":
+			log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
+		default:
+			log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
+		}
 	}
 
 	if serveTensorFlowArgs.VersionPolicy != "" {
