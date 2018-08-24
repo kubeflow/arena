@@ -62,8 +62,8 @@ spec:
           resources:
             requests:
               cpu: {{ .Values.cpu }}
-              memory: {{ .Values.cpu }}
-              nvidia.com/gpu: {{ .Values.cpu }}
+              memory: {{ .Values.memory }}
+              nvidia.com/gpu: {{ .Values.gpus }}
           volumeMounts:
             {{ if ne .Values.pvcName "" }}
             - name: model-volume
