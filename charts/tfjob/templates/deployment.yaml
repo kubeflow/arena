@@ -1,3 +1,5 @@
+{{- if (not .Values.enableGangScheduler) -}}
+{{- if (not .Values.hasGangScheduler) -}}
 {{- if .Values.useTensorboard }}
 ---
 apiVersion: extensions/v1beta1
@@ -20,6 +22,13 @@ spec:
         release: {{ .Release.Name }}
         role: tensorboard
     spec:
+      {{- if .Values.ps }}
+      {{- if .Values.hasGangScheduler }}
+      {{- if .Values.enableGangScheduler }}
+      schedulerName: {{ .Values.schedulerName }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
       affinity:
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -65,4 +74,6 @@ spec:
         volumeMounts:
         - mountPath: /output/training_logs
           name: training-logs-volume
+{{- end }}
+{{- end }}
 {{- end }}
