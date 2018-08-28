@@ -78,3 +78,10 @@ make
 ```
 
 `arena` binary is located in directory `arena/bin`. You may want add the directory to `$PATH`.
+
+
+9\. Install and configure kube-arbitrator for gang scheduling(optional)
+
+```
+kubectl create -f arena/kubernetes-artifacts/kube-batchd/kube-batched.yaml
+```
