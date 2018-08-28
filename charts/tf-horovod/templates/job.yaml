@@ -1,6 +1,7 @@
 {{- $gpuCount := .Values.gpuCount -}}
 {{- $syncMode := .Values.syncMode -}}
 {{- $dataDirs := .Values.dataDirs -}}
+{{- $workers := .Values.workers -}}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -202,6 +203,7 @@ spec:
             - name: code-sync
               mountPath: /code
         {{- end}}
+        {{- if gt (int $workers) 0}} 
         - name: wait-workers
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
@@ -221,3 +223,4 @@ spec:
           volumeMounts:
           - name: {{ template "horovod.fullname" . }}-cm
             mountPath: /openmpi/generated
+         {{- end}}
