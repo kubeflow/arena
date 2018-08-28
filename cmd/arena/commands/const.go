@@ -9,4 +9,6 @@ const (
 	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
 
 	masterLabelRole = "node-role.kubernetes.io/master"
+
+	gangSchdName = "kube-batchd"
 )

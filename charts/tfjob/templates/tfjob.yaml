@@ -35,6 +35,13 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
         spec:
+          {{- if .Values.ps }}
+          {{- if .Values.hasGangScheduler }}
+          {{- if .Values.enableGangScheduler }}
+          schedulerName: {{ .Values.schedulerName }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
           {{- if .Values.binpack }}
           affinity:
             podAffinity:
@@ -213,6 +220,13 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
         spec:
+          {{- if .Values.ps }}
+          {{- if .Values.hasGangScheduler }}
+          {{- if .Values.enableGangScheduler }}
+          schedulerName: {{ .Values.schedulerName }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
           {{- if .Values.ps }}
           {{- if .Values.binpack }}
           affinity:

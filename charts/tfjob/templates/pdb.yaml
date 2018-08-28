@@ -1,0 +1,23 @@
+{{- $workers := .Values.workers -}}
+{{- $ps := .Values.ps -}}
+{{- $total := .Values.total -}}
+{{- if .Values.ps }}
+{{- if .Values.hasGangScheduler }}
+{{- if .Values.enableGangScheduler }}
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "tfjob.fullname" . }}
+  labels:
+    app: {{ template "tfjob.name" . }}
+    chart: {{ template "tfjob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  minAvailable: {{ add $workers $ps }}
+  selector:
+    matchLabels:
+      tf_job_name: {{ template "tfjob.fullname" . }}
+{{- end }}
+{{- end }}
+{{- end }}
