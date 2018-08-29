@@ -44,6 +44,7 @@ func NewCommand() *cobra.Command {
 	command.PersistentFlags().StringVar(&arenaNamespace, "arenaNamespace", "arena-system", "The namespace of arena system service, like TFJob")
 
 	command.AddCommand(NewSubmitCommand())
+	command.AddCommand(NewServeCommand())
 	command.AddCommand(NewListCommand())
 	command.AddCommand(NewGetCommand())
 	command.AddCommand(NewLogViewerCommand())
