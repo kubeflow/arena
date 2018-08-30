@@ -71,7 +71,6 @@ func (tj *TensorFlowJob) GetStatus() (status string) {
 	if tj.tfjob.Name == "" {
 		return status
 	}
-
 	if isSucceeded(tj.tfjob.Status) {
 		status = "SUCCEEDED"
 	} else if isFailed(tj.tfjob.Status) {
@@ -435,5 +434,8 @@ func isFailed(status tfv1alpha2.TFJobStatus) bool {
 }
 
 func isPending(status tfv1alpha2.TFJobStatus) bool {
+	if status.Conditions == nil {
+		return true
+	}
 	return hasCondition(status, tfv1alpha2.TFJobCreated) || hasCondition(status, tfv1alpha2.TFJobRestarting)
 }
