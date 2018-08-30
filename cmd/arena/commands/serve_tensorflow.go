@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package commands
 
 import (
@@ -19,11 +20,12 @@ import (
 	"strings"
 
 	"bytes"
+	"io/ioutil"
+
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 )
 
 var (

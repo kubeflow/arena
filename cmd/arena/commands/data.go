@@ -16,31 +16,28 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	// podv1 "k8s.io/api/core/v1"
 )
 
 var (
-	topLong = `Display Resource (GPU) usage.
+	dataLong = `manage data volumes.
 
 Available Commands:
-  node        Display Resource (GPU) usage of nodes
-  job         Display Resource (GPU) usage of pods
+  list,ls              List the data volumes.
     `
 )
 
-func NewTopCommand() *cobra.Command {
+// manage data volume
+func NewDataCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   "top",
-		Short: "Display Resource (GPU) usage.",
-		Long:  topLong,
+		Use:   "data",
+		Short: "manage data.",
+		Long:  dataLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},
 	}
 
-	// create subcommands
-	command.AddCommand(NewTopNodeCommand())
-	command.AddCommand(NewTopJobCommand())
+	command.AddCommand(NewDataListCommand())
 
 	return command
 }
