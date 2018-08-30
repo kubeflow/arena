@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package commands
 
 import (
@@ -65,6 +66,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewDeleteCommand())
 	command.AddCommand(NewTopCommand())
 	command.AddCommand(NewVersionCmd(CLIName))
+	command.AddCommand(NewDataCommand())
 	// command.AddCommand(NewWaitCommand())
 	// command.AddCommand(cmd.NewVersionCmd(CLIName))
 
