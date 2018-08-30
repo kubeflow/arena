@@ -1,0 +1,89 @@
+{{- $gpuCount := .Values.gpuCount -}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "tensorflow-serving.fullname" . }}
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "tensorflow-serving.chart" . }}
+    app: {{ template "tensorflow-serving.name" . }}
+  annotations:
+    "helm.sh/created": {{ .Release.Time.Seconds | quote }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      release: {{ .Release.Name | quote }}
+      app: {{ template "tensorflow-serving.name" . }} 
+  template:
+    metadata:
+      labels:
+        heritage: {{ .Release.Service | quote }}
+        release: {{ .Release.Name | quote }}
+        chart: {{ template "tensorflow-serving.chart" . }}
+        app: {{ template "tensorflow-serving.name" . }}
+    spec:
+      initContainers:
+
+      containers:
+        - name: serving
+          image: "{{ .Values.image }}"
+          imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+          env:
+          {{- if .Values.envs }}
+          {{- range $key, $value := .Values.envs }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne .Values.command "" }}
+          command: {{ .Values.command }}
+          {{- else }}
+          command:
+            - "/usr/bin/tensorflow_model_server"
+          args:
+            - "--port={{ .Values.port }}"
+            {{- if ne .Values.modelConfigFileContent "" }}
+            - "--model_config_file=/tmp/config"
+            {{- end }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.port }}
+              name: serving
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: serving
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: {{ .Values.cpu }}
+              memory: {{ .Values.memory }}
+              nvidia.com/gpu: {{ .Values.gpus }}
+          volumeMounts:
+            {{ if ne .Values.pvcName "" }}
+            - name: model-volume
+            {{- if .Values.mountPath }}
+              mountPath: {{ .Values.mountPath }}
+            {{- else }}
+              mountPath: /data
+            {{- end }}
+            {{- end }}
+            - name: config
+              mountPath: /tmp
+      volumes:
+        {{ if ne .Values.pvcName "" }}
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.pvcName }}
+        {{- end }}
+        - name: config
+          configMap:
+            name: {{ template "tensorflow-serving.fullname" . }}-cm
+            items:
+            - key: modelConfigFileContent
+              path: config
