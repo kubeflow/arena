@@ -44,6 +44,7 @@ func NewCommand() *cobra.Command {
 	command.PersistentFlags().StringVar(&arenaNamespace, "arenaNamespace", "arena-system", "The namespace of arena system service, like TFJob")
 
 	command.AddCommand(NewSubmitCommand())
+	command.AddCommand(NewServeCommand())
 	command.AddCommand(NewListCommand())
 	command.AddCommand(NewGetCommand())
 	command.AddCommand(NewLogViewerCommand())
@@ -64,7 +65,7 @@ func addKubectlFlagsToCmd(cmd *cobra.Command) {
 	overrides := clientcmd.ConfigOverrides{}
 	// kflags := clientcmd.RecommendedConfigOverrideFlags("")
 	cmd.PersistentFlags().StringVar(&loadingRules.ExplicitPath, "config", "", "Path to a kube config. Only required if out-of-cluster")
-	cmd.PersistentFlags().StringVar(&namespace, "namespace", "default", "namespace")
+	cmd.PersistentFlags().StringVar(&namespace, "namespace", "default", "the namespace of the job")
 	// clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), kflags)
 	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
 }

@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// acqurie all active pods from all namespaces
+// acquire all active pods from all namespaces
 func acquireAllActivePods(client *kubernetes.Clientset) ([]v1.Pod, error) {
 	allPods := []v1.Pod{}
 
@@ -115,7 +115,7 @@ func getPodFromJob(client kubernetes.Interface, namespace, releaseName string) (
 				log.Debugf("set pod %s as first jobpod, and it's time is %v", jobPod.Name, jobPod.CreationTimestamp)
 			} else {
 				log.Debugf("current jobpod %s , and it's time is %v", jobPod.Name, latest)
-				log.Debugf("candidiate jobpod %s , and it's time is %v", pod.Name, pod.CreationTimestamp)
+				log.Debugf("candidate jobpod %s , and it's time is %v", pod.Name, pod.CreationTimestamp)
 				current := pod.CreationTimestamp
 				if latest.Before(&current) {
 					jobPod = pod

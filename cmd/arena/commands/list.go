@@ -65,7 +65,7 @@ func NewListCommand() *cobra.Command {
 				}
 
 				if !supportedChart {
-					log.Debugf("Unkown chart %s\n", name)
+					log.Debugf("Unknown chart %s\n", name)
 				}
 
 			}

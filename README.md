@@ -25,6 +25,8 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [2. Run a training Job with tensorboard](docs/userguide/2-tfjob-tensorboard.md)
 - [3. Run a distributed training Job](docs/userguide/3-tfjob-distributed.md)
 - [4. Run a distributed training Job with external data](docs/userguide/4-tfjob-distributed-data.md)
+- [5. Run a distributed training Job based on MPI](docs/userguide/5-mpijob-distributed.md)
+- [6. Run a distributed TensorFlow training job with gang scheduler](docs/userguide/6-tfjob-gangschd.md)
 
 ## Demo
 
@@ -38,22 +40,19 @@ Prerequisites:
 - Go >= 1.8
 
 ```
-mkdir -p $GOPATH/github.com/kubeflow
-cd $GOPATH/github.com/kubeflow
-git clone <TODO>
+mkdir -p $GOPATH/src/github.com/kubeflow
+cd $GOPATH/src/github.com/kubeflow
+git clone https://github.com/AliyunContainerService/arena.git
 cd arena
 make
 ```
 
-Then you can get `arena` binary from `arena/bin`
+`arena` binary is located in directory `arena/bin`. You may want add the directory to `$PATH`.
+
+## CLI Document
+
+Please refer to [arena.md](docs/cli/arena.md)
 
 ## RoadMap
 
 See [RoadMap](ROADMAP.md)
-
-## License
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

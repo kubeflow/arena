@@ -10,13 +10,13 @@ Arena doesn't have to run can be run within Kubernetes cluster. It can also be r
 
 ### Requirements
 
-  * Kubernetes >= 1.8 [tf-operator requriements](https://github.com/kubeflow/tf-operator#requirements)
+  * Kubernetes >= 1.10
   * helm version [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) or later 
   * tiller with ths same version of helm should be also installed (https://docs.helm.sh/using_helm/#installing-tiller)
 
 ### Steps
 
-1. Prepare kubeconfig file by using `export KUBECONFIG=/etc/kubernetes/admin.conf` or creating a `~/.kube/config`
+1\. Prepare kubeconfig file by using `export KUBECONFIG=/etc/kubernetes/admin.conf` or creating a `~/.kube/config`
 
 2\. Install kubectl client
 
@@ -40,19 +40,48 @@ Then run `helm list` to check if the the kubernetes can be managed successfully 
 
 ```
 mkdir /charts
-git clone ****
+git clone https://github.com/AliyunContainerService/arena.git
 cp -r arena/charts/* /charts
 ```
 
 5\. Install TFJob Controller
 
 ```
-kubectl create -f arena/kubernetes/jobmon/jobmon-role.yaml
-kubectl create -f arena/kubernetes/tf-operator/tf-operator.yaml
+kubectl create -f arena/kubernetes-artifacts/jobmon/jobmon-role.yaml
+kubectl create -f arena/kubernetes-artifacts/tf-operator/tf-operator.yaml
 ```
 
 6\. Install Dashboard
 
 ```
-kubectl create -f arena/kubernetes/dashboard/dashboard.yaml
+kubectl create -f arena/kubernetes-artifacts/dashboard/dashboard.yaml
+```
+
+7\. Install MPIJob Controller
+
+```
+kubectl create -f arena/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
+```
+
+8\. Install arena
+
+Prerequisites:
+
+- Go >= 1.8
+
+```
+mkdir -p $GOPATH/src/github.com/kubeflow
+cd $GOPATH/src/github.com/kubeflow
+git clone https://github.com/AliyunContainerService/arena.git
+cd arena
+make
+```
+
+`arena` binary is located in directory `arena/bin`. You may want add the directory to `$PATH`.
+
+
+9\. Install and configure kube-arbitrator for gang scheduling(optional)
+
+```
+kubectl create -f arena/kubernetes-artifacts/kube-batchd/kube-batched.yaml
 ```

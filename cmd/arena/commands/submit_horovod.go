@@ -10,17 +10,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewSubmitHorovodJobCommand
 func NewSubmitHorovodJobCommand() *cobra.Command {
 	var (
 		submitArgs submitHorovodJobArgs
 	)
-	// TODO(cheyang): set this mode as mpijob for short time
-	submitArgs.Mode = "mpijob"
 
 	var command = &cobra.Command{
-		Use:     "mpijob",
-		Short:   "Submit MPIJob as training job.",
-		Aliases: []string{"mpi"},
+		Use:     "horovodjob",
+		Short:   "Submit horovodjob as training job.",
+		Aliases: []string{"hj"},
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)

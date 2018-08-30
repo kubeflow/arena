@@ -55,7 +55,7 @@ NAME                                   READY  STATUS   RESTARTS  AGE
 tf-tensorboard-tfjob-64455d5b69-jmm6s  0/1    Pending  0         0s
 ```
 
-> the source code will be downloaded and extracted to the dirctory `code/` of the working directory. The default working directory is `/root`, you can also specify by using `--workingDir`.
+> the source code will be downloaded and extracted to the directory `code/` of the working directory. The default working directory is `/root`, you can also specify by using `--workingDir`.
 
 > `logdir` indicates where the tensorboard reads the event logs of TensorFlow
 

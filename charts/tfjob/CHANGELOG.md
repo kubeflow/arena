@@ -23,3 +23,14 @@
 ### 0.6.0
 
 * support multiple dataDirs 
+
+
+### 0.7.0
+
+* worker and ps soft affinity
+* standalone worker without host network
+
+
+### 0.8.0
+
+* support gang scheduler

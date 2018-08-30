@@ -95,7 +95,7 @@ func CheckRelease(name string) (exist bool, err error) {
 	}
 
 	if err := cmd.Start(); err != nil {
-		log.Fatalf("cmd.Start: %v")
+		log.Fatalf("cmd.Start: %v", err)
 		return exist, err
 	}
 

@@ -1,3 +1,11 @@
+### 0.12.0
+* support standalone training without sshd requirement
+
+### 0.11.0
+
+* disable privileged by default
+
+
 ### 0.10.0
 
 * support multiple dataDirs 

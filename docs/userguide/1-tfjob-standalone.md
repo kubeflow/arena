@@ -41,7 +41,7 @@ NAME          AGE
 tf-git-tfjob  0s
 ```
 
-> the source code will be downloaded and extracted to the dirctory `code/` of the working directory. The default working directory is `/root`, you can also specify by using `--workingDir`.
+> the source code will be downloaded and extracted to the directory `code/` of the working directory. The default working directory is `/root`, you can also specify by using `--workingDir`.
 
 > If you are using the private git repo, you can use the following command:
 

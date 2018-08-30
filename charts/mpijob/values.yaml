@@ -1,0 +1,24 @@
+# Default values for mpijob.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+useHostNetwork: true
+useHostPID: true
+useHostIPC: true
+gpuCount: 0 # user define
+
+# rsync image
+rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
+# git sync image
+gitImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/git-sync:v2.0.6
+
+shmSize: 2Gi
+privileged: false
+
+useTensorboard: false
+tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel
+tensorboardImagePullpolicy: Always
+tensorboardServiceType: NodePort
+
+launcherOnMaster: true
+retry: 0
