@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 
 	log "github.com/sirupsen/logrus"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -128,9 +130,9 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 			}
 		}
 
-		role := "worker"
-		if isMasterNode(nodeInfo.node) {
-			role = "master"
+		role := strings.Join(findNodeRoles(&nodeInfo.node), ",")
+		if len(role) == 0 {
+			role = "<none>"
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
@@ -174,10 +176,11 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 			address = nodeInfo.node.Status.Addresses[0].Address
 		}
 
-		role := "worker"
-		if isMasterNode(nodeInfo.node) {
-			role = "master"
+		role := strings.Join(findNodeRoles(&nodeInfo.node), ",")
+		if len(role) == 0 {
+			role = "<none>"
 		}
+
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, "NAME:\t%s\n", nodeInfo.node.Name)
 		fmt.Fprintf(w, "IPADDRESS:\t%s\n", address)
@@ -247,4 +250,24 @@ func isMasterNode(node v1.Node) bool {
 	}
 
 	return false
+}
+
+// findNodeRoles returns the roles of a given node.
+// The roles are determined by looking for:
+// * a node-role.kubernetes.io/<role>="" label
+// * a kubernetes.io/role="<role>" label
+func findNodeRoles(node *v1.Node) []string {
+	roles := sets.NewString()
+	for k, v := range node.Labels {
+		switch {
+		case strings.HasPrefix(k, labelNodeRolePrefix):
+			if role := strings.TrimPrefix(k, labelNodeRolePrefix); len(role) > 0 {
+				roles.Insert(role)
+			}
+
+		case k == nodeLabelRole && v != "":
+			roles.Insert(v)
+		}
+	}
+	return roles.List()
 }
