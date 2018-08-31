@@ -1,7 +1,8 @@
 approvers:
   - cheyang
   - wsxiaozhang
-  - GarnettWang
-reviewers:
   - denverdino
-  - cuericlee
+reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
