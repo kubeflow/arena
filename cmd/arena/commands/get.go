@@ -136,7 +136,7 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 		fmt.Fprintf(w, "%s \t\n", url)
 	}
 
-	if job.GetStatus() == "PENDING" {
+	if GetJobRealStatus(job) == "PENDING" {
 		printEvents(w, job.ChiefPod().Namespace, pods)
 	}
 
@@ -167,6 +167,25 @@ func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
 	}
 }
 
+// Get real job status
+// WHen has pods being pending, tfJob still show in Running state, it should be Pending
+func GetJobRealStatus(job TrainingJob) string {
+	hasPendingPod := false
+	jobStatus := job.GetStatus()
+	if jobStatus == "RUNNING" {
+		pods := job.AllPods()
+		for _, pod := range pods {
+			if pod.Status.Phase == v1.PodPending {
+				hasPendingPod = true
+				break
+			}
+		}
+		if hasPendingPod {
+			jobStatus = "PENDING"
+		}
+	}
+	return jobStatus
+}
 
 // Get Event of the Job
 func GetPodEvents(client *kubernetes.Clientset, namespace string, pods []v1.Pod) (map[string][]v1.Event, error) {
