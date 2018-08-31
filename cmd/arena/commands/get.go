@@ -167,6 +167,8 @@ func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
 	}
 }
 
+// Get real job status
+// WHen has pods being pending, tfJob still show in Running state, it should be Pending
 func GetJobRealStatus(job TrainingJob) string {
 	hasPendingPod := false
 	jobStatus := job.GetStatus()

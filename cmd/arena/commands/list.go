@@ -93,7 +93,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	}
 
 	for _, jobInfo := range jobInfoList {
-		status := jobInfo.GetStatus()
+		status := GetJobRealStatus(jobInfo)
 		hostIP := jobInfo.HostIPOfChief()
 		if displayGPU {
 			requestedGPU := jobInfo.RequestedGPU()
