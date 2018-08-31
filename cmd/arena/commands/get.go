@@ -168,16 +168,17 @@ func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
 }
 
 func GetJobRealStatus(job TrainingJob) string {
-	findPendingPod := false
+	hasPendingPod := false
 	jobStatus := job.GetStatus()
 	if jobStatus == "RUNNING" {
 		pods := job.AllPods()
 		for _, pod := range pods {
 			if pod.Status.Phase == v1.PodPending {
-				findPendingPod = true
+				hasPendingPod = true
+				break
 			}
 		}
-		if findPendingPod {
+		if hasPendingPod {
 			jobStatus = "PENDING"
 		}
 	}
