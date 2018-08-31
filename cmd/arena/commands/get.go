@@ -156,7 +156,7 @@ func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
 		events := eventMap[pod.Name]
 		for _, event := range events {
 			instanceName := pod.Name
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
 				instanceName,
 				event.Type,
 				util.ShortHumanDuration(time.Now().Sub(event.CreationTimestamp.Time)),
