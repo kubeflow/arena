@@ -1,7 +1,7 @@
 # Arena
 
-[![Build Status](https://travis-ci.org/AliyunContainerService/arena.svg?branch=master)](https://travis-ci.org/AliyunContainerService/arena) 
-[![Go Report Card](https://goreportcard.com/badge/github.com/AliyunContainerService/arena)](https://goreportcard.com/report/github.com/AliyunContainerService/arena)
+[![Build Status](https://travis-ci.org/kubeflow/arena.svg?branch=master)](https://travis-ci.org/kubeflow/arena) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubeflow/arena)](https://goreportcard.com/report/github.com/kubeflow/arena)
 
 
 ## Overview
@@ -42,7 +42,7 @@ Prerequisites:
 ```
 mkdir -p $GOPATH/src/github.com/kubeflow
 cd $GOPATH/src/github.com/kubeflow
-git clone https://github.com/AliyunContainerService/arena.git
+git clone https://github.com/kubeflow/arena.git
 cd arena
 make
 ```
