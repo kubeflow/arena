@@ -49,6 +49,10 @@
   name = "k8s.io/apimachinery"
   branch = "release-1.9"
 
+[[override]]
+  name = "k8s.io/kubernetes"
+  version = "v1.9.0"
+
 [[constraint]]
   name = "github.com/kubeflow/tf-operator"
   version = "v0.2.0-rc1"
@@ -56,4 +60,3 @@
 [prune]
   go-tests = true
   unused-packages = true
-
