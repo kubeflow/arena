@@ -5,19 +5,14 @@
 ## Kubernetes configuration
 ## support NodePort, LoadBalancer
 ##
-serviceType: ClusterIP
-
-## serving name and version
-serviceName:
-serviceVersion:
+serviceType: LoadBalancer
 
 ## expose the service to the grpc client
-port: 8500
-rest_api_port: 8501
+port: 9000
 replicas: 1
 
 # repository: "cheyang/tf-model-server-gpu"
-image: "tensorflow/serving:latest"
+image: "tensorflow/serving:1.8.0-devel-gpu"
 
 imagePullPolicy: "IfNotPresent"
 

@@ -8,8 +8,6 @@ metadata:
     release: {{ .Release.Name | quote }}
     chart: {{ template "tensorflow-serving.chart" . }}
     app: {{ template "tensorflow-serving.name" . }}
-    serviceName: "{{ .Values.serviceName }}"
-    serviceVersion: "{{ .Values.serviceVersion }}"
   annotations:
     "helm.sh/created": {{ .Release.Time.Seconds | quote }}
 spec:
@@ -22,28 +20,18 @@ spec:
       app: {{ template "tensorflow-serving.name" . }} 
   template:
     metadata:
-      {{- if eq .Values.enableIstio true }}
-      annotations:
-        sidecar.istio.io/inject: "true"
-      {{- end }}
       labels:
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name | quote }}
         chart: {{ template "tensorflow-serving.chart" . }}
         app: {{ template "tensorflow-serving.name" . }}
-        serviceName: "{{ .Values.serviceName }}"
-        serviceVersion: "{{ .Values.serviceVersion }}"
     spec:
       initContainers:
 
       containers:
         - name: serving
-          {{- if .Values.image }}
           image: "{{ .Values.image }}"
-          {{- end }}
-          {{- if .Values.imagePullPolicy }}
           imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-          {{- end }}
           env:
           {{- if .Values.envs }}
           {{- range $key, $value := .Values.envs }}
@@ -58,9 +46,6 @@ spec:
             - "/usr/bin/tensorflow_model_server"
           args:
             - "--port={{ .Values.port }}"
-            {{- if .Values.rest_api_port }}
-            - "--rest_api_port={{ .Values.rest_api_port }}"
-            {{- end }}
             {{- if ne .Values.modelConfigFileContent "" }}
             - "--model_config_file=/tmp/config"
             {{- end }}
@@ -69,9 +54,6 @@ spec:
             - containerPort: {{ .Values.port }}
               name: serving
               protocol: TCP
-            - containerPort: {{ .Values.rest_api_port }}
-              name: serving-rest
-              protocol: TCP
           readinessProbe:
             tcpSocket:
               port: serving
@@ -79,38 +61,21 @@ spec:
             timeoutSeconds: 1
           resources:
             requests:
-              {{- if .Values.cpu }}
               cpu: {{ .Values.cpu }}
-              {{- end }}
-              {{- if .Values.memory }}
               memory: {{ .Values.memory }}
-              {{- end }}
-              {{- if gt (int $gpuCount) 0}}
-              nvidia.com/gpu: {{ .Values.gpu }}
-              {{- end }}
+              nvidia.com/gpu: {{ .Values.gpus }}
           volumeMounts:
-            {{- if .Values.dataDirs }}
-            {{- range $index, $dataDir := .Values.dataDirs}}
-            - name: {{ $dataDir.name }}-{{ $index }}
-              {{- if $dataDir.containerPath }}
-              mountPath: {{ $dataDir.containerPath }}
-              {{- else }}
+            {{ if ne .Values.pvcName "" }}
+            - name: model-volume
+            {{- if .Values.mountPath }}
+              mountPath: {{ .Values.mountPath }}
+            {{- else }}
               mountPath: /data
-              {{- end }}
             {{- end }}
             {{- end }}
-            {{- if ne .Values.modelConfigFileContent "" }}
             - name: config
               mountPath: /tmp
-            {{- end }}
       volumes:
-        {{- if .Values.dataDirs }}
-        {{- range $index, $dataDir := .Values.dataDirs}}
-        - name: {{ $dataDir.name }}-{{ $index }}
-          persistentVolumeClaim:
-            claimName: {{ $dataDir.name }}
-        {{- end }}
-        {{- end }}
         {{ if ne .Values.pvcName "" }}
         - name: model-volume
           persistentVolumeClaim:
