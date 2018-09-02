@@ -45,6 +45,7 @@ func NewCommand() *cobra.Command {
 
 	command.AddCommand(NewSubmitCommand())
 	command.AddCommand(NewServeCommand())
+	command.AddCommand(NewTrafficRouterSplitCommand())
 	command.AddCommand(NewListCommand())
 	command.AddCommand(NewGetCommand())
 	command.AddCommand(NewLogViewerCommand())

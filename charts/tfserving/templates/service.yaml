@@ -1,7 +1,8 @@
+{{- if eq .Values.modelServiceExists false }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "tensorflow-serving.fullname" . }}
+  name:  {{ .Values.serviceName }}
   labels:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
@@ -13,6 +14,10 @@ spec:
     - name: serving
       port: {{ .Values.port }}
       targetPort: {{ .Values.port }}
+    - name: serving-rest
+      port: {{ .Values.rest_api_port }}
+      targetPort: {{ .Values.rest_api_port }}
   selector:
-    release: {{ .Release.Name | quote }}
-    app: {{ template "tensorflow-serving.name" . }}
+    servicelName: "{{ .Values.servicelName }}"
+    serviceVersion: "{{ .Values.serviceVersion }}"
+{{- end }}

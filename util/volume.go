@@ -24,7 +24,7 @@ func ValidateDatasets(dataset []string) (err error) {
 			return err
 		}
 		// validate mount destination
-		err = validateMountDestination(parts[1])
+		err = ValidateMountDestination(parts[1])
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func validateAbsolute(p string) error {
 // Currently, we have only two obvious rule for validation:
 //  - path must not be "/"
 //  - path must be absolute
-func validateMountDestination(dest string) error {
+func ValidateMountDestination(dest string) (error) {
 	if err := validateNotRoot(dest); err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func validateHostPath(path string) error {
 	if path == "" {
 		return errInvalidSpec(path)
 	}
-	return validateMountDestination(path)
+	return ValidateMountDestination(path)
 }
 
 func convertSlash(p string) string {

@@ -50,6 +50,10 @@
   branch = "release-1.9"
 
 [[constraint]]
+  name = "istio.io/api"
+  branch = "release-1.0"
+
+[[constraint]]
   name = "github.com/kubeflow/tf-operator"
   version = "v0.2.0-rc1"
 
