@@ -1,3 +1,16 @@
+// Copyright 2018 The Kubeflow Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package commands
 
 import (
@@ -11,10 +24,12 @@ import (
 
 	"github.com/kubeflow/arena/util/helm"
 	"github.com/spf13/cobra"
-	// podv1 "k8s.io/api/core/v1"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"io"
+	"time"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var output string
@@ -106,7 +121,10 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 	// apply a dummy FgDefault format to align tabwriter with the rest of the columns
 
 	fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tINSTANCE\tNODE\n")
-	for _, pod := range job.AllPods() {
+	pods := job.AllPods()
+
+
+	for _, pod := range pods {
 		hostIP := "N/A"
 
 		if pod.Status.Phase == v1.PodRunning {
@@ -121,6 +139,7 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 			hostIP)
 	}
 
+
 	url, err := tensorboardURL(job.Name(), job.ChiefPod().Namespace)
 	if url == "" || err != nil {
 		log.Debugf("Tensorboard dones't show up because of %v, or url %s", err, url)
@@ -130,6 +149,71 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 		fmt.Fprintf(w, "%s \t\n", url)
 	}
 
+	if GetJobRealStatus(job) == "PENDING" {
+		printEvents(w, job.ChiefPod().Namespace, pods)
+	}
+
 	_ = w.Flush()
 
+}
+
+func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
+	eventMap, _ := GetPodEvents(clientset, namespace, pods)
+	fmt.Fprintf(w, "\nEvents: \n")
+	fmt.Fprintf(w, "INSTANCE\tTYPE\tAGE\tMESSAGE\n")
+	fmt.Fprintf(w, "--------\t----\t---\t-------\n")
+	for _, pod := range pods {
+		if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
+			continue
+		}
+		events := eventMap[pod.Name]
+		for _, event := range events {
+			instanceName := pod.Name
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
+				instanceName,
+				event.Type,
+				util.ShortHumanDuration(time.Now().Sub(event.CreationTimestamp.Time)),
+				fmt.Sprintf("[%s] %s", event.Reason, event.Message))
+		}
+		// empty line for per pod
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n","", "", "", "", "", "")
+	}
+}
+
+// Get real job status
+// WHen has pods being pending, tfJob still show in Running state, it should be Pending
+func GetJobRealStatus(job TrainingJob) string {
+	hasPendingPod := false
+	jobStatus := job.GetStatus()
+	if jobStatus == "RUNNING" {
+		pods := job.AllPods()
+		for _, pod := range pods {
+			if pod.Status.Phase == v1.PodPending {
+				hasPendingPod = true
+				break
+			}
+		}
+		if hasPendingPod {
+			jobStatus = "PENDING"
+		}
+	}
+	return jobStatus
+}
+
+// Get Event of the Job
+func GetPodEvents(client *kubernetes.Clientset, namespace string, pods []v1.Pod) (map[string][]v1.Event, error) {
+	eventMap := make(map[string][]v1.Event)
+	events, err := client.CoreV1().Events(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return eventMap, err
+	}
+	for _, pod := range pods {
+		eventMap[pod.Name] = []v1.Event{}
+		for _, event := range events.Items {
+			if event.InvolvedObject.Kind == "Pod" && event.InvolvedObject.Name == pod.Name {
+				eventMap[pod.Name] = append(eventMap[pod.Name], event)
+			}
+		}
+	}
+	return eventMap, nil
 }
