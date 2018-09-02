@@ -116,7 +116,7 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 
 	} else {
 		//populate content from modelConfigFile
-		log.Infof("modelConfigFile is specified, so ignore --modelName and --modelPath", serveTensorFlowArgs.ModelConfigFile)
+		log.Infof("modelConfigFile=%s is specified, so ignore --modelName and --modelPath", serveTensorFlowArgs.ModelConfigFile)
 		modelConfigFileContentBytes, err := ioutil.ReadFile(serveTensorFlowArgs.ModelConfigFile)
 		if err != nil {
 			return fmt.Errorf("cannot read the modelConfigFile[%s]: %s", serveTensorFlowArgs.ModelConfigFile, err)

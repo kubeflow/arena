@@ -101,13 +101,39 @@ type PreprocesObject struct {
 }
 
 type DestinationRuleCRD struct {
-	metav1.TypeMeta               `json:",inline",yaml:",inline"`
+	// Kind is a string value representing the REST resource this object represents.
+	// Servers may infer this from the endpoint the client submits requests to.
+	// Cannot be updated.
+	// In CamelCase.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// +optional
+	Kind string `json:"kind,omitempty" protobuf:"bytes,1,opt,name=kind"`
+
+	// APIVersion defines the versioned schema of this representation of an object.
+	// Servers should convert recognized schemas to the latest internal value, and
+	// may reject unrecognized values.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
+	// +optional
+	APIVersion string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
 	metav1.ObjectMeta             `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	Spec v1alpha3.DestinationRule `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
 type VirtualServiceCRD struct {
-	metav1.TypeMeta     `json:",inline",yaml:",inline"`
+	// Kind is a string value representing the REST resource this object represents.
+	// Servers may infer this from the endpoint the client submits requests to.
+	// Cannot be updated.
+	// In CamelCase.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+	// +optional
+	Kind string `json:"kind,omitempty" protobuf:"bytes,1,opt,name=kind"`
+
+	// APIVersion defines the versioned schema of this representation of an object.
+	// Servers should convert recognized schemas to the latest internal value, and
+	// may reject unrecognized values.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
+	// +optional
+	APIVersion string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
 	metav1.ObjectMeta   `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	Spec VirtualService `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
@@ -149,10 +175,8 @@ type PortSelector struct {
 
 func generateDestinationRule(namespace string, serviceName string, versionArray []string) (DestinationRuleCRD) {
 	destinationRule := DestinationRuleCRD{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "DestinationRule",
-			APIVersion: "networking.istio.io/v1alpha3",
-		},
+		Kind:       "DestinationRule",
+		APIVersion: "networking.istio.io/v1alpha3",
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        serviceName,
 			Namespace:   namespace,
@@ -210,10 +234,8 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 	}
 
 	virtualService := VirtualServiceCRD{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "VirtualService",
-			APIVersion: "networking.istio.io/v1alpha3",
-		},
+		Kind:       "VirtualService",
+		APIVersion: "networking.istio.io/v1alpha3",
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        serviceName + "-gw-service",
 			Namespace:   namespace,

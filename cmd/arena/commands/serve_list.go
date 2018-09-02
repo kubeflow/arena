@@ -66,7 +66,7 @@ func NewServingListCommand() *cobra.Command {
 						serviceVersion = name[index+1:]
 					}
 					nameAndVersion := strings.Split(name, "-")
-					log.Debugf("nameAndVersion: %s, len(nameAndVersion): %s", nameAndVersion, len(nameAndVersion))
+					log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
 					fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name,
 						status,
 						serviceVersion,
