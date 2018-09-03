@@ -456,7 +456,7 @@ func runTrafficRouterSplit(client *kubernetes.Clientset, istioClient *rest.RESTC
 	jsonVirtualService, err := json.Marshal(preprocesObject.VirtualService)
 	log.Debugf("virtual service: %s", jsonVirtualService)
 
-	virtualServiceName := preprocesObject.ServiceName + "-gw-service"
+	virtualServiceName := preprocesObject.ServiceName + "-service"
 	log.Debugf("virtualServiceName:%s", virtualServiceName)
 	destinationRuleName := preprocesObject.ServiceName
 	log.Debugf("destinationRuleName:%s", virtualServiceName)
