@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	tfservingChart        = "./charts/tfserving"
+	tfservingChart        = "/charts/tfserving"
 	defaultTfServingImage = "tensorflow/serving:latest"
 )
 
