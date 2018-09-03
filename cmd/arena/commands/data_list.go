@@ -69,7 +69,7 @@ func NewDataListCommand() *cobra.Command {
 func displayDataVolume(pvcList *v1.PersistentVolumeClaimList) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	if allNamespaces {
-		fmt.Fprintf(w, "NAMESPACE\tNAME\tSTATUS\tCAPACITY\tACCESS MODES\tAGE\n")
+		fmt.Fprintf(w, "NAME\tNAMESPACE\tSTATUS\tCAPACITY\tACCESS MODES\tAGE\n")
 	} else {
 		fmt.Fprintf(w, "NAME\tSTATUS\tCAPACITY\tACCESS MODES\tAGE\n")
 	}
@@ -88,8 +88,8 @@ func displayDataVolume(pvcList *v1.PersistentVolumeClaimList) {
 
 		if allNamespaces {
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
-				item.Namespace,
 				item.Name,
+				item.Namespace,
 				string(phase),
 				// item.Spec.VolumeName,
 				capacity,
