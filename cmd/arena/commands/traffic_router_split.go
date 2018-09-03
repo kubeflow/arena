@@ -193,7 +193,7 @@ func generateDestinationRule(namespace string, serviceName string, versionArray 
 
 	for i := 0; i < length; i++ {
 		label := map[string]string{}
-		label["modelVersion"] = versionArray[i]
+		label["serviceVersion"] = versionArray[i]
 		subsets[i] = &istiov1alpha3.Subset{
 			Name:   "v" + versionArray[i],
 			Labels: label,
@@ -237,7 +237,7 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 		Kind:       "VirtualService",
 		APIVersion: "networking.istio.io/v1alpha3",
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        serviceName + "-gw-service",
+			Name:        serviceName + "-service",
 			Namespace:   namespace,
 			Labels:      nil,
 			Annotations: nil,
@@ -501,86 +501,3 @@ func initIstioClient() (*rest.RESTClient, error) {
 
 	return rest.RESTClientFor(restConfig)
 }
-
-//
-//func apiResources(config *rest.Config, configs []crd.IstioKind) (map[string]metav1.APIResource, error) {
-//	client, err := discovery.NewDiscoveryClientForConfig(config)
-//	if err != nil {
-//		return nil, err
-//	}
-//	resources, err := client.ServerResourcesForGroupVersion("networking.istio.io")
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	kindsSet := map[string]bool{}
-//	for _, config := range configs {
-//		if !kindsSet[config.Kind] {
-//			kindsSet[config.Kind] = true
-//		}
-//	}
-//	result := make(map[string]metav1.APIResource, len(kindsSet))
-//	for _, resource := range resources.APIResources {
-//		if kindsSet[resource.Kind] {
-//			result[resource.Kind] = resource
-//		}
-//	}
-//	return result, nil
-//}
-
-//
-//type Metadata struct {
-//	Name string `yaml:"name"`
-//}
-//
-//type Spec struct {
-//	Host      string      `yaml:"host,omitempty"`
-//	Subsets   []Subset    `yaml:"subsets,omitempty"`
-//	Gateways  []string    `yaml:"gateways,omitempty"`
-//	Hosts     []string    `yaml:"hosts,omitempty"`
-//	HttpRoute []HTTPRoute `yaml:"http,omitempty"`
-//}
-//
-//type Subset struct {
-//	Name   string `yaml:"name"`
-//	Labels Label  `yaml:"labels"`
-//}
-//
-//type Label struct {
-//	ModelVersion string `yaml:"modelVersion"`
-//}
-//
-
-//
-//type HTTPRoute struct {
-//	HTTPMatch []HTTPMatch `yaml:"match,omitempty"`
-//	Rewrite   Rewrite     `yaml:"rewrite,omitempty"`
-//	Route     []Route     `yaml:"route,omitempty"`
-//}
-//
-//type HTTPMatch struct {
-//	URI URI `yaml:"uri,omitempty"`
-//}
-//
-//type URI struct {
-//	Prefix string `yaml:"prefix,omitempty"`
-//}
-//
-//type Rewrite struct {
-//	URI string `yaml:"uri,omitempty"`
-//}
-//
-//type Route struct {
-//	Destination Destination `yaml:"destination,omitempty"`
-//	Weight      int         `yaml:"weight,omitempty"`
-//}
-//
-//type Destination struct {
-//	Host   string `yaml:"host,omitempty"`
-//	Subset string `yaml:"subset,omitempty"`
-//	Port   Port   `yaml:"port,omitempty"`
-//}
-//
-//type Port struct {
-//	Number int `yaml:"number,omitempty"`
-//}
