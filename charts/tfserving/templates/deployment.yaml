@@ -8,8 +8,8 @@ metadata:
     release: {{ .Release.Name | quote }}
     chart: {{ template "tensorflow-serving.chart" . }}
     app: {{ template "tensorflow-serving.name" . }}
-    serviceName: "{{ .Values.serviceName }}"
-    serviceVersion: "{{ .Values.serviceVersion }}"
+    serviceName: "{{ .Values.servingName }}"
+    serviceVersion: "{{ .Values.servingVersion }}"
   annotations:
     "helm.sh/created": {{ .Release.Time.Seconds | quote }}
 spec:
@@ -31,8 +31,8 @@ spec:
         release: {{ .Release.Name | quote }}
         chart: {{ template "tensorflow-serving.chart" . }}
         app: {{ template "tensorflow-serving.name" . }}
-        serviceName: "{{ .Values.serviceName }}"
-        serviceVersion: "{{ .Values.serviceVersion }}"
+        serviceName: "{{ .Values.servingName }}"
+        serviceVersion: "{{ .Values.servingVersion }}"
     spec:
       initContainers:
 

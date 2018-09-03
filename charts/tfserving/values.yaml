@@ -8,8 +8,8 @@
 serviceType: ClusterIP
 
 ## serving name and version
-serviceName:
-serviceVersion:
+servingName:
+servingVersion:
 
 ## expose the service to the grpc client
 port: 8500

@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"io/ioutil"
 	"bytes"
+	validate "github.com/kubeflow/arena/util"
 )
 
 var (
@@ -74,6 +75,10 @@ func NewServingTensorFlowCommand() *cobra.Command {
 	//submitArgs.addSyncFlags(command)
 
 	// TFServingJob
+	// add grpc port and rest api port
+	command.Flags().IntVar(&serveTensorFlowArgs.Port, "port", 8500, "the port of tensorflow gRPC listening port")
+	command.Flags().IntVar(&serveTensorFlowArgs.RestfulPort, "restfulPort", 8501, "the port of tensorflow RESTful listening port")
+
 	command.Flags().StringVar(&serveTensorFlowArgs.ModelConfigFile, "modelConfigFile", "", "Corresponding with --model_config_file in tensorflow serving")
 	command.Flags().StringVar(&serveTensorFlowArgs.VersionPolicy, "versionPolicy", "", "support latest, latest:N, specific:N, all")
 
@@ -84,6 +89,7 @@ type ServeTensorFlowArgs struct {
 	VersionPolicy          string `yaml:"versionPolicy"`   // --versionPolicy
 	ModelConfigFile        string `yaml:"modelConfigFile"` // --modelConfigFile
 	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
+	RestfulPort            int    `yaml:"restfulPort"` // --restfulPort
 
 	ServeArgs `yaml:",inline"`
 
@@ -100,12 +106,12 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 		if err != nil {
 			return err
 		}
-		//2. validate modelPath
-		dataDir, err := ParseBasePath(serveTensorFlowArgs.ModelPath)
+		//2. validate modelPath and storagePath
+		err = validate.ValidateMountDestination(serveTensorFlowArgs.ModelPath)
 		if err != nil {
-			return fmt.Errorf("modelPath[%s] has wrong content: %s", serveTensorFlowArgs.ModelPath, err)
+			return fmt.Errorf("modelPath[%s] has wrong value: %s", serveTensorFlowArgs.ModelPath, err)
 		}
-		serveTensorFlowArgs.DataDirs = append(serveTensorFlowArgs.DataDirs, dataDir)
+
 		//3. validate versionPolicy
 		err = serveTensorFlowArgs.validateVersionPolicy()
 		if err != nil {
@@ -116,25 +122,29 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 
 	} else {
 		//populate content from modelConfigFile
-		log.Infof("modelConfigFile=%s is specified, so ignore --modelName and --modelPath", serveTensorFlowArgs.ModelConfigFile)
+		if serveTensorFlowArgs.ModelName != "" || serveTensorFlowArgs.ModelPath != "" {
+			return fmt.Errorf("modelConfigFile=%s is specified, so --modelName or --modelPath cannot be used", serveTensorFlowArgs.ModelConfigFile)
+		}
+
 		modelConfigFileContentBytes, err := ioutil.ReadFile(serveTensorFlowArgs.ModelConfigFile)
 		if err != nil {
 			return fmt.Errorf("cannot read the modelConfigFile[%s]: %s", serveTensorFlowArgs.ModelConfigFile, err)
 		}
-		modelconfigString := string(modelConfigFileContentBytes)
-		log.Debugf("The content of modelConfigFile[%s] is: %s", serveTensorFlowArgs.ModelConfigFile, modelconfigString)
-
-		newModelconfigString, dataDirs, err := populateModelConfig(modelconfigString)
-		if err != nil {
-			return fmt.Errorf("modelConfigFile[%s] has wrong content: %s", serveTensorFlowArgs.ModelConfigFile, err)
-		}
-
-		serveTensorFlowArgs.ModelConfigFileContent = newModelconfigString
-		serveTensorFlowArgs.DataDirs = dataDirs
-
-		log.Debugf("modelConfigFileContent:%s", serveTensorFlowArgs.ModelConfigFileContent)
-		log.Debugf("dataDirs:%s", serveTensorFlowArgs.DataDirs)
+		modelConfigString := string(modelConfigFileContentBytes)
+		log.Debugf("The content of modelConfigFile[%s] is: %s", serveTensorFlowArgs.ModelConfigFile, modelConfigString)
+		serveTensorFlowArgs.ModelConfigFileContent = modelConfigString
 	}
+	// validate storagePath
+	if serveTensorFlowArgs.StoragePath != "" {
+		dataDir, err := ParseMountPath(serveTensorFlowArgs.StoragePath)
+		if err != nil {
+			return fmt.Errorf("storagePath has wrong value: %s", err)
+		}
+		serveTensorFlowArgs.DataDirs = append(serveTensorFlowArgs.DataDirs, dataDir)
+	}
+
+	log.Debugf("dataDirs:%s", serveTensorFlowArgs.DataDirs)
+
 	//validate Istio enablement
 	err = serveTensorFlowArgs.ServeArgs.validateIstioEnablement()
 	if err != nil {
@@ -146,59 +156,10 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 		serveTensorFlowArgs.Envs = transformSliceToMap(envs, "=")
 	}
 
-	modelServiceExists, err := checkServiceExists(client, namespace, serveTensorFlowArgs.ServiceName)
+	modelServiceExists, err := checkServiceExists(client, namespace, serveTensorFlowArgs.ServingName)
 	serveTensorFlowArgs.ModelServiceExists = modelServiceExists
 
 	return nil
-}
-
-func populateModelConfig(originalContent string) (string, []dataDirVolume, error) {
-	basePathFiled := "base_path:"
-	lengthOfBasePathField := len(basePathFiled)
-	count := strings.Count(originalContent, basePathFiled)
-	log.Debugf("model config count: %d", count)
-	dataDirs := []dataDirVolume{}
-
-	if count == 0 {
-		return originalContent, dataDirs, nil
-	}
-	index := strings.Index(originalContent, basePathFiled) + lengthOfBasePathField
-	configString := originalContent[0:index]
-	tempString := originalContent[index:]
-	log.Debugf("tempString:%s", tempString)
-	tempString = strings.Trim(tempString, " ")
-	index2 := strings.Index(tempString, "\"")
-	if index2 != 0 {
-		return "", dataDirs, fmt.Errorf("no available model config is provided: %s", originalContent)
-	}
-	tempString = tempString[1:]
-	index2 = strings.Index(tempString, "\"")
-	if index2 <= 0 {
-		return "", dataDirs, fmt.Errorf("no available model config is provided: %s", originalContent)
-	}
-	originalBasePath := tempString[0:index2]
-	log.Debugf("originalBasePath: %s", originalBasePath)
-	dataDir, err := ParseBasePath(originalBasePath)
-	if err == nil {
-		updatedBasePath := dataDir.ContainerPath + dataDir.HostPath
-		log.Debugf("updatedBasePath: %s", updatedBasePath)
-		configString += "\"" + updatedBasePath + "\""
-		dataDirs = append(dataDirs, dataDir)
-	} else {
-		return "", dataDirs, fmt.Errorf("modelConfigFile has wrong content for filed basepath: %s", err)
-	}
-	tempString = tempString[index2+1:]
-	log.Debugf("tempString:%s", tempString)
-
-	configString_, dataDirs_, err := populateModelConfig(tempString)
-	if err == nil && configString_ != "" {
-		configString += configString_
-		for i := 0; i < len(dataDirs_); i++ {
-			dataDirs = append(dataDirs, dataDirs_[i])
-		}
-	}
-	log.Debugf("configString:%s", configString)
-	return configString, dataDirs, err
 }
 
 func checkServiceExists(client *kubernetes.Clientset, namespace string, name string) (bool, error) {
@@ -244,9 +205,9 @@ func serveTensorFlow(args []string, serveTensorFlowArgs *ServeTensorFlowArgs, cl
 	}
 
 	//log.Debugf("ModelVersion:%s", serveTensorFlowArgs.ModelVersion)
-	name = serveTensorFlowArgs.ServiceName
-	if serveTensorFlowArgs.ServiceVersion != "" {
-		name += "-" + serveTensorFlowArgs.ServiceVersion
+	name = serveTensorFlowArgs.ServingName
+	if serveTensorFlowArgs.ServingVersion != "" {
+		name += "-" + serveTensorFlowArgs.ServingVersion
 	}
 
 	return helm.InstallRelease(name, namespace, serveTensorFlowArgs, tfservingChart)
@@ -255,14 +216,13 @@ func serveTensorFlow(args []string, serveTensorFlowArgs *ServeTensorFlowArgs, cl
 func generateModelConfigFileContent(serveTensorFlowArgs ServeTensorFlowArgs) string {
 	modelName := serveTensorFlowArgs.ModelName
 	versionPolicy := serveTensorFlowArgs.VersionPolicy
-	mountPath := serveTensorFlowArgs.DataDirs[0].ContainerPath
-	modelPathInPvc := serveTensorFlowArgs.DataDirs[0].HostPath
+	mountPath := serveTensorFlowArgs.ModelPath
 	versionPolicyName := strings.Split(versionPolicy, ":")
 
 	var buffer bytes.Buffer
 	buffer.WriteString("model_config_list: { config: { name: ")
 	buffer.WriteString("\"" + modelName + "\" base_path: \"")
-	buffer.WriteString(mountPath + modelPathInPvc + "\" model_platform: \"")
+	buffer.WriteString(mountPath + "\" model_platform: \"")
 	buffer.WriteString("tensorflow\" model_version_policy: { ")
 	switch versionPolicyName[0] {
 	case "all":

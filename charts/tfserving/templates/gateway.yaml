@@ -3,7 +3,7 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
-  name: {{ .Values.modelName }}-gateway
+  name: {{ .Values.servingName }}-gateway
 spec:
   selector:
     istio: ingressgateway # use istio default controller
@@ -18,12 +18,12 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: {{ .Values.modelName }}-gw-service
+  name: {{ .Values.servingName }}-service
 spec:
   hosts:
   - "*"
   gateways:
-  - {{ .Values.modelName }}-gateway
+  - {{ .Values.servingName }}-gateway
   http:
   - match:
     - uri:
@@ -32,20 +32,20 @@ spec:
           uri: /v1/models
     route:
     - destination:
-        host: {{ .Values.modelName }}
-        subset: v{{ .Values.modelVersion }}
+        host: {{ .Values.servingName }}
+        subset: v{{ .Values.servingVersion }}
         port:
           number: {{ .Values.rest_api_port }}
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: {{ .Values.modelName }}
+  name: {{ .Values.servingName }}
 spec:
-  host: {{ .Values.modelName }}
+  host: {{ .Values.servingName }}
   subsets:
-  - name: v{{ .Values.modelVersion }}
+  - name: v{{ .Values.servingVersion }}
     labels:
-      modelVersion: "{{ .Values.modelVersion }}"
+      serviceVersion: "{{ .Values.servingVersion }}"
 {{- end }}
 {{- end }}

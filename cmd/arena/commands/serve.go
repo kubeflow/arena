@@ -44,8 +44,9 @@ type ServeArgs struct {
 	PvcName        string            `yaml:"pvcName"`
 	MountPath      string            `yaml:"mountPath"`
 	EnableIstio    bool              `yaml:"enableIstio"`    // --enableIstio
-	ServiceName    string            `yaml:"serviceName"`    //--serviceName
-	ServiceVersion string            `yaml:"serviceVersion"` //--serviceVersion
+	ServingName    string            `yaml:"servingName"`    // --servingName
+	ServingVersion string            `yaml:"servingVersion"` // --servingVersion
+	StoragePath    string            `yaml:"storagePath"`    // --storagePath
 	DataDirs       []dataDirVolume   `yaml:"dataDirs"`
 }
 
@@ -57,12 +58,12 @@ func (s ServeArgs) validateIstioEnablement() error {
 
 	var reg *regexp.Regexp
 	reg = regexp.MustCompile(regexp4serviceName)
-	matched := reg.MatchString(s.ServiceName)
+	matched := reg.MatchString(s.ServingName)
 	if !matched {
 		return fmt.Errorf("--serviceName should be numbers, letters, dashes, and underscores ONLY")
 	}
-	log.Debugf("--serviceVersion=%s is specified.", s.ServiceVersion)
-	if s.ServiceVersion == "" {
+	log.Debugf("--serviceVersion=%s is specified.", s.ServingVersion)
+	if s.ServingVersion == "" {
 		return fmt.Errorf("--serviceVersion must be specified if enableIstio=true")
 	}
 
@@ -84,92 +85,22 @@ func (s ServeArgs) validateModelName() error {
 	return nil
 }
 
-func ParseBasePath(basePath string) (dataDir dataDirVolume, err error) {
+func ParseMountPath(storagePath string) (dataDir dataDirVolume, err error) {
 	// parse basePath, if basePath string include ':'，should split it into PvcName, ModelPathInPVC and MountPath
 	dataDir = dataDirVolume{}
-	if strings.Index(basePath, modelPathSeparator) > 0 {
-		modelPathSplitArray := strings.Split(basePath, modelPathSeparator)
+	modelPathSplitArray := strings.Split(storagePath, modelPathSeparator)
+	if len(modelPathSplitArray) == 2 {
 		dataDir.Name = modelPathSplitArray[0]
-		if len(modelPathSplitArray) >= 3 {
-			dataDir.HostPath = modelPathSplitArray[1]
-			dataDir.ContainerPath = modelPathSplitArray[2]
-			err := validate.ValidateMountDestination(dataDir.HostPath)
-			if err != nil {
-				return dataDir, err
-			}
-			err = validate.ValidateMountDestination(dataDir.ContainerPath)
-			if err != nil {
-				return dataDir, err
-			}
-			dataDir.ContainerPath = strings.Trim(dataDir.ContainerPath, "")
-			dataDir.ContainerPath = strings.TrimRight(dataDir.ContainerPath, "/")
-		} else {
-			return dataDir, fmt.Errorf("the modelPath should be specified as pvc:modelPathInPVC:mountPathInContainer")
-		}
-	} else {
-		//no pvc, use local path
-		//s.ModelPath is the local model path
-		err := validate.ValidateMountDestination(basePath)
-		if err != nil {
-			return dataDir, err
-		}
-		dataDir.Name = ""
-		dataDir.HostPath = ""
-		dataDir.ContainerPath = strings.Trim(basePath, "")
+		dataDir.ContainerPath = modelPathSplitArray[1]
+		dataDir.ContainerPath = strings.Trim(dataDir.ContainerPath, "")
 		dataDir.ContainerPath = strings.TrimRight(dataDir.ContainerPath, "/")
-	}
-	log.Debugf("dataDir: %s", dataDir)
-	return dataDir, nil
-}
-
-func (s *ServeArgs) validateModelPath() (err error) {
-	log.Debugf("ModelPath: %s", s.ModelPath)
-	//hostPath, containerPath, err := util.ParseDataDirRaw(s.ModelPath)
-	//if err != nil {
-	//	log.Error(err)
-	//	return err
-	//}
-	//log.Debugf("hostpath: %s", hostPath)
-	//log.Debugf("containerPath: %s", containerPath)
-	//s.DataDirs = append(s.DataDirs, dataDirVolume{
-	//	Name:          "serving-model",
-	//	HostPath:      hostPath,
-	//	ContainerPath: containerPath,
-	//})
-
-	//log.Debugf("s.DataDirs: %v", s.DataDirs)
-	// parse ModelPath, if ModePath string include ':'，should split it into PvcName, ModelPathInPVC and MountPath
-	if strings.Index(s.ModelPath, modelPathSeparator) > 0 {
-		modelPathSplitArray := strings.Split(s.ModelPath, modelPathSeparator)
-		s.PvcName = modelPathSplitArray[0]
-		if len(modelPathSplitArray) == 3 {
-			//MountPath == ModelPathInPVC
-			s.ModelPath = modelPathSplitArray[1]
-			s.MountPath = modelPathSplitArray[2]
-			err := validate.ValidateMountDestination(s.ModelPath)
-			if err != nil {
-				return err
-			}
-			err = validate.ValidateMountDestination(s.MountPath)
-			if err != nil {
-				return err
-			}
-		} else {
-			return fmt.Errorf("the modelPath should be specified as pvc:modelPathInPVC:mountPathInContainer")
-		}
+		err = validate.ValidateMountDestination(dataDir.ContainerPath)
 	} else {
-		//no pvc, use local path
-		//s.ModelPath is the local model path
-		s.MountPath = ""
-		err := validate.ValidateMountDestination(s.ModelPath)
-		if err != nil {
-			return err
-		}
+		err = fmt.Errorf("the storage path to mount should be the format \"{PVC Name}:{Mount Path}\"")
 	}
-	log.Debugf("PvcName: %s", s.PvcName)
-	log.Debugf("ModelPath: %s", s.ModelPath)
-	log.Debugf("MountPath: %s", s.MountPath)
-	return nil
+
+	log.Debugf("dataDir: %s", dataDir)
+	return dataDir, err
 }
 
 func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
@@ -177,22 +108,20 @@ func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 	// create subcommands
 	//command.Flags().StringVar(&name, "name", "", "override name")
 	command.Flags().StringVar(&serveArgs.Image, "image", defaultTfServingImage, "the docker image name of serve job, default image is "+defaultTfServingImage)
-	command.Flags().IntVar(&serveArgs.Port, "port", 8500, "the port of serve pod exposed.")
 	command.Flags().StringVar(&serveArgs.Command, "command", "", "the command will inject to container's command.")
 	command.Flags().IntVar(&serveArgs.Gpus, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.Replicas, "replicas", 1, "the replicas number of the serve job.")
-	command.Flags().StringVar(&serveArgs.ModelPath, "modelPath", "", "the model path for serving following the format: pvc-name:/root/model")
+	command.Flags().StringVar(&serveArgs.ModelPath, "modelPath", "", "the model path for serving in the container")
 	command.Flags().StringArrayVarP(&envs, "envs", "e", []string{}, "the environment variables")
 	command.Flags().StringVar(&serveArgs.ModelName, "modelName", "", "the model name for serving")
 	command.Flags().BoolVar(&serveArgs.EnableIstio, "enableIstio", false, "enable Istio for serving or not (disable Istio by default)")
-	command.Flags().StringVar(&serveArgs.ServiceName, "serviceName", "", "the serving name")
-	command.Flags().StringVar(&serveArgs.ServiceVersion, "serviceVersion", "", "the serving version")
+	command.Flags().StringVar(&serveArgs.ServingName, "servingName", "", "the serving name")
+	command.Flags().StringVar(&serveArgs.ServingVersion, "servingVersion", "", "the serving version")
+	command.Flags().StringVar(&serveArgs.StoragePath, "storagePath", "", "the storage path to mount using the format \"{PVC Name}:{Mount Path}\"")
+	command.MarkFlagRequired("servingName")
 
-	command.MarkFlagRequired("serviceName")
-	//command.MarkFlagRequired("modelName")
-	//command.MarkFlagRequired("modelPath")
 }
 
 func init() {

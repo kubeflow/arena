@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"istio.io/api/networking/v1alpha3"
+	istiov1alpha3 "github.com/kubeflow/arena/pkg/istio.io/api/networking/v1alpha3"
 	"encoding/json"
 	"regexp"
 )
@@ -75,11 +75,11 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 	}
 
 	// Traffic Routing Args
-	command.Flags().StringVar(&submitArgs.ServiceName, "serviceName", "", "Corresponding with --model_name in tensorflow serving")
+	command.Flags().StringVar(&submitArgs.ServingName, "servingName", "", "the serving name")
 	command.Flags().StringVar(&submitArgs.Namespace, "namespace", "", "namespace (default \"default\")")
 	command.Flags().StringVar(&submitArgs.Versions, "versions", "[]", "Model versions which the traffic will be routed to, e.g. [1,2,3]")
 	command.Flags().StringVar(&submitArgs.Weights, "weights", "[]", "Weight percentage values for each model version which the traffic will be routed to,e.g. [70,20,10]")
-	command.MarkFlagRequired("modelName")
+	command.MarkFlagRequired("servingName")
 	command.MarkFlagRequired("versions")
 	command.MarkFlagRequired("weights")
 
@@ -87,10 +87,10 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 }
 
 type runTrafficRouterSplitArgs struct {
-	ServiceName string `yaml:"serviceName,omitempty"` //--serviceName
-	Namespace string `yaml:"namespace,omitempty"` //--namespace
-	Versions  string `yaml:"versions,omitempty"`  //--versions
-	Weights   string `yaml:"weights,omitempty"`   //--weights
+	ServingName string `yaml:"servingName,omitempty"` //--servingName
+	Namespace   string `yaml:"namespace,omitempty"`   //--namespace
+	Versions    string `yaml:"versions,omitempty"`    //--versions
+	Weights     string `yaml:"weights,omitempty"`     //--weights
 }
 
 type PreprocesObject struct {
@@ -114,9 +114,9 @@ type DestinationRuleCRD struct {
 	// may reject unrecognized values.
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
 	// +optional
-	APIVersion string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
-	metav1.ObjectMeta             `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	Spec v1alpha3.DestinationRule `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	APIVersion string                        `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
+	metav1.ObjectMeta                        `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	Spec       istiov1alpha3.DestinationRule `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
 type VirtualServiceCRD struct {
@@ -133,24 +133,24 @@ type VirtualServiceCRD struct {
 	// may reject unrecognized values.
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
 	// +optional
-	APIVersion string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
-	metav1.ObjectMeta   `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	Spec VirtualService `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	APIVersion string         `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
+	metav1.ObjectMeta         `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	Spec       VirtualService `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
 type VirtualService struct {
-	*v1alpha3.VirtualService
+	*istiov1alpha3.VirtualService
 	Http []*HTTPRoute `protobuf:"bytes,3,rep,name=http" json:"http,omitempty"`
 }
 
 type HTTPRoute struct {
-	*v1alpha3.HTTPRoute
+	*istiov1alpha3.HTTPRoute
 	Match []*HTTPMatchRequest  `protobuf:"bytes,1,rep,name=match" json:"match,omitempty"`
 	Route []*DestinationWeight `protobuf:"bytes,2,rep,name=route" json:"route,omitempty"`
 }
 
 type HTTPMatchRequest struct {
-	*v1alpha3.HTTPMatchRequest
+	*istiov1alpha3.HTTPMatchRequest
 	Uri *StringMatchPrefix `protobuf:"bytes,1,opt,name=uri" json:"uri,omitempty"`
 }
 
@@ -159,17 +159,17 @@ type StringMatchPrefix struct {
 }
 
 type DestinationWeight struct {
-	*v1alpha3.DestinationWeight
+	*istiov1alpha3.DestinationWeight
 	Destination *Destination `protobuf:"bytes,1,opt,name=destination" json:"destination,omitempty"`
 }
 
 type Destination struct {
-	*v1alpha3.Destination
+	*istiov1alpha3.Destination
 	Port *PortSelector `protobuf:"bytes,3,opt,name=port" json:"port,omitempty"`
 }
 
 type PortSelector struct {
-	*v1alpha3.PortSelector
+	*istiov1alpha3.PortSelector
 	Number uint32 `protobuf:"varint,1,opt,name=number,proto3,oneof" json:"number,omitempty"`
 }
 
@@ -183,18 +183,18 @@ func generateDestinationRule(namespace string, serviceName string, versionArray 
 			Labels:      nil,
 			Annotations: nil,
 		},
-		Spec: v1alpha3.DestinationRule{
+		Spec: istiov1alpha3.DestinationRule{
 			Host: serviceName,
 		},
 	}
 
 	length := len(versionArray)
-	subsets := make([]*v1alpha3.Subset, length)
+	subsets := make([]*istiov1alpha3.Subset, length)
 
 	for i := 0; i < length; i++ {
 		label := map[string]string{}
 		label["modelVersion"] = versionArray[i]
-		subsets[i] = &v1alpha3.Subset{
+		subsets[i] = &istiov1alpha3.Subset{
 			Name:   "v" + versionArray[i],
 			Labels: label,
 		}
@@ -211,7 +211,7 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 	for i := 0; i < length; i++ {
 		routes[i] = &DestinationWeight{
 			Destination: &Destination{
-				Destination: &v1alpha3.Destination{
+				Destination: &istiov1alpha3.Destination{
 					Subset: "v" + versionArray[i],
 					Host:   serviceName,
 				},
@@ -219,7 +219,7 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 					Number: 8501,
 				},
 			},
-			DestinationWeight: &v1alpha3.DestinationWeight{
+			DestinationWeight: &istiov1alpha3.DestinationWeight{
 				Weight: iweightArray[i],
 			},
 		}
@@ -243,14 +243,14 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 			Annotations: nil,
 		},
 		Spec: VirtualService{
-			VirtualService: &v1alpha3.VirtualService{
+			VirtualService: &istiov1alpha3.VirtualService{
 				Hosts:    []string{"*"},
 				Gateways: []string{serviceName + "-gateway"},
 			},
 			Http: []*HTTPRoute{
 				{
-					HTTPRoute: &v1alpha3.HTTPRoute{
-						Rewrite: &v1alpha3.HTTPRewrite{
+					HTTPRoute: &istiov1alpha3.HTTPRoute{
+						Rewrite: &istiov1alpha3.HTTPRewrite{
 							Uri:       "/v1/models",
 							Authority: "",
 						},
@@ -268,12 +268,12 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 func (runTrafficRouterSplitArgs *runTrafficRouterSplitArgs) preprocess(client *kubernetes.Clientset) (preprocessObject PreprocesObject, err error) {
 	var reg *regexp.Regexp
 	reg = regexp.MustCompile(regexp4serviceName)
-	matched := reg.MatchString(runTrafficRouterSplitArgs.ServiceName)
+	matched := reg.MatchString(runTrafficRouterSplitArgs.ServingName)
 	if !matched {
 		return preprocessObject, fmt.Errorf("parameter modelName should be numbers, letters, dashes, and underscores ONLY")
 	}
 
-	serviceName := strings.Trim(runTrafficRouterSplitArgs.ServiceName, " ")
+	serviceName := strings.Trim(runTrafficRouterSplitArgs.ServingName, " ")
 	serviceName = strings.Trim(serviceName, "\"")
 	log.Debugf("serviceName: %s", serviceName)
 	preprocessObject.ServiceName = serviceName

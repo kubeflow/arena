@@ -50,7 +50,7 @@ func NewServingListCommand() *cobra.Command {
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-			fmt.Fprintf(w, "NAME\tSTATUS\tVERSION\tCHART\tNAMESPACE\n")
+			fmt.Fprintf(w, "NAME\tVERSION\tSTATUS\n")
 
 			for name, cols := range releaseMap {
 				log.Debugf("name: %s, cols: %s", name, cols)
@@ -67,10 +67,9 @@ func NewServingListCommand() *cobra.Command {
 					}
 					nameAndVersion := strings.Split(name, "-")
 					log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
-					fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name,
-						status,
+					fmt.Fprintf(w, "%s\t%s\t%s\n", name,
 						serviceVersion,
-						chart, namespace)
+						status)
 
 				}
 			}

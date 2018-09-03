@@ -1,7 +1,7 @@
 model_config_list: {
     config: {
         name: "mnist"
-        base_path: "myoss1pvc:/models/mnist:/data"
+        base_path: "/data2/models/mnist"
         model_platform: "tensorflow"
         model_version_policy: {
             all: {}
