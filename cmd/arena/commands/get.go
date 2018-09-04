@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package commands
 
 import (
@@ -25,11 +26,12 @@ import (
 	"github.com/kubeflow/arena/util/helm"
 	"github.com/spf13/cobra"
 
-	"k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
 	"io"
 	"time"
+
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 var output string
@@ -123,7 +125,6 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 	fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tINSTANCE\tNODE\n")
 	pods := job.AllPods()
 
-
 	for _, pod := range pods {
 		hostIP := "N/A"
 
@@ -138,7 +139,6 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 			pod.Name,
 			hostIP)
 	}
-
 
 	url, err := tensorboardURL(job.Name(), job.ChiefPod().Namespace)
 	if url == "" || err != nil {
@@ -176,7 +176,7 @@ func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
 				fmt.Sprintf("[%s] %s", event.Reason, event.Message))
 		}
 		// empty line for per pod
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n","", "", "", "", "", "")
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", "", "", "", "", "", "")
 	}
 }
 

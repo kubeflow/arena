@@ -14,16 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -o errexit
-set -o nounset
-set -o pipefail
-
-PREFIX="arena"
-CMD_PREFIX="cmd"
-
-SCRIPT_ROOT=$(dirname ${BASH_SOURCE})/..
-
-cd ${SCRIPT_ROOT}
-echo "Generating CLI documentation..."
-go run hack/docgen.go
-cd - > /dev/null
+# script to copy the headers to all the source files and header files
+for f in $(find . -name "*.go" -type f -not -path "./vendor/*"); do
+  if (grep Copyright $f);then
+    echo "No need to copy the License Header to $f"
+  else
+    cat license.txt $f > $f.new
+    mv $f.new $f
+    echo "License Header copied to $f"
+  fi
+done
