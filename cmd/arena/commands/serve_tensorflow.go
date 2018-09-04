@@ -26,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"io/ioutil"
 	"bytes"
-	validate "github.com/kubeflow/arena/util"
 )
 
 var (
@@ -72,7 +71,6 @@ func NewServingTensorFlowCommand() *cobra.Command {
 	}
 
 	serveTensorFlowArgs.addServeCommonFlags(command)
-	//submitArgs.addSyncFlags(command)
 
 	// TFServingJob
 	// add grpc port and rest api port
@@ -89,7 +87,6 @@ type ServeTensorFlowArgs struct {
 	VersionPolicy          string `yaml:"versionPolicy"`   // --versionPolicy
 	ModelConfigFile        string `yaml:"modelConfigFile"` // --modelConfigFile
 	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
-	RestfulPort            int    `yaml:"restfulPort"` // --restfulPort
 
 	ServeArgs `yaml:",inline"`
 
@@ -106,10 +103,9 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 		if err != nil {
 			return err
 		}
-		//2. validate modelPath and storagePath
-		err = validate.ValidateMountDestination(serveTensorFlowArgs.ModelPath)
-		if err != nil {
-			return fmt.Errorf("modelPath[%s] has wrong value: %s", serveTensorFlowArgs.ModelPath, err)
+		//2. validate modelPath
+		if serveTensorFlowArgs.ModelPath == "" {
+			return fmt.Errorf("modelPath should be specified if no modelConfigFile is specified")
 		}
 
 		//3. validate versionPolicy
@@ -122,8 +118,11 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 
 	} else {
 		//populate content from modelConfigFile
-		if serveTensorFlowArgs.ModelName != "" || serveTensorFlowArgs.ModelPath != "" {
-			return fmt.Errorf("modelConfigFile=%s is specified, so --modelName or --modelPath cannot be used", serveTensorFlowArgs.ModelConfigFile)
+		if serveTensorFlowArgs.ModelName != ""  {
+			return fmt.Errorf("modelConfigFile=%s is specified, so --modelName cannot be used", serveTensorFlowArgs.ModelConfigFile)
+		}
+		if serveTensorFlowArgs.ModelPath != "" {
+			return fmt.Errorf("modelConfigFile=%s is specified, so --modelPath cannot be used", serveTensorFlowArgs.ModelConfigFile)
 		}
 
 		modelConfigFileContentBytes, err := ioutil.ReadFile(serveTensorFlowArgs.ModelConfigFile)

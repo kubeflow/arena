@@ -31,18 +31,17 @@ var (
 )
 
 type ServeArgs struct {
-	Image          string            `yaml:"image"`     // --image
-	Gpus           int               `yaml:"gpus"`      // --gpus
-	Cpu            string            `yaml:"cpu"`       // --cpu
-	Memory         string            `yaml:"memory"`    // --memory
-	Envs           map[string]string `yaml:"envs"`      // --envs
-	Command        string            `yaml:"command"`   // --command
-	Replicas       int               `yaml:"replicas"`  // --replicas
-	Port           int               `yaml:"port"`      // --port
-	ModelName      string            `yaml:"modelName"` // --modelName
-	ModelPath      string            `yaml:"modelPath"` // --modelPath
-	PvcName        string            `yaml:"pvcName"`
-	MountPath      string            `yaml:"mountPath"`
+	Image          string            `yaml:"image"`         // --image
+	Gpus           int               `yaml:"gpus"`          // --gpus
+	Cpu            string            `yaml:"cpu"`           // --cpu
+	Memory         string            `yaml:"memory"`        // --memory
+	Envs           map[string]string `yaml:"envs"`          // --envs
+	Command        string            `yaml:"command"`       // --command
+	Replicas       int               `yaml:"replicas"`      // --replicas
+	Port           int               `yaml:"port"`          // --port
+	RestfulPort    int               `yaml:"rest_api_port"` // --restfulPort
+	ModelName      string            `yaml:"modelName"`     // --modelName
+	ModelPath      string            `yaml:"modelPath"`     // --modelPath
 	EnableIstio    bool              `yaml:"enableIstio"`    // --enableIstio
 	ServingName    string            `yaml:"servingName"`    // --servingName
 	ServingVersion string            `yaml:"servingVersion"` // --servingVersion
@@ -86,17 +85,14 @@ func (s ServeArgs) validateModelName() error {
 }
 
 func ParseMountPath(storagePath string) (dataDir dataDirVolume, err error) {
-	// parse basePath, if basePath string include ':'，should split it into PvcName, ModelPathInPVC and MountPath
+	err = validate.ValidateDatasets([]string{storagePath})
 	dataDir = dataDirVolume{}
-	modelPathSplitArray := strings.Split(storagePath, modelPathSeparator)
-	if len(modelPathSplitArray) == 2 {
+	if err == nil {
+		modelPathSplitArray := strings.Split(storagePath, modelPathSeparator)
 		dataDir.Name = modelPathSplitArray[0]
 		dataDir.ContainerPath = modelPathSplitArray[1]
 		dataDir.ContainerPath = strings.Trim(dataDir.ContainerPath, "")
 		dataDir.ContainerPath = strings.TrimRight(dataDir.ContainerPath, "/")
-		err = validate.ValidateMountDestination(dataDir.ContainerPath)
-	} else {
-		err = fmt.Errorf("the storage path to mount should be the format \"{PVC Name}:{Mount Path}\"")
 	}
 
 	log.Debugf("dataDir: %s", dataDir)
@@ -151,6 +147,6 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewServingTensorFlowCommand())
 	command.AddCommand(NewServingListCommand())
 	command.AddCommand(NewServingDeleteCommand())
-
+	command.AddCommand(NewTrafficRouterSplitCommand())
 	return command
 }

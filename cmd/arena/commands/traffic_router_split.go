@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	istiov1alpha3 "github.com/kubeflow/arena/pkg/istio.io/api/networking/v1alpha3"
+	istiov1alpha3 "istio.io/api/networking/v1alpha3"
 	"encoding/json"
 	"regexp"
 )

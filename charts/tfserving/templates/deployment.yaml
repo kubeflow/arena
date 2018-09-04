@@ -111,11 +111,6 @@ spec:
             claimName: {{ $dataDir.name }}
         {{- end }}
         {{- end }}
-        {{ if ne .Values.pvcName "" }}
-        - name: model-volume
-          persistentVolumeClaim:
-            claimName: {{ .Values.pvcName }}
-        {{- end }}
         - name: config
           configMap:
             name: {{ template "tensorflow-serving.fullname" . }}-cm
