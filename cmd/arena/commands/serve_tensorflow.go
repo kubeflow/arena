@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"io/ioutil"
+	"bytes"
 )
 
 var (
