@@ -53,6 +53,14 @@
   name = "github.com/kubeflow/tf-operator"
   version = "v0.2.0-rc1"
 
+[[constraint]]
+  name = "github.com/gogo/protobuf"
+  version = "v1.1.1"
+
+[[constraint]]
+  name = "istio.io/api"
+  branch = "release-1.0"
+
 [prune]
   go-tests = true
   unused-packages = true
