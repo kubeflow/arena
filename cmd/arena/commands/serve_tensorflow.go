@@ -119,7 +119,7 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 
 	} else {
 		//populate content from modelConfigFile
-		if serveTensorFlowArgs.ModelName != ""  {
+		if serveTensorFlowArgs.ModelName != "" {
 			return fmt.Errorf("modelConfigFile=%s is specified, so --modelName cannot be used", serveTensorFlowArgs.ModelConfigFile)
 		}
 		if serveTensorFlowArgs.ModelPath != "" {
@@ -134,16 +134,16 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 		log.Debugf("The content of modelConfigFile[%s] is: %s", serveTensorFlowArgs.ModelConfigFile, modelConfigString)
 		serveTensorFlowArgs.ModelConfigFileContent = modelConfigString
 	}
-	// validate storagePath
-	if serveTensorFlowArgs.StoragePath != "" {
-		dataDir, err := ParseMountPath(serveTensorFlowArgs.StoragePath)
+	// validate models data
+	if len(dataset) > 0 {
+		err := ParseMountPath(dataset)
 		if err != nil {
-			return fmt.Errorf("storagePath has wrong value: %s", err)
+			return fmt.Errorf("--data has wrong value: %s", err)
 		}
-		serveTensorFlowArgs.DataDirs = append(serveTensorFlowArgs.DataDirs, dataDir)
+		serveTensorFlowArgs.ModelDirs = transformSliceToMap(dataset, ":")
 	}
 
-	log.Debugf("dataDirs:%s", serveTensorFlowArgs.DataDirs)
+	log.Debugf("models:%s", serveTensorFlowArgs.ModelDirs)
 
 	//validate Istio enablement
 	err = serveTensorFlowArgs.ServeArgs.validateIstioEnablement()

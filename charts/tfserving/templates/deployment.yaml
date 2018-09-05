@@ -89,14 +89,10 @@ spec:
               nvidia.com/gpu: {{ .Values.gpu }}
               {{- end }}
           volumeMounts:
-            {{- if .Values.dataDirs }}
-            {{- range $index, $dataDir := .Values.dataDirs}}
-            - name: {{ $dataDir.name }}-{{ $index }}
-              {{- if $dataDir.containerPath }}
-              mountPath: {{ $dataDir.containerPath }}
-              {{- else }}
-              mountPath: /data
-              {{- end }}
+            {{- if .Values.modelDirs }}
+            {{- range $pvcName, $destPath := .Values.modelDirs}}
+            - name: "{{ $pvcName }}"
+              mountPath: "{{ $destPath }}"
             {{- end }}
             {{- end }}
             {{- if ne .Values.modelConfigFileContent "" }}
@@ -104,11 +100,11 @@ spec:
               mountPath: /tmp
             {{- end }}
       volumes:
-        {{- if .Values.dataDirs }}
-        {{- range $index, $dataDir := .Values.dataDirs}}
-        - name: {{ $dataDir.name }}-{{ $index }}
+        {{- if .Values.modelDirs }}
+        {{- range $pvcName, $destPath := .Values.modelDirs}}
+        - name: "{{ $pvcName }}"
           persistentVolumeClaim:
-            claimName: {{ $dataDir.name }}
+            claimName: "{{ $pvcName }}"
         {{- end }}
         {{- end }}
         - name: config
