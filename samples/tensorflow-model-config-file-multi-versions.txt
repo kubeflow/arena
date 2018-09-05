@@ -1,0 +1,22 @@
+model_config_list: {
+	config: {
+		name: "mnist",
+		base_path: "/data2/models/mnist"
+		model_platform: "tensorflow",
+		model_version_policy: {
+		   specific: {
+            versions: 1
+           }
+		}
+	},
+	config: {
+		name: "mnist2",
+        base_path: "/data2/models/mnist2",
+        model_platform: "tensorflow",
+        model_version_policy: {
+           specific: {
+            versions: 3
+           }
+        }
+	}
+}

@@ -18,73 +18,94 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
-
-	validate "github.com/kubeflow/arena/util"
 	"github.com/spf13/cobra"
+	"regexp"
+	log "github.com/sirupsen/logrus"
+	validate "github.com/kubeflow/arena/util"
 )
 
 var (
-	modelPathSeparator = "|"
+	modelPathSeparator = ":"
+	regexp4serviceName = "^[a-z0-9A-Z_-]+$"
 )
 
 type ServeArgs struct {
-	Image     string            `yaml:"image"`     // --image
-	Gpus      int               `yaml:"gpus"`      // --gpus
-	Cpu       string            `yaml:"cpu"`       // --cpu
-	Memory    string            `yaml:"memory"`    // --memory
-	Envs      map[string]string `yaml:"envs"`      // --envs
-	Command   string            `yaml:"command"`   // --command
-	Replicas  int               `yaml:"replicas"`  // --replicas
-	Port      int               `yaml:"port"`      // --port
-	ModelName string            `yaml:"modelName"` // --modelName
-	ModelPath string            `yaml:"modelPath"` // --modelPath
-	PvcName   string            `yaml:"pvcName"`
-	MountPath string            `yaml:"mountPath"`
+	Image          string            `yaml:"image"`          // --image
+	Gpus           int               `yaml:"gpus"`           // --gpus
+	Cpu            string            `yaml:"cpu"`            // --cpu
+	Memory         string            `yaml:"memory"`         // --memory
+	Envs           map[string]string `yaml:"envs"`           // --envs
+	Command        string            `yaml:"command"`        // --command
+	Replicas       int               `yaml:"replicas"`       // --replicas
+	Port           int               `yaml:"port"`           // --port
+	RestfulPort    int               `yaml:"rest_api_port"`  // --restfulPort
+	ModelName      string            `yaml:"modelName"`      // --modelName
+	ModelPath      string            `yaml:"modelPath"`      // --modelPath
+	EnableIstio    bool              `yaml:"enableIstio"`    // --enableIstio
+	ServingName    string            `yaml:"servingName"`    // --servingName
+	ServingVersion string            `yaml:"servingVersion"` // --servingVersion
+	ModelDirs      map[string]string `yaml:"modelDirs"`
 }
 
-func (s ServeArgs) check() error {
-	if name == "" {
-		return fmt.Errorf("--name must be set")
+func (s ServeArgs) validateIstioEnablement() error {
+	log.Debugf("--enableIstio=%t is specified.", s.EnableIstio)
+	if !s.EnableIstio {
+		return nil
 	}
 
-	err := validate.ValidateJobName(name)
-	if err != nil {
-		return err
+	var reg *regexp.Regexp
+	reg = regexp.MustCompile(regexp4serviceName)
+	matched := reg.MatchString(s.ServingName)
+	if !matched {
+		return fmt.Errorf("--serviceName should be numbers, letters, dashes, and underscores ONLY")
+	}
+	log.Debugf("--serviceVersion=%s is specified.", s.ServingVersion)
+	if s.ServingVersion == "" {
+		return fmt.Errorf("--serviceVersion must be specified if enableIstio=true")
 	}
 
 	return nil
 }
 
-// transform common parts of submitArgs
-func (s *ServeArgs) transform() (err error) {
-	// parse ModelPath, if ModePath string include ':'，should split it into PvcName and MountPath
-	if strings.Index(s.ModelPath, modelPathSeparator) > 0 {
-		modelPathSplitArray := strings.Split(s.ModelPath, modelPathSeparator)
-		s.PvcName = modelPathSplitArray[0]
-		s.MountPath = modelPathSplitArray[1]
-	} else {
-		s.MountPath = s.ModelPath
+func (s ServeArgs) validateModelName() error {
+	if s.ModelName == "" {
+		return fmt.Errorf("--modelName cannot be blank")
+	}
+
+	var reg *regexp.Regexp
+	reg = regexp.MustCompile(regexp4serviceName)
+	matched := reg.MatchString(s.ModelName)
+	if !matched {
+		return fmt.Errorf("--modelName should be numbers, letters, dashes, and underscores ONLY")
 	}
 
 	return nil
+}
+
+func ParseMountPath(dataset []string) (err error) {
+	err = validate.ValidateDatasets(dataset)
+	return err
 }
 
 func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 
 	// create subcommands
-	command.Flags().StringVar(&name, "name", "", "override name")
-	command.MarkFlagRequired("name")
-	command.Flags().StringVar(&serveArgs.Image, "image", "", "the docker image name of serve job.")
-	command.Flags().IntVar(&serveArgs.Port, "port", 9000, "the port of serve pod exposed.")
+	command.Flags().StringVar(&serveArgs.Image, "image", defaultTfServingImage, "the docker image name of serve job, default image is "+defaultTfServingImage)
 	command.Flags().StringVar(&serveArgs.Command, "command", "", "the command will inject to container's command.")
 	command.Flags().IntVar(&serveArgs.Gpus, "gpus", 0, "the limit GPU count of each replica to run the serve.")
-	command.Flags().StringVar(&serveArgs.Cpu, "cpu", "0", "the request cpu of each replica to run the serve.")
-	command.Flags().StringVar(&serveArgs.Memory, "memory", "0", "the request memory of each replica to run the serve.")
+	command.Flags().StringVar(&serveArgs.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
+	command.Flags().StringVar(&serveArgs.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.Replicas, "replicas", 1, "the replicas number of the serve job.")
-	command.Flags().StringVar(&serveArgs.ModelPath, "modelPath", "", "")
+	command.Flags().StringVar(&serveArgs.ModelPath, "modelPath", "", "the model path for serving in the container")
 	command.Flags().StringArrayVarP(&envs, "envs", "e", []string{}, "the environment variables")
-	command.Flags().StringVar(&serveArgs.ModelName, "modelName", "", "the model name to serve")
+	command.Flags().StringVar(&serveArgs.ModelName, "modelName", "", "the model name for serving")
+	command.Flags().BoolVar(&serveArgs.EnableIstio, "enableIstio", false, "enable Istio for serving or not (disable Istio by default)")
+	command.Flags().StringVar(&serveArgs.ServingName, "servingName", "", "the serving name")
+	command.Flags().StringVar(&serveArgs.ServingVersion, "servingVersion", "", "the serving version")
+	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")
+
+	command.MarkFlagRequired("servingName")
+
 }
 
 func init() {
@@ -111,7 +132,9 @@ func NewServeCommand() *cobra.Command {
 		},
 	}
 
-	command.AddCommand(NewServeTensorFlowCommand())
-
+	command.AddCommand(NewServingTensorFlowCommand())
+	command.AddCommand(NewServingListCommand())
+	command.AddCommand(NewServingDeleteCommand())
+	command.AddCommand(NewTrafficRouterSplitCommand())
 	return command
 }

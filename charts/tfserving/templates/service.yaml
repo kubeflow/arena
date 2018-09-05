@@ -1,7 +1,12 @@
+{{- if eq .Values.modelServiceExists false }}
 apiVersion: v1
 kind: Service
 metadata:
+  {{ if eq .Values.enableIstio true }}
+  name:  {{ .Values.servingName }}
+  {{ else }}
   name: {{ template "tensorflow-serving.fullname" . }}
+  {{ end }}
   labels:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
@@ -13,6 +18,15 @@ spec:
     - name: serving
       port: {{ .Values.port }}
       targetPort: {{ .Values.port }}
+    - name: serving-rest
+      port: {{ .Values.rest_api_port }}
+      targetPort: {{ .Values.rest_api_port }}
   selector:
+    {{ if eq .Values.enableIstio true }}
+    app: {{ template "tensorflow-serving.name" . }}
+    serviceName: "{{ .Values.servingName }}"
+    {{ else }}
     release: {{ .Release.Name | quote }}
     app: {{ template "tensorflow-serving.name" . }}
+    {{ end }}
+{{- end }}
