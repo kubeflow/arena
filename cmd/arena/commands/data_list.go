@@ -96,7 +96,7 @@ func displayDataVolume(pvcList *v1.PersistentVolumeClaimList) {
 		owner := item.Annotations[dataOwner]
 
 		if allNamespaces {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 				item.Name,
 				item.Namespace,
 				getAccessModesAsString(item.Spec.AccessModes),
@@ -104,7 +104,7 @@ func displayDataVolume(pvcList *v1.PersistentVolumeClaimList) {
 				owner,
 				translateTimestamp(item.CreationTimestamp))
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 				item.Name,
 				getAccessModesAsString(item.Spec.AccessModes),
 				description,
