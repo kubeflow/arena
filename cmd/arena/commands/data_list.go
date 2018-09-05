@@ -86,7 +86,7 @@ func displayDataVolume(pvcList *v1.PersistentVolumeClaimList) {
 
 	for _, item := range pvcList.Items {
 		if item.ObjectMeta.DeletionTimestamp != nil || item.Status.Phase != v1.ClaimBound {
-			log.Debugf("skip unready data: %v", item)
+			log.Debugf("skip the data is not ready: %s", item.Name)
 			continue
 		}
 
