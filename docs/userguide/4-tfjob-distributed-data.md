@@ -48,6 +48,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: tfdata
+  annotations:
+    description: "this is the mnist demo"
+    owner: Tom
 spec:
   accessModes:
     - ReadWriteMany
@@ -60,18 +63,17 @@ spec:
 # kubectl create -f nfs-pvc.yaml
 ```
 
-4\. Check PV and PVC
+> Notice: suggest to add `description` and `owner`
+
+4\. Check the data volume
 
 ```
-# kubectl get pv,pvc
-NAME                      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM            STORAGECLASS   REASON    AGE
-persistentvolume/tfdata   10Gi       RWX            Retain           Bound     default/tfdata                            38s
-
-NAME                           STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-persistentvolumeclaim/tfdata   Bound     tfdata    10Gi       RWX                           13s
+# arena data list 
+NAME    ACCESSMODE     DESCRIPTION             OWNER   AGE
+tfdata  ReadWriteMany  this is for mnist demo  myteam  43d
 ```
 
-5\. Now we can submit a distributed training job with `arena`, it will download the source code from github and point the data volume to PVC `tfdata`.
+5\. Now we can submit a distributed training job with `arena`, it will download the source code from github and mount data volume `tfdata` to `/mnist_data`.
 
 ```
 # arena submit tf --name=tf-dist-data         \
@@ -87,7 +89,7 @@ persistentvolumeclaim/tfdata   Bound     tfdata    10Gi       RWX               
               "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --logdir /training_logs --data_dir /mnist_data"
 ```
 
-> `--data` specifies the data volume to mount to all the tasks of the job, like <name_of_datasource>:<mount_point_on_job>. In this example, the PVC is `tfdata`, and the target directory is `/mnist_data`.
+> `--data` specifies the data volume to mount to all the tasks of the job, like <name_of_datasource>:<mount_point_on_job>. In this example, the data volume is `tfdata`, and the target directory is `/mnist_data`.
 
 
 6\. From the logs, we find that the training data is extracted from `/mnist_data` instead of downloading from internet directly.
