@@ -70,8 +70,7 @@ spec:
               name: serving
               protocol: TCP
             - containerPort: {{ .Values.rest_api_port }}
-              name: serving-rest
-              protocol: TCP
+              name: http-serving
           readinessProbe:
             tcpSocket:
               port: serving

@@ -1,36 +1,14 @@
 {{- if eq .Values.enableIstio true }}
 {{- if eq .Values.modelServiceExists false }}
 apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  name: {{ .Values.servingName }}-gateway
-spec:
-  selector:
-    istio: ingressgateway # use istio default controller
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "*"
----
-apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: {{ .Values.servingName }}-service
+  name: "{{ .Values.servingName }}"
 spec:
   hosts:
-  - "*"
-  gateways:
-  - {{ .Values.servingName }}-gateway
+  - "{{ .Values.servingName }}"
   http:
-  - match:
-    - uri:
-        prefix: /v1/models
-    rewrite:
-          uri: /v1/models
-    route:
+  - route:
     - destination:
         host: {{ .Values.servingName }}
         subset: v{{ .Values.servingVersion }}
