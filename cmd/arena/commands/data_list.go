@@ -71,6 +71,7 @@ func NewDataListCommand() *cobra.Command {
 	return command
 }
 
+// Display the data volume
 func displayDataVolume(pvcList *v1.PersistentVolumeClaimList) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	if allNamespaces {
@@ -84,11 +85,18 @@ func displayDataVolume(pvcList *v1.PersistentVolumeClaimList) {
 	}
 
 	for _, item := range pvcList.Items {
+		if item.ObjectMeta.DeletionTimestamp != nil || item.Status.Phase != v1.ClaimBound {
+			log.Debugf("skip unready data: %v", item)
+			continue
+		}
+
+		// storage := item.Status.Capacity[v1.ResourceStorage]
+		// capacity := storage.String()
 		description := item.Annotations[dataDescritpion]
 		owner := item.Annotations[dataOwner]
 
 		if allNamespaces {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 				item.Name,
 				item.Namespace,
 				getAccessModesAsString(item.Spec.AccessModes),
@@ -96,7 +104,7 @@ func displayDataVolume(pvcList *v1.PersistentVolumeClaimList) {
 				owner,
 				translateTimestamp(item.CreationTimestamp))
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 				item.Name,
 				getAccessModesAsString(item.Spec.AccessModes),
 				description,
