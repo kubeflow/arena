@@ -112,10 +112,8 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 		return err
 	}
 
-	// enable Tensorboard
-	if submitArgs.UseTensorboard {
-		submitArgs.HostLogPath = fmt.Sprintf("/arena_logs/training%s", util.RandomInt32())
-	}
+	// process tensorboard
+	submitArgs.processTensorboad()
 
 	if len(envs) > 0 {
 		submitArgs.Envs = transformSliceToMap(envs, "=")
