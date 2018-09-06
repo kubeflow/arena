@@ -29,9 +29,6 @@ spec:
                 operator: In
                 values: 
                   - {{ template "mpijob.fullname" . }}
-            topologyKey: kubernetes.io/hostname
-          - labelSelector:
-              matchExpressions:
               - key: statefulset.kubernetes.io/pod-name
                 operator: In
                 values: 

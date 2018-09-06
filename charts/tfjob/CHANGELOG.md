@@ -34,3 +34,7 @@
 ### 0.8.0
 
 * support gang scheduler
+
+### 0.9.0
+
+* Fix tensorboard affinity issue
