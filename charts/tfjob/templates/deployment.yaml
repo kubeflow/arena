@@ -38,23 +38,14 @@ spec:
                 operator: In
                 values: 
                   - {{ template "tfjob.name" . }}
-            topologyKey: kubernetes.io/hostname
-          - labelSelector:
-              matchExpressions:
               - key: release
                 operator: In
                 values: 
                   - {{ .Release.Name }}
-            topologyKey: kubernetes.io/hostname
-          - labelSelector:
-              matchExpressions:
               - key: tf-replica-index
                 operator: In
                 values: 
                   - "0"
-            topologyKey: kubernetes.io/hostname
-          - labelSelector:
-              matchExpressions:
               - key: tf-replica-type
                 operator: In
                 values: 
