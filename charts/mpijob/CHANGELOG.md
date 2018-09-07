@@ -12,3 +12,8 @@
 ### 0.3.0
 
 * Fix tensorboard affinity issue
+
+### 0.4.0
+
+* Support tensorboard loading event log from hdfs path
+

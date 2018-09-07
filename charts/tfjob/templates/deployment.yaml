@@ -52,19 +52,27 @@ spec:
                   - "worker"
             topologyKey: kubernetes.io/hostname
       volumes:
+        {{- if .Values.isLocalLogging }}
         - hostPath:
             path: "{{ .Values.hostLogPath }}"
           name: training-logs-volume
+        {{- end }}
       containers:
       - name: tensorboard      
+        {{- if .Values.isLocalLogging }}
         command: ["tensorboard", "--logdir", "/output/training_logs",  "--host",  "0.0.0.0"]
+        {{- else}}
+        command: ["tensorboard", "--logdir", "{{ .Values.trainingLogdir }}",  "--host",  "0.0.0.0"]
+        {{- end }}
         image: "{{ .Values.tensorboardImage }}"
         imagePullPolicy: {{ .Values.tensorboardImagePullpolicy }}
         ports:
         - containerPort: 6006
         volumeMounts:
+        {{- if .Values.isLocalLogging }}
         - mountPath: /output/training_logs
           name: training-logs-volume
+        {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
