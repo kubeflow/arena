@@ -279,9 +279,11 @@ spec:
           {{- end }}
           volumes:
             {{- if .Values.useTensorboard }}
+            {{- if .Values.isLocalLogging }}
             - hostPath:
                 path: "{{ .Values.hostLogPath }}"
               name: training-logs-volume
+            {{- end}}
             {{- end}}
             {{- if .Values.syncMode }}
             - name: code-sync
@@ -396,8 +398,10 @@ spec:
               {{- end }}
               volumeMounts:
                 {{- if .Values.useTensorboard }}
+                {{- if .Values.isLocalLogging }}
                 - mountPath: {{ .Values.trainingLogdir }}
                   name: training-logs-volume
+                {{- end}}
                 {{- end}}
                 {{- if .Values.syncMode }}
                 {{- if .Values.workingDir }}

@@ -137,6 +137,9 @@ func (submitArgs *submitTFJobArgs) prepare(args []string) (err error) {
 		return err
 	}
 
+	// process tensorboard
+	submitArgs.processTensorboad()
+
 	commonArgs := &submitArgs.submitArgs
 	err = commonArgs.transform()
 	if err != nil {
@@ -210,10 +213,6 @@ func (submitArgs *submitTFJobArgs) transform() error {
 		if submitArgs.PSImage == "" {
 			submitArgs.PSImage = submitArgs.Image
 		}
-	}
-
-	if submitArgs.UseTensorboard {
-		submitArgs.HostLogPath = fmt.Sprintf("/arena_logs/training%s", util.RandomInt32())
 	}
 
 	// check Gang scheduler

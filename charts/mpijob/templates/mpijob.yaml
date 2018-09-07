@@ -41,14 +41,16 @@ spec:
       {{- end }}
       volumes:
       {{- if .Values.useTensorboard }}
+      {{- if .Values.isLocalLogging }}
       - hostPath:
           path: "{{ .Values.hostLogPath }}"
         name: training-logs-volume
-      {{- end}}
+      {{- end }}
+      {{- end }}
       {{- if .Values.syncMode }}
       - name: code-sync
         emptyDir: {}
-      {{- end}}
+      {{- end }}
       {{- if .Values.nvidiaPath }}
       - hostPath:
           path: "{{ .Values.nvidiaPath }}"
@@ -109,14 +111,14 @@ spec:
         volumeMounts:
           - name: code-sync
             mountPath: /code
-      {{- end}}
+      {{- end }}
       containers:
       - image: "{{ .Values.image }}"
         name: mpi   
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         {{- if .Values.workingDir }}
         workingDir: {{ .Values.workingDir }}
-        {{- end}}
+        {{- end }}
         command:
         - "sh"
         - "-c"
@@ -128,28 +130,28 @@ spec:
             alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
             {{- else}}
             nvidia.com/gpu: {{ $gpuCount | quote }}
-            {{- end}}
-            {{- end}}
+            {{- end }}
+            {{- end }}
             {{- if .Values.cpu }}
             cpu: {{ .Values.cpu | quote }}
-            {{- end}}
+            {{- end }}
             {{- if .Values.memory }}
             memory: {{ .Values.memory | quote }}
-            {{- end}}
+            {{- end }}
           limits:
             {{- if gt (int $gpuCount) 0}}   
             {{- if .Values.nvidiaPath }}
             alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
             {{- else}}
             nvidia.com/gpu: {{ $gpuCount | quote }}
-            {{- end}}
-            {{- end}}
+            {{- end }}
+            {{- end }}
             {{- if .Values.cpu }}
             cpu: {{ .Values.cpu | quote }}
-            {{- end}}
+            {{- end }}
             {{- if .Values.memory }}
             memory: {{ .Values.memory | quote }}
-            {{- end}}
+            {{- end }}
         env:
         {{- if .Values.envs }}            
         {{- range $key, $value := .Values.envs }}
@@ -163,9 +165,11 @@ spec:
         {{- end }}
         volumeMounts:
         {{- if .Values.useTensorboard }}
+        {{- if .Values.isLocalLogging }}
         - mountPath: {{ .Values.trainingLogdir }}
           name: training-logs-volume
-        {{- end}}
+        {{- end }}
+        {{- end }}
         {{- if .Values.syncMode }}
         {{- if .Values.workingDir }}
         - name: code-sync
@@ -173,8 +177,8 @@ spec:
         {{- else }}
         - name: code-sync
           mountPath: /code
-        {{- end}}
-        {{- end}}
+        {{- end }}
+        {{- end }}
         {{- if .Values.nvidiaPath }}
         - mountPath: /usr/local/nvidia
           name: nvidia
