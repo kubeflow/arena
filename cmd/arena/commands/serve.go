@@ -30,21 +30,23 @@ var (
 )
 
 type ServeArgs struct {
-	Image          string            `yaml:"image"`          // --image
-	Gpus           int               `yaml:"gpus"`           // --gpus
-	Cpu            string            `yaml:"cpu"`            // --cpu
-	Memory         string            `yaml:"memory"`         // --memory
-	Envs           map[string]string `yaml:"envs"`           // --envs
-	Command        string            `yaml:"command"`        // --command
-	Replicas       int               `yaml:"replicas"`       // --replicas
-	Port           int               `yaml:"port"`           // --port
-	RestfulPort    int               `yaml:"rest_api_port"`  // --restfulPort
-	ModelName      string            `yaml:"modelName"`      // --modelName
-	ModelPath      string            `yaml:"modelPath"`      // --modelPath
-	EnableIstio    bool              `yaml:"enableIstio"`    // --enableIstio
-	ServingName    string            `yaml:"servingName"`    // --servingName
-	ServingVersion string            `yaml:"servingVersion"` // --servingVersion
-	ModelDirs      map[string]string `yaml:"modelDirs"`
+	Image           string            `yaml:"image"`           // --image
+	ImagePullPolicy string            `yaml:"imagePullPolicy"` // --imagePullPolicy
+	Gpus            int               `yaml:"gpus"`            // --gpus
+	Cpu             string            `yaml:"cpu"`             // --cpu
+	Memory          string            `yaml:"memory"`          // --memory
+	Envs            map[string]string `yaml:"envs"`            // --envs
+	Command         string            `yaml:"command"`         // --command
+	Replicas        int               `yaml:"replicas"`        // --replicas
+	Port            int               `yaml:"port"`            // --port
+	RestfulPort     int               `yaml:"rest_api_port"`   // --restfulPort
+	ModelName       string            `yaml:"modelName"`       // --modelName
+	ModelPath       string            `yaml:"modelPath"`       // --modelPath
+	EnableIstio     bool              `yaml:"enableIstio"`     // --enableIstio
+	ExposeService   bool              `yaml:"exposeService"`   // --exposeService
+	ServingName     string            `yaml:"servingName"`     // --servingName
+	ServingVersion  string            `yaml:"servingVersion"`  // --servingVersion
+	ModelDirs       map[string]string `yaml:"modelDirs"`
 }
 
 func (s ServeArgs) validateIstioEnablement() error {
@@ -90,7 +92,8 @@ func ParseMountPath(dataset []string) (err error) {
 func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 
 	// create subcommands
-	command.Flags().StringVar(&serveArgs.Image, "image", defaultTfServingImage, "the docker image name of serve job, default image is "+defaultTfServingImage)
+	command.Flags().StringVar(&serveArgs.Image, "image", defaultTfServingImage, "the docker image name of serve job, and the default image is "+defaultTfServingImage)
+	command.Flags().StringVar(&serveArgs.ImagePullPolicy, "imagePullPolicy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
 	command.Flags().StringVar(&serveArgs.Command, "command", "", "the command will inject to container's command.")
 	command.Flags().IntVar(&serveArgs.Gpus, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
@@ -100,6 +103,7 @@ func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&envs, "envs", "e", []string{}, "the environment variables")
 	command.Flags().StringVar(&serveArgs.ModelName, "modelName", "", "the model name for serving")
 	command.Flags().BoolVar(&serveArgs.EnableIstio, "enableIstio", false, "enable Istio for serving or not (disable Istio by default)")
+	command.Flags().BoolVar(&serveArgs.ExposeService, "exposeService", false, "expose service using Istio gateway for external access or not (not expose by default)")
 	command.Flags().StringVar(&serveArgs.ServingName, "servingName", "", "the serving name")
 	command.Flags().StringVar(&serveArgs.ServingVersion, "servingVersion", "", "the serving version")
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")

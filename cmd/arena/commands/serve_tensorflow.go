@@ -95,7 +95,8 @@ type ServeTensorFlowArgs struct {
 }
 
 func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Clientset, args []string) (err error) {
-	serveTensorFlowArgs.Command = strings.Join(args, " ")
+	//serveTensorFlowArgs.Command = strings.Join(args, " ")
+	log.Debugf("command: %s", serveTensorFlowArgs.Command)
 
 	if serveTensorFlowArgs.ModelConfigFile == "" {
 		// need to validate modelName, modelPath and versionPolicy if not specify modelConfigFile

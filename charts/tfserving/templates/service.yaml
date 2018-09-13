@@ -18,7 +18,7 @@ spec:
     - name: serving
       port: {{ .Values.port }}
       targetPort: {{ .Values.port }}
-    - name: serving-rest
+    - name: http-serving
       port: {{ .Values.rest_api_port }}
       targetPort: {{ .Values.rest_api_port }}
   selector:

@@ -77,7 +77,7 @@ spec:
             initialDelaySeconds: 15
             timeoutSeconds: 1
           resources:
-            requests:
+            limits:
               {{- if .Values.cpu }}
               cpu: {{ .Values.cpu }}
               {{- end }}
