@@ -39,9 +39,9 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 	)
 
 	var command = &cobra.Command{
-		Use:     "traffic-router-split",
+		Use:     "traffic-split",
 		Short:   "Adjust traffic routing dynamically for tfserving jobs",
-		Aliases: []string{"trs", "traffic-router", "traffic-split", "traffic-shift", "traffic-shifting"},
+		Aliases: []string{"trs", "traffic-router", "traffic-router-split", "traffic-shift", "traffic-shifting"},
 		Run: func(cmd *cobra.Command, args []string) {
 			/*if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
