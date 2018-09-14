@@ -160,8 +160,8 @@ type StringMatchPrefix struct {
 }
 
 type DestinationWeight struct {
-	*istiov1alpha3.DestinationWeight
 	Destination *Destination `protobuf:"bytes,1,opt,name=destination" json:"destination,omitempty"`
+	Weight      int32        `protobuf:"varint,2,opt,name=weight,proto3" json:"weight"`
 }
 
 type Destination struct {
@@ -217,9 +217,7 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 					Host:   serviceName,
 				},
 			},
-			DestinationWeight: &istiov1alpha3.DestinationWeight{
-				Weight: iweightArray[i],
-			},
+			Weight: iweightArray[i],
 		}
 
 	}
@@ -242,7 +240,7 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 		},
 		Spec: VirtualService{
 			VirtualService: &istiov1alpha3.VirtualService{
-				Hosts:    []string{serviceName},
+				Hosts: []string{serviceName},
 			},
 			Http: []*HTTPRoute{
 				{
