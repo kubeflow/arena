@@ -16,7 +16,9 @@ package commands
 
 import (
 	"fmt"
+	"path"
 
+	"github.com/kubeflow/arena/util"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +29,20 @@ type submitTensorboardArgs struct {
 	TensorboardImage string `yaml:"tensorboardImage"` // --tensorboardImage
 	TrainingLogdir   string `yaml:"trainingLogdir"`   // --logdir
 	HostLogPath      string `yaml:"hostLogPath"`
+	IsLocalLogging   bool   `yaml:"isLocalLogging"`
+}
+
+func (submitArgs *submitTensorboardArgs) processTensorboad() {
+	if submitArgs.UseTensorboard {
+		if path.IsAbs(submitArgs.HostLogPath) {
+			submitArgs.HostLogPath = fmt.Sprintf("/arena_logs/training%s", util.RandomInt32())
+			submitArgs.IsLocalLogging = true
+		} else {
+			// doing nothing for hdfs path
+			log.Debugf("Doing nothing for logging Path %s", submitArgs.HostLogPath)
+			submitArgs.IsLocalLogging = false
+		}
+	}
 }
 
 func tensorboardURL(name, namespace string) (url string, err error) {
