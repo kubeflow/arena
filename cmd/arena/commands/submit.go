@@ -104,6 +104,7 @@ func (s *submitArgs) transform() (err error) {
 		}
 		s.DataSet = transformSliceToMap(dataset, ":")
 	}
+
 	return nil
 }
 
