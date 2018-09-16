@@ -78,8 +78,8 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 	// Traffic Routing Args
 	command.Flags().StringVar(&submitArgs.ServingName, "servingName", "", "the serving name")
 	command.Flags().StringVar(&submitArgs.Namespace, "namespace", "", "namespace (default \"default\")")
-	command.Flags().StringVar(&submitArgs.Versions, "servingVersions", "[]", "Model versions which the traffic will be routed to, e.g. [1,2,3]")
-	command.Flags().StringVar(&submitArgs.Weights, "weights", "[]", "Weight percentage values for each model version which the traffic will be routed to,e.g. [70,20,10]")
+	command.Flags().StringVar(&submitArgs.Versions, "servingVersions", "", "Model versions which the traffic will be routed to, e.g. 1,2,3")
+	command.Flags().StringVar(&submitArgs.Weights, "weights", "", "Weight percentage values for each model version which the traffic will be routed to,e.g. 70,20,10")
 	command.MarkFlagRequired("servingName")
 	command.MarkFlagRequired("servingVersions")
 	command.MarkFlagRequired("weights")
