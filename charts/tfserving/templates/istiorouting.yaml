@@ -7,13 +7,16 @@ metadata:
 spec:
   hosts:
   - "{{ .Values.servingName }}"
+  {{- if eq .Values.exposeService true }}
+  gateways:
+    - "{{ .Values.servingName }}-gateway"
+    - "mesh"
+  {{- end }}
   http:
   - route:
     - destination:
         host: {{ .Values.servingName }}
-        subset: v{{ .Values.servingVersion }}
-        port:
-          number: {{ .Values.rest_api_port }}
+        subset: "subset-{{ .Values.servingVersion }}"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -22,8 +25,25 @@ metadata:
 spec:
   host: {{ .Values.servingName }}
   subsets:
-  - name: v{{ .Values.servingVersion }}
+  - name: "subset-{{ .Values.servingVersion }}"
     labels:
       serviceVersion: "{{ .Values.servingVersion }}"
+---
+{{- if eq .Values.exposeService true }}
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: "{{ .Values.servingName }}-gateway"
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+{{- end }}
 {{- end }}
 {{- end }}

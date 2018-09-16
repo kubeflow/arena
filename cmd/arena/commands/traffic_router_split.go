@@ -39,9 +39,9 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 	)
 
 	var command = &cobra.Command{
-		Use:     "traffic-router-split",
+		Use:     "traffic-split",
 		Short:   "Adjust traffic routing dynamically for tfserving jobs",
-		Aliases: []string{"trs", "traffic-router"},
+		Aliases: []string{"trs", "traffic-router", "traffic-router-split", "traffic-shift", "traffic-shifting"},
 		Run: func(cmd *cobra.Command, args []string) {
 			/*if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
@@ -78,10 +78,10 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 	// Traffic Routing Args
 	command.Flags().StringVar(&submitArgs.ServingName, "servingName", "", "the serving name")
 	command.Flags().StringVar(&submitArgs.Namespace, "namespace", "", "namespace (default \"default\")")
-	command.Flags().StringVar(&submitArgs.Versions, "versions", "[]", "Model versions which the traffic will be routed to, e.g. [1,2,3]")
-	command.Flags().StringVar(&submitArgs.Weights, "weights", "[]", "Weight percentage values for each model version which the traffic will be routed to,e.g. [70,20,10]")
+	command.Flags().StringVar(&submitArgs.Versions, "servingVersions", "", "Model versions which the traffic will be routed to, e.g. 1,2,3")
+	command.Flags().StringVar(&submitArgs.Weights, "weights", "", "Weight percentage values for each model version which the traffic will be routed to,e.g. 70,20,10")
 	command.MarkFlagRequired("servingName")
-	command.MarkFlagRequired("versions")
+	command.MarkFlagRequired("servingVersions")
 	command.MarkFlagRequired("weights")
 
 	return command
@@ -160,8 +160,8 @@ type StringMatchPrefix struct {
 }
 
 type DestinationWeight struct {
-	*istiov1alpha3.DestinationWeight
 	Destination *Destination `protobuf:"bytes,1,opt,name=destination" json:"destination,omitempty"`
+	Weight      int32        `protobuf:"varint,2,opt,name=weight,proto3" json:"weight"`
 }
 
 type Destination struct {
@@ -196,7 +196,7 @@ func generateDestinationRule(namespace string, serviceName string, versionArray 
 		label := map[string]string{}
 		label["serviceVersion"] = versionArray[i]
 		subsets[i] = &istiov1alpha3.Subset{
-			Name:   "v" + versionArray[i],
+			Name:   "subset-" + versionArray[i],
 			Labels: label,
 		}
 
@@ -213,16 +213,11 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 		routes[i] = &DestinationWeight{
 			Destination: &Destination{
 				Destination: &istiov1alpha3.Destination{
-					Subset: "v" + versionArray[i],
+					Subset: "subset-" + versionArray[i],
 					Host:   serviceName,
 				},
-				Port: &PortSelector{
-					Number: 8501,
-				},
 			},
-			DestinationWeight: &istiov1alpha3.DestinationWeight{
-				Weight: iweightArray[i],
-			},
+			Weight: iweightArray[i],
 		}
 
 	}
@@ -230,7 +225,7 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 	httpMatchRequests := make([]*HTTPMatchRequest, 1)
 	httpMatchRequests[0] = &HTTPMatchRequest{
 		Uri: &StringMatchPrefix{
-			Prefix: "/v1/models",
+			Prefix: "/",
 		},
 	}
 
@@ -238,21 +233,20 @@ func generateVirtualService(namespace string, serviceName string, versionArray [
 		Kind:       "VirtualService",
 		APIVersion: "networking.istio.io/v1alpha3",
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        serviceName + "-service",
+			Name:        serviceName,
 			Namespace:   namespace,
 			Labels:      nil,
 			Annotations: nil,
 		},
 		Spec: VirtualService{
 			VirtualService: &istiov1alpha3.VirtualService{
-				Hosts:    []string{"*"},
-				Gateways: []string{serviceName + "-gateway"},
+				Hosts: []string{serviceName},
 			},
 			Http: []*HTTPRoute{
 				{
 					HTTPRoute: &istiov1alpha3.HTTPRoute{
 						Rewrite: &istiov1alpha3.HTTPRewrite{
-							Uri:       "/v1/models",
+							Uri:       "/",
 							Authority: "",
 						},
 					},
@@ -457,7 +451,7 @@ func runTrafficRouterSplit(client *kubernetes.Clientset, istioClient *rest.RESTC
 	jsonVirtualService, err := json.Marshal(preprocesObject.VirtualService)
 	log.Debugf("virtual service: %s", jsonVirtualService)
 
-	virtualServiceName := preprocesObject.ServiceName + "-service"
+	virtualServiceName := preprocesObject.ServiceName
 	log.Debugf("virtualServiceName:%s", virtualServiceName)
 	destinationRuleName := preprocesObject.ServiceName
 	log.Debugf("destinationRuleName:%s", virtualServiceName)
