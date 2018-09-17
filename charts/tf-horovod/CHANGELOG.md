@@ -1,3 +1,6 @@
+### 0.13.0
+* Support RoCE by using https://github.com/Mellanox/k8s-rdma-sriov-dev-plugin, only support hostNetwork now.
+
 ### 0.12.0
 * support standalone training without sshd requirement
 

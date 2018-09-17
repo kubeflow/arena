@@ -17,3 +17,7 @@
 
 * Support tensorboard loading event log from hdfs path
 
+### 0.5.0
+
+* Support RoCE by using https://github.com/Mellanox/k8s-rdma-sriov-dev-plugin, only support hostNetwork now.
+

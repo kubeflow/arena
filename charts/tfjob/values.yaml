@@ -6,6 +6,7 @@ useHostNetwork: true
 useHostPID: true
 useHostIPC: true
 gpuCount: 0 # user define
+privileged: false
 
 chief: 0
 # chiefPort: 2221
@@ -45,6 +46,9 @@ binpack: false
 # enable gang scheduler
 enableGangScheduler: false
 schedulerName: kube-batchd
+
+# enable RDMA support
+enableRDMA: false
 
 # hostLogPath: /training_logs/112345_logs
 

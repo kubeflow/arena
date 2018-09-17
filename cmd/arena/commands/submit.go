@@ -51,6 +51,8 @@ type submitArgs struct {
 	// DataDir  string            `yaml:"dataDir"`  // --dataDir
 	DataSet  map[string]string `yaml:"dataset"`
 	DataDirs []dataDirVolume   `yaml:"dataDirs"`
+
+	EnableRDMA bool `yaml:"enableRDMA"` // --rdma
 }
 
 type dataDirVolume struct {
@@ -136,6 +138,8 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
 	command.Flags().StringArrayVar(&dataDirs, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
+	// enable RDMA or not, support hostnetwork for now
+	command.Flags().BoolVar(&submitArgs.EnableRDMA, "rdma", false, "enable RDMA")
 }
 
 func init() {
