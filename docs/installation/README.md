@@ -85,3 +85,33 @@ make
 ```
 kubectl create -f arena/kubernetes-artifacts/kube-batchd/kube-batched.yaml
 ```
+
+10\. Enable shell autocompletion
+
+On Linux, please use bash
+
+On CentOS Linux, you may need to install the bash-completion package which is not installed by default.
+
+```
+yum install bash-completion -y
+```
+
+To add arena autocompletion to your current shell, run source <(arena completion bash).
+
+To add arena autocompletion to your profile, so it is automatically loaded in future shells run:
+
+```
+echo "source <(arena completion bash)" >> ~/.bashrc
+```
+
+Then you can use [tab] to auto complete the command
+
+```
+# arena list
+NAME            STATUS   TRAINER  AGE  NODE
+tf1             PENDING  TFJOB    0s   N/A
+caffe-1080ti-1  RUNNING  HOROVOD  45s  192.168.1.120
+# arena get [tab]
+caffe-1080ti-1  tf1
+```
+
