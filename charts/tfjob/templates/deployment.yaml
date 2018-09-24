@@ -1,5 +1,4 @@
 {{- if (not .Values.enableGangScheduler) -}}
-{{- if (not .Values.hasGangScheduler) -}}
 {{- if .Values.useTensorboard }}
 ---
 apiVersion: extensions/v1beta1
@@ -42,6 +41,12 @@ spec:
                 operator: In
                 values: 
                   - {{ .Release.Name }}
+              {{- if .Values.chief }}
+              - key: tf-replica-type
+                operator: In
+                values: 
+                  - "chief"
+              {{- else }}
               - key: tf-replica-index
                 operator: In
                 values: 
@@ -50,12 +55,22 @@ spec:
                 operator: In
                 values: 
                   - "worker"
+              {{- end }}
             topologyKey: kubernetes.io/hostname
       volumes:
         {{- if .Values.isLocalLogging }}
         - hostPath:
             path: "{{ .Values.hostLogPath }}"
           name: training-logs-volume
+        {{- end }}
+        {{- if (not .Values.isLocalLogging) }}
+        {{- if .Values.dataset }}   
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          persistentVolumeClaim:
+            claimName: "{{ $pvcName }}"
+        {{- end }}
+        {{- end }}
         {{- end }}
       containers:
       - name: tensorboard      
@@ -72,7 +87,13 @@ spec:
         {{- if .Values.isLocalLogging }}
         - mountPath: /output/training_logs
           name: training-logs-volume
+        {{- else }}
+        {{- if .Values.dataset }}   
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          mountPath: "{{ $destPath }}"
         {{- end }}
-{{- end }}
+        {{- end }}
+        {{- end }}
 {{- end }}
 {{- end }}

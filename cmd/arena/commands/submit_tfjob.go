@@ -90,6 +90,15 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboardImage", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel", "the docker image for tensorboard")
 	command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
 
+	// Estimator
+	command.Flags().BoolVar(&submitArgs.UseChief, "chief", false, "enable chief, which is requried for estimator.")
+	command.Flags().BoolVar(&submitArgs.UseEvaluator, "evaluator", false, "enable evaluator, which is optional for estimator.")
+	command.Flags().StringVar(&submitArgs.ChiefCpu, "ChiefCpu", "", "the cpu resource to use for the Chief, like 1 for 1 core.")
+	command.Flags().StringVar(&submitArgs.ChiefMemory, "ChiefMemory", "", "the memory resource to use for the Chief, like 1Gi.")
+	command.Flags().StringVar(&submitArgs.EvaluatorCpu, "evaluatorCpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
+	command.Flags().StringVar(&submitArgs.EvaluatorMemory, "evaluatorMemory", "", "the memory resource to use for the evaluator, like 1Gi.")
+	command.Flags().IntVar(&submitArgs.ChiefPort, "chiefPort", 22221, "the port of the chief.")
+
 	// command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
 	return command
 }
@@ -106,6 +115,17 @@ type submitTFJobArgs struct {
 	PSCpu          string `yaml:"psCPU"`          // --psCpu
 	PSMemory       string `yaml:"psMemory"`       // --psMemory
 	CleanPodPolicy string `yaml:"cleanPodPolicy"` // --cleanTaskPolicy
+	// For esitmator, it reuses workerImage
+	ChiefCount      int    `yaml:"chief,omitempty"`
+	EvaluatorCount  int    `yaml:"evaluator,omitempty"`
+	UseChief        bool   `yaml:",omitempty"`      // --chief
+	UseEvaluator    bool   `yaml:",omitempty"`      // --evaluator
+	ChiefPort       int    `yaml:"chiefPort"`       // --chiefPort
+	ChiefCpu        string `yaml:"ChiefCPU"`        // --chiefCpu
+	ChiefMemory     string `yaml:"ChiefMemory"`     // --chiefMemory
+	EvaluatorCpu    string `yaml:"EvaluatorCPU"`    // --evaluatorCpu
+	EvaluatorMemory string `yaml:"EvaluatorMemory"` // --evaluatorMemory
+
 	// determine if it has gang scheduler
 	HasGangScheduler bool `yaml:"hasGangScheduler"`
 
@@ -137,14 +157,14 @@ func (submitArgs *submitTFJobArgs) prepare(args []string) (err error) {
 		return err
 	}
 
-	// process tensorboard
-	submitArgs.processTensorboad()
-
 	commonArgs := &submitArgs.submitArgs
 	err = commonArgs.transform()
 	if err != nil {
 		return nil
 	}
+
+	// process tensorboard
+	submitArgs.processTensorboad(submitArgs.DataSet)
 
 	if len(envs) > 0 {
 		submitArgs.Envs = transformSliceToMap(envs, "=")
@@ -215,6 +235,12 @@ func (submitArgs *submitTFJobArgs) transform() error {
 		}
 	}
 
+	// transform estimator
+	err := submitArgs.transformEstimator()
+	if err != nil {
+		return err
+	}
+
 	// check Gang scheduler
 	submitArgs.checkGangCapablitiesInCluster()
 
@@ -223,6 +249,35 @@ func (submitArgs *submitTFJobArgs) transform() error {
 
 func (submitArgs *submitTFJobArgs) addTFJobInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
+}
+
+func (submitArgs *submitTFJobArgs) transformEstimator() (err error) {
+	if submitArgs.UseChief {
+		if submitArgs.WorkerCount <= 0 {
+			return fmt.Errorf("chief mode is only for distributed training, --workers must be greater than 0")
+		}
+		if submitArgs.PSCount <= 0 {
+			return fmt.Errorf("chief mode is only for distributed training, --ps must be greater than 0")
+		}
+
+		submitArgs.ChiefCount = 1
+	}
+
+	if submitArgs.UseEvaluator {
+		if submitArgs.WorkerCount <= 0 {
+			return fmt.Errorf("evaluator mode is only for distributed training, --workers must be greater than 0")
+		}
+		if submitArgs.PSCount <= 0 {
+			return fmt.Errorf("evaluator mode is only for distributed training, --ps must be greater than 0")
+		}
+		if submitArgs.ChiefCount <= 0 {
+			return fmt.Errorf("evaluator mode is only for distributed training, --chief must be set")
+		}
+
+		submitArgs.EvaluatorCount = 1
+	}
+
+	return
 }
 
 func (submitArgs *submitTFJobArgs) checkGangCapablitiesInCluster() {

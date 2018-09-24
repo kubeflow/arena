@@ -1,5 +1,7 @@
 {{- $workers := .Values.workers -}}
 {{- $ps := .Values.ps -}}
+{{- $chief := .Values.chief -}}
+{{- $evaluator := .Values.evaluator -}}
 {{- $total := .Values.total -}}
 {{- if .Values.ps }}
 {{- if .Values.hasGangScheduler }}
@@ -14,7 +16,11 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+{{- if .Values.chief }}
+  minAvailable: {{ add $workers $ps $chief $evaluator }}
+{{- else }}
   minAvailable: {{ add $workers $ps }}
+{{- end }}
   selector:
     matchLabels:
       tf_job_name: {{ template "tfjob.fullname" . }}
