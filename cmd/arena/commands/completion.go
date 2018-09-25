@@ -44,6 +44,8 @@ variable.
 			}
 			shell := args[0]
 			rootCommand := NewCommand()
+			rootCommand.BashCompletionFunction = bashCompletionFunc
+
 			availableCompletions := map[string]func(io.Writer) error{
 				"bash": rootCommand.GenBashCompletion,
 				"zsh":  rootCommand.GenZshCompletion,
