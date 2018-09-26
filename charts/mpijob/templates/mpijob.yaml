@@ -138,6 +138,11 @@ spec:
             {{- if .Values.memory }}
             memory: {{ .Values.memory | quote }}
             {{- end }}
+            {{- if .Values.enableRDMA }}
+            {{- if .Values.useHostNetwork }}
+            rdma/hca: "1"
+            {{- end}}
+            {{- end}}
           limits:
             {{- if gt (int $gpuCount) 0}}   
             {{- if .Values.nvidiaPath }}
@@ -152,6 +157,11 @@ spec:
             {{- if .Values.memory }}
             memory: {{ .Values.memory | quote }}
             {{- end }}
+            {{- if .Values.enableRDMA }}
+            {{- if .Values.useHostNetwork }}
+            rdma/hca: "1"
+            {{- end}}
+            {{- end}}
         env:
         {{- if .Values.envs }}            
         {{- range $key, $value := .Values.envs }}
@@ -162,6 +172,11 @@ spec:
         {{- if .Values.privileged }}
         securityContext:
           privileged: true
+        {{- else if .Values.enableRDMA }}
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
         {{- end }}
         volumeMounts:
         {{- if .Values.useTensorboard }}
