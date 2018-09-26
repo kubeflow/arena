@@ -10,7 +10,7 @@ Follow the Istio [doc](https://istio.io/docs/setup/kubernetes/quick-start/#insta
 
 Istio by default [denies egress traffic](https://istio.io/docs/tasks/traffic-management/egress.html). Since TensorFlow serving component might need to read model files from outside, we need some cloud-specific [setting](https://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly). 
 
-1. Disable Istio for Tensorflow serving
+2\. Disable Istio for Tensorflow serving
 
 You can deploy and serve a Tensorflow model without Istio enablement. 
 
@@ -56,7 +56,7 @@ For example, you can submit a Tensorflow model with specific version policy as b
 Once this command is triggered, one Kubernetes service will be created to provide the exposed gRPC and RESTful APIs.
 
 
-2. Enable Istio for Tensorflow serving
+3\. Enable Istio for Tensorflow serving
 
 If you need to enable Istio for Tensorflow serving,  you can append the parameter `--enableIstio` into the command above (disable Istio by default).
 
@@ -105,7 +105,7 @@ Getting Started:
 
 ```
 
-3. List all the serving
+4\. List all the serving
 
 You can use the following command to list all the serving jobs.
 
@@ -115,7 +115,7 @@ You can use the following command to list all the serving jobs.
   mymnist-v1  v1       DEPLOYED
 ```
 
-4. Adjust traffic routing dynamically for tfserving jobs
+5\. Adjust traffic routing dynamically for tfserving jobs
    
 Deploy one new version of Tensorflow model with Istio enablement:
 ```
@@ -128,7 +128,7 @@ Then you can adjust traffic routing dynamically for all these two versions of tf
 # arena serve traffic-router-split --servingName=mymnist  --servingVersions=v1,v2 --weights=50,50
 ```
 
-5. Run the test
+6\. Run the test
 
 Start the `sleep` service so you can use `curl` to provide load:
 
@@ -165,7 +165,7 @@ In this container, use `curl` to call the exposed Tensorflow serving API:
 # curl -X POST   http://mymnist:8501/v1/models/mnist:predict    -d '{"signature_name":"predict","instances":[{"sepal_length":[6.8],"sepal_width":[3.2],"petal_length":[5.9],"petal_width":[2.3]}]}' 
 ```
 
-6. Delete one serving job
+7\. Delete one serving job
 
 You can use the following command to delete a serving job and its associated pods
                                      
