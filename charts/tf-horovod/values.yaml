@@ -43,6 +43,8 @@ jobmon:
 syncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
 # imagePullPolicy: Always
 
+# enable RDMA support
+enableRDMA: false
 
 retry: 0
 

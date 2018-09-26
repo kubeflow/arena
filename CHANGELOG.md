@@ -8,6 +8,8 @@
 - Add top node/job for checking GPU allocations in Kubernetes
 - Add MPIJob v1alpha1 for Solo/Distributed Training
 - Add gang scheduling support for TFJob
+- Add Data
+- Add RDMA support
 
 ### Changed
 
