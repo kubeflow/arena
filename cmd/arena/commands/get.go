@@ -40,10 +40,7 @@ var dashboardURL string
 
 // NewGetCommand
 func NewGetCommand() *cobra.Command {
-	var (
-		output string
-	)
-
+	printArgs := PrintArgs{}
 	var command = &cobra.Command{
 		Use:   "get training job",
 		Short: "display details of a training job",
@@ -76,12 +73,18 @@ func NewGetCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			printTrainingJob(job, output)
+			printTrainingJob(job, printArgs)
 		},
 	}
 
-	command.Flags().StringVarP(&output, "output", "o", "", "Output format. One of: json|yaml|wide")
+	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Specify if show pending pod's events.")
+	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
 	return command
+}
+
+type PrintArgs struct {
+	ShowEvents bool
+	Output string
 }
 
 func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job TrainingJob, err error) {
@@ -99,25 +102,25 @@ func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job T
 	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
 }
 
-func printTrainingJob(job TrainingJob, outFmt string) {
-	switch outFmt {
+func printTrainingJob(job TrainingJob, printArgs PrintArgs) {
+	switch printArgs.Output {
 	case "name":
 		fmt.Println(job.Name())
-	// for future CRD support
-	// case "json":
-	// 	outBytes, _ := json.MarshalIndent(job, "", "    ")
-	// 	fmt.Println(string(outBytes))
-	// case "yaml":
-	// 	outBytes, _ := yaml.Marshal(job.)
-	// 	fmt.Print(string(outBytes))
+		// for future CRD support
+		// case "json":
+		// 	outBytes, _ := json.MarshalIndent(job, "", "    ")
+		// 	fmt.Println(string(outBytes))
+		// case "yaml":
+		// 	outBytes, _ := yaml.Marshal(job.)
+		// 	fmt.Print(string(outBytes))
 	case "wide", "":
-		printSingleJobHelper(job, outFmt)
+		printSingleJobHelper(job, printArgs)
 	default:
-		log.Fatalf("Unknown output format: %s", outFmt)
+		log.Fatalf("Unknown output format: %s", printArgs.Output)
 	}
 }
 
-func printSingleJobHelper(job TrainingJob, outFmt string) {
+func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	// apply a dummy FgDefault format to align tabwriter with the rest of the columns
@@ -149,7 +152,7 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 		fmt.Fprintf(w, "%s \t\n", url)
 	}
 
-	if GetJobRealStatus(job) == "PENDING" {
+	if printArgs.ShowEvents {
 		printEvents(w, job.ChiefPod().Namespace, pods)
 	}
 
@@ -158,15 +161,24 @@ func printSingleJobHelper(job TrainingJob, outFmt string) {
 }
 
 func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
-	eventMap, _ := GetPodEvents(clientset, namespace, pods)
-	fmt.Fprintf(w, "\nEvents: \n")
-	fmt.Fprintf(w, "INSTANCE\tTYPE\tAGE\tMESSAGE\n")
-	fmt.Fprintf(w, "--------\t----\t---\t-------\n")
+	eventsMap, _ := GetPodEvents(clientset, namespace, pods)
+	pendingPods := []v1.Pod{}
 	for _, pod := range pods {
 		if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
 			continue
 		}
-		events := eventMap[pod.Name]
+		pendingPods = append(pendingPods, pod)
+	}
+	fmt.Fprintf(w, "\nEvents: \n")
+	if len(pendingPods) == 0 {
+		fmt.Fprintln(w, "No events for pending pod")
+		return
+	}
+	fmt.Fprintf(w, "INSTANCE\tTYPE\tAGE\tMESSAGE\n")
+	fmt.Fprintf(w, "--------\t----\t---\t-------\n")
+
+	for _, pod := range pendingPods {
+		events := eventsMap[pod.Name]
 		for _, event := range events {
 			instanceName := pod.Name
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
