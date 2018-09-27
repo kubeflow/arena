@@ -194,20 +194,9 @@ func (submitArgs submitTFJobArgs) check() error {
 		return fmt.Errorf("--image or --workerImage must be set")
 	}
 
-	// distributed tensorflow should enable workerPort
-	if submitArgs.WorkerCount+submitArgs.PSCount > 1 {
-		if submitArgs.WorkerPort <= 0 {
-			return fmt.Errorf("--port or --workerPort must be set")
-		}
-	}
-
 	if submitArgs.PSCount > 0 {
 		if submitArgs.PSImage == "" {
 			return fmt.Errorf("--image or --psImage must be set")
-		}
-
-		if submitArgs.PSPort <= 0 {
-			return fmt.Errorf("--port or --psPort must be set")
 		}
 	}
 
@@ -215,18 +204,23 @@ func (submitArgs submitTFJobArgs) check() error {
 }
 
 func (submitArgs *submitTFJobArgs) transform() error {
-	if submitArgs.WorkerPort == 0 {
-		submitArgs.WorkerPort = submitArgs.Port
+	autoSelectWorkerPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.WorkerPort)
+	if err != nil {
+		return err
 	}
+	submitArgs.WorkerPort = autoSelectWorkerPort
 
 	if submitArgs.WorkerImage == "" {
 		submitArgs.WorkerImage = submitArgs.Image
 	}
 
 	if submitArgs.PSCount > 0 {
-		if submitArgs.PSPort == 0 {
-			submitArgs.PSPort = submitArgs.Port
+
+		autoSelectPsPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.PSPort)
+		if err != nil {
+			return err
 		}
+		submitArgs.PSPort = autoSelectPsPort
 
 		if submitArgs.PSImage == "" {
 			submitArgs.PSImage = submitArgs.Image
