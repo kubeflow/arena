@@ -1,3 +1,6 @@
+### 0.14.0
+* add annotations, for cloud provider customization
+
 ### 0.13.0
 * Support RoCE by using https://github.com/Mellanox/k8s-rdma-sriov-dev-plugin, only support hostNetwork now.
 

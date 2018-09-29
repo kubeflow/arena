@@ -30,6 +30,10 @@ spec:
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
         role: mpiworker
+      annotations:
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
     spec:
       {{- if .Values.useHostNetwork }}
       hostNetwork: {{ .Values.useHostNetwork }}
