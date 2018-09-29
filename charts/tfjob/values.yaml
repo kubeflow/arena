@@ -12,21 +12,29 @@ chief: 0
 # Possible value: Chief/Master
 chiefName: Chief
 # chiefPort: 2221
+chiefAnnotations: {}
+# chiefAnnotations:
+#  k8s.aliyun.com/eni: "true"
 
 workers: 1
 workerImage: kubeflow/tf-dist-mnist-test:1.0
 # workerCpu: 1
 # workerMemory: 1 Gi
 # workPort: 2222
+workerAnnotations: {}
+# workerAnnotations:
+#  k8s.aliyun.com/eni: "true"
 
 ps: 0
 psImage: kubeflow/tf-dist-mnist-test:1.0
 # psCpu: 1
 # psMemory: 1 Gi
 # psPort: 2223
+psAnnotations: {}
 
 evaluator: 0
 evaluatorImage: kubeflow/tf-dist-mnist-test:1.0
+evaluatorAnnotations: {}
 
 # rsync image
 rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
