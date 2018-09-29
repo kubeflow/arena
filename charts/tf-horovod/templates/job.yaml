@@ -21,6 +21,10 @@ spec:
         app: {{ template "horovod.name" . }}
         release: {{ .Release.Name }}
         role: mpimaster
+      annotations:
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
     spec:
       {{- if .Values.useHostNetwork }}
       hostNetwork: {{ .Values.useHostNetwork }}

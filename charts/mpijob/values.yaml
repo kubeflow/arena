@@ -22,3 +22,6 @@ tensorboardServiceType: NodePort
 
 launcherOnMaster: true
 retry: 0
+
+workerAnnotations: {}
+# workerAnnotations:
