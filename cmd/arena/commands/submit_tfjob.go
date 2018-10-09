@@ -76,8 +76,8 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.WorkerImage, "workerImage", "", "the docker image for tensorflow workers")
 	command.Flags().StringVar(&submitArgs.PSImage, "psImage", "", "the docker image for tensorflow workers")
 	command.Flags().IntVar(&submitArgs.PSCount, "ps", 0, "the number of the parameter servers.")
-	command.Flags().IntVar(&submitArgs.PSPort, "psPort", 22223, "the port of the parameter server.")
-	command.Flags().IntVar(&submitArgs.WorkerPort, "workerPort", 22222, "the port of the worker.")
+	command.Flags().IntVar(&submitArgs.PSPort, "psPort", 0, "the port of the parameter server.")
+	command.Flags().IntVar(&submitArgs.WorkerPort, "workerPort", 0, "the port of the worker.")
 	command.Flags().StringVar(&submitArgs.WorkerCpu, "workerCpu", "", "the cpu resource to use for the worker, like 1 for 1 core.")
 	command.Flags().StringVar(&submitArgs.WorkerMemory, "workerMemory", "", "the memory resource to use for the worker, like 1Gi.")
 	command.Flags().StringVar(&submitArgs.PSCpu, "psCpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
@@ -206,7 +206,7 @@ func (submitArgs submitTFJobArgs) check() error {
 func (submitArgs *submitTFJobArgs) transform() error {
 	autoSelectWorkerPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.WorkerPort)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to select worker port: %++v", err)
 	}
 	submitArgs.WorkerPort = autoSelectWorkerPort
 
@@ -215,10 +215,9 @@ func (submitArgs *submitTFJobArgs) transform() error {
 	}
 
 	if submitArgs.PSCount > 0 {
-
 		autoSelectPsPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.PSPort)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to select ps port: %++v", err)
 		}
 		submitArgs.PSPort = autoSelectPsPort
 

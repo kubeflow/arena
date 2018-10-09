@@ -14,26 +14,30 @@ const AUTO_SELECT_PORT_MIN = 20000
 const AUTO_SELECT_PORT_MAX = 30000
 
 // If default port is available, use it
-// else select port automatically
-func SelectAvailablePortWithDefault(client *kubernetes.Clientset, defaultPort int) (int, error) {
+// If not set defaultPort, select port automatically
+func SelectAvailablePortWithDefault(client *kubernetes.Clientset, port int) (int, error) {
 	if _, err := initK8sClusterUsedPort(client); err != nil {
 		return 0, err
 	}
-	if !isPortInUse(defaultPort) {
-		return defaultPort, nil
+	// if set port and is being used, return error
+	if port != 0 {
+		if isPortInUsed(port) {
+			return 0, fmt.Errorf("port %d is in used by cluster HostPort or Service", port)
+		}
+		return port, nil
 	}
 	return SelectAvailablePort(client)
 }
 
 // Select a available port in range (AUTO_SELECT_PORT_MIN ~ AUTO_SELECT_PORT_MAX), and exclude used ports in k8s
-// if 30000 is selected this time, make sure next time it will select 30001
+// if 20000 is selected this time, make sure next time it will select 20001
 func SelectAvailablePort(client *kubernetes.Clientset) (int, error) {
 	if _, err := initK8sClusterUsedPort(client); err != nil {
 		return 0, err
 	}
 	port := AUTO_SELECT_PORT_MIN
 	for port < AUTO_SELECT_PORT_MAX {
-		if ! isPortInUse(port) {
+		if ! isPortInUsed(port) {
 			setUsedPort(port)
 			return port, nil
 		}
@@ -105,7 +109,7 @@ func unassignedNonTerminatedPod(pod *v1.Pod) bool {
 	return true
 }
 
-func isPortInUse(port int) bool {
+func isPortInUsed(port int) bool {
 	for _, usedPort := range k8sClusterUsedPorts {
 		if port == usedPort {
 			return true

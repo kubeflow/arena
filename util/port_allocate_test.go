@@ -50,19 +50,20 @@ func TestSelectAvailablePort(t *testing.T)  {
 		t.Errorf("Port should be %d, when latest port is %d", port1 + 1, port1)
 	}
 
-	k8sClusterUsedPorts = []int {30000, 30001}
+	k8sClusterUsedPorts = []int {20000, 20001}
 	port3, err := SelectAvailablePort(clientset)
 	if err != nil {
 		t.Errorf("failed to SelectAvailablePort, %++v", err)
 	}
 	t.Logf("port is %d", port3)
-	if port3 != 30002 {
+	if port3 != 20002 {
 		t.Errorf("Port should be 30002, when 30000,30001 is used")
 	}
 	port4, err := SelectAvailablePortWithDefault(clientset, port3)
-	if err != nil {
-		t.Errorf("failed to SelectAvailablePortWithDefault, %++v", err)
+	if err == nil {
+		t.Errorf("SelectAvailablePortWithDefault with used port should return error")
 	}
+	port4, err = SelectAvailablePortWithDefault(clientset, 0)
 	t.Logf("port is %d", port4)
 	if port4 == port3 {
 		t.Errorf("If default port is used, chose another one")
