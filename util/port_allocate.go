@@ -10,8 +10,8 @@ import (
 
 var k8sClusterUsedPorts = []int{}
 
-const AUTO_SELECT_PORT_MIN = 30000
-const AUTO_SELECT_PORT_MAX = 50000
+const AUTO_SELECT_PORT_MIN = 20000
+const AUTO_SELECT_PORT_MAX = 30000
 
 // If default port is available, use it
 // else select port automatically
