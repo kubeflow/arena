@@ -85,7 +85,7 @@ spec:
               memory: {{ .Values.memory }}
               {{- end }}
               {{- if gt (int $gpuCount) 0}}
-              nvidia.com/gpu: {{ .Values.gpu }}
+              nvidia.com/gpu: {{ .Values.gpuCount }}
               {{- end }}
           volumeMounts:
             {{- if .Values.modelDirs }}

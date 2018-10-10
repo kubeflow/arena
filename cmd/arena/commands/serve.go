@@ -32,7 +32,7 @@ var (
 type ServeArgs struct {
 	Image           string            `yaml:"image"`           // --image
 	ImagePullPolicy string            `yaml:"imagePullPolicy"` // --imagePullPolicy
-	Gpus            int               `yaml:"gpus"`            // --gpus
+	GPUCount        int               `yaml:"gpuCount"`            // --gpus
 	Cpu             string            `yaml:"cpu"`             // --cpu
 	Memory          string            `yaml:"memory"`          // --memory
 	Envs            map[string]string `yaml:"envs"`            // --envs
@@ -95,7 +95,7 @@ func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&serveArgs.Image, "image", defaultTfServingImage, "the docker image name of serve job, and the default image is "+defaultTfServingImage)
 	command.Flags().StringVar(&serveArgs.ImagePullPolicy, "imagePullPolicy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
 	command.Flags().StringVar(&serveArgs.Command, "command", "", "the command will inject to container's command.")
-	command.Flags().IntVar(&serveArgs.Gpus, "gpus", 0, "the limit GPU count of each replica to run the serve.")
+	command.Flags().IntVar(&serveArgs.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.Replicas, "replicas", 1, "the replicas number of the serve job.")
