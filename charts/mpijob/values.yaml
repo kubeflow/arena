@@ -22,3 +22,7 @@ tensorboardServiceType: NodePort
 
 launcherOnMaster: true
 retry: 0
+
+workerAnnotations: {}
+# workerAnnotations:
+#  k8s.aliyun.com/eni: "true"

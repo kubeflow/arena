@@ -190,7 +190,7 @@ spec:
       containers:
       - command:
         - /opt/tensorflow_k8s/dashboard/backend
-        image: registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v20180718-c9ed7effc14a
+        image: registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v20180901-454c5c1a
         name: tf-job-dashboard
         ports:
         - containerPort: 8080

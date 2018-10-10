@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/kubeflow/arena/util"
 	log "github.com/sirupsen/logrus"
@@ -32,17 +33,34 @@ type submitTensorboardArgs struct {
 	IsLocalLogging   bool   `yaml:"isLocalLogging"`
 }
 
-func (submitArgs *submitTensorboardArgs) processTensorboad() {
+func (submitArgs *submitTensorboardArgs) processTensorboad(dataMap map[string]string) {
 	if submitArgs.UseTensorboard {
-		if path.IsAbs(submitArgs.HostLogPath) {
+		log.Debugf("dataMap %v", dataMap)
+		if path.IsAbs(submitArgs.TrainingLogdir) && !submitArgs.isLoggingInPVC(dataMap) {
+			// Need to consider pvc
 			submitArgs.HostLogPath = fmt.Sprintf("/arena_logs/training%s", util.RandomInt32())
 			submitArgs.IsLocalLogging = true
 		} else {
 			// doing nothing for hdfs path
-			log.Debugf("Doing nothing for logging Path %s", submitArgs.HostLogPath)
+			log.Debugf("Doing nothing for logging Path %s", submitArgs.TrainingLogdir)
 			submitArgs.IsLocalLogging = false
 		}
 	}
+}
+
+// check if the path in the pvc
+func (submitArgs *submitTensorboardArgs) isLoggingInPVC(dataMap map[string]string) (inPVC bool) {
+	for pvc, path := range dataMap {
+		if strings.HasPrefix(submitArgs.TrainingLogdir, path) {
+			log.Debugf("Log path %s is contained by pvc %s's path %s", submitArgs.TrainingLogdir, pvc, path)
+			inPVC = true
+			break
+		} else {
+			log.Debugf("Log path %s is not contained by pvc %s's path %s", submitArgs.TrainingLogdir, pvc, path)
+		}
+	}
+
+	return inPVC
 }
 
 func tensorboardURL(name, namespace string) (url string, err error) {
