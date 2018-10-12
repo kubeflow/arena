@@ -116,8 +116,6 @@ type submitTFJobArgs struct {
 	PSMemory       string `yaml:"psMemory"`       // --psMemory
 	CleanPodPolicy string `yaml:"cleanPodPolicy"` // --cleanTaskPolicy
 	// For esitmator, it reuses workerImage
-	ChiefCount      int    `yaml:"chief,omitempty"`
-	EvaluatorCount  int    `yaml:"evaluator,omitempty"`
 	UseChief        bool   `yaml:",omitempty"`      // --chief
 	UseEvaluator    bool   `yaml:",omitempty"`      // --evaluator
 	ChiefPort       int    `yaml:"chiefPort"`       // --chiefPort
@@ -259,8 +257,6 @@ func (submitArgs *submitTFJobArgs) transformEstimator() (err error) {
 		if submitArgs.PSCount <= 0 {
 			return fmt.Errorf("chief mode is only for distributed training, --ps must be greater than 0")
 		}
-
-		submitArgs.ChiefCount = 1
 	}
 
 	if submitArgs.UseEvaluator {
@@ -270,11 +266,9 @@ func (submitArgs *submitTFJobArgs) transformEstimator() (err error) {
 		if submitArgs.PSCount <= 0 {
 			return fmt.Errorf("evaluator mode is only for distributed training, --ps must be greater than 0")
 		}
-		if submitArgs.ChiefCount <= 0 {
+		if !submitArgs.UseChief {
 			return fmt.Errorf("evaluator mode is only for distributed training, --chief must be set")
 		}
-
-		submitArgs.EvaluatorCount = 1
 	}
 
 	return
