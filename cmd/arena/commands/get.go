@@ -201,6 +201,7 @@ func GetJobRealStatus(job TrainingJob) string {
 		pods := job.AllPods()
 		for _, pod := range pods {
 			if pod.Status.Phase == v1.PodPending {
+				log.Debugf("pod %s is pending", pod.Name)
 				hasPendingPod = true
 				break
 			}

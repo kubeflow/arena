@@ -89,10 +89,12 @@ func (tj *TensorFlowJob) GetStatus() (status string) {
 		status = "SUCCEEDED"
 	} else if isFailed(tj.tfjob.Status) {
 		status = "FAILED"
+	} else if isRunning(tj.tfjob.Status) {
+		status = "RUNNING"
 	} else if isPending(tj.tfjob.Status) {
 		status = "PENDING"
 	} else {
-		status = "RUNNING"
+		status = "UNKNOWN"
 	}
 
 	return status
@@ -305,7 +307,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 		if !tt.isTensorFlowPod(name, namespace, item) {
 			continue
 		}
-		if tt.isChiefPod(item) {
+		if tt.isChiefPod(tfjob, item) {
 			chiefPod = item
 		}
 
@@ -348,7 +350,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (Traini
 		if !tt.isTensorFlowPod(name, ns, item) {
 			continue
 		}
-		if tt.isChiefPod(item) {
+		if tt.isChiefPod(tfjob, item) {
 			chiefPod = item
 		}
 
@@ -367,16 +369,27 @@ func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (Traini
 	}, nil
 }
 
-func (tt *TensorFlowJobTrainer) isChiefPod(item v1.Pod) bool {
+func (tt *TensorFlowJobTrainer) isChiefPod(tfjob tfv1alpha2.TFJob, item v1.Pod) bool {
+
+	// find chief pod in chief mode
+	if _, ok := tfjob.Spec.TFReplicaSpecs[tfv1alpha2.TFReplicaTypeChief]; ok {
+		log.Debugf("The distributed tensorflow is in chief mode")
+		if val, ok := item.Labels["tf-replica-type"]; ok && (val == "chief") {
+			log.Debugf("the tfjob %s with labels %s is the chief pod", item.Name, val)
+			return true
+		} else {
+			return false
+		}
+	}
 
 	if val, ok := item.Labels["tf-replica-type"]; ok && (val == "worker") {
-		log.Debugf("the tfjob %s with labels %s", item.Name, val)
+		log.Debugf("the tfjob %s with labels %s is the chief pod", item.Name, val)
 	} else {
 		return false
 	}
 
 	if val, ok := item.Labels["tf-replica-index"]; ok && (val == "0") {
-		log.Debugf("the tfjob %s with labels %s is found.", item.Name, val)
+		log.Debugf("the chief pod of tfjob %s with labels %s is found.", item.Name, val)
 	} else {
 		return false
 	}
@@ -445,6 +458,10 @@ func isSucceeded(status tfv1alpha2.TFJobStatus) bool {
 
 func isFailed(status tfv1alpha2.TFJobStatus) bool {
 	return hasCondition(status, tfv1alpha2.TFJobFailed)
+}
+
+func isRunning(status tfv1alpha2.TFJobStatus) bool {
+	return hasCondition(status, tfv1alpha2.TFJobRunning)
 }
 
 func isPending(status tfv1alpha2.TFJobStatus) bool {
