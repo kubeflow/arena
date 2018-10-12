@@ -1,5 +1,4 @@
 {{- if (not .Values.enableGangScheduler) -}}
-{{- if (not .Values.hasGangScheduler) -}}
 {{- if .Values.useTensorboard }}
 apiVersion: v1
 kind: Service
@@ -24,6 +23,5 @@ spec:
     chart: {{ template "tfjob.chart" . }}
     release: {{ .Release.Name }}
     role: tensorboard
-{{- end }}
 {{- end }}
 {{- end }}

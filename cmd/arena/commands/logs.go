@@ -102,7 +102,7 @@ func NewLogsCommand() *cobra.Command {
 					}
 				}
 				if pod.Name == "" {
-					fmt.Printf("The instance %s is not belong to the job %s, so no log can be found.", printer.pod, name)
+					fmt.Printf("The instance %s is not belong to the job %s, so no log can be found. Please run 'arena get %s' to check status.", printer.pod, name, name)
 					os.Exit(1)
 				}
 			} else {
@@ -235,5 +235,5 @@ func (p *logPrinter) ensureContainerStarted(podName string, podNamespace string,
 			return nil
 		}
 	}
-	return fmt.Errorf("pod '%s' has not been started.", podName)
+	return fmt.Errorf("pod '%s' has not been started. Please run 'arena get %s' to check status.", podName, name)
 }

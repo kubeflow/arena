@@ -9,6 +9,8 @@ gpuCount: 0 # user define
 privileged: false
 
 chief: 0
+# Possible value: Chief/Master
+chiefName: Chief
 # chiefPort: 2221
 
 workers: 1

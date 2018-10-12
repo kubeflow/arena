@@ -46,3 +46,7 @@
 ### 0.11.0
 
 * Support RoCE by using https://github.com/Mellanox/k8s-rdma-sriov-dev-plugin, only support hostNetwork now.
+
+### 0.12.0
+
+* Support Estimator Mode, Chief for new version esitmator(>1.4), Master for old version esitmator(<= 1.4)

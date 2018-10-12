@@ -113,7 +113,7 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	}
 
 	// process tensorboard
-	submitArgs.processTensorboad()
+	submitArgs.processTensorboad(submitArgs.DataSet)
 
 	if len(envs) > 0 {
 		submitArgs.Envs = transformSliceToMap(envs, "=")
