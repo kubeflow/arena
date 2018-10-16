@@ -14,7 +14,6 @@ chiefName: Chief
 # chiefPort: 2221
 chiefAnnotations: {}
 # chiefAnnotations:
-#  k8s.aliyun.com/eni: "true"
 
 workers: 1
 workerImage: kubeflow/tf-dist-mnist-test:1.0
@@ -23,7 +22,6 @@ workerImage: kubeflow/tf-dist-mnist-test:1.0
 # workPort: 2222
 workerAnnotations: {}
 # workerAnnotations:
-#  k8s.aliyun.com/eni: "true"
 
 ps: 0
 psImage: kubeflow/tf-dist-mnist-test:1.0
