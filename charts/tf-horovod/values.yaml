@@ -51,6 +51,5 @@ retry: 0
 annotations: {}
 
 # annotations:
-#  k8s.aliyun.com/eni: "true"
 
 
