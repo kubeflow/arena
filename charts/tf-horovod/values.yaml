@@ -48,3 +48,8 @@ enableRDMA: false
 
 retry: 0
 
+annotations: {}
+
+# annotations:
+
+

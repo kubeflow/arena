@@ -34,6 +34,10 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
+        annotations:
+        {{- range $key, $value := .Values.psAnnotations }}
+          {{ $key }}: {{ $value | quote }}
+        {{- end }}
         spec:
           {{- if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
@@ -242,6 +246,10 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
+          annotations:
+          {{- range $key, $value := .Values.workerAnnotations }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
         spec:
           {{- if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
@@ -487,6 +495,10 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
+          annotations:
+          {{- range $key, $value := .Values.chiefAnnotations }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
         spec:
           {{- if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
@@ -729,6 +741,10 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
+          annotations:
+          {{- range $key, $value := .Values.evaluatorAnnotations }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
         spec:
           {{- if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
