@@ -27,6 +27,10 @@ spec:
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
         createdBy: "MPIJob"
+      annotations:
+          {{- range $key, $value := .Values.workerAnnotations }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
     spec:
       restartPolicy: Never
       {{- if .Values.useHostNetwork }}

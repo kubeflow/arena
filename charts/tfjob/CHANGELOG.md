@@ -50,3 +50,7 @@
 ### 0.12.0
 
 * Support Estimator Mode, Chief for new version esitmator(>1.4), Master for old version esitmator(<= 1.4)
+
+### 0.13.0
+
+* add annotations, for cloud provider customization
