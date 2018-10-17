@@ -97,7 +97,7 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.ChiefMemory, "ChiefMemory", "", "the memory resource to use for the Chief, like 1Gi.")
 	command.Flags().StringVar(&submitArgs.EvaluatorCpu, "evaluatorCpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
 	command.Flags().StringVar(&submitArgs.EvaluatorMemory, "evaluatorMemory", "", "the memory resource to use for the evaluator, like 1Gi.")
-	command.Flags().IntVar(&submitArgs.ChiefPort, "chiefPort", 22221, "the port of the chief.")
+	command.Flags().IntVar(&submitArgs.ChiefPort, "chiefPort", 0, "the port of the chief.")
 
 	// command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
 	return command
@@ -214,6 +214,12 @@ func (submitArgs *submitTFJobArgs) transform() error {
 		submitArgs.WorkerImage = submitArgs.Image
 	}
 
+	autoSelectChiefPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.ChiefPort)
+	if err != nil {
+		return fmt.Errorf("failed to select chief port: %++v", err)
+	}
+	submitArgs.ChiefPort = autoSelectChiefPort
+
 	if submitArgs.PSCount > 0 {
 		autoSelectPsPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.PSPort)
 		if err != nil {
@@ -227,7 +233,7 @@ func (submitArgs *submitTFJobArgs) transform() error {
 	}
 
 	// transform estimator
-	err := submitArgs.transformEstimator()
+	err = submitArgs.transformEstimator()
 	if err != nil {
 		return err
 	}
