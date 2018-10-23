@@ -76,8 +76,8 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.WorkerImage, "workerImage", "", "the docker image for tensorflow workers")
 	command.Flags().StringVar(&submitArgs.PSImage, "psImage", "", "the docker image for tensorflow workers")
 	command.Flags().IntVar(&submitArgs.PSCount, "ps", 0, "the number of the parameter servers.")
-	command.Flags().IntVar(&submitArgs.PSPort, "psPort", 22223, "the port of the parameter server.")
-	command.Flags().IntVar(&submitArgs.WorkerPort, "workerPort", 22222, "the port of the worker.")
+	command.Flags().IntVar(&submitArgs.PSPort, "psPort", 0, "the port of the parameter server.")
+	command.Flags().IntVar(&submitArgs.WorkerPort, "workerPort", 0, "the port of the worker.")
 	command.Flags().StringVar(&submitArgs.WorkerCpu, "workerCpu", "", "the cpu resource to use for the worker, like 1 for 1 core.")
 	command.Flags().StringVar(&submitArgs.WorkerMemory, "workerMemory", "", "the memory resource to use for the worker, like 1Gi.")
 	command.Flags().StringVar(&submitArgs.PSCpu, "psCpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
@@ -97,7 +97,7 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.ChiefMemory, "ChiefMemory", "", "the memory resource to use for the Chief, like 1Gi.")
 	command.Flags().StringVar(&submitArgs.EvaluatorCpu, "evaluatorCpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
 	command.Flags().StringVar(&submitArgs.EvaluatorMemory, "evaluatorMemory", "", "the memory resource to use for the evaluator, like 1Gi.")
-	command.Flags().IntVar(&submitArgs.ChiefPort, "chiefPort", 22221, "the port of the chief.")
+	command.Flags().IntVar(&submitArgs.ChiefPort, "chiefPort", 0, "the port of the chief.")
 
 	// command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
 	return command
@@ -194,20 +194,9 @@ func (submitArgs submitTFJobArgs) check() error {
 		return fmt.Errorf("--image or --workerImage must be set")
 	}
 
-	// distributed tensorflow should enable workerPort
-	if submitArgs.WorkerCount+submitArgs.PSCount > 1 {
-		if submitArgs.WorkerPort <= 0 {
-			return fmt.Errorf("--port or --workerPort must be set")
-		}
-	}
-
 	if submitArgs.PSCount > 0 {
 		if submitArgs.PSImage == "" {
 			return fmt.Errorf("--image or --psImage must be set")
-		}
-
-		if submitArgs.PSPort <= 0 {
-			return fmt.Errorf("--port or --psPort must be set")
 		}
 	}
 
@@ -215,18 +204,28 @@ func (submitArgs submitTFJobArgs) check() error {
 }
 
 func (submitArgs *submitTFJobArgs) transform() error {
-	if submitArgs.WorkerPort == 0 {
-		submitArgs.WorkerPort = submitArgs.Port
+	autoSelectWorkerPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.WorkerPort)
+	if err != nil {
+		return fmt.Errorf("failed to select worker port: %++v", err)
 	}
+	submitArgs.WorkerPort = autoSelectWorkerPort
 
 	if submitArgs.WorkerImage == "" {
 		submitArgs.WorkerImage = submitArgs.Image
 	}
 
+	autoSelectChiefPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.ChiefPort)
+	if err != nil {
+		return fmt.Errorf("failed to select chief port: %++v", err)
+	}
+	submitArgs.ChiefPort = autoSelectChiefPort
+
 	if submitArgs.PSCount > 0 {
-		if submitArgs.PSPort == 0 {
-			submitArgs.PSPort = submitArgs.Port
+		autoSelectPsPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.PSPort)
+		if err != nil {
+			return fmt.Errorf("failed to select ps port: %++v", err)
 		}
+		submitArgs.PSPort = autoSelectPsPort
 
 		if submitArgs.PSImage == "" {
 			submitArgs.PSImage = submitArgs.Image
@@ -234,7 +233,7 @@ func (submitArgs *submitTFJobArgs) transform() error {
 	}
 
 	// transform estimator
-	err := submitArgs.transformEstimator()
+	err = submitArgs.transformEstimator()
 	if err != nil {
 		return err
 	}

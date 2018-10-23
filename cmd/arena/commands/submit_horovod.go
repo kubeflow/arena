@@ -91,6 +91,12 @@ type submitHorovodJobArgs struct {
 func (submitArgs *submitHorovodJobArgs) prepare(args []string) (err error) {
 	submitArgs.Command = strings.Join(args, " ")
 
+	sshPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.SSHPort)
+	if err != nil {
+		return fmt.Errorf("failed to select ssh port: %++v", err)
+	}
+	submitArgs.SSHPort = sshPort
+
 	err = submitArgs.check()
 	if err != nil {
 		return err
