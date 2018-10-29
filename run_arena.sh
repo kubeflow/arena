@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -x -e
 
+function log() {
+        echo $(date +"[%Y%m%d %H:%M:%S]: ") $1
+}
+
 if [ ! -f /root/kube/.config ]; then
 	log "Failed to find /root/kube/.config. Please mount kubeconfig file into the pod and make sure it's /root/kube/.config"
 	exit 1
@@ -31,7 +35,3 @@ if [ $# -eq 0 ]; then
 else
    bash -c "$*"
 fi
-
-log() {
-	echo $(date +"[%Y%m%d %H:%M:%S]: ") $1
-}
