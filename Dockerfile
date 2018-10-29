@@ -22,11 +22,11 @@ COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena /usr/local/bin/are
 
 COPY --from=build /usr/local/bin/helm /usr/local/bin/helm
 
-COPY --from=build /go/src/github.com/kubeflow/arena/kubernetes-artifacts /root
+COPY --from=build /go/src/github.com/kubeflow/arena/kubernetes-artifacts /root/kubernetes-artifacts
 
 COPY --from=build /usr/local/bin/kubectl /usr/local/bin/kubectl
 
-COPY --from=build /go/src/github.com/kubeflow/arena/charts /
+COPY --from=build /go/src/github.com/kubeflow/arena/charts /charts
 
 ADD run_arena.sh /usr/local/bin
 
