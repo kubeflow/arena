@@ -1,18 +1,4 @@
-FROM centos:7 as build
-
-RUN yum install -y \
-        gcc-c++ \
-        ca-certificates \
-        wget \
-        git \
-        make && \
-    rm -rf /var/cache/yum/*
-
-ENV GOLANG_VERSION 1.10.3
-RUN wget -nv -O - https://storage.googleapis.com/golang/go${GOLANG_VERSION}.linux-amd64.tar.gz \
-    | tar -C /usr/local -xz
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+FROM golang:1.10-stretch as build
 
 RUN mkdir -p /go/src/github.com/kubeflow/arena
 
