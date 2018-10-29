@@ -5,8 +5,8 @@ function log() {
         echo $(date +"[%Y%m%d %H:%M:%S]: ") $1
 }
 
-if [ ! -f /root/kube/.config ]; then
-	log "Failed to find /root/kube/.config. Please mount kubeconfig file into the pod and make sure it's /root/kube/.config"
+if ! [ -f $KUBECONFIG ]; then
+	log "Failed to find $KUBECONFIG. Please mount kubeconfig file into the pod and make sure it's $KUBECONFIG"
 	exit 1
 fi
 
