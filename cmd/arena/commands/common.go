@@ -72,7 +72,7 @@ func setupKubeconfig() {
 		if _, err := os.Stat(loadingRules.ExplicitPath); err != nil {
 			log.Warnf("Illegal kubeconfig file: %s", loadingRules.ExplicitPath)
 		} else {
-			log.Infof("Use specified kubeconfig file %s", loadingRules.ExplicitPath)
+			log.Debugf("Use specified kubeconfig file %s", loadingRules.ExplicitPath)
 			types.KubeConfig = loadingRules.ExplicitPath
 			os.Setenv("KUBECONFIG", loadingRules.ExplicitPath)
 		}

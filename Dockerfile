@@ -32,7 +32,8 @@ ADD run_arena.sh /usr/local/bin
 
 RUN chmod u+x /usr/local/bin/run_arena.sh
 
-RUN yum install bash-completion -y
+RUN yum install bash-completion -y && \
+    echo "source <(arena completion bash)" >> ~/.bashrc
 
 ENTRYPOINT ["/usr/local/bin/run_arena.sh"]
     

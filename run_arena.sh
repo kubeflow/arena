@@ -29,8 +29,6 @@ if ! kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
 fi
 set -e
 
-echo "source <(arena completion bash)" >> ~/.bashrc
-
 if [ $# -eq 0 ]; then
    cp /usr/local/bin/arena /host/usr/local/bin/arena
    cp -r /charts /host
