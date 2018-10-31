@@ -10,7 +10,7 @@ if ! [ -f $KUBECONFIG ]; then
 	exit 1
 fi
 
-if helm list >/dev/null 2>&1; then
+if ! helm list >/dev/null 2>&1; then
 	log "Failed to run 'helm list', please check if tiller is installed appropriately."
 	exit 1
 fi
@@ -28,6 +28,8 @@ if ! kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
 	kubectl apply -f /root/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
 fi
 set -e
+
+echo "source <(arena completion bash)" >> ~/.bashrc
 
 if [ $# -eq 0 ]; then
    cp /usr/local/bin/arena /host/usr/local/bin/arena
