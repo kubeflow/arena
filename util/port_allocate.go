@@ -16,14 +16,8 @@ const AUTO_SELECT_PORT_MAX = 30000
 // If default port is available, use it
 // If not set defaultPort, select port automatically
 func SelectAvailablePortWithDefault(client *kubernetes.Clientset, port int) (int, error) {
-	if _, err := initK8sClusterUsedPort(client); err != nil {
-		return 0, err
-	}
-	// if set port and is being used, return error
+	// if set port, return the port
 	if port != 0 {
-		if isPortInUsed(port) {
-			return 0, fmt.Errorf("port %d is in used by cluster HostPort or Service", port)
-		}
 		return port, nil
 	}
 	return SelectAvailablePort(client)
@@ -67,8 +61,8 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 		return k8sClusterUsedPorts, err
 	}
 	for _, pod := range pods.Items {
-		// fileter terminated and not Assigned pod
-		if unassignedNonTerminatedPod(&pod) {
+		// fileter pod
+		if excludeInactivePod(&pod) {
 			continue
 		}
 		for _, container := range pod.Spec.Containers {
@@ -98,15 +92,17 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 	return k8sClusterUsedPorts, nil
 }
 
-// unassignedNonTerminatedPod selects pods that are unassigned and non-terminal.
-func unassignedNonTerminatedPod(pod *v1.Pod) bool {
-	if len(pod.Spec.NodeName) != 0 {
-		return false
+// exclude Inactive pod when compute ports
+func excludeInactivePod(pod *v1.Pod) bool {
+	// pod not assigned
+	if len(pod.Spec.NodeName) == 0 {
+		return true
 	}
+	// pod is Successed or failed
 	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
-		return false
+		return true
 	}
-	return true
+	return false
 }
 
 func isPortInUsed(port int) bool {

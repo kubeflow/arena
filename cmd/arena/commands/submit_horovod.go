@@ -68,7 +68,7 @@ func NewSubmitHorovodJobCommand() *cobra.Command {
 	submitArgs.addCommonFlags(command)
 	submitArgs.addSyncFlags(command)
 
-	command.Flags().IntVar(&submitArgs.SSHPort, "sshPort", 33,
+	command.Flags().IntVar(&submitArgs.SSHPort, "sshPort", 0,
 		"ssh port.")
 	return command
 }
