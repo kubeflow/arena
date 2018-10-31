@@ -33,6 +33,7 @@ var (
 	envs                      []string
 	dataset                   []string
 	dataDirs                  []string
+	annotations               []string
 )
 
 // The common parts of the submitAthd
@@ -52,7 +53,10 @@ type submitArgs struct {
 	DataSet  map[string]string `yaml:"dataset"`
 	DataDirs []dataDirVolume   `yaml:"dataDirs"`
 
-	EnableRDMA bool `yaml:"enableRDMA"` // --rdma
+	EnableRDMA     bool `yaml:"enableRDMA"` // --rdma
+	UseHostNetwork bool `yaml:"useHostNetwork"`
+
+	Annotations map[string]string `yaml:"annotations"`
 }
 
 type dataDirVolume struct {
@@ -106,6 +110,14 @@ func (s *submitArgs) transform() (err error) {
 		}
 		s.DataSet = transformSliceToMap(dataset, ":")
 	}
+	// 3. handle annotations
+	log.Debugf("annotations: %v", annotations)
+	if len(annotations) > 0 {
+		s.Annotations = transformSliceToMap(annotations, "=")
+		if value, _ := s.Annotations[aliyunENIAnnotation]; value == "true" {
+			s.UseHostNetwork = false
+		}
+	}
 
 	return nil
 }
@@ -138,6 +150,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
 	command.Flags().StringArrayVar(&dataDirs, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
 	// enable RDMA or not, support hostnetwork for now
 	command.Flags().BoolVar(&submitArgs.EnableRDMA, "rdma", false, "enable RDMA")
 }
