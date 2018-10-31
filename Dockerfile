@@ -1,0 +1,36 @@
+FROM golang:1.10-stretch as build
+
+RUN mkdir -p /go/src/github.com/kubeflow/arena
+
+WORKDIR /go/src/github.com/kubeflow/arena
+COPY . .
+
+RUN make
+
+RUN wget https://storage.googleapis.com/kubernetes-helm/helm-v2.8.2-linux-amd64.tar.gz && \
+    tar -xvf helm-v2.8.2-linux-amd64.tar.gz && \
+    mv linux-amd64/helm /usr/local/bin/helm && \
+    chmod u+x /usr/local/bin/helm
+
+ENV K8S_VERSION v1.11.2
+RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x /usr/local/bin/kubectl
+
+
+FROM centos:7
+
+COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena /usr/local/bin/arena
+
+COPY --from=build /usr/local/bin/helm /usr/local/bin/helm
+
+COPY --from=build /go/src/github.com/kubeflow/arena/kubernetes-artifacts /root/kubernetes-artifacts
+
+COPY --from=build /usr/local/bin/kubectl /usr/local/bin/kubectl
+
+COPY --from=build /go/src/github.com/kubeflow/arena/charts /charts
+
+ADD run_arena.sh /usr/local/bin
+
+RUN chmod u+x /usr/local/bin/run_arena.sh
+
+ENTRYPOINT ["/usr/local/bin/run_arena.sh"]
+    
