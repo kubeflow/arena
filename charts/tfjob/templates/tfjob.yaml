@@ -35,7 +35,7 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
         annotations:
-        {{- range $key, $value := .Values.psAnnotations }}
+        {{- range $key, $value := .Values.annotations }}
           {{ $key }}: {{ $value | quote }}
         {{- end }}
         spec:
