@@ -32,4 +32,6 @@ const (
 
 	// nodeLabelRole specifies the role of a node
 	nodeLabelRole = "kubernetes.io/role"
+
+	aliyunENIAnnotation = "k8s.aliyun.com/eni"
 )

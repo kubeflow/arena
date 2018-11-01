@@ -7,8 +7,8 @@ COPY . .
 
 RUN make
 
-RUN wget https://storage.googleapis.com/kubernetes-helm/helm-v2.8.2-linux-amd64.tar.gz && \
-    tar -xvf helm-v2.8.2-linux-amd64.tar.gz && \
+RUN wget https://storage.googleapis.com/kubernetes-helm/helm-v2.9.1-linux-amd64.tar.gz && \
+    tar -xvf helm-v2.9.1-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/local/bin/helm && \
     chmod u+x /usr/local/bin/helm
 
@@ -31,6 +31,9 @@ COPY --from=build /go/src/github.com/kubeflow/arena/charts /charts
 ADD run_arena.sh /usr/local/bin
 
 RUN chmod u+x /usr/local/bin/run_arena.sh
+
+RUN yum install bash-completion -y && \
+    echo "source <(arena completion bash)" >> ~/.bashrc
 
 ENTRYPOINT ["/usr/local/bin/run_arena.sh"]
     

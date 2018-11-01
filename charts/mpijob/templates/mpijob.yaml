@@ -28,7 +28,7 @@ spec:
         heritage: {{ .Release.Service }}
         createdBy: "MPIJob"
       annotations:
-          {{- range $key, $value := .Values.workerAnnotations }}
+          {{- range $key, $value := .Values.annotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
     spec:
