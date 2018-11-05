@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-useHostNetwork: true
+useHostNetwork: false
 useHostPID: false
 gpuCount: 0 # user define
 #cpu: 1 # user define

@@ -115,3 +115,11 @@ caffe-1080ti-1  RUNNING  HOROVOD  45s  192.168.1.120
 caffe-1080ti-1  tf1
 ```
 
+
+11\. Enable Host network for training(optional)
+
+The training is not `useHostNetwork` by default. If you'd like to run the training in HostNetwork. You can run the command below:
+
+```
+find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
+```

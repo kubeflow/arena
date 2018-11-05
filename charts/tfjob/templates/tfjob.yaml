@@ -177,9 +177,7 @@ spec:
                   memory: {{ .Values.psMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
-                  {{- if .Values.useHostNetwork }}
                   rdma/hca: "1"
-                  {{- end}}
                   {{- end}}
                 limits:
                   {{- if .Values.psCpu }}
@@ -189,9 +187,7 @@ spec:
                   memory: {{ .Values.psMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
-                  {{- if .Values.useHostNetwork }}
                   rdma/hca: "1"
-                  {{- end}}
                   {{- end}}
               {{- if .Values.psPort }}
               ports:
@@ -409,9 +405,7 @@ spec:
                   memory: {{ .Values.workerMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
-                  {{- if .Values.useHostNetwork }}
                   rdma/hca: "1"
-                  {{- end}}
                   {{- end}}
                 limits:
                   {{- if gt (int $gpuCount) 0}}   
@@ -428,9 +422,7 @@ spec:
                   memory: {{ .Values.workerMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
-                  {{- if .Values.useHostNetwork }}
                   rdma/hca: "1"
-                  {{- end}}
                   {{- end}}
               {{- if .Values.workerPort }}
               ports:
@@ -658,9 +650,7 @@ spec:
                   memory: {{ .Values.chiefMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
-                  {{- if .Values.useHostNetwork }}
                   rdma/hca: "1"
-                  {{- end}}
                   {{- end}}
                 limits:
                   {{- if gt (int $gpuCount) 0}}   
@@ -677,9 +667,7 @@ spec:
                   memory: {{ .Values.chiefMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
-                  {{- if .Values.useHostNetwork }}
                   rdma/hca: "1"
-                  {{- end}}
                   {{- end}}
               {{- if .Values.chiefPort }}
               ports:
