@@ -34,11 +34,13 @@ if [ "$useHostNetwork" == "true" ]; then
 fi
 
 if [ $# -eq 0 ]; then
-   cp /usr/local/bin/arena /host/usr/local/bin/arena
-   if [ -d "/host/charts" ]; then
-      mv /host/charts /host/charts_bak
+   if [ -d "/host" ]; then
+      cp /usr/local/bin/arena /host/usr/local/bin/arena
+      if [ -d "/host/charts" ]; then
+         mv /host/charts /host/charts_bak
+      fi
+      cp -r /charts /host
    fi
-   cp -r /charts /host
 else
    bash -c "$*"
 fi
