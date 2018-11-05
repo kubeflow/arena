@@ -62,7 +62,7 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 	}
 	for _, pod := range pods.Items {
 		// fileter pod
-		if excludePod(&pod) {
+		if excludeInactivePod(&pod) {
 			continue
 		}
 		for _, container := range pod.Spec.Containers {
@@ -92,8 +92,8 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 	return k8sClusterUsedPorts, nil
 }
 
-// exclude pod when compute ports
-func excludePod(pod *v1.Pod) bool {
+// exclude Inactive pod when compute ports
+func excludeInactivePod(pod *v1.Pod) bool {
 	// pod not assigned
 	if len(pod.Spec.NodeName) == 0 {
 		return true
