@@ -123,3 +123,14 @@ The training is not `useHostNetwork` by default. If you'd like to run the traini
 ```
 find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
 ```
+
+12\. Enable Loadbalancer in the public cloud
+
+ Kubernetes can be run on AWS, GCE, Azure and Alibaba Cloud, and `LoadBalancer` is supported in their cloud provider. If you want to access tensorboard on the internet directly, you can run the command below:
+
+
+```
+find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+```
+
+> Warning: it's not encouraged to expose the service to the internet, because the service can be attacked by hacker easily.

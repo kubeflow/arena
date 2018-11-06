@@ -15,6 +15,7 @@
 package commands
 
 import (
+	"github.com/Sirupsen/logrus"
 	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +31,16 @@ func dashboard(client kubernetes.Interface, namespace string, name string) (stri
 	// 		APIVersion: "v1",
 	// 	}, LabelSelector: fmt.Sprintf("release=%s", name),
 	// })
+
+	url, err := dashboardFromLoadbalancer(client, namespace, name)
+	if err != nil {
+		logrus.Debugf("Failed to find the dashboard entry in the loadbalancer from %s in namespace %s due to %v",
+			name,
+			namespace,
+			err)
+	} else if len(url) > 0 {
+		return url, nil
+	}
 
 	ep, err := client.CoreV1().Endpoints(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
@@ -87,4 +98,24 @@ func GetJobDashboards(dashboard string, job *v1.Job, pods []corev1.Pod) []string
 		}
 	}
 	return urls
+}
+
+// Get dashboard url if it's load balancer
+func dashboardFromLoadbalancer(client *kubernetes.Clientset, namespace string, name string) (string, error) {
+	svc, err := client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
+		if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
+			if len(svc.Status.LoadBalancer.Ingress) > 0 {
+				address = svc.Status.LoadBalancer.Ingress[0]
+				port = svc.Spec.Ports[0].Port
+				return fmt.Sprintf("%s:%d", address, port), nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("Ignore non load balacner svc for %s")
 }
