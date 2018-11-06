@@ -1,3 +1,6 @@
+### 0.15.0
+* Make Hostnetwork as false by default
+
 ### 0.14.0
 * add annotations, for cloud provider customization
 

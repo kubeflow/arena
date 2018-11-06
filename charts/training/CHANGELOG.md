@@ -1,3 +1,7 @@
+### 0.9.0
+
+* Make Hostnetwork as false by default
+
 ### 0.8.0
 
 * support multiple dataDirs 

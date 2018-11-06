@@ -29,9 +29,18 @@ if ! kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
 fi
 set -e
 
+if [ "$useHostNetwork" == "true" ]; then
+	find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
+fi
+
 if [ $# -eq 0 ]; then
-   cp /usr/local/bin/arena /host/usr/local/bin/arena
-   cp -r /charts /host
+   if [ -d "/host" ]; then
+      cp /usr/local/bin/arena /host/usr/local/bin/arena
+      if [ -d "/host/charts" ]; then
+         mv /host/charts /host/charts_bak
+      fi
+      cp -r /charts /host
+   fi
 else
    bash -c "$*"
 fi
