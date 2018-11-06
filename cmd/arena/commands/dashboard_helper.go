@@ -117,5 +117,5 @@ func dashboardFromLoadbalancer(client kubernetes.Interface, namespace string, na
 		}
 	}
 
-	return "", fmt.Errorf("Ignore non load balacner svc for %s")
+	return "", fmt.Errorf("Ignore non load balacner svc for %s in namespace %s", name, namespace)
 }
