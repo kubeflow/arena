@@ -180,9 +180,7 @@ spec:
               memory: {{ .Values.memory | quote }}
               {{- end}}
               {{- if .Values.enableRDMA }}
-              {{- if .Values.useHostNetwork }}
               rdma/hca: "1"
-              {{- end}}
               {{- end}}
             limits:
               {{- if gt (int $gpuCount) 0}}
@@ -199,7 +197,5 @@ spec:
               memory: {{ .Values.memory | quote }}
               {{- end}}
               {{- if .Values.enableRDMA }}
-              {{- if .Values.useHostNetwork }}
               rdma/hca: "1"
-              {{- end}}
               {{- end}}
