@@ -103,9 +103,8 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 	// Get Address for loadbalancer
 	if service.Spec.Type == v1.ServiceTypeLoadBalancer {
 		if len(service.Status.LoadBalancer.Ingress) > 0 {
-			address = service.Status.LoadBalancer.Ingress[0]
-			port = service.Spec.Ports[0].Port
-			return fmt.Sprintf("%s:%d", address, port)
+			address = service.Status.LoadBalancer.Ingress[0].IP
+			return fmt.Sprintf("%s:%d", address, service.Spec.Ports[0].Port)
 		}
 	}
 

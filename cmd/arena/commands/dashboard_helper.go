@@ -101,17 +101,17 @@ func GetJobDashboards(dashboard string, job *v1.Job, pods []corev1.Pod) []string
 }
 
 // Get dashboard url if it's load balancer
-func dashboardFromLoadbalancer(client *kubernetes.Clientset, namespace string, name string) (string, error) {
+func dashboardFromLoadbalancer(client kubernetes.Interface, namespace string, name string) (string, error) {
 	svc, err := client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
 
 	if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
-		if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
+		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
 			if len(svc.Status.LoadBalancer.Ingress) > 0 {
-				address = svc.Status.LoadBalancer.Ingress[0]
-				port = svc.Spec.Ports[0].Port
+				address := svc.Status.LoadBalancer.Ingress[0].IP
+				port := svc.Spec.Ports[0].Port
 				return fmt.Sprintf("%s:%d", address, port), nil
 			}
 		}
