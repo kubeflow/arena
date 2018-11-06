@@ -67,7 +67,7 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 
 	var (
 		address string
-		port    int
+		port    int32
 	)
 
 	// 1. Get port
