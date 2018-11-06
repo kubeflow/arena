@@ -226,7 +226,7 @@ func (submitArgs *submitTFJobArgs) transform() error {
 		submitArgs.WorkerImage = submitArgs.Image
 	}
 
-	if submitArgs.UseChief > 0 {
+	if submitArgs.UseChief {
 		autoSelectChiefPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.ChiefPort)
 		if err != nil {
 			return fmt.Errorf("failed to select chief port: %++v", err)
@@ -246,7 +246,7 @@ func (submitArgs *submitTFJobArgs) transform() error {
 	}
 
 	// transform estimator
-	err = submitArgs.transformEstimator()
+	err := submitArgs.transformEstimator()
 	if err != nil {
 		return err
 	}
