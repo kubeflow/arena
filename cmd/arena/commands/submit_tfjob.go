@@ -116,13 +116,15 @@ type submitTFJobArgs struct {
 	PSMemory       string `yaml:"psMemory"`       // --psMemory
 	CleanPodPolicy string `yaml:"cleanPodPolicy"` // --cleanTaskPolicy
 	// For esitmator, it reuses workerImage
-	UseChief        bool   `yaml:",omitempty"`      // --chief
+	UseChief        bool   `yaml:",omitempty"` // --chief
+	ChiefCount      int    `yaml:"chief"`
 	UseEvaluator    bool   `yaml:",omitempty"`      // --evaluator
 	ChiefPort       int    `yaml:"chiefPort"`       // --chiefPort
-	ChiefCpu        string `yaml:"ChiefCPU"`        // --chiefCpu
-	ChiefMemory     string `yaml:"ChiefMemory"`     // --chiefMemory
-	EvaluatorCpu    string `yaml:"EvaluatorCPU"`    // --evaluatorCpu
-	EvaluatorMemory string `yaml:"EvaluatorMemory"` // --evaluatorMemory
+	ChiefCpu        string `yaml:"chiefCPU"`        // --chiefCpu
+	ChiefMemory     string `yaml:"chiefMemory"`     // --chiefMemory
+	EvaluatorCpu    string `yaml:"evaluatorCPU"`    // --evaluatorCpu
+	EvaluatorMemory string `yaml:"evaluatorMemory"` // --evaluatorMemory
+	EvaluatorCount  int    `yaml:"evaluator"`
 
 	// determine if it has gang scheduler
 	HasGangScheduler bool `yaml:"hasGangScheduler"`
@@ -233,6 +235,7 @@ func (submitArgs *submitTFJobArgs) transform() error {
 			return fmt.Errorf("failed to select chief port: %++v", err)
 		}
 		submitArgs.ChiefPort = autoSelectChiefPort
+		submitArgs.ChiefCount = 1
 	}
 
 	if submitArgs.PSCount > 0 {
@@ -244,6 +247,10 @@ func (submitArgs *submitTFJobArgs) transform() error {
 		if submitArgs.PSImage == "" {
 			submitArgs.PSImage = submitArgs.Image
 		}
+	}
+
+	if submitArgs.UseEvaluator {
+		submitArgs.EvaluatorCount = 1
 	}
 
 	// check Gang scheduler
