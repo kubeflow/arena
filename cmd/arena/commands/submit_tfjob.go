@@ -186,8 +186,8 @@ func (submitArgs submitTFJobArgs) check() error {
 		return fmt.Errorf("Unsupported cleanTaskPolicy %s", submitArgs.CleanPodPolicy)
 	}
 
-	if submitArgs.WorkerCount == 0 {
-		return fmt.Errorf("--workers must be greater than 0")
+	if submitArgs.WorkerCount == 0 && !submitArgs.UseChief {
+		return fmt.Errorf("--workers must be greater than 0 in distributed training")
 	}
 
 	if submitArgs.WorkerImage == "" {
@@ -203,22 +203,36 @@ func (submitArgs submitTFJobArgs) check() error {
 	return nil
 }
 
-func (submitArgs *submitTFJobArgs) transform() error {
-	autoSelectWorkerPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.WorkerPort)
-	if err != nil {
-		return fmt.Errorf("failed to select worker port: %++v", err)
+// This method for supporting tf-estimator
+func (submitArgs *submitTFJobArgs) setStandaloneMode() {
+	if submitArgs.PSCount < 1 {
+		submitArgs.UseChief = true
+		submitArgs.WorkerCount = 0
 	}
-	submitArgs.WorkerPort = autoSelectWorkerPort
+}
 
+func (submitArgs *submitTFJobArgs) transform() error {
+
+	submitArgs.setStandaloneMode()
+
+	if submitArgs.WorkerCount > 0 {
+		autoSelectWorkerPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.WorkerPort)
+		if err != nil {
+			return fmt.Errorf("failed to select worker port: %++v", err)
+		}
+		submitArgs.WorkerPort = autoSelectWorkerPort
+	}
 	if submitArgs.WorkerImage == "" {
 		submitArgs.WorkerImage = submitArgs.Image
 	}
 
-	autoSelectChiefPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.ChiefPort)
-	if err != nil {
-		return fmt.Errorf("failed to select chief port: %++v", err)
+	if submitArgs.UseChief > 0 {
+		autoSelectChiefPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.ChiefPort)
+		if err != nil {
+			return fmt.Errorf("failed to select chief port: %++v", err)
+		}
+		submitArgs.ChiefPort = autoSelectChiefPort
 	}
-	submitArgs.ChiefPort = autoSelectChiefPort
 
 	if submitArgs.PSCount > 0 {
 		autoSelectPsPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.PSPort)
@@ -226,7 +240,6 @@ func (submitArgs *submitTFJobArgs) transform() error {
 			return fmt.Errorf("failed to select ps port: %++v", err)
 		}
 		submitArgs.PSPort = autoSelectPsPort
-
 		if submitArgs.PSImage == "" {
 			submitArgs.PSImage = submitArgs.Image
 		}
