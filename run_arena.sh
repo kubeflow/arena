@@ -17,6 +17,12 @@ fi
 
 set +e
 
+if [ "$useLoadBlancer" == "true" ]; then
+	find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+	find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+fi
+
+
 if ! kubectl get serviceaccount --all-namespaces | grep jobmon; then
 	kubectl apply -f /root/kubernetes-artifacts/jobmon/jobmon-role.yaml
 fi

@@ -65,7 +65,53 @@ func (submitArgs *submitTensorboardArgs) isLoggingInPVC(dataMap map[string]strin
 
 func tensorboardURL(name, namespace string) (url string, err error) {
 
-	// 1. Get address
+	var (
+		address string
+		port    int32
+	)
+
+	// 1. Get port
+	serviceList, err := clientset.CoreV1().Services(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release=%s,role=tensorboard", name),
+	})
+	if err != nil {
+		// if errors.IsNotFound(err) {
+		// 	log.Debugf("The tensorboard service doesn't exist")
+		// 	return "", nil
+		// }else{
+		// 	return "", err
+		// }
+		return "", err
+	}
+
+	if len(serviceList.Items) == 0 {
+		log.Debugf("Failed to find the tensorboard service due to service"+
+			"List is empty when selector is release=%s,role=tensorboard.", name)
+		return "", nil
+	}
+
+	service := serviceList.Items[0]
+	portList := service.Spec.Ports
+	if len(portList) == 0 {
+		log.Debugf("Failed to find the tensorboard service due to ports list is empty.")
+		return "", nil
+	}
+
+	// Get Address for loadbalancer
+	if service.Spec.Type == v1.ServiceTypeLoadBalancer {
+		if len(service.Status.LoadBalancer.Ingress) > 0 {
+			return fmt.Sprintf("%s:%d",
+				service.Status.LoadBalancer.Ingress[0].IP,
+				service.Spec.Ports[0].Port), nil
+		}
+	}
+
+	port = portList[0].NodePort
+
+	// 2. Get address
 	nodeList, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return "", err
@@ -90,40 +136,8 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 		return "", fmt.Errorf("Failed to find the ready node for exporting tensorboard.")
 	}
 
-	address := node.Status.Addresses[0].Address
-
-	// 2. Get port
-
-	serviceList, err := clientset.CoreV1().Services(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,role=tensorboard", name),
-	})
-	if err != nil {
-		// if errors.IsNotFound(err) {
-		// 	log.Debugf("The tensorboard service doesn't exist")
-		// 	return "", nil
-		// }else{
-		// 	return "", err
-		// }
-		return "", err
-	}
-
-	if len(serviceList.Items) == 0 {
-		log.Debugf("Failed to find the tensorboard service due to service"+
-			"List is empty when selector is release=%s,role=tensorboard.", name)
-		return "", nil
-	}
-
-	ports := serviceList.Items[0].Spec.Ports
-	if len(ports) == 0 {
-		log.Debugf("Failed to find the tensorboard service due to ports list is empty.")
-		return "", nil
-	}
-
-	nodePort := ports[0].NodePort
-	url = fmt.Sprintf("%s:%d", address, nodePort)
+	address = node.Status.Addresses[0].Address
+	url = fmt.Sprintf("%s:%d", address, port)
 
 	return url, nil
 }
