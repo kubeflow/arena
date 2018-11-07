@@ -19,7 +19,7 @@ const (
 
 __custom_func() {
     case ${last_command} in
-        arena_get | arena_logs | arena_delete | arena_logviewer)
+        arena_get | arena_logs | arena_delete | arena_logviewer )
             __arena_parse_get
             return
             ;;
