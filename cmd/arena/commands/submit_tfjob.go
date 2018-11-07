@@ -116,13 +116,15 @@ type submitTFJobArgs struct {
 	PSMemory       string `yaml:"psMemory"`       // --psMemory
 	CleanPodPolicy string `yaml:"cleanPodPolicy"` // --cleanTaskPolicy
 	// For esitmator, it reuses workerImage
-	UseChief        bool   `yaml:",omitempty"`      // --chief
+	UseChief        bool   `yaml:",omitempty"` // --chief
+	ChiefCount      int    `yaml:"chief"`
 	UseEvaluator    bool   `yaml:",omitempty"`      // --evaluator
 	ChiefPort       int    `yaml:"chiefPort"`       // --chiefPort
-	ChiefCpu        string `yaml:"ChiefCPU"`        // --chiefCpu
-	ChiefMemory     string `yaml:"ChiefMemory"`     // --chiefMemory
-	EvaluatorCpu    string `yaml:"EvaluatorCPU"`    // --evaluatorCpu
-	EvaluatorMemory string `yaml:"EvaluatorMemory"` // --evaluatorMemory
+	ChiefCpu        string `yaml:"chiefCPU"`        // --chiefCpu
+	ChiefMemory     string `yaml:"chiefMemory"`     // --chiefMemory
+	EvaluatorCpu    string `yaml:"evaluatorCPU"`    // --evaluatorCpu
+	EvaluatorMemory string `yaml:"evaluatorMemory"` // --evaluatorMemory
+	EvaluatorCount  int    `yaml:"evaluator"`
 
 	// determine if it has gang scheduler
 	HasGangScheduler bool `yaml:"hasGangScheduler"`
@@ -186,8 +188,8 @@ func (submitArgs submitTFJobArgs) check() error {
 		return fmt.Errorf("Unsupported cleanTaskPolicy %s", submitArgs.CleanPodPolicy)
 	}
 
-	if submitArgs.WorkerCount == 0 {
-		return fmt.Errorf("--workers must be greater than 0")
+	if submitArgs.WorkerCount == 0 && !submitArgs.UseChief {
+		return fmt.Errorf("--workers must be greater than 0 in distributed training")
 	}
 
 	if submitArgs.WorkerImage == "" {
@@ -203,22 +205,38 @@ func (submitArgs submitTFJobArgs) check() error {
 	return nil
 }
 
-func (submitArgs *submitTFJobArgs) transform() error {
-	autoSelectWorkerPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.WorkerPort)
-	if err != nil {
-		return fmt.Errorf("failed to select worker port: %++v", err)
+// This method for supporting tf-estimator
+func (submitArgs *submitTFJobArgs) setStandaloneMode() {
+	if submitArgs.PSCount < 1 {
+		submitArgs.UseChief = true
+		submitArgs.WorkerCount = 0
 	}
-	submitArgs.WorkerPort = autoSelectWorkerPort
+}
+
+func (submitArgs *submitTFJobArgs) transform() error {
+
+	submitArgs.setStandaloneMode()
 
 	if submitArgs.WorkerImage == "" {
 		submitArgs.WorkerImage = submitArgs.Image
 	}
 
-	autoSelectChiefPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.ChiefPort)
-	if err != nil {
-		return fmt.Errorf("failed to select chief port: %++v", err)
+	if submitArgs.WorkerCount > 0 {
+		autoSelectWorkerPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.WorkerPort)
+		if err != nil {
+			return fmt.Errorf("failed to select worker port: %++v", err)
+		}
+		submitArgs.WorkerPort = autoSelectWorkerPort
 	}
-	submitArgs.ChiefPort = autoSelectChiefPort
+
+	if submitArgs.UseChief {
+		autoSelectChiefPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.ChiefPort)
+		if err != nil {
+			return fmt.Errorf("failed to select chief port: %++v", err)
+		}
+		submitArgs.ChiefPort = autoSelectChiefPort
+		submitArgs.ChiefCount = 1
+	}
 
 	if submitArgs.PSCount > 0 {
 		autoSelectPsPort, err := util.SelectAvailablePortWithDefault(clientset, submitArgs.PSPort)
@@ -226,16 +244,13 @@ func (submitArgs *submitTFJobArgs) transform() error {
 			return fmt.Errorf("failed to select ps port: %++v", err)
 		}
 		submitArgs.PSPort = autoSelectPsPort
-
 		if submitArgs.PSImage == "" {
 			submitArgs.PSImage = submitArgs.Image
 		}
 	}
 
-	// transform estimator
-	err = submitArgs.transformEstimator()
-	if err != nil {
-		return err
+	if submitArgs.UseEvaluator {
+		submitArgs.EvaluatorCount = 1
 	}
 
 	// check Gang scheduler
@@ -246,31 +261,6 @@ func (submitArgs *submitTFJobArgs) transform() error {
 
 func (submitArgs *submitTFJobArgs) addTFJobInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
-}
-
-func (submitArgs *submitTFJobArgs) transformEstimator() (err error) {
-	if submitArgs.UseChief {
-		if submitArgs.WorkerCount <= 0 {
-			return fmt.Errorf("chief mode is only for distributed training, --workers must be greater than 0")
-		}
-		if submitArgs.PSCount <= 0 {
-			return fmt.Errorf("chief mode is only for distributed training, --ps must be greater than 0")
-		}
-	}
-
-	if submitArgs.UseEvaluator {
-		if submitArgs.WorkerCount <= 0 {
-			return fmt.Errorf("evaluator mode is only for distributed training, --workers must be greater than 0")
-		}
-		if submitArgs.PSCount <= 0 {
-			return fmt.Errorf("evaluator mode is only for distributed training, --ps must be greater than 0")
-		}
-		if !submitArgs.UseChief {
-			return fmt.Errorf("evaluator mode is only for distributed training, --chief must be set")
-		}
-	}
-
-	return
 }
 
 func (submitArgs *submitTFJobArgs) checkGangCapablitiesInCluster() {
