@@ -99,9 +99,14 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 		totalAllocatedGPUs int64
 		totalRequestedGPUs int64
 	)
-
+	displayGPUMetric := GpuMonitoringInstalled(clientset)
+	// TODO: should refactory to a array
 	if displayGPU {
-		fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tNODE\tGPU(Requests)\tGPU(Allocated)\n")
+		if displayGPUMetric{
+			fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tNODE\tGPU(Requests)\tGPU(Allocated)\tGPU(Duty Cycle)\tGPU(Memory Usage)\n")
+		}else {
+			fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tNODE\tGPU(Requests)\tGPU(Allocated)\n")
+		}
 	} else {
 		fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tNODE\n")
 	}
@@ -115,14 +120,26 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 			// status, hostIP := jobInfo.getStatus()
 			totalAllocatedGPUs += allocatedGPU
 			totalRequestedGPUs += requestedGPU
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", jobInfo.Name(),
-				status,
-				strings.ToUpper(jobInfo.Trainer()),
-				jobInfo.Age(),
-				hostIP,
-				strconv.FormatInt(requestedGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10))
-
+			if !displayGPUMetric {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", jobInfo.Name(),
+					status,
+					strings.ToUpper(jobInfo.Trainer()),
+					jobInfo.Age(),
+					hostIP,
+					strconv.FormatInt(requestedGPU, 10),
+					strconv.FormatInt(allocatedGPU, 10))
+			} else {
+				gpuMetric, _ := GetJobGpuMetric(clientset, jobInfo)
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%f\t%f\n", jobInfo.Name(),
+					status,
+					strings.ToUpper(jobInfo.Trainer()),
+					jobInfo.Age(),
+					hostIP,
+					strconv.FormatInt(requestedGPU, 10),
+					strconv.FormatInt(allocatedGPU, 10),
+					gpuMetric.GpuDutyCycle,
+					gpuMetric.GpuMemoryUsed / gpuMetric.GpuMemoryTotal	)
+			}
 		} else {
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", jobInfo.Name(),
 				status,
