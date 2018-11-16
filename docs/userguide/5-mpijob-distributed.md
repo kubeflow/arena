@@ -16,6 +16,7 @@ The following command is an example. In this example, it defines 2 workers and 1
               --gpus=1              \
               --workers=2              \
               --image=uber/horovod:0.13.11-tf1.10.0-torch0.4.0-py3.5  \
+              --env=GIT_SYNC_BRANCH=cnn_tf_v1.9_compatible \
               --syncMode=git \
               --syncSource=https://github.com/tensorflow/benchmarks.git \
               --tensorboard \
