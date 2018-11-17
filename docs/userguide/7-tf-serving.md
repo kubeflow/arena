@@ -1,8 +1,8 @@
-This guide walks through the steps required to deploy and serve a TensorFlow model using Kubernetes (K8s) and Istio.
+This guide walks through the steps required to deploy and serve a TensorFlow model using Kubernetes (K8s) and Istio (if you want to experience the advanced features such as version based traffic splitting).
 
 1. Setup
 
-Before using `Arena` for TensorFlow serving, we need to setup the environment including Kubernetes cluster and Istio.
+Before using `Arena` for TensorFlow serving, we need to setup the environment including Kubernetes cluster and Istio (optional).
 
 Make sure that your Kubernetes cluster is running.
 
@@ -70,7 +70,7 @@ tfmodel  ReadWriteMany this is tfmodel for mnist  tester  31s
 ```
 
 
-3\. Disable Istio for Tensorflow serving
+3\. Tensorflow serving without Istio enablement
 
 You can deploy and serve a Tensorflow model without Istio enablement. 
 
@@ -116,7 +116,7 @@ arena serve tensorflow --servingName=mymnist --modelName=mnist --image=tensorflo
 Once this command is triggered, one Kubernetes service will be created to provide the exposed gRPC and RESTful APIs.
 
 
-4\. Enable Istio for Tensorflow serving
+4\. Tensorflow serving with Istio enablement
 
 If you need to enable Istio for Tensorflow serving,  you can append the parameter `--enableIstio` into the command above (disable Istio by default).
 
@@ -190,8 +190,31 @@ Then you can adjust traffic routing dynamically for all these two versions of tf
 
 7\. Run the test
 
-Start the `sleep` service so you can use `curl` to provide load:
+Start the `sleep` service so you can use `curl` to provide load.
 
+If you disable Istio, run the following:
+```
+# cat <<EOF | kubectl create -f -
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sleep
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sleep
+    spec:
+      containers:
+      - name: sleep
+        image: tutum/curl
+        command: ["/bin/sleep","infinity"]
+        imagePullPolicy: IfNotPresent
+EOF
+```
+
+If you enable Istio, run the following:
 ```
 # cat <<EOF | istioctl kube-inject -f - | kubectl create -f -
 apiVersion: extensions/v1beta1
