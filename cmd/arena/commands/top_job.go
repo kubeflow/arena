@@ -30,6 +30,7 @@ import (
 
 func NewTopJobCommand() *cobra.Command {
 	var notStop bool
+	var instanceName string
 	var command = &cobra.Command{
 		Use:   "job",
 		Short: "Display Resource (GPU) usage of jobs.",
@@ -102,17 +103,18 @@ func NewTopJobCommand() *cobra.Command {
 			jobs = makeTrainingJobOrderdByGPUCount(jobs)
 			// TODO(cheyang): Support different job describer, such as MPI job/tf job describer
 			showGpuMetric := topPodName != ""
-			topTrainingJob(jobs, showGpuMetric, notStop)
+			topTrainingJob(jobs, showGpuMetric, instanceName, notStop)
 
 		},
 	}
 
-	 command.Flags().BoolVarP(&notStop, "tail", "f", false, "Display continuously")
+	 command.Flags().BoolVarP(&notStop, "refresh", "r", false, "Display continuously")
+	 command.Flags().StringVarP(&instanceName, "instance", "i", "", "Display instance top info")
 	return command
 }
 
 
-func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, notStop bool) {
+func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, instanceName string, notStop bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
 		totalAllocatedGPUs int64
@@ -125,9 +127,9 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, notSt
 			return
 		}
 	}
-	labelField := []string{"NAME", "STATUS", "TRAINER", "AGE", "NODE", "GPU(Requests)", "GPU(Allocated)"}
+	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TRAINER", "AGE", "NODE"}
 	if showSpecificJobMetric {
-		labelField = []string{"INSTANCE NAME", "STATUS", "NODE", "GPU(Device Index)", "GPU(Duty Cycle)", "GPU(Memory MiB)"}
+		labelField = []string{"INSTANCE NAME", "GPU(Device Index)", "GPU(Duty Cycle)", "GPU(Memory MiB)", "STATUS", "NODE"}
 	}
 	printStart:
 	PrintLine(w, labelField...)
@@ -141,6 +143,9 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, notSt
 				continue
 			}
 			for _, pod := range pods {
+				if instanceName != "" && instanceName != pod.Name {
+					continue
+				}
 				hostIP := ""
 				status := string(pod.Status.Phase)
 				if pod.Status.Phase == v1.PodRunning {
@@ -149,11 +154,11 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, notSt
 				if podMetric, ok := gpuMetric[pod.Name]; !ok || len(podMetric) == 0 {
 					PrintLine(w,
 						pod.Name,
+						"N/A",
+						"N/A",
+						"N/A",
 						status,
 						hostIP,
-						"N/A",
-						"N/A",
-						"N/A",
 					)
 				}else {
 					index := 0
@@ -162,18 +167,16 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, notSt
 						podName := pod.Name
 						if index != 0 {
 							podName = ""
-							hostIP = ""
-							status = ""
 						}
 						guid := gid
 						gpuMetric := podMetric[gid]
 						PrintLine(w,
 							podName,
-							status,
-							hostIP,
 							guid,
 							fmt.Sprintf("%.0f%%", gpuMetric.GpuDutyCycle),
 							fmt.Sprintf("%.1fMiB / %.1fMiB ", fromByteToMiB(gpuMetric.GpuMemoryUsed) ,  fromByteToMiB(gpuMetric.GpuMemoryTotal) ),
+							status,
+							hostIP,
 						)
 						index ++
 					}
@@ -190,12 +193,12 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, notSt
 			totalAllocatedGPUs += allocatedGPU
 			totalRequestedGPUs += requestedGPU
 			PrintLine(w, jobInfo.Name(),
+				strconv.FormatInt(requestedGPU, 10),
+				strconv.FormatInt(allocatedGPU, 10),
 				jobInfo.GetStatus(),
 				jobInfo.Trainer(),
 				jobInfo.Age(),
 				hostIP,
-				strconv.FormatInt(requestedGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10),
 			)
 		}
 	}
