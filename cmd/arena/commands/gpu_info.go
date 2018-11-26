@@ -10,12 +10,16 @@ import (
 	"strconv"
 	"time"
 	"strings"
+	"sort"
 )
 
+const PROMETHEUS_INSTALL_DOC_URL = "https://github.com/kubeflow/arena/blob/master/docs/userguide/9-top-job-gpu-metric.md"
 const KUBE_SYSTEM_NAMESPACE = "kube-system"
 const PROMETHEUS_SCHEME = "http"
 const PROMETHEUS_SVC_LABEL = "kubernetes.io/name=Prometheus"
-//
+const POD_METRIC_TMP = `{__name__=~"%s", pod_name=~"%s"}`
+var GPU_METRIC_LIST = []string{"nvidia_gpu_duty_cycle", "nvidia_gpu_memory_used_bytes", "nvidia_gpu_memory_total_bytes" }
+
 type PrometheusMetric struct {
 	Status string `json:"status,inline"`
 	Data PrometheusMetricData `json:"data,omitempty"`
@@ -45,10 +49,15 @@ type GpuMetricInfo struct {
 	Id string
 }
 
-
-const PROMETHEUS_METRIC_QUERL_TPM = `%s{pod_name=~"%s", container_name!=""}`
-
 type JobGpuMetric map[string]PodGpuMetric
+
+type PodGpuMetric map[string]*GpuMetric
+
+type GpuMetric struct {
+	GpuDutyCycle float64
+	GpuMemoryUsed float64
+	GpuMemoryTotal float64
+}
 
 func (m *JobGpuMetric) SetPodMetric(metric GpuMetricInfo)  {
 	v, err := strconv.ParseFloat(metric.Value, 64)
@@ -83,16 +92,6 @@ func (m JobGpuMetric) GetPodMetrics(podName string) PodGpuMetric {
 	return nil
 }
 
-type PodGpuMetric map[string]*GpuMetric
-
-type GpuMetric struct {
-	GpuDutyCycle float64
-	GpuMemoryUsed float64
-	GpuMemoryTotal float64
-}
-
-
-
 func GpuMonitoringInstalled(client *kubernetes.Clientset) bool {
 	prometheusServiceName := GetPrometheusServiceName(client)
 	if (prometheusServiceName == "") {
@@ -101,7 +100,6 @@ func GpuMonitoringInstalled(client *kubernetes.Clientset) bool {
 	gpuDeviceMetrics, _ := QueryMetricByPrometheus(client, prometheusServiceName, "nvidia_gpu_num_devices")
 	return len(gpuDeviceMetrics) > 0
 }
-
 
 func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric JobGpuMetric, err error) {
 	runningPods := []string{}
@@ -119,13 +117,10 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric J
 	if (prometheusServiceName == "") {
 		return
 	}
-
 	podsMetrics, err := GetPodsGpuInfo(client, prometheusServiceName, runningPods)
 	return podsMetrics, nil
 }
 
-const POD_METRIC_TMP = `{__name__=~"%s", pod_name=~"%s"}`
-var GPU_METRIC_LIST = []string{"nvidia_gpu_duty_cycle", "nvidia_gpu_memory_used_bytes", "nvidia_gpu_memory_total_bytes" }
 func GetPodsGpuInfo(client *kubernetes.Clientset, prometheusServiceName string, podNames []string) (JobGpuMetric, error) {
 	jobMetric := &JobGpuMetric{}
 
@@ -205,4 +200,13 @@ func GetPrometheusServiceName(client *kubernetes.Clientset) string {
 	prometheusService := services.Items[0]
 	return prometheusService.Name
 
+}
+
+func SortMapKeys(podMetric PodGpuMetric) []string {
+	var keys []string
+	for k, _ := range podMetric {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

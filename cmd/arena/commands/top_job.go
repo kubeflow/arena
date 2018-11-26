@@ -25,9 +25,11 @@ import (
 	"strconv"
 	"text/tabwriter"
 	"k8s.io/api/core/v1"
+	"time"
 )
 
 func NewTopJobCommand() *cobra.Command {
+	var notStop bool
 	var command = &cobra.Command{
 		Use:   "job",
 		Short: "Display Resource (GPU) usage of jobs.",
@@ -100,32 +102,37 @@ func NewTopJobCommand() *cobra.Command {
 			jobs = makeTrainingJobOrderdByGPUCount(jobs)
 			// TODO(cheyang): Support different job describer, such as MPI job/tf job describer
 			showGpuMetric := topPodName != ""
-			topTrainingJob(jobs, showGpuMetric)
+			topTrainingJob(jobs, showGpuMetric, notStop)
 
 		},
 	}
 
-	// command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
+	 command.Flags().BoolVarP(&notStop, "tail", "f", false, "Display continuously")
 	return command
 }
 
 
-
-func topTrainingJob(jobInfoList []TrainingJob, showSpecific bool) {
+func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, notStop bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
 		totalAllocatedGPUs int64
 		totalRequestedGPUs int64
 	)
-	showSpecific = showSpecific && GpuMonitoringInstalled(clientset)
+	if showSpecificJobMetric {
+		if !GpuMonitoringInstalled(clientset) {
+			fmt.Fprint(w, fmt.Sprintf("You haven't deployed prometheus and gpu metrics exporter for your k8s cluster, please deploy prometheus and gpu metric exporter following %s", PROMETHEUS_INSTALL_DOC_URL))
+			_ = w.Flush()
+			return
+		}
+	}
 	labelField := []string{"NAME", "STATUS", "TRAINER", "AGE", "NODE", "GPU(Requests)", "GPU(Allocated)"}
-	if showSpecific{
+	if showSpecificJobMetric {
 		labelField = []string{"INSTANCE NAME", "STATUS", "NODE", "GPU(Device Index)", "GPU(Duty Cycle)", "GPU(Memory MiB)"}
 	}
-
+	printStart:
 	PrintLine(w, labelField...)
 
-	if showSpecific {
+	if showSpecificJobMetric {
 		for _, jobInfo := range jobInfoList {
 			pods := jobInfo.AllPods()
 			gpuMetric, err := GetJobGpuMetric(clientset, jobInfo)
@@ -150,20 +157,23 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecific bool) {
 					)
 				}else {
 					index := 0
-					for guid, gpuMetric := range podMetric {
+					keys := SortMapKeys(podMetric)
+					for _, gid := range keys {
 						podName := pod.Name
 						if index != 0 {
 							podName = ""
 							hostIP = ""
 							status = ""
 						}
+						guid := gid
+						gpuMetric := podMetric[gid]
 						PrintLine(w,
 							podName,
 							status,
 							hostIP,
 							guid,
 							fmt.Sprintf("%.0f%%", gpuMetric.GpuDutyCycle),
-							fmt.Sprintf("%.0fMiB / %.0fMiB ", fromByteToMiB(gpuMetric.GpuMemoryUsed) ,  fromByteToMiB(gpuMetric.GpuMemoryTotal) ),
+							fmt.Sprintf("%.1fMiB / %.1fMiB ", fromByteToMiB(gpuMetric.GpuMemoryUsed) ,  fromByteToMiB(gpuMetric.GpuMemoryTotal) ),
 						)
 						index ++
 					}
@@ -190,7 +200,7 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecific bool) {
 		}
 	}
 
-	if !showSpecific {
+	if !showSpecificJobMetric {
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, "Total Allocated GPUs of Training Job:\n")
@@ -200,6 +210,13 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecific bool) {
 		fmt.Fprintf(w, "%s \t\n", strconv.FormatInt(totalRequestedGPUs, 10))
 	}
 
+	if notStop {
+		fmt.Printf("\033[2J")
+		fmt.Printf("\033[0;0H")
+		_ = w.Flush()
+		time.Sleep(1 * time.Second)
+		goto printStart
+	}
 	_ = w.Flush()
 }
 
