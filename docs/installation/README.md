@@ -116,7 +116,7 @@ caffe-1080ti-1  tf1
 ```
 
 
-11\. Enable Host network for training(optional)
+11\. Enable Host network for training (optional)
 
 The training is not `useHostNetwork` by default. If you'd like to run the training in HostNetwork. You can run the command below:
 
@@ -124,7 +124,7 @@ The training is not `useHostNetwork` by default. If you'd like to run the traini
 find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
 ```
 
-12\. Enable Loadbalancer in the public cloud
+12\. Enable Loadbalancer in the public cloud (optional)
 
  Kubernetes can be run on AWS, GCE, Azure and Alibaba Cloud, and `LoadBalancer` is supported in their cloud provider. If you want to access tensorboard on the internet directly, you can run the command below:
 
@@ -134,3 +134,12 @@ find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
 ```
 
 > Warning: it's not encouraged to expose the service to the internet, because the service can be attacked by hacker easily.
+
+
+13\. Change imagePullPolicy from `Always` to `IfNotPresent` (optional)
+
+```
+find /charts/ -name values.yaml| xargs sed -i "s/Always/IfNotPresent/g"
+```
+
+> Warning: this may cause the docker images are not up to date if it's already downloaded in node.
