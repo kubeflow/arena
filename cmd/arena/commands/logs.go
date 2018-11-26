@@ -110,10 +110,10 @@ func NewLogsCommand() *cobra.Command {
 			}
 
 			if pod.Name == "" {
-				fmt.Printf("The chief instance is not found, it should be deleted. Please run 'arena get %s' to check the INSTANCE column. \n Then run 'arena logs %s -i INSTANCE_NAME' to check log.\n",
+				fmt.Printf("The chief instance is not found, it should be deleted. Please run 'arena get %s' to check the INSTANCE column, and run 'arena logs %s -i INSTANCE_NAME' to check log.\n",
 					name,
 					name)
-				fmt.Println("To avoid that the instances are deleted automatically, you can set cleanTaskPolicy as None. It means that all the instances are kept after training, and will hold the resources unless you can clean it up manully.")
+				fmt.Println("\nTo avoid that the instances are deleted automatically, you can set cleanTaskPolicy as None. It means that all the instances are kept after training, and will hold the resources unless you can clean it up manully.")
 				os.Exit(1)
 			}
 
