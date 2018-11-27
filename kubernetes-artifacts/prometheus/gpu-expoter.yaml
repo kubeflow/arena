@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-gpu-exporter
+spec:
+  selector:
+    matchLabels:
+      app: node-gpu-exporter
+  template:
+    metadata:
+      labels:
+        app: node-gpu-exporter
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: aliyun.accelerator/nvidia_count
+                operator: Exists
+      hostPID: true
+      containers:
+      - name: node-gpu-exporter
+        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:0.1-f48bc3c
+        imagePullPolicy: Always
+        env:
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MY_NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: EXCLUDE_PODS
+          value: $(MY_POD_NAME),nvidia-device-plugin-$(MY_NODE_NAME),nvidia-device-plugin-ctr
+        - name: CADVISOR_URL
+          value: http://$(MY_NODE_IP):10255
+        ports:
+        - containerPort: 9445
+          hostPort: 9445
+        resources:
+          requests:
+            memory: 30Mi
+            cpu: 100m
+          limits:
+            memory: 50Mi
+            cpu: 200m
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  name: node-gpu-exporter
+  labels:
+    app: node-gpu-exporter
+    k8s-app: node-gpu-exporter
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: http-metrics
+    port: 9445
+    protocol: TCP
+  selector:
+    app: node-gpu-exporter
