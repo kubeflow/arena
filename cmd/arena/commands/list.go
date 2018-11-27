@@ -17,7 +17,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"text/tabwriter"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/kubeflow/arena/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"io"
 )
 
 func NewListCommand() *cobra.Command {
@@ -95,53 +95,24 @@ func NewListCommand() *cobra.Command {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	var (
-		totalAllocatedGPUs int64
-		totalRequestedGPUs int64
-	)
+	labelField := []string{"NAME", "STATUS", "TRAINER", "AGE", "NODE"}
 
-	if displayGPU {
-		fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tNODE\tGPU(Requests)\tGPU(Allocated)\n")
-	} else {
-		fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tNODE\n")
-	}
+	PrintLine(w, labelField...)
 
 	for _, jobInfo := range jobInfoList {
 		status := GetJobRealStatus(jobInfo)
 		hostIP := jobInfo.HostIPOfChief()
-		if displayGPU {
-			requestedGPU := jobInfo.RequestedGPU()
-			allocatedGPU := jobInfo.AllocatedGPU()
-			// status, hostIP := jobInfo.getStatus()
-			totalAllocatedGPUs += allocatedGPU
-			totalRequestedGPUs += requestedGPU
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", jobInfo.Name(),
-				status,
-				strings.ToUpper(jobInfo.Trainer()),
-				jobInfo.Age(),
-				hostIP,
-				strconv.FormatInt(requestedGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10))
-
-		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", jobInfo.Name(),
-				status,
-				strings.ToUpper(jobInfo.Trainer()),
-				jobInfo.Age(),
-				hostIP)
-
-		}
+		PrintLine(w, jobInfo.Name(),
+			status,
+			strings.ToUpper(jobInfo.Trainer()),
+			jobInfo.Age(),
+			hostIP)
 	}
-
-	if displayGPU {
-		fmt.Fprintf(w, "\n")
-		fmt.Fprintf(w, "\n")
-		fmt.Fprintf(w, "Total Allocated GPUs of Training Job:\n")
-		fmt.Fprintf(w, "%s \t\n", strconv.FormatInt(totalAllocatedGPUs, 10))
-		fmt.Fprintf(w, "\n")
-		fmt.Fprintf(w, "Total Requested GPUs of Training Job:\n")
-		fmt.Fprintf(w, "%s \t\n", strconv.FormatInt(totalRequestedGPUs, 10))
-	}
-
 	_ = w.Flush()
+}
+
+func PrintLine(w io.Writer, fields ...string)  {
+	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	buffer := strings.Join(fields, "\t")
+	fmt.Fprintln(w, buffer)
 }

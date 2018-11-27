@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-env
+data:
+  storage-retention: 360h
+---
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  - apiGroups: ["", "extensions", "apps"]
+    resources:
+    - nodes
+    - nodes/proxy
+    - services
+    - endpoints
+    - pods
+    - deployments
+    - services
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: kube-system # 如果部署在其他namespace下， 需要修改这里的namespace配置
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prometheus-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      name: prometheus
+      labels:
+        app: prometheus
+    spec:
+      serviceAccount: prometheus
+      serviceAccountName: prometheus
+      containers:
+      - name: prometheus
+        image: registry.cn-hangzhou.aliyuncs.com/acs/prometheus:v2.2.0-rc.0
+        args:
+          - '--storage.tsdb.path=/prometheus'
+          - '--storage.tsdb.retention=$(STORAGE_RETENTION)'
+          - '--web.enable-lifecycle'
+          - '--storage.tsdb.no-lockfile'
+          - '--config.file=/etc/prometheus/prometheus.yml'
+        ports:
+        - name: web
+          containerPort: 9090
+        env:
+        - name: STORAGE_RETENTION
+          valueFrom:
+            configMapKeyRef:
+              name: prometheus-env
+              key: storage-retention
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus
+        - name: prometheus-data
+          mountPath: /prometheus
+      volumes:
+      - name: config-volume
+        configMap:
+          name: prometheus-configmap
+      - name: prometheus-data
+        emptyDir: {}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: prometheus-svc
+    kubernetes.io/name: "Prometheus"
+  name: prometheus-svc
+spec:
+  selector:
+    app: prometheus
+  ports:
+  - name: prometheus
+    protocol: TCP
+    port: 9090
+    targetPort: 9090
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-configmap
+data:
+  prometheus.yml: |-
+    rule_files:
+      - "/etc/prometheus-rules/*.rules"
+    scrape_configs:
+    - job_name: kubernetes-service-endpoints
+      scrape_interval: 10s
+      scrape_timeout: 10s
+      kubernetes_sd_configs:
+      - api_server: null
+        role: endpoints
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (https?)
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: (.+)(?::\d+);(\d+)
+        replacement: $1:$2
+      - action: labelmap
+        regex: __meta_kubernetes_service_label_(.+)
+      - source_labels: [__meta_kubernetes_service_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        action: replace
+        target_label: kubernetes_name
