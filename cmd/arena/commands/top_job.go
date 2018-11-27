@@ -29,7 +29,7 @@ import (
 )
 
 func NewTopJobCommand() *cobra.Command {
-	var notStop bool
+	var printNotStop bool
 	var instanceName string
 	var command = &cobra.Command{
 		Use:   "job",
@@ -41,7 +41,7 @@ func NewTopJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
+			printStart:
 			releaseMap, err := helm.ListReleaseMap()
 			// log.Printf("releaseMap %v", releaseMap)
 			if err != nil {
@@ -103,12 +103,14 @@ func NewTopJobCommand() *cobra.Command {
 			jobs = makeTrainingJobOrderdByGPUCount(jobs)
 			// TODO(cheyang): Support different job describer, such as MPI job/tf job describer
 			showGpuMetric := topPodName != ""
-			topTrainingJob(jobs, showGpuMetric, instanceName, notStop)
-
+			topTrainingJob(jobs, showGpuMetric, instanceName, printNotStop)
+			if printNotStop {
+				goto printStart
+			}
 		},
 	}
 
-	 command.Flags().BoolVarP(&notStop, "refresh", "r", false, "Display continuously")
+	 command.Flags().BoolVarP(&printNotStop, "refresh", "r", false, "Display continuously")
 	 command.Flags().StringVarP(&instanceName, "instance", "i", "", "Display instance top info")
 	return command
 }
@@ -131,7 +133,6 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, insta
 	if showSpecificJobMetric {
 		labelField = []string{"INSTANCE NAME", "GPU(Device Index)", "GPU(Duty Cycle)", "GPU(Memory MiB)", "STATUS", "NODE"}
 	}
-	printStart:
 	PrintLine(w, labelField...)
 
 	if showSpecificJobMetric {
@@ -214,11 +215,11 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, insta
 	}
 
 	if notStop {
-		fmt.Printf("\033[2J")
-		fmt.Printf("\033[0;0H")
+		fmt.Print("\033[2J")
+		fmt.Print("\033[0;0H")
 		_ = w.Flush()
 		time.Sleep(1 * time.Second)
-		goto printStart
+		return
 	}
 	_ = w.Flush()
 }
