@@ -1,18 +1,32 @@
 The command `arena top job <job name>` can display GPU monitoring metrics. Before using it, you must deploy a Prometheus and nodeExporter for GPU Metrics.
 
-* Deploy a Prometheus
+1\. Deploy a Prometheus
 
 ```
-kubectl apply -f https://github.com/kubeflow/arena/tree/master/kubernetes-artifacts/prometheus/prometheus.yaml
+kubectl apply -f kubernetes-artifacts/prometheus/prometheus.yaml
 ```
 
-* Deploy GPU node exporter
+2\. Deploy GPU node exporter
+
+If your cluster is aliyun kubernetes cluster, you can just exec command:
+
 
 ```
-kubectl apply -f https://github.com/kubeflow/arena/tree/master/kubernetes-artifacts/prometheus/gpu-exporter.yaml
+kubectl apply -f kubernetes-artifacts/prometheus/gpu-expoter.yaml
 ```
 
-* You can check the GPU metrics by prometheus SQL request
+If your cluster is not aliyun kubernetes cluster, exec command that
+
+```
+# label your gpu node
+kubectl label node <your node> accelerator/nvidia_gpu=true
+# change gpu export nodeSelector to your label
+sed 's|aliyun.accelerator/nvidia_count|accelerator/nvidia_gpu|g' kubernetes-artifacts/prometheus/gpu-expoter.yaml
+# deploy gpu expoter
+kubectl apply -f kubernetes-artifacts/prometheus/gpu-expoter.yaml
+```
+
+3\. You can check the GPU metrics by prometheus SQL request
 
 ```
 # kubectl get --raw '/api/v1/namespaces/kube-system/services/prometheus-svc:prometheus/proxy/api/v1/query?query=nvidia_gpu_num_devices'
@@ -21,7 +35,7 @@ kubectl apply -f https://github.com/kubeflow/arena/tree/master/kubernetes-artifa
 
 ```
 
-* Submit a traing job by arena
+4\. Submit a traing job by arena
 
 ```
 arena submit tf --name=style-transfer              \
@@ -34,7 +48,7 @@ arena submit tf --name=style-transfer              \
               "python neural_style.py --styles /neural-style/examples/1-style.jpg --iterations 1000000"
 ```
 
-* Check GPU metrics for the job you deployed
+5\. Check GPU metrics for the job you deployed
 
 ```
 # arena top job style-transfer
