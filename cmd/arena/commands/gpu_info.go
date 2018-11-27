@@ -2,11 +2,11 @@ package commands
 
 import (
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	v12 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"strconv"
 	"time"
 	"strings"
@@ -107,7 +107,7 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric J
 	if jobStatus == "RUNNING" {
 		pods := job.AllPods()
 		for _, pod := range pods {
-			if pod.Status.Phase == v12.PodPending {
+			if pod.Status.Phase == corev1.PodPending {
 				continue
 			}
 			runningPods = append(runningPods, pod.Name)
@@ -188,7 +188,7 @@ func getMetricAverage(metrics []GpuMetricInfo) float64 {
 }
 
 func GetPrometheusServiceName(client *kubernetes.Clientset) string {
-	services, err := client.CoreV1().Services(KUBE_SYSTEM_NAMESPACE).List(v1.ListOptions{
+	services, err := client.CoreV1().Services(KUBE_SYSTEM_NAMESPACE).List(metav1.ListOptions{
 		LabelSelector: PROMETHEUS_SVC_LABEL,
 	})
 	if err != nil {

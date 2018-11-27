@@ -8,13 +8,13 @@ kubectl apply -f kubernetes-artifacts/prometheus/prometheus.yaml
 
 2\. Deploy GPU node exporter
 
-If your cluster is aliyun kubernetes cluster, you can just exec command:
+If your cluster is ACK (Alibaba Cloud Kubernetes) cluster, you can just exec command:
 
 ```
 kubectl apply -f kubernetes-artifacts/prometheus/gpu-expoter.yaml
 ```
 
-If your cluster is not aliyun kubernetes cluster, exec command:
+If your cluster is not ACK cluster, exec command:
 
 ```
 # label all your GPU nodes
