@@ -10,15 +10,14 @@ kubectl apply -f kubernetes-artifacts/prometheus/prometheus.yaml
 
 If your cluster is aliyun kubernetes cluster, you can just exec command:
 
-
 ```
 kubectl apply -f kubernetes-artifacts/prometheus/gpu-expoter.yaml
 ```
 
-If your cluster is not aliyun kubernetes cluster, exec command that
+If your cluster is not aliyun kubernetes cluster, exec command:
 
 ```
-# label your gpu node
+# label all your GPU nodes
 kubectl label node <your node> accelerator/nvidia_gpu=true
 # change gpu export nodeSelector to your label
 sed 's|aliyun.accelerator/nvidia_count|accelerator/nvidia_gpu|g' kubernetes-artifacts/prometheus/gpu-expoter.yaml
