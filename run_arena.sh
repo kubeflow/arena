@@ -11,8 +11,7 @@ if ! [ -f $KUBECONFIG ]; then
 fi
 
 if ! helm list >/dev/null 2>&1; then
-	log "Failed to run 'helm list', please check if tiller is installed appropriately."
-	exit 1
+	log "Warning: Failed to run 'helm list', please check if tiller is installed appropriately."
 fi
 
 set +e
