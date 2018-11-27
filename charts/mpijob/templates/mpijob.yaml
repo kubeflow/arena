@@ -16,7 +16,7 @@ spec:
   {{- if .Values.launcherOnMaster }}
   launcherOnMaster: {{ .Values.launcherOnMaster }}
   {{- end }}
-  BackoffLimit: {{ .Values.retry }}
+  backoffLimit: {{ .Values.retry }}
   replicas: {{ .Values.workers }}
   template:
     metadata:

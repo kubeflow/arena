@@ -207,7 +207,7 @@ func (submitArgs submitTFJobArgs) check() error {
 
 // This method for supporting tf-estimator
 func (submitArgs *submitTFJobArgs) setStandaloneMode() {
-	if submitArgs.PSCount < 1 {
+	if submitArgs.PSCount < 1 && submitArgs.WorkerCount == 1 {
 		submitArgs.UseChief = true
 		submitArgs.WorkerCount = 0
 	}

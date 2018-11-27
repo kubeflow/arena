@@ -29,3 +29,8 @@
 
 * Make Hostnetwork as false by default
 
+
+### 0.8.0
+
+* Fix MPI Job backofflimit typo
+
