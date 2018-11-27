@@ -161,7 +161,7 @@ spec:
       serviceAccountName: mpi-operator
       containers:
       - name: mpi-operator
-        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/mpi-operator:v20180816
+        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/mpi-operator:v20180907
         args: [
           "--gpus-per-node", "8",
           "--kubectl-delivery-image",
