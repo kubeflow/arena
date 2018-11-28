@@ -38,14 +38,14 @@ if [ "$useHostNetwork" == "true" ]; then
 	find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
 fi
 
-if [ $# -eq 0 ]; then
-   if [ -d "/host" ]; then
-      cp /usr/local/bin/arena /host/usr/local/bin/arena
-      if [ -d "/host/charts" ]; then
-         mv /host/charts /host/charts_bak
-      fi
-      cp -r /charts /host
+
+if [ -d "/host" ]; then
+   cp /usr/local/bin/arena /host/usr/local/bin/arena
+   if [ -d "/host/charts" ]; then
+      mv /host/charts /host/charts_bak
    fi
-else
-   tail -f /dev/null
+   cp -r /charts /host
 fi
+
+tail -f /dev/null
+
