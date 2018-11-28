@@ -11,8 +11,7 @@ if ! [ -f $KUBECONFIG ]; then
 fi
 
 if ! helm list >/dev/null 2>&1; then
-	log "Failed to run 'helm list', please check if tiller is installed appropriately."
-	exit 1
+	log "Warning: Failed to run 'helm list', please check if tiller is installed appropriately."
 fi
 
 set +e
@@ -39,14 +38,14 @@ if [ "$useHostNetwork" == "true" ]; then
 	find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
 fi
 
-if [ $# -eq 0 ]; then
-   if [ -d "/host" ]; then
-      cp /usr/local/bin/arena /host/usr/local/bin/arena
-      if [ -d "/host/charts" ]; then
-         mv /host/charts /host/charts_bak
-      fi
-      cp -r /charts /host
+
+if [ -d "/host" ]; then
+   cp /usr/local/bin/arena /host/usr/local/bin/arena
+   if [ -d "/host/charts" ]; then
+      mv /host/charts /host/charts_bak
    fi
-else
-   bash -c "$*"
+   cp -r /charts /host
 fi
+
+tail -f /dev/null
+
