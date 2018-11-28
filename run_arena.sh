@@ -47,5 +47,5 @@ if [ $# -eq 0 ]; then
       cp -r /charts /host
    fi
 else
-   bash -c "$*"
+   tail -f /dev/null
 fi
