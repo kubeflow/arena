@@ -34,8 +34,10 @@ if ! kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
 fi
 
 if [ "$usePrometheus" == "true" ]; then
-	find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
-	find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+	if ! kubectl get serviceaccount --all-namespaces | grep prometheus; then
+	   kubectl apply -f /root/kubernetes-artifacts/prometheus/gpu-expoter.yaml
+	   kubectl apply -f /root/kubernetes-artifacts/prometheus/prometheus.yaml
+    fi
 fi
 set -e
 
