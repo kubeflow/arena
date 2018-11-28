@@ -32,6 +32,11 @@ fi
 if ! kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
 	kubectl apply -f /root/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
 fi
+
+if [ "$usePrometheus" == "true" ]; then
+	find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+	find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+fi
 set -e
 
 if [ "$useHostNetwork" == "true" ]; then
