@@ -25,7 +25,7 @@ sed 's|aliyun.accelerator/nvidia_count|accelerator/nvidia_gpu|g' kubernetes-arti
 kubectl apply -f kubernetes-artifacts/prometheus/gpu-expoter.yaml
 ```
 
-> Notice: the prometheus and gpu-exporter components should be deployed in namespace `kube-system`, so `arena top job` can look up correctly. 
+> Notice: the prometheus and gpu-exporter components should be deployed in namespace `kube-system`, and `arena top job` can work. 
 
 3\. You can check the GPU metrics by prometheus SQL request
 
