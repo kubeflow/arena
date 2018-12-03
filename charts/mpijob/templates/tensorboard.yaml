@@ -39,11 +39,13 @@ spec:
         - hostPath:
             path: "{{ .Values.hostLogPath }}"
           name: training-logs-volume
-        {{- end }}
+        {{- else }}
         {{- if .Values.dataset }}   
         {{- range $pvcName, $destPath := .Values.dataset }}
         - name: "{{ $pvcName }}"
-          mountPath: "{{ $destPath }}"
+          persistentVolumeClaim:
+            claimName: "{{ $pvcName }}"
+        {{- end }}
         {{- end }}
         {{- end }}
       containers:
