@@ -32,6 +32,13 @@ fi
 if ! kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
 	kubectl apply -f /root/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
 fi
+
+if [ "$usePrometheus" == "true" ]; then
+	if ! kubectl get serviceaccount --all-namespaces | grep prometheus; then
+	   kubectl apply -f /root/kubernetes-artifacts/prometheus/gpu-expoter.yaml
+	   kubectl apply -f /root/kubernetes-artifacts/prometheus/prometheus.yaml
+    fi
+fi
 set -e
 
 if [ "$useHostNetwork" == "true" ]; then
