@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: node-gpu-exporter
+  namespace: kube-system
 spec:
   selector:
     matchLabels:
@@ -58,6 +59,7 @@ metadata:
   annotations:
     prometheus.io/scrape: 'true'
   name: node-gpu-exporter
+  namespace: kube-system
   labels:
     app: node-gpu-exporter
     k8s-app: node-gpu-exporter

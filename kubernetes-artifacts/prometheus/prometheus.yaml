@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-env
+  namespace: kube-system
 data:
   storage-retention: 360h
 ---
@@ -10,6 +11,7 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
   name: prometheus
+  namespace: kube-system
 rules:
   - apiGroups: ["", "extensions", "apps"]
     resources:
@@ -28,11 +30,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus
+  namespace: kube-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
   name: prometheus
+  namespace: kube-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -46,6 +50,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: prometheus-deployment
+  namespace: kube-system
 spec:
   replicas: 1
   selector:
@@ -97,6 +102,7 @@ metadata:
     name: prometheus-svc
     kubernetes.io/name: "Prometheus"
   name: prometheus-svc
+  namespace: kube-system
 spec:
   selector:
     app: prometheus
@@ -111,6 +117,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-configmap
+  namespace: kube-system
 data:
   prometheus.yml: |-
     rule_files:
