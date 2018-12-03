@@ -130,7 +130,7 @@ find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
 
 
 ```
-find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+find /charts/ -name "*.yaml" | xargs sed -i "s/NodePort/LoadBalancer/g"
 ```
 
 > Warning: it's not encouraged to expose the service to the internet, because the service can be attacked by hacker easily.

@@ -40,6 +40,12 @@ spec:
             path: "{{ .Values.hostLogPath }}"
           name: training-logs-volume
         {{- end }}
+        {{- if .Values.dataset }}   
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          mountPath: "{{ $destPath }}"
+        {{- end }}
+        {{- end }}
       containers:
       - name: tensorboard   
         {{- if .Values.isLocalLogging }}
@@ -55,5 +61,12 @@ spec:
         {{- if .Values.isLocalLogging }}
         - mountPath: /output/training_logs
           name: training-logs-volume
+        {{- else }}
+        {{- if .Values.dataset }}   
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          mountPath: "{{ $destPath }}"
+        {{- end }}
+        {{- end }}
         {{- end }}
 {{- end }}
