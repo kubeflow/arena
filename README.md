@@ -12,6 +12,7 @@ Meanwhile, the end users require GPU resource and node management. Arena also pr
 
 In one word, Arena's goal is to make the data scientists feel like to work on a single machine but with the Power of GPU clusters indeed.
 
+For the Chinese version, please refer to [Chinese version](ROADMAP_cn.md)
 
 ## Setup
 
