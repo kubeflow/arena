@@ -36,8 +36,10 @@ spec:
       {{- end }}
     spec:
       {{- if .Values.useHostNetwork }}
+      {{- if not .Values.useENI }}
       hostNetwork: {{ .Values.useHostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
       {{- end }}
       {{- if .Values.useHostPID }}
       hostPID: {{ .Values.useHostPID }}
