@@ -34,3 +34,8 @@
 
 * Fix MPI Job backofflimit typo
 
+
+### 0.9.0
+
+* Fix MPI Job Tensorboard issue when using `--data`
+
