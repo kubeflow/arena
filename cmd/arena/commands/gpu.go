@@ -30,7 +30,7 @@ func gpuPods(pods []v1.Pod) (podsWithGPU []v1.Pod) {
 
 // The way to get GPU Count of Node: nvidia.com/gpu
 func gpuInNode(node v1.Node) int64 {
-	val, ok := node.Status.Capacity[NVIDIAGPUResourceName]
+	val, ok := node.Status.Allocatable[NVIDIAGPUResourceName]
 
 	if !ok {
 		return gpuInNodeDeprecated(node)
@@ -41,7 +41,7 @@ func gpuInNode(node v1.Node) int64 {
 
 // The way to get GPU Count of Node: alpha.kubernetes.io/nvidia-gpu
 func gpuInNodeDeprecated(node v1.Node) int64 {
-	val, ok := node.Status.Capacity[DeprecatedNVIDIAGPUResourceName]
+	val, ok := node.Status.Allocatable[DeprecatedNVIDIAGPUResourceName]
 
 	if !ok {
 		return 0
