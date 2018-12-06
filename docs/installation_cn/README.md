@@ -12,7 +12,7 @@ Arena 并非必需在 Kubernetes 集群内运行。它也可以在您的笔记�
 
   * Kubernetes >= 1.10
   * helm 版本 [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) 或更新版本 
-  * 此外还应按照与 helm 版本相同的 tiller(https://docs.helm.sh/using_helm/#installing-tiller)
+  * 此外还要部署与 helm 版本相同的 tiller(https://docs.helm.sh/using_helm/#installing-tiller)
 
 ###步骤
 
@@ -51,7 +51,7 @@ kubectl create -f arena/kubernetes-artifacts/jobmon/jobmon-role.yaml
 kubectl create -f arena/kubernetes-artifacts/tf-operator/tf-operator.yaml
 ```
 
-6\.安装仪表板
+6\.安装控制台 (可选)
 
 ```
 kubectl create -f arena/kubernetes-artifacts/dashboard/dashboard.yaml
@@ -104,7 +104,7 @@ yum install bash-completion -y
 echo "source <(arena completion bash)" >> ~/.bashrc
 ```
 
-然后，你可以使用 [标签] 来自动完成命令
+然后，你可以使用 [TAB] 来自动完成命令
 
 ```
 #arena list
@@ -129,7 +129,7 @@ find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
  Kubernetes 可在 AWS、GCE、Azure 和阿里云中运行，其云提供商支持 `LoadBalancer`。如果您希望在互联网上直接访问 tensorboard，可以运行如下代码：
 
 ```
-find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+find /charts/ -name "*.yaml" | xargs sed -i "s/NodePort/LoadBalancer/g"
 ```
 
 > 警告：我们不鼓励将服务公开给互联网，因为这种做法会导致服务受黑客攻击。

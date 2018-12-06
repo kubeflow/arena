@@ -1,7 +1,7 @@
 ﻿
-这个示例展示了如何使用 `Arena` 进行机器学习训练。该示例将从 git url 下载源代码。
+这个示例展示了如何使用 `Arena` 进行机器学习模型训练。该示例将从 git url 下载源代码。
 
-1. 第一步是检查可用资源
+1. 第一步是检查可用的GPU资源
 
 ```
 arena top node
@@ -17,10 +17,10 @@ Allocated/Total GPUs In Cluster:
 0/3 (0%)
 ```
 
-有 3 个带有 GPU 的可用节点用于运行训练作业。
+有 3 个包含 GPU 的可用节点用于运行训练作业。
 
 
-2\.现在，我们可以通过 `arena` 提交一个训练作业，这会从 github 下载源代码
+2\.现在，我们可以通过 `arena` 提交一个训练作业，本示例从 github 下载源代码
 
 ```
 #arena submit tf \
@@ -67,7 +67,7 @@ NAME STATUS TRAINER AGE NODE
 tf-git RUNNING tfjob 0s 192.168.1.120
 ```
 
-4\.检查作业所使用的资源
+4\.检查作业所使用的GPU资源
 
 ```
 #arena top job
@@ -82,7 +82,7 @@ Total Requested GPUs of Training Job:
 1
 ```
 
-5\.检查集群所使用的资源
+5\.检查集群所使用的GPU资源
 
 ```
 #arena top node

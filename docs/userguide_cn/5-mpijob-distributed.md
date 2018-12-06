@@ -42,7 +42,7 @@ Your tensorboard will be available on:
 ![](5-mpi-tensorboard.jpg)
 
 
-4\.获取 MPI 仪表板
+4\.获取 MPI 控制台
 
 ```
 #arena logviewer mpi-dist

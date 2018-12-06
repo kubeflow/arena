@@ -8,7 +8,7 @@
 
 按照 Istio [文档](https://istio.io/docs/setup/kubernetes/quick-start/#installation-steps) 安装 Istio。安装完成之后，您应该会在命名空间 `istio-system` 内看到 `istio-pilot` 和 `istio-mixer` 服务。
 
-Istio 默认 [拒绝出站数据流量](https://istio.io/docs/tasks/traffic-management/egress.html)。由于 TensorFlow 传送组件可能需要从外部都模型文件，因此我们需要某些特定于云的 [设置](https://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly)。 
+Istio 默认 [拒绝出站数据流量](https://istio.io/docs/tasks/traffic-management/egress.html)。由于 TensorFlow Serving组件可能需要从外部都模型文件，因此我们需要某些特定于云的 [设置](https://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly)。 
 
 2\.为模型文件创建持久卷
 
@@ -70,11 +70,11 @@ tfmodel ReadWriteMany this is tfmodel for mnist tester 31s
 ```
 
 
-3\.为 Tensorflow 传送禁用 Istio
+3\.为 Tensorflow Serving禁用 Istio
 
 您可以在不启用 Istio 的情况下部署并传送 Tensorflow 模型。 
 
-执行以下命令，提交 tensorflow 传送作业，部署并传送机器学习模型。
+执行以下命令，提交 tensorflow Serving作业，部署并传送机器学习模型。
 
 ```
 arena serve tensorflow [flags]
@@ -113,12 +113,12 @@ options:
 arena serve tensorflow --servingName=mymnist --modelName=mnist --image=tensorflow/serving:latest --data=tfmodel:/tfmodel --modelPath=/tfmodel/mnist --versionPolicy=specific:1 --loglevel=debug
 ```
 
-触发该命令之后，系统将创建一项 Kubernetes 服务，以提供公开的 gRPC 和 RESTful API。
+触发该命令之后，系统将创建相应 Kubernetes 服务，以提供公开的 gRPC 和 RESTful API。
 
 
-4\.为 Tensorflow 传送启用 Istio
+4\.为 Tensorflow Serving启用 Istio
 
-如果您需要为 Tensorflow 传送启用 Istio，则可以在上述命令中附上参数 `--enableIstio`（默认禁用 Istio）。
+如果您需要为 Tensorflow Serving启用 Istio，则可以在上述命令中附上参数 `--enableIstio`（默认禁用 Istio）。
 
 例如，您可以在提交 Tensorflow 模型的同时启用 Istio，如下所示。
 
@@ -219,7 +219,7 @@ EOF
 #kubectl exec -it sleep-5dd9955c58-km59h -c sleep bash
 ```
 
-在此容器内，使用 `curl` 调用公开的 Tensorflow 传送 API：
+在此容器内，使用 `curl` 调用公开的 Tensorflow Serving API：
 
 ```
 #curl -X POST   http://mymnist:8501/v1/models/mnist:predict    -d '{"signature_name":"predict","instances":[{"sepal_length":[6.8],"sepal_width":[3.2],"petal_length":[5.9],"petal_width":[2.3]}]}' 

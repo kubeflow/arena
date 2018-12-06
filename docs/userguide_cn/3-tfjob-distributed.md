@@ -68,7 +68,7 @@ Your tensorboard will be available on:
 ![](3-tensorboard.jpg)
 
 
-4\.获取 TFJob 仪表板
+4\.获取 TFJob 控制台
 
 ```
 #arena logviewer tf-dist-git

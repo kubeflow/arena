@@ -6,7 +6,7 @@
 
 ##概述
 
-Arena 是一种命令行工具，可供数据科学家轻而易举地运行和监控机器学习训练作业，并便捷地检查结果。目前，它支持独立/分布式 TensorFlow 训练。在后端，它基于 Kubernetes、helm 和 Kubeflow。但数据科学家可能对于 kubernetes 知之甚少。
+Arena 是一个命令行工具，可供数据科学家轻而易举地运行和监控机器学习训练作业，并便捷地检查结果。目前，它支持单机/分布式深度学习模型训练。在实现层面，它基于 Kubernetes、helm 和 Kubeflow。但数据科学家可能对于 kubernetes 知之甚少。
 
 与此同时，用户需要 GPU 资源和节点管理。Arena 还提供了 `top` 命令，用于检查 Kubernetes 集群内的可用 GPU 资源。
 

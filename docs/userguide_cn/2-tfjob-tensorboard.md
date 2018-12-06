@@ -1,5 +1,5 @@
 ﻿
-这个示例展示了如何使用 `Arena` 进行机器学习训练。它会从 git url 下载源代码，并使用 Tensorboard 可视化 Tensorflow 计算图形、绘制量化指标。
+这个示例展示了如何使用 `Arena` 进行机器学习模型训练。它会从 git url 下载源代码，并使用 Tensorboard 可视化 Tensorflow 训练状态。
 
 1. 第一步是检查可用资源
 
@@ -20,7 +20,7 @@ Allocated/Total GPUs In Cluster:
 有 3 个带有 GPU 的可用节点用于运行训练作业。
 
 
-2\.现在，我们可以通过 `arena cli` 提交一个训练作业，这会从 github 下载源代码
+2\.现在，我们可以通过 `arena submit` 提交一个训练作业，这会从 github 下载源代码
 
 ```
 #arena submit tf \
@@ -67,7 +67,7 @@ NAME STATUS TRAINER AGE NODE
 tf-tensorboard RUNNING TFJOB 0s 192.168.1.119
 ```
 
-4\.检查作业所使用的资源
+4\.检查作业所使用的GPU资源
 
 ```
 #arena top job
@@ -84,7 +84,7 @@ Total Requested GPUs of Training Job:
 
 
 
-5\.检查集群所使用的资源
+5\.检查集群所使用的GPU资源
 
 
 ```
