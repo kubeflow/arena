@@ -17,8 +17,8 @@ Arena 支持利用 [kube-arbitrator](https://github.com/kubernetes-incubator/kub
  - 各 Worker 的 GPU（仅 GPU 工作负载需要）
  - Worker 的数量（必需）
  - PS 的数量（必需）
- - Worker 的 docker 映像（必需）
- - PS 的 docker 映像（必需）
+ - Worker 的 docker 镜像（必需）
+ - PS 的 docker 镜像（必需）
  - Worker 的端口（默认为 22222）
  - PS 的端口（默认为 22223）
 

@@ -64,8 +64,8 @@ tfdata ReadWriteMany this is for mnist demo myteam 43d
  - 启用评估器 （必需）
  - Worker 的数量（必需）
  - PS 的数量（必需）
- - Worker 和主节点的 docker 映像（必需）
- - PS 的 docker 映像（必需）
+ - Worker 和主节点的 docker 镜像（必需）
+ - PS 的 docker 镜像（必需）
  - 主 Worker 的端口（默认为 22221）
  - Worker 的端口（默认为 22222）
  - PS 的端口（默认为 22223）

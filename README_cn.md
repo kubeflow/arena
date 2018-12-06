@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubeflow/arena)](https://goreportcard.com/report/github.com/kubeflow/arena)
 
 
-##概述
+## 概述
 
 Arena 是一个命令行工具，可供数据科学家轻而易举地运行和监控机器学习训练作业，并便捷地检查结果。目前，它支持单机/分布式深度学习模型训练。在实现层面，它基于 Kubernetes、helm 和 Kubeflow。但数据科学家可能对于 kubernetes 知之甚少。
 
@@ -13,11 +13,11 @@ Arena 是一个命令行工具，可供数据科学家轻而易举地运行和�
 简而言之，Arena 的目标是让数据科学家感觉自己就像是在一台机器上工作，而实际上还可以享受到 GPU 集群的强大力量。
 
 
-##设置
+## 设置
 
 您可以按照 [安装指南](docs/installation_cn/README.md) 执行操作
 
-##用户指南
+## 用户指南
 
 Arena 是一种命令行界面，支持轻而易举地运行和监控机器学习训练作业，并便捷地检查结果。目前，它支持独立/分布式训练。
 
@@ -30,12 +30,12 @@ Arena 是一种命令行界面，支持轻而易举地运行和监控机器学�
 - [7.运行 TensorFlow Serving](docs/userguide_cn/7-tf-serving.md)
 - [8.运行 TensorFlow Estimator](docs/userguide_cn/8-tfjob-estimator.md)
 
-##演示
+## 演示
 
 [![](demo.jpg)](http://cloud.video.taobao.com/play/u/2987821887/p/1/e/6/t/1/50210690772.mp4)
 
 
-##开发
+## 开发
 
 先决条件：
 
@@ -51,11 +51,11 @@ make
 
 `arena` 二进制文件位于 `arena/bin` 目录下。您可能希望将目录添加到 `$PATH`。
 
-##命令行文档
+## 命令行文档
 
 请参阅 [arena.md](docs/cli/arena.md)
 
-##路线图
+## 路线图
 
 请参阅[路线图](ROADMAP.md)
 
