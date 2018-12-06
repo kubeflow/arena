@@ -6,7 +6,7 @@ Arena 为分布式 TensorFlow 训练（MPI 模式）提供了支持和简化。
 
  - 各 Worker 的 GPU（仅 GPU 工作负载需要）
  - Worker 的数量（必需）
- - mpi Worker 的 docker 映像（必需）
+ - mpi Worker 的 docker 镜像（必需）
  
 
 如下命令提供了一个示例。本例中定义了 2 个 Worker 和 1 个 PS，每个 Worker 有 1 个 GPU。Worker 和 PS 的源代码位于 git 中，Tensorboard 已启用。

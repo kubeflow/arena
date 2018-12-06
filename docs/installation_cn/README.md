@@ -1,4 +1,4 @@
-﻿##设置
+﻿## 部署
 
 本文档假设您已经有可用的 Kubernetes 集群。
 
@@ -8,13 +8,13 @@
 
 Arena 并非必需在 Kubernetes 集群内运行。它也可以在您的笔记本电脑中运行。如果您可以运行 `kubectl` 以管理 Kubernetes 集群，那么也可以使用 `arena` 管理训练作业。
 
-###要求
+### 要求
 
   * Kubernetes >= 1.10
   * helm 版本 [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) 或更新版本 
   * 此外还要部署与 helm 版本相同的 tiller(https://docs.helm.sh/using_helm/#installing-tiller)
 
-###步骤
+### 步骤
 
 1\.通过使用 `export KUBECONFIG=/etc/kubernetes/admin.conf` 或创建一个 `~/.kube/config` 来准备 kubeconfig 文件
 

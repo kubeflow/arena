@@ -1,14 +1,14 @@
-﻿本指南详细介绍了使用 Kubernetes (K8s) 和 Istio 部署和提供 TensorFlow 模型时所需的步骤。
+﻿本指南详细介绍了使用 Kubernetes (K8s) 和 Istio 部署和提供 TensorFlow 模型预测时所需的步骤。
 
-1.设置
+1. 部署
 
-在使用 `Arena` 传送 TensorFlow 之前，我们需要设置环境，包括 Kubernetes 集群和 Istio。
+在使用 `Arena` serving TensorFlow 之前，我们需要准备环境，包括 Kubernetes 集群和 Istio （可选）。
 
 确保您的 Kubernetes 集群处于运行状态。
 
 按照 Istio [文档](https://istio.io/docs/setup/kubernetes/quick-start/#installation-steps) 安装 Istio。安装完成之后，您应该会在命名空间 `istio-system` 内看到 `istio-pilot` 和 `istio-mixer` 服务。
 
-Istio 默认 [拒绝出站数据流量](https://istio.io/docs/tasks/traffic-management/egress.html)。由于 TensorFlow Serving组件可能需要从外部都模型文件，因此我们需要某些特定于云的 [设置](https://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly)。 
+Istio 默认 [拒绝访问外部数据流量](https://istio.io/docs/tasks/traffic-management/egress.html)。由于 TensorFlow Serving组件可能需要从外部都模型文件，因此我们需要某些特定于云的 [配置](https://istio.io/docs/tasks/traffic-management/egress.html#calling-external-services-directly)。 
 
 2\.为模型文件创建持久卷
 
@@ -72,9 +72,9 @@ tfmodel ReadWriteMany this is tfmodel for mnist tester 31s
 
 3\.为 Tensorflow Serving禁用 Istio
 
-您可以在不启用 Istio 的情况下部署并传送 Tensorflow 模型。 
+您可以在不启用 Istio 的情况下部署并运行 Tensorflow 模型预测。 
 
-执行以下命令，提交 tensorflow Serving作业，部署并传送机器学习模型。
+执行以下命令，提交 tensorflow Serving作业，部署机器学习模型预测。
 
 ```
 arena serve tensorflow [flags]
@@ -167,7 +167,7 @@ Getting Started:
 
 5\.列出所有传送作业
 
-您可以使用如下命令列出所有传送作业。
+您可以使用如下命令列出所有预测服务。
 
 ```
 #arena serve list
@@ -225,7 +225,7 @@ EOF
 #curl -X POST   http://mymnist:8501/v1/models/mnist:predict    -d '{"signature_name":"predict","instances":[{"sepal_length":[6.8],"sepal_width":[3.2],"petal_length":[5.9],"petal_width":[2.3]}]}' 
 ```
 
-8\.删除一个传送作业
+8\.删除一个模型预测任务
 
 您可以使用如下命令来删除传送作业及其相关的 pod
                                      
