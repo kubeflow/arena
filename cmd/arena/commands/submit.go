@@ -53,8 +53,8 @@ type submitArgs struct {
 	DataSet  map[string]string `yaml:"dataset"`
 	DataDirs []dataDirVolume   `yaml:"dataDirs"`
 
-	EnableRDMA     bool `yaml:"enableRDMA"` // --rdma
-	UseHostNetwork bool `yaml:"useHostNetwork"`
+	EnableRDMA bool `yaml:"enableRDMA"` // --rdma
+	UseENI     bool `yaml:"useENI"`
 
 	Annotations map[string]string `yaml:"annotations"`
 }
@@ -115,7 +115,7 @@ func (s *submitArgs) transform() (err error) {
 	if len(annotations) > 0 {
 		s.Annotations = transformSliceToMap(annotations, "=")
 		if value, _ := s.Annotations[aliyunENIAnnotation]; value == "true" {
-			s.UseHostNetwork = false
+			s.UseENI = true
 		}
 	}
 

@@ -39,3 +39,7 @@
 
 * Fix MPI Job Tensorboard issue when using `--data`
 
+
+### 0.10.0
+
+* Fix hostnetwork issue which is introduced by ENI

@@ -6,4 +6,4 @@ maintainers:
 - email: cheyang@163.com
   name: cheyang
 name: tf-horovod
-version: 0.15.0
+version: 0.16.0
