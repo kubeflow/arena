@@ -16,6 +16,7 @@ package commands
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/tf-operator/pkg/client/clientset/versioned"
@@ -81,20 +82,16 @@ func (tj *TensorFlowJob) AllPods() []v1.Pod {
 
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (tj *TensorFlowJob) GetStatus() (status string) {
-	status = "UNKNOWN"
+	status = "Unknown"
 	if tj.tfjob.Name == "" {
 		return status
 	}
-	if isSucceeded(tj.tfjob.Status) {
-		status = "SUCCEEDED"
-	} else if isFailed(tj.tfjob.Status) {
-		status = "FAILED"
-	} else if isRunning(tj.tfjob.Status) {
-		status = "RUNNING"
-	} else if isPending(tj.tfjob.Status) {
-		status = "PENDING"
+
+	t := checkStatus(tj.tfjob.Status)
+	if t == tfv1alpha2.TFJobCreated || t == tfv1alpha2.TFJobRestarting {
+		status = "Pending"
 	} else {
-		status = "UNKNOWN"
+		status = string(t)
 	}
 
 	return status
@@ -291,6 +288,9 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 		tfjob = tfjobList.Items[0]
 	}
 
+	// Sort tfjob status conditions and make the newest condition at first
+	tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
+
 	// 2. Find the pod list, and determine the pod of the job
 	podList, err := tt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{
@@ -443,6 +443,35 @@ func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item v1.Pod) bo
 	return true
 }
 
+type orderedTrainingJobConditionsByTime []tfv1alpha2.TFJobCondition
+
+func (t orderedTrainingJobConditionsByTime) Len() int {
+	return len(t)
+}
+
+func (t orderedTrainingJobConditionsByTime) Less(i, j int) bool {
+	if t[i].LastUpdateTime.IsZero() {
+		return true
+	} else if t[j].LastUpdateTime.IsZero() {
+		return false
+	}
+
+	return t[i].LastUpdateTime.After(t[j].LastUpdateTime.Time)
+}
+
+func (t orderedTrainingJobConditionsByTime) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
+}
+
+func makeJobStatusSortedByTime(conditions []tfv1alpha2.TFJobCondition) []tfv1alpha2.TFJobCondition {
+	newConditions := make(orderedTrainingJobConditionsByTime, 0, len(conditions))
+	for _, c := range conditions {
+		newConditions = append(newConditions, c)
+	}
+	sort.Sort(newConditions)
+	return []tfv1alpha2.TFJobCondition(newConditions)
+}
+
 func hasCondition(status tfv1alpha2.TFJobStatus, condType tfv1alpha2.TFJobConditionType) bool {
 	for _, condition := range status.Conditions {
 		if condition.Type == condType && condition.Status == v1.ConditionTrue {
@@ -452,21 +481,13 @@ func hasCondition(status tfv1alpha2.TFJobStatus, condType tfv1alpha2.TFJobCondit
 	return false
 }
 
-func isSucceeded(status tfv1alpha2.TFJobStatus) bool {
-	return hasCondition(status, tfv1alpha2.TFJobSucceeded)
-}
-
-func isFailed(status tfv1alpha2.TFJobStatus) bool {
-	return hasCondition(status, tfv1alpha2.TFJobFailed)
-}
-
-func isRunning(status tfv1alpha2.TFJobStatus) bool {
-	return hasCondition(status, tfv1alpha2.TFJobRunning)
-}
-
-func isPending(status tfv1alpha2.TFJobStatus) bool {
-	if status.Conditions == nil {
-		return true
+func checkStatus(status tfv1alpha2.TFJobStatus) tfv1alpha2.TFJobConditionType {
+	t := tfv1alpha2.TFJobConditionType("Unknown")
+	for _, condition := range status.Conditions {
+		if condition.Status == v1.ConditionTrue {
+			t = condition.Type
+			break
+		}
 	}
-	return hasCondition(status, tfv1alpha2.TFJobCreated) || hasCondition(status, tfv1alpha2.TFJobRestarting)
+	return t
 }
