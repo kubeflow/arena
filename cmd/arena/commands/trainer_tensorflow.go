@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/tf-operator/pkg/client/clientset/versioned"
@@ -82,16 +83,16 @@ func (tj *TensorFlowJob) AllPods() []v1.Pod {
 
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (tj *TensorFlowJob) GetStatus() (status string) {
-	status = "Unknown"
+	status = "UNKNOWN"
 	if tj.tfjob.Name == "" {
 		return status
 	}
 
 	t := checkStatus(tj.tfjob.Status)
 	if t == tfv1alpha2.TFJobCreated || t == tfv1alpha2.TFJobRestarting {
-		status = "Pending"
+		status = "PENDING"
 	} else {
-		status = string(t)
+		status = strings.ToUpper(string(t))
 	}
 
 	return status
