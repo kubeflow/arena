@@ -15,7 +15,6 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -176,34 +175,11 @@ func (p *logPrinter) getPodLogs(displayName string, podName string, podNamespace
 		SinceTime:    sinceTime,
 		TailLines:    tail,
 	}).Stream()
-	// if err == nil {
-	// 	scanner := bufio.NewScanner(stream)
-	// 	for scanner.Scan() {
-	// 		line := scanner.Text()
-	// 		parts := strings.Split(line, " ")
-	// 		logTime, err := time.Parse(time.RFC3339, parts[0])
-	// 		if err == nil {
-	// 			lines := strings.Join(parts[1:], " ")
-	// 			for _, line := range strings.Split(lines, "\r") {
-	// 				if line != "" {
-	// 					callback(logEntry{
-	// 						pod:         podName,
-	// 						displayName: displayName,
-	// 						time:        logTime,
-	// 						line:        line,
-	// 					})
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	if err != nil {
 		return err
 	}
-	writer := bufio.NewWriter(os.Stdout)
-	defer writer.Flush()
-	_, err = io.Copy(writer, readCloser)
+	_, err = io.Copy(os.Stdout, readCloser)
 
 	defer readCloser.Close()
 	return err
