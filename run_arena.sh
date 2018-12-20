@@ -16,13 +16,13 @@ fi
 
 set +e
 
-if [[ ! -z "${REGISTRY}" ]]; then
-  find /charts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${REGISTRY}/g"
-  find /charts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${REGISTRY}/g"
+if [[ ! -z "${registry}" ]]; then
+  find /charts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${registry}/g"
+  find /charts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${registry}/g"
 fi
 
-if [[ ! -z "${REPO}" ]]; then
-  find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${REPO}/g"
+if [[ ! -z "${repo}" ]]; then
+  find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${repo}/g"
 fi
 
 if [ "$useLoadBlancer" == "true" ]; then
