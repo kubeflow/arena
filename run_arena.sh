@@ -16,6 +16,15 @@ fi
 
 set +e
 
+if [[ ! -z "${REGISTRY}" ]]; then
+  find /charts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${REGISTRY}/g"
+  find /charts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${REGISTRY}/g"
+fi
+
+if [[ ! -z "${REPO}" ]]; then
+  find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${REPO}/g"
+fi
+
 if [ "$useLoadBlancer" == "true" ]; then
 	find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
 	find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
