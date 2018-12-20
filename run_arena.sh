@@ -60,7 +60,7 @@ fi
 if [ -d "/host" ]; then
    cp /usr/local/bin/arena /host/usr/local/bin/arena
    if [ -d "/host/charts" ]; then
-      mv /host/charts /host/charts_bak
+      mv /host/charts /host/charts_$(date "+%Y%m%d%H%M%S")
    fi
    cp -r /charts /host
 fi
