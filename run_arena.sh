@@ -23,9 +23,9 @@ if [[ ! -z "${registry}" ]]; then
   find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${registry}/g"
 fi
 
-if [[ ! -z "${repo}" ]]; then
-  find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${repo}/g"
-  find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${repo}/g"
+if [[ ! -z "${namespace}" ]]; then
+  find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${namespace}/g"
+  find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${namespace}/g"
 fi
 
 if [ "$useLoadBlancer" == "true" ]; then
