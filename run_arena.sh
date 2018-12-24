@@ -16,6 +16,18 @@ fi
 
 set +e
 
+if [[ ! -z "${registry}" ]]; then
+  find /charts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${registry}/g"
+  find /charts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${registry}/g"
+  find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${registry}/g"
+  find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${registry}/g"
+fi
+
+if [[ ! -z "${namespace}" ]]; then
+  find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${namespace}/g"
+  find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${namespace}/g"
+fi
+
 if [ "$useLoadBlancer" == "true" ]; then
 	find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
 	find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
@@ -49,7 +61,7 @@ fi
 if [ -d "/host" ]; then
    cp /usr/local/bin/arena /host/usr/local/bin/arena
    if [ -d "/host/charts" ]; then
-      mv /host/charts /host/charts_bak
+      mv /host/charts /host/charts_$(date "+%Y%m%d%H%M%S")
    fi
    cp -r /charts /host
 fi
