@@ -17,7 +17,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"runtime/pprof"
+	"strconv"
 
 	"github.com/kubeflow/arena/cmd/arena/commands"
 	log "github.com/sirupsen/logrus"
@@ -31,6 +33,7 @@ func main() {
 			log.Fatal(err)
 		}
 		pprof.StartCPUProfile(cpuf)
+		runtime.SetCPUProfileRate(getProfileHZ())
 		log.Infof("Dump cpu profile file into /tmp/cpu_profile")
 		defer pprof.StopCPUProfile()
 	}
@@ -50,4 +53,12 @@ func isPProfEnabled() (enable bool) {
 	}
 
 	return
+}
+
+func getProfileHZ() int {
+	profileRate := 1000
+	if s, err := strconv.Atoi(os.Getenv("PROFILE_RATE")); err == nil {
+		profileRate = s
+	}
+	return profileRate
 }
