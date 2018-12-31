@@ -81,7 +81,7 @@ func getProfileHZ() int {
 	return profileRate
 }
 
-func isTraceEnabled() (enabled bool) {
+func isTraceEnabled() (enable bool) {
 	for _, arg := range os.Args {
 		if arg == "--trace" {
 			enable = true
