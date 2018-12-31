@@ -201,7 +201,7 @@ func NewMPIJobTrainer(client *kubernetes.Clientset) Trainer {
 		}
 	}
 	// allPods have been cached, we do the same to allMPIjobs
-	if len(allPods) > 0 {
+	if useCache {
 		mpijobList, err := mpijobClient.KubeflowV1alpha1().MPIJobs(metav1.NamespaceAll).List(metav1.ListOptions{})
 		// mpijobList, err := mpijobClient.KubeflowV1alpha2().mpijob(metav1.NamespaceAll).List(metav1.ListOptions{})
 		if err != nil {
@@ -238,7 +238,7 @@ func (tt *MPIJobTrainer) IsSupported(name, ns string) bool {
 
 	isMPI := false
 
-	if len(allMPIjobs) > 0 {
+	if useCache {
 		for _, job := range allMPIjobs {
 			if tt.isMPIJob(name, ns, job) {
 				isMPI = true
