@@ -19,6 +19,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"runtime/trace"
 	"strconv"
 
 	"github.com/kubeflow/arena/cmd/arena/commands"
@@ -32,10 +33,27 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer cpuf.Close()
+
 		runtime.SetCPUProfileRate(getProfileHZ())
 		pprof.StartCPUProfile(cpuf)
 		log.Infof("Dump cpu profile file into /tmp/cpu_profile")
 		defer pprof.StopCPUProfile()
+	}
+
+	// debug latency issue
+	if isTraceEnabled() {
+		tracef, err := os.Create("/tmp/trace.log")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer tracef.Close()
+
+		err = trace.Start(tracef)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer trace.Stop()
 	}
 
 	if err := commands.NewCommand().Execute(); err != nil {
@@ -61,4 +79,15 @@ func getProfileHZ() int {
 		profileRate = s
 	}
 	return profileRate
+}
+
+func isTraceEnabled() (enabled bool) {
+	for _, arg := range os.Args {
+		if arg == "--trace" {
+			enable = true
+			break
+		}
+	}
+
+	return
 }
