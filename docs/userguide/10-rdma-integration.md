@@ -31,37 +31,15 @@ find /charts/ -name values.yaml | xargs sed -i "/enableRDMA/s/false/true/g"
 4\. Submit a Tensorflow training job using RDMA
 
 ```
-# arena submit tf --name=tf-dist-git \
+# arena submit mpi --name=mpi-dist              \
               --rdma \
-              --gpus=1 \
-              --workers=2 \
-              --workerImage=tensorflow/tensorflow:1.5.0-devel-gpu \
+              --gpus=1              \
+              --workers=2              \
+              --image=uber/horovod:0.13.11-tf1.10.0-torch0.4.0-py3.5  \
+              --env=GIT_SYNC_BRANCH=cnn_tf_v1.9_compatible \
               --syncMode=git \
-              --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
-              --ps=1 \
-              --psImage=tensorflow/tensorflow:1.5.0-devel \
+              --syncSource=https://github.com/tensorflow/benchmarks.git \
               --tensorboard \
-              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --logdir /training_logs"
-
-NAME:   tf-dist-git
-LAST DEPLOYED: Fri Dec 14 18:47:28 2018
-NAMESPACE: default
-STATUS: DEPLOYED
-
-RESOURCES:
-==> v1alpha2/TFJob
-NAME               AGE
-tf-dist-git-tfjob  0s
-
-==> v1/Pod(related)
-NAME                                READY  STATUS   RESTARTS  AGE
-tf-dist-git-tfjob-54c6cd95d6-hc5n9  0/1    Pending  0         0s
-
-==> v1/Service
-NAME               TYPE      CLUSTER-IP   EXTERNAL-IP  PORT(S)         AGE
-tf-dist-git-tfjob  NodePort  172.19.9.80  <none>       6006:32339/TCP  0s
-
-==> v1beta1/Deployment
-NAME               DESIRED  CURRENT  UP-TO-DATE  AVAILABLE  AGE
-tf-dist-git-tfjob  1        1        1           0          0s
+              "mpirun python code/benchmarks/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py --model resnet101 --batch_size 64     --variable_update horovod --train_dir=/training_logs --summary_verbosity=3
+              --save_summaries_steps=10"
 ```

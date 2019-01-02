@@ -8,24 +8,27 @@ kubectl apply -f kubernetes-artifacts/prometheus/prometheus.yaml
 
 2\. Deploy GPU node exporter
 
-If your cluster is ACK (Alibaba Cloud Kubernetes) cluster, you can just exec command:
+* If your cluster is ACK (Alibaba Cloud Kubernetes) cluster, you can just exec command:
 
 ```
-kubectl apply -f kubernetes-artifacts/prometheus/gpu-expoter.yaml
+# change gpu export nodeSelector to aliyun label
+sed 's|accelerator/nvidia_gpu|aliyun.accelerator/nvidia_count|g' kubernetes-artifacts/prometheus/gpu-expoter.yaml
 ```
 
-If your cluster is not ACK cluster, exec command:
+* If your cluster is not ACK cluster, you need to label your GPU node:
 
 ```
 # label all your GPU nodes
-kubectl label node <your node> accelerator/nvidia_gpu=true
-# change gpu export nodeSelector to your label
-sed 's|aliyun.accelerator/nvidia_count|accelerator/nvidia_gpu|g' kubernetes-artifacts/prometheus/gpu-expoter.yaml
-# deploy gpu expoter
+kubectl label node <your GPU node> accelerator/nvidia_gpu=true
+```
+
+* Deploy gpu expoter
+
+```
 kubectl apply -f kubernetes-artifacts/prometheus/gpu-expoter.yaml
 ```
 
-> Notice: the prometheus and gpu-exporter components should be deployed in namespace `kube-system`, and `arena top job` can work. 
+> Notice: the prometheus and gpu-exporter components should be deployed in namespace `kube-system`, and so that `arena top job <job name>` can work.
 
 3\. You can check the GPU metrics by prometheus SQL request
 
