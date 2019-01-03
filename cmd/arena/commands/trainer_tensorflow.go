@@ -258,7 +258,7 @@ func (tt *TensorFlowJobTrainer) IsSupported(name, ns string) bool {
 }
 
 func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
-	if len(allTfjobs) > 0 {
+	if useCache {
 		tj, err = tt.getTrainingJobFromCache(name, namespace)
 	} else {
 		tj, err = tt.getTrainingJob(name, namespace)
@@ -269,7 +269,7 @@ func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (tj Train
 
 func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
 	var (
-		tfjob    tfv1alpha2.TFJob
+		tfjob tfv1alpha2.TFJob
 	)
 
 	// 1. Get the batchJob of training Job
@@ -318,7 +318,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, error) {
 
 	var (
-		tfjob    tfv1alpha2.TFJob
+		tfjob tfv1alpha2.TFJob
 	)
 
 	// 1. Find the batch job
@@ -328,7 +328,6 @@ func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (Traini
 			break
 		}
 	}
-
 
 	// 2. Find the pods, and determine the pod of the job
 	pods, chiefPod := getPodsOfTFJob(tt, tfjob, allPods)
