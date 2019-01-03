@@ -269,7 +269,6 @@ func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (tj Train
 
 func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
 	var (
-		chiefPod v1.Pod
 		tfjob    tfv1alpha2.TFJob
 	)
 
@@ -303,19 +302,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 	if err != nil {
 		return nil, err
 	}
-
-	for _, item := range podList.Items {
-		if !tt.isTensorFlowPod(name, namespace, item) {
-			continue
-		}
-		if tt.isChiefPod(tfjob, item) {
-			chiefPod = item
-		}
-
-		// for non-job pod, add it into the pod list
-		pods = append(pods, item)
-		log.Debugf("add pod %v to pods", item)
-	}
+	pods, chiefPod := getPodsOfTFJob(tt, tfjob, podList.Items)
 
 	return &TensorFlowJob{
 		tfjob:       tfjob,
@@ -331,11 +318,8 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, error) {
 
 	var (
-		chiefPod v1.Pod
 		tfjob    tfv1alpha2.TFJob
 	)
-
-	pods := []v1.Pod{}
 
 	// 1. Find the batch job
 	for _, item := range allTfjobs {
@@ -345,21 +329,9 @@ func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (Traini
 		}
 	}
 
+
 	// 2. Find the pods, and determine the pod of the job
-	for _, item := range allPods {
-
-		if !tt.isTensorFlowPod(name, ns, item) {
-			continue
-		}
-		if tt.isChiefPod(tfjob, item) {
-			chiefPod = item
-		}
-
-		// for non-job pod, add it into the pod list
-		pods = append(pods, item)
-		log.Debugf("add pod %v to pods", item)
-
-	}
+	pods, chiefPod := getPodsOfTFJob(tt, tfjob, allPods)
 
 	return &TensorFlowJob{
 		tfjob:       tfjob,
@@ -491,4 +463,25 @@ func checkStatus(status tfv1alpha2.TFJobStatus) tfv1alpha2.TFJobConditionType {
 		}
 	}
 	return t
+}
+
+func getPodsOfTFJob(tt *TensorFlowJobTrainer, tfjob tfv1alpha2.TFJob, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
+	pods = []v1.Pod{}
+	for _, item := range podList {
+		if !tt.isTensorFlowPod(name, namespace, item) {
+			continue
+		}
+		if tt.isChiefPod(tfjob, item) && item.CreationTimestamp.After(chiefPod.CreationTimestamp.Time) {
+			// If there are some failed chiefPod, and the new chiefPod haven't started, set the latest failed pod as chief pod
+			if chiefPod.Name != "" && item.Status.Phase == v1.PodPending {
+				continue
+			}
+			chiefPod = item
+		}
+
+		// for non-job pod, add it into the pod list
+		pods = append(pods, item)
+		log.Debugf("add pod %v to pods", item)
+	}
+	return pods, chiefPod
 }
