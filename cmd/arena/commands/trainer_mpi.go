@@ -276,13 +276,10 @@ func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob,
 
 func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
 	var (
-		chiefPod v1.Pod
 		mpijob   v1alpha1.MPIJob
 	)
 
 	// 1. Get the batchJob of training Job
-	pods := []v1.Pod{}
-
 	mpijobList, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(namespace).List(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("release=%s", name),
 	})
@@ -308,18 +305,7 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 		return nil, err
 	}
 
-	for _, item := range podList.Items {
-		if !tt.isMPIPod(name, namespace, item) {
-			continue
-		}
-		if tt.isChiefPod(item) {
-			chiefPod = item
-		}
-
-		// for non-job pod, add it into the pod list
-		pods = append(pods, item)
-		log.Debugf("add pod %v to pods", item)
-	}
+	pods, chiefPod := getPodsOfMPIJob(tt, podList.Items)
 
 	return &MPIJob{
 		mpijob:      mpijob,
@@ -335,11 +321,8 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, error) {
 
 	var (
-		chiefPod v1.Pod
 		mpijob   v1alpha1.MPIJob
 	)
-
-	pods := []v1.Pod{}
 
 	// 1. Find the batch job
 	for _, item := range allMPIjobs {
@@ -350,20 +333,7 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, 
 	}
 
 	// 2. Find the pods, and determine the pod of the job
-	for _, item := range allPods {
-
-		if !tt.isMPIPod(name, ns, item) {
-			continue
-		}
-		if tt.isChiefPod(item) {
-			chiefPod = item
-		}
-
-		// for non-job pod, add it into the pod list
-		pods = append(pods, item)
-		log.Debugf("add pod %v to pods", item)
-
-	}
+	pods, chiefPod := getPodsOfMPIJob(tt, allPods)
 
 	return &MPIJob{
 		mpijob:      mpijob,
@@ -443,4 +413,26 @@ func isMPIJobFailed(status v1alpha1.MPIJobStatus) bool {
 
 func isMPIJobPending(status v1alpha1.MPIJobStatus) bool {
 	return false
+}
+
+
+func getPodsOfMPIJob(tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
+	pods = []v1.Pod{}
+	for _, item := range podList {
+		if !tt.isMPIPod(name, namespace, item) {
+			continue
+		}
+		if tt.isChiefPod(item) && item.CreationTimestamp.After(chiefPod.CreationTimestamp.Time) {
+			// If there are some failed chiefPod, and the new chiefPod haven't started, set the latest failed pod as chief pod
+			if chiefPod.Name != "" && item.Status.Phase == v1.PodPending {
+				continue
+			}
+			chiefPod = item
+		}
+
+		// for non-job pod, add it into the pod list
+		pods = append(pods, item)
+		log.Debugf("add pod %v to pods", item)
+	}
+	return pods, chiefPod
 }
