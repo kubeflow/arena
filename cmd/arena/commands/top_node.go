@@ -51,7 +51,7 @@ func NewTopNodeCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			allPods, err := acquireAllActivePods(client)
+			allPods, err = acquireAllActivePods(client)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

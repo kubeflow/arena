@@ -20,11 +20,12 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"io"
+
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"io"
 )
 
 func NewListCommand() *cobra.Command {
@@ -46,7 +47,8 @@ func NewListCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
+			// determine use cache
+			useCache = true
 			allPods, err = acquireAllPods(client)
 			if err != nil {
 				fmt.Println(err)
@@ -111,7 +113,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	_ = w.Flush()
 }
 
-func PrintLine(w io.Writer, fields ...string)  {
+func PrintLine(w io.Writer, fields ...string) {
 	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	buffer := strings.Join(fields, "\t")
 	fmt.Fprintln(w, buffer)

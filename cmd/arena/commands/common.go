@@ -35,6 +35,7 @@ var (
 	// To reduce client-go API call, for 'arena list' scenario
 	allPods        []v1.Pod
 	allJobs        []batchv1.Job
+	useCache       bool
 	name           string
 	namespace      string
 	arenaNamespace string // the system namespace of arena

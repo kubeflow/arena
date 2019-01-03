@@ -53,6 +53,20 @@ make
 
 `arena` binary is located in directory `arena/bin`. You may want to add the directory to `$PATH`.
 
+## CPU Profiling
+
+```
+# set profile rate (HZ)
+export PROFILE_RATE=1000
+
+# arena {command} --pprof
+arena list --pprof
+INFO[0000] Dump cpu profile file into /tmp/cpu_profile
+```
+
+Then you can analyze the profile by following [Go CPU profiling: pprof and speedscope](https://coder.today/go-profiling-pprof-and-speedscope-b05b812cc429)
+
+
 ## CLI Document
 
 Please refer to [arena.md](docs/cli/arena.md)

@@ -35,6 +35,7 @@ var (
 	loadingRules *clientcmd.ClientConfigLoadingRules
 	logLevel     string
 	enablePProf  bool
+	enableTrace  bool
 )
 
 // NewCommand returns a new instance of an Arena command
@@ -56,6 +57,7 @@ func NewCommand() *cobra.Command {
 	// enable logging
 	command.PersistentFlags().StringVar(&logLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
 	command.PersistentFlags().BoolVar(&enablePProf, "pprof", false, "enable cpu profile")
+	command.PersistentFlags().BoolVar(&enableTrace, "trace", false, "enable trace")
 	command.PersistentFlags().StringVar(&arenaNamespace, "arenaNamespace", "arena-system", "The namespace of arena system service, like TFJob")
 
 	command.AddCommand(NewSubmitCommand())
