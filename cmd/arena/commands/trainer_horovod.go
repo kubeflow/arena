@@ -106,7 +106,7 @@ func NewHorovodJobTrainer(client *kubernetes.Clientset) Trainer {
 func (m *HorovodJobTrainer) IsSupported(name, ns string) bool {
 	isHorovod := false
 
-	if len(allJobs) > 0 {
+	if useCache {
 		for _, job := range allJobs {
 			if isHorovodJob(name, ns, job) {
 				isHorovod = true
@@ -138,7 +138,7 @@ func (m *HorovodJobTrainer) Type() string {
 }
 
 func (m *HorovodJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
-	if len(allPods) > 0 {
+	if useCache {
 		tj, err = m.getTrainingJobFromCache(name, namespace)
 	} else {
 		tj, err = m.getTrainingJob(name, namespace)

@@ -85,7 +85,7 @@ func (s *StandaloneJobTrainer) Type() string {
 func (s *StandaloneJobTrainer) IsSupported(name, ns string) bool {
 	supported := false
 
-	if len(allJobs) > 0 {
+	if useCache {
 		for _, job := range allJobs {
 			if isStandaloneJob(name, ns, job) {
 				supported = true
@@ -113,7 +113,7 @@ func (s *StandaloneJobTrainer) IsSupported(name, ns string) bool {
 }
 
 func (s *StandaloneJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
-	if len(allPods) > 0 {
+	if useCache {
 		tj, err = s.getTrainingJobFromCache(name, namespace)
 	} else {
 		tj, err = s.getTrainingJob(name, namespace)

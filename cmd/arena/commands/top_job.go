@@ -21,11 +21,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/kubeflow/arena/util/helm"
 	"strconv"
 	"text/tabwriter"
-	"k8s.io/api/core/v1"
 	"time"
+
+	"github.com/kubeflow/arena/util/helm"
+	"k8s.io/api/core/v1"
 )
 
 func NewTopJobCommand() *cobra.Command {
@@ -41,7 +42,7 @@ func NewTopJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			printStart:
+		printStart:
 			releaseMap, err := helm.ListReleaseMap()
 			// log.Printf("releaseMap %v", releaseMap)
 			if err != nil {
@@ -54,7 +55,7 @@ func NewTopJobCommand() *cobra.Command {
 			// 	fmt.Println(err)
 			// 	os.Exit(1)
 			// }
-
+			useCache = true
 			allPods, err = acquireAllPods(client)
 			if err != nil {
 				fmt.Println(err)
@@ -110,11 +111,10 @@ func NewTopJobCommand() *cobra.Command {
 		},
 	}
 
-	 command.Flags().BoolVarP(&printNotStop, "refresh", "r", false, "Display continuously")
-	 command.Flags().StringVarP(&instanceName, "instance", "i", "", "Display instance top info")
+	command.Flags().BoolVarP(&printNotStop, "refresh", "r", false, "Display continuously")
+	command.Flags().StringVarP(&instanceName, "instance", "i", "", "Display instance top info")
 	return command
 }
-
 
 func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, instanceName string, notStop bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
@@ -161,7 +161,7 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, insta
 						status,
 						hostIP,
 					)
-				}else {
+				} else {
 					index := 0
 					keys := SortMapKeys(podMetric)
 					for _, gid := range keys {
@@ -175,16 +175,16 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, insta
 							podName,
 							guid,
 							fmt.Sprintf("%.0f%%", gpuMetric.GpuDutyCycle),
-							fmt.Sprintf("%.1fMiB / %.1fMiB ", fromByteToMiB(gpuMetric.GpuMemoryUsed) ,  fromByteToMiB(gpuMetric.GpuMemoryTotal) ),
+							fmt.Sprintf("%.1fMiB / %.1fMiB ", fromByteToMiB(gpuMetric.GpuMemoryUsed), fromByteToMiB(gpuMetric.GpuMemoryTotal)),
 							status,
 							hostIP,
 						)
-						index ++
+						index++
 					}
 				}
 			}
 		}
-	}else {
+	} else {
 		for _, jobInfo := range jobInfoList {
 
 			hostIP := jobInfo.HostIPOfChief()

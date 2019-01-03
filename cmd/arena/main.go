@@ -17,7 +17,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"runtime/pprof"
+	"runtime/trace"
+	"strconv"
 
 	"github.com/kubeflow/arena/cmd/arena/commands"
 	log "github.com/sirupsen/logrus"
@@ -30,9 +33,27 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer cpuf.Close()
+
+		runtime.SetCPUProfileRate(getProfileHZ())
 		pprof.StartCPUProfile(cpuf)
 		log.Infof("Dump cpu profile file into /tmp/cpu_profile")
 		defer pprof.StopCPUProfile()
+	}
+
+	// debug latency issue
+	if isTraceEnabled() {
+		tracef, err := os.Create("/tmp/trace.log")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer tracef.Close()
+
+		err = trace.Start(tracef)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer trace.Stop()
 	}
 
 	if err := commands.NewCommand().Execute(); err != nil {
@@ -44,6 +65,25 @@ func main() {
 func isPProfEnabled() (enable bool) {
 	for _, arg := range os.Args {
 		if arg == "--pprof" {
+			enable = true
+			break
+		}
+	}
+
+	return
+}
+
+func getProfileHZ() int {
+	profileRate := 1000
+	if s, err := strconv.Atoi(os.Getenv("PROFILE_RATE")); err == nil {
+		profileRate = s
+	}
+	return profileRate
+}
+
+func isTraceEnabled() (enable bool) {
+	for _, arg := range os.Args {
+		if arg == "--trace" {
 			enable = true
 			break
 		}
