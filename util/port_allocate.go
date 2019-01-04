@@ -1,11 +1,11 @@
 package util
 
 import (
-	"k8s.io/client-go/kubernetes"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/api/core/v1"
-	log "github.com/sirupsen/logrus"
 	"fmt"
+	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 var k8sClusterUsedPorts = []int{}
@@ -31,11 +31,11 @@ func SelectAvailablePort(client *kubernetes.Clientset) (int, error) {
 	}
 	port := AUTO_SELECT_PORT_MIN
 	for port < AUTO_SELECT_PORT_MAX {
-		if ! isPortInUsed(port) {
+		if !isPortInUsed(port) {
 			setUsedPort(port)
 			return port, nil
 		}
-		port ++
+		port++
 	}
 	return 0, fmt.Errorf("failed to select a available port")
 }

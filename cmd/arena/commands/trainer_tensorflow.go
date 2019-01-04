@@ -19,7 +19,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/tf-operator/pkg/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
@@ -27,6 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	tfv1alpha2 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1alpha2"
+	"time"
 )
 
 var (
@@ -103,16 +103,14 @@ func (tj *TensorFlowJob) StartTime() *metav1.Time {
 }
 
 // Get the Job Age
-func (tj *TensorFlowJob) Age() string {
+func (tj *TensorFlowJob) Age() time.Duration {
 	job := tj.tfjob
 
 	if job.Status.StartTime == nil ||
 		job.Status.StartTime.IsZero() {
-		return "0s"
+		return 0
 	}
-	d := metav1.Now().Sub(job.Status.StartTime.Time)
-
-	return util.ShortHumanDuration(d)
+	return metav1.Now().Sub(job.Status.StartTime.Time)
 }
 
 // Get Dashboard url of the job

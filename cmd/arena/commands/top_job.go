@@ -25,6 +25,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
 	"k8s.io/api/core/v1"
 )
@@ -198,7 +199,7 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, insta
 				strconv.FormatInt(allocatedGPU, 10),
 				jobInfo.GetStatus(),
 				jobInfo.Trainer(),
-				jobInfo.Age(),
+				util.ShortHumanDuration(jobInfo.Age()),
 				hostIP,
 			)
 		}
