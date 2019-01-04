@@ -136,6 +136,10 @@ func (mj *MPIJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, erro
 		return urls, fmt.Errorf("No LOGVIEWER Installed.")
 	}
 
+	if len(mj.chiefPod.Spec.Containers) == 0 {
+		return urls, fmt.Errorf("mpi launcher is not ready!")
+	}
+
 	url := fmt.Sprintf("%s/#!/log/%s/%s/%s?namespace=%s\n",
 		dashboardURL,
 		mj.chiefPod.Namespace,
