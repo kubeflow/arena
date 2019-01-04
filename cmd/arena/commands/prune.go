@@ -17,21 +17,25 @@ package commands
 import (
 	"fmt"
 	"os"
-	"strings"
-	"text/tabwriter"
-
-	"io"
 
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"time"
 )
 
-func NewListCommand() *cobra.Command {
+type PruneArgs struct {
+	days  int64
+	hours int64
+}
+
+func NewPruneCommand() *cobra.Command {
+	var (
+		pruneArgs PruneArgs
+	)
 	var command = &cobra.Command{
-		Use:   "list",
-		Short: "list all the training jobs",
+		Use:   "prune history job",
+		Short: "prune history job",
 		Run: func(cmd *cobra.Command, args []string) {
 			util.SetLogLevel(logLevel)
 
@@ -60,13 +64,9 @@ func NewListCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
 			trainers := NewTrainers(client)
 			jobs := []TrainingJob{}
-			// for
-			println(name)
 			for name, ns := range releaseMap {
-				supportedChart := false
 				for _, trainer := range trainers {
 					if trainer.IsSupported(name, ns) {
 						job, err := trainer.GetTrainingJob(name, ns)
@@ -75,46 +75,21 @@ func NewListCommand() *cobra.Command {
 							os.Exit(1)
 						}
 						jobs = append(jobs, job)
-						supportedChart = true
 						break
 					}
 				}
-
-				if !supportedChart {
-					log.Debugf("Unknown chart %s\n", name)
-				}
-
 			}
-
-			jobs = makeTrainingJobOrderdByAge(jobs)
-
-			displayTrainingJobList(jobs, false)
+			for _, job := range jobs {
+				if GetJobRealStatus(job) != "RUNNING" {
+					if job.Age() > (time.Duration(pruneArgs.days)*24*time.Hour + time.Duration(pruneArgs.hours)*time.Hour) {
+						deleteTrainingJob(job.Name())
+					}
+				}
+			}
 		},
 	}
 
+	command.Flags().Int64Var(&pruneArgs.days, "day",  10, "Specify clean job's days.")
+	command.Flags().Int64Var(&pruneArgs.hours, "hour", 0, "Specify clean job's hours.")
 	return command
-}
-
-func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "TRAINER", "AGE", "NODE"}
-
-	PrintLine(w, labelField...)
-
-	for _, jobInfo := range jobInfoList {
-		status := GetJobRealStatus(jobInfo)
-		hostIP := jobInfo.HostIPOfChief()
-		PrintLine(w, jobInfo.Name(),
-			status,
-			strings.ToUpper(jobInfo.Trainer()),
-			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP)
-	}
-	_ = w.Flush()
-}
-
-func PrintLine(w io.Writer, fields ...string) {
-	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	buffer := strings.Join(fields, "\t")
-	fmt.Fprintln(w, buffer)
 }

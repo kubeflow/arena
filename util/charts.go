@@ -14,16 +14,17 @@ func pathExists(path string) bool {
 	}
 	return true
 }
-var chartFolder=""
+var chartFolder = ""
 
-func GetChartsFolder() string  {
+func GetChartsFolder() string {
 	if chartFolder != "" {
 		return chartFolder
 	}
 	homeChartsFolder := os.Getenv("HOME") + "/charts"
 	if !pathExists(homeChartsFolder) {
 		chartFolder = "/charts"
-	}else {
+
+	} else {
 		chartFolder = homeChartsFolder
 	}
 	return chartFolder

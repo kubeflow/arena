@@ -21,9 +21,9 @@ import (
 	"text/tabwriter"
 
 	"github.com/kubeflow/arena/util"
+	"github.com/kubeflow/arena/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/kubeflow/arena/util/helm"
 )
 
 var serving_charts = map[string]bool{

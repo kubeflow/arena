@@ -15,22 +15,22 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
 	"github.com/kubeflow/arena/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes"
-	"strings"
-	"strconv"
-	"k8s.io/client-go/rest"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	istiov1alpha3 "istio.io/api/networking/v1alpha3"
-	"encoding/json"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"os"
 	"regexp"
+	"strconv"
+	"strings"
 )
 
 func NewTrafficRouterSplitCommand() *cobra.Command {
@@ -115,9 +115,9 @@ type DestinationRuleCRD struct {
 	// may reject unrecognized values.
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
 	// +optional
-	APIVersion string                        `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
-	metav1.ObjectMeta                        `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	Spec       istiov1alpha3.DestinationRule `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	APIVersion        string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
+	metav1.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	Spec              istiov1alpha3.DestinationRule `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
 type VirtualServiceCRD struct {
@@ -134,9 +134,9 @@ type VirtualServiceCRD struct {
 	// may reject unrecognized values.
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
 	// +optional
-	APIVersion string         `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
-	metav1.ObjectMeta         `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	Spec       VirtualService `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	APIVersion        string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
+	metav1.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	Spec              VirtualService `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
 type VirtualService struct {
@@ -174,7 +174,7 @@ type PortSelector struct {
 	Number uint32 `protobuf:"varint,1,opt,name=number,proto3,oneof" json:"number,omitempty"`
 }
 
-func generateDestinationRule(namespace string, serviceName string, versionArray []string) (DestinationRuleCRD) {
+func generateDestinationRule(namespace string, serviceName string, versionArray []string) DestinationRuleCRD {
 	destinationRule := DestinationRuleCRD{
 		Kind:       "DestinationRule",
 		APIVersion: "networking.istio.io/v1alpha3",
@@ -205,7 +205,7 @@ func generateDestinationRule(namespace string, serviceName string, versionArray 
 	return destinationRule
 }
 
-func generateVirtualService(namespace string, serviceName string, versionArray []string, iweightArray []int32) (VirtualServiceCRD) {
+func generateVirtualService(namespace string, serviceName string, versionArray []string, iweightArray []int32) VirtualServiceCRD {
 	length := len(versionArray)
 	routes := make([]*DestinationWeight, length)
 
