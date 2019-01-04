@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	tfjob_chart = "/charts/tfjob"
+	tfjob_chart = util.GetChartsFolder() + "/tfjob"
 )
 
 func NewSubmitTFJobCommand() *cobra.Command {
