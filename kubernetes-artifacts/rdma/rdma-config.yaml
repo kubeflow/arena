@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rdma-devices
+  namespace: kube-system
+data:
+  config.json: |
+    {
+        "mode" : "hca"
+    }

@@ -17,7 +17,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: aliyun.accelerator/nvidia_count
+              - key: accelerator/nvidia_gpu
                 operator: Exists
       hostPID: true
       containers:
