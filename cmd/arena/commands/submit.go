@@ -22,14 +22,13 @@ import (
 	"strings"
 
 	"github.com/kubeflow/arena/util"
-	validate "github.com/kubeflow/arena/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 var (
-	standalone_training_chart = "/charts/training"
-	horovod_training_chart    = "/charts/tf-horovod"
+	standalone_training_chart = util.GetChartsFolder() + "/training"
+	horovod_training_chart    = util.GetChartsFolder() + "/tf-horovod"
 	envs                      []string
 	dataset                   []string
 	dataDirs                  []string
@@ -71,7 +70,7 @@ func (s submitArgs) check() error {
 	}
 
 	// return fmt.Errorf("must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character.")
-	err := validate.ValidateJobName(name)
+	err := util.ValidateJobName(name)
 	if err != nil {
 		return err
 	}
