@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	mpijob_chart = "/charts/mpijob"
+	mpijob_chart = util.GetChartsFolder() + "/mpijob"
 )
 
 func NewSubmitMPIJobCommand() *cobra.Command {
