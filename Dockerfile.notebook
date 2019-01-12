@@ -24,7 +24,8 @@ COPY --from=build /usr/local/bin/helm /usr/local/bin/helm
 
 COPY --from=build /go/src/github.com/kubeflow/arena/charts /charts
 
-RUN chmod a+rx /usr/local/bin/*
+RUN chmod a+rx /usr/local/bin/* && \
+    chmod a+rx -R /charts
 
 RUN apt-get update && \
     apt-get install bash-completion -y && \
