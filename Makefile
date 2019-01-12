@@ -66,3 +66,7 @@ cli:
 .PHONY: install-image
 install-image:
 	docker build -t cheyang/arena:${VERSION}-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.install .
+
+.PHONY: notebook-image
+notebook-image:
+  docker build -t cheyang/arena:${VERSION}-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.notebook .
