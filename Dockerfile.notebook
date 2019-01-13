@@ -30,7 +30,7 @@ RUN chmod a+rx /usr/local/bin/* && \
 
 RUN apt-get update && \
     apt-get install bash-completion -y && \
-    echo "source /etc/bash_completion" >> /etc/bashrc && \
-    echo "source <(arena completion bash)" >> /etc/bashrc
+    echo "source /etc/bash_completion" >> /etc/profile && \
+    echo "source <(arena completion bash)" >> /etc/profile
 
     
