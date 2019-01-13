@@ -71,3 +71,4 @@ install-image:
 .PHONY: notebook-image
 notebook-image:
 	docker build --build-arg "BASE_IMAGE=${BASE_IMAGE}" -t cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.notebook .
+	docker tag cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} cheyang/arena:notebook
