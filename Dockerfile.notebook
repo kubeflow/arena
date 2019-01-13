@@ -15,8 +15,9 @@ RUN wget https://storage.googleapis.com/kubernetes-helm/helm-v2.9.1-linux-amd64.
 ENV K8S_VERSION v1.11.2
 RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x /usr/local/bin/kubectl
 
+ARG BASE_IMAGE=registry.aliyuncs.com/kubeflow-images-public/tensorflow-1.12.0-notebook-gpu:v0.4.0
 
-FROM registry.aliyuncs.com/kubeflow-images-public/tensorflow-1.12.0-notebook-gpu:v0.4.0
+FROM $BASE_IMAGE
 
 COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena /usr/local/bin/arena
 
@@ -29,6 +30,7 @@ RUN chmod a+rx /usr/local/bin/* && \
 
 RUN apt-get update && \
     apt-get install bash-completion -y && \
-    echo "source <(arena completion bash)" >> ~/.bashrc
+    echo "source /etc/bash_completion" >> /etc/bashrc && \
+    echo "source <(arena completion bash)" >> /etc/bashrc
 
     
