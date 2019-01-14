@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/util/helm"
+	"github.com/kubeflow/arena/util"
 	"k8s.io/api/core/v1"
 )
 
@@ -36,6 +37,7 @@ func NewTopJobCommand() *cobra.Command {
 		Use:   "job",
 		Short: "Display Resource (GPU) usage of jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
+			util.SetLogLevel(logLevel)
 			setupKubeconfig()
 			client, err := initKubeClient()
 			if err != nil {
