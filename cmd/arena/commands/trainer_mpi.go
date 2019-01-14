@@ -309,7 +309,7 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 		return nil, err
 	}
 
-	pods, chiefPod := getPodsOfMPIJob(tt, podList.Items)
+	pods, chiefPod := getPodsOfMPIJob(name, tt, podList.Items)
 
 	return &MPIJob{
 		mpijob:      mpijob,
@@ -337,7 +337,7 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, 
 	}
 
 	// 2. Find the pods, and determine the pod of the job
-	pods, chiefPod := getPodsOfMPIJob(tt, allPods)
+	pods, chiefPod := getPodsOfMPIJob(name, tt, allPods)
 
 	return &MPIJob{
 		mpijob:      mpijob,
@@ -420,7 +420,7 @@ func isMPIJobPending(status v1alpha1.MPIJobStatus) bool {
 }
 
 
-func getPodsOfMPIJob(tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
+func getPodsOfMPIJob(name string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
 	pods = []v1.Pod{}
 	for _, item := range podList {
 		if !tt.isMPIPod(name, namespace, item) {

@@ -142,6 +142,7 @@ func QueryMetricByPrometheus(client *kubernetes.Clientset, prometheusServiceName
 		"query": query,
 		"time": strconv.FormatInt(time.Now().Unix(), 10),
 	})
+	log.Debugf("Query prometheus for by %s", query)
 	metric, _ := req.DoRaw()
 	var metricResponse *PrometheusMetric
 	err := json.Unmarshal(metric, &metricResponse)
