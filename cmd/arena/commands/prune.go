@@ -25,8 +25,7 @@ import (
 )
 
 type PruneArgs struct {
-	days  int64
-	hours int64
+	since time.Duration
 }
 
 func NewPruneCommand() *cobra.Command {
@@ -79,17 +78,25 @@ func NewPruneCommand() *cobra.Command {
 					}
 				}
 			}
+			deleted := false
 			for _, job := range jobs {
 				if GetJobRealStatus(job) != "RUNNING" {
-					if job.Age() > (time.Duration(pruneArgs.days)*24*time.Hour + time.Duration(pruneArgs.hours)*time.Hour) {
-						deleteTrainingJob(job.Name())
+					if job.Age() > pruneArgs.since {
+						deleted = true
+						fmt.Printf("Delete %s %s", job.Trainer(), job.Name())
+						err = deleteTrainingJob(job.Name())
+						if err != nil {
+							fmt.Printf("Failed to delete %s %s, err: %++v", job.Trainer(), job.Name(), err)
+						}
 					}
 				}
+			}
+			if !deleted {
+				fmt.Println("No job need to be deleted")
 			}
 		},
 	}
 
-	command.Flags().Int64Var(&pruneArgs.days, "day",  10, "Specify clean job's days.")
-	command.Flags().Int64Var(&pruneArgs.hours, "hour", 0, "Specify clean job's hours.")
+	command.Flags().DurationVarP(&pruneArgs.since, "since","s",  24 * time.Hour, "Specify clean job's days.")
 	return command
 }
