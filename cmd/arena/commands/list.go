@@ -63,8 +63,6 @@ func NewListCommand() *cobra.Command {
 
 			trainers := NewTrainers(client)
 			jobs := []TrainingJob{}
-			// for
-			println(name)
 			for name, ns := range releaseMap {
 				supportedChart := false
 				for _, trainer := range trainers {
