@@ -328,6 +328,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (Traini
 			break
 		}
 	}
+	tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
 	// 2. Find the pods, and determine the pod of the job
 	pods, chiefPod := getPodsOfTFJob(name, tt, tfjob, allPods)
 
