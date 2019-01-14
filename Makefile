@@ -14,6 +14,7 @@ GIT_TREE_STATE=$(shell if [ -z "`git status --porcelain`" ]; then echo "clean" ;
 PACKR_CMD=$(shell if [ "`which packr`" ]; then echo "packr"; else echo "go run vendor/github.com/gobuffalo/packr/packr/main.go"; fi)
 
 BUILDER_IMAGE=arena-builder
+BASE_IMAGE=registry.aliyuncs.com/kubeflow-images-public/tensorflow-1.12.0-notebook-gpu:v0.4.0
 # NOTE: the volume mount of ${DIST_DIR}/pkg below is optional and serves only
 # to speed up subsequent builds by caching ${GOPATH}/pkg between builds.
 BUILDER_CMD=docker run --rm \
@@ -66,3 +67,8 @@ cli:
 .PHONY: install-image
 install-image:
 	docker build -t cheyang/arena:${VERSION}-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.install .
+
+.PHONY: notebook-image
+notebook-image:
+	docker build --build-arg "BASE_IMAGE=${BASE_IMAGE}" -t cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.notebook .
+	docker tag cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} cheyang/arena:notebook
