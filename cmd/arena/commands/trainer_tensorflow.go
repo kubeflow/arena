@@ -83,7 +83,7 @@ func (tj *TensorFlowJob) AllPods() []v1.Pod {
 
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (tj *TensorFlowJob) GetStatus() (status string) {
-	status = "UNKNOWN"
+	status = "PENDING"
 	if tj.tfjob.Name == "" {
 		return status
 	}
@@ -302,7 +302,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 	if err != nil {
 		return nil, err
 	}
-	pods, chiefPod := getPodsOfTFJob(tt, tfjob, podList.Items)
+	pods, chiefPod := getPodsOfTFJob(name, tt, tfjob, podList.Items)
 
 	return &TensorFlowJob{
 		tfjob:       tfjob,
@@ -328,9 +328,8 @@ func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (Traini
 			break
 		}
 	}
-
 	// 2. Find the pods, and determine the pod of the job
-	pods, chiefPod := getPodsOfTFJob(tt, tfjob, allPods)
+	pods, chiefPod := getPodsOfTFJob(name, tt, tfjob, allPods)
 
 	return &TensorFlowJob{
 		tfjob:       tfjob,
@@ -390,7 +389,6 @@ func (tt *TensorFlowJobTrainer) isTensorFlowJob(name, ns string, item tfv1alpha2
 }
 
 func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item v1.Pod) bool {
-
 	if val, ok := item.Labels["release"]; ok && (val == name) {
 		log.Debugf("the tfjob %s with labels %s", item.Name, val)
 	} else {
@@ -464,7 +462,7 @@ func checkStatus(status tfv1alpha2.TFJobStatus) tfv1alpha2.TFJobConditionType {
 	return t
 }
 
-func getPodsOfTFJob(tt *TensorFlowJobTrainer, tfjob tfv1alpha2.TFJob, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
+func getPodsOfTFJob(name string, tt *TensorFlowJobTrainer, tfjob tfv1alpha2.TFJob, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
 	pods = []v1.Pod{}
 	for _, item := range podList {
 		if !tt.isTensorFlowPod(name, namespace, item) {
