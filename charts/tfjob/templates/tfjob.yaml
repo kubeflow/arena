@@ -136,6 +136,8 @@ spec:
             command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
             {{- end }}
             env:
+              - name: NVIDIA_VISIBLE_DEVICES
+                value: void
             {{- range $key, $value := .Values.envs }}
               - name: "{{ $key }}"
                 value: "{{ $value }}"

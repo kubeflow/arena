@@ -62,3 +62,7 @@
 ### 0.15.0
 
 * Fix hostnetwork issue which is introduced by ENI
+
+### 0.16.0
+
+* Avoid PS to use GPU during training when the PS image is CUDA images for nvidia
