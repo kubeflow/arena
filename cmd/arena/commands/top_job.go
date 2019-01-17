@@ -25,7 +25,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
 	"github.com/kubeflow/arena/util"
 	"k8s.io/api/core/v1"
@@ -143,7 +142,7 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, insta
 			pods := jobInfo.AllPods()
 			gpuMetric, err := GetJobGpuMetric(clientset, jobInfo)
 			if err != nil {
-				log.Errorf("Failed Query job %s GPU metric, err: %++v", err)
+				log.Debug("Failed Query job %s GPU metric, err: %++v", jobInfo.Name(), err)
 				continue
 			}
 			for _, pod := range pods {
