@@ -79,6 +79,10 @@ func NewPruneCommand() *cobra.Command {
 				}
 			}
 			deleted := false
+			if pruneArgs.since == -1 {
+				fmt.Println("Your need to specify the relative duration live time of the job that need to be cleaned by --since. Like --since 10h")
+				return
+			}
 			for _, job := range jobs {
 				if GetJobRealStatus(job) != "RUNNING" {
 					if job.Age() > pruneArgs.since {
@@ -97,6 +101,6 @@ func NewPruneCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().DurationVarP(&pruneArgs.since, "since","s",  24 * time.Hour, "Specify clean job's days.")
+	command.Flags().DurationVarP(&pruneArgs.since, "since","s",  -1, "Clean job that live longer than relative duration like 5s, 2m, or 3h.")
 	return command
 }
