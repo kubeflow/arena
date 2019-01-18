@@ -453,7 +453,7 @@ func hasCondition(status tfv1alpha2.TFJobStatus, condType tfv1alpha2.TFJobCondit
 }
 
 func checkStatus(status tfv1alpha2.TFJobStatus) tfv1alpha2.TFJobConditionType {
-	t := tfv1alpha2.TFJobConditionType("Unknown")
+	t := tfv1alpha2.TFJobConditionType("Pending")
 	for _, condition := range status.Conditions {
 		if condition.Status == v1.ConditionTrue {
 			t = condition.Type
