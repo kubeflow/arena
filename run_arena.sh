@@ -47,7 +47,7 @@ fi
 
 if [ "$usePrometheus" == "true" ]; then
     if [ "$platform" == "ack" ]; then
-        sed 's|accelerator/nvidia_gpu|aliyun.accelerator/nvidia_count|g' /root/kubernetes-artifacts/prometheus/gpu-expoter.yaml
+        sed -i 's|accelerator/nvidia_gpu|aliyun.accelerator/nvidia_count|g' /root/kubernetes-artifacts/prometheus/gpu-expoter.yaml
     fi
 	if ! kubectl get serviceaccount --all-namespaces | grep prometheus; then
 	   kubectl apply -f /root/kubernetes-artifacts/prometheus/gpu-expoter.yaml

@@ -12,7 +12,7 @@ kubectl apply -f kubernetes-artifacts/prometheus/prometheus.yaml
 
 ```
 # change gpu export nodeSelector to aliyun label
-sed 's|accelerator/nvidia_gpu|aliyun.accelerator/nvidia_count|g' kubernetes-artifacts/prometheus/gpu-expoter.yaml
+sed -i 's|accelerator/nvidia_gpu|aliyun.accelerator/nvidia_count|g' kubernetes-artifacts/prometheus/gpu-expoter.yaml
 ```
 
 * If your cluster is not ACK cluster, you need to label your GPU node:
