@@ -1,9 +1,9 @@
 package util
 
 import (
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
-	"k8s.io/client-go/kubernetes"
 	"testing"
 )
 

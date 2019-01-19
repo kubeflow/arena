@@ -17,21 +17,24 @@ package commands
 import (
 	"fmt"
 	"os"
-	"strings"
-	"text/tabwriter"
-
-	"io"
 
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"time"
 )
 
-func NewListCommand() *cobra.Command {
+type PruneArgs struct {
+	since time.Duration
+}
+
+func NewPruneCommand() *cobra.Command {
+	var (
+		pruneArgs PruneArgs
+	)
 	var command = &cobra.Command{
-		Use:   "list",
-		Short: "list all the training jobs",
+		Use:   "prune history job",
+		Short: "prune history job",
 		Run: func(cmd *cobra.Command, args []string) {
 			util.SetLogLevel(logLevel)
 
@@ -60,11 +63,9 @@ func NewListCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
 			trainers := NewTrainers(client)
 			jobs := []TrainingJob{}
 			for name, ns := range releaseMap {
-				supportedChart := false
 				for _, trainer := range trainers {
 					if trainer.IsSupported(name, ns) {
 						job, err := trainer.GetTrainingJob(name, ns)
@@ -73,46 +74,33 @@ func NewListCommand() *cobra.Command {
 							os.Exit(1)
 						}
 						jobs = append(jobs, job)
-						supportedChart = true
 						break
 					}
 				}
-
-				if !supportedChart {
-					log.Debugf("Unknown chart %s\n", name)
-				}
-
 			}
-
-			jobs = makeTrainingJobOrderdByAge(jobs)
-
-			displayTrainingJobList(jobs, false)
+			deleted := false
+			if pruneArgs.since == -1 {
+				fmt.Println("Your need to specify the relative duration live time of the job that need to be cleaned by --since. Like --since 10h")
+				return
+			}
+			for _, job := range jobs {
+				if GetJobRealStatus(job) != "RUNNING" {
+					if job.Age() > pruneArgs.since {
+						deleted = true
+						fmt.Printf("Delete %s %s", job.Trainer(), job.Name())
+						err = deleteTrainingJob(job.Name())
+						if err != nil {
+							fmt.Printf("Failed to delete %s %s, err: %++v", job.Trainer(), job.Name(), err)
+						}
+					}
+				}
+			}
+			if !deleted {
+				fmt.Println("No job need to be deleted")
+			}
 		},
 	}
 
+	command.Flags().DurationVarP(&pruneArgs.since, "since","s",  -1, "Clean job that live longer than relative duration like 5s, 2m, or 3h.")
 	return command
-}
-
-func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "TRAINER", "AGE", "NODE"}
-
-	PrintLine(w, labelField...)
-
-	for _, jobInfo := range jobInfoList {
-		status := GetJobRealStatus(jobInfo)
-		hostIP := jobInfo.HostIPOfChief()
-		PrintLine(w, jobInfo.Name(),
-			status,
-			strings.ToUpper(jobInfo.Trainer()),
-			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP)
-	}
-	_ = w.Flush()
-}
-
-func PrintLine(w io.Writer, fields ...string) {
-	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	buffer := strings.Join(fields, "\t")
-	fmt.Fprintln(w, buffer)
 }

@@ -63,6 +63,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewSubmitCommand())
 	command.AddCommand(NewServeCommand())
 	command.AddCommand(NewListCommand())
+	command.AddCommand(NewPruneCommand())
 	command.AddCommand(NewGetCommand())
 	command.AddCommand(NewLogViewerCommand())
 	command.AddCommand(NewLogsCommand())

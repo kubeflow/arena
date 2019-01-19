@@ -142,7 +142,7 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, insta
 			pods := jobInfo.AllPods()
 			gpuMetric, err := GetJobGpuMetric(clientset, jobInfo)
 			if err != nil {
-				log.Errorf("Failed Query job %s GPU metric, err: %++v", err)
+				log.Debug("Failed Query job %s GPU metric, err: %++v", jobInfo.Name(), err)
 				continue
 			}
 			for _, pod := range pods {
@@ -200,7 +200,7 @@ func topTrainingJob(jobInfoList []TrainingJob, showSpecificJobMetric bool, insta
 				strconv.FormatInt(allocatedGPU, 10),
 				jobInfo.GetStatus(),
 				jobInfo.Trainer(),
-				jobInfo.Age(),
+				util.ShortHumanDuration(jobInfo.Age()),
 				hostIP,
 			)
 		}

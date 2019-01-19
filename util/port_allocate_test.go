@@ -2,11 +2,9 @@ package util
 
 import (
 	"testing"
-
 )
 
-
-func TestSelectAvailablePort(t *testing.T)  {
+func TestSelectAvailablePort(t *testing.T) {
 	clientset := GetClientSetForTest(t)
 	if clientset == nil {
 		t.Skip("kubeclient not setup")
@@ -22,11 +20,11 @@ func TestSelectAvailablePort(t *testing.T)  {
 		t.Errorf("failed to SelectAvailablePort, %++v", err)
 	}
 	t.Logf("port is %d", port2)
-	if port2 != port1 + 1 {
-		t.Errorf("Port should be %d, when latest port is %d", port1 + 1, port1)
+	if port2 != port1+1 {
+		t.Errorf("Port should be %d, when latest port is %d", port1+1, port1)
 	}
 
-	k8sClusterUsedPorts = []int {20000, 20001}
+	k8sClusterUsedPorts = []int{20000, 20001}
 	port3, err := SelectAvailablePort(clientset)
 	if err != nil {
 		t.Errorf("failed to SelectAvailablePort, %++v", err)
