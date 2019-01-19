@@ -84,7 +84,7 @@ func NewGetCommand() *cobra.Command {
 
 type PrintArgs struct {
 	ShowEvents bool
-	Output string
+	Output     string
 }
 
 func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job TrainingJob, err error) {
@@ -138,7 +138,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", job.Name(),
 			strings.ToUpper(string(pod.Status.Phase)),
 			strings.ToUpper(job.Trainer()),
-			job.Age(),
+			util.ShortHumanDuration(job.Age()),
 			pod.Name,
 			hostIP)
 	}

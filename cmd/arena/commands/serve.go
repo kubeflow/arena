@@ -16,12 +16,12 @@ package commands
 
 import (
 	"fmt"
+	validate "github.com/kubeflow/arena/util"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
-	"github.com/spf13/cobra"
 	"regexp"
-	log "github.com/sirupsen/logrus"
-	validate "github.com/kubeflow/arena/util"
 )
 
 var (
@@ -32,7 +32,7 @@ var (
 type ServeArgs struct {
 	Image           string            `yaml:"image"`           // --image
 	ImagePullPolicy string            `yaml:"imagePullPolicy"` // --imagePullPolicy
-	GPUCount        int               `yaml:"gpuCount"`            // --gpus
+	GPUCount        int               `yaml:"gpuCount"`        // --gpus
 	Cpu             string            `yaml:"cpu"`             // --cpu
 	Memory          string            `yaml:"memory"`          // --memory
 	Envs            map[string]string `yaml:"envs"`            // --envs
