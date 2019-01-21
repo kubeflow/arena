@@ -82,7 +82,7 @@ func setupKubeconfig() {
 }
 
 // Update namespace if it's not set by user
-func updateNamespace(cmd *cobra.Command) error {
+func updateNamespace(cmd *cobra.Command) (err error) {
 	// Update the namespace
 	if !cmd.Flags().Changed("namespace") {
 		namespace, _, err = clientConfig.Namespace()
