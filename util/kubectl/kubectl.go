@@ -23,7 +23,7 @@ func InstallApps(namespace, fileName string) error {
 	fmt.Println("")
 	fmt.Printf("%s\n", string(out))
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", binary, args, err)
+		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
 	return err
@@ -40,7 +40,7 @@ func CreateConfigmap(name, namespace, configFileName string) error {
 	fmt.Println("")
 	fmt.Printf("%s\n", string(out))
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", binary, args, err)
+		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
 	return err

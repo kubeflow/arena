@@ -13,12 +13,12 @@ import (
 /*
 * Generate value file
  */
-func GenerateValueFile(value interface{}) (fileName string, err error) {
+func GenerateValueFile(value interface{}) (valueFile string, err error) {
 	// 1. generate the template file
 	valueFile, err = ioutil.TempFile(os.TempDir(), "values")
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", valueFile.Name(), err)
-		return templateFileName, err
+		return valueFile, err
 	}
 
 	valueFileName = valueFile.Name()
@@ -55,7 +55,7 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, c
 	// }
 
 	// 4. prepare the arguments
-	args := []string{binary, "template", "-f", valueFile.Name(),
+	args := []string{binary, "template", "-f", valueFileName,
 		"--namespace", namespace,
 		"--name", name, chartName, ">", templateFileName}
 
