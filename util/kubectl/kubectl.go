@@ -50,12 +50,12 @@ func CreateConfigmap(name, namespace, configFileName string) error {
 *
 * save configMap into a file
 **/
-func SaveConfigMapToFile(name, namespace) (fileName string, err error) {
+func SaveConfigMapToFile(name, namespace string) (fileName string, err error) {
 	args := []string{"get", "configmap", name, "--namespace", namespace, fmt.Sprintf("jsonpath='{.%s.test}'", name)}
 	data, err := kubectl(args, configFileName)
 
 	if err != nil {
-		return fmt.Errorf("Failed to execute %s, %v with %v", binary, args, err)
+		return "", fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
 	file, err = ioutil.TempFile(os.TempDir(), name)

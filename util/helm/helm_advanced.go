@@ -15,7 +15,7 @@ import (
  */
 func GenerateValueFile(value interface{}) (valueFileName string, err error) {
 	// 1. generate the template file
-	valueFile, err = ioutil.TempFile(os.TempDir(), "values")
+	valueFile, err := ioutil.TempFile(os.TempDir(), "values")
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", valueFile.Name(), err)
 		return valueFile, err
