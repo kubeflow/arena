@@ -13,7 +13,7 @@ import (
 /*
 * Generate value file
  */
-func GenerateValueFile(value interface{}) (valueFile string, err error) {
+func GenerateValueFile(value interface{}) (valueFileName string, err error) {
 	// 1. generate the template file
 	valueFile, err = ioutil.TempFile(os.TempDir(), "values")
 	if err != nil {
