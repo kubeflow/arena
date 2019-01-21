@@ -18,7 +18,7 @@ func GenerateValueFile(value interface{}) (valueFileName string, err error) {
 	valueFile, err := ioutil.TempFile(os.TempDir(), "values")
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", valueFile.Name(), err)
-		return valueFile, err
+		return "", err
 	}
 
 	valueFileName = valueFile.Name()

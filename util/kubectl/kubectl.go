@@ -52,7 +52,7 @@ func CreateConfigmap(name, namespace, configFileName string) error {
 **/
 func SaveConfigMapToFile(name, namespace string) (fileName string, err error) {
 	args := []string{"get", "configmap", name, "--namespace", namespace, fmt.Sprintf("jsonpath='{.%s.test}'", name)}
-	data, err := kubectl(args, configFileName)
+	data, err := kubectl(args, "")
 
 	if err != nil {
 		return "", fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
@@ -82,8 +82,10 @@ func kubectl(args []string, fileName string) ([]byte, error) {
 	}
 
 	// 1. check if the template file exists
-	if _, err = os.Stat(fileName); err != nil {
-		return nil, err
+	if len(fileName) > 0 {
+		if _, err = os.Stat(fileName); err != nil {
+			return nil, err
+		}
 	}
 
 	// 2. prepare the arguments
