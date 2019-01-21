@@ -1,8 +1,11 @@
 package workflow
 
 import (
+	"os"
+
 	"github.com/kubeflow/arena/util/helm"
 	"github.com/kubeflow/arena/util/kubectl"
+	log "github.com/sirupsen/logrus"
 )
 
 /**
@@ -30,5 +33,21 @@ func SubmitJob(name string, namespace string, values interface{}, chartName stri
 
 	// 4. Create Application
 	err = kubectl.InstallApps(name, template)
+	if err != nil {
+		return err
+	}
+
+	if log.GetLevel() != log.DebugLevel {
+		err = os.Remove(valueFileName)
+		if err != nil {
+			log.Warnf("Failed to delete %s due to %v", valueFile.Name(), err)
+		}
+
+		err = os.Remove(template)
+		if err != nil {
+			log.Warnf("Failed to delete %s due to %v", valueFile.Name(), err)
+		}
+	}
+
 	return err
 }
