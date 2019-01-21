@@ -56,6 +56,12 @@ func NewSubmitTFJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			err = updateNamespace(cmd)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			err = ensureNamespace(clientset, namespace)
 			if err != nil {
 				fmt.Println(err)
