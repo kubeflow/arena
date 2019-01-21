@@ -58,7 +58,7 @@ func SaveConfigMapToFile(name, namespace string) (fileName string, err error) {
 		return "", fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
-	file, err = ioutil.TempFile(os.TempDir(), name)
+	file, err := ioutil.TempFile(os.TempDir(), name)
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", file.Name(), err)
 		return fileName, err
