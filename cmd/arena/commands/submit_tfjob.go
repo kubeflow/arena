@@ -19,6 +19,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kubeflow/arena/pkg/workflow"
 	"github.com/kubeflow/arena/util"
 	"github.com/kubeflow/arena/util/helm"
 	log "github.com/sirupsen/logrus"
@@ -279,6 +280,28 @@ func (submitArgs *submitTFJobArgs) checkGangCapablitiesInCluster() {
 }
 
 func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
+	err = submitArgs.prepare(args)
+	if err != nil {
+		return err
+	}
+
+	trainer := NewTensorFlowJobTrainer(clientset)
+	job, err := trainer.GetTrainingJob(name, namespace)
+	if err != nil {
+		log.Debugf("Check %s exist due to error %v", name, err)
+	}
+
+	if job != nil {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+	}
+
+	// the master is also considered as a worker
+	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
+
+	return workflow.SubmitJob(name, namespace, submitArgs, tfjob_chart)
+}
+
+func submitTFJobWithHelm(args []string, submitArgs *submitTFJobArgs) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
