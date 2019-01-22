@@ -52,24 +52,28 @@ func NewSubmitTFJobCommand() *cobra.Command {
 			setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
 			err = updateNamespace(cmd)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
 			err = ensureNamespace(clientset, namespace)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
 			err = submitTFJob(args, &submitArgs)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
