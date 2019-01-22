@@ -9,7 +9,7 @@
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ template "tfjob.fullname" . }}
+  name: {{ .Release.Name }}
   labels:
     app: {{ template "tfjob.name" . }}
     chart: {{ template "tfjob.chart" . }}
@@ -23,7 +23,7 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      tf_job_name: {{ template "tfjob.fullname" . }}
+      tf_job_name: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 {{- end }}
