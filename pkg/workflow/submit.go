@@ -32,7 +32,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 3. Generate Template file
-	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chartName)
+	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart)
 	if err != nil {
 		return err
 	}
