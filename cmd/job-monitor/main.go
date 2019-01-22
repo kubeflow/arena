@@ -20,7 +20,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/kubeflow/arena/util"
+	"github.com/kubeflow/arena/pkg/util"
 	yaml "gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

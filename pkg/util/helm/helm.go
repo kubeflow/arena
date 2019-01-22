@@ -22,7 +22,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/kubeflow/arena/types"
+	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )

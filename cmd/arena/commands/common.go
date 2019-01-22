@@ -17,7 +17,7 @@ package commands
 import (
 	"os"
 
-	"github.com/kubeflow/arena/types"
+	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 

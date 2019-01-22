@@ -18,10 +18,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kubeflow/arena/util"
-	"github.com/kubeflow/arena/util/helm"
-	"github.com/spf13/cobra"
 	"time"
+
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/spf13/cobra"
 )
 
 type PruneArgs struct {
@@ -101,6 +102,6 @@ func NewPruneCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().DurationVarP(&pruneArgs.since, "since","s",  -1, "Clean job that live longer than relative duration like 5s, 2m, or 3h.")
+	command.Flags().DurationVarP(&pruneArgs.since, "since", "s", -1, "Clean job that live longer than relative duration like 5s, 2m, or 3h.")
 	return command
 }

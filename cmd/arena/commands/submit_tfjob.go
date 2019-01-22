@@ -19,9 +19,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
-	"github.com/kubeflow/arena/util"
-	"github.com/kubeflow/arena/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
