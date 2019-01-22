@@ -16,7 +16,7 @@ var kubectlCmd = []string{"kubectl"}
 * Apply kubernetes config
 * Exec /usr/local/bin/kubectl, [apply -f /tmp/values313606961 --namespace default]
 **/
-func InstallApps(namespace, fileName string) error {
+func InstallApps(fileName, namespace string) error {
 	args := []string{"apply", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args, fileName)
 

@@ -38,7 +38,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 4. Create Application
-	err = kubectl.InstallApps(name, template)
+	err = kubectl.InstallApps(template, namespace)
 	if err != nil {
 		return err
 	}

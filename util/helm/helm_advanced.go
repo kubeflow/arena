@@ -36,7 +36,7 @@ func GenerateValueFile(values interface{}) (valueFileName string, err error) {
 * returns generated template file: templateFileName
  */
 func GenerateHelmTemplate(name string, namespace string, valueFileName string, chartName string) (templateFileName string, err error) {
-	tempName := fmt.Sprintf("%s.*.yaml", name)
+	tempName := fmt.Sprintf("%s*.yaml", name)
 	templateFile, err := ioutil.TempFile("", tempName)
 	if err != nil {
 		return templateFileName, err
