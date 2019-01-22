@@ -3,8 +3,8 @@ package workflow
 import (
 	"os"
 
-	"github.com/kubeflow/arena/util/helm"
-	"github.com/kubeflow/arena/util/kubectl"
+	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 )
 
