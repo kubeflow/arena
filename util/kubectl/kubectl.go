@@ -33,8 +33,11 @@ func InstallApps(namespace, fileName string) error {
 * This name should be <job-type>-<job-name>
 * create configMap by using name, namespace and configFile
 **/
-func CreateConfigmap(name, namespace, configFileName string) error {
-	args := []string{"create", "configmap", name, "--namespace", namespace, fmt.Sprintf("--from-file=%s=%s", name, configFileName)}
+func CreateConfigmap(name, trainingType, namespace, configFileName, chartName, chartVersion string) error {
+	args := []string{"create", "configmap", fmt.Sprintf("%s-%s", name, trainingType),
+		"--namespace", namespace,
+		fmt.Sprintf("--from-file=%s=%s", name, configFileName),
+		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion)}
 	out, err := kubectl(args, configFileName)
 
 	fmt.Println("")

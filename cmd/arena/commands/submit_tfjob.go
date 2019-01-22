@@ -301,7 +301,7 @@ func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	return workflow.SubmitJob(name, namespace, submitArgs, tfjob_chart)
+	return workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart)
 }
 
 func submitTFJobWithHelm(args []string, submitArgs *submitTFJobArgs) (err error) {

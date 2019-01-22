@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -124,4 +125,8 @@ func GetChartVersion(chart string) (version string, err error) {
 
 	version = strings.TrimSpace(fields[1])
 	return version, nil
+}
+
+func GetChartName(chart string) string {
+	return filepath.Base(chart)
 }

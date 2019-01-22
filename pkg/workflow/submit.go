@@ -12,7 +12,7 @@ import (
 *	install application
 **/
 
-func SubmitJob(name string, namespace string, values interface{}, chartName string) error {
+func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string) error {
 	// 1. Generate value file
 	valueFileName, err := helm.GenerateValueFile(values)
 	if err != nil {
@@ -20,7 +20,13 @@ func SubmitJob(name string, namespace string, values interface{}, chartName stri
 	}
 
 	// 2. Keep value file in configmap
-	err = kubectl.CreateConfigmap(name, namespace, valueFileName)
+	chartName := helm.GetChartName(chart)
+	chartVersion, err := helm.GetChartVersion(chart)
+	if err != nil {
+		return err
+	}
+
+	err = kubectl.CreateConfigmap(name, trainingType, namespace, valueFileName, chartName, chartVersion)
 	if err != nil {
 		return err
 	}
