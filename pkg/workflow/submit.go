@@ -40,12 +40,12 @@ func SubmitJob(name string, namespace string, values interface{}, chartName stri
 	if log.GetLevel() != log.DebugLevel {
 		err = os.Remove(valueFileName)
 		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", valueFile.Name(), err)
+			log.Warnf("Failed to delete %s due to %v", valueFileName, err)
 		}
 
 		err = os.Remove(template)
 		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", valueFile.Name(), err)
+			log.Warnf("Failed to delete %s due to %v", valueFileName, err)
 		}
 	}
 
