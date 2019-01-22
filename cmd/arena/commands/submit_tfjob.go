@@ -301,7 +301,14 @@ func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	return workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart)
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("The Job %s has been submitted successfully", name)
+	log.Infof("You can run `arena get %s --type tfjob` to check the job status")
+	return nil
 }
 
 func submitTFJobWithHelm(args []string, submitArgs *submitTFJobArgs) (err error) {

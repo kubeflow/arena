@@ -55,5 +55,5 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		}
 	}
 
-	return err
+	return nil
 }
