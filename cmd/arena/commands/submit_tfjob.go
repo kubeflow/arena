@@ -307,7 +307,7 @@ func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
 	}
 
 	log.Infof("The Job %s has been submitted successfully", name)
-	log.Infof("You can run `arena get %s --type tfjob` to check the job status")
+	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
 	return nil
 }
 

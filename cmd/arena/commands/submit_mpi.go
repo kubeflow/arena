@@ -21,6 +21,8 @@ import (
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/workflow"
+	"github.com/labstack/gommon/log"
 	"github.com/spf13/cobra"
 )
 
@@ -32,6 +34,8 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 	var (
 		submitArgs submitMPIJobArgs
 	)
+
+	submitArgs.Mode = "mpijob"
 
 	var command = &cobra.Command{
 		Use:     "mpijob",
@@ -143,6 +147,36 @@ func (submitArgs *submitMPIJobArgs) addMPIInfoToEnv() {
 
 // Submit MPIJob
 func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
+	err = submitArgs.prepare(args)
+	if err != nil {
+		return err
+	}
+
+	trainer := NewMPIJobTrainer(clientset)
+	job, err := trainer.GetTrainingJob(name, namespace)
+	if err != nil {
+		log.Debugf("Check %s exist due to error %v", name, err)
+	}
+
+	if job != nil {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+	}
+
+	// the master is also considered as a worker
+	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
+
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, mpijob_chart)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("The Job %s has been submitted successfully", name)
+	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
+	return nil
+}
+
+// Submit MPIJob with helm
+func submitMPIJobWithHelm(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
