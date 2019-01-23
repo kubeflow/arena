@@ -102,7 +102,7 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
 	}
 
 	args := []string{"cat", appInfoFile, "|", "xargs",
-		"kubectl", "delete"}
+		binary, "delete"}
 
 	log.Debugf("Exec bash -c %v", args)
 
