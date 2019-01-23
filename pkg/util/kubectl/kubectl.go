@@ -71,7 +71,7 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 * Delete kubernetes config to uninstall app
 * Exec /usr/local/bin/kubectl, [delete -f /tmp/values313606961 --namespace default]
 **/
-func UninstallApps(fileName, namespace string) error {
+func UninstallApps(fileName, namespace string) (err error) {
 	if _, err = os.Stat(fileName); os.IsNotExist(err) {
 		return err
 	}
@@ -91,7 +91,7 @@ func UninstallApps(fileName, namespace string) error {
 * Apply kubernetes config to install app
 * Exec /usr/local/bin/kubectl, [apply -f /tmp/values313606961 --namespace default]
 **/
-func InstallApps(fileName, namespace string) error {
+func InstallApps(fileName, namespace string) (err error) {
 	if _, err = os.Stat(fileName); os.IsNotExist(err) {
 		return err
 	}
@@ -111,7 +111,7 @@ func InstallApps(fileName, namespace string) error {
 * This name should be <job-type>-<job-name>
 * create configMap by using name, namespace and configFile
 **/
-func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFileName, chartName, chartVersion string) error {
+func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFileName, chartName, chartVersion string) (err error) {
 	if _, err = os.Stat(configFileName); os.IsNotExist(err) {
 		return err
 	}
@@ -139,7 +139,7 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 *
 * delete configMap by using name, namespace
 **/
-func DeleteAppConfigMap(name, namespace string) error {
+func DeleteAppConfigMap(name, namespace string) (err error) {
 	args := []string{"delete", "configmap", name, "--namespace", namespace}
 	out, err := kubectl(args)
 
