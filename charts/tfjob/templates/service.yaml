@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name }}-tensorboard
   labels:
     app: {{ template "tfjob.name" . }}
     chart: {{ template "tfjob.chart" . }}

@@ -5,7 +5,7 @@
 apiVersion: kubeflow.org/v1alpha1
 kind: MPIJob
 metadata:
-  name: {{ template "mpijob.fullname" . }}
+  name: {{ .Release.Name }}
   labels:
     app: {{ template "mpijob.name" . }}
     chart: {{ template "mpijob.chart" . }}
@@ -20,7 +20,7 @@ spec:
   replicas: {{ .Values.workers }}
   template:
     metadata:
-      name: {{ template "mpijob.fullname" . }}
+      name: {{ .Release.Name }}
       labels:
         app: {{ template "mpijob.name" . }}
         chart: {{ template "mpijob.chart" . }}
