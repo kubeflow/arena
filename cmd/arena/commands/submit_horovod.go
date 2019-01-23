@@ -21,6 +21,8 @@ import (
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/workflow"
+	"github.com/labstack/gommon/log"
 	"github.com/spf13/cobra"
 )
 
@@ -29,6 +31,8 @@ func NewSubmitHorovodJobCommand() *cobra.Command {
 	var (
 		submitArgs submitHorovodJobArgs
 	)
+
+	submitArgs.Mode = "horovodjob"
 
 	var command = &cobra.Command{
 		Use:     "horovodjob",
@@ -140,18 +144,24 @@ func submitHorovodJob(args []string, submitArgs *submitHorovodJobArgs) (err erro
 		return err
 	}
 
-	exist, err := helm.CheckRelease(name)
+	trainer := NewHorovodJobTrainer(clientset)
+	job, err := trainer.GetTrainingJob(name, namespace)
 	if err != nil {
-		return err
+		log.Debugf("Check %s exist due to error %v", name, err)
 	}
-	if exist {
+
+	if job != nil {
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
 	}
 
-	// the master is also considered as a worker
-	submitArgs.WorkerCount = submitArgs.WorkerCount - 1
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, horovod_training_chart)
+	if err != nil {
+		return err
+	}
 
-	return helm.InstallRelease(name, namespace, submitArgs, horovod_training_chart)
+	log.Infof("The Job %s has been submitted successfully", name)
+	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
+	return nil
 }
 
 func submitHorovodJobWithHelm(args []string, submitArgs *submitHorovodJobArgs) (err error) {
