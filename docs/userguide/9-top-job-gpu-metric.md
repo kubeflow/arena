@@ -22,10 +22,10 @@ sed -i 's|accelerator/nvidia_gpu|aliyun.accelerator/nvidia_count|g' kubernetes-a
 kubectl label node <your GPU node> accelerator/nvidia_gpu=true
 ```
 
-* Deploy gpu expoter
+* Deploy gpu exporter
 
 ```
-kubectl apply -f kubernetes-artifacts/prometheus/gpu-expoter.yaml
+kubectl apply -f kubernetes-artifacts/prometheus/gpu-exporter.yaml
 ```
 
 > Notice: the prometheus and gpu-exporter components should be deployed in namespace `kube-system`, and so that `arena top job <job name>` can work.
