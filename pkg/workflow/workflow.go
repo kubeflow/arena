@@ -13,7 +13,7 @@ import (
 **/
 
 func DeleteJob(name, namespace string) error {
-	appInfoFilename, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
+	appInfoFilename, err := kubectl.SaveAppConfigMapToFile(name, "app", namespace)
 	if err != nil {
 		return err
 	}
@@ -22,6 +22,8 @@ func DeleteJob(name, namespace string) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
 }
 
 /**
