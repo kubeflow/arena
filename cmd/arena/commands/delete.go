@@ -18,6 +18,7 @@ import (
 	"os"
 
 	"github.com/kubeflow/arena/pkg/util/helm"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -43,5 +44,19 @@ func NewDeleteCommand() *cobra.Command {
 }
 
 func deleteTrainingJob(jobName string) error {
+	// 1. Handle legacy training job
+	err := helm.DeleteRelease(jobName)
+	if err == nil {
+		return nil
+	}
+
+	log.Debugf("it didn't deleted by helm due to %v", err)
+
+	// 2. Handle training jobs created by arena
+
+	// 3. Handle training jobs created by others
+}
+
+func deleteTrainingJobWithHelm(jobName string) error {
 	return helm.DeleteRelease(jobName)
 }
