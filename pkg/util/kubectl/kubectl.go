@@ -19,6 +19,10 @@ var kubectlCmd = []string{"kubectl"}
 **/
 
 func SaveAppInfo(fileName, namespace string) (configFileName string, err error) {
+	if _, err = os.Stat(fileName); os.IsNotExist(err) {
+		return err
+	}
+
 	args := []string{"create", "--dry-run", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 	output := string(out)
@@ -32,7 +36,7 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 	}
 
 	// 1. generate the config file
-	configFile, err = ioutil.TempFile("", "config")
+	configFile, err := ioutil.TempFile("", "config")
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", configFile.Name(), err)
 		return "", err
@@ -68,6 +72,10 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 * Exec /usr/local/bin/kubectl, [delete -f /tmp/values313606961 --namespace default]
 **/
 func UninstallApps(fileName, namespace string) error {
+	if _, err = os.Stat(fileName); os.IsNotExist(err) {
+		return err
+	}
+
 	args := []string{"delete", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 
@@ -84,6 +92,10 @@ func UninstallApps(fileName, namespace string) error {
 * Exec /usr/local/bin/kubectl, [apply -f /tmp/values313606961 --namespace default]
 **/
 func InstallApps(fileName, namespace string) error {
+	if _, err = os.Stat(fileName); os.IsNotExist(err) {
+		return err
+	}
+
 	args := []string{"apply", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 
@@ -100,6 +112,14 @@ func InstallApps(fileName, namespace string) error {
 * create configMap by using name, namespace and configFile
 **/
 func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFileName, chartName, chartVersion string) error {
+	if _, err = os.Stat(configFileName); os.IsNotExist(err) {
+		return err
+	}
+
+	if _, err = os.Stat(appInfoFileName); os.IsNotExist(err) {
+		return err
+	}
+
 	args := []string{"create", "configmap", fmt.Sprintf("%s-%s", name, trainingType),
 		"--namespace", namespace,
 		fmt.Sprintf("--from-file=%s=%s", "values", configFileName),
@@ -119,7 +139,7 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 *
 * delete configMap by using name, namespace
 **/
-func DeleteAppConfigMap(name, namespace) error {
+func DeleteAppConfigMap(name, namespace string) error {
 	args := []string{"delete", "configmap", name, "--namespace", namespace}
 	out, err := kubectl(args)
 
