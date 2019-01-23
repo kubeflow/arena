@@ -20,7 +20,7 @@ var kubectlCmd = []string{"kubectl"}
 
 func SaveAppInfo(fileName, namespace string) (configFileName string, err error) {
 	if _, err = os.Stat(fileName); os.IsNotExist(err) {
-		return err
+		return "", err
 	}
 
 	args := []string{"create", "--dry-run", "--namespace", namespace, "-f", fileName}
