@@ -22,7 +22,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
-	"github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
