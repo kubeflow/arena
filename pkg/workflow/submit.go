@@ -19,30 +19,53 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
-	// 2. Keep value file in configmap
+	// 2. Generate Template file
+	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart)
+	if err != nil {
+		return err
+	}
+
+	// 3. Generate AppInfo file
+	AppInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
+	if err != nil {
+		return err
+	}
+
+	// 4. Keep value file in configmap
 	chartName := helm.GetChartName(chart)
 	chartVersion, err := helm.GetChartVersion(chart)
 	if err != nil {
 		return err
 	}
 
-	err = kubectl.CreateConfigmap(name, trainingType, namespace, valueFileName, chartName, chartVersion)
+	err = kubectl.CreateAppConfigmap(name,
+		trainingType,
+		namespace,
+		valueFileName,
+		AppInfoFileName,
+		chartName,
+		chartVersion)
+
 	if err != nil {
 		return err
 	}
 
-	// 3. Generate Template file
-	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart)
+	// 5. Delete Application
+	err = kubectl.DeleteAppConfigMap(name, namespace)
 	if err != nil {
-		return err
+		log.Debugf("Ignore delete configmap %s's error %v", name, err)
 	}
 
-	// 4. Create Application
+	// 6. Create Application
 	err = kubectl.InstallApps(template, namespace)
 	if err != nil {
+		// clean configmap
+		log.Infof("clean up the config map %s because creating application failed.", name)
+		kubectl.DeleteAppConfigMap(name, namespace)
 		return err
 	}
 
+	// 7. Clean up the template file
 	if log.GetLevel() != log.DebugLevel {
 		err = os.Remove(valueFileName)
 		if err != nil {
@@ -52,6 +75,11 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		err = os.Remove(template)
 		if err != nil {
 			log.Warnf("Failed to delete %s due to %v", template, err)
+		}
+
+		err = os.Remove(AppInfoFileName)
+		if err != nil {
+			log.Warnf("Failed to delete %s due to %v", AppInfoFileName, err)
 		}
 	}
 

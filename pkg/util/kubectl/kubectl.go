@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
@@ -13,12 +14,78 @@ import (
 var kubectlCmd = []string{"kubectl"}
 
 /**
-* Apply kubernetes config
+* dry-run creating kubernetes App Info for delete in future
+* Exec /usr/local/bin/kubectl, [create --dry-run -f /tmp/values313606961 --namespace default]
+**/
+
+func SaveAppInfo(fileName, namespace string) (configFileName string, err error) {
+	args := []string{"create", "--dry-run", "--namespace", namespace, "-f", fileName}
+	out, err := kubectl(args)
+	output := string(out)
+	result := []string{}
+
+	// fmt.Printf("%s\n", string(out))
+	if err != nil {
+		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Errorf("The output is %s\n", output)
+		return "", err
+	}
+
+	// 1. generate the config file
+	configFile, err = ioutil.TempFile("", "config")
+	if err != nil {
+		log.Errorf("Failed to create tmp file %v due to %v", configFile.Name(), err)
+		return "", err
+	}
+
+	configFileName = configFile.Name()
+	log.Debugf("Save the config file %s", configFileName)
+
+	// 2. save app types to config file
+	lines := strings.Split(output, "\n")
+	log.Debugf("dry run result: %v", lines)
+
+	for _, line := range lines {
+		line := strings.TrimSpace(line)
+		cols := strings.Fields(line)
+		log.Debugf("cols: ", cols, len(cols))
+		result = append(result, cols[0])
+	}
+
+	data := []byte(strings.Join(result, "\n"))
+	defer configFile.Close()
+	_, err = configFile.Write(data)
+	if err != nil {
+		log.Errorf("Failed to write %v to %s due to %v", data, configFileName, err)
+		return configFileName, err
+	}
+
+	return configFileName, nil
+}
+
+/**
+* Delete kubernetes config to uninstall app
+* Exec /usr/local/bin/kubectl, [delete -f /tmp/values313606961 --namespace default]
+**/
+func UninstallApps(fileName, namespace string) error {
+	args := []string{"delete", "--namespace", namespace, "-f", fileName}
+	out, err := kubectl(args)
+
+	fmt.Printf("%s\n", string(out))
+	if err != nil {
+		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+	}
+
+	return err
+}
+
+/**
+* Apply kubernetes config to install app
 * Exec /usr/local/bin/kubectl, [apply -f /tmp/values313606961 --namespace default]
 **/
 func InstallApps(fileName, namespace string) error {
 	args := []string{"apply", "--namespace", namespace, "-f", fileName}
-	out, err := kubectl(args, fileName)
+	out, err := kubectl(args)
 
 	fmt.Printf("%s\n", string(out))
 	if err != nil {
@@ -32,12 +99,13 @@ func InstallApps(fileName, namespace string) error {
 * This name should be <job-type>-<job-name>
 * create configMap by using name, namespace and configFile
 **/
-func CreateConfigmap(name, trainingType, namespace, configFileName, chartName, chartVersion string) error {
+func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFileName, chartName, chartVersion string) error {
 	args := []string{"create", "configmap", fmt.Sprintf("%s-%s", name, trainingType),
 		"--namespace", namespace,
-		fmt.Sprintf("--from-file=%s=%s", name, configFileName),
+		fmt.Sprintf("--from-file=%s=%s", "values", configFileName),
+		fmt.Sprintf("--from-file=%s=%s", "app", appInfoFileName),
 		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion)}
-	out, err := kubectl(args, configFileName)
+	out, err := kubectl(args)
 
 	fmt.Printf("%s\n", string(out))
 	if err != nil {
@@ -49,11 +117,28 @@ func CreateConfigmap(name, trainingType, namespace, configFileName, chartName, c
 
 /**
 *
-* save configMap into a file
+* delete configMap by using name, namespace
 **/
-func SaveConfigMapToFile(name, namespace string) (fileName string, err error) {
-	args := []string{"get", "configmap", name, "--namespace", namespace, fmt.Sprintf("jsonpath='{.%s.test}'", name)}
-	data, err := kubectl(args, "")
+func DeleteAppConfigMap(name, namespace) error {
+	args := []string{"delete", "configmap", name, "--namespace", namespace}
+	out, err := kubectl(args)
+
+	log.Debugf("%s\n", string(out))
+	if err != nil {
+		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+	}
+
+	return err
+
+}
+
+/**
+*
+* save the key of configMap into a file
+**/
+func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err error) {
+	args := []string{"get", "configmap", name, "--namespace", namespace, fmt.Sprintf("jsonpath='{.data.%s}'", key)}
+	data, err := kubectl(args)
 
 	if err != nil {
 		return "", fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
@@ -76,20 +161,13 @@ func SaveConfigMapToFile(name, namespace string) (fileName string, err error) {
 	return fileName, err
 }
 
-func kubectl(args []string, fileName string) ([]byte, error) {
+func kubectl(args []string) ([]byte, error) {
 	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
 		return nil, err
 	}
 
-	// 1. check if the template file exists
-	if len(fileName) > 0 {
-		if _, err = os.Stat(fileName); err != nil {
-			return nil, err
-		}
-	}
-
-	// 2. prepare the arguments
+	// 1. prepare the arguments
 	// args := []string{"create", "configmap", name, "--namespace", namespace, fmt.Sprintf("--from-file=%s=%s", name, configFileName)}
 	log.Debugf("Exec %s, %v", binary, args)
 
@@ -99,7 +177,7 @@ func kubectl(args []string, fileName string) ([]byte, error) {
 	}
 
 	// return syscall.Exec(cmd, args, env)
-	// 3. execute the command
+	// 2. execute the command
 	cmd := exec.Command(binary, args...)
 	cmd.Env = env
 	return cmd.CombinedOutput()
