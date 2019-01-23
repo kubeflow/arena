@@ -4,7 +4,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name }}-name
   labels:
     app: {{ template "tfjob.name" . }}
     chart: {{ template "tfjob.chart" . }}
