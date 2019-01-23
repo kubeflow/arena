@@ -143,7 +143,7 @@ func submitStandaloneJob(args []string, submitArgs *submitStandaloneJobArgs) (er
 		return err
 	}
 
-	trainer := NewTensorFlowJobTrainer(clientset)
+	trainer := NewStandaloneJobTrainer(clientset)
 	job, err := trainer.GetTrainingJob(name, namespace)
 	if err != nil {
 		log.Debugf("Check %s exist due to error %v", name, err)

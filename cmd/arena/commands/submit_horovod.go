@@ -153,3 +153,23 @@ func submitHorovodJob(args []string, submitArgs *submitHorovodJobArgs) (err erro
 
 	return helm.InstallRelease(name, namespace, submitArgs, horovod_training_chart)
 }
+
+func submitHorovodJobWithHelm(args []string, submitArgs *submitHorovodJobArgs) (err error) {
+	err = submitArgs.prepare(args)
+	if err != nil {
+		return err
+	}
+
+	exist, err := helm.CheckRelease(name)
+	if err != nil {
+		return err
+	}
+	if exist {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+	}
+
+	// the master is also considered as a worker
+	submitArgs.WorkerCount = submitArgs.WorkerCount - 1
+
+	return helm.InstallRelease(name, namespace, submitArgs, horovod_training_chart)
+}
