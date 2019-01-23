@@ -43,3 +43,7 @@
 ### 0.10.0
 
 * Fix hostnetwork issue which is introduced by ENI
+
+### 0.11.0
+
+* Remove -mpijob from mpijob name

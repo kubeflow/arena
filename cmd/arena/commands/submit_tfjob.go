@@ -19,8 +19,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kubeflow/arena/util"
-	"github.com/kubeflow/arena/util/helm"
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,18 +52,21 @@ func NewSubmitTFJobCommand() *cobra.Command {
 			setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			err = ensureNamespace(clientset, namespace)
+			err = updateNamespace(cmd)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
 			err = submitTFJob(args, &submitArgs)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
@@ -279,6 +283,35 @@ func (submitArgs *submitTFJobArgs) checkGangCapablitiesInCluster() {
 }
 
 func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
+	err = submitArgs.prepare(args)
+	if err != nil {
+		return err
+	}
+
+	trainer := NewTensorFlowJobTrainer(clientset)
+	job, err := trainer.GetTrainingJob(name, namespace)
+	if err != nil {
+		log.Debugf("Check %s exist due to error %v", name, err)
+	}
+
+	if job != nil {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+	}
+
+	// the master is also considered as a worker
+	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
+
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("The Job %s has been submitted successfully", name)
+	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
+	return nil
+}
+
+func submitTFJobWithHelm(args []string, submitArgs *submitTFJobArgs) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err

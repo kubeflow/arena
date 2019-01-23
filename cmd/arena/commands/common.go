@@ -17,8 +17,9 @@ package commands
 import (
 	"os"
 
-	"github.com/kubeflow/arena/types"
+	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
@@ -78,4 +79,19 @@ func setupKubeconfig() {
 			os.Setenv("KUBECONFIG", loadingRules.ExplicitPath)
 		}
 	}
+}
+
+// Update namespace if it's not set by user
+func updateNamespace(cmd *cobra.Command) (err error) {
+	// Update the namespace
+	if !cmd.Flags().Changed("namespace") {
+		namespace, _, err = clientConfig.Namespace()
+		log.Debugf("auto detect namespace %s", namespace)
+		if err != nil {
+			return err
+		}
+	} else {
+		log.Debugf("force to use namespace %s", namespace)
+	}
+	return nil
 }

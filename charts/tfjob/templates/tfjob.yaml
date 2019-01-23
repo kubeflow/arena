@@ -5,7 +5,7 @@
 apiVersion: "kubeflow.org/v1alpha2"
 kind: "TFJob"
 metadata:
-  name: {{ template "tfjob.fullname" . }}
+  name: {{ .Release.Name }}
   labels:
     app: {{ template "tfjob.name" . }}
     chart: {{ template "tfjob.chart" . }}

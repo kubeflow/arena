@@ -25,8 +25,8 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/kubeflow/arena/util/helm"
-	"github.com/kubeflow/arena/util"
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/helm"
 	"k8s.io/api/core/v1"
 )
 
