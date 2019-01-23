@@ -52,8 +52,9 @@ func NewSubmitStandaloneJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = ensureNamespace(client, namespace)
+			err = updateNamespace(cmd)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
