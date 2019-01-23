@@ -21,6 +21,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -137,6 +138,32 @@ func (submitArgs *submitStandaloneJobArgs) addStandaloneInfoToEnv() {
 }
 
 func submitStandaloneJob(args []string, submitArgs *submitStandaloneJobArgs) (err error) {
+	err = submitArgs.prepare(args)
+	if err != nil {
+		return err
+	}
+
+	trainer := NewTensorFlowJobTrainer(clientset)
+	job, err := trainer.GetTrainingJob(name, namespace)
+	if err != nil {
+		log.Debugf("Check %s exist due to error %v", name, err)
+	}
+
+	if job != nil {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+	}
+
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, standalone_training_chart)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("The Job %s has been submitted successfully", name)
+	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
+	return nil
+}
+
+func submitStandaloneJobWithHelm(args []string, submitArgs *submitStandaloneJobArgs) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
