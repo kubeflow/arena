@@ -26,6 +26,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	standalone_training_chart = util.GetChartsFolder() + "/training"
+)
+
 func NewSubmitStandaloneJobCommand() *cobra.Command {
 	var (
 		submitArgs submitStandaloneJobArgs
