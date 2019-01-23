@@ -15,9 +15,11 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -33,9 +35,19 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			err := updateNamespace(cmd)
+			if err != nil {
+				log.Debugf("Failed due to %v", err)
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			setupKubeconfig()
 			for _, jobName := range args {
-				deleteTrainingJob(jobName)
+				err = deleteTrainingJob(jobName)
+				if err != nil {
+					fmt.Printf("Failed to delete %s due to %v", jobName, err)
+				}
 			}
 		},
 	}
@@ -53,8 +65,12 @@ func deleteTrainingJob(jobName string) error {
 	log.Debugf("it didn't deleted by helm due to %v", err)
 
 	// 2. Handle training jobs created by arena
+	err = workflow.DeleteJob(jobName, namespace)
+	if err != nil {
+		return err
+	}
 
-	// 3. Handle training jobs created by others
+	// (TODO: cheyang)3. Handle training jobs created by others, to implement
 }
 
 func deleteTrainingJobWithHelm(jobName string) error {

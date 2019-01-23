@@ -9,7 +9,23 @@ import (
 )
 
 /**
-*	install application
+*	delete training job
+**/
+
+func DeleteJob(name, namespace string) error {
+	appInfoFilename, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
+	if err != nil {
+		return err
+	}
+
+	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFilename, namespace)
+	if err != nil {
+		return err
+	}
+}
+
+/**
+*	Submit training job
 **/
 
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string) error {

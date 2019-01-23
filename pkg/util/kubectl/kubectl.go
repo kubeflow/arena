@@ -88,6 +88,39 @@ func UninstallApps(fileName, namespace string) (err error) {
 }
 
 /**
+* Delete kubernetes config to uninstall app
+* Exec /usr/local/bin/kubectl, [delete -f /tmp/values313606961 --namespace default]
+**/
+func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
+	binary, err := exec.LookPath(kubectlCmd[0])
+	if err != nil {
+		return err
+	}
+
+	if _, err = os.Stat(appInfoFile); err != nil {
+		return err
+	}
+
+	args := []string{"cat", appInfoFile, "|", "xargs",
+		"kubectl", "delete"}
+
+	log.Debugf("Exec bash -c %v", args)
+
+	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
+	out, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s\n", string(out))
+	if err != nil {
+		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+	}
+
+	return err
+}
+
+/**
 * Apply kubernetes config to install app
 * Exec /usr/local/bin/kubectl, [apply -f /tmp/values313606961 --namespace default]
 **/
