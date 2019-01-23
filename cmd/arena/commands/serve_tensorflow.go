@@ -20,11 +20,12 @@ import (
 	"strings"
 
 	"bytes"
-	"github.com/kubeflow/arena/util"
-	"github.com/kubeflow/arena/util/helm"
+	"io/ioutil"
+
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )

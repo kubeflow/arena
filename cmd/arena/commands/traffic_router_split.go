@@ -17,7 +17,12 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeflow/arena/util"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	istiov1alpha3 "istio.io/api/networking/v1alpha3"
@@ -27,10 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"os"
-	"regexp"
-	"strconv"
-	"strings"
 )
 
 func NewTrafficRouterSplitCommand() *cobra.Command {

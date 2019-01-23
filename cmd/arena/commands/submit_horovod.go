@@ -19,8 +19,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kubeflow/arena/util"
-	"github.com/kubeflow/arena/util/helm"
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/workflow"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -29,6 +31,8 @@ func NewSubmitHorovodJobCommand() *cobra.Command {
 	var (
 		submitArgs submitHorovodJobArgs
 	)
+
+	submitArgs.Mode = "horovodjob"
 
 	var command = &cobra.Command{
 		Use:     "horovodjob",
@@ -42,14 +46,15 @@ func NewSubmitHorovodJobCommand() *cobra.Command {
 
 			util.SetLogLevel(logLevel)
 			setupKubeconfig()
-			client, err := initKubeClient()
+			_, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			err = ensureNamespace(client, namespace)
+			err = updateNamespace(cmd)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
@@ -135,6 +140,32 @@ func (submitArgs *submitHorovodJobArgs) addHorovodInfoToEnv() {
 }
 
 func submitHorovodJob(args []string, submitArgs *submitHorovodJobArgs) (err error) {
+	err = submitArgs.prepare(args)
+	if err != nil {
+		return err
+	}
+
+	trainer := NewHorovodJobTrainer(clientset)
+	job, err := trainer.GetTrainingJob(name, namespace)
+	if err != nil {
+		log.Debugf("Check %s exist due to error %v", name, err)
+	}
+
+	if job != nil {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+	}
+
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, horovod_training_chart)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("The Job %s has been submitted successfully", name)
+	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
+	return nil
+}
+
+func submitHorovodJobWithHelm(args []string, submitArgs *submitHorovodJobArgs) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err

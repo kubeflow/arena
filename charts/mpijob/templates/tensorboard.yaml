@@ -3,7 +3,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "mpijob.fullname" . }}
+  name: {{ .Release.Name }}-tensorboard
   labels:
     app: {{ template "mpijob.name" . }}
     chart: {{ template "mpijob.chart" . }}

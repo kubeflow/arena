@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kubeflow/arena/util"
+	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

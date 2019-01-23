@@ -16,12 +16,13 @@ package commands
 
 import (
 	"fmt"
-	validate "github.com/kubeflow/arena/util"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	validate "github.com/kubeflow/arena/pkg/util"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var (
