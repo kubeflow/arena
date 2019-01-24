@@ -83,10 +83,10 @@ type PrintArgs struct {
 /*
 * search the training job with name and training type
  */
-func searchTrainingJob(name, trainingType string) (job TrainingJob, err error) {
+func searchTrainingJob(jobName, trainingType string) (job TrainingJob, err error) {
 	if len(trainingType) > 0 {
 		if isKnownTrainingType(trainingType) {
-			job, err = getTrainingJobByType(clientset, name, namespace, trainingType)
+			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)
 			if err != nil {
 				return nil, err
 			}

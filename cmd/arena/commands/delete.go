@@ -79,7 +79,7 @@ func deleteTrainingJob(jobName string) error {
 
 	if len(trainingType) > 0 {
 		if isKnownTrainingType(trainingType) {
-			job, err = getTrainingJobByType(clientset, name, namespace, trainingType)
+			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)
 			if err != nil {
 				return err
 			}
