@@ -47,6 +47,11 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			setupKubeconfig()
+			_, err = initKubeClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 			for _, jobName := range args {
 				err = deleteTrainingJob(jobName)
 				if err != nil {
