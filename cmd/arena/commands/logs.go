@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/util"
-	"github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
