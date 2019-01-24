@@ -3,14 +3,15 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 const PROMETHEUS_INSTALL_DOC_URL = "https://github.com/kubeflow/arena/blob/master/docs/userguide/9-top-job-gpu-metric.md"
@@ -119,7 +120,7 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric J
 		return
 	}
 	podsMetrics, err := GetPodsGpuInfo(client, prometheusServiceName, runningPods)
-	return podsMetrics, nil
+	return podsMetrics, err
 }
 
 func GetPodsGpuInfo(client *kubernetes.Clientset, prometheusServiceName string, podNames []string) (JobGpuMetric, error) {
