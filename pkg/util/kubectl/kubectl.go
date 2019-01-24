@@ -53,6 +53,9 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 		line := strings.TrimSpace(line)
 		cols := strings.Fields(line)
 		log.Debugf("cols: ", cols, len(cols))
+		if len(cols) == 0 {
+			continue
+		}
 		result = append(result, cols[0])
 	}
 
