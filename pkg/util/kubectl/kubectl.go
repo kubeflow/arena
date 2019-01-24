@@ -136,7 +136,7 @@ func InstallApps(fileName, namespace string) (err error) {
 	args := []string{"apply", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s\n", string(out))
+	fmt.Printf("%s", string(out))
 	if err != nil {
 		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
@@ -164,7 +164,7 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion)}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s\n", string(out))
+	fmt.Printf("%s", string(out))
 	if err != nil {
 		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
