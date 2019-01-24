@@ -59,7 +59,7 @@ func NewLogsCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			client, err := initKubeClient()
+			_, err = initKubeClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
