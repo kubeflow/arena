@@ -98,7 +98,7 @@ func NewHorovodJobTrainer(client *kubernetes.Clientset) Trainer {
 
 	return &HorovodJobTrainer{
 		client:      client,
-		trainerType: "Horovod",
+		trainerType: "horovodjob",
 	}
 }
 

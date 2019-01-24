@@ -102,6 +102,43 @@ func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job T
 	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
 }
 
+func getTrainingJobByType(client *kubernetes.Clientset, name, namespace, trainingType string) (job TrainingJob, err error) {
+	// trainers := NewTrainers(client, )
+
+	trainers := NewTrainers(client)
+	for _, trainer := range trainers {
+		if trainer.Type() == trainingType {
+			return trainer.GetTrainingJob(name, namespace)
+		} else {
+			log.Debugf("the job %s with type %s in namespace %s is not expected type %v",
+				name,
+				trainer.Type(),
+				namespace,
+				trainingType)
+		}
+	}
+
+	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
+}
+
+func getTrainingJobs(client *kubernetes.Clientset, name, namespace string) (jobs []TrainingJob, err error) {
+	jobs = []TrainingJob{}
+	trainers := NewTrainers(client)
+	for _, trainer := range trainers {
+		if trainer.IsSupported(name, namespace) {
+			jobs = append(jobs, trainer.GetTrainingJob(name, namespace))
+		} else {
+			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
+		}
+	}
+
+	if len(jobs) == 0 {
+		return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
+	}
+
+	return jobs, nil
+}
+
 func printTrainingJob(job TrainingJob, printArgs PrintArgs) {
 	switch printArgs.Output {
 	case "name":

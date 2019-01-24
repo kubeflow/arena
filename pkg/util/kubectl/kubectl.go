@@ -52,7 +52,7 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 	for _, line := range lines {
 		line := strings.TrimSpace(line)
 		cols := strings.Fields(line)
-		log.Debugf("cols: ", cols, len(cols))
+		log.Debugf("cols: %s, %d", cols, len(cols))
 		if len(cols) == 0 {
 			continue
 		}

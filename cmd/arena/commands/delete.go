@@ -24,6 +24,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	trainingType string
+)
+
 // NewDeleteCommand
 func NewDeleteCommand() *cobra.Command {
 	var command = &cobra.Command{
@@ -51,6 +55,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 		},
 	}
+	command.Flags().StringVar(&trainingType, "--type", "", "The training type to delete, the possible option is tfjob, mpijob, horovodjob or standalonejob. (optional)")
 
 	return command
 }
@@ -65,6 +70,35 @@ func deleteTrainingJob(jobName string) error {
 	log.Debugf("it didn't deleted by helm due to %v", err)
 
 	// 2. Handle training jobs created by arena
+	found := false
+	var job TrainingJob
+
+	if len(trainingType) > 0 {
+		if isKnownTrainingType(trainingType) {
+			job, err = getTrainingJobByType(client, name, namespace, trainingType)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("%s is unknown training type, please choose a known type from %v",
+				trainingType,
+				knownTrainingTypes)
+		}
+	} else {
+		jobs, err := getTrainingJobs(client, jobName, namespace)
+		if err != nil {
+			return err
+		}
+
+		if len(jobs) > 1 {
+			return fmt.Errorf("There are more than 1 training job with the same name %s, please check it with `arena list | grep %s`",
+				jobName,
+				jobName)
+		} else {
+			job = jobs[0]
+		}
+	}
+
 	err = workflow.DeleteJob(jobName, namespace)
 	if err != nil {
 		return err
@@ -76,4 +110,14 @@ func deleteTrainingJob(jobName string) error {
 
 func deleteTrainingJobWithHelm(jobName string) error {
 	return helm.DeleteRelease(jobName)
+}
+
+func isKnownTrainingType(trainingType string) bool {
+	for _, knownType := range knownTrainingTypes {
+		if trainingType == knownType {
+			return true
+		}
+	}
+
+	return false
 }

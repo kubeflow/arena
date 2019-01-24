@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/kubeflow/arena/pkg/util/helm"
@@ -9,11 +10,13 @@ import (
 )
 
 /**
-*	delete training job
+*	delete training job with the job name
 **/
 
-func DeleteJob(name, namespace string) error {
-	appInfoFilename, err := kubectl.SaveAppConfigMapToFile(name, "app", namespace)
+func DeleteJob(name, namespace, trainingType string) error {
+	jobName := fmt.Sprintf("%s-%s", name, trainingType)
+
+	appInfoFilename, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {
 		return err
 	}
@@ -23,10 +26,10 @@ func DeleteJob(name, namespace string) error {
 		return err
 	}
 
-	err = kubectl.DeleteAppConfigMap(name, namespace)
+	err = kubectl.DeleteAppConfigMap(jobName, namespace)
 	if err != nil {
-		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", name, err)
-		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, name)
+		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
+		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
 	}
 
 	return nil
@@ -62,7 +65,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
-	err = kubectl.DeleteAppConfigMap(name, namespace)
+	err = kubectl.DeleteAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 	if err != nil {
 		log.Debugf("Delete configmap %s failed, please clean it manually due to %v.", name, err)
 		log.Debugf("Please run `kubectl delete -n %s cm %s`", namespace, name)
