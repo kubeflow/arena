@@ -108,6 +108,7 @@ func deleteTrainingJob(jobName string) error {
 		return err
 	}
 
+	log.Infof("The Job %s has been deleted successfully", jobName)
 	// (TODO: cheyang)3. Handle training jobs created by others, to implement
 	return nil
 }
