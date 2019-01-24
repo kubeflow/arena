@@ -182,9 +182,9 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 
 	if err != nil {
 		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
-		log.Debugf("%s\n", string(out))
+		log.Debugf("%s", string(out))
 	} else {
-		fmt.Printf("%s\n", string(out))
+		fmt.Printf("%s", string(out))
 	}
 
 	return err
@@ -219,7 +219,7 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
 	out, err := cmd.Output()
-	fmt.Printf("%s\n", string(out))
+	fmt.Printf("%s", string(out))
 
 	if err != nil {
 		return fileName, fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)

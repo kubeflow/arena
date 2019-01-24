@@ -60,7 +60,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 		},
 	}
-	command.Flags().StringVar(&trainingType, "--type", "", "The training type to delete, the possible option is tfjob, mpijob, horovodjob or standalonejob. (optional)")
+	command.Flags().StringVar(&trainingType, "type", "", "The training type to delete, the possible option is tfjob, mpijob, horovodjob or standalonejob. (optional)")
 
 	return command
 }

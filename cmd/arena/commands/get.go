@@ -23,7 +23,6 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/spf13/cobra"
 
 	"io"
@@ -59,24 +58,32 @@ func NewGetCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			exist, err := helm.CheckRelease(name)
+			// exist, err := helm.CheckRelease(name)
+			// if err != nil {
+			// 	fmt.Println(err)
+			// 	os.Exit(1)
+			// }
+			// if !exist {
+			// 	fmt.Printf("The job %s doesn't exist, please create it first. use 'arena submit'\n", name)
+			// 	os.Exit(1)
+			// }
+			// job, err := getTrainingJob(client, name, namespace)
+			// if err != nil {
+			// 	fmt.Println(err)
+			// 	os.Exit(1)
+			// }
+
+			job, err := searchTrainingJob(name, trainingType)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			if !exist {
-				fmt.Printf("The job %s doesn't exist, please create it first. use 'arena submit'\n", name)
-				os.Exit(1)
-			}
-			job, err := getTrainingJob(client, name, namespace)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+
 			printTrainingJob(job, printArgs)
 		},
 	}
 
+	command.Flags().StringVar(&trainingType, "type", "", "The training type to delete, the possible option is tfjob, mpijob, horovodjob or standalonejob. (optional)")
 	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Specify if show pending pod's events.")
 	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
 	return command
@@ -85,6 +92,39 @@ func NewGetCommand() *cobra.Command {
 type PrintArgs struct {
 	ShowEvents bool
 	Output     string
+}
+
+/*
+* search the training job with name and training type
+ */
+func searchTrainingJob(name, trainingType string) (job TrainingJob, err error) {
+	if len(trainingType) > 0 {
+		if isKnownTrainingType(trainingType) {
+			job, err = getTrainingJobByType(clientset, name, namespace, trainingType)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, fmt.Errorf("%s is unknown training type, please choose a known type from %v",
+				trainingType,
+				knownTrainingTypes)
+		}
+	} else {
+		jobs, err := getTrainingJobs(clientset, jobName, namespace)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(jobs) > 1 {
+			return nil, fmt.Errorf("There are more than 1 training job with the same name %s, please check it with `arena list | grep %s`",
+				jobName,
+				jobName)
+		} else {
+			job = jobs[0]
+		}
+	}
+
+	return job, nil
 }
 
 func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job TrainingJob, err error) {
