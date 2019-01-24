@@ -142,18 +142,22 @@ func CheckRelease(name string) (exist bool, err error) {
 }
 
 func DeleteRelease(name string) error {
-	cmd, err := exec.LookPath(helmCmd[0])
+	binary, err := exec.LookPath(helmCmd[0])
 	if err != nil {
 		return err
 	}
 
-	args := []string{"helm", "del", "--purge", name}
+	args := []string{"del", "--purge", name}
+	cmd := exec.Command(binary, args...)
 
 	env := os.Environ()
 	if types.KubeConfig != "" {
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
-	return syscall.Exec(cmd, args, env)
+	// return syscall.Exec(cmd, args, env)
+	out, err := cmd.Output()
+	log.Debugf("Delete release's result: %s\n", string(out))
+	return err
 }
 
 func ListReleases() (releases []string, err error) {
