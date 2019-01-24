@@ -68,7 +68,6 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, c
 	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
 	// cmd.Env = env
 	out, err := cmd.CombinedOutput()
-	fmt.Println("")
 	fmt.Printf("%s\n", string(out))
 	if err != nil {
 		return templateFileName, fmt.Errorf("Failed to execute %s, %v with %v", binary, args, err)

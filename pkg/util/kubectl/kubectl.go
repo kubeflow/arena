@@ -180,9 +180,11 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 	args := []string{"delete", "configmap", name, "--namespace", namespace}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s\n", string(out))
 	if err != nil {
 		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("%s\n", string(out))
+	} else {
+		fmt.Printf("%s\n", string(out))
 	}
 
 	return err
