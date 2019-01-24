@@ -115,7 +115,7 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
 	out, err := cmd.Output()
-	fmt.Printf("%s\n", string(out))
+	fmt.Printf("%s", string(out))
 
 	if err != nil {
 		log.Errorf("Failed to execute %s, %v with %v", "bash -c", args, err)
