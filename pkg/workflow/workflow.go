@@ -18,11 +18,13 @@ func DeleteJob(name, namespace, trainingType string) error {
 
 	appInfoFilename, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {
+		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
 		return err
 	}
 
 	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFilename, namespace)
 	if err != nil {
+		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 		return err
 	}
 
