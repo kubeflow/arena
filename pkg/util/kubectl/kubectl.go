@@ -195,7 +195,7 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err error) {
 	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	file, err := ioutil.TempFile(os.TempDir(), name)
