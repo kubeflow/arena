@@ -71,6 +71,7 @@ func deleteTrainingJob(jobName string) error {
 	}
 
 	// (TODO: cheyang)3. Handle training jobs created by others, to implement
+	return nil
 }
 
 func deleteTrainingJobWithHelm(jobName string) error {
