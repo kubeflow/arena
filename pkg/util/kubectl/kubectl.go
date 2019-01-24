@@ -196,7 +196,7 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 * save the key of configMap into a file
 **/
 func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err error) {
-	args := []string{"get", "configmap", name, "--namespace", namespace, fmt.Sprintf("jsonpath='{.data.%s}'", key)}
+	args := []string{"get", "configmap", name, "--namespace", namespace, fmt.Sprintf("-o=jsonpath='{.data.%s}'", key)}
 	data, err := kubectl(args)
 
 	if err != nil {
