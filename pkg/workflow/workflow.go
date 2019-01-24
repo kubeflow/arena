@@ -62,6 +62,12 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
+	err = kubectl.DeleteAppConfigMap(name, namespace)
+	if err != nil {
+		log.Debugf("Delete configmap %s failed, please clean it manually due to %v.", name, err)
+		log.Debugf("Please run `kubectl delete -n %s cm %s`", namespace, name)
+	}
+
 	err = kubectl.CreateAppConfigmap(name,
 		trainingType,
 		namespace,
