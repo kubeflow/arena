@@ -118,7 +118,7 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
 	fmt.Printf("%s\n", string(out))
 
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Errorf("Failed to execute %s, %v with %v", "bash -c", args, err)
 	}
 
 	return err
@@ -193,11 +193,9 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 * save the key of configMap into a file
 **/
 func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err error) {
-	args := []string{"get", "configmap", name, "--namespace", namespace, fmt.Sprintf("-o=jsonpath='{.data.%s}'", key)}
-	data, err := kubectl(args)
-
+	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
-		return "", fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		return err
 	}
 
 	file, err := ioutil.TempFile(os.TempDir(), name)
@@ -205,14 +203,24 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 		log.Errorf("Failed to create tmp file %v due to %v", file.Name(), err)
 		return fileName, err
 	}
-
 	fileName = file.Name()
-	log.Debugf("Save the values file %s", fileName)
 
-	defer file.Close()
-	_, err = file.Write(data)
+	args := []string{binary, "get", "configmap", name,
+		"--namespace", namespace,
+		fmt.Sprintf("-o=jsonpath='{.data.%s}'", key),
+		">", fileName}
+	log.Debugf("Exec bash -c %s", strings.Join(args, " "))
+
+	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
+	env := os.Environ()
+	if types.KubeConfig != "" {
+		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
+	}
+	out, err := cmd.Output()
+	fmt.Printf("%s\n", string(out))
+
 	if err != nil {
-		log.Errorf("Failed to write %v to %s due to %v", data, file.Name(), err)
+		return fileName, fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 	return fileName, err
 }
