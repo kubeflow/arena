@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/util"
+	"github.com/labstack/gommon/log"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,6 +85,13 @@ func NewLogsCommand() *cobra.Command {
 				}
 				printer.sinceSeconds = &parsedSince
 			}
+			err = updateNamespace(cmd)
+			if err != nil {
+				log.Debugf("Failed due to %v", err)
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
 			job, err := searchTrainingJob(name, trainingType)
 			if err != nil {
