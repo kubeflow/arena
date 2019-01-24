@@ -58,20 +58,6 @@ func NewGetCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			// exist, err := helm.CheckRelease(name)
-			// if err != nil {
-			// 	fmt.Println(err)
-			// 	os.Exit(1)
-			// }
-			// if !exist {
-			// 	fmt.Printf("The job %s doesn't exist, please create it first. use 'arena submit'\n", name)
-			// 	os.Exit(1)
-			// }
-			// job, err := getTrainingJob(client, name, namespace)
-			// if err != nil {
-			// 	fmt.Println(err)
-			// 	os.Exit(1)
-			// }
 
 			job, err := searchTrainingJob(name, trainingType)
 			if err != nil {
@@ -177,7 +163,8 @@ func getTrainingJobs(client *kubernetes.Clientset, name, namespace string) (jobs
 	}
 
 	if len(jobs) == 0 {
-		return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
+		log.Debugf("Failed to find the training job %s in namespace %s", name, namespace)
+		return nil, fmt.Errorf("The job %s in namespace %s doesn't exist, please create it first. use 'arena submit'\n", name, namespace)
 	}
 
 	return jobs, nil
