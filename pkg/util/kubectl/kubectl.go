@@ -110,6 +110,10 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
 	log.Debugf("Exec bash -c %v", args)
 
 	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
+	env := os.Environ()
+	if types.KubeConfig != "" {
+		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
+	}
 	out, err := cmd.Output()
 	if err != nil {
 		return err
@@ -185,7 +189,6 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 	}
 
 	return err
-
 }
 
 /**
