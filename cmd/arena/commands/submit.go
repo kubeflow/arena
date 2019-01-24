@@ -27,12 +27,10 @@ import (
 )
 
 var (
-	standalone_training_chart = util.GetChartsFolder() + "/training"
-	horovod_training_chart    = util.GetChartsFolder() + "/tf-horovod"
-	envs                      []string
-	dataset                   []string
-	dataDirs                  []string
-	annotations               []string
+	envs        []string
+	dataset     []string
+	dataDirs    []string
+	annotations []string
 )
 
 // The common parts of the submitAthd

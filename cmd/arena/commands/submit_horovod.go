@@ -26,6 +26,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	horovod_training_chart = util.GetChartsFolder() + "/tf-horovod"
+)
+
 // NewSubmitHorovodJobCommand
 func NewSubmitHorovodJobCommand() *cobra.Command {
 	var (
