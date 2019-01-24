@@ -126,7 +126,11 @@ func getTrainingJobs(client *kubernetes.Clientset, name, namespace string) (jobs
 	trainers := NewTrainers(client)
 	for _, trainer := range trainers {
 		if trainer.IsSupported(name, namespace) {
-			jobs = append(jobs, trainer.GetTrainingJob(name, namespace))
+			job, err := trainer.GetTrainingJob(name, namespace)
+			if err != nil {
+				return nil, err
+			}
+			jobs = append(jobs, job)
 		} else {
 			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
 		}

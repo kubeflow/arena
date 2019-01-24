@@ -34,6 +34,8 @@ const (
 	nodeLabelRole = "kubernetes.io/role"
 
 	aliyunENIAnnotation = "k8s.aliyun.com/eni"
+)
 
+var (
 	knownTrainingTypes = []string{"tfjob", "mpijob", "standalonejob", "horovodjob"}
 )

@@ -70,12 +70,11 @@ func deleteTrainingJob(jobName string) error {
 	log.Debugf("it didn't deleted by helm due to %v", err)
 
 	// 2. Handle training jobs created by arena
-	found := false
 	var job TrainingJob
 
 	if len(trainingType) > 0 {
 		if isKnownTrainingType(trainingType) {
-			job, err = getTrainingJobByType(client, name, namespace, trainingType)
+			job, err = getTrainingJobByType(clientset, name, namespace, trainingType)
 			if err != nil {
 				return err
 			}
@@ -85,7 +84,7 @@ func deleteTrainingJob(jobName string) error {
 				knownTrainingTypes)
 		}
 	} else {
-		jobs, err := getTrainingJobs(client, jobName, namespace)
+		jobs, err := getTrainingJobs(clientset, jobName, namespace)
 		if err != nil {
 			return err
 		}
@@ -99,7 +98,7 @@ func deleteTrainingJob(jobName string) error {
 		}
 	}
 
-	err = workflow.DeleteJob(jobName, namespace)
+	err = workflow.DeleteJob(jobName, namespace, job.Trainer())
 	if err != nil {
 		return err
 	}
