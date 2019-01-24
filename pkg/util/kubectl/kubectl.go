@@ -181,7 +181,7 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 
 	log.Debugf("%s\n", string(out))
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
 	return err
