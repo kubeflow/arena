@@ -33,7 +33,16 @@ type StandaloneJob struct {
 func (sj *StandaloneJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
 	urls := []string{}
 	// dashboardURL, err := dashboard(client, "kube-system", "kubernetes-dashboard")
-	dashboardURL, err := dashboard(client, arenaNamespace, "kubernetes-dashboard")
+	dashboardURL, err := dashboard(client, namespace, "kubernetes-dashboard")
+
+	if err != nil {
+		log.Debugf("Get dashboard failed due to %v", err)
+		// retry for the existing customers, will be deprecated in the future
+		dashboardURL, err = dashboard(client, arenaNamespace, "kubernetes-dashboard")
+		if err != nil {
+			log.Debugf("Get dashboard failed due to %v", err)
+		}
+	}
 
 	if err != nil {
 		log.Debugf("Get dashboard failed due to %v", err)

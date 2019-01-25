@@ -25,8 +25,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	tfv1alpha2 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1alpha2"
 	"time"
+
+	tfv1alpha2 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1alpha2"
 )
 
 var (
@@ -117,7 +118,16 @@ func (tj *TensorFlowJob) Age() time.Duration {
 func (tj *TensorFlowJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
 	urls := []string{}
 	// dashboardURL, err := dashboard(client, "kubeflow", "tf-job-dashboard")
-	dashboardURL, err := dashboard(client, arenaNamespace, "tf-job-dashboard")
+	dashboardURL, err := dashboard(client, namespace, "tf-job-dashboard")
+
+	if err != nil {
+		log.Debugf("Get dashboard failed due to %v", err)
+		// retry for the existing customers, will be deprecated in the future
+		dashboardURL, err = dashboard(client, arenaNamespace, "tf-job-dashboard")
+		if err != nil {
+			log.Debugf("Get dashboard failed due to %v", err)
+		}
+	}
 
 	if err != nil {
 		log.Debugf("Get dashboard failed due to %v", err)

@@ -18,7 +18,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/util"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,7 @@ func NewLogViewerCommand() *cobra.Command {
 		Use:   "logviewer job",
 		Short: "display Log Viewer URL of a training job",
 		Run: func(cmd *cobra.Command, args []string) {
+			util.SetLogLevel(logLevel)
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
@@ -37,16 +39,16 @@ func NewLogViewerCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			exist, err := helm.CheckRelease(name)
+
+			err = updateNamespace(cmd)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			if !exist {
-				fmt.Printf("The job %s doesn't exist, please create it first. use 'arena create'\n", name)
-				os.Exit(1)
-			}
-			job, err := getTrainingJob(client, name, namespace)
+
+			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
+			job, err := searchTrainingJob(name, trainingType)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

@@ -42,6 +42,17 @@ func dashboard(client kubernetes.Interface, namespace string, name string) (stri
 		return url, nil
 	}
 
+	//dashboardFromNodePort
+	url, err = dashboardFromNodePort(client, namespace, name)
+	if err != nil {
+		logrus.Debugf("Failed to find the dashboard entry in the nodePort from %s in namespace %s due to %v",
+			name,
+			namespace,
+			err)
+	} else if len(url) > 0 {
+		return url, nil
+	}
+
 	ep, err := client.CoreV1().Endpoints(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
@@ -108,13 +119,58 @@ func dashboardFromLoadbalancer(client kubernetes.Interface, namespace string, na
 	}
 
 	if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
-		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
-			if len(svc.Status.LoadBalancer.Ingress) > 0 {
-				address := svc.Status.LoadBalancer.Ingress[0].IP
-				port := svc.Spec.Ports[0].Port
-				return fmt.Sprintf("%s:%d", address, port), nil
+		if len(svc.Status.LoadBalancer.Ingress) > 0 {
+			address := svc.Status.LoadBalancer.Ingress[0].IP
+			port := svc.Spec.Ports[0].Port
+			return fmt.Sprintf("%s:%d", address, port), nil
+		}
+	}
+
+	return "", fmt.Errorf("Ignore non load balacner svc for %s in namespace %s", name, namespace)
+}
+
+// Get dashboard url if it's nodePort
+func dashboardFromNodePort(client kubernetes.Interface, namespace string, name string) (string, error) {
+	svc, err := client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	if svc.Spec.Type == corev1.ServiceTypeNodePort {
+		if len(svc.Spec.Ports) > 0 {
+			// address := svc.Status.LoadBalancer.Ingress[0].IP
+			// port := svc.Spec.Ports[0].Port
+			// return fmt.Sprintf("%s:%d", address, port), nil
+			for _, port := range svc.Spec.Ports {
+				nodePort := port.NodePort
+				// Get node address
+				nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
+				if err != nil {
+					return "", err
+				}
+				node := corev1.Node{}
+				findReadyNode := false
+
+				for _, item := range nodeList.Items {
+					for _, condition := range item.Status.Conditions {
+						if condition.Type == "Ready" {
+							if condition.Status == "True" {
+								node = item
+								findReadyNode = true
+								break
+							}
+						}
+					}
+				}
+
+				if !findReadyNode {
+					return "", fmt.Errorf("Failed to find the ready node for exporting dashboard.")
+				}
+				address := node.Status.Addresses[0].Address
+				return fmt.Sprintf("%s:%d", address, nodePort), nil
 			}
 		}
+
 	}
 
 	return "", fmt.Errorf("Ignore non load balacner svc for %s in namespace %s", name, namespace)

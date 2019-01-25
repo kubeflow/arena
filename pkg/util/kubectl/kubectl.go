@@ -115,7 +115,7 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
 	out, err := cmd.Output()
-	fmt.Printf("%s\n", string(out))
+	fmt.Printf("%s", string(out))
 
 	if err != nil {
 		log.Errorf("Failed to execute %s, %v with %v", "bash -c", args, err)
@@ -136,7 +136,7 @@ func InstallApps(fileName, namespace string) (err error) {
 	args := []string{"apply", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s\n", string(out))
+	fmt.Printf("%s", string(out))
 	if err != nil {
 		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
@@ -164,7 +164,7 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion)}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s\n", string(out))
+	fmt.Printf("%s", string(out))
 	if err != nil {
 		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
@@ -180,9 +180,11 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 	args := []string{"delete", "configmap", name, "--namespace", namespace}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s\n", string(out))
 	if err != nil {
 		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("%s", string(out))
+	} else {
+		fmt.Printf("%s", string(out))
 	}
 
 	return err
@@ -217,7 +219,7 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
 	out, err := cmd.Output()
-	fmt.Printf("%s\n", string(out))
+	fmt.Printf("%s", string(out))
 
 	if err != nil {
 		return fileName, fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
