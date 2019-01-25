@@ -75,32 +75,10 @@ func deleteTrainingJob(jobName string) error {
 	log.Debugf("it didn't deleted by helm due to %v", err)
 
 	// 2. Handle training jobs created by arena
-	var job TrainingJob
-
-	if len(trainingType) > 0 {
-		if isKnownTrainingType(trainingType) {
-			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)
-			if err != nil {
-				return err
-			}
-		} else {
-			return fmt.Errorf("%s is unknown training type, please choose a known type from %v",
-				trainingType,
-				knownTrainingTypes)
-		}
-	} else {
-		jobs, err := getTrainingJobs(clientset, jobName, namespace)
-		if err != nil {
-			return err
-		}
-
-		if len(jobs) > 1 {
-			return fmt.Errorf("There are more than 1 training job with the same name %s, please check it with `arena list | grep %s`",
-				jobName,
-				jobName)
-		} else {
-			job = jobs[0]
-		}
+	job, err := searchTrainingJob(name, trainingType)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	err = workflow.DeleteJob(jobName, namespace, job.Trainer())
