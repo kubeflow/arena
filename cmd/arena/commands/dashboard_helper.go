@@ -137,7 +137,7 @@ func dashboardFromNodePort(client kubernetes.Interface, namespace string, name s
 				if err != nil {
 					return "", err
 				}
-				node := v1.Node{}
+				node := corev1.Node{}
 				findReadyNode := false
 
 				for _, item := range nodeList.Items {
@@ -156,7 +156,7 @@ func dashboardFromNodePort(client kubernetes.Interface, namespace string, name s
 					return "", fmt.Errorf("Failed to find the ready node for exporting dashboard.")
 				}
 				address = node.Status.Addresses[0].Address
-				return fmt.Sprintf("%s:%d", address, port), nil
+				return fmt.Sprintf("%s:%d", address, nodePort), nil
 			}
 		}
 
