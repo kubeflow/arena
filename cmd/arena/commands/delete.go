@@ -75,7 +75,7 @@ func deleteTrainingJob(jobName string) error {
 	log.Debugf("it didn't deleted by helm due to %v", err)
 
 	// 2. Handle training jobs created by arena
-	job, err := searchTrainingJob(name, trainingType)
+	job, err := searchTrainingJob(jobName, trainingType)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
