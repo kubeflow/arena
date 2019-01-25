@@ -69,6 +69,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 
 	err = kubectl.DeleteAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 	if err != nil {
+		log.Debugf("Ignore delete configmap %s's error %v", name, err)
 		log.Debugf("Delete configmap %s failed, please clean it manually due to %v.", name, err)
 		log.Debugf("Please run `kubectl delete -n %s cm %s`", namespace, name)
 	}
@@ -85,22 +86,16 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
-	// 5. Delete Application
-	err = kubectl.DeleteAppConfigMap(name, namespace)
-	if err != nil {
-		log.Debugf("Ignore delete configmap %s's error %v", name, err)
-	}
-
-	// 6. Create Application
+	// 5. Create Application
 	err = kubectl.InstallApps(template, namespace)
 	if err != nil {
 		// clean configmap
 		log.Infof("clean up the config map %s because creating application failed.", name)
-		kubectl.DeleteAppConfigMap(name, namespace)
+		kubectl.DeleteAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 		return err
 	}
 
-	// 7. Clean up the template file
+	// 6. Clean up the template file
 	if log.GetLevel() != log.DebugLevel {
 		err = os.Remove(valueFileName)
 		if err != nil {
