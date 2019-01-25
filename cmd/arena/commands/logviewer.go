@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kubeflow/arena/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -27,6 +28,7 @@ func NewLogViewerCommand() *cobra.Command {
 		Use:   "logviewer job",
 		Short: "display Log Viewer URL of a training job",
 		Run: func(cmd *cobra.Command, args []string) {
+			util.SetLogLevel(logLevel)
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
