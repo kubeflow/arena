@@ -42,6 +42,17 @@ func dashboard(client kubernetes.Interface, namespace string, name string) (stri
 		return url, nil
 	}
 
+	//dashboardFromNodePort
+	url, err = dashboardFromNodePort(client, namespace, name)
+	if err != nil {
+		logrus.Debugf("Failed to find the dashboard entry in the nodePort from %s in namespace %s due to %v",
+			name,
+			namespace,
+			err)
+	} else if len(url) > 0 {
+		return url, nil
+	}
+
 	ep, err := client.CoreV1().Endpoints(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return "", err
