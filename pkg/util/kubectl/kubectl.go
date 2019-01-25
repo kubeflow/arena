@@ -192,6 +192,25 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 
 /**
 *
+* get configMap by using name, namespace
+**/
+func CheckAppConfigMap(name, namespace string) (found bool) {
+	args := []string{"get", "configmap", name, "--namespace", namespace}
+	out, err := kubectl(args)
+
+	if err != nil {
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("%s", string(out))
+	} else {
+		log.Debugf("%s", string(out))
+		found = true
+	}
+
+	return found
+}
+
+/**
+*
 * save the key of configMap into a file
 **/
 func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err error) {
