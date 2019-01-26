@@ -31,18 +31,12 @@ func ListAppConfigMaps(clientset *kubernetes.Clientset, namespace string, traini
 
 	innerLoop:
 		for _, trainingType := range trainingTypes {
-			// if item.n.HasSuffix(line, fmt.Sprintf("-%s", trainingType)) {
-			// 	found = true
-			// 	name.Name = strings.TrimSuffix(line, fmt.Sprintf("-%s", trainingType))
-			// 	name.Type = trainingType
-			// 	break innerLoop
-			// }
-
 			if strings.HasSuffix(cm.Name, fmt.Sprintf("-%s", trainingType)) {
 				found = true
 				job.Name = strings.TrimSuffix(cm.Name, fmt.Sprintf("-%s", trainingType))
 				job.Type = trainingType
 				job.Namespace = cm.Namespace
+				break innerLoop
 			}
 		}
 
