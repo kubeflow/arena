@@ -12,12 +12,19 @@ import (
 func getTrainingTypes(name, namespace string) (cms []string) {
 	cms = []string{}
 	for _, trainingType := range knownTrainingTypes {
-		configName := fmt.Sprintf("%s-%s", name, trainingType)
-		found := kubectl.CheckAppConfigMap(configName, namespace)
+		found := isTrainingConfigExist(name, trainingType, namespace)
 		if found {
 			cms = append(cms, trainingType)
 		}
 	}
 
 	return cms
+}
+
+/**
+*  check if the training config exist
+ */
+func isTrainingConfigExist(name, trainingType, namespace) bool {
+	configName := fmt.Sprintf("%s-%s", name, trainingType)
+	return kubectl.CheckAppConfigMap(configName, namespace)
 }
