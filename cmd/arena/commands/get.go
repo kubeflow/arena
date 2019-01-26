@@ -109,7 +109,7 @@ func searchTrainingJob(jobName, trainingType string) (job TrainingJob, err error
 		}
 
 		if len(jobs) > 1 {
-			return nil, fmt.Errorf("There are more than 1 training job with the same name %s, please check it with `arena list | grep %s`",
+			return nil, fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`",
 				jobName,
 				jobName)
 		} else {

@@ -55,7 +55,7 @@ func NewDeleteCommand() *cobra.Command {
 			for _, jobName := range args {
 				err = deleteTrainingJob(jobName)
 				if err != nil {
-					fmt.Printf("Failed to delete %s due to %v\n", jobName, err)
+					fmt.Printf("Failed to delete %s, reason is that %v\n", jobName, err)
 				}
 			}
 		},
@@ -75,13 +75,17 @@ func deleteTrainingJob(jobName string) error {
 	log.Debugf("it didn't deleted by helm due to %v", err)
 
 	// 2. Handle training jobs created by arena
-	job, err := searchTrainingJob(jobName, trainingType)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	trainingTypes := getTrainingTypes(jobName, namespace)
+	if len(trainingTypes) == 0 {
+		return fmt.Errorf("There is no training job found with the name %s, please check it with `arena list | grep %s`",
+			jobName)
+	} else if len(trainingTypes) > 1 {
+		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`",
+			jobName,
+			jobName)
 	}
 
-	err = workflow.DeleteJob(jobName, namespace, job.Trainer())
+	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0])
 	if err != nil {
 		return err
 	}
