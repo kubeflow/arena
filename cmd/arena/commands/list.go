@@ -50,7 +50,7 @@ func NewListCommand() *cobra.Command {
 			// log.Printf("releaseMap %v", releaseMap)
 			if err != nil {
 				log.Debugf("Failed to helm list due to %v", err)
-				useHelm := false
+				useHelm = false
 			}
 			// determine use cache
 			useCache = true
@@ -104,6 +104,7 @@ func NewListCommand() *cobra.Command {
 					fmt.Println(err)
 					os.Exit(1)
 				}
+				jobs = append(jobs, job)
 			}
 
 			jobs = makeTrainingJobOrderdByAge(jobs)
