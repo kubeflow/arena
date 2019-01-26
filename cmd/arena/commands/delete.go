@@ -55,7 +55,7 @@ func NewDeleteCommand() *cobra.Command {
 			for _, jobName := range args {
 				err = deleteTrainingJob(jobName)
 				if err != nil {
-					fmt.Printf("Failed to delete %s, reason is that %v\n", jobName, err)
+					fmt.Printf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
 			}
 		},
@@ -78,9 +78,10 @@ func deleteTrainingJob(jobName string) error {
 	trainingTypes := getTrainingTypes(jobName, namespace)
 	if len(trainingTypes) == 0 {
 		return fmt.Errorf("There is no training job found with the name %s, please check it with `arena list | grep %s`",
+			jobName,
 			jobName)
 	} else if len(trainingTypes) > 1 {
-		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`",
+		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`. And use `arena delete %s --type`",
 			jobName,
 			jobName)
 	}
