@@ -22,11 +22,12 @@ func DeleteJob(name, namespace, trainingType string) error {
 		return err
 	}
 
-	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	result, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
 		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 		return err
 	}
+	fmt.Printf("%s", result)
 
 	err = kubectl.DeleteAppConfigMap(jobName, namespace)
 	if err != nil {
@@ -84,12 +85,13 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 5. Create Application
-	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
 		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 	}
 
-	err = kubectl.InstallApps(template, namespace)
+	result, err = kubectl.InstallApps(template, namespace)
+	fmt.Printf("%s", result)
 	if err != nil {
 		// clean configmap
 		log.Infof("clean up the config map %s because creating application failed.", name)

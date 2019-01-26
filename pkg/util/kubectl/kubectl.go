@@ -94,14 +94,14 @@ func UninstallApps(fileName, namespace string) (err error) {
 * Delete kubernetes config to uninstall app
 * Exec /usr/local/bin/kubectl, [delete -f /tmp/values313606961 --namespace default]
 **/
-func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
+func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (output string, err error) {
 	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if _, err = os.Stat(appInfoFile); err != nil {
-		return err
+		return "", err
 	}
 
 	args := []string{"cat", appInfoFile, "|", "xargs",
@@ -115,33 +115,33 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
 	out, err := cmd.Output()
-	fmt.Printf("%s", string(out))
+	log.Debugf("%s", string(out))
 
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "bash -c", args, err)
+		log.Debugf("Failed to execute %s, %v with %v", "bash -c", args, err)
 	}
 
-	return err
+	return string(out), err
 }
 
 /**
 * Apply kubernetes config to install app
 * Exec /usr/local/bin/kubectl, [apply -f /tmp/values313606961 --namespace default]
 **/
-func InstallApps(fileName, namespace string) (err error) {
+func InstallApps(fileName, namespace string) (output string, err error) {
 	if _, err = os.Stat(fileName); os.IsNotExist(err) {
-		return err
+		return output, err
 	}
 
 	args := []string{"apply", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s", string(out))
+	log.Debugf("%s", string(out))
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
-	return err
+	return string(out), err
 }
 
 /**
