@@ -252,7 +252,7 @@ func ListAppConfigMaps(namespace string, trainingTypes []string) (names []string
 		for _, trainingType := range trainingTypes {
 			if strings.HasSuffix(name, fmt.Sprintf("-%s", trainingType)) {
 				found = true
-				break
+				break innerLoop
 			}
 		}
 
