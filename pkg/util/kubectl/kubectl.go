@@ -215,7 +215,7 @@ func CheckAppConfigMap(name, namespace string) (found bool) {
 **/
 func ListAppConfigMaps(namespace string, trainingTypes []string) (names []string, err error) {
 	names = []string{}
-	binary, err := exec.LookPath(kubectlCmd[0])
+	_, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
 		return names, err
 	}
