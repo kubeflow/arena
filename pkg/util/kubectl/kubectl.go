@@ -246,7 +246,7 @@ func ListAppConfigMaps(namespace string, trainingTypes []string) (names []string
 
 	for _, line := range lines {
 		found := false
-		name = strings.TrimSpace(line)
+		name := strings.TrimSpace(line)
 
 	innerLoop:
 		for _, trainingType := range trainingTypes {
