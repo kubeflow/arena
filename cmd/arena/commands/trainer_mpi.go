@@ -214,7 +214,12 @@ func NewMPIJobTrainer(client *kubernetes.Clientset) Trainer {
 	}
 	// allPods have been cached, we do the same to allMPIjobs
 	if useCache {
-		mpijobList, err := mpijobClient.KubeflowV1alpha1().MPIJobs(metav1.NamespaceAll).List(metav1.ListOptions{})
+		ns := namespace
+		if allNamespaces {
+			ns = metav1.NamespaceAll
+		}
+
+		mpijobList, err := mpijobClient.KubeflowV1alpha1().MPIJobs(ns).List(metav1.ListOptions{})
 		// mpijobList, err := mpijobClient.KubeflowV1alpha2().mpijob(metav1.NamespaceAll).List(metav1.ListOptions{})
 		if err != nil {
 			log.Debugf("unsupported mpijob due to %v", err)

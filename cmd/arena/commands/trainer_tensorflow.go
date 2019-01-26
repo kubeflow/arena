@@ -206,7 +206,12 @@ func NewTensorFlowJobTrainer(client *kubernetes.Clientset) Trainer {
 	}
 	// allPods have been cached, we do the same to allTfjobs
 	if useCache {
-		tfjobList, err := tfjobClient.KubeflowV1alpha2().TFJobs(metav1.NamespaceAll).List(metav1.ListOptions{})
+		ns := namespace
+		if allNamespaces {
+			ns = metav1.NamespaceAll
+		}
+
+		tfjobList, err := tfjobClient.KubeflowV1alpha2().TFJobs(ns).List(metav1.ListOptions{})
 		if err != nil {
 			log.Debugf("unsupported tfjobs due to %v", err)
 			return &TensorFlowJobTrainer{
