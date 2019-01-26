@@ -161,13 +161,28 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 		"--namespace", namespace,
 		fmt.Sprintf("--from-file=%s=%s", "values", configFileName),
 		fmt.Sprintf("--from-file=%s=%s", "app", appInfoFileName),
-		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion),
-		"--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}
+		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion)}
+	// "--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}
 	out, err := kubectl(args)
 
 	fmt.Printf("%s", string(out))
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
+	}
+
+	return err
+}
+
+func LabelAppConfigmap(name, trainingType, namespace, label string) (err error) {
+	args := []string{"label", "configmap", fmt.Sprintf("%s-%s", name, trainingType),
+		"--namespace", namespace,
+		label}
+	// "--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}
+	out, err := kubectl(args)
+
+	fmt.Printf("%s", string(out))
+	if err != nil {
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
 	return err

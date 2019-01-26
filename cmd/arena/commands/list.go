@@ -68,6 +68,8 @@ func NewListCommand() *cobra.Command {
 
 			trainers := NewTrainers(client)
 			jobs := []TrainingJob{}
+
+			// 1. search by using helm
 			if useHelm {
 				for name, ns := range releaseMap {
 					supportedChart := false
@@ -91,6 +93,7 @@ func NewListCommand() *cobra.Command {
 				}
 			}
 
+			// 2. search by using configmap
 			cms := []types.TrainingJobInfo{}
 			if allNamespaces {
 				cms, err = kubectl.ListAppConfigMaps(client, namespace, knownTrainingTypes)

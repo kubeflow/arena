@@ -83,6 +83,10 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		return err
 	}
+	err = kubectl.LabelAppConfigmap(name, trainingType, namespace, kubectl.JOB_CONFIG_LABEL)
+	if err != nil {
+		return err
+	}
 
 	// 5. Create Application
 	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
