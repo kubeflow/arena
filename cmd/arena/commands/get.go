@@ -96,9 +96,10 @@ func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob
 			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)
 			if err != nil {
 				if isTrainingConfigExist(jobName, trainingType, namespace) {
-					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s'.",
+					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s --type %s'.",
 						jobName,
-						jobName)
+						jobName,
+						trainingType)
 				}
 				return nil, err
 			}
@@ -110,7 +111,7 @@ func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob
 	} else {
 		jobs, err := getTrainingJobsByName(clientset, jobName, namespace)
 		if err != nil {
-			if getTrainingTypes(jobName, namespace) {
+			if getTrainingTypes(jobName, namespace) > 0 {
 				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s'.",
 					jobName,
 					jobName)
