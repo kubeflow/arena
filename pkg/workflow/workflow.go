@@ -42,7 +42,7 @@ func DeleteJob(name, namespace, trainingType string) error {
 **/
 
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string) error {
-	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType))
+	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 	if found {
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
 	}
@@ -84,7 +84,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 5. Create Application
-	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFilename, namespace)
+	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
 		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 	}
