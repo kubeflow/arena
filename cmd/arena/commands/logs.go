@@ -93,7 +93,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 
 			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
-			job, err := searchTrainingJob(name, trainingType)
+			job, err := searchTrainingJob(name, trainingType, namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

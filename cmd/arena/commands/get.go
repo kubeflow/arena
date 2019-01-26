@@ -66,7 +66,7 @@ func NewGetCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			job, err := searchTrainingJob(name, trainingType)
+			job, err := searchTrainingJob(name, trainingType, namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -90,11 +90,16 @@ type PrintArgs struct {
 /*
 * search the training job with name and training type
  */
-func searchTrainingJob(jobName, trainingType string) (job TrainingJob, err error) {
+func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob, err error) {
 	if len(trainingType) > 0 {
 		if isKnownTrainingType(trainingType) {
 			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)
 			if err != nil {
+				if isTrainingConfigExist(jobName, trainingType, namespace) {
+					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s'.",
+						jobName,
+						jobName)
+				}
 				return nil, err
 			}
 		} else {
@@ -103,8 +108,13 @@ func searchTrainingJob(jobName, trainingType string) (job TrainingJob, err error
 				knownTrainingTypes)
 		}
 	} else {
-		jobs, err := getTrainingJobs(clientset, jobName, namespace)
+		jobs, err := getTrainingJobsByName(clientset, jobName, namespace)
 		if err != nil {
+			if getTrainingTypes(jobName, namespace) {
+				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s'.",
+					jobName,
+					jobName)
+			}
 			return nil, err
 		}
 
@@ -154,7 +164,7 @@ func getTrainingJobByType(client *kubernetes.Clientset, name, namespace, trainin
 	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
 }
 
-func getTrainingJobs(client *kubernetes.Clientset, name, namespace string) (jobs []TrainingJob, err error) {
+func getTrainingJobsByName(client *kubernetes.Clientset, name, namespace string) (jobs []TrainingJob, err error) {
 	jobs = []TrainingJob{}
 	trainers := NewTrainers(client)
 	for _, trainer := range trainers {
