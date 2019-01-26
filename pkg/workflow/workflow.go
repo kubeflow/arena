@@ -16,13 +16,13 @@ import (
 func DeleteJob(name, namespace, trainingType string) error {
 	jobName := fmt.Sprintf("%s-%s", name, trainingType)
 
-	appInfoFilename, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
+	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {
 		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
 		return err
 	}
 
-	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFilename, namespace)
+	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
 		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 		return err
@@ -60,7 +60,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 3. Generate AppInfo file
-	AppInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
+	appInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		trainingType,
 		namespace,
 		valueFileName,
-		AppInfoFileName,
+		appInfoFileName,
 		chartName,
 		chartVersion)
 	if err != nil {
@@ -109,9 +109,9 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 			log.Warnf("Failed to delete %s due to %v", template, err)
 		}
 
-		err = os.Remove(AppInfoFileName)
+		err = os.Remove(appInfoFileName)
 		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", AppInfoFileName, err)
+			log.Warnf("Failed to delete %s due to %v", appInfoFileName, err)
 		}
 	}
 
