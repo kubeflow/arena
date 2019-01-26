@@ -90,6 +90,8 @@ func NewListCommand() *cobra.Command {
 		},
 	}
 
+	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+
 	return command
 }
 
