@@ -22,10 +22,13 @@ import (
 
 	"io"
 
+	"github.com/kubeflow/arena/pkg/types"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func NewListCommand() *cobra.Command {
@@ -41,11 +44,13 @@ func NewListCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+
+			useHelm := true
 			releaseMap, err := helm.ListReleaseMap()
 			// log.Printf("releaseMap %v", releaseMap)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				log.Debugf("Failed to helm list due to %v", err)
+				useHelm := false
 			}
 			// determine use cache
 			useCache = true
@@ -63,25 +68,42 @@ func NewListCommand() *cobra.Command {
 
 			trainers := NewTrainers(client)
 			jobs := []TrainingJob{}
-			for name, ns := range releaseMap {
-				supportedChart := false
-				for _, trainer := range trainers {
-					if trainer.IsSupported(name, ns) {
-						job, err := trainer.GetTrainingJob(name, ns)
-						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
+			if useHelm {
+				for name, ns := range releaseMap {
+					supportedChart := false
+					for _, trainer := range trainers {
+						if trainer.IsSupported(name, ns) {
+							job, err := trainer.GetTrainingJob(name, ns)
+							if err != nil {
+								fmt.Println(err)
+								os.Exit(1)
+							}
+							jobs = append(jobs, job)
+							supportedChart = true
+							break
 						}
-						jobs = append(jobs, job)
-						supportedChart = true
-						break
 					}
-				}
 
-				if !supportedChart {
-					log.Debugf("Unknown chart %s\n", name)
-				}
+					if !supportedChart {
+						log.Debugf("Unknown chart %s\n", name)
+					}
 
+				}
+			}
+
+			cms := []types.TrainingJobInfo{}
+			if allNamespaces {
+				cms, err = kubectl.ListAppConfigMaps(client, namespace, knownTrainingTypes)
+			} else {
+				cms, err = kubectl.ListAppConfigMaps(client, metav1.NamespaceAll, knownTrainingTypes)
+			}
+
+			for _, cm := range cms {
+				job, err := searchTrainingJob(cm.Name, cm.Type, cm.Namespace)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
 			}
 
 			jobs = makeTrainingJobOrderdByAge(jobs)

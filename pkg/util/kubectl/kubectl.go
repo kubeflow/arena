@@ -161,7 +161,8 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 		"--namespace", namespace,
 		fmt.Sprintf("--from-file=%s=%s", "values", configFileName),
 		fmt.Sprintf("--from-file=%s=%s", "app", appInfoFileName),
-		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion)}
+		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion),
+		"--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}
 	out, err := kubectl(args)
 
 	fmt.Printf("%s", string(out))
@@ -207,66 +208,6 @@ func CheckAppConfigMap(name, namespace string) (found bool) {
 	}
 
 	return found
-}
-
-/**
-*
-* list configMaps by using namespace
-**/
-func ListAppConfigMaps(namespace string, trainingTypes []string) (names []string, err error) {
-	names = []string{}
-	_, err = exec.LookPath(kubectlCmd[0])
-	if err != nil {
-		return names, err
-	}
-
-	var argStr string
-	if len(namespace) == 0 {
-		argStr = fmt.Sprintf("kubectl get cm -n %s -o=name | awk -F '\\/' '{print $NF}'", namespace)
-	} else {
-		argStr = "kubectl get cm --all-namespaces -o=name | awk -F '\\/' '{print $NF}'"
-	}
-
-	log.Debugf("Exec bash -c %v", argStr)
-
-	cmd := exec.Command("bash", "-c", argStr)
-	env := os.Environ()
-	if types.KubeConfig != "" {
-		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
-	out, err := cmd.Output()
-	log.Debugf("%s", string(out))
-
-	if err != nil {
-		log.Debugf("Failed to execute %s, %v with %v", "bash -c", argStr, err)
-		return names, err
-	}
-
-	lines := strings.Split(string(out), "\n")
-
-	for _, line := range lines {
-		found := false
-		name := strings.TrimSpace(line)
-
-	innerLoop:
-		for _, trainingType := range trainingTypes {
-			if strings.HasSuffix(name, fmt.Sprintf("-%s", trainingType)) {
-				found = true
-				break innerLoop
-			}
-		}
-
-		if found {
-			names = append(names, name)
-		} else {
-			log.Debugf("drop %s in training configmap", name)
-		}
-
-	}
-
-	log.Debugf("the job training configmap: %v", names)
-
-	return names, nil
 }
 
 /**

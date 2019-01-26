@@ -14,3 +14,9 @@
 package types
 
 var KubeConfig string
+
+type TrainingJobInfo struct {
+	Name      string
+	Type      string
+	Namespace string
+}
