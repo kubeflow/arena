@@ -24,7 +24,7 @@ func getTrainingTypes(name, namespace string) (cms []string) {
 /**
 *  check if the training config exist
  */
-func isTrainingConfigExist(name, trainingType, namespace) bool {
+func isTrainingConfigExist(name, trainingType, namespace string) bool {
 	configName := fmt.Sprintf("%s-%s", name, trainingType)
 	return kubectl.CheckAppConfigMap(configName, namespace)
 }
