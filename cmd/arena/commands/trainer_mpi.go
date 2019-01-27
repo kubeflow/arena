@@ -428,7 +428,7 @@ func (tt *MPIJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
 		log.Debugf("find mpijob %s in %s", mpijob.Name, mpijob.Namespace)
 		if val, ok := mpijob.Labels["release"]; ok && (mpijob.Name == fmt.Sprintf("%s-%s", val, tt.Type())) {
 			log.Debugf("the mpijob %s with labels %s found in List", mpijob.Name, val)
-			JobInfo.Name = val
+			jobInfo.Name = val
 		} else {
 			jobInfo.Name = mpijob.Name
 		}
@@ -447,7 +447,7 @@ func (tt *MPIJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
 		jobs = append(jobs, job)
 	}
 
-	return jobs
+	return jobs, nil
 }
 
 func isMPIJobSucceeded(status v1alpha1.MPIJobStatus) bool {

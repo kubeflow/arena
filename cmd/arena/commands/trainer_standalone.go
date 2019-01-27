@@ -270,7 +270,7 @@ innerLoop:
 		log.Debugf("find standaloneJob %s in %s", standaloneJob.Name, standaloneJob.Namespace)
 		if val, ok := standaloneJob.Labels["release"]; ok && (standaloneJob.Name == fmt.Sprintf("%s-training", val, s.Type())) {
 			log.Debugf("the standaloneJob %s with labels %s found in List", standaloneJob.Name, val)
-			JobInfo.Name = val
+			jobInfo.Name = val
 		} else {
 			log.Debugf("the jobs %s with labels %s is not standaloneJob in List", standaloneJob.Name, val)
 			continue innerLoop
@@ -290,7 +290,7 @@ innerLoop:
 		jobs = append(jobs, job)
 	}
 
-	return jobs
+	return jobs, err
 }
 
 func isStandaloneJob(name, ns string, item batchv1.Job) bool {

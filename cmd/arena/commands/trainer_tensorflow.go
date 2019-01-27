@@ -439,7 +439,7 @@ func (tt *TensorFlowJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err erro
 		log.Debugf("find tfjob %s in %s", tfjob.Name, tfjob.Namespace)
 		if val, ok := tfjob.Labels["release"]; ok && (tfjob.Name == fmt.Sprintf("%s-%s", val, tt.Type())) {
 			log.Debugf("the tfjob %s with labels %s found in List", tfjob.Name, val)
-			JobInfo.Name = val
+			jobInfo.Name = val
 		} else {
 			jobInfo.Name = tfjob.Name
 		}
@@ -458,7 +458,7 @@ func (tt *TensorFlowJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err erro
 		jobs = append(jobs, job)
 	}
 
-	return jobs
+	return jobs, nil
 }
 
 type orderedTrainingJobConditionsByTime []tfv1alpha2.TFJobCondition
