@@ -33,11 +33,11 @@ spec:
               - key: mpi_job_name
                 operator: In
                 values: 
-                  - {{ template "mpijob.fullname" . }}
+                  - {{ .Release.Name }}
               - key: statefulset.kubernetes.io/pod-name
                 operator: In
                 values: 
-                  - {{ template "mpijob.fullname" . }}-worker-0
+                  - {{ .Release.Name }}-worker-0
             topologyKey: kubernetes.io/hostname
       volumes:
         {{- if .Values.isLocalLogging }}
