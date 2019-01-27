@@ -53,13 +53,6 @@ func NewListCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			useHelm := true
-			releaseMap, err := helm.ListReleaseMap()
-			// log.Printf("releaseMap %v", releaseMap)
-			if err != nil {
-				log.Debugf("Failed to helm list due to %v", err)
-				useHelm = false
-			}
 			// determine use cache
 			useCache = true
 			allPods, err = acquireAllPods(client)
@@ -99,6 +92,14 @@ func NewListCommand() *cobra.Command {
 * original job list
  */
 func trainingJobList(client *kubernetes.Clientset) ([]TrainingJob, error) {
+	useHelm := true
+	releaseMap, err := helm.ListReleaseMap()
+	// log.Printf("releaseMap %v", releaseMap)
+	if err != nil {
+		log.Debugf("Failed to helm list due to %v", err)
+		useHelm = false
+	}
+
 	trainers := NewTrainers(client)
 	jobs := []TrainingJob{}
 

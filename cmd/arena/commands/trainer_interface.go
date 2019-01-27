@@ -68,5 +68,5 @@ type Trainer interface {
 	// Get the type of trainer
 	Type() string
 
-	ListTrainingJobs(namespace string) ([]TrainingJob, error)
+	ListTrainingJobs() ([]TrainingJob, error)
 }

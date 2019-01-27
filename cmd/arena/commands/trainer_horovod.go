@@ -328,7 +328,7 @@ innerLoop:
 		jobInfo := types.TrainingJobInfo{}
 
 		log.Debugf("find horovodJob %s in %s", horovodJob.Name, horovodJob.Namespace)
-		if val, ok := horovodJob.Labels["release"]; ok && (horovodJob.Name == fmt.Sprintf("%s-tf-horovod-job", val, tt.Type())) {
+		if val, ok := horovodJob.Labels["release"]; ok && (horovodJob.Name == fmt.Sprintf("%s-tf-horovod-job", val, hj.Type())) {
 			log.Debugf("the horovodJob %s with labels %s found in List", horovodJob.Name, val)
 			JobInfo.Name = val
 		} else {
