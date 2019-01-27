@@ -265,7 +265,7 @@ func (tt *MPIJobTrainer) IsSupported(name, ns string) bool {
 			}
 		}
 	} else {
-		mpijobList, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(metav1.NamespaceAll).List(metav1.ListOptions{
+		mpijobList, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(ns).List(metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("release=%s", name),
 		})
 

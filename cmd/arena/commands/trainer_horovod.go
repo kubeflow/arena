@@ -125,7 +125,7 @@ func (m *HorovodJobTrainer) IsSupported(name, ns string) bool {
 			}
 		}
 	} else {
-		jobList, err := m.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		jobList, err := m.client.BatchV1().Jobs(ns).List(metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",

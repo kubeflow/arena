@@ -255,7 +255,7 @@ func (tt *TensorFlowJobTrainer) IsSupported(name, ns string) bool {
 			}
 		}
 	} else {
-		tfjobList, err := tt.tfjobClient.KubeflowV1alpha2().TFJobs(namespace).List(metav1.ListOptions{
+		tfjobList, err := tt.tfjobClient.KubeflowV1alpha2().TFJobs(ns).List(metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("release=%s", name),
 		})
 

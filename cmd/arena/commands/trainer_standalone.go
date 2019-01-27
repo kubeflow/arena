@@ -104,7 +104,7 @@ func (s *StandaloneJobTrainer) IsSupported(name, ns string) bool {
 			}
 		}
 	} else {
-		jobList, err := s.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		jobList, err := s.client.BatchV1().Jobs(ns).List(metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
