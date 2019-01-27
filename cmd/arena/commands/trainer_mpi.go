@@ -440,7 +440,7 @@ func (tt *MPIJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
 	log.Debugf("jobInfos %v", jobInfos)
 
 	for _, jobInfo := range jobInfos {
-		job, err := tt.getTrainingJob(JobInfo.Name, JobInfo.Namespace)
+		job, err := tt.getTrainingJob(jobInfo.Name, jobInfo.Namespace)
 		if err != nil {
 			return jobs, err
 		}
