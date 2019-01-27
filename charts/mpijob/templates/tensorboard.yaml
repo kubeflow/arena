@@ -20,6 +20,11 @@ spec:
         release: {{ .Release.Name }}
         role: tensorboard
     spec:
+      {{- if .Values.launcherOnMaster }}
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      {{- end }}
       affinity:
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

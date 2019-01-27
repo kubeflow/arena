@@ -20,7 +20,7 @@ tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensor
 tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
 
-launcherOnMaster: true
+launcherOnMaster: false
 retry: 0
 
 annotations: {}
