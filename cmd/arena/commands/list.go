@@ -103,9 +103,9 @@ func NewListCommand() *cobra.Command {
 			// 2. search by using configmap
 			cms := []types.TrainingJobInfo{}
 			if allNamespaces {
-				cms, err = kubectl.ListAppConfigMaps(client, namespace, knownTrainingTypes)
-			} else {
 				cms, err = kubectl.ListAppConfigMaps(client, metav1.NamespaceAll, knownTrainingTypes)
+			} else {
+				cms, err = kubectl.ListAppConfigMaps(client, namespace, knownTrainingTypes)
 			}
 
 			if err != nil {
