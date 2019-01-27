@@ -24,6 +24,8 @@ func ListAppConfigMaps(clientset *kubernetes.Clientset, namespace string, traini
 		return nil, err
 	}
 
+	log.Debugf("The cmList is %v", cmList.Items)
+
 	for _, cm := range cmList.Items {
 		found := false
 
