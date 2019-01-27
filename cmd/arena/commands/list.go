@@ -108,6 +108,11 @@ func NewListCommand() *cobra.Command {
 				cms, err = kubectl.ListAppConfigMaps(client, metav1.NamespaceAll, knownTrainingTypes)
 			}
 
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			log.Debugf("job config maps: %v", cms)
 
 			for _, cm := range cms {
