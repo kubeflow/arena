@@ -391,7 +391,7 @@ func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha1.MPIJob) bool {
 }
 
 func (tt *MPIJobTrainer) isMPIPod(name, ns string, item v1.Pod) bool {
-	println(item.Labels["release"])
+	log.Debugf("pod.name: %s: %v", item.Name, item.Labels)
 	if val, ok := item.Labels["release"]; ok && (val == name) {
 		log.Debugf("the mpijob %s with labels %s", item.Name, val)
 	} else {
