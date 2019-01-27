@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kubeflow/arena/pkg/types"
 	"github.com/kubeflow/tf-operator/pkg/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
@@ -425,6 +426,39 @@ func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item v1.Pod) bo
 		return false
 	}
 	return true
+}
+
+/**
+* List Training jobs
+ */
+func (tt *TensorFlowJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
+	jobs = []TrainingJob{}
+	jobInfos := []types.TrainingJobInfo{}
+	for _, tfjob := range allTfjobs {
+		jobInfo := types.TrainingJobInfo{}
+		log.Debugf("find tfjob %s in %s", tfjob.Name, tfjob.Namespace)
+		if val, ok := tfjob.Labels["release"]; ok && (tfjob.Name == fmt.Sprintf("%s-%s", val, tt.Type())) {
+			log.Debugf("the tfjob %s with labels %s found in List", tfjob.Name, val)
+			JobInfo.Name = val
+		} else {
+			jobInfo.Name = tfjob.Name
+		}
+
+		jobInfo.Namespace = tfjob.Namespace
+		jobInfos = append(jobInfos, jobInfo)
+		// jobInfos = append(jobInfos, types.TrainingJobInfo{Name: tfjob.})
+	}
+	log.Debugf("jobInfos %v", jobInfos)
+
+	for _, jobInfo := range jobInfos {
+		job, err := tt.getTrainingJob(JobInfo.Name, JobInfo.Namespace)
+		if err != nil {
+			return jobs, err
+		}
+		jobs = append(jobs, job)
+	}
+
+	return jobs
 }
 
 type orderedTrainingJobConditionsByTime []tfv1alpha2.TFJobCondition

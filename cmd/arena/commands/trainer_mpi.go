@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/mpi-operator/client/clientset/versioned"
+	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -414,6 +415,39 @@ func (tt *MPIJobTrainer) isMPIPod(name, ns string, item v1.Pod) bool {
 		return false
 	}
 	return true
+}
+
+/**
+* List Training jobs
+ */
+func (tt *MPIJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
+	jobs = []TrainingJob{}
+	jobInfos := []types.TrainingJobInfo{}
+	for _, mpijob := range allMPIjobs {
+		jobInfo := types.TrainingJobInfo{}
+		log.Debugf("find mpijob %s in %s", mpijob.Name, mpijob.Namespace)
+		if val, ok := mpijob.Labels["release"]; ok && (mpijob.Name == fmt.Sprintf("%s-%s", val, tt.Type())) {
+			log.Debugf("the mpijob %s with labels %s found in List", mpijob.Name, val)
+			JobInfo.Name = val
+		} else {
+			jobInfo.Name = mpijob.Name
+		}
+
+		jobInfo.Namespace = mpijob.Namespace
+		jobInfos = append(jobInfos, jobInfo)
+		// jobInfos = append(jobInfos, types.TrainingJobInfo{Name: mpijob.})
+	}
+	log.Debugf("jobInfos %v", jobInfos)
+
+	for _, jobInfo := range jobInfos {
+		job, err := tt.getTrainingJob(JobInfo.Name, JobInfo.Namespace)
+		if err != nil {
+			return jobs, err
+		}
+		jobs = append(jobs, job)
+	}
+
+	return jobs
 }
 
 func isMPIJobSucceeded(status v1alpha1.MPIJobStatus) bool {

@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
@@ -254,6 +255,42 @@ func (s *StandaloneJobTrainer) getTrainingJobFromCache(name, ns string) (Trainin
 			trainerType: s.Type(),
 		},
 	}, nil
+}
+
+/**
+* List Training jobs
+ */
+func (s *StandaloneJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
+	jobs = []TrainingJob{}
+	jobInfos := []types.TrainingJobInfo{}
+innerLoop:
+	for _, standaloneJob := range allJobs {
+		jobInfo := types.TrainingJobInfo{}
+
+		log.Debugf("find standaloneJob %s in %s", standaloneJob.Name, standaloneJob.Namespace)
+		if val, ok := standaloneJob.Labels["release"]; ok && (standaloneJob.Name == fmt.Sprintf("%s-training", val, tt.Type())) {
+			log.Debugf("the standaloneJob %s with labels %s found in List", standaloneJob.Name, val)
+			JobInfo.Name = val
+		} else {
+			log.Debugf("the jobs %s with labels %s is not standaloneJob in List", standaloneJob.Name, val)
+			continue innerLoop
+		}
+
+		jobInfo.Namespace = standaloneJob.Namespace
+		jobInfos = append(jobInfos, jobInfo)
+		// jobInfos = append(jobInfos, types.TrainingJobInfo{Name: standaloneJob.})
+	}
+	log.Debugf("jobInfos %v", jobInfos)
+
+	for _, jobInfo := range jobInfos {
+		job, err := s.getTrainingJob(JobInfo.Name, JobInfo.Namespace)
+		if err != nil {
+			return jobs, err
+		}
+		jobs = append(jobs, job)
+	}
+
+	return jobs
 }
 
 func isStandaloneJob(name, ns string, item batchv1.Job) bool {
