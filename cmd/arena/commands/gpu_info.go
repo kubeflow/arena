@@ -225,13 +225,12 @@ func GetPrometheusServiceName(client *kubernetes.Clientset) (name string, ns str
 
 func getPrometheusServiceName(client *kubernetes.Clientset, namespace string) (name string) {
 	svcFunc := func(svc corev1.ServiceList) string {
-		if len(svc) == 0 {
+		if len(svc.Items) == 0 {
 			return ""
 		}
 		return svc.Items[0].Name
 	}
 
-	// 1. Locate the service in the current namespace
 	services, err := client.CoreV1().Services(namespace).List(metav1.ListOptions{
 		LabelSelector: PROMETHEUS_SVC_LABEL,
 	})
@@ -240,6 +239,8 @@ func getPrometheusServiceName(client *kubernetes.Clientset, namespace string) (n
 	} else {
 		return svcFunc(services)
 	}
+
+	return ""
 }
 
 func SortMapKeys(podMetric PodGpuMetric) []string {
