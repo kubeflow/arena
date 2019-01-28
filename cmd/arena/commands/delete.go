@@ -56,7 +56,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				_, err := searchTrainingJob(jobName, "", namespace)
+				_, err := searchTrainingJob(jobName, trainingType, namespace)
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 					continue
@@ -73,7 +73,8 @@ func NewDeleteCommand() *cobra.Command {
 	return command
 }
 
-func deleteTrainingJob(jobName string) error {
+func deleteTrainingJob(jobName, trainingType string) error {
+	var trainingTypes []string
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)
 	if err == nil {
@@ -83,16 +84,20 @@ func deleteTrainingJob(jobName string) error {
 	log.Debugf("%s wasn't deleted by helm due to %v", jobName, err)
 
 	// 2. Handle training jobs created by arena
-	trainingTypes := getTrainingTypes(jobName, namespace)
-	if len(trainingTypes) == 0 {
-		return fmt.Errorf("There is no training job found with the name %s, please check it with `arena list | grep %s`",
-			jobName,
-			jobName)
-	} else if len(trainingTypes) > 1 {
-		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one.",
-			jobName,
-			jobName,
-			jobName)
+	if trainingType == "" {
+		trainingTypes = getTrainingTypes(jobName, namespace)
+		if len(trainingTypes) == 0 {
+			return fmt.Errorf("There is no training job found with the name %s, please check it with `arena list | grep %s`",
+				jobName,
+				jobName)
+		} else if len(trainingTypes) > 1 {
+			return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one.",
+				jobName,
+				jobName,
+				jobName)
+		}
+	} else {
+		trainingTypes = []string{trainingType}
 	}
 
 	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0])
