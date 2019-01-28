@@ -224,20 +224,13 @@ func GetPrometheusServiceName(client *kubernetes.Clientset) (name string, ns str
 }
 
 func getPrometheusServiceName(client *kubernetes.Clientset, namespace string) (name string) {
-	svcFunc := func(svc corev1.ServiceList) string {
-		if len(svc.Items) == 0 {
-			return ""
-		}
-		return svc.Items[0].Name
-	}
-
 	services, err := client.CoreV1().Services(namespace).List(metav1.ListOptions{
 		LabelSelector: PROMETHEUS_SVC_LABEL,
 	})
 	if err != nil {
 		log.Debugf("Failed to get PrometheusServiceName from %s due to %v", namespace, err)
-	} else {
-		return svcFunc(services)
+	} else if len(services.Items) > 0 {
+		return services.Items[0].Name
 	}
 
 	return ""
