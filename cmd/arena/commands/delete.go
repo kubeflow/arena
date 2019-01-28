@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
@@ -39,6 +40,7 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			util.SetLogLevel(logLevel)
 			setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
