@@ -3,14 +3,15 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 const PROMETHEUS_INSTALL_DOC_URL = "https://github.com/kubeflow/arena/blob/master/docs/userguide/9-top-job-gpu-metric.md"
@@ -18,6 +19,7 @@ const KUBE_SYSTEM_NAMESPACE = "kube-system"
 const PROMETHEUS_SCHEME = "http"
 const PROMETHEUS_SVC_LABEL = "kubernetes.io/name=Prometheus"
 const POD_METRIC_TMP = `{__name__=~"%s", pod_name=~"%s"}`
+const KUBEFLOW_NAMESPACE = "kubeflow"
 
 var GPU_METRIC_LIST = []string{"nvidia_gpu_duty_cycle", "nvidia_gpu_memory_used_bytes", "nvidia_gpu_memory_total_bytes"}
 
@@ -94,7 +96,7 @@ func (m JobGpuMetric) GetPodMetrics(podName string) PodGpuMetric {
 }
 
 func GpuMonitoringInstalled(client *kubernetes.Clientset) bool {
-	prometheusServiceName := GetPrometheusServiceName(client)
+	prometheusServiceName, _ := GetPrometheusServiceName(client)
 	if prometheusServiceName == "" {
 		return false
 	}
@@ -114,7 +116,7 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric J
 			runningPods = append(runningPods, pod.Name)
 		}
 	}
-	prometheusServiceName := GetPrometheusServiceName(client)
+	prometheusServiceName, namespace := GetPrometheusServiceName(client)
 	if prometheusServiceName == "" {
 		return
 	}
@@ -122,10 +124,10 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric J
 	return podsMetrics, nil
 }
 
-func GetPodsGpuInfo(client *kubernetes.Clientset, prometheusServiceName string, podNames []string) (JobGpuMetric, error) {
+func GetPodsGpuInfo(client *kubernetes.Clientset, prometheusServiceName string, namespace string, podNames []string) (JobGpuMetric, error) {
 	jobMetric := &JobGpuMetric{}
 
-	gpuMetrics, err := QueryMetricByPrometheus(client, prometheusServiceName, fmt.Sprintf(POD_METRIC_TMP, strings.Join(GPU_METRIC_LIST, "|"), strings.Join(podNames, "|")))
+	gpuMetrics, err := QueryMetricByPrometheus(client, prometheusServiceName, namespace, fmt.Sprintf(POD_METRIC_TMP, strings.Join(GPU_METRIC_LIST, "|"), strings.Join(podNames, "|")))
 	if err != nil {
 		return nil, err
 	}
@@ -135,11 +137,11 @@ func GetPodsGpuInfo(client *kubernetes.Clientset, prometheusServiceName string, 
 	return *jobMetric, nil
 }
 
-func QueryMetricByPrometheus(client *kubernetes.Clientset, prometheusServiceName string, query string) ([]GpuMetricInfo, error) {
+func QueryMetricByPrometheus(client *kubernetes.Clientset, prometheusServiceName string, namespace string, query string) ([]GpuMetricInfo, error) {
 	var gpuMetric []GpuMetricInfo
 
 	svcClient := client.CoreV1()
-	req := svcClient.Services(KUBE_SYSTEM_NAMESPACE).ProxyGet(PROMETHEUS_SCHEME, prometheusServiceName, "9090", "api/v1/query", map[string]string{
+	req := svcClient.Services(namespace).ProxyGet(PROMETHEUS_SCHEME, prometheusServiceName, "9090", "api/v1/query", map[string]string{
 		"query": query,
 		"time":  strconv.FormatInt(time.Now().Unix(), 10),
 	})
@@ -189,19 +191,55 @@ func getMetricAverage(metrics []GpuMetricInfo) float64 {
 	return result
 }
 
-func GetPrometheusServiceName(client *kubernetes.Clientset) string {
-	services, err := client.CoreV1().Services(KUBE_SYSTEM_NAMESPACE).List(metav1.ListOptions{
+/**
+* Get Prometheus from different namespaces
+ */
+func GetPrometheusServiceName(client *kubernetes.Clientset) (name string, ns string) {
+
+	// 1. Locate the service in the current namespace
+	name = getPrometheusServiceName(client, namespace)
+	if len(name) > 0 {
+		return name, namespace
+	}
+
+	// 2. Locate the service in the arena namespace
+	name = getPrometheusServiceName(client, arenaNamespace)
+	if len(name) > 0 {
+		return name, arenaNamespace
+	}
+
+	// 3. Locate the service in the arena namespace
+	name = getPrometheusServiceName(client, KUBEFLOW_NAMESPACE)
+	if len(name) > 0 {
+		return name, KUBEFLOW_NAMESPACE
+	}
+
+	// 4. Locate the service in the current namespace
+	name = getPrometheusServiceName(client, KUBE_SYSTEM_NAMESPACE)
+	if len(name) > 0 {
+		return name, KUBE_SYSTEM_NAMESPACE
+	}
+
+	return "", ""
+}
+
+func getPrometheusServiceName(client *kubernetes.Clientset, namespace string) (name string) {
+	svcFunc := func(svc corev1.ServiceList) string {
+		if len(svc) == 0 {
+			return ""
+		}
+		return svc.Items[0].Name
+	}
+
+	// 1. Locate the service in the current namespace
+	services, err := client.CoreV1().Services(namespace).List(metav1.ListOptions{
 		LabelSelector: PROMETHEUS_SVC_LABEL,
 	})
 	if err != nil {
-		return ""
+		log.Debugf("Failed to get PrometheusServiceName from %s due to %v", namespace, err)
+	} else {
+		return svcFunc(services), namespace
 	}
-	if len(services.Items) == 0 {
-		return ""
-	}
-	prometheusService := services.Items[0]
-	return prometheusService.Name
-
 }
 
 func SortMapKeys(podMetric PodGpuMetric) []string {
