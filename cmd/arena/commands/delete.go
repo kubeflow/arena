@@ -83,6 +83,7 @@ func deleteTrainingJob(jobName string) error {
 	} else if len(trainingTypes) > 1 {
 		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`. And use `arena delete %s --type`",
 			jobName,
+			jobName,
 			jobName)
 	}
 
