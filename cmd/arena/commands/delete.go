@@ -61,7 +61,7 @@ func NewDeleteCommand() *cobra.Command {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 					continue
 				}
-				err = deleteTrainingJob(jobName)
+				err = deleteTrainingJob(jobName, trainingType)
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
