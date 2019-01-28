@@ -39,6 +39,13 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			setupKubeconfig()
+			_, err = initKubeClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 			err := updateNamespace(cmd)
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
@@ -46,16 +53,14 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			setupKubeconfig()
-			_, err = initKubeClient()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
 			for _, jobName := range args {
+				job, err := searchTrainingJob(jobName, "", namespace)
+				if err != nil {
+					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
+				}
 				err = deleteTrainingJob(jobName)
 				if err != nil {
-					fmt.Printf("Failed to delete %s, the reason is that %v\n", jobName, err)
+					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
 			}
 		},
@@ -72,7 +77,7 @@ func deleteTrainingJob(jobName string) error {
 		return nil
 	}
 
-	log.Debugf("it didn't deleted by helm due to %v", err)
+	log.Debugf("%s wasn't deleted by helm due to %v", jobName, err)
 
 	// 2. Handle training jobs created by arena
 	trainingTypes := getTrainingTypes(jobName, namespace)
@@ -81,7 +86,7 @@ func deleteTrainingJob(jobName string) error {
 			jobName,
 			jobName)
 	} else if len(trainingTypes) > 1 {
-		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`. And use `arena delete %s --type`",
+		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one.",
 			jobName,
 			jobName,
 			jobName)
