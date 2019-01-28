@@ -96,11 +96,11 @@ func (m JobGpuMetric) GetPodMetrics(podName string) PodGpuMetric {
 }
 
 func GpuMonitoringInstalled(client *kubernetes.Clientset) bool {
-	prometheusServiceName, _ := GetPrometheusServiceName(client)
+	prometheusServiceName, namespace := GetPrometheusServiceName(client)
 	if prometheusServiceName == "" {
 		return false
 	}
-	gpuDeviceMetrics, _ := QueryMetricByPrometheus(client, prometheusServiceName, "nvidia_gpu_num_devices")
+	gpuDeviceMetrics, _ := QueryMetricByPrometheus(client, prometheusServiceName, namespace, "nvidia_gpu_num_devices")
 	return len(gpuDeviceMetrics) > 0
 }
 
@@ -120,7 +120,7 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric J
 	if prometheusServiceName == "" {
 		return
 	}
-	podsMetrics, err := GetPodsGpuInfo(client, prometheusServiceName, runningPods)
+	podsMetrics, err := GetPodsGpuInfo(client, prometheusServiceName, namespace, runningPods)
 	return podsMetrics, nil
 }
 
