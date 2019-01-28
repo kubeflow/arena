@@ -47,3 +47,7 @@
 ### 0.11.0
 
 * Remove -mpijob from mpijob name
+
+### 0.12.0
+
+* Fix tensorboard not work on master node

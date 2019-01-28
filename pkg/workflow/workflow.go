@@ -16,17 +16,18 @@ import (
 func DeleteJob(name, namespace, trainingType string) error {
 	jobName := fmt.Sprintf("%s-%s", name, trainingType)
 
-	appInfoFilename, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
+	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
 	if err != nil {
 		log.Debugf("Failed to SaveAppConfigMapToFile due to %v", err)
 		return err
 	}
 
-	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFilename, namespace)
+	result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
 		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 		return err
 	}
+	fmt.Printf("%s", result)
 
 	err = kubectl.DeleteAppConfigMap(jobName, namespace)
 	if err != nil {
@@ -42,6 +43,11 @@ func DeleteJob(name, namespace, trainingType string) error {
 **/
 
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string) error {
+	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
+	if found {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+	}
+
 	// 1. Generate value file
 	valueFileName, err := helm.GenerateValueFile(values)
 	if err != nil {
@@ -55,7 +61,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 3. Generate AppInfo file
-	AppInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
+	appInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
 	if err != nil {
 		return err
 	}
@@ -67,31 +73,33 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
-	err = kubectl.DeleteAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
-	if err != nil {
-		log.Debugf("Ignore delete configmap %s's error %v", name, err)
-		log.Debugf("Delete configmap %s failed, please clean it manually due to %v.", name, err)
-		log.Debugf("Please run `kubectl delete -n %s cm %s`", namespace, name)
-	}
-
 	err = kubectl.CreateAppConfigmap(name,
 		trainingType,
 		namespace,
 		valueFileName,
-		AppInfoFileName,
+		appInfoFileName,
 		chartName,
 		chartVersion)
-
+	if err != nil {
+		return err
+	}
+	err = kubectl.LabelAppConfigmap(name, trainingType, namespace, kubectl.JOB_CONFIG_LABEL)
 	if err != nil {
 		return err
 	}
 
 	// 5. Create Application
-	err = kubectl.InstallApps(template, namespace)
+	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	if err != nil {
+		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
+	}
+
+	result, err := kubectl.InstallApps(template, namespace)
+	fmt.Printf("%s", result)
 	if err != nil {
 		// clean configmap
 		log.Infof("clean up the config map %s because creating application failed.", name)
-		kubectl.DeleteAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
+		log.Warnf("Please clean up the training job by using `arena delete %s --type %s`", name, trainingType)
 		return err
 	}
 
@@ -107,9 +115,9 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 			log.Warnf("Failed to delete %s due to %v", template, err)
 		}
 
-		err = os.Remove(AppInfoFileName)
+		err = os.Remove(appInfoFileName)
 		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", AppInfoFileName, err)
+			log.Warnf("Failed to delete %s due to %v", appInfoFileName, err)
 		}
 	}
 

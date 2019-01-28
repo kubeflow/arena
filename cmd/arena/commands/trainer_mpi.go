@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/mpi-operator/client/clientset/versioned"
+	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -214,7 +215,12 @@ func NewMPIJobTrainer(client *kubernetes.Clientset) Trainer {
 	}
 	// allPods have been cached, we do the same to allMPIjobs
 	if useCache {
-		mpijobList, err := mpijobClient.KubeflowV1alpha1().MPIJobs(metav1.NamespaceAll).List(metav1.ListOptions{})
+		ns := namespace
+		if allNamespaces {
+			ns = metav1.NamespaceAll
+		}
+
+		mpijobList, err := mpijobClient.KubeflowV1alpha1().MPIJobs(ns).List(metav1.ListOptions{})
 		// mpijobList, err := mpijobClient.KubeflowV1alpha2().mpijob(metav1.NamespaceAll).List(metav1.ListOptions{})
 		if err != nil {
 			log.Debugf("unsupported mpijob due to %v", err)
@@ -259,7 +265,7 @@ func (tt *MPIJobTrainer) IsSupported(name, ns string) bool {
 			}
 		}
 	} else {
-		mpijobList, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(metav1.NamespaceAll).List(metav1.ListOptions{
+		mpijobList, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(ns).List(metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("release=%s", name),
 		})
 
@@ -386,7 +392,7 @@ func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha1.MPIJob) bool {
 }
 
 func (tt *MPIJobTrainer) isMPIPod(name, ns string, item v1.Pod) bool {
-	println(item.Labels["release"])
+	log.Debugf("pod.name: %s: %v", item.Name, item.Labels)
 	if val, ok := item.Labels["release"]; ok && (val == name) {
 		log.Debugf("the mpijob %s with labels %s", item.Name, val)
 	} else {
@@ -409,6 +415,39 @@ func (tt *MPIJobTrainer) isMPIPod(name, ns string, item v1.Pod) bool {
 		return false
 	}
 	return true
+}
+
+/**
+* List Training jobs
+ */
+func (tt *MPIJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
+	jobs = []TrainingJob{}
+	jobInfos := []types.TrainingJobInfo{}
+	for _, mpijob := range allMPIjobs {
+		jobInfo := types.TrainingJobInfo{}
+		log.Debugf("find mpijob %s in %s", mpijob.Name, mpijob.Namespace)
+		if val, ok := mpijob.Labels["release"]; ok && (mpijob.Name == fmt.Sprintf("%s-%s", val, tt.Type())) {
+			log.Debugf("the mpijob %s with labels %s found in List", mpijob.Name, val)
+			jobInfo.Name = val
+		} else {
+			jobInfo.Name = mpijob.Name
+		}
+
+		jobInfo.Namespace = mpijob.Namespace
+		jobInfos = append(jobInfos, jobInfo)
+		// jobInfos = append(jobInfos, types.TrainingJobInfo{Name: mpijob.})
+	}
+	log.Debugf("jobInfos %v", jobInfos)
+
+	for _, jobInfo := range jobInfos {
+		job, err := tt.getTrainingJob(jobInfo.Name, jobInfo.Namespace)
+		if err != nil {
+			return jobs, err
+		}
+		jobs = append(jobs, job)
+	}
+
+	return jobs, nil
 }
 
 func isMPIJobSucceeded(status v1alpha1.MPIJobStatus) bool {
