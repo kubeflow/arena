@@ -238,7 +238,7 @@ func getPrometheusServiceName(client *kubernetes.Clientset, namespace string) (n
 	if err != nil {
 		log.Debugf("Failed to get PrometheusServiceName from %s due to %v", namespace, err)
 	} else {
-		return svcFunc(services), namespace
+		return svcFunc(services)
 	}
 }
 
