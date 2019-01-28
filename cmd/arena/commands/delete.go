@@ -54,7 +54,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				job, err := searchTrainingJob(jobName, "", namespace)
+				_, err := searchTrainingJob(jobName, "", namespace)
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
