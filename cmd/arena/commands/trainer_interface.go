@@ -15,10 +15,11 @@
 package commands
 
 import (
+	"time"
+
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"time"
 )
 
 // The Training Job can be TensorFlow, MPI and Caffe
@@ -66,4 +67,6 @@ type Trainer interface {
 
 	// Get the type of trainer
 	Type() string
+
+	ListTrainingJobs() ([]TrainingJob, error)
 }

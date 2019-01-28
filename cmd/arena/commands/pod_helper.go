@@ -46,7 +46,11 @@ func acquireAllActivePods(client *kubernetes.Clientset) ([]v1.Pod, error) {
 
 func acquireAllPods(client *kubernetes.Clientset) ([]v1.Pod, error) {
 	allPods := []v1.Pod{}
-	podList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
+	ns := namespace
+	if allNamespaces {
+		ns = metav1.NamespaceAll
+	}
+	podList, err := client.CoreV1().Pods(ns).List(metav1.ListOptions{})
 	if err != nil {
 		return allPods, err
 	}
@@ -58,7 +62,11 @@ func acquireAllPods(client *kubernetes.Clientset) ([]v1.Pod, error) {
 
 func acquireAllJobs(client *kubernetes.Clientset) ([]batchv1.Job, error) {
 	allJobs := []batchv1.Job{}
-	jobList, err := client.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{})
+	ns := namespace
+	if allNamespaces {
+		ns = metav1.NamespaceAll
+	}
+	jobList, err := client.BatchV1().Jobs(ns).List(metav1.ListOptions{})
 	if err != nil {
 		return allJobs, err
 	}

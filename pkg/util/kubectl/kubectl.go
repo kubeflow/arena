@@ -1,3 +1,17 @@
+// Copyright 2018 The Kubeflow Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package kubectl
 
 import (
@@ -84,7 +98,7 @@ func UninstallApps(fileName, namespace string) (err error) {
 
 	fmt.Printf("%s\n", string(out))
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
 	return err
@@ -94,18 +108,18 @@ func UninstallApps(fileName, namespace string) (err error) {
 * Delete kubernetes config to uninstall app
 * Exec /usr/local/bin/kubectl, [delete -f /tmp/values313606961 --namespace default]
 **/
-func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
+func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (output string, err error) {
 	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if _, err = os.Stat(appInfoFile); err != nil {
-		return err
+		return "", err
 	}
 
 	args := []string{"cat", appInfoFile, "|", "xargs",
-		binary, "delete"}
+		binary, "delete", "--namespace", namespace}
 
 	log.Debugf("Exec bash -c %v", args)
 
@@ -115,33 +129,33 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (err error) {
 		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
 	}
 	out, err := cmd.Output()
-	fmt.Printf("%s", string(out))
+	log.Debugf("%s", string(out))
 
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "bash -c", args, err)
+		log.Debugf("Failed to execute %s, %v with %v", "bash -c", args, err)
 	}
 
-	return err
+	return string(out), err
 }
 
 /**
 * Apply kubernetes config to install app
 * Exec /usr/local/bin/kubectl, [apply -f /tmp/values313606961 --namespace default]
 **/
-func InstallApps(fileName, namespace string) (err error) {
+func InstallApps(fileName, namespace string) (output string, err error) {
 	if _, err = os.Stat(fileName); os.IsNotExist(err) {
-		return err
+		return output, err
 	}
 
 	args := []string{"apply", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 
-	fmt.Printf("%s", string(out))
+	log.Debugf("%s", string(out))
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
-	return err
+	return string(out), err
 }
 
 /**
@@ -162,11 +176,27 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 		fmt.Sprintf("--from-file=%s=%s", "values", configFileName),
 		fmt.Sprintf("--from-file=%s=%s", "app", appInfoFileName),
 		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion)}
+	// "--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}
 	out, err := kubectl(args)
 
 	fmt.Printf("%s", string(out))
 	if err != nil {
-		log.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
+	}
+
+	return err
+}
+
+func LabelAppConfigmap(name, trainingType, namespace, label string) (err error) {
+	args := []string{"label", "configmap", fmt.Sprintf("%s-%s", name, trainingType),
+		"--namespace", namespace,
+		label}
+	// "--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}
+	out, err := kubectl(args)
+
+	fmt.Printf("%s", string(out))
+	if err != nil {
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 
 	return err
@@ -188,6 +218,25 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 	}
 
 	return err
+}
+
+/**
+*
+* get configMap by using name, namespace
+**/
+func CheckAppConfigMap(name, namespace string) (found bool) {
+	args := []string{"get", "configmap", name, "--namespace", namespace}
+	out, err := kubectl(args)
+
+	if err != nil {
+		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		log.Debugf("%s", string(out))
+	} else {
+		log.Debugf("%s", string(out))
+		found = true
+	}
+
+	return found
 }
 
 /**

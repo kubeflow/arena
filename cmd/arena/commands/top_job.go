@@ -115,6 +115,8 @@ func NewTopJobCommand() *cobra.Command {
 
 	command.Flags().BoolVarP(&printNotStop, "refresh", "r", false, "Display continuously")
 	command.Flags().StringVarP(&instanceName, "instance", "i", "", "Display instance top info")
+	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+
 	return command
 }
 
