@@ -1,19 +1,20 @@
-## arena logviewer
+## arena prune
 
-display Log Viewer URL of a training job
+prune history job
 
 ### Synopsis
 
-display Log Viewer URL of a training job
+prune history job
 
 ```
-arena logviewer job [flags]
+arena prune history job [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for logviewer
+  -h, --help             help for prune
+  -s, --since duration   Clean job that live longer than relative duration like 5s, 2m, or 3h. (default -1ns)
 ```
 
 ### Options inherited from parent commands

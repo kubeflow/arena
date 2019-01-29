@@ -1,19 +1,28 @@
-## arena logviewer
+## arena completion
 
-display Log Viewer URL of a training job
+output shell completion code for the specified shell (bash or zsh)
 
 ### Synopsis
 
-display Log Viewer URL of a training job
+Write bash or zsh shell completion code to standard output.
+
+For bash, ensure you have bash completions installed and enabled.
+To access completions in your current shell, run
+$ source <(arena completion bash)
+Alternatively, write it to a file and source in .bash_profile
+
+For zsh, output to a file in a directory referenced by the $fpath shell
+variable.
+
 
 ```
-arena logviewer job [flags]
+arena completion SHELL [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for logviewer
+  -h, --help   help for completion
 ```
 
 ### Options inherited from parent commands
