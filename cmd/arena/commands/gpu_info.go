@@ -148,7 +148,8 @@ func QueryMetricByPrometheus(client *kubernetes.Clientset, prometheusServiceName
 	log.Debugf("Query prometheus for by %s", query)
 	metric, err := req.DoRaw()
 	if err != nil {
-		log.Debugf("Query prometheus failed due to %v", err)
+		log.Debugf("Query prometheus failed due to err %v", err)
+		log.Debugf("Query prometheus failed due to result %s", string(metric))
 	}
 	var metricResponse *PrometheusMetric
 	err = json.Unmarshal(metric, &metricResponse)
