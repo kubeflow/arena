@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/util/helm"
 	"k8s.io/api/core/v1"
 )
 
@@ -44,68 +43,73 @@ func NewTopJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-		printStart:
-			releaseMap, err := helm.ListReleaseMap()
-			// log.Printf("releaseMap %v", releaseMap)
+
+			err = updateNamespace(cmd)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			// allPods, err := acquireAllActivePods(client)
-			// if err != nil {
-			// 	fmt.Println(err)
-			// 	os.Exit(1)
-			// }
-			useCache = true
-			allPods, err = acquireAllPods(client)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			var (
+				topJobName    string
+				trainingType  string
+				job           TrainingJob
+				jobs          []TrainingJob
+				showGpuMetric bool
+			)
 
-			allJobs, err = acquireAllJobs(client)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			trainers := NewTrainers(client)
-			jobs := []TrainingJob{}
-			var topPodName string
 			if len(args) > 0 {
-				topPodName = args[0]
+				// enable GPU Metrics
+				showGpuMetric = true
+				topJobName = args[0]
+				job, err = searchTrainingJob(topJobName, "", namespace)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				trainingType = job.Trainer()
 			}
 
-			for name, ns := range releaseMap {
-				if topPodName != "" {
-					if name != topPodName {
-						continue
-					}
+		printStart:
+			if showGpuMetric {
+				jobs = []TrainingJob{}
+				job, err = searchTrainingJob(topJobName, trainingType, namespace)
+				if err != nil {
+					fmt.Printf("Failed to show GPU metrics due to %v", err)
 				}
-				supportedChart := false
+				jobs = append(jobs, job)
+			} else {
+				if printNotStop {
+					fmt.Println("You must specify the job name when using `-r` flag")
+					os.Exit(1)
+				}
+
+				useCache = true
+				allPods, err = acquireAllPods(client)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				allJobs, err = acquireAllJobs(client)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				trainers := NewTrainers(client)
 				for _, trainer := range trainers {
-					if trainer.IsSupported(name, ns) {
-						job, err := trainer.GetTrainingJob(name, ns)
-						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
-						}
-						jobs = append(jobs, job)
-						supportedChart = true
-						break
+					trainingJobs, err := trainer.ListTrainingJobs()
+					if err != nil {
+						log.Errorf("Failed due to %v", err)
+						os.Exit(1)
 					}
+					jobs = append(jobs, trainingJobs...)
 				}
-
-				if !supportedChart {
-					log.Debugf("Unkown chart %s\n", name)
-				}
-
 			}
 
 			jobs = makeTrainingJobOrderdByGPUCount(jobs)
 			// TODO(cheyang): Support different job describer, such as MPI job/tf job describer
-			showGpuMetric := topPodName != ""
 			topTrainingJob(jobs, showGpuMetric, instanceName, printNotStop)
 			if printNotStop {
 				goto printStart
