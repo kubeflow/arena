@@ -149,6 +149,7 @@ func QueryMetricByPrometheus(client *kubernetes.Clientset, prometheusServiceName
 	metric, _ := req.DoRaw()
 	var metricResponse *PrometheusMetric
 	err := json.Unmarshal(metric, &metricResponse)
+	log.Debugf("Prometheus metric:%v", metricResponse)
 	if err != nil {
 		log.Errorf("failed to unmarshall heapster response: %v", err)
 		return gpuMetric, fmt.Errorf("failed to unmarshall heapster response: %v", err)
