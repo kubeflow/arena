@@ -146,9 +146,12 @@ func QueryMetricByPrometheus(client *kubernetes.Clientset, prometheusServiceName
 		"time":  strconv.FormatInt(time.Now().Unix(), 10),
 	})
 	log.Debugf("Query prometheus for by %s", query)
-	metric, _ := req.DoRaw()
+	metric, err := req.DoRaw()
+	if err != nil {
+		log.Debugf("Query prometheus failed due to %v", err)
+	}
 	var metricResponse *PrometheusMetric
-	err := json.Unmarshal(metric, &metricResponse)
+	err = json.Unmarshal(metric, &metricResponse)
 	log.Debugf("Prometheus metric:%v", metricResponse)
 	if err != nil {
 		log.Errorf("failed to unmarshall heapster response: %v", err)
