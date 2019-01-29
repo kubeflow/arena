@@ -145,7 +145,7 @@ func QueryMetricByPrometheus(client *kubernetes.Clientset, prometheusServiceName
 		"query": query,
 		"time":  strconv.FormatInt(time.Now().Unix(), 10),
 	})
-	log.Debugf("Query prometheus for by %s", query)
+	log.Debugf("Query prometheus for by %s in ns %s", query, namespace)
 	metric, err := req.DoRaw()
 	if err != nil {
 		log.Debugf("Query prometheus failed due to err %v", err)
