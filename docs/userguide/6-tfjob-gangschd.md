@@ -34,19 +34,13 @@ The following command is an example. In this example, it defines 2 workers and 1
               --ps=1              \
               --psImage=tensorflow/tensorflow:1.5.0-devel   \
               "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --logdir /training_logs"
-NAME:   tf-dist-git
-LAST DEPLOYED: Mon Jul 23 21:32:20 2018
-NAMESPACE: default
-STATUS: DEPLOYED
-
-RESOURCES:
-==> v1beta1/Deployment
-NAME               DESIRED  CURRENT  UP-TO-DATE  AVAILABLE  AGE
-tf-dist-git-tfjob  1        0        0           0          0s
-
-==> v1alpha2/TFJob
-NAME               AGE
-tf-dist-git-tfjob  0s
+configmap/tf-dist-git-tfjob created
+configmap/tf-dist-git-tfjob labeled
+service/tf-dist-git-tensorboard created
+deployment.extensions/tf-dist-git-tensorboard created
+tfjob.kubeflow.org/tf-dist-git created
+INFO[0001] The Job tf-dist-git has been submitted successfully
+INFO[0001] You can run `arena get tf-dist-git --type tfjob` to check the job status
 
 ```
 

@@ -87,15 +87,13 @@ tfdata ReadWriteMany this is for mnist demo myteam 43d
               --psImage=tensorflow/tensorflow:1.9.0-devel \
               --tensorboard \
               "bash code/models/dist_mnist_estimator.sh --data_dir=/data/mnist/MNIST_data --model_dir=/data/mnist/models"
-NAME:   tf-estimator
-LAST DEPLOYED: Tue Sep 25 06:37:01 2018
-NAMESPACE: default
-STATUS: DEPLOYED
-
-RESOURCES:
-==> v1alpha2/TFJob
-NAME AGE
-tf-estimator-tfjob 0s
+configmap/tf-estimator-tfjob created
+configmap/tf-estimator-tfjob labeled
+service/tf-estimator-tensorboard created
+deployment.extensions/tf-estimator-tensorboard created
+tfjob.kubeflow.org/tf-estimator created
+INFO[0001] The Job tf-estimator has been submitted successfully
+INFO[0001] You can run `arena get tf-estimator --type tfjob` to check the job status
 
 ``` 
 
