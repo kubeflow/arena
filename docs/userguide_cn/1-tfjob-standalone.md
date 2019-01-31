@@ -30,15 +30,11 @@ Allocated/Total GPUs In Cluster:
              --syncMode=git \
              --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 10000"
-NAME:   tf-git
-LAST DEPLOYED: Mon Jul 23 07:51:52 2018
-NAMESPACE: default
-STATUS: DEPLOYED
-
-RESOURCES:
-==> v1alpha2/TFJob
-NAME AGE
-tf-git-tfjob 0s
+configmap/tf-git-tfjob created
+configmap/tf-git-tfjob labeled
+tfjob.kubeflow.org/tf-git created
+INFO[0000] The Job tf-git has been submitted successfully
+INFO[0000] You can run `arena get tf-git --type tfjob` to check the job status
 ```
 
 > 这会下载源代码，并将其解压缩到工作目录的 `code/` 目录。默认的工作目录是 `/root`，您也可以使用 `--workingDir` 加以指定。

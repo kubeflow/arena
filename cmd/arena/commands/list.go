@@ -48,7 +48,6 @@ func NewListCommand() *cobra.Command {
 
 			err = updateNamespace(cmd)
 			if err != nil {
-				log.Debugf("Failed due to %v", err)
 				log.Errorf("Failed due to %v", err)
 				os.Exit(1)
 			}
@@ -89,7 +88,7 @@ func NewListCommand() *cobra.Command {
 }
 
 /**
-* original job list
+* original job list, deprecated
  */
 func trainingJobList(client *kubernetes.Clientset) ([]TrainingJob, error) {
 	useHelm := true

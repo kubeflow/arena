@@ -24,8 +24,8 @@ func DeleteJob(name, namespace, trainingType string) error {
 
 	result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
-		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
-		return err
+		log.Warnf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
+		log.Warnln("manually delete the following resource:")
 	}
 	fmt.Printf("%s", result)
 

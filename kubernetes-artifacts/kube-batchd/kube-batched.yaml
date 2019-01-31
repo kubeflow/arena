@@ -128,7 +128,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kube-batchd
-  namespace: kube-system
+  namespace: arena-system
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -141,7 +141,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: kube-batchd
-  namespace: kube-system
+  namespace: arena-system
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -152,7 +152,7 @@ metadata:
   name: kube-batchd
   annotations:
     scheduler.alpha.kubernetes.io/critical-pod: ""
-  namespace: kube-system
+  namespace: arena-system
 spec:
   replicas: 1
   template:

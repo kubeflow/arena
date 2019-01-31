@@ -24,8 +24,12 @@ if [[ ! -z "${registry}" ]]; then
 fi
 
 if [[ ! -z "${namespace}" ]]; then
-  find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${namespace}/g"
-  find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${namespace}/g"
+  find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/arena-system/${namespace}/g"
+fi
+
+if [[ ! -z "${repo_namespace}" ]]; then
+  find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${repo_namespace}/g"
+  find /root/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${repo_namespace}/g"
 fi
 
 if [ "$useLoadBlancer" == "true" ]; then

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rdma-devices
-  namespace: kube-system
+  namespace: arena-system
 data:
   config.json: |
     {

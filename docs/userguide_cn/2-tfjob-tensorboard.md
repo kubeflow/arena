@@ -32,27 +32,13 @@ Allocated/Total GPUs In Cluster:
              --tensorboard \
              --logdir=/tmp/tensorflow/logs \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000"
-NAME:   tf-tensorboard
-LAST DEPLOYED: Mon Jul 23 18:30:50 2018
-NAMESPACE: default
-STATUS: DEPLOYED
-
-RESOURCES:
-==> v1/Service
-NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
-tf-tensorboard-tfjob NodePort 172.19.15.183  6006:30705/TCP 0s
-
-==> v1beta1/Deployment
-NAME DESIRED CURRENT UP-TO-DATE AVAILABLE AGE
-tf-tensorboard-tfjob 1 0 0 0 0s
-
-==> v1alpha2/TFJob
-NAME AGE
-tf-tensorboard-tfjob 0s
-
-==> v1/Pod(related)
-NAME READY STATUS RESTARTS AGE
-tf-tensorboard-tfjob-64455d5b69-jmm6s 0/1 Pending 0 0s
+configmap/tf-tensorboard-tfjob created
+configmap/tf-tensorboard-tfjob labeled
+service/tf-tensorboard-tensorboard created
+deployment.extensions/tf-tensorboard-tensorboard created
+tfjob.kubeflow.org/tf-tensorboard created
+INFO[0001] The Job tf-tensorboard has been submitted successfully
+INFO[0001] You can run `arena get tf-tensorboard --type tfjob` to check the job status
 ```
 
 > 这会下载源代码，并将其解压缩到工作目录的 `code/` 目录。默认的工作目录是 `/root`，您也可以使用 `--workingDir` 加以指定。
