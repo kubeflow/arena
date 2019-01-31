@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/util/helm"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -45,12 +45,13 @@ func NewPruneCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			releaseMap, err := helm.ListReleaseMap()
-			// log.Printf("releaseMap %v", releaseMap)
+
+			err = updateNamespace(cmd)
 			if err != nil {
-				fmt.Println(err)
+				log.Errorf("Failed due to %v", err)
 				os.Exit(1)
 			}
+
 			// determine use cache
 			useCache = true
 			allPods, err = acquireAllPods(client)
@@ -66,19 +67,15 @@ func NewPruneCommand() *cobra.Command {
 			}
 			trainers := NewTrainers(client)
 			jobs := []TrainingJob{}
-			for name, ns := range releaseMap {
-				for _, trainer := range trainers {
-					if trainer.IsSupported(name, ns) {
-						job, err := trainer.GetTrainingJob(name, ns)
-						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
-						}
-						jobs = append(jobs, job)
-						break
-					}
+			for _, trainer := range trainers {
+				trainingJobs, err := trainer.ListTrainingJobs()
+				if err != nil {
+					log.Errorf("Failed due to %v", err)
+					os.Exit(1)
 				}
+				jobs = append(jobs, trainingJobs...)
 			}
+
 			deleted := false
 			if pruneArgs.since == -1 {
 				fmt.Println("Your need to specify the relative duration live time of the job that need to be cleaned by --since. Like --since 10h")

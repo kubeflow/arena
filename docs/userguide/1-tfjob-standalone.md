@@ -30,15 +30,11 @@ There are 3 available nodes with GPU for running training jobs.
              --syncMode=git \
              --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 10000"
-NAME:   tf-git
-LAST DEPLOYED: Mon Jul 23 07:51:52 2018
-NAMESPACE: default
-STATUS: DEPLOYED
-
-RESOURCES:
-==> v1alpha2/TFJob
-NAME          AGE
-tf-git-tfjob  0s
+configmap/tf-git-tfjob created
+configmap/tf-git-tfjob labeled
+tfjob.kubeflow.org/tf-git created
+INFO[0000] The Job tf-git has been submitted successfully
+INFO[0000] You can run `arena get tf-git --type tfjob` to check the job status
 ```
 
 > the source code will be downloaded and extracted to the directory `code/` of the working directory. The default working directory is `/root`, you can also specify by using `--workingDir`.
