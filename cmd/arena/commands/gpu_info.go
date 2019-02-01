@@ -121,7 +121,7 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric J
 		return
 	}
 	podsMetrics, err := GetPodsGpuInfo(client, prometheusServiceName, namespace, runningPods)
-	return podsMetrics, nil
+	return podsMetrics, err
 }
 
 func GetPodsGpuInfo(client *kubernetes.Clientset, prometheusServiceName string, namespace string, podNames []string) (JobGpuMetric, error) {
@@ -163,8 +163,8 @@ func QueryMetricByPrometheus(client *kubernetes.Clientset, prometheusServiceName
 		return gpuMetric, fmt.Errorf("failed to query prometheus, status: %s", metricResponse.Status)
 	}
 	if len(metricResponse.Data.Result) == 0 {
-		log.Errorf("gpu metric is not exist in prometheus for query  %s", query)
-		return gpuMetric, fmt.Errorf("gpu metric is not exist in prometheusfor query  %s", query)
+		log.Debugf("gpu metric is not exist in prometheus for query  %s", query)
+		return gpuMetric, nil
 	}
 	for _, m := range metricResponse.Data.Result {
 		gpuMetric = append(gpuMetric, GpuMetricInfo{
