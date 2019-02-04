@@ -421,7 +421,7 @@ func (tt *MPIJobTrainer) getChiefJob(name string, namespace string) (job batchv1
 
 	if len(jobList.Items) > 0 {
 		job = jobList.Items[0]
-		return job, nil
+		return job
 	}
 
 	if err != nil {
