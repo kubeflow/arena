@@ -133,7 +133,7 @@ func (tj *TensorFlowJob) Duration() time.Duration {
 		if !cond.LastTransitionTime.IsZero() {
 			return cond.LastTransitionTime.Time.Sub(job.Status.StartTime.Time)
 		} else {
-			log.Debugf("the latest condition's time is zero of pod %s", mj.chiefPod.Name)
+			log.Debugf("the latest condition's time is zero of pod %s", tj.chiefPod.Name)
 		}
 	}
 
