@@ -250,6 +250,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 func printJobSummary(w io.Writer, job TrainingJob, namespace string) {
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", namespace)
+	fmt.Fprintf(w, "TRAINING DURATION: %s\n", job.Duration())
 	fmt.Fprintln(w, "")
 
 }

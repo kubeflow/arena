@@ -90,11 +90,11 @@ func (mj *MPIJob) GetStatus() (status string) {
 		return status
 	}
 
-	if isMPIJobSucceeded(mj.mpijob.Status) {
+	if mj.isSucceeded() {
 		status = "SUCCEEDED"
-	} else if isMPIJobFailed(mj.mpijob.Status) {
+	} else if mj.isFailed() {
 		status = "FAILED"
-	} else if isMPIJobPending(mj.mpijob.Status) {
+	} else if mj.isPending() {
 		status = "PENDING"
 	} else {
 		status = "RUNNING"
@@ -544,17 +544,27 @@ func (tt *MPIJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) {
 	return jobs, nil
 }
 
-func isMPIJobSucceeded(status v1alpha1.MPIJobStatus) bool {
+func (mj *MPIJob) isSucceeded() bool {
 	// status.MPIJobLauncherStatusType
-
-	return status.LauncherStatus == v1alpha1.LauncherSucceeded
+	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherSucceeded
 }
 
-func isMPIJobFailed(status v1alpha1.MPIJobStatus) bool {
-	return status.LauncherStatus == v1alpha1.LauncherFailed
+func (mj *MPIJob) isFailed() bool {
+	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherFailed
 }
 
-func isMPIJobPending(status v1alpha1.MPIJobStatus) bool {
+func (mj *MPIJob) isPending() bool {
+	// return false
+	if len(mj.chiefjob.Name) == 0 {
+		log.Debugf("The MPIJob is pending due to chiefJob is not ready")
+		return true
+	}
+
+	if len(mj.chiefPod.Name) == 0 || mj.chiefPod.Status.Phase == v1.PodPending {
+		log.Debugf("The MPIJob is pending due to chiefPod is not ready")
+		return true
+	}
+
 	return false
 }
 
