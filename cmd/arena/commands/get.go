@@ -247,7 +247,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 
 }
 
-func printJobSummary(w io.Writer, namespace string, job TrainingJob) {
+func printJobSummary(w io.Writer, job TrainingJob, namespace string) {
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "\nNAMESPACE: %s\n", namespace)
 }
