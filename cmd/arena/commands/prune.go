@@ -85,7 +85,7 @@ func NewPruneCommand() *cobra.Command {
 				if GetJobRealStatus(job) != "RUNNING" {
 					if job.Age() > pruneArgs.since {
 						deleted = true
-						fmt.Printf("Delete %s %s", job.Trainer(), job.Name())
+						fmt.Printf("Delete %s %s with Age %s \n", job.Trainer(), job.Name(), util.ShortHumanDuration(job.Age()))
 						err = deleteTrainingJob(job.Name(), "")
 						if err != nil {
 							fmt.Printf("Failed to delete %s %s, err: %++v", job.Trainer(), job.Name(), err)
