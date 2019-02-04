@@ -15,7 +15,7 @@
 package commands
 
 import (
-	"github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
