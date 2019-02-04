@@ -208,6 +208,7 @@ func printTrainingJob(job TrainingJob, printArgs PrintArgs) {
 
 func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	printJobSummary(w, job, job.ChiefPod().Namespace)
 
 	// apply a dummy FgDefault format to align tabwriter with the rest of the columns
 
@@ -244,6 +245,11 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 
 	_ = w.Flush()
 
+}
+
+func printJobSummary(w io.Writer, namespace string, job TrainingJob) {
+	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
+	fmt.Fprintf(w, "\nNAMESPACE: %s\n", namespace)
 }
 
 func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
