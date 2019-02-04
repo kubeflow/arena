@@ -143,3 +143,7 @@ func (ji *JobInfo) GetStatus() (status string) {
 	}
 	return status
 }
+
+func (ji *JobInfo) Namespace() string {
+	return ji.job.Namespace
+}

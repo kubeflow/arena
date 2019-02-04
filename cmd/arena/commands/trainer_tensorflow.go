@@ -104,6 +104,10 @@ func (tj *TensorFlowJob) StartTime() *metav1.Time {
 	return tj.tfjob.Status.StartTime
 }
 
+func (tj *TensorFlowJob) Namespace() string {
+	return tj.tfjob.Namespace
+}
+
 // Get the Job Age
 func (tj *TensorFlowJob) Age() time.Duration {
 	job := tj.tfjob

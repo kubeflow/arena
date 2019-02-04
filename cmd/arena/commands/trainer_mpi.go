@@ -219,6 +219,10 @@ func (mj *MPIJob) HostIPOfChief() (hostIP string) {
 	return hostIP
 }
 
+func (mj *MPIJob) Namespace() string {
+	return mj.mpijob.Namespace
+}
+
 // MPI Job trainer
 type MPIJobTrainer struct {
 	client       *kubernetes.Clientset
