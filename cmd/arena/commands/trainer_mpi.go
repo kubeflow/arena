@@ -131,6 +131,15 @@ func (mj *MPIJob) Duration() time.Duration {
 		return mj.chiefjob.Status.CompletionTime.Time.Sub(mpijob.CreationTimestamp.Time)
 	}
 
+	if mj.isFailed() {
+		cond := getPodLatestCondition(mj.chiefPod)
+		if !cond.LastTransitionTime.IsZero() {
+			return cond.LastTransitionTime.Time.Sub(mpijob.CreationTimestamp.Time)
+		} else {
+			log.Debugf("the latest condition's time is zero of pod %s", mj.chiefPod.Name)
+		}
+	}
+
 	return metav1.Now().Sub(mpijob.CreationTimestamp.Time)
 }
 

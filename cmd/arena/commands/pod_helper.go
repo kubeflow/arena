@@ -16,6 +16,7 @@ package commands
 
 import (
 	"fmt"
+	"sort"
 
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -213,4 +214,35 @@ func jobPods(client kubernetes.Interface, namespace string, releaseName string) 
 	}
 
 	return podList.Items, err
+}
+
+// Sort the pod condition by time.
+type SortPodConditionByLastTransitionTime []v1.PodCondition
+
+func (s SortPodConditionByLastTransitionTime) Len() int      { return len(s) }
+func (s SortPodConditionByLastTransitionTime) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s SortPodConditionByLastTransitionTime) Less(i, j int) bool {
+	// return s[i].CreatedAt.Before(s[j].CreatedAt)
+	return s[i].LastTransitionTime.After(s[j].LastTransitionTime)
+}
+
+func makePodConditionsSortedByTime(conditions []v1.PodCondition) []v1.PodCondition {
+	newCondtions := make(SortPodConditionByLastTransitionTime, 0, len(conditions))
+	for _, c := range conditions {
+		newCondtions = append(newCondtions, c)
+	}
+	sort.Sort(newCondtions)
+	return []*v1.PodCondition(newCondtions)
+}
+
+func getPodLatestCondition(pod v1.Pod) (cond v1.PodCondition) {
+	condidtions := makePodConditionsSortedByTime(pod.Status.Conditions)
+	if len(condidtions) > 0 {
+		cond = condidtions[0]
+		log.Debugf("the pod %s's conditions %v is not empty", pod.Name, condidtions)
+	} else {
+		log.Debugf("the pod %s's conditions %v is empty", pod.Name, condidtions)
+	}
+
+	return
 }

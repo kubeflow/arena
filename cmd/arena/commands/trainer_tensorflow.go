@@ -128,6 +128,15 @@ func (tj *TensorFlowJob) Duration() time.Duration {
 		return job.Status.CompletionTime.Time.Sub(job.Status.StartTime.Time)
 	}
 
+	if tj.GetStatus() == "FAILED" {
+		cond := getPodLatestCondition(tj.chiefPod)
+		if !cond.LastTransitionTime.IsZero() {
+			return cond.LastTransitionTime.Time.Sub(job.Status.StartTime.Time)
+		} else {
+			log.Debugf("the latest condition's time is zero of pod %s", mj.chiefPod.Name)
+		}
+	}
+
 	return metav1.Now().Sub(job.Status.StartTime.Time)
 }
 

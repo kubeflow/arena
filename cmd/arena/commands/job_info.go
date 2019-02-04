@@ -15,6 +15,7 @@
 package commands
 
 import (
+	"github.com/labstack/gommon/log"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -102,6 +103,15 @@ func (ji *JobInfo) Duration() time.Duration {
 	}
 	if job.Status.CompletionTime != nil {
 		return job.Status.CompletionTime.Time.Sub(job.Status.StartTime.Time)
+	}
+
+	if ji.GetStatus() == "FAILED" {
+		cond := getPodLatestCondition(ji.ChiefPod())
+		if !cond.LastTransitionTime.IsZero() {
+			return cond.LastTransitionTime.Time.Sub(job.Status.StartTime.Time)
+		} else {
+			log.Debugf("the latest condition's time is zero of pod %s", mj.chiefPod.Name)
+		}
 	}
 
 	return metav1.Now().Sub(job.Status.StartTime.Time)
