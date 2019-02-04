@@ -125,7 +125,7 @@ func (tj *TensorFlowJob) Duration() time.Duration {
 	}
 
 	if !job.Status.CompletionTime.IsZero() {
-		return job.Status.CompletionTime.Sub(job.Status.StartTime)
+		return job.Status.CompletionTime.Time.Sub(job.Status.StartTime.Time)
 	}
 
 	return metav1.Now().Sub(job.Status.StartTime.Time)
