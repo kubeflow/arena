@@ -101,10 +101,10 @@ func (ji *JobInfo) Duration() time.Duration {
 		return 0
 	}
 	if job.Status.CompletionTime != nil {
-		return mj.chiefjob.Status.CompletionTime.Time.Sub(mpijob.Status.StartTime.Time)
+		return job.Status.CompletionTime.Time.Sub(job.Status.StartTime.Time)
 	}
 
-	return metav1.Now().Sub(mpijob.Status.StartTime.Time)
+	return metav1.Now().Sub(job.Status.StartTime.Time)
 }
 
 func (ji *JobInfo) StartTime() *metav1.Time {

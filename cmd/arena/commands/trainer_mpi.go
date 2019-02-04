@@ -123,16 +123,15 @@ func (mj *MPIJob) Age() time.Duration {
 func (mj *MPIJob) Duration() time.Duration {
 	mpijob := mj.mpijob
 
-	if mpijob.Status.StartTime == nil ||
-		mpijob.Status.StartTime.IsZero() {
+	if mpijob.CreationTimestamp.IsZero() {
 		return 0
 	}
 
 	if len(mj.chiefjob.Name) != 0 && mj.chiefjob.Status.CompletionTime != nil {
-		return mj.chiefjob.Status.CompletionTime.Time.Sub(mpijob.Status.StartTime.Time)
+		return mj.chiefjob.Status.CompletionTime.Time.Sub(mpijob.CreationTimestamp.Time)
 	}
 
-	return metav1.Now().Sub(mpijob.Status.StartTime.Time)
+	return metav1.Now().Sub(mpijob.CreationTimestamp.Time)
 }
 
 // Get Dashboard url of the job
@@ -368,7 +367,7 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, 
 	// 0. Find the batch job
 	//isChiefJob
 	for _, item := range allJobs {
-		if tt.isChiefJob(name, ns, item) {
+		if tt.isChiefJob(item, name, ns) {
 			job = item
 			break
 		}
