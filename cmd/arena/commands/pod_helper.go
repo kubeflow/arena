@@ -223,7 +223,7 @@ func (s SortPodConditionByLastTransitionTime) Len() int      { return len(s) }
 func (s SortPodConditionByLastTransitionTime) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s SortPodConditionByLastTransitionTime) Less(i, j int) bool {
 	// return s[i].CreatedAt.Before(s[j].CreatedAt)
-	return s[i].LastTransitionTime.After(s[j].LastTransitionTime)
+	return s[i].LastTransitionTime.Time.After(s[j].LastTransitionTime.Time)
 }
 
 func makePodConditionsSortedByTime(conditions []v1.PodCondition) []v1.PodCondition {
