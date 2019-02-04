@@ -92,6 +92,21 @@ func (ji *JobInfo) Age() time.Duration {
 	return metav1.Now().Sub(job.Status.StartTime.Time)
 }
 
+// Get the Job Training Duration
+func (ji *JobInfo) Duration() time.Duration {
+	job := ji.job
+
+	if job.Status.StartTime == nil ||
+		job.Status.StartTime.IsZero() {
+		return 0
+	}
+	if job.Status.CompletionTime != nil {
+		return mj.chiefjob.Status.CompletionTime.Time.Sub(mpijob.Status.StartTime.Time)
+	}
+
+	return metav1.Now().Sub(mpijob.Status.StartTime.Time)
+}
+
 func (ji *JobInfo) StartTime() *metav1.Time {
 	return ji.job.Status.StartTime
 }

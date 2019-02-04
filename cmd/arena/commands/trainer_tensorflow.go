@@ -115,6 +115,22 @@ func (tj *TensorFlowJob) Age() time.Duration {
 	return metav1.Now().Sub(job.Status.StartTime.Time)
 }
 
+// Get the Job Training Duration
+func (tj *TensorFlowJob) Duration() time.Duration {
+	job := tj.tfjob
+
+	if job.Status.StartTime == nil ||
+		job.Status.StartTime.IsZero() {
+		return 0
+	}
+
+	if !job.Status.CompletionTime.IsZero() {
+		return job.Status.CompletionTime.Sub(job.Status.StartTime)
+	}
+
+	return metav1.Now().Sub(job.Status.StartTime.Time)
+}
+
 // Get Dashboard url of the job
 func (tj *TensorFlowJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
 	urls := []string{}

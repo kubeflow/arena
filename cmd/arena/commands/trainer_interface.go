@@ -42,6 +42,9 @@ type TrainingJob interface {
 	// Get the Job Age
 	Age() time.Duration
 
+	// Get the Job Duration
+	Duration() time.Duration
+
 	// Get start time
 	StartTime() *metav1.Time
 
