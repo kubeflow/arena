@@ -110,7 +110,7 @@ func (ji *JobInfo) Duration() time.Duration {
 		if !cond.LastTransitionTime.IsZero() {
 			return cond.LastTransitionTime.Time.Sub(job.Status.StartTime.Time)
 		} else {
-			log.Debugf("the latest condition's time is zero of pod %s", ji.chiefPod.Name)
+			log.Debugf("the latest condition's time is zero of pod %s", ji.ChiefPod().Name)
 		}
 	}
 

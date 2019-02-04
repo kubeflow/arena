@@ -232,7 +232,7 @@ func makePodConditionsSortedByTime(conditions []v1.PodCondition) []v1.PodConditi
 		newCondtions = append(newCondtions, c)
 	}
 	sort.Sort(newCondtions)
-	return []*v1.PodCondition(newCondtions)
+	return []v1.PodCondition(newCondtions)
 }
 
 func getPodLatestCondition(pod v1.Pod) (cond v1.PodCondition) {
