@@ -343,7 +343,7 @@ innerLoop:
 	log.Debugf("jobInfos %v", jobInfos)
 
 	for _, jobInfo := range jobInfos {
-		job, err := hj.getTrainingJob(jobInfo.Name, jobInfo.Namespace)
+		job, err := hj.getTrainingJobFromCache(jobInfo.Name, jobInfo.Namespace)
 		if err != nil {
 			return jobs, err
 		}
