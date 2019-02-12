@@ -30,6 +30,9 @@ type TrainingJob interface {
 	// Get the name of the Training Job
 	Name() string
 
+	// Get the namespace of the Training Job
+	Namespace() string
+
 	// Get all the pods of the Training Job
 	AllPods() []v1.Pod
 
@@ -41,6 +44,9 @@ type TrainingJob interface {
 
 	// Get the Job Age
 	Age() time.Duration
+
+	// Get the Job Duration
+	Duration() time.Duration
 
 	// Get start time
 	StartTime() *metav1.Time

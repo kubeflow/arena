@@ -104,6 +104,10 @@ func (tj *TensorFlowJob) StartTime() *metav1.Time {
 	return tj.tfjob.Status.StartTime
 }
 
+func (tj *TensorFlowJob) Namespace() string {
+	return tj.tfjob.Namespace
+}
+
 // Get the Job Age
 func (tj *TensorFlowJob) Age() time.Duration {
 	job := tj.tfjob
@@ -112,6 +116,31 @@ func (tj *TensorFlowJob) Age() time.Duration {
 		job.Status.StartTime.IsZero() {
 		return 0
 	}
+	return metav1.Now().Sub(job.Status.StartTime.Time)
+}
+
+// Get the Job Training Duration
+func (tj *TensorFlowJob) Duration() time.Duration {
+	job := tj.tfjob
+
+	if job.Status.StartTime == nil ||
+		job.Status.StartTime.IsZero() {
+		return 0
+	}
+
+	if !job.Status.CompletionTime.IsZero() {
+		return job.Status.CompletionTime.Time.Sub(job.Status.StartTime.Time)
+	}
+
+	if tj.GetStatus() == "FAILED" {
+		cond := getPodLatestCondition(tj.chiefPod)
+		if !cond.LastTransitionTime.IsZero() {
+			return cond.LastTransitionTime.Time.Sub(job.Status.StartTime.Time)
+		} else {
+			log.Debugf("the latest condition's time is zero of pod %s", tj.chiefPod.Name)
+		}
+	}
+
 	return metav1.Now().Sub(job.Status.StartTime.Time)
 }
 
@@ -451,7 +480,7 @@ func (tt *TensorFlowJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err erro
 	log.Debugf("jobInfos %v", jobInfos)
 
 	for _, jobInfo := range jobInfos {
-		job, err := tt.getTrainingJob(jobInfo.Name, jobInfo.Namespace)
+		job, err := tt.getTrainingJobFromCache(jobInfo.Name, jobInfo.Namespace)
 		if err != nil {
 			return jobs, err
 		}

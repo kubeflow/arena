@@ -85,7 +85,7 @@ func addKubectlFlagsToCmd(cmd *cobra.Command) {
 	overrides := clientcmd.ConfigOverrides{}
 	// kflags := clientcmd.RecommendedConfigOverrideFlags("")
 	cmd.PersistentFlags().StringVar(&loadingRules.ExplicitPath, "config", "", "Path to a kube config. Only required if out-of-cluster")
-	cmd.PersistentFlags().StringVar(&namespace, "namespace", "default", "the namespace of the job")
+	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "default", "the namespace of the job")
 	// clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), kflags)
 	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
 }

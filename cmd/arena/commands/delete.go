@@ -73,6 +73,7 @@ func deleteTrainingJob(jobName, trainingType string) error {
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)
 	if err == nil {
+		log.Infof("Delete the job %s successfully.", jobName)
 		return nil
 	}
 
