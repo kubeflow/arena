@@ -17,7 +17,7 @@ kubectl label node <your node> accelerator/rdma=true
 
 ```
 # Check Device plugin status
-kubectl -n kube-system get ds
+kubectl -n arena-system get ds
 NAME                       DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                     AGE
 rdma-sriov-dp-ds           1         1         1       1            1           accelerator/rdma=true      46d
 ```
