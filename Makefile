@@ -68,7 +68,7 @@ cli:
 install-image:
 	docker build -t cheyang/arena:${VERSION}-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.install .
 
-.PHONY: notebook-image
-notebook-image:
-	docker build --build-arg "BASE_IMAGE=${BASE_IMAGE}" -t cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.notebook .
+.PHONY: notebook-image-gpu
+notebook-image-gpu:
+	docker build --build-arg "BASE_IMAGE=${BASE_IMAGE}" -t cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.notebook.gpu .
 	docker tag cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} cheyang/arena:notebook
