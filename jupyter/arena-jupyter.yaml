@@ -1,0 +1,146 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: arena-notebook
+  namespace: default
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: arena-notebook
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - deployments
+  - nodes
+  - nodes/*
+  verbs:
+  - get
+  - list
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: arena-notebook
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - services/proxy
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  - services
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  - apps
+  - extensions
+  resources:
+  - deployments
+  - replicasets
+  verbs:
+  - '*'
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - '*'
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: arena-notebook-cluster-role
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: arena-notebook
+subjects:
+- kind: ServiceAccount
+  name: arena-notebook
+  namespace: default
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: arena-notebook-role
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: arena-notebook
+subjects:
+- kind: ServiceAccount
+  name: arena-notebook
+  namespace: default
+
+---
+# Define the arena notebook deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arena-notebook
+  labels:
+    app: arena-notebook
+spec:
+  replicas: 1
+  selector: # define how the deployment finds the pods it mangages
+    matchLabels:
+      app: arena-notebook
+  template: # define the pods specifications
+    metadata:
+      labels:
+        app: arena-notebook
+    spec:
+      serviceAccountName: arena-notebook
+      containers:
+      - name: arena-notebook
+        image: cheyang/arena-notebook:cpu
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8888
+          hostPort: 8888
+        env:
+          - name: PASSWORD
+            value: passw0rd
+
+# Define the arena notebook service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arena-notebook
+spec:
+  ports:
+  - port: 80
+    targetPort: 8888
+    name: notebook
+  selector:
+    app: arena-notebook
+  type: NodePort
