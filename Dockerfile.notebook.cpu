@@ -1,6 +1,7 @@
-ARG BASE_IMAGE=registry.aliyuncs.com/kubeflow-images-public/tensorflow-1.12.0-notebook:v0.4.0
+# ARG BASE_IMAGE=registry.aliyuncs.com/kubeflow-images-public/tensorflow-1.12.0-notebook:v0.4.0
+ARG BASE_IMAGE=tensorflow/tensorflow:1.12.0-devel-py3
 
-ARG USER=jovyan
+ARG USER=root
 
 FROM golang:1.10-stretch as build
 
@@ -35,4 +36,10 @@ RUN apt-get update && \
     echo "source /etc/bash_completion" >> /etc/bash.bashrc && \
     echo "source <(arena completion bash)" >> /etc/bash.bashrc
 
-USER $USER   
+USER $USER  
+
+ADD run_jupyter.sh /run_jupyter.sh
+
+RUN chmod 755 /run_jupyter.sh
+
+CMD [ "/run_jupyter.sh"]
