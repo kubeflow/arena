@@ -1,0 +1,108 @@
+{{- $gpuCount := .Values.gpuCount -}}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "tensorrt-inference-server.fullname" . }}
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "tensorrt-inference-server.chart" . }}
+    app: {{ template "tensorrt-inference-server.name" . }}
+    serviceName: "{{ .Values.servingName }}"
+  annotations:
+    "helm.sh/created": {{ .Release.Time.Seconds | quote }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      release: {{ .Release.Name | quote }}
+      app: {{ template "tensorrt-inference-server.name" . }}
+  template:
+    metadata:
+      labels:
+        heritage: {{ .Release.Service | quote }}
+        release: {{ .Release.Name | quote }}
+        chart: {{ template "tensorrt-inference-server.chart" . }}
+        app: {{ template "tensorrt-inference-server.name" . }}
+        serviceName: "{{ .Values.servingName }}"
+        serviceVersion: "{{ .Values.servingVersion }}"
+    spec:
+      initContainers:
+
+      containers:
+        - name: serving
+          {{- if .Values.image }}
+          image: "{{ .Values.image }}"
+          {{- end }}
+          {{- if .Values.imagePullPolicy }}
+          imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+          {{- end }}
+          env:
+          {{- if .Values.envs }}
+          {{- range $key, $value := .Values.envs }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne .Values.command "" }}
+          command: {{ .Values.command }}
+          {{- else }}
+          command:
+            - "/opt/tensorrtserver/bin/trtserver"
+          args:
+            - "--allow-metrics={{ .Values.allowMetrics }}"
+            {{- if .Values.httpPort }}
+            - "--http-port={{ .Values.httpPort }}"
+            {{- end }}
+            {{- if .Values.grpcPort }}
+            - "--grpc-port={{ .Values.grpcPort }}"
+            {{- end }}
+            {{- if .Values.allowMetrics }}
+            - "--metrics-port={{ .Values.metricPort }}"
+            {{- end }}
+            {{- if ne .Values.modelStore "" }}
+            - "--model-store={{ .Values.modelStore }}"
+            {{- end }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.httpPort }}
+              name: http-serving
+              protocol: TCP
+            - containerPort: {{ .Values.grpcPort }}
+              name: grpc-serving
+            - containerPort: {{ .Values.metricsPort }}
+              name: metrics-server
+          readinessProbe:
+            httpGet:
+              port: http-serving
+              path: "/api/health/ready"
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+          resources:
+            limits:
+              {{- if .Values.cpu }}
+              cpu: {{ .Values.cpu }}
+              {{- end }}
+              {{- if .Values.memory }}
+              memory: {{ .Values.memory }}
+              {{- end }}
+              {{- if gt (int $gpuCount) 0}}
+              nvidia.com/gpu: {{ .Values.gpuCount }}
+              {{- end }}
+          volumeMounts:
+            {{- if .Values.modelDirs }}
+            {{- range $pvcName, $destPath := .Values.modelDirs}}
+            - name: "{{ $pvcName }}"
+              mountPath: "{{ $destPath }}"
+            {{- end }}
+            {{- end }}
+      volumes:
+        {{- if .Values.modelDirs }}
+        {{- range $pvcName, $destPath := .Values.modelDirs}}
+        - name: "{{ $pvcName }}"
+          persistentVolumeClaim:
+            claimName: "{{ $pvcName }}"
+        {{- end }}
+        {{- end }}

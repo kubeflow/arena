@@ -26,8 +26,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var serving_charts = map[string]bool{
-	"tensorflow-serving-0.2.0": true,
+var serving_charts = map[string]string{
+	"tensorflow-serving-0.2.0":  "Tensorflow",
+	"tensorrt-inference-server-0.0.1": "TensorRT",
 }
 
 func NewServingListCommand() *cobra.Command {
@@ -51,7 +52,7 @@ func NewServingListCommand() *cobra.Command {
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-			fmt.Fprintf(w, "NAME\tVERSION\tSTATUS\n")
+			fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tSTATUS\n")
 
 			for name, cols := range releaseMap {
 				log.Debugf("name: %s, cols: %s", name, cols)
@@ -59,7 +60,7 @@ func NewServingListCommand() *cobra.Command {
 				chart := cols[len(cols)-2]
 				status := cols[len(cols)-3]
 				log.Debugf("namespace: %s, chart: %s, status:%s", namespace, chart, status)
-				if serving_charts[chart] {
+				if serveType, ok := serving_charts[chart]; ok {
 					index := strings.Index(name, "-")
 					//serviceName := name[0:index]
 					serviceVersion := ""
@@ -68,7 +69,8 @@ func NewServingListCommand() *cobra.Command {
 					}
 					nameAndVersion := strings.Split(name, "-")
 					log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
-					fmt.Fprintf(w, "%s\t%s\t%s\n", name,
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name,
+						serveType,
 						serviceVersion,
 						status)
 
