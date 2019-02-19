@@ -76,6 +76,7 @@ func NewServingTensorFlowCommand() *cobra.Command {
 
 	// TFServingJob
 	// add grpc port and rest api port
+	command.Flags().StringVar(&serveTensorFlowArgs.Image, "image", defaultTfServingImage, "the docker image name of serve job, and the default image is "+defaultTfServingImage)
 	command.Flags().IntVar(&serveTensorFlowArgs.Port, "port", 8500, "the port of tensorflow gRPC listening port")
 	command.Flags().IntVar(&serveTensorFlowArgs.RestfulPort, "restfulPort", 8501, "the port of tensorflow RESTful listening port")
 
@@ -89,6 +90,7 @@ type ServeTensorFlowArgs struct {
 	VersionPolicy          string `yaml:"versionPolicy"`   // --versionPolicy
 	ModelConfigFile        string `yaml:"modelConfigFile"` // --modelConfigFile
 	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
+	Image           	   string `yaml:"image"`           // --image
 
 	ServeArgs `yaml:",inline"`
 
