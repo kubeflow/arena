@@ -1,5 +1,7 @@
 ARG BASE_IMAGE=registry.aliyuncs.com/kubeflow-images-public/tensorflow-1.12.0-notebook-gpu:v0.4.0
 
+ARG USER=jovyan
+
 FROM golang:1.10-stretch as build
 
 RUN mkdir -p /go/src/github.com/kubeflow/arena
@@ -33,4 +35,4 @@ RUN apt-get update && \
     echo "source /etc/bash_completion" >> /etc/bash.bashrc && \
     echo "source <(arena completion bash)" >> /etc/bash.bashrc
 
-    
+USER $USER
