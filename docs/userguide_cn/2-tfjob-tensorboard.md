@@ -27,10 +27,11 @@ Allocated/Total GPUs In Cluster:
              --name=tf-tensorboard \
              --gpus=1 \
              --image=tensorflow/tensorflow:1.5.0-devel-gpu \
+             --env=TEST_TMPDIR=code/tensorflow-sample-code/ \
              --syncMode=git \
              --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
              --tensorboard \
-             --logdir=/tmp/tensorflow/logs \
+             --logdir=/training_logs \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000"
 configmap/tf-tensorboard-tfjob created
 configmap/tf-tensorboard-tfjob labeled
