@@ -40,7 +40,8 @@ RUN apt-get update && \
 
 USER $USER  
 
-ADD run_jupyter.sh /run_jupyter.sh
+ADD jupyter/run_jupyter.sh /run_jupyter.sh
+ADD jupyter/jupyter_notebook_config.py /jupyter_notebook_config.py
 
 RUN chmod 755 /run_jupyter.sh
 
