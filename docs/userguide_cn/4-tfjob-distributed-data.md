@@ -86,7 +86,7 @@ tfdata ReadWriteMany this is for mnist demo myteam 43d
               --psImage=tensorflow/tensorflow:1.5.0-devel \
               --tensorboard \
               --data=tfdata:/mnist_data \
-              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --logdir /training_logs --data_dir /mnist_data"
+              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir /training_logs --data_dir /mnist_data"
 ```
 
 > `--data` 指定了要挂载到作业的所有任务的数据卷，例如 :。在本例中，数据卷是 `tfdata`，目标目录是 `/mnist_data`。

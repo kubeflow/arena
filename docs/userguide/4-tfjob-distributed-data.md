@@ -86,7 +86,7 @@ tfdata  ReadWriteMany  this is for mnist demo  myteam  43d
               --psImage=tensorflow/tensorflow:1.5.0-devel   \
               --tensorboard \
               --data=tfdata:/mnist_data \
-              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --logdir /training_logs --data_dir /mnist_data"
+              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir /training_logs --data_dir /mnist_data"
 ```
 
 > `--data` specifies the data volume to mount to all the tasks of the job, like <name_of_datasource>:<mount_point_on_job>. In this example, the data volume is `tfdata`, and the target directory is `/mnist_data`.
