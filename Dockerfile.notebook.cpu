@@ -34,7 +34,7 @@ RUN chmod a+rx /usr/local/bin/* && \
     chmod a+rx -R /charts
 
 RUN apt-get update && \
-    apt-get install bash-completion -y && \
+    apt-get install bash-completion tree -y && \
     echo "source /etc/bash_completion" >> /etc/bash.bashrc && \
     echo "source <(arena completion bash)" >> /etc/bash.bashrc
 
