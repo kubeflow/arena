@@ -25,7 +25,7 @@ Arena 为分布式 TensorFlow 训练（ps/worker 模式）提供了支持和简�
               --ps=1 \
               --psImage=tensorflow/tensorflow:1.5.0-devel \
               --tensorboard \
-              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --logdir /training_logs"
+              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir /training_logs"
 configmap/tf-dist-git-tfjob created
 configmap/tf-dist-git-tfjob labeled
 service/tf-dist-git-tensorboard created

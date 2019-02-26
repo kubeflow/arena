@@ -33,7 +33,7 @@ arena submit tf --name=tf-dist-git \
               --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
               --ps=1 \
               --psImage=tensorflow/tensorflow:1.5.0-devel \
-              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --logdir /training_logs"
+              "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir /training_logs"
 configmap/tf-dist-git-tfjob created
 configmap/tf-dist-git-tfjob labeled
 service/tf-dist-git-tensorboard created
