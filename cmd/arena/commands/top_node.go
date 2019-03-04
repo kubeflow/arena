@@ -187,7 +187,12 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 
 		address := "unknown"
 		if len(nodeInfo.node.Status.Addresses) > 0 {
-			address = nodeInfo.node.Status.Addresses[0].Address
+			//address = nodeInfo.node.Status.Addresses[0].Address
+			for _, addr := range nodeInfo.node.Status.Addresses {
+				if addr.Type == v1.NodeInternalIP {
+					address = addr.Address
+				}
+			}
 		}
 
 		role := strings.Join(findNodeRoles(&nodeInfo.node), ",")
