@@ -56,6 +56,7 @@ if [ "$usePrometheus" == "true" ]; then
 	if ! kubectl get serviceaccount --all-namespaces | grep prometheus; then
 	   kubectl apply -f /root/kubernetes-artifacts/prometheus/gpu-exporter.yaml
 	   kubectl apply -f /root/kubernetes-artifacts/prometheus/prometheus.yaml
+	   kubectl apply -f /root/kubernetes-artifacts/prometheus/grafana.yaml
     fi
 fi
 set -e
