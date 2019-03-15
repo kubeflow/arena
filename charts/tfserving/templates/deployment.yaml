@@ -52,7 +52,10 @@ spec:
           {{- end }}
           {{- end }}
           {{- if ne .Values.command "" }}
-          command: {{ .Values.command }}
+          command:
+          - "sh"
+          - "-c"
+          - "{{ .Values.command }}"
           {{- else }}
           command:
             - "/usr/bin/tensorflow_model_server"
