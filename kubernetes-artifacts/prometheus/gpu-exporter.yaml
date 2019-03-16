@@ -20,30 +20,17 @@ spec:
               - key: accelerator/nvidia_gpu
                 operator: Exists
       hostPID: true
+      volumes:
+      - hostPath:
+          path: /var/run/docker.sock
+          type: File
+        name: docker-sock
       containers:
       - name: node-gpu-exporter
-        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:0.1-f48bc3c
+        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:0.1-b50fec3
         imagePullPolicy: Always
-        env:
-        - name: MY_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: MY_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: MY_NODE_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        - name: EXCLUDE_PODS
-          value: $(MY_POD_NAME),nvidia-device-plugin-$(MY_NODE_NAME),nvidia-device-plugin-ctr
-        - name: CADVISOR_URL
-          value: http://$(MY_NODE_IP):10255
         ports:
         - containerPort: 9445
-          hostPort: 9445
         resources:
           requests:
             memory: 30Mi
@@ -51,6 +38,9 @@ spec:
           limits:
             memory: 50Mi
             cpu: 200m
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-sock
 
 ---
 apiVersion: v1
