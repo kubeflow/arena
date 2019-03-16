@@ -143,10 +143,16 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 		"retry times.")
 	// command.MarkFlagRequired("syncSource")
 	command.Flags().StringVar(&submitArgs.WorkingDir, "workingDir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
+	command.Flags().MarkDeprecated("workingDir", "please use --working-dir instead")
+	command.Flags().StringVar(&submitArgs.WorkingDir, "working-dir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
+
 	// command.MarkFlagRequired("workingDir")
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
 	command.Flags().StringArrayVar(&dataDirs, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
+	command.Flags().MarkDeprecated("dataDir", "please use --data-dir instead")
+	command.Flags().StringArrayVar(&dataDirs, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
+
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
 	// enable RDMA or not, support hostnetwork for now
 	command.Flags().BoolVar(&submitArgs.EnableRDMA, "rdma", false, "enable RDMA")
