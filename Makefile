@@ -61,8 +61,19 @@ all: cli
 .PHONY: cli
 cli:
 	mkdir -p bin
-	CGO_ENABLED=1 go build -tags 'netgo'  -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
+	CGO_ENABLED=1 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
 	CGO_ENABLED=1 go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} cmd/job-monitor/*.go
+
+.PHONY: cli-darwin
+cli-darwin:
+	mkdir -p bin
+	CGO_ENABLED=0 GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/arena-darwin-amd64 ./cmd/arena/*.go
+
+.PHONY: cli-windows
+cli-windows:
+	mkdir -p bin
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/arena-windows-amd64 ./cmd/arena/*.go
+
 
 .PHONY: install-image
 install-image:
