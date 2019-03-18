@@ -103,7 +103,7 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 	// Get Address for loadbalancer
 	if service.Spec.Type == v1.ServiceTypeLoadBalancer {
 		if len(service.Status.LoadBalancer.Ingress) > 0 {
-			return fmt.Sprintf("%s:%d",
+			return fmt.Sprintf("http://%s:%d",
 				service.Status.LoadBalancer.Ingress[0].IP,
 				service.Spec.Ports[0].Port), nil
 		}
@@ -137,7 +137,7 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 	}
 
 	address = node.Status.Addresses[0].Address
-	url = fmt.Sprintf("%s:%d", address, port)
+	url = fmt.Sprintf("http://%s:%d", address, port)
 
 	return url, nil
 }
