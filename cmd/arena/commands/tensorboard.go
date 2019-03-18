@@ -33,7 +33,7 @@ type submitTensorboardArgs struct {
 	IsLocalLogging   bool   `yaml:"isLocalLogging"`
 }
 
-func (submitArgs *submitTensorboardArgs) processTensorboad(dataMap map[string]string) {
+func (submitArgs *submitTensorboardArgs) processTensorboard(dataMap map[string]string) {
 	if submitArgs.UseTensorboard {
 		log.Debugf("dataMap %v", dataMap)
 		if path.IsAbs(submitArgs.TrainingLogdir) && !submitArgs.isLoggingInPVC(dataMap) {
