@@ -62,7 +62,15 @@ func (sc *submitSyncCodeArgs) HandleSyncCode() error {
 
 func (sc *submitSyncCodeArgs) addSyncFlags(command *cobra.Command) {
 	command.Flags().StringVar(&sc.SyncMode, "syncMode", "", "syncMode: support rsync, hdfs, git")
+	command.Flags().MarkDeprecated("syncMode", "please use --sync-mode instead")
+	command.Flags().StringVar(&sc.SyncMode, "sync-mode", "", "syncMode: support rsync, hdfs, git")
+
 	// command.MarkFlagRequired("syncMode")
 	command.Flags().StringVar(&sc.SyncSource, "syncSource", "", "syncSource: for rsync, it's like 10.88.29.56::backup/data/logoRecoTrain.zip; for git, it's like https://github.com/kubeflow/tf-operator.git")
+	command.Flags().MarkDeprecated("syncSource", "please use --sync-source instead")
+	command.Flags().StringVar(&sc.SyncSource, "sync-source", "", "sync-source: for rsync, it's like 10.88.29.56::backup/data/logoRecoTrain.zip; for git, it's like https://github.com/kubeflow/tf-operator.git")
+
 	command.Flags().StringVar(&sc.SyncImage, "syncImage", "", "the docker image of syncImage")
+	command.Flags().MarkDeprecated("syncImage", "please use --sync-image instead")
+	command.Flags().StringVar(&sc.SyncImage, "sync-image", "", "the docker image of syncImage")
 }

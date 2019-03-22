@@ -78,30 +78,74 @@ func NewSubmitTFJobCommand() *cobra.Command {
 
 	// TFJob
 	command.Flags().StringVar(&submitArgs.WorkerImage, "workerImage", "", "the docker image for tensorflow workers")
+	command.Flags().MarkDeprecated("workerImage", "please use --worker-image instead")
+	command.Flags().StringVar(&submitArgs.WorkerImage, "worker-image", "", "the docker image for tensorflow workers")
+
 	command.Flags().StringVar(&submitArgs.PSImage, "psImage", "", "the docker image for tensorflow workers")
+	command.Flags().MarkDeprecated("psImage", "please use --ps-image instead")
+	command.Flags().StringVar(&submitArgs.PSImage, "ps-image", "", "the docker image for tensorflow workers")
+
 	command.Flags().IntVar(&submitArgs.PSCount, "ps", 0, "the number of the parameter servers.")
+
 	command.Flags().IntVar(&submitArgs.PSPort, "psPort", 0, "the port of the parameter server.")
+	command.Flags().MarkDeprecated("psPort", "please use --ps-port instead")
+	command.Flags().IntVar(&submitArgs.PSPort, "ps-port", 0, "the port of the parameter server.")
+
 	command.Flags().IntVar(&submitArgs.WorkerPort, "workerPort", 0, "the port of the worker.")
+	command.Flags().MarkDeprecated("workerPort", "please use --worker-port instead")
+	command.Flags().IntVar(&submitArgs.WorkerPort, "worker-port", 0, "the port of the worker.")
+
 	command.Flags().StringVar(&submitArgs.WorkerCpu, "workerCpu", "", "the cpu resource to use for the worker, like 1 for 1 core.")
+	command.Flags().MarkDeprecated("workerCpu", "please use --worker-cpu instead")
+	command.Flags().StringVar(&submitArgs.WorkerCpu, "worker-cpu", "", "the cpu resource to use for the worker, like 1 for 1 core.")
+
 	command.Flags().StringVar(&submitArgs.WorkerMemory, "workerMemory", "", "the memory resource to use for the worker, like 1Gi.")
+	command.Flags().MarkDeprecated("workerMemory", "please use --worker-memory instead")
+	command.Flags().StringVar(&submitArgs.WorkerMemory, "worker-memory", "", "the memory resource to use for the worker, like 1Gi.")
+
 	command.Flags().StringVar(&submitArgs.PSCpu, "psCpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
+	command.Flags().MarkDeprecated("psCpu", "please use --ps-cpu instead")
+	command.Flags().StringVar(&submitArgs.PSCpu, "ps-cpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
+
 	command.Flags().StringVar(&submitArgs.PSMemory, "psMemory", "", "the memory resource to use for the parameter servers, like 1Gi.")
+	command.Flags().MarkDeprecated("psMemory", "please use --ps-memory instead")
+	command.Flags().StringVar(&submitArgs.PSMemory, "ps-memory", "", "the memory resource to use for the parameter servers, like 1Gi.")
+
 	// How to clean up Task
 	command.Flags().StringVar(&submitArgs.CleanPodPolicy, "cleanTaskPolicy", "Running", "How to clean tasks after Training is done, only support Running, None.")
+	command.Flags().MarkDeprecated("cleanTaskPolicy", "please use --clean-task-policy instead")
+	command.Flags().StringVar(&submitArgs.CleanPodPolicy, "clean-task-policy", "Running", "How to clean tasks after Training is done, only support Running, None.")
 
 	// Tensorboard
 	command.Flags().BoolVar(&submitArgs.UseTensorboard, "tensorboard", false, "enable tensorboard")
 	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboardImage", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", "the docker image for tensorboard")
+	command.Flags().MarkDeprecated("tensorboardImage", "please use --tensorboard-image instead")
+	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", "the docker image for tensorboard")
+
 	command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
 
 	// Estimator
 	command.Flags().BoolVar(&submitArgs.UseChief, "chief", false, "enable chief, which is requried for estimator.")
 	command.Flags().BoolVar(&submitArgs.UseEvaluator, "evaluator", false, "enable evaluator, which is optional for estimator.")
 	command.Flags().StringVar(&submitArgs.ChiefCpu, "ChiefCpu", "", "the cpu resource to use for the Chief, like 1 for 1 core.")
+	command.Flags().MarkDeprecated("ChiefCpu", "please use --chief-cpu instead")
+	command.Flags().StringVar(&submitArgs.ChiefCpu, "chief-cpu", "", "the cpu resource to use for the Chief, like 1 for 1 core.")
+
 	command.Flags().StringVar(&submitArgs.ChiefMemory, "ChiefMemory", "", "the memory resource to use for the Chief, like 1Gi.")
+	command.Flags().MarkDeprecated("ChiefMemory", "please use --chief-memory instead")
+	command.Flags().StringVar(&submitArgs.ChiefMemory, "chief-memory", "", "the memory resource to use for the Chief, like 1Gi.")
+
 	command.Flags().StringVar(&submitArgs.EvaluatorCpu, "evaluatorCpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
+	command.Flags().MarkDeprecated("evaluatorCpu", "please use --evaluator-cpu instead")
+	command.Flags().StringVar(&submitArgs.EvaluatorCpu, "evaluator-cpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
+
 	command.Flags().StringVar(&submitArgs.EvaluatorMemory, "evaluatorMemory", "", "the memory resource to use for the evaluator, like 1Gi.")
+	command.Flags().MarkDeprecated("evaluatorMemory", "please use --evaluator-memory instead")
+	command.Flags().StringVar(&submitArgs.EvaluatorMemory, "evaluator-memory", "", "the memory resource to use for the evaluator, like 1Gi.")
+
 	command.Flags().IntVar(&submitArgs.ChiefPort, "chiefPort", 0, "the port of the chief.")
+	command.Flags().MarkDeprecated("chiefPort", "please use --chief-port instead")
+	command.Flags().IntVar(&submitArgs.ChiefPort, "chief-port", 0, "the port of the chief.")
 
 	// command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
 	return command
