@@ -85,10 +85,14 @@ func setupKubeconfig() {
 func updateNamespace(cmd *cobra.Command) (err error) {
 	// Update the namespace
 	if !cmd.Flags().Changed("namespace") {
-		namespace, _, err = clientConfig.Namespace()
-		log.Debugf("auto detect namespace %s", namespace)
-		if err != nil {
-			return err
+		if len(os.Getenv("NAMESPACE")) > 0 {
+			namespace = os.Getenv("NAMESPACE")
+		} else {
+			namespace, _, err = clientConfig.Namespace()
+			log.Debugf("auto detect namespace %s", namespace)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		log.Debugf("force to use namespace %s", namespace)
