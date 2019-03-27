@@ -162,6 +162,8 @@ func init() {
 	if os.Getenv(CHART_PKG_LOC) != "" {
 		standalone_training_chart = filepath.Join(os.Getenv(CHART_PKG_LOC), "training")
 	}
+
+	arenaConfigs = LoadArenaClientConifg()
 }
 
 var (

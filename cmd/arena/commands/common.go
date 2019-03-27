@@ -83,16 +83,18 @@ func setupKubeconfig() {
 
 // Update namespace if it's not set by user
 func updateNamespace(cmd *cobra.Command) (err error) {
+	found := false
 	// Update the namespace
 	if !cmd.Flags().Changed("namespace") {
-		if len(os.Getenv("NAMESPACE")) > 0 {
-			namespace = os.Getenv("NAMESPACE")
-		} else {
+		namespace, found = arenaConfigs["namespace"]
+		if !found {
 			namespace, _, err = clientConfig.Namespace()
 			log.Debugf("auto detect namespace %s", namespace)
 			if err != nil {
 				return err
 			}
+		} else {
+			log.Debugf("use arena config namespace %s", namespace)
 		}
 	} else {
 		log.Debugf("force to use namespace %s", namespace)

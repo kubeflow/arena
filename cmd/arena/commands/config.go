@@ -3,13 +3,17 @@ package commands
 import (
 	"os"
 
-	"github.com/labstack/gommon/log"
+	config "github.com/kubeflow/arena/pkg/util/config"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
 	RecommendedConfigPathEnvVar = "ARENA_CONFIG"
 	DefaultArenaConfigPath      = "~/.arena/config"
+)
+
+var (
+	arenaConfigs map[string]string
 )
 
 // LoadArenaClientConifg returns configs in map
@@ -28,14 +32,6 @@ func LoadArenaClientConifg() (configs map[string]string) {
 		return
 	}
 
-}
+	return config.ReadConfigFile(envVarFileName)
 
-func readEnvConfigFile(filename string) (configs map[string]string) {
-	configs = make(map[string]string)
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Debugf("Illegal arena config file: %s due to %v", filename, err)
-		return configs
-	}
-	defer file.Close()
 }
