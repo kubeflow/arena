@@ -32,6 +32,10 @@ func LoadArenaClientConifg() (configs map[string]string) {
 		return
 	}
 
-	return config.ReadConfigFile(envVarFileName)
+	log.Debugf("Load arena config file %s", envVarFileName)
 
+	configs = config.ReadConfigFile(envVarFileName)
+	log.Debugf("arena configs: %v", configs)
+
+	return configs
 }
