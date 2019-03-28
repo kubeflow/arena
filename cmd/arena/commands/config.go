@@ -30,7 +30,11 @@ func loadArenaConifg() {
 	_, err := os.Stat(envVarFileName)
 	if err != nil {
 		log.Debugf("illegal arena config file: %s due to %v", envVarFileName, err)
-		envVarFileName = homedir.Expand(DefaultArenaConfigPath)
+		envVarFileName, err = homedir.Expand(DefaultArenaConfigPath)
+		if err != nil {
+			log.Debugf("fail to get arena config file: %s due to %v", envVarFileName, err)
+			return
+		}
 	}
 
 	_, err = os.Stat(envVarFileName)
