@@ -246,6 +246,14 @@
   revision = "d5012789d6659eeed305f54c1b1542e7b65829e6"
 
 [[projects]]
+  digest = "1:5d231480e1c64a726869bc4142d270184c419749d34f167646baa21008eb0a79"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:33422d238f147d247752996a26574ac48dcf472976eda7f5134015f06bf16563"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -588,6 +596,7 @@
     "github.com/golang/glog",
     "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1alpha2",
     "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned",
+    "github.com/mitchellh/go-homedir",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",
