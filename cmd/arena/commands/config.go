@@ -13,12 +13,18 @@ const (
 )
 
 var (
-	arenaConfigs map[string]string
+	arenaConfigs           map[string]string
+	alreadyInitArenaConfig bool
 )
 
-// LoadArenaClientConifg returns configs in map
-func LoadArenaClientConifg() (configs map[string]string) {
-	configs = make(map[string]string)
+// loadArenaConifg returns configs in map
+func loadArenaConifg() {
+	if alreadyInitArenaConfig {
+		return
+	}
+	log.Debugf("Init arena config")
+	alreadyInitArenaConfig = true
+	arenaConfigs = make(map[string]string)
 	envVarFileName := os.Getenv(RecommendedConfigPathEnvVar)
 	_, err := os.Stat(envVarFileName)
 	if err != nil {
@@ -34,8 +40,6 @@ func LoadArenaClientConifg() (configs map[string]string) {
 
 	log.Debugf("Load arena config file %s", envVarFileName)
 
-	configs = config.ReadConfigFile(envVarFileName)
-	log.Debugf("arena configs: %v", configs)
-
-	return configs
+	arenaConfigs = config.ReadConfigFile(envVarFileName)
+	log.Debugf("arena configs: %v", arenaConfigs)
 }

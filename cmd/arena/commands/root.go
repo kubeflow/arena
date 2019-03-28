@@ -48,6 +48,8 @@ func NewCommand() *cobra.Command {
 		},
 	}
 
+	loadArenaConifg()
+
 	// command.AddCommand(NewCompletionCommand())
 	// 1. unzip chart
 	// command.AddCommand(NewInstallCommand())
