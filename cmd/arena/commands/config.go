@@ -4,6 +4,7 @@ import (
 	"os"
 
 	config "github.com/kubeflow/arena/pkg/util/config"
+	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,26 +20,26 @@ var (
 
 // loadArenaConifg returns configs in map
 func loadArenaConifg() {
+	log.Debugf("init arena config")
 	if alreadyInitArenaConfig {
 		return
 	}
-	log.Debugf("Init arena config")
 	alreadyInitArenaConfig = true
 	arenaConfigs = make(map[string]string)
 	envVarFileName := os.Getenv(RecommendedConfigPathEnvVar)
 	_, err := os.Stat(envVarFileName)
 	if err != nil {
-		log.Debugf("Illegal arena config file: %s due to %v", envVarFileName, err)
-		envVarFileName = DefaultArenaConfigPath
+		log.Debugf("illegal arena config file: %s due to %v", envVarFileName, err)
+		envVarFileName = homedir.Expand(DefaultArenaConfigPath)
 	}
 
 	_, err = os.Stat(envVarFileName)
 	if err != nil {
-		log.Debugf("Illegal arena config file: %s due to %v", envVarFileName, err)
+		log.Debugf("illegal arena config file: %s due to %v", envVarFileName, err)
 		return
 	}
 
-	log.Debugf("Load arena config file %s", envVarFileName)
+	log.Debugf("load arena config file %s", envVarFileName)
 
 	arenaConfigs = config.ReadConfigFile(envVarFileName)
 	log.Debugf("arena configs: %v", arenaConfigs)

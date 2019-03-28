@@ -43,6 +43,7 @@ var (
 )
 
 func initKubeClient() (*kubernetes.Clientset, error) {
+	loadArenaConifg()
 	if clientset != nil {
 		return clientset, nil
 	}
