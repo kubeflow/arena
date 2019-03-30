@@ -1,30 +1,35 @@
-﻿# 路线图
+﻿# 2019 路线图
 
 本文档给出了 Arena 开发的路线图。
 
+### 2019
 
-### 2018
+#### 核心用户场景
 
-#### 功能特点
+目标: 方便与外部系统集成
 
-- 增强了训练作业
-  - 转为采用 MPI Operator
-  - 根据不同的训练类型设置默认 CPU/内存限制：tf Operator、MPI Operator
-  -支持群调度器
-  - Pytorch Operator
+* 集成工作
+	* 提供Java, Python and C++ API
+	* 和Kubeflow Pipelines项目集成，并且提供Standalone Job, MPI Job, Estimator Job支持
 
-- 训练历史记录管理
-  - 使用 CRD 管理训练历史记录
+目标: 扩展能力范围，提供更多具体任务类型的提交和管理以及模型预测的能力
 
-- 集成数据
-  
-- 多租户
-
-- 易于安装
+* High Level Interfaces:
+	* 支持 Flink 任务的全生命周期管理
+	* 支持 Spark 任务的全生命周期管理
+	* 支持 Pytorch 任务的全生命周期管理
+	* 支持 MXNet 任务的全生命周期管理
+	* 支持 Model Serving的全生命周期管理，这会依赖于KF Serving的实现
 
 
-#### 稳定性/可靠性
+目标: 支持同一个后端Operator的不同API版本，避免因为后端API版本升级影响用户对于现有任务的使用
 
-- 端到端测试
-- 单元测试
-- 自动生成 arena docker镜像
+* 适配不同版本:
+	* v1aphla2 和 v1 TFJob
+	* v1alpha1 和 v1aphla2 MPIJob
+
+目标: 提升自动化测试能力进而能实现告诉迭代
+
+* 自动化测试能力: 
+	* 单元测试
+	* 集成测试
