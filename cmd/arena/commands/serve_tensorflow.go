@@ -23,11 +23,11 @@ import (
 	"io/ioutil"
 
 	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"github.com/kubeflow/arena/pkg/workflow"
 )
 
 var (
@@ -58,8 +58,9 @@ func NewServingTensorFlowCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = ensureNamespace(client, namespace)
+			err = updateNamespace(cmd)
 			if err != nil {
+				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
 			}
@@ -200,21 +201,11 @@ func serveTensorFlow(args []string, serveTensorFlowArgs *ServeTensorFlowArgs, cl
 		return err
 	}
 
-	exist, err := helm.CheckRelease(name)
-	if err != nil {
-		return err
-	}
-	if exist {
-		return fmt.Errorf("the job %s is already exist, please delete it firstly. use 'arena delete %s'", name, name)
-	}
-
-	//log.Debugf("ModelVersion:%s", serveTensorFlowArgs.ModelVersion)
 	name = serveTensorFlowArgs.ServingName
 	if serveTensorFlowArgs.ServingVersion != "" {
 		name += "-" + serveTensorFlowArgs.ServingVersion
 	}
-
-	return helm.InstallRelease(name, namespace, serveTensorFlowArgs, tfservingChart)
+	return workflow.SubmitJob(name, "tf-serving", namespace, serveTensorFlowArgs, tfservingChart)
 }
 
 func generateModelConfigFileContent(serveTensorFlowArgs ServeTensorFlowArgs) string {

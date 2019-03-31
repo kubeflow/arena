@@ -36,6 +36,7 @@ var (
 	// To reduce client-go API call, for 'arena list' scenario
 	allPods        []v1.Pod
 	allJobs        []batchv1.Job
+	allServices    []v1.Service
 	useCache       bool
 	name           string
 	namespace      string
