@@ -156,7 +156,7 @@ func submitHorovodJob(args []string, submitArgs *submitHorovodJobArgs) (err erro
 	}
 
 	if job != nil {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first via 'arena delete %s'", name, name)
 	}
 
 	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, horovod_training_chart)
@@ -165,7 +165,7 @@ func submitHorovodJob(args []string, submitArgs *submitHorovodJobArgs) (err erro
 	}
 
 	log.Infof("The Job %s has been submitted successfully", name)
-	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
+	log.Infof("You can check the job status via `arena get %s --type %s`", name, submitArgs.Mode)
 	return nil
 }
 
@@ -180,7 +180,7 @@ func submitHorovodJobWithHelm(args []string, submitArgs *submitHorovodJobArgs) (
 		return err
 	}
 	if exist {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first via 'arena delete %s'", name, name)
 	}
 
 	// the master is also considered as a worker
