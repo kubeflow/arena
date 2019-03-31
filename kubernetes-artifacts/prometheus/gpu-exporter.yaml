@@ -27,7 +27,7 @@ spec:
         name: docker-sock
       containers:
       - name: node-gpu-exporter
-        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:0.1-b50fec3
+        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:0.1-b4ae190
         imagePullPolicy: Always
         ports:
         - containerPort: 9445
