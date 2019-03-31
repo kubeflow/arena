@@ -30,6 +30,9 @@ Objectives: "Make Arena support the same Operator compatiable with different API
 
 Objectives: "Enchance the software quality of Arena so it can be in the High speed iteration"
 
+* Refactor the source code
+	* Move Training implementation from `cmd` into `pkg`
+
 * Automatic Test Enhancement: 
 	* Unit test
 	* Integration test
