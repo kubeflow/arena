@@ -50,7 +50,7 @@ func NewServingListCommand() *cobra.Command {
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 			fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tSTATUS\tCLUSTER-IP\n")
-			jobs, err := ListServingJobs(client)
+			jobs, err := ListServing(client)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -72,7 +72,7 @@ func NewServingListCommand() *cobra.Command {
 	return command
 }
 
-func ListServingJobs(client *kubernetes.Clientset) ([]ServingJob, error) {
+func ListServing(client *kubernetes.Clientset) ([]ServingJob, error) {
 	jobs := []ServingJob{}
 	ns := namespace
 	if allNamespaces {
