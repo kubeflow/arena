@@ -26,12 +26,8 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/kubeflow/arena/pkg/types"
 )
-
-var serving_charts = map[string]string{
-	"tensorflow-serving-0.2.0":  "Tensorflow",
-	"tensorrt-inference-server-0.0.1": "TensorRT",
-}
 
 func NewServingListCommand() *cobra.Command {
 	var command = &cobra.Command{
@@ -72,12 +68,9 @@ func NewServingListCommand() *cobra.Command {
 	return command
 }
 
-func ListServing(client *kubernetes.Clientset) ([]ServingJob, error) {
-	jobs := []ServingJob{}
-	ns := namespace
-	if allNamespaces {
-		ns = metav1.NamespaceAll
-	}
+func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
+	jobs := []types.Serving{}
+	ns := GetNamespace()
 	serviceNameLabel := "servingName"
 	deployments, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
 		LabelSelector: serviceNameLabel,
@@ -93,38 +86,28 @@ func ListServing(client *kubernetes.Clientset) ([]ServingJob, error) {
 		os.Exit(1)
 	}
 
-	services, err := client.CoreV1().Services(ns).List(metav1.ListOptions{
-		LabelSelector: "servingName",
-	})
-	if err != nil {
-		log.Errorf("Failed to list services due to %v", err)
-		os.Exit(1)
-	}
-	allServices = services.Items
-	log.Debugf("All Services: %++v", allServices)
-
 	log.Debugf("Serving deployments Items is %++v", deployments.Items)
 	for _, deploy := range deployments.Items {
-		jobs = append(jobs, NewServingJob(deploy))
+		jobs = append(jobs, types.NewServingJob(client, deploy, allPods))
 	}
 	log.Debugf("Serving jobs list is %++v", jobs)
 	return jobs, nil
 }
 
-func ListServingJobsByHelm() ([]ServingJob, error) {
+func ListServingJobsByHelm() ([]types.Serving, error) {
 	releaseMap, err := helm.ListAllReleasesWithDetail()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	servingJobs := []ServingJob{}
+	servings := []types.Serving{}
 	for name, cols := range releaseMap {
 		log.Debugf("name: %s, cols: %s", name, cols)
 		namespace := cols[len(cols)-1]
 		chart := cols[len(cols)-2]
 		status := cols[len(cols)-3]
 		log.Debugf("namespace: %s, chart: %s, status:%s", namespace, chart, status)
-		if serveType, ok := serving_charts[chart]; ok {
+		if serveType, ok := types.SERVING_CHARTS[chart]; ok {
 			index := strings.Index(name, "-")
 			//serviceName := name[0:index]
 			serviceVersion := ""
@@ -133,7 +116,7 @@ func ListServingJobsByHelm() ([]ServingJob, error) {
 			}
 			nameAndVersion := strings.Split(name, "-")
 			log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
-			servingJobs = append(servingJobs, ServingJob{
+			servings = append(servings, types.Serving{
 				Name: nameAndVersion[0],
 				Namespace: namespace,
 				Version: serviceVersion,
@@ -142,5 +125,13 @@ func ListServingJobsByHelm() ([]ServingJob, error) {
 			})
 		}
 	}
-	return servingJobs, nil
+	return servings, nil
+}
+
+func GetNamespace() string {
+	ns := namespace
+	if allNamespaces {
+		ns = metav1.NamespaceAll
+	}
+	return ns
 }

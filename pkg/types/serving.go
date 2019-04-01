@@ -1,34 +1,48 @@
-package commands
+package types
 
 import
 (
-	v1 "k8s.io/api/core/v1"
+v1 "k8s.io/api/core/v1"
 
-	log "github.com/sirupsen/logrus"
-	app_v1 "k8s.io/api/apps/v1"
-	"fmt"
+log "github.com/sirupsen/logrus"
+app_v1 "k8s.io/api/apps/v1"
+"fmt"
+	"github.com/kubeflow/arena/pkg/util"
+	"k8s.io/client-go/kubernetes"
 )
 
-type ServingJob struct {
+type Serving struct {
 	Name string
 	ServeType string
 	Namespace string
 	Version string
 	pods []v1.Pod
 	deploy app_v1.Deployment
+	client *kubernetes.Clientset
 }
 
 
-func NewServingJob(deploy app_v1.Deployment) ServingJob {
-	chart := deploy.Labels["chart"]
+var SERVING_CHARTS = map[string]string{
+	"tensorflow-serving-0.2.0":  "Tensorflow",
+	"tensorrt-inference-server-0.0.1": "TensorRT",
+}
+var SERVING_TYPE = map[string]string{
+	"tf-serving":  "Tensorflow",
+	"trt-serving": "TensorRT",
+}
+
+
+func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPods []v1.Pod) Serving {
+	servingTypeLabel := deploy.Labels["servingType"]
 	serviceVersion := deploy.Labels["serviceVersion"]
 	servingName := deploy.Labels["servingName"]
 	servingType := "Tensorflow"
-	if serveType, ok := serving_charts[chart]; ok {
+	if serveType, ok := SERVING_TYPE[servingTypeLabel]; ok {
 		servingType = serveType
 	}
-	job := ServingJob{
+	serving := Serving{
 		Name: servingName,
+		client: client,
 		ServeType: servingType,
 		Namespace: deploy.Namespace,
 		Version: serviceVersion,
@@ -36,25 +50,30 @@ func NewServingJob(deploy app_v1.Deployment) ServingJob {
 	}
 	for _, pod := range allPods {
 		if IsPodControllerByDeploment(pod, deploy) {
-			job.pods = append(job.pods, pod)
+			serving.pods = append(serving.pods, pod)
 		}
 	}
-	return job
+	return serving
 }
 
-func (s ServingJob) GetName() string {
+func (s Serving) GetName() string {
 	if s.Version != "" {
 		return fmt.Sprintf("%s-%s", s.Name, s.Version)
 	}
 	return s.Name
 }
 
-func (s ServingJob) AllPods() []v1.Pod {
+func (s Serving) AllPods() []v1.Pod {
 	return s.pods
 }
 
-func (s ServingJob) GetClusterIP() string {
+func (s Serving) GetClusterIP() string {
 	serviceName := fmt.Sprintf("%s-%s", s.deploy.Labels["release"], s.deploy.Labels["app"])
+	allServices, err := util.AcquireServingServices(s.Namespace, s.client)
+	if err != nil {
+		log.Errorf("failed to list serving services, err: %++v", err)
+		return "N/A"
+	}
 	for _, service := range allServices {
 		if service.Name == serviceName {
 			return service.Spec.ClusterIP
@@ -63,7 +82,7 @@ func (s ServingJob) GetClusterIP() string {
 	return "N/A"
 }
 
-func (s ServingJob) GetStatus() string {
+func (s Serving) GetStatus() string {
 	hasPendingPod := false
 	for _, pod := range s.pods {
 		if pod.Status.Phase == v1.PodPending {
