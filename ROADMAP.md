@@ -15,11 +15,8 @@ Objectives: "Make Arena easily to be integrated with External System."
 Objectives: "Simplify the user experience of the data scientists and provide a low barrier to handle different kind of  training jobs and serve different models."
 
 * High Level Interfaces:
-	* Submit and manage Flink Jobs
-	* Submit and manage Spark Jobs
-	* Submit and manage Pytorch Jobs
-	* Submit and manage MXNet Jobs
-	* Submit and manage Model Serving with KF Serving
+	* Submit and manage other data processing and machine learning jobs, like Spark, Flink, [XDL](https://github.com/alibaba/x-deeplearning), PyTorch, MXNet
+	* Submit and manage Model Serving with [KF Serving](https://github.com/kubeflow/kfserving)
 
 
 Objectives: "Make Arena support the same Operator compatiable with different API version, so the upgrade of operator doesn't impact the existing users' experiences."
@@ -28,7 +25,7 @@ Objectives: "Make Arena support the same Operator compatiable with different API
 	* v1aphla2 and v1 TFJob
 	* v1alpha1 and v1aphla2 MPIJob
 
-Objectives: "Enchance the software quality of Arena so it can be in the High speed iteration"
+Objectives: "Enchance the software quality of Arena so it can be in the quick iteration"
 
 * Refactor the source code
 	* Move Training implementation from `cmd` into `pkg`
