@@ -22,7 +22,7 @@ type ServingJob struct {
 func NewServingJob(deploy app_v1.Deployment) ServingJob {
 	chart := deploy.Labels["chart"]
 	serviceVersion := deploy.Labels["serviceVersion"]
-	servingName := deploy.Labels["serviceName"]
+	servingName := deploy.Labels["servingName"]
 	servingType := "Tensorflow"
 	if serveType, ok := serving_charts[chart]; ok {
 		servingType = serveType

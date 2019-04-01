@@ -64,20 +64,11 @@ func deleteServingJob(servingJob string) error {
 	log.Debugf("%s wasn't deleted by helm due to %v", servingJob, err)
 
 	// 2. Handle serving jobs created by arena
-	if trainingType == "" {
-		servingTypes = getServingTypes(servingJob, namespace)
-		if len(servingTypes) == 0 {
-			return fmt.Errorf("There is no serving job found with the name %s, please check it with `arena serve list | grep %s`",
-				servingJob,
-				servingJob)
-		} else if len(servingTypes) > 1 {
-			return fmt.Errorf("There are more than 1 serving jobs with the same name %s, please double check with `arena serve list | grep %s`. And use `arena serve delete %s --type` to delete the exact one.",
-				servingJob,
-				servingJob,
-				servingJob)
-		}
-	} else {
-		servingTypes = []string{trainingType}
+	servingTypes = getServingTypes(servingJob, namespace)
+	if len(servingTypes) == 0 {
+		return fmt.Errorf("There is no serving job found with the name %s, please check it with `arena serve list | grep %s`",
+			servingJob,
+			servingJob)
 	}
 
 	err = workflow.DeleteJob(servingJob, namespace, servingTypes[0])

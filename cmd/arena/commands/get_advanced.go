@@ -40,10 +40,10 @@ func getTrainingTypes(name, namespace string) (cms []string) {
  */
 func getServingTypes(name, namespace string) (cms []string) {
 	cms = []string{}
-	for _, trainingType := range knownServingTypes {
-		found := isTrainingConfigExist(name, trainingType, namespace)
+	for _, servingType := range knownServingTypes {
+		found := isTrainingConfigExist(name, servingType, namespace)
 		if found {
-			cms = append(cms, trainingType)
+			cms = append(cms, servingType)
 		}
 	}
 

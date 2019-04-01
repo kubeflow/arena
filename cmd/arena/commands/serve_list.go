@@ -78,7 +78,7 @@ func ListServingJobs(client *kubernetes.Clientset) ([]ServingJob, error) {
 	if allNamespaces {
 		ns = metav1.NamespaceAll
 	}
-	serviceNameLabel := "serviceName"
+	serviceNameLabel := "servingName"
 	deployments, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
 		LabelSelector: serviceNameLabel,
 	})
@@ -93,7 +93,9 @@ func ListServingJobs(client *kubernetes.Clientset) ([]ServingJob, error) {
 		os.Exit(1)
 	}
 
-	services, err := client.CoreV1().Services(ns).List(metav1.ListOptions{})
+	services, err := client.CoreV1().Services(ns).List(metav1.ListOptions{
+		LabelSelector: "servingName",
+	})
 	if err != nil {
 		log.Errorf("Failed to list services due to %v", err)
 		os.Exit(1)
