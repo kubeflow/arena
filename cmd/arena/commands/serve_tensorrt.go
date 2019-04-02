@@ -22,10 +22,11 @@ import (
 	"github.com/kubeflow/arena/pkg/util/helm"
 	//log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/kubeflow/arena/pkg/workflow"
 )
 
 var (
-	trtservingChart        = "/charts/trtserving"
+	trtservingChart        =  util.GetChartsFolder() + "/trtserving"
 	defaultTRTServingImage = "registry.cn-beijing.aliyuncs.com/xiaozhou/tensorrt-serving:18.12-py3"
 )
 
@@ -128,5 +129,6 @@ func serveTensorRT(serveTensorRTArgs *ServeTensorRTArgs) (err error) {
 
 	name = serveTensorRTArgs.ServingName
 
-	return helm.InstallRelease(name, namespace, serveTensorRTArgs, trtservingChart)
+	//return helm.InstallRelease(name, namespace, serveTensorRTArgs, trtservingChart)
+	return workflow.SubmitJob(name, "trt-serving", namespace, serveTensorRTArgs, trtservingChart)
 }
