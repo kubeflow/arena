@@ -8,7 +8,9 @@ metadata:
     release: {{ .Release.Name | quote }}
     chart: {{ template "tensorrt-inference-server.chart" . }}
     app: {{ template "tensorrt-inference-server.name" . }}
+    servingName: "{{ .Values.servingName }}"
     serviceName: "{{ .Values.servingName }}"
+    servingType: "trt-serving"
   annotations:
     "helm.sh/created": {{ .Release.Time.Seconds | quote }}
 spec:

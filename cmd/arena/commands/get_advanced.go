@@ -35,6 +35,21 @@ func getTrainingTypes(name, namespace string) (cms []string) {
 	return cms
 }
 
+/*
+* get App Configs by name, which is created by arena
+ */
+func getServingTypes(name, namespace string) (cms []string) {
+	cms = []string{}
+	for _, servingType := range knownServingTypes {
+		found := isTrainingConfigExist(name, servingType, namespace)
+		if found {
+			cms = append(cms, servingType)
+		}
+	}
+
+	return cms
+}
+
 /**
 *  check if the training config exist
  */

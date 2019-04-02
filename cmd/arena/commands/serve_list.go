@@ -24,12 +24,10 @@ import (
 	"github.com/kubeflow/arena/pkg/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/kubernetes"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/kubeflow/arena/pkg/types"
 )
-
-var serving_charts = map[string]string{
-	"tensorflow-serving-0.2.0":  "Tensorflow",
-	"tensorrt-inference-server-0.0.1": "TensorRT",
-}
 
 func NewServingListCommand() *cobra.Command {
 	var command = &cobra.Command{
@@ -39,12 +37,7 @@ func NewServingListCommand() *cobra.Command {
 			util.SetLogLevel(logLevel)
 
 			setupKubeconfig()
-			_, err := initKubeClient()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			releaseMap, err := helm.ListAllReleasesWithDetail()
+			client, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -52,29 +45,20 @@ func NewServingListCommand() *cobra.Command {
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-			fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tSTATUS\n")
-
-			for name, cols := range releaseMap {
-				log.Debugf("name: %s, cols: %s", name, cols)
-				namespace := cols[len(cols)-1]
-				chart := cols[len(cols)-2]
-				status := cols[len(cols)-3]
-				log.Debugf("namespace: %s, chart: %s, status:%s", namespace, chart, status)
-				if serveType, ok := serving_charts[chart]; ok {
-					index := strings.Index(name, "-")
-					//serviceName := name[0:index]
-					serviceVersion := ""
-					if index > -1 {
-						serviceVersion = name[index+1:]
-					}
-					nameAndVersion := strings.Split(name, "-")
-					log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
-					fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name,
-						serveType,
-						serviceVersion,
-						status)
-
-				}
+			fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tSTATUS\tCLUSTER-IP\n")
+			jobs, err := ListServing(client)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			for _, servingJob := range jobs {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+					servingJob.GetName(),
+					servingJob.ServeType,
+					servingJob.Version,
+					servingJob.GetStatus(),
+					servingJob.GetClusterIP(),
+						)
 			}
 
 			_ = w.Flush()
@@ -82,4 +66,72 @@ func NewServingListCommand() *cobra.Command {
 	}
 
 	return command
+}
+
+func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
+	jobs := []types.Serving{}
+	ns := GetNamespace()
+	serviceNameLabel := "servingName"
+	deployments, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
+		LabelSelector: serviceNameLabel,
+	})
+	if err != nil {
+		log.Errorf("Failed due to %v", err)
+		os.Exit(1)
+	}
+
+	allPods, err = acquireAllPods(client)
+	if err != nil {
+		log.Errorf("Failed to acquireAllPods due to %v", err)
+		os.Exit(1)
+	}
+
+	log.Debugf("Serving deployments Items is %++v", deployments.Items)
+	for _, deploy := range deployments.Items {
+		jobs = append(jobs, types.NewServingJob(client, deploy, allPods))
+	}
+	log.Debugf("Serving jobs list is %++v", jobs)
+	return jobs, nil
+}
+
+func ListServingJobsByHelm() ([]types.Serving, error) {
+	releaseMap, err := helm.ListAllReleasesWithDetail()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	servings := []types.Serving{}
+	for name, cols := range releaseMap {
+		log.Debugf("name: %s, cols: %s", name, cols)
+		namespace := cols[len(cols)-1]
+		chart := cols[len(cols)-2]
+		status := cols[len(cols)-3]
+		log.Debugf("namespace: %s, chart: %s, status:%s", namespace, chart, status)
+		if serveType, ok := types.SERVING_CHARTS[chart]; ok {
+			index := strings.Index(name, "-")
+			//serviceName := name[0:index]
+			serviceVersion := ""
+			if index > -1 {
+				serviceVersion = name[index+1:]
+			}
+			nameAndVersion := strings.Split(name, "-")
+			log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
+			servings = append(servings, types.Serving{
+				Name: nameAndVersion[0],
+				Namespace: namespace,
+				Version: serviceVersion,
+				ServeType: serveType,
+				//Status: status,
+			})
+		}
+	}
+	return servings, nil
+}
+
+func GetNamespace() string {
+	ns := namespace
+	if allNamespaces {
+		ns = metav1.NamespaceAll
+	}
+	return ns
 }
