@@ -129,20 +129,15 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 
 	fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tGPU(Total)\tGPU(Allocated)\n")
 	for _, nodeInfo := range nodeInfos {
+		// Skip NotReady node
+		//if ! isNodeReady(nodeInfo.node) {
+		//	continue
+		//}
 		totalGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
 
-		address := "unknown"
-		if len(nodeInfo.node.Status.Addresses) > 0 {
-			// address = nodeInfo.node.Status.Addresses[0].Address
-			for _, addr := range nodeInfo.node.Status.Addresses {
-				if addr.Type == v1.NodeInternalIP {
-					address = addr.Address
-					break
-				}
-			}
-		}
+		address := getNodeInternalAddress(nodeInfo.node)
 
 		role := strings.Join(findNodeRoles(&nodeInfo.node), ",")
 		if len(role) == 0 {
@@ -181,19 +176,16 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 
 	fmt.Fprintf(w, "\n")
 	for _, nodeInfo := range nodeInfos {
+		// Skip NotReady node
+		//if ! isNodeReady(nodeInfo.node) {
+		//	continue
+		//}
+
 		totalGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
 
-		address := "unknown"
-		if len(nodeInfo.node.Status.Addresses) > 0 {
-			//address = nodeInfo.node.Status.Addresses[0].Address
-			for _, addr := range nodeInfo.node.Status.Addresses {
-				if addr.Type == v1.NodeInternalIP {
-					address = addr.Address
-				}
-			}
-		}
+		address := getNodeInternalAddress(nodeInfo.node)
 
 		role := strings.Join(findNodeRoles(&nodeInfo.node), ",")
 		if len(role) == 0 {
@@ -289,4 +281,26 @@ func findNodeRoles(node *v1.Node) []string {
 		}
 	}
 	return roles.List()
+}
+
+func isNodeReady(node v1.Node) bool {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == v1.NodeReady && condition.Status == v1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+func getNodeInternalAddress(node v1.Node) string {
+	address := "unknown"
+	if len(node.Status.Addresses) > 0 {
+		//address = nodeInfo.node.Status.Addresses[0].Address
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == v1.NodeInternalIP {
+				address = addr.Address
+			}
+		}
+	}
+	return address
 }
