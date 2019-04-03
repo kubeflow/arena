@@ -121,23 +121,17 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 	findReadyNode := false
 
 	for _, item := range nodeList.Items {
-		for _, condition := range item.Status.Conditions {
-			if condition.Type == "Ready" {
-				if condition.Status == "True" {
-					node = item
-					findReadyNode = true
-					break
-				}
-			}
+		if isNodeReady(item) {
+			node = item
+			findReadyNode = true
+			break
 		}
 	}
 
 	if !findReadyNode {
 		return "", fmt.Errorf("Failed to find the ready node for exporting tensorboard.")
 	}
-
-	address = node.Status.Addresses[0].Address
-	url = fmt.Sprintf("http://%s:%d", address, port)
+	url = fmt.Sprintf("http://%s:%d", getNodeInternalAddress(node), port)
 
 	return url, nil
 }
