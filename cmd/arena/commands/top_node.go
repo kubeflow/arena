@@ -130,9 +130,9 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tGPU(Total)\tGPU(Allocated)\n")
 	for _, nodeInfo := range nodeInfos {
 		// Skip NotReady node
-		if ! isNodeReady(nodeInfo.node) {
-			continue
-		}
+		//if ! isNodeReady(nodeInfo.node) {
+		//	continue
+		//}
 		totalGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
@@ -177,9 +177,9 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 	fmt.Fprintf(w, "\n")
 	for _, nodeInfo := range nodeInfos {
 		// Skip NotReady node
-		if ! isNodeReady(nodeInfo.node) {
-			continue
-		}
+		//if ! isNodeReady(nodeInfo.node) {
+		//	continue
+		//}
 
 		totalGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
 		totalGPUsInCluster += totalGPU

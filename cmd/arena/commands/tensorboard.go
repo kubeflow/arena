@@ -66,7 +66,6 @@ func (submitArgs *submitTensorboardArgs) isLoggingInPVC(dataMap map[string]strin
 func tensorboardURL(name, namespace string) (url string, err error) {
 
 	var (
-		address string
 		port    int32
 	)
 
