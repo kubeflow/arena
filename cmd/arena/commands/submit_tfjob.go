@@ -125,7 +125,7 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
 
 	// Estimator
-	command.Flags().BoolVar(&submitArgs.UseChief, "chief", false, "enable chief, which is requried for estimator.")
+	command.Flags().BoolVar(&submitArgs.UseChief, "chief", false, "enable chief, which is required for estimator.")
 	command.Flags().BoolVar(&submitArgs.UseEvaluator, "evaluator", false, "enable evaluator, which is optional for estimator.")
 	command.Flags().StringVar(&submitArgs.ChiefCpu, "ChiefCpu", "", "the cpu resource to use for the Chief, like 1 for 1 core.")
 	command.Flags().MarkDeprecated("ChiefCpu", "please use --chief-cpu instead")

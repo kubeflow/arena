@@ -16,7 +16,7 @@ arena submit tfjob [flags]
       --ChiefCpu string           the cpu resource to use for the Chief, like 1 for 1 core.
       --ChiefMemory string        the memory resource to use for the Chief, like 1Gi.
   -a, --annotation stringArray    the annotations
-      --chief                     enable chief, which is requried for estimator.
+      --chief                     enable chief, which is required for estimator.
       --chiefPort int             the port of the chief.
       --cleanTaskPolicy string    How to clean tasks after Training is done, only support Running, None. (default "Running")
   -d, --data stringArray          specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>
