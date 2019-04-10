@@ -1,30 +1,35 @@
-# Roadmap
+# Arena 2019 Roadmap
 
-This document defines a high level roadmap for the arena development.
+This document defines a high level roadmap for Arena development.
 
+### 2019
 
-### 2018
+#### Core CUJs
 
-#### Features
+Objectives: "Make Arena easily to be integrated with External System."
 
-- Enhance Training Job
-  - Move to MPI-operator
-  - Set default CPU/Memory limit according to different types of training: tf-operator, MPI-operator
-  - Support Gang Scheuler
-  - Pytorch-operator
+* Integration
+	* Provide the Java, Python and C++ API for system interaction
+	* Integrate with Pipelines to support Standalone Job, MPI Job, Estimator Job 
 
-- Training History Management
-  - Use CRD to manage the training history
+Objectives: "Simplify the user experience of the data scientists and provide a low barrier to handle different kind of  training jobs and serve different models."
 
-- Integrate with data
-  
-- Muti-tenancy
-
-- Easy install
+* High Level Interfaces:
+	* Submit and manage other data processing and machine learning jobs, like Spark, Flink, [XDL](https://github.com/alibaba/x-deeplearning), PyTorch, MXNet
+	* Submit and manage Model Serving with [KF Serving](https://github.com/kubeflow/kfserving)
 
 
-#### Stability/Reliability
+Objectives: "Make Arena support the same Operator compatiable with different API version, so the upgrade of operator doesn't impact the existing users' experiences."
 
-- end-to-end testing
-- unit tests
-- build arena docker images automatically
+* Compatibility:
+	* v1aphla2 and v1 TFJob
+	* v1alpha1 and v1aphla2 MPIJob
+
+Objectives: "Enchance the software quality of Arena so it can be in the quick iteration"
+
+* Refactor the source code
+	* Move Training implementation from `cmd` into `pkg`
+
+* Automatic Test Enhancement: 
+	* Unit test
+	* Integration test
