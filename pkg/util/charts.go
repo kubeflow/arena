@@ -14,6 +14,7 @@ func pathExists(path string) bool {
 	}
 	return true
 }
+
 var chartFolder = ""
 
 func GetChartsFolder() string {

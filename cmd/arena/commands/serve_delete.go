@@ -17,12 +17,12 @@ package commands
 import (
 	"os"
 
-	"github.com/kubeflow/arena/pkg/util/helm"
-	"github.com/spf13/cobra"
-	"github.com/kubeflow/arena/pkg/workflow"
-	log "github.com/sirupsen/logrus"
 	"fmt"
 	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/workflow"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 // NewDeleteCommand

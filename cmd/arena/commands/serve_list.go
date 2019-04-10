@@ -20,13 +20,13 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/kubeflow/arena/pkg/types"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"github.com/kubeflow/arena/pkg/types"
+	"k8s.io/client-go/kubernetes"
 )
 
 func NewServingListCommand() *cobra.Command {
@@ -58,7 +58,7 @@ func NewServingListCommand() *cobra.Command {
 					servingJob.Version,
 					servingJob.GetStatus(),
 					servingJob.GetClusterIP(),
-						)
+				)
 			}
 
 			_ = w.Flush()
@@ -117,9 +117,9 @@ func ListServingJobsByHelm() ([]types.Serving, error) {
 			nameAndVersion := strings.Split(name, "-")
 			log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
 			servings = append(servings, types.Serving{
-				Name: nameAndVersion[0],
+				Name:      nameAndVersion[0],
 				Namespace: namespace,
-				Version: serviceVersion,
+				Version:   serviceVersion,
 				ServeType: serveType,
 				//Status: status,
 			})

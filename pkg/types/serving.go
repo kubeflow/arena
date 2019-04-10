@@ -1,36 +1,33 @@
 package types
 
-import
-(
-v1 "k8s.io/api/core/v1"
+import (
+	v1 "k8s.io/api/core/v1"
 
-log "github.com/sirupsen/logrus"
-app_v1 "k8s.io/api/apps/v1"
-"fmt"
+	"fmt"
 	"github.com/kubeflow/arena/pkg/util"
+	log "github.com/sirupsen/logrus"
+	app_v1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 type Serving struct {
-	Name string
+	Name      string
 	ServeType string
 	Namespace string
-	Version string
-	pods []v1.Pod
-	deploy app_v1.Deployment
-	client *kubernetes.Clientset
+	Version   string
+	pods      []v1.Pod
+	deploy    app_v1.Deployment
+	client    *kubernetes.Clientset
 }
 
-
 var SERVING_CHARTS = map[string]string{
-	"tensorflow-serving-0.2.0":  "Tensorflow",
+	"tensorflow-serving-0.2.0":        "Tensorflow",
 	"tensorrt-inference-server-0.0.1": "TensorRT",
 }
 var SERVING_TYPE = map[string]string{
 	"tf-serving":  "Tensorflow",
 	"trt-serving": "TensorRT",
 }
-
 
 func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPods []v1.Pod) Serving {
 	servingTypeLabel := deploy.Labels["servingType"]
@@ -41,12 +38,12 @@ func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPo
 		servingType = serveType
 	}
 	serving := Serving{
-		Name: servingName,
-		client: client,
+		Name:      servingName,
+		client:    client,
 		ServeType: servingType,
 		Namespace: deploy.Namespace,
-		Version: serviceVersion,
-		deploy: deploy,
+		Version:   serviceVersion,
+		deploy:    deploy,
 	}
 	for _, pod := range allPods {
 		if IsPodControllerByDeploment(pod, deploy) {
