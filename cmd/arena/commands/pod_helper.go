@@ -236,12 +236,12 @@ func makePodConditionsSortedByTime(conditions []v1.PodCondition) []v1.PodConditi
 }
 
 func getPodLatestCondition(pod v1.Pod) (cond v1.PodCondition) {
-	condidtions := makePodConditionsSortedByTime(pod.Status.Conditions)
-	if len(condidtions) > 0 {
-		cond = condidtions[0]
-		log.Debugf("the pod %s's conditions %v is not empty", pod.Name, condidtions)
+	conditions := makePodConditionsSortedByTime(pod.Status.Conditions)
+	if len(conditions) > 0 {
+		cond = conditions[0]
+		log.Debugf("the pod %s's conditions %v is not empty", pod.Name, conditions)
 	} else {
-		log.Debugf("the pod %s's conditions %v is empty", pod.Name, condidtions)
+		log.Debugf("the pod %s's conditions %v is empty", pod.Name, conditions)
 	}
 
 	return

@@ -142,11 +142,11 @@ chart and their default values.
 | `mpiWorker.image.pullPolicy` | `pullPolicy` for the service mpi worker | `IfNotPresent` |
 | `mpiWorker.image.tag` | `tag` for the service mpi worker | `IfNotPresent` |
 | `mpiWorker.sshPort` | mpiWorker's sshPort | `22` |
-| `mpiWorker.env` | mpiWorker's environment varaibles | `{}` |
+| `mpiWorker.env` | mpiWorker's environment variables | `{}` |
 | `mpiMaster.image.repository` | horovod image | `registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/tf-horovod-k8s` |
 | `mpiMaster.image.pullPolicy` | `pullPolicy` for the service mpi master | `IfNotPresent` |
 | `mpiMaster.args` | mpiMaster's args | `{}` |
-| `mpiMaster.env` | mpiMaster's environment varaibles | `{}` |
+| `mpiMaster.env` | mpiMaster's environment variables | `{}` |
 | `tensorboard.enabled` | if the tensorboard is enabled | `true` |
 | `tensorboard.image.repository` | `repository` for tensorboard | `registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/tensorboard` |
 | `tensorboard.image.pullPolicy` | `pullPolicy` for tensorboard | `IfNotPresent` |

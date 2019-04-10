@@ -459,10 +459,10 @@ func (tt *MPIJobTrainer) isChiefJob(job batchv1.Job, name string, namespace stri
 	}
 
 	if job.Name == fmt.Sprintf("%s-launcher", name) || job.Name == fmt.Sprintf("%s-mpijob-launcher", name) {
-		log.Debugf("The job %s is the cheif job of %s", job.Name, name)
+		log.Debugf("The job %s is the chief job of %s", job.Name, name)
 		return true
 	} else {
-		log.Debugf("The job %s is not the cheif job of %s", job.Name, name)
+		log.Debugf("The job %s is not the chief job of %s", job.Name, name)
 	}
 
 	return false

@@ -216,7 +216,7 @@ func (m *HorovodJobTrainer) getTrainingJob(name, namespace string) (TrainingJob,
 				log.Debugf("set pod %s as first jobpod, and it's time is %v", jobPod.Name, jobPod.CreationTimestamp)
 			} else {
 				log.Debugf("current jobpod %s , and it's time is %v", jobPod.Name, latest)
-				log.Debugf("candidiate jobpod %s , and it's time is %v", item.Name, item.CreationTimestamp)
+				log.Debugf("candidate jobpod %s , and it's time is %v", item.Name, item.CreationTimestamp)
 				current := item.CreationTimestamp
 				if latest.Before(&current) {
 					jobPod = item
@@ -291,7 +291,7 @@ func (m *HorovodJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJo
 				log.Debugf("set pod %s as first jobpod, and it's time is %v", jobPod.Name, jobPod.CreationTimestamp)
 			} else {
 				log.Debugf("current jobpod %s , and it's time is %v", jobPod.Name, latest)
-				log.Debugf("candidiate jobpod %s , and it's time is %v", item.Name, item.CreationTimestamp)
+				log.Debugf("candidate jobpod %s , and it's time is %v", item.Name, item.CreationTimestamp)
 				current := item.CreationTimestamp
 				if latest.Before(&current) {
 					jobPod = item
