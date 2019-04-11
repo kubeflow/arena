@@ -2,18 +2,20 @@ package types
 
 import "k8s.io/api/core/v1"
 
-type TrainingJobInfo struct {
+type JobInfo struct {
 	// The name of the training job
 	Name string `json:"name"`
 	// The namespace of the training job
 	Namespace string `json:"namespace"`
 	// The time of the training job
 	Duration string `json:"duration"`
-	// The status of the Job
+	// The status of the training Job
 	Status JobStatus `json:"status"`
 
-	// The training type of the job
+	// The training type of the training job
 	Trainer string `json:"trainer"`
+	// The tensorboard of the training job
+	Tensorboard string `json:"tensorboard,omitempty"`
 
 	// The instances under the training job
 	Instances []Instance `json:"instances"`

@@ -15,6 +15,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
 
@@ -193,12 +195,16 @@ func printTrainingJob(job TrainingJob, printArgs PrintArgs) {
 	case "name":
 		fmt.Println(job.Name())
 		// for future CRD support
-		// case "json":
-		// 	outBytes, _ := json.MarshalIndent(job, "", "    ")
-		// 	fmt.Println(string(outBytes))
-		// case "yaml":
-		// 	outBytes, _ := yaml.Marshal(job.)
-		// 	fmt.Print(string(outBytes))
+	case "json":
+		outBytes, err := json.MarshalIndent(BuildJobInfo(job), "", "    ")
+		if err != nil {
+			fmt.Sprintf("Failed due to %v", err)
+			return
+		}
+		fmt.Println(string(outBytes))
+	case "yaml":
+		outBytes, _ := yaml.Marshal(BuildJobInfo(job))
+		fmt.Print(string(outBytes))
 	case "wide", "":
 		printSingleJobHelper(job, printArgs)
 	default:
@@ -216,10 +222,14 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	pods := job.AllPods()
 
 	for _, pod := range pods {
-		hostIP := "N/A"
+		// hostIP := "N/A"
 
-		if pod.Status.Phase == v1.PodRunning {
-			hostIP = pod.Status.HostIP
+		// if pod.Status.Phase == v1.PodRunning {
+		hostIP := pod.Status.HostIP
+		// }
+
+		if len(hostIP) == 0 {
+			hostIP = "N/A"
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", job.Name(),
