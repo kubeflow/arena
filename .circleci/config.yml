@@ -17,7 +17,7 @@ jobs:
           test -z $(go fmt ./...)
           go vet ./...
           go test -race -v ./...
-    - run: docker build -t acs/arena:$CIRCLE_BUILD_NUM .
+    - run: docker build -t acs/arena:$CIRCLE_BUILD_NUM -f Dockerfile.install .
     - run:
         name: codecov
         command: |
