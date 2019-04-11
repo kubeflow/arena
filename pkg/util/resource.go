@@ -7,11 +7,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
 var (
 	allServices = map[string][]v1.Service{}
-	allPods 	= map[string][]v1.Pod{}
+	allPods     = map[string][]v1.Pod{}
 )
-
 
 func AcquireAllPods(namespace string, client *kubernetes.Clientset) ([]v1.Pod, error) {
 	if podsCache, ok := allPods[namespace]; ok {
@@ -26,7 +26,7 @@ func AcquireAllPods(namespace string, client *kubernetes.Clientset) ([]v1.Pod, e
 		pods = append(pods, pod)
 	}
 	allPods[namespace] = pods
-	log.Debugf("Pods in %s: %++v",namespace, allPods[namespace])
+	log.Debugf("Pods in %s: %++v", namespace, allPods[namespace])
 	return pods, nil
 }
 
@@ -42,6 +42,6 @@ func AcquireServingServices(namespace string, client *kubernetes.Clientset) ([]v
 		return []v1.Service{}, err
 	}
 	allServices[namespace] = serviceList.Items
-	log.Debugf("Services in %s: %++v",namespace, allServices[namespace])
+	log.Debugf("Services in %s: %++v", namespace, allServices[namespace])
 	return allServices[namespace], nil
 }

@@ -23,11 +23,11 @@ import (
 	"io/ioutil"
 
 	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"github.com/kubeflow/arena/pkg/workflow"
 )
 
 var (
@@ -91,7 +91,7 @@ type ServeTensorFlowArgs struct {
 	VersionPolicy          string `yaml:"versionPolicy"`   // --versionPolicy
 	ModelConfigFile        string `yaml:"modelConfigFile"` // --modelConfigFile
 	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
-	Image           	   string `yaml:"image"`           // --image
+	Image                  string `yaml:"image"` // --image
 
 	ServeArgs `yaml:",inline"`
 
