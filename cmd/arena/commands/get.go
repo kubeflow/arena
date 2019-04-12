@@ -198,13 +198,17 @@ func printTrainingJob(job TrainingJob, printArgs PrintArgs) {
 	case "json":
 		outBytes, err := json.MarshalIndent(BuildJobInfo(job), "", "    ")
 		if err != nil {
-			fmt.Sprintf("Failed due to %v", err)
+			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Println(string(outBytes))
 		}
 	case "yaml":
-		outBytes, _ := yaml.Marshal(BuildJobInfo(job))
-		fmt.Print(string(outBytes))
+		outBytes, err := yaml.Marshal(BuildJobInfo(job))
+		if err != nil {
+			fmt.Printf("Failed due to %v", err)
+		} else {
+			fmt.Println(string(outBytes))
+		}
 	case "wide", "":
 		printSingleJobHelper(job, printArgs)
 	default:
