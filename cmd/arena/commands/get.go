@@ -199,9 +199,9 @@ func printTrainingJob(job TrainingJob, printArgs PrintArgs) {
 		outBytes, err := json.MarshalIndent(BuildJobInfo(job), "", "    ")
 		if err != nil {
 			fmt.Sprintf("Failed due to %v", err)
-			return
+		} else {
+			fmt.Println(string(outBytes))
 		}
-		fmt.Println(string(outBytes))
 	case "yaml":
 		outBytes, _ := yaml.Marshal(BuildJobInfo(job))
 		fmt.Print(string(outBytes))
