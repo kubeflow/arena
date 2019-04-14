@@ -15,6 +15,9 @@ type JobInfo struct {
 	// The tensorboard of the training job
 	Tensorboard string `json:"tensorboard,omitempty"`
 
+	// The name of the chief Instance
+	ChiefName string `json:"chiefName" yaml:"chiefName"`
+
 	// The instances under the training job
 	Instances []Instance `json:"instances"`
 }

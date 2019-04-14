@@ -95,6 +95,7 @@ func BuildJobInfo(job TrainingJob) *types.JobInfo {
 		Duration:    util.ShortHumanDuration(job.Duration()),
 		Trainer:     job.Trainer(),
 		Tensorboard: tensorboard,
+		ChiefName:   job.ChiefPod().Name,
 		Instances:   instances,
 	}
 }
