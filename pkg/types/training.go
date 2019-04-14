@@ -1,7 +1,5 @@
 package types
 
-import "k8s.io/api/core/v1"
-
 type JobInfo struct {
 	// The name of the training job
 	Name string `json:"name"`
@@ -37,11 +35,13 @@ const (
 
 type Instance struct {
 	// the status of of instance
-	Status v1.PodPhase `json:"status"`
+	Status string `json:"status"`
 	// the name of instance
 	Name string `json:"name"`
 	// the age of instance
 	Age string `json:"age"`
 	// the node instance runs on
 	Node string `json:"node"`
+	// the instance is chief or not
+	IsChief bool `json:"chief" yaml:"chief"`
 }

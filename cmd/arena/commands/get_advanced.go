@@ -16,6 +16,7 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kubeflow/arena/pkg/types"
 	"github.com/kubeflow/arena/pkg/util"
@@ -73,12 +74,17 @@ func BuildJobInfo(job TrainingJob) *types.JobInfo {
 
 	instances := []types.Instance{}
 	for _, pod := range job.AllPods() {
+		isChief := false
+		if pod.Name == job.ChiefPod().Name {
+			isChief = true
+		}
 
 		instances = append(instances, types.Instance{
-			Name:   pod.Name,
-			Status: pod.Status.Phase,
-			Age:    util.ShortHumanDuration(job.Age()),
-			Node:   pod.Status.HostIP,
+			Name:    pod.Name,
+			Status:  strings.ToUpper(string(pod.Status.Phase)),
+			Age:     util.ShortHumanDuration(job.Age()),
+			Node:    pod.Status.HostIP,
+			IsChief: isChief,
 		})
 	}
 
