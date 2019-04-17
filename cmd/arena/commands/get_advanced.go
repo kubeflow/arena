@@ -16,8 +16,12 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/kubeflow/arena/pkg/types"
+	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
+	log "github.com/sirupsen/logrus"
 )
 
 /*
@@ -56,4 +60,42 @@ func getServingTypes(name, namespace string) (cms []string) {
 func isTrainingConfigExist(name, trainingType, namespace string) bool {
 	configName := fmt.Sprintf("%s-%s", name, trainingType)
 	return kubectl.CheckAppConfigMap(configName, namespace)
+}
+
+/**
+* BuildTrainingJobInfo returns types.TrainingJobInfo
+ */
+func BuildJobInfo(job TrainingJob) *types.JobInfo {
+
+	tensorboard, err := tensorboardURL(job.Name(), job.ChiefPod().Namespace)
+	if tensorboard == "" || err != nil {
+		log.Debugf("Tensorboard dones't show up because of %v, or tensorboard url %s", err, tensorboard)
+	}
+
+	instances := []types.Instance{}
+	for _, pod := range job.AllPods() {
+		isChief := false
+		if pod.Name == job.ChiefPod().Name {
+			isChief = true
+		}
+
+		instances = append(instances, types.Instance{
+			Name:    pod.Name,
+			Status:  strings.ToUpper(string(pod.Status.Phase)),
+			Age:     util.ShortHumanDuration(job.Age()),
+			Node:    pod.Status.HostIP,
+			IsChief: isChief,
+		})
+	}
+
+	return &types.JobInfo{
+		Name:        job.Name(),
+		Namespace:   job.Namespace(),
+		Status:      types.JobStatus(GetJobRealStatus(job)),
+		Duration:    util.ShortHumanDuration(job.Duration()),
+		Trainer:     job.Trainer(),
+		Tensorboard: tensorboard,
+		ChiefName:   job.ChiefPod().Name,
+		Instances:   instances,
+	}
 }
