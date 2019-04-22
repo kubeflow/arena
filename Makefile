@@ -55,8 +55,22 @@ IMAGE_PREFIX=${IMAGE_NAMESPACE}/
 endif
 
 # Build the project
-.PHONY: all
-all: cli-linux-amd64 
+.PHONY: default
+default:
+ifeq ($(OS),Windows_NT)
+default: cli-windows
+else
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+$(info "Building on Linux")
+default: cli-linux-amd64
+else ifeq ($(UNAME_S),Darwin)
+$(info "Building on Darwin")
+default: cli-darwin
+else
+$(error "The OS is not supported")
+endif
+endif
 
 .PHONY: cli-linux-amd64
 cli-linux-amd64:
@@ -67,12 +81,12 @@ cli-linux-amd64:
 .PHONY: cli-darwin
 cli-darwin:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/arena-darwin-amd64 ./cmd/arena/*.go
+	CGO_ENABLED=0 GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
 
 .PHONY: cli-windows
 cli-windows:
 	mkdir -p bin
-	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/arena-windows-amd64 ./cmd/arena/*.go
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
 
 
 .PHONY: install-image
