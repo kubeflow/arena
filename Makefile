@@ -55,20 +55,20 @@ IMAGE_PREFIX=${IMAGE_NAMESPACE}/
 endif
 
 # Build the project
-.PHONY: all
-all:
+.PHONY: default
+default:
 ifeq ($(OS),Windows_NT)
-all: cli-windows
+default: cli-windows
 else
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 $(info "Building on Linux")
-all: cli-linux-amd64
+default: cli-linux-amd64
 else ifeq ($(UNAME_S),Darwin)
-$(error "Building on Darwin")
-all: cli-darwin
+$(info "Building on Darwin")
+default: cli-darwin
 else
-$(info "The OS is not supported")
+$(error "The OS is not supported")
 endif
 endif
 
