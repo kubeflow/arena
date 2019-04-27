@@ -31,11 +31,13 @@ var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
 
 var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
 
+// ValidateJobName validates the job name, its length should less than 63, and match dns1123LabelFmt
 func ValidateJobName(value string) error {
 	if len(value) > DNS1123LabelMaxLength {
-		return fmt.Errorf("The len of name %d is too long, it should be less than %d",
+		return fmt.Errorf("The len %d of name %s is too long, it should be less than %d",
 			len(value),
-			DNS1123SubdomainMaxLength)
+			value,
+			DNS1123LabelMaxLength)
 	}
 	if !dns1123LabelRegexp.MatchString(value) {
 		return fmt.Errorf("The job name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character.")
