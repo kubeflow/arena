@@ -27,17 +27,20 @@ const dns1123LabelFmt string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
 const dns1123LabelErrMsg string = "a DNS-1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character"
 const DNS1123LabelMaxLength int = 63
 
+// Job Max lenth should be 49
+const JobMaxLength int = 49
+
 var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
 
 var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
 
 // ValidateJobName validates the job name, its length should less than 63, and match dns1123LabelFmt
 func ValidateJobName(value string) error {
-	if len(value) > DNS1123LabelMaxLength {
+	if len(value) > JobMaxLength {
 		return fmt.Errorf("The len %d of name %s is too long, it should be less than %d",
 			len(value),
 			value,
-			DNS1123LabelMaxLength)
+			JobMaxLength)
 	}
 	if !dns1123LabelRegexp.MatchString(value) {
 		return fmt.Errorf("The job name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character.")
