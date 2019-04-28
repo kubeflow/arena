@@ -1,18 +1,19 @@
-## arena serve tensorflow
+## arena serve tensorrt
 
-Submit tensorflow serving job to deploy and serve machine learning models.
+Submit tensorRT inference serving job to deploy and serve machine learning models.
 
 ### Synopsis
 
-Submit tensorflow serving job to deploy and serve machine learning models.
+Submit tensorRT inference serving job to deploy and serve machine learning models.
 
 ```
-arena serve tensorflow [flags]
+arena serve tensorrt [flags]
 ```
 
 ### Options
 
 ```
+      --allowMetrics             Open Metric
       --command string           the command will inject to container's command.
       --cpu string               the request cpu of each replica to run the serve.
   -d, --data stringArray         specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>
@@ -20,19 +21,19 @@ arena serve tensorflow [flags]
   -e, --envs stringArray         the environment variables
       --exposeService            expose service using Istio gateway for external access or not (not expose by default)
       --gpus int                 the limit GPU count of each replica to run the serve.
-  -h, --help                     help for tensorflow
-      --image string             the docker image name of serve job, and the default image is tensorflow/serving:latest (default "tensorflow/serving:latest")
+      --grpcPort int             the port of grpc serving server (default 8001)
+  -h, --help                     help for tensorrt
+      --httpPort int             the port of http serving server (default 8000)
+      --image string             the docker image name of serve job, and the default image is registry.cn-beijing.aliyuncs.com/xiaozhou/tensorrt-serving:18.12-py3 (default "registry.cn-beijing.aliyuncs.com/xiaozhou/tensorrt-serving:18.12-py3")
       --imagePullPolicy string   the policy to pull the image, and the default policy is IfNotPresent (default "IfNotPresent")
       --memory string            the request memory of each replica to run the serve.
-      --modelConfigFile string   Corresponding with --model_config_file in tensorflow serving
+      --metricPort int           the port of metrics server (default 8002)
       --modelName string         the model name for serving
       --modelPath string         the model path for serving in the container
-      --port int                 the port of tensorflow gRPC listening port (default 8500)
+      --modelStore string        the path of tensorRT model path
       --replicas int             the replicas number of the serve job. (default 1)
-      --restfulPort int          the port of tensorflow RESTful listening port (default 8501)
       --servingName string       the serving name
       --servingVersion string    the serving version
-      --versionPolicy string     support latest, latest:N, specific:N, all
 ```
 
 ### Options inherited from parent commands
