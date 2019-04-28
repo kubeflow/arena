@@ -13,56 +13,56 @@ arena submit tfjob [flags]
 ### Options
 
 ```
-      --ChiefCpu string           the cpu resource to use for the Chief, like 1 for 1 core.
-      --ChiefMemory string        the memory resource to use for the Chief, like 1Gi.
-  -a, --annotation stringArray    the annotations
-      --chief                     enable chief, which is required for estimator.
-      --chiefPort int             the port of the chief.
-      --cleanTaskPolicy string    How to clean tasks after Training is done, only support Running, None. (default "Running")
-  -d, --data stringArray          specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>
-      --dataDir stringArray       the data dir. If you specify /data, it means mounting hostpath /data into container path /data
-  -e, --env stringArray           the environment variables
-      --evaluator                 enable evaluator, which is optional for estimator.
-      --evaluatorCpu string       the cpu resource to use for the evaluator, like 1 for 1 core.
-      --evaluatorMemory string    the memory resource to use for the evaluator, like 1Gi.
-      --gpus int                  the GPU count of each worker to run the training.
-  -h, --help                      help for tfjob
-      --image string              the docker image name of training job
-      --logdir string             the training logs dir, default is /training_logs (default "/training_logs")
-      --name string               override name
-      --ps int                    the number of the parameter servers.
-      --psCpu string              the cpu resource to use for the parameter servers, like 1 for 1 core.
-      --psImage string            the docker image for tensorflow workers
-      --psMemory string           the memory resource to use for the parameter servers, like 1Gi.
-      --psPort int                the port of the parameter server.
-      --rdma                      enable RDMA
-      --retry int                 retry times.
-      --syncImage string          the docker image of syncImage
-      --syncMode string           syncMode: support rsync, hdfs, git
-      --syncSource string         syncSource: for rsync, it's like 10.88.29.56::backup/data/logoRecoTrain.zip; for git, it's like https://github.com/kubeflow/tf-operator.git
-      --tensorboard               enable tensorboard
-      --tensorboardImage string   the docker image for tensorboard (default "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel")
-      --workerCpu string          the cpu resource to use for the worker, like 1 for 1 core.
-      --workerImage string        the docker image for tensorflow workers
-      --workerMemory string       the memory resource to use for the worker, like 1Gi.
-      --workerPort int            the port of the worker.
-      --workers int               the worker number to run the distributed training. (default 1)
-      --workingDir string         working directory to extract the code. If using syncMode, the $workingDir/code contains the code (default "/root")
+  -a, --annotation stringArray     the annotations
+      --chief                      enable chief, which is required for estimator.
+      --chief-cpu string           the cpu resource to use for the Chief, like 1 for 1 core.
+      --chief-memory string        the memory resource to use for the Chief, like 1Gi.
+      --chief-port int             the port of the chief.
+      --clean-task-policy string   How to clean tasks after Training is done, only support Running, None. (default "Running")
+  -d, --data stringArray           specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>
+      --data-dir stringArray       the data dir. If you specify /data, it means mounting hostpath /data into container path /data
+  -e, --env stringArray            the environment variables
+      --evaluator                  enable evaluator, which is optional for estimator.
+      --evaluator-cpu string       the cpu resource to use for the evaluator, like 1 for 1 core.
+      --evaluator-memory string    the memory resource to use for the evaluator, like 1Gi.
+      --gpus int                   the GPU count of each worker to run the training.
+  -h, --help                       help for tfjob
+      --image string               the docker image name of training job
+      --logdir string              the training logs dir, default is /training_logs (default "/training_logs")
+      --name string                override name
+      --ps int                     the number of the parameter servers.
+      --ps-cpu string              the cpu resource to use for the parameter servers, like 1 for 1 core.
+      --ps-image string            the docker image for tensorflow workers
+      --ps-memory string           the memory resource to use for the parameter servers, like 1Gi.
+      --ps-port int                the port of the parameter server.
+      --rdma                       enable RDMA
+      --retry int                  retry times.
+      --sync-image string          the docker image of syncImage
+      --sync-mode string           syncMode: support rsync, hdfs, git
+      --sync-source string         sync-source: for rsync, it's like 10.88.29.56::backup/data/logoRecoTrain.zip; for git, it's like https://github.com/kubeflow/tf-operator.git
+      --tensorboard                enable tensorboard
+      --tensorboard-image string   the docker image for tensorboard (default "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel")
+      --worker-cpu string          the cpu resource to use for the worker, like 1 for 1 core.
+      --worker-image string        the docker image for tensorflow workers
+      --worker-memory string       the memory resource to use for the worker, like 1Gi.
+      --worker-port int            the port of the worker.
+      --workers int                the worker number to run the distributed training. (default 1)
+      --working-dir string         working directory to extract the code. If using syncMode, the $workingDir/code contains the code (default "/root")
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --arenaNamespace string   The namespace of arena system service, like TFJob (default "arena-system")
-      --config string           Path to a kube config. Only required if out-of-cluster
-      --loglevel string         Set the logging level. One of: debug|info|warn|error (default "info")
-      --namespace string        the namespace of the job (default "default")
-      --pprof                   enable cpu profile
-      --trace                   enable trace
+      --arena-namespace string   The namespace of arena system service, like tf-operator (default "arena-system")
+      --config string            Path to a kube config. Only required if out-of-cluster
+      --loglevel string          Set the logging level. One of: debug|info|warn|error (default "info")
+  -n, --namespace string         the namespace of the job (default "default")
+      --pprof                    enable cpu profile
+      --trace                    enable trace
 ```
 
 ### SEE ALSO
 
 * [arena submit](arena_submit.md)	 - Submit a job.
 
-###### Auto generated by spf13/cobra on 30-Jan-2019
+###### Auto generated by spf13/cobra on 24-Apr-2019
