@@ -20,6 +20,7 @@ spec:
         release: {{ .Release.Name }}
         role: tensorboard
     spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- if .Values.launcherOnMaster }}
       tolerations:
       - effect: NoSchedule

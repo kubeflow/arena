@@ -39,6 +39,7 @@ spec:
           {{ $key }}: {{ $value | quote }}
         {{- end }}
         spec:
+          terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
           {{- if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
@@ -249,6 +250,7 @@ spec:
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
+          terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
           {{- if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
@@ -496,6 +498,7 @@ spec:
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
+          terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
           {{- if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
@@ -740,6 +743,7 @@ spec:
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
+          terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
           {{- if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}

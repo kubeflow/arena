@@ -21,6 +21,7 @@ spec:
         release: {{ .Release.Name }}
         role: tensorboard
     spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- if .Values.ps }}
       {{- if .Values.hasGangScheduler }}
       {{- if .Values.enableGangScheduler }}

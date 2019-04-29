@@ -1,3 +1,6 @@
+### 0.17.0
+* Customize terminationGracePeriodSeconds
+
 ### 0.16.0
 * Fix hostnetwork issue which is introduced by ENI
 

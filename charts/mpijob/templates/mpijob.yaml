@@ -32,6 +32,7 @@ spec:
             {{ $key }}: {{ $value | quote }}
           {{- end }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       restartPolicy: Never
       {{- if .Values.useHostNetwork }}
       {{- if not .Values.useENI }}
