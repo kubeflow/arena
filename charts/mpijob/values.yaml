@@ -25,4 +25,4 @@ retry: 0
 
 annotations: {}
 # annotations:
-terminationGracePeriodSeconds: 60
+terminationGracePeriodSeconds: 30
