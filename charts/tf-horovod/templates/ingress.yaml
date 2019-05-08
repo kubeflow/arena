@@ -2,21 +2,21 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ .Release.Name }}-mpijob
+  name: {{ .Release.Name }}-horovod
   annotations:
       nginx.ingress.kubernetes.io/rewrite-target: /
   labels:
-    app: {{ template "mpijob.name" . }}
-    chart: {{ template "mpijob.chart" . }}
+    app: {{ template "horovod.name" . }}
+    chart: {{ template "horovod.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    createdBy: "mpijob"
+    role: tensorboard
 spec:
   rules:
     - http:
         paths:
-          - path: /{{ .Release.Name }}-mpijob
+          - path: /{{ .Release.Name }}-horovod
             backend:
-              serviceName: {{ .Release.Name }}-tensorboard
+              serviceName: {{ template "horovod.fullname" . }}-tensorboard
               servicePort: 6006
 {{- end }}
