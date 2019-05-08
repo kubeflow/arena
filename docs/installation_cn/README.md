@@ -134,7 +134,17 @@ find /charts/ -name "*.yaml" | xargs sed -i "s/NodePort/LoadBalancer/g"
 
 > 警告：我们不鼓励将服务公开给互联网，因为这种做法会导致服务受黑客攻击。
 
-13\. 将 imagePullPolicy 策略由 `Always` 修改为 `IfNotPresent` (可选)
+13\. 在公共云中启用 Ingress
+
+Kubernetes 可在 AWS、GCE、Azure 和阿里云中运行，其云提供商支持 `Ingress`。如果您希望在互联网上直接通过统一入口访问 tensorboard，可以运行如下代码：
+
+```
+find /charts/ -name values.yaml | xargs sed -i "/ingress/s/false/true/g"
+```
+
+> 警告：我们不鼓励将服务公开给互联网，因为这种做法会导致服务受黑客攻击。
+
+14\. 将 imagePullPolicy 策略由 `Always` 修改为 `IfNotPresent` (可选)
 
 ```
 find /charts/ -name values.yaml| xargs sed -i "s/Always/IfNotPresent/g"
