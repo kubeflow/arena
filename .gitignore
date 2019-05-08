@@ -1,3 +1,6 @@
 bin/
 **/*.tgz
 **/.DS_Store
+.idea
+.kube
+Library

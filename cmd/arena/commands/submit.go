@@ -185,6 +185,7 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewSubmitHorovodJobCommand())
 	// This will be deprecated soon.
 	command.AddCommand(NewSubmitStandaloneJobCommand())
+	command.AddCommand(NewSparkApplicationCommand())
 
 	return command
 }
