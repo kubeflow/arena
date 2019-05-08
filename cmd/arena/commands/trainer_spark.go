@@ -254,7 +254,6 @@ func NewSparkJobTrainer(client *kubernetes.Clientset) Trainer {
 		trainerType:    defaultSparkJobTrainingType,
 		enabled:        true,
 	}
-	return nil
 }
 
 // init spark job client
@@ -364,7 +363,6 @@ func (st *SparkJobTrainer) getTrainingJobFromCache(name, namespace string) (job 
 		name:        name,
 		trainerType: st.Type(),
 	}, nil
-	return nil, nil
 }
 
 func (st *SparkJobTrainer) getTrainingJob(name, namespace string) (job TrainingJob, err error) {

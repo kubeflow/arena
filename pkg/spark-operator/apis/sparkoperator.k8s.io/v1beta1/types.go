@@ -379,9 +379,6 @@ type SparkPodSpec struct {
 	// SecurityContenxt specifies the PodSecurityContext to apply.
 	// Optional.
 	SecurityContenxt *apiv1.PodSecurityContext `json:"securityContext,omitempty"`
-	// HostNetwork specifies whether PodHostNetwork option to apply.
-	// Optional.
-	HostNetwork bool `json:hostNetwork,omitempty`
 }
 
 // DriverSpec is specification of the driver.

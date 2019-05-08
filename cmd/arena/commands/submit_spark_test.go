@@ -11,13 +11,13 @@ func newMockSubmitSparkJobArgs() *submitSparkJobArgs {
 		MainClass: "com.alibaba.www.main",
 		Jar:       "local://spark-demo.jar",
 		Executor: &Executor{
-			Replicas:              0,
-			ExecutorCPURequest:    "1",
-			ExecutorMemoryRequest: "200Mi",
+			Replicas:      0,
+			CPURequest:    1,
+			MemoryRequest: "200Mi",
 		},
 		Driver: &Driver{
-			DriverCPURequest:    "1",
-			DriverMemoryRequest: "200Mi",
+			CPURequest:    1,
+			MemoryRequest: "200Mi",
 		},
 	}
 }

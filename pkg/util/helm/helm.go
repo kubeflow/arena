@@ -201,7 +201,7 @@ func ListReleaseMap() (releaseMap map[string]string, err error) {
 		line = strings.Trim(line, " ")
 		if !strings.Contains(line, "NAME") {
 			cols := strings.Fields(line)
-			log.Debugf("cols: ", cols, len(cols))
+			log.Debugf("%d cols: %v", len(cols), cols)
 			if len(cols) > 1 {
 				log.Debugf("releaseMap: %s=%s\n", cols[0], cols[len(cols)-1])
 				releaseMap[cols[0]] = cols[len(cols)-1]
@@ -234,7 +234,7 @@ func ListAllReleasesWithDetail() (releaseMap map[string][]string, err error) {
 		line = strings.Trim(line, " ")
 		if !strings.Contains(line, "NAME") {
 			cols := strings.Fields(line)
-			log.Debugf("cols: ", cols, len(cols))
+			log.Debugf("%d cols: %v", len(cols), cols)
 			if len(cols) > 3 {
 				log.Debugf("releaseMap: %s=%s\n", cols[0], cols)
 				releaseMap[cols[0]] = cols
