@@ -1,0 +1,25 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+    - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/kubeflow/arena
+    steps:
+    - checkout
+    - setup_remote_docker:
+          docker_layer_caching: true
+    - run:
+        name: run tests
+        command: |
+          test -z $(go fmt ./...)
+          go vet ./...
+          go test -race -v ./...
+    - run: docker build -t acs/arena:$CIRCLE_BUILD_NUM -f Dockerfile.install .
+    - run:
+        name: codecov
+        command: |
+          go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+          bash <(curl -s https://codecov.io/bash)

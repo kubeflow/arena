@@ -33,7 +33,7 @@ type submitTensorboardArgs struct {
 	IsLocalLogging   bool   `yaml:"isLocalLogging"`
 }
 
-func (submitArgs *submitTensorboardArgs) processTensorboad(dataMap map[string]string) {
+func (submitArgs *submitTensorboardArgs) processTensorboard(dataMap map[string]string) {
 	if submitArgs.UseTensorboard {
 		log.Debugf("dataMap %v", dataMap)
 		if path.IsAbs(submitArgs.TrainingLogdir) && !submitArgs.isLoggingInPVC(dataMap) {
@@ -66,8 +66,7 @@ func (submitArgs *submitTensorboardArgs) isLoggingInPVC(dataMap map[string]strin
 func tensorboardURL(name, namespace string) (url string, err error) {
 
 	var (
-		address string
-		port    int32
+		port int32
 	)
 
 	// 1. Get port
@@ -103,7 +102,7 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 	// Get Address for loadbalancer
 	if service.Spec.Type == v1.ServiceTypeLoadBalancer {
 		if len(service.Status.LoadBalancer.Ingress) > 0 {
-			return fmt.Sprintf("%s:%d",
+			return fmt.Sprintf("http://%s:%d",
 				service.Status.LoadBalancer.Ingress[0].IP,
 				service.Spec.Ports[0].Port), nil
 		}
@@ -121,23 +120,17 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 	findReadyNode := false
 
 	for _, item := range nodeList.Items {
-		for _, condition := range item.Status.Conditions {
-			if condition.Type == "Ready" {
-				if condition.Status == "True" {
-					node = item
-					findReadyNode = true
-					break
-				}
-			}
+		if isNodeReady(item) {
+			node = item
+			findReadyNode = true
+			break
 		}
 	}
 
 	if !findReadyNode {
 		return "", fmt.Errorf("Failed to find the ready node for exporting tensorboard.")
 	}
-
-	address = node.Status.Addresses[0].Address
-	url = fmt.Sprintf("%s:%d", address, port)
+	url = fmt.Sprintf("http://%s:%d", getNodeInternalAddress(node), port)
 
 	return url, nil
 }

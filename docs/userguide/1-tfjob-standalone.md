@@ -53,7 +53,7 @@ INFO[0000] You can run `arena get tf-git --type tfjob` to check the job status
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py"
 ```
 
-Notice: `arena` is using [git-sync](https://github.com/kubernetes/git-sync/blob/master/cmd/git-sync/main.go) to sync up source code. You can set the environment varaibles defined in git-sync project.
+Notice: `arena` is using [git-sync](https://github.com/kubernetes/git-sync/blob/master/cmd/git-sync/main.go) to sync up source code. You can set the environment variables defined in git-sync project.
 
 3\. List all the jobs
 
