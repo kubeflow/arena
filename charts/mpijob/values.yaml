@@ -25,3 +25,5 @@ retry: 0
 
 annotations: {}
 # annotations:
+
+ingress: true

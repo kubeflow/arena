@@ -51,3 +51,7 @@
 ### 0.12.0
 
 * Fix tensorboard not work on master node
+
+### 0.13.0
+
+* Support Tensorboard for Ingress 

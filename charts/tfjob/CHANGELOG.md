@@ -66,3 +66,8 @@
 ### 0.16.0
 
 * Remove -tfjob from tfjob name
+
+### 0.17.0
+
+* Support Tensorboard for Ingress 
+

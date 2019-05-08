@@ -1,0 +1,24 @@
+{{- if .Values.ingress -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-mpijob-tensorboard
+  labels:
+    app: {{ template "mpijob.name" . }}
+    chart: {{ template "mpijob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "mpijob"
+{{- with .Values.ingress.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /{{ .Release.Name }}-mpijob
+            backend:
+              serviceName: {{ .Release.Name }}-mpijob
+              servicePort: 6006
+{{- end }}
