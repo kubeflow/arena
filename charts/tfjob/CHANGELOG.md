@@ -71,3 +71,7 @@
 
 * Support Tensorboard for Ingress 
 
+
+### 0.18.0
+
+* Update git-sync image to fix could not lock config file issue
