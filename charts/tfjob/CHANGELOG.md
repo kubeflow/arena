@@ -66,3 +66,12 @@
 ### 0.16.0
 
 * Remove -tfjob from tfjob name
+
+### 0.17.0
+
+* Support Tensorboard for Ingress 
+
+
+### 0.18.0
+
+* Update git-sync image to fix could not lock config file issue

@@ -40,6 +40,8 @@ jobmon:
   image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/jobmon:latest
   pullPolicy: Always
 
+ingress: false
+
 syncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
 # imagePullPolicy: Always
 

@@ -51,3 +51,11 @@
 ### 0.12.0
 
 * Fix tensorboard not work on master node
+
+### 0.13.0
+
+* Support Tensorboard for Ingress 
+
+### 0.14.0
+
+* Update git-sync image to fix could not lock config file issue
