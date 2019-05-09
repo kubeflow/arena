@@ -1,0 +1,22 @@
+{{- if .Values.ingress -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-mpijob
+  annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+  labels:
+    app: {{ template "mpijob.name" . }}
+    chart: {{ template "mpijob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "mpijob"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /{{ .Release.Name }}-mpijob
+            backend:
+              serviceName: {{ .Release.Name }}-tensorboard
+              servicePort: 6006
+{{- end }}

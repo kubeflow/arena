@@ -10,7 +10,7 @@ gpuCount: 0 # user define
 # rsync image
 rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
 # git sync image
-gitImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/git-sync:v2.0.6
+gitImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/git-sync:v3.1.1
 
 shmSize: 2Gi
 privileged: false
@@ -25,3 +25,5 @@ retry: 0
 
 annotations: {}
 # annotations:
+
+ingress: false

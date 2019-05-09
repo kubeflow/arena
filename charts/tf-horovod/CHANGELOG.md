@@ -1,3 +1,8 @@
+### 0.17.0
+
+* Support Tensorboard for Ingress 
+
+
 ### 0.16.0
 * Fix hostnetwork issue which is introduced by ENI
 
