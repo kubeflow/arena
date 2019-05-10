@@ -14,3 +14,4 @@ Executor:
   CPURequest: 1
   MemoryRequest: "1g"
   Replicas: 1
+  

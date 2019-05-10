@@ -80,7 +80,7 @@ spec:
       serviceAccountName: sparkoperator
       containers:
       - name: sparkoperator
-        image: registry.cn-beijing.aliyuncs.com/acs/spark-operator:v2.4.0-v1beta1-0.8.1
+        image: registry.cn-zhangjiakou.aliyuncs.com/acs/spark-operator:v2.4.0-v1beta1-0.8.1
         imagePullPolicy: Always
         command: ["/usr/bin/spark-operator"]
         args:
