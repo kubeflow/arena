@@ -32,7 +32,7 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [7. Run TensorFlow Serving](docs/userguide/7-tf-serving.md)
 - [8. Run TensorFlow Estimator](docs/userguide/8-tfjob-estimator.md)
 - [9. Monitor GPUs of the training job ](docs/userguide/9-top-job-gpu-metric.md)
-- [10. Enable RDMA](docs/userguide/10-rdma-integration.md)
+- [10. Run a distributed training job with RDMA](docs/userguide/10-rdma-integration.md)
 
 ## Demo
 
