@@ -1,0 +1,17 @@
+Lang: Scala
+
+Image: registry.aliyuncs.com/acs/spark:v2.4.0
+
+MainClass: org.apache.spark.examples.SparkPi
+
+Jar: local:///opt/spark/examples/jars/spark-examples_2.11-2.4.0.jar
+
+Driver:
+  CPURequest: 1
+  MemoryRequest: "1g"
+
+Executor:
+  CPURequest: 1
+  MemoryRequest: "1g"
+  Replicas: 1
+  

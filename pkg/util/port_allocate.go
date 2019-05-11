@@ -88,7 +88,7 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 			}
 		}
 	}
-	log.Debug("Get K8S used ports, %++v", k8sClusterUsedPorts)
+	log.Debugf("Get K8S used ports, %++v", k8sClusterUsedPorts)
 	return k8sClusterUsedPorts, nil
 }
 
