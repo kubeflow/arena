@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"github.com/kubeflow/arena/pkg/util"
-	"github.com/spf13/cobra"
-	log "github.com/sirupsen/logrus"
-	"github.com/kubeflow/arena/pkg/workflow"
-	"os"
-	"fmt"
 	"errors"
+	"fmt"
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/workflow"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"os"
 )
 
 var (
@@ -19,11 +19,11 @@ const (
 )
 
 /**
-	https://github.com/GoogleCloudPlatform/spark-on-k8s-operator
+https://github.com/GoogleCloudPlatform/spark-on-k8s-operator
 
-	sparkApplication is the supported as default
-	scheduledSparkApplication is not supported.
- */
+sparkApplication is the supported as default
+scheduledSparkApplication is not supported.
+*/
 func NewSparkApplicationCommand() *cobra.Command {
 	submitArgs := NewSubmitSparkJobArgs()
 	var command = &cobra.Command{

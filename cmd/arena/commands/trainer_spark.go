@@ -1,15 +1,15 @@
 package commands
 
 import (
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"github.com/kubeflow/arena/pkg/types"
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	"github.com/kubeflow/arena/pkg/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
 	"github.com/kubeflow/arena/pkg/spark-operator/client/clientset/versioned"
+	"github.com/kubeflow/arena/pkg/types"
+	log "github.com/sirupsen/logrus"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"time"
-	"fmt"
 )
 
 // all spark jobs cache
@@ -68,7 +68,7 @@ func (sj *SparkJob) AllPods() []v1.Pod {
 	ExecutorCompletedState ExecutorState = "COMPLETED"
 	ExecutorFailedState    ExecutorState = "FAILED"
 	ExecutorUnknownState   ExecutorState = "UNKNOWN"
- */
+*/
 func (sj *SparkJob) GetStatus() (status string) {
 
 	defer func() {
