@@ -69,6 +69,11 @@ INFO[0000] Dump cpu profile file into /tmp/cpu_profile
 Then you can analyze the profile by following [Go CPU profiling: pprof and speedscope](https://coder.today/go-profiling-pprof-and-speedscope-b05b812cc429)
 
 
+
+## FAQ
+
+Please refer to [FAQ](FAQ.md)
+
 ## CLI Document
 
 Please refer to [arena.md](docs/cli/arena.md)
