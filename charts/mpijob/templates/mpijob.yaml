@@ -16,9 +16,8 @@ spec:
   {{- if .Values.launcherOnMaster }}
   launcherOnMaster: {{ .Values.launcherOnMaster }}
   {{- end }}
-  {{- if .Values.launcherResourceLimit }}
-  launcherResourceLimit: {{ .Values.launcherResourceLimit }}
-  {{- end }}
+  launcherResources:
+{{ toYaml .Values.launcherResources | indent 10 }}
   backoffLimit: {{ .Values.retry }}
   replicas: {{ .Values.workers }}
   template:

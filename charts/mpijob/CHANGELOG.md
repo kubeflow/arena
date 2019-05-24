@@ -63,4 +63,4 @@
 
 ### 0.15.0
 
-* Add flag to enable or disable resource limits for mpi-launcher
+* Add resource limits for mpi-launcher
