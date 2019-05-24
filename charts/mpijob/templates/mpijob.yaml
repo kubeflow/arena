@@ -111,13 +111,6 @@ spec:
             memory: {{ .Values.memory | quote }}
             {{- end }}
           limits:
-            {{- if gt (int $gpuCount) 0}}   
-            {{- if .Values.nvidiaPath }}
-            alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-            {{- else}}
-            nvidia.com/gpu: {{ $gpuCount | quote }}
-            {{- end }}
-            {{- end }}
             {{- if .Values.cpu }}
             cpu: {{ .Values.cpu | quote }}
             {{- end }}
