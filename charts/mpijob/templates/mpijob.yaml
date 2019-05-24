@@ -16,6 +16,9 @@ spec:
   {{- if .Values.launcherOnMaster }}
   launcherOnMaster: {{ .Values.launcherOnMaster }}
   {{- end }}
+  {{- if .Values.launcherResourceLimit }}
+  launcherResourceLimit: {{ .Values.launcherResourceLimit }}
+  {{- end }}
   backoffLimit: {{ .Values.retry }}
   replicas: {{ .Values.workers }}
   template:
@@ -99,6 +102,31 @@ spec:
         {{- if eq "rsync" $syncMode }}
         command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
         {{- end }}
+        resources:             
+          requests:
+            {{- if .Values.cpu }}
+            cpu: {{ .Values.cpu | quote }}
+            {{- end }}
+            {{- if .Values.memory }}
+            memory: {{ .Values.memory | quote }}
+            {{- end }}
+          limits:
+            {{- if gt (int $gpuCount) 0}}   
+            {{- if .Values.nvidiaPath }}
+            alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+            {{- else}}
+            nvidia.com/gpu: {{ $gpuCount | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.cpu }}
+            cpu: {{ .Values.cpu | quote }}
+            {{- end }}
+            {{- if .Values.memory }}
+            memory: {{ .Values.memory | quote }}
+            {{- end }}
+            {{- if .Values.enableRDMA }}
+            rdma/hca: "1"
+            {{- end}}
         env:
         {{- range $key, $value := .Values.envs }}
           - name: "{{ $key }}"

@@ -21,6 +21,7 @@ tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
 
 launcherOnMaster: false
+launcherResourceLimit: false
 retry: 0
 
 annotations: {}
