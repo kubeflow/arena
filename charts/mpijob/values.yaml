@@ -33,6 +33,15 @@ launcherResources: {}
 #     cpu: 1
 #     memory: 1Gi
 
+tensorboardResources: {}
+# tensorboardResources:
+#   limits:
+#     cpu: 500m
+#     memory: 500Mi
+#   requests:
+#     cpu: 500m
+#     memory: 500Mi
+
 
 annotations: {}
 # annotations:
