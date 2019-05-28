@@ -59,3 +59,8 @@
 ### 0.14.0
 
 * Update git-sync image to fix could not lock config file issue
+
+
+### 0.15.0
+
+* Add resource limits for mpi-launcher

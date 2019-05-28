@@ -16,6 +16,8 @@ spec:
   {{- if .Values.launcherOnMaster }}
   launcherOnMaster: {{ .Values.launcherOnMaster }}
   {{- end }}
+  launcherResources:
+{{ toYaml .Values.launcherResources | indent 10 }}
   backoffLimit: {{ .Values.retry }}
   replicas: {{ .Values.workers }}
   template:
@@ -99,6 +101,24 @@ spec:
         {{- if eq "rsync" $syncMode }}
         command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
         {{- end }}
+        resources:             
+          requests:
+            {{- if .Values.cpu }}
+            cpu: {{ .Values.cpu | quote }}
+            {{- end }}
+            {{- if .Values.memory }}
+            memory: {{ .Values.memory | quote }}
+            {{- end }}
+          limits:
+            {{- if .Values.cpu }}
+            cpu: {{ .Values.cpu | quote }}
+            {{- end }}
+            {{- if .Values.memory }}
+            memory: {{ .Values.memory | quote }}
+            {{- end }}
+            {{- if .Values.enableRDMA }}
+            rdma/hca: "1"
+            {{- end}}
         env:
         {{- range $key, $value := .Values.envs }}
           - name: "{{ $key }}"
