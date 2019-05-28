@@ -9,3 +9,7 @@ kubectl delete -f kubernetes-artifacts/tf-operator/tf-operator.yaml
 kubectl create -f kubernetes-artifacts/tf-operator/tf-operator.yaml
 ```
 
+## Common questions:
+
+### Does arena support pytorch
+Not yet, although support for using kfserving is planned for 2019. More updates will be available here.
