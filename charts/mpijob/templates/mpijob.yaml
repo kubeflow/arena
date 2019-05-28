@@ -116,9 +116,6 @@ spec:
             {{- if .Values.memory }}
             memory: {{ .Values.memory | quote }}
             {{- end }}
-            {{- if .Values.enableRDMA }}
-            rdma/hca: "1"
-            {{- end}}
         env:
         {{- range $key, $value := .Values.envs }}
           - name: "{{ $key }}"

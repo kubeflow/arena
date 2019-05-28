@@ -135,6 +135,21 @@ spec:
             {{- if eq "rsync" $syncMode }}
             command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
             {{- end }}
+            resources:
+              requests:
+                {{- if .Values.psCpu }}
+                cpu: {{ .Values.psCpu | quote }}
+                {{- end}}
+                {{- if .Values.psMemory }}
+                memory: {{ .Values.psMemory | quote }}
+                {{- end}}
+              limits:
+                {{- if .Values.psCpu }}
+                cpu: {{ .Values.psCpu | quote }}
+                {{- end}}
+                {{- if .Values.psMemory }}
+                memory: {{ .Values.psMemory | quote }}
+                {{- end}}
             env:
             {{- range $key, $value := .Values.envs }}
               - name: "{{ $key }}"
@@ -358,6 +373,21 @@ spec:
             {{- if eq "rsync" $syncMode }}
             command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
             {{- end }}
+            resources:
+              requests:
+                  {{- if .Values.workerCPU }}
+                  cpu: {{ .Values.workerCPU | quote }}
+                  {{- end}}
+                  {{- if .Values.workerMemory }}
+                  memory: {{ .Values.workerMemory | quote }}
+                  {{- end}}
+              limits:
+                  {{- if .Values.workerCPU }}
+                  cpu: {{ .Values.workerCPU | quote }}
+                  {{- end}}
+                  {{- if .Values.workerMemory }}
+                  memory: {{ .Values.workerMemory | quote }}
+                  {{- end}}
             env:
             {{- range $key, $value := .Values.envs }}
               - name: "{{ $key }}"
@@ -605,6 +635,21 @@ spec:
             {{- if eq "rsync" $syncMode }}
             command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
             {{- end }}
+            resources:
+              requests:
+                  {{- if .Values.chiefCPU }}
+                  cpu: {{ .Values.chiefCPU | quote }}
+                  {{- end}}
+                  {{- if .Values.chiefMemory }}
+                  memory: {{ .Values.chiefMemory | quote }}
+                  {{- end}}
+              limits:
+                  {{- if .Values.chiefCPU }}
+                  cpu: {{ .Values.chiefCPU | quote }}
+                  {{- end}}
+                  {{- if .Values.chiefMemory }}
+                  memory: {{ .Values.chiefMemory | quote }}
+                  {{- end}}
             env:
             {{- range $key, $value := .Values.envs }}
               - name: "{{ $key }}"
@@ -811,6 +856,21 @@ spec:
             {{- if eq "rsync" $syncMode }}
             command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
             {{- end }}
+            resources:
+              requests:
+                  {{- if .Values.evaluatorCPU }}
+                  cpu: {{ .Values.evaluatorCPU | quote }}
+                  {{- end}}
+                  {{- if .Values.evaluatorMemory }}
+                  memory: {{ .Values.evaluatorMemory | quote }}
+                  {{- end}}
+              limits:
+                  {{- if .Values.evaluatorCPU }}
+                  cpu: {{ .Values.evaluatorCPU | quote }}
+                  {{- end}}
+                  {{- if .Values.evaluatorMemory }}
+                  memory: {{ .Values.evaluatorMemory | quote }}
+                  {{- end}}
             env:
             {{- range $key, $value := .Values.envs }}
               - name: "{{ $key }}"

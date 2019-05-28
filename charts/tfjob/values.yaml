@@ -43,6 +43,14 @@ useTensorboard: false
 tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel
 tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
+tensorboardResources: {}
+# tensorboardResources:
+#   limits:
+#     cpu: 500m
+#     memory: 500Mi
+#   requests:
+#     cpu: 500m
+#     memory: 500Mi
 
 trainingLogdir: /output/training_logs
 
