@@ -75,3 +75,7 @@
 ### 0.18.0
 
 * Update git-sync image to fix could not lock config file issue
+
+### 0.19.0
+
+* Add resource limits/requests to tfjob initContainer and tensorboard

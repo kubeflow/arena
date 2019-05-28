@@ -81,6 +81,8 @@ spec:
         {{- end }}
         image: "{{ .Values.tensorboardImage }}"
         imagePullPolicy: {{ .Values.tensorboardImagePullpolicy }}
+        resources:
+{{ toYaml .Values.tensorboardResources | indent 10 }}
         ports:
         - containerPort: 6006
         volumeMounts:
