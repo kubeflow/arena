@@ -136,10 +136,10 @@ func (s *submitArgs) transform() (err error) {
 		// only config PodSecurityContext for non-root user
 		if currentUser.Uid != "0" {
 			s.IsNonRoot = true
-			s.PodSecurityContext.RunAsUser, _ = strconv.ParseInt(user.Uid, 10, 64)
+			s.PodSecurityContext.RunAsUser, _ = strconv.ParseInt(currentUser.Uid, 10, 64)
 			s.PodSecurityContext.RunAsNonRoot = true
-			s.PodSecurityContext.RunAsGroup, _ = strconv.ParseInt(user.Gid, 10, 64)
-			groups, _ := user.GroupIds()
+			s.PodSecurityContext.RunAsGroup, _ = strconv.ParseInt(currentUser.Gid, 10, 64)
+			groups, _ := currentUser.GroupIds()
 			if len(groups) > 0 {
 				for i, group := range groups {
 					s.PodSecurityContext.SupplementalGroups[i], _ = strconv.ParseInt(group, 10, 64)
