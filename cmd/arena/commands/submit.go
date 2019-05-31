@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -54,12 +55,23 @@ type submitArgs struct {
 	UseENI     bool `yaml:"useENI"`
 
 	Annotations map[string]string `yaml:"annotations"`
+
+	EnablePodSecurityContext bool `yaml: "enablePodSecurityContext"`
+	IsNonRoot bool `yaml: "isNonRoot"`
+	PodSecurityContext limitedPodSecurityContext `yaml: "podSecurityContext"`
 }
 
 type dataDirVolume struct {
 	HostPath      string `yaml:"hostPath"`
 	ContainerPath string `yaml:"containerPath"`
 	Name          string `yaml:"name"`
+}
+
+type limitedPodSecurityContext struct {
+	RunAsUser int64 `yaml:"runAsUser"`
+	RunAsNonRoot bool `yaml:"runAsNonRoot"`
+	RunAsGroup int64 `yaml:"runAsGroup"`
+	SupplementalGroups []int64 `yaml:"supplementalGroups"`
 }
 
 func (s submitArgs) check() error {
@@ -115,7 +127,26 @@ func (s *submitArgs) transform() (err error) {
 			s.UseENI = true
 		}
 	}
-
+	// 4. handle PodSecurityContext: runAsUser, runAsGroup, supplementalGroups, runAsNonRoot
+	if s.EnablePodSecurityContext {
+		currentUser, err := user.Current()
+		if err != nil {
+			return err
+		}
+		// only config PodSecurityContext for non-root user
+		if currentUser.Uid != "0" {
+			s.IsNonRoot = true
+			s.PodSecurityContext.RunAsUser, _ = strconv.ParseInt(user.Uid, 10, 64)
+			s.PodSecurityContext.RunAsNonRoot = true
+			s.PodSecurityContext.RunAsGroup, _ = strconv.ParseInt(user.Gid, 10, 64)
+			groups, _ := user.GroupIds()
+			if len(groups) > 0 {
+				for i, group := range groups {
+					s.PodSecurityContext.SupplementalGroups[i], _ = strconv.ParseInt(group, 10, 64)
+				}
+			}
+		}
+	}
 	return nil
 }
 

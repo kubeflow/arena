@@ -69,3 +69,7 @@ ingress: false
 # hostLogPath: /training_logs/112345_logs
 
 # nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81
+
+# enable PodSecurityContext
+# In the future, this flag should be protected separately, in case of arena admin and users are not the same people
+enablePodSecurityContext: false
