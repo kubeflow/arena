@@ -128,11 +128,13 @@ func (s *submitArgs) transform() (err error) {
 		}
 	}
 	// 4. handle PodSecurityContext: runAsUser, runAsGroup, supplementalGroups, runAsNonRoot
+	log.Debugf("enablePodSecurityContext %v", s.EnablePodSecurityContext)
 	if s.EnablePodSecurityContext {
 		currentUser, err := user.Current()
 		if err != nil {
 			return err
 		}
+		log.Debugf("Current OS user info: ", currentUser.Uid, currentUser.Gid)
 		// only config PodSecurityContext for non-root user
 		if currentUser.Uid != "0" {
 			s.IsNonRoot = true
@@ -147,6 +149,7 @@ func (s *submitArgs) transform() (err error) {
 			}
 		}
 	}
+	log.Debugf("PodSecurityContext %v ", s.PodSecurityContext)
 	return nil
 }
 
