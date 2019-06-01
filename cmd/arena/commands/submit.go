@@ -56,9 +56,9 @@ type submitArgs struct {
 
 	Annotations map[string]string `yaml:"annotations"`
 
-	EnablePodSecurityContext bool `yaml: "enablePodSecurityContext"`
-	IsNonRoot bool `yaml: "isNonRoot"`
-	PodSecurityContext limitedPodSecurityContext `yaml: "podSecurityContext"`
+	EnablePodSecurityContext bool                      `yaml: "enablePodSecurityContext"`
+	IsNonRoot                bool                      `yaml: "isNonRoot"`
+	PodSecurityContext       limitedPodSecurityContext `yaml: "podSecurityContext"`
 }
 
 type dataDirVolume struct {
@@ -68,9 +68,9 @@ type dataDirVolume struct {
 }
 
 type limitedPodSecurityContext struct {
-	RunAsUser int64 `yaml:"runAsUser"`
-	RunAsNonRoot bool `yaml:"runAsNonRoot"`
-	RunAsGroup int64 `yaml:"runAsGroup"`
+	RunAsUser          int64   `yaml:"runAsUser"`
+	RunAsNonRoot       bool    `yaml:"runAsNonRoot"`
+	RunAsGroup         int64   `yaml:"runAsGroup"`
 	SupplementalGroups []int64 `yaml:"supplementalGroups"`
 }
 
@@ -128,24 +128,21 @@ func (s *submitArgs) transform() (err error) {
 		}
 	}
 	// 4. handle PodSecurityContext: runAsUser, runAsGroup, supplementalGroups, runAsNonRoot
-	log.Debugf("enablePodSecurityContext %v", s.EnablePodSecurityContext)
-	if s.EnablePodSecurityContext {
-		currentUser, err := user.Current()
-		if err != nil {
-			return err
-		}
-		log.Debugf("Current OS user info: ", currentUser.Uid, currentUser.Gid)
-		// only config PodSecurityContext for non-root user
-		if currentUser.Uid != "0" {
-			s.IsNonRoot = true
-			s.PodSecurityContext.RunAsUser, _ = strconv.ParseInt(currentUser.Uid, 10, 64)
-			s.PodSecurityContext.RunAsNonRoot = true
-			s.PodSecurityContext.RunAsGroup, _ = strconv.ParseInt(currentUser.Gid, 10, 64)
-			groups, _ := currentUser.GroupIds()
-			if len(groups) > 0 {
-				for i, group := range groups {
-					s.PodSecurityContext.SupplementalGroups[i], _ = strconv.ParseInt(group, 10, 64)
-				}
+	currentUser, err := user.Current()
+	if err != nil {
+		return err
+	}
+	log.Debugf("Current OS user info: ", currentUser.Uid, currentUser.Gid)
+	// only config PodSecurityContext for non-root user
+	if currentUser.Uid != "0" {
+		s.IsNonRoot = true
+		s.PodSecurityContext.RunAsUser, _ = strconv.ParseInt(currentUser.Uid, 10, 64)
+		s.PodSecurityContext.RunAsNonRoot = true
+		s.PodSecurityContext.RunAsGroup, _ = strconv.ParseInt(currentUser.Gid, 10, 64)
+		groups, _ := currentUser.GroupIds()
+		if len(groups) > 0 {
+			for i, group := range groups {
+				s.PodSecurityContext.SupplementalGroups[i], _ = strconv.ParseInt(group, 10, 64)
 			}
 		}
 	}
