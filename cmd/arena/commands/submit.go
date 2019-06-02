@@ -56,7 +56,6 @@ type submitArgs struct {
 
 	Annotations map[string]string `yaml:"annotations"`
 
-	EnablePodSecurityContext bool                      `yaml: "enablePodSecurityContext"`
 	IsNonRoot                bool                      `yaml: "isNonRoot"`
 	PodSecurityContext       limitedPodSecurityContext `yaml: "podSecurityContext"`
 }
