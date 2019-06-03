@@ -56,8 +56,8 @@ type submitArgs struct {
 
 	Annotations map[string]string `yaml:"annotations"`
 
-	IsNonRoot                bool                      `yaml: "isNonRoot"`
-	PodSecurityContext       limitedPodSecurityContext `yaml: "podSecurityContext"`
+	IsNonRoot                bool                      `yaml:"isNonRoot"`
+	PodSecurityContext       limitedPodSecurityContext `yaml:"podSecurityContext"`
 }
 
 type dataDirVolume struct {
