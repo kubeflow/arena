@@ -129,23 +129,27 @@ func (s *submitArgs) transform() (err error) {
 	// 4. handle PodSecurityContext: runAsUser, runAsGroup, supplementalGroups, runAsNonRoot
 	currentUser, err := user.Current()
 	if err != nil {
-		return err
-	}
-	log.Debugf("Current OS user info: ", currentUser.Uid, currentUser.Gid)
-	// only config PodSecurityContext for non-root user
-	if currentUser.Uid != "0" {
-		s.IsNonRoot = true
-		s.PodSecurityContext.RunAsUser, _ = strconv.ParseInt(currentUser.Uid, 10, 64)
-		s.PodSecurityContext.RunAsNonRoot = true
-		s.PodSecurityContext.RunAsGroup, _ = strconv.ParseInt(currentUser.Gid, 10, 64)
-		groups, _ := currentUser.GroupIds()
-		if len(groups) > 0 {
-			for i, group := range groups {
-				s.PodSecurityContext.SupplementalGroups[i], _ = strconv.ParseInt(group, 10, 64)
+		log.Debugf("Job will be started as root in containers. Failed to get current OS user with error: %v", err)
+	} else {
+		log.Debugf("Current OS user info: ", currentUser.Uid, currentUser.Gid)
+		// only config PodSecurityContext for non-root user
+		if currentUser.Uid != "0" {
+			s.IsNonRoot = true
+			s.PodSecurityContext.RunAsUser, _ = strconv.ParseInt(currentUser.Uid, 10, 64)
+			s.PodSecurityContext.RunAsNonRoot = true
+			s.PodSecurityContext.RunAsGroup, _ = strconv.ParseInt(currentUser.Gid, 10, 64)
+			groups, _ := currentUser.GroupIds()
+			if len(groups) > 0 {
+				sg := make([]int64, 0)
+				for _, group := range groups {
+					supplementalGroup, _ := strconv.ParseInt(group, 10, 64)
+					sg = append(sg, supplementalGroup)
+				}
+				s.PodSecurityContext.SupplementalGroups = sg
 			}
 		}
+		log.Debugf("PodSecurityContext %v ", s.PodSecurityContext)
 	}
-	log.Debugf("PodSecurityContext %v ", s.PodSecurityContext)
 	return nil
 }
 

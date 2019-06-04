@@ -101,7 +101,7 @@ spec:
             runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
             runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
             supplementalGroups:
-              {{- range $group := .Values.podSecurityContext.podsupplementalGroups }}
+              {{- range $group := .Values.podSecurityContext.supplementalGroups }}
               - {{ $group -}}
               {{ end }}
           {{- end }}
@@ -342,7 +342,7 @@ spec:
             runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
             runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
             supplementalGroups:
-              {{- range $group := .Values.podSecurityContext.podsupplementalGroups }}
+              {{- range $group := .Values.podSecurityContext.supplementalGroups }}
               - {{ $group -}}
               {{ end }}
           {{- end }}
@@ -616,7 +616,7 @@ spec:
             runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
             runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
             supplementalGroups:
-              {{- range $group := .Values.podSecurityContext.podsupplementalGroups }}
+              {{- range $group := .Values.podSecurityContext.supplementalGroups }}
               - {{ $group -}}
               {{ end }}
           {{- end }}
@@ -849,7 +849,7 @@ spec:
             runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
             runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
             supplementalGroups:
-              {{- range $group := .Values.podSecurityContext.podsupplementalGroups }}
+              {{- range $group := .Values.podSecurityContext.supplementalGroups }}
               - {{ $group -}}
               {{ end }}
           {{- end }}
