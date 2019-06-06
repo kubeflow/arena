@@ -70,6 +70,7 @@ type limitedPodSecurityContext struct {
 	RunAsNonRoot       bool    `yaml:"runAsNonRoot"`
 	RunAsGroup         int64   `yaml:"runAsGroup"`
 	SupplementalGroups []int64 `yaml:"supplementalGroups"`
+	FSGroup            int64   `yaml:"fsGroup"`
 }
 
 func (s submitArgs) check() error {
