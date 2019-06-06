@@ -54,12 +54,23 @@ type submitArgs struct {
 	UseENI     bool `yaml:"useENI"`
 
 	Annotations map[string]string `yaml:"annotations"`
+
+	IsNonRoot          bool                      `yaml:"isNonRoot"`
+	PodSecurityContext limitedPodSecurityContext `yaml:"podSecurityContext"`
 }
 
 type dataDirVolume struct {
 	HostPath      string `yaml:"hostPath"`
 	ContainerPath string `yaml:"containerPath"`
 	Name          string `yaml:"name"`
+}
+
+type limitedPodSecurityContext struct {
+	RunAsUser          int64   `yaml:"runAsUser"`
+	RunAsNonRoot       bool    `yaml:"runAsNonRoot"`
+	RunAsGroup         int64   `yaml:"runAsGroup"`
+	SupplementalGroups []int64 `yaml:"supplementalGroups"`
+	FSGroup            int64   `yaml:"fsGroup"`
 }
 
 func (s submitArgs) check() error {
@@ -115,7 +126,26 @@ func (s *submitArgs) transform() (err error) {
 			s.UseENI = true
 		}
 	}
-
+	// 4. handle PodSecurityContext: runAsUser, runAsGroup, supplementalGroups, runAsNonRoot
+	callerUid := os.Getuid()
+	callerGid := os.Getgid()
+	log.Debugf("Current user: ", callerUid)
+	if callerUid != 0 {
+		// only config PodSecurityContext for non-root user
+		s.IsNonRoot = true
+		s.PodSecurityContext.RunAsNonRoot = true
+		s.PodSecurityContext.RunAsUser = int64(callerUid)
+		s.PodSecurityContext.RunAsGroup = int64(callerGid)
+		groups, _ := os.Getgroups()
+		if len(groups) > 0 {
+			sg := make([]int64, 0)
+			for _, group := range groups {
+				sg = append(sg, int64(group))
+			}
+			s.PodSecurityContext.SupplementalGroups = sg
+		}
+		log.Debugf("PodSecurityContext %v ", s.PodSecurityContext)
+	}
 	return nil
 }
 

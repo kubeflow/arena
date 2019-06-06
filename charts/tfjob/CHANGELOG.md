@@ -79,3 +79,7 @@
 ### 0.19.0
 
 * Add resource limits/requests to tfjob initContainer and tensorboard
+
+### 0.20.0
+
+* Add PodSecurityContext support for RunAsUser, RunAsGroup, RunAsNonRoot, SupplementalGroups
