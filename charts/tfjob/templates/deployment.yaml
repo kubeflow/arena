@@ -57,6 +57,18 @@ spec:
                   - "worker"
               {{- end }}
             topologyKey: kubernetes.io/hostname
+      {{- if .Values.enablePodSecurityContext }}
+      {{- if .Values.isNonRoot}}
+      securityContext:
+        runAsUser: {{ .Values.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
+        runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
+        supplementalGroups:
+          {{- range $group := .Values.podSecurityContext.supplementalGroups }}
+          - {{ $group -}}
+          {{ end }}
+      {{- end }}
+      {{- end }}
       volumes:
         {{- if .Values.isLocalLogging }}
         - hostPath:
