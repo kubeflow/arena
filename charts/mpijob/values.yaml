@@ -47,3 +47,7 @@ annotations: {}
 # annotations:
 
 ingress: false
+
+# enable PodSecurityContext
+# In the future, this flag should be protected separately, in case of arena admin and users are not the same people
+enablePodSecurityContext: false

@@ -63,7 +63,6 @@ spec:
         runAsUser: {{ .Values.podSecurityContext.runAsUser }}
         runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
         runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
-        fsGroup: {{ .Values.podSecurityContext.fsGroup }}
         supplementalGroups:
           {{- range $group := .Values.podSecurityContext.supplementalGroups }}
           - {{ $group -}}
