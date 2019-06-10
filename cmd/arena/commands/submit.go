@@ -173,6 +173,7 @@ Available Commands:
   mpijob,mpi           Submit a MPIJob.
   standalonejob,sj     Submit a standalone Job.
   tfserving,tfserving  Submit a Serving Job.
+  volcanojob,vj        Submit a VolcanoJob.
     `
 )
 
@@ -192,6 +193,8 @@ func NewSubmitCommand() *cobra.Command {
 	// This will be deprecated soon.
 	command.AddCommand(NewSubmitStandaloneJobCommand())
 	command.AddCommand(NewSparkApplicationCommand())
+
+	command.AddCommand(NewVolcanoJobCommand())
 
 	return command
 }
