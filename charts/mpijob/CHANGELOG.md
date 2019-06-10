@@ -64,3 +64,7 @@
 ### 0.15.0
 
 * Add resource limits for mpi-launcher
+
+### 0.16.0
+
+* Add PodSecurityContext support for RunAsUser, RunAsGroup, RunAsNonRoot, SupplementalGroups
