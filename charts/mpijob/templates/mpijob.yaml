@@ -47,6 +47,18 @@ spec:
       {{- if .Values.useHostIPC }}
       hostIPC: {{ .Values.useHostIPC }}
       {{- end }}
+      {{- if .Values.enablePodSecurityContext }}
+      {{- if .Values.isNonRoot}}
+      securityContext:
+        runAsUser: {{ .Values.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
+        runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
+        supplementalGroups:
+          {{- range $group := .Values.podSecurityContext.supplementalGroups }}
+          - {{ $group -}}
+          {{ end }}
+      {{- end }}
+      {{- end }}
       volumes:
       {{- if .Values.useTensorboard }}
       {{- if .Values.isLocalLogging }}
