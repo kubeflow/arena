@@ -29,7 +29,8 @@ func NewTrainers(client *kubernetes.Clientset) []Trainer {
 		NewStandaloneJobTrainer,
 		NewTensorFlowJobTrainer,
 		NewMPIJobTrainer,
-		NewSparkJobTrainer}
+		NewSparkJobTrainer,
+		NewVolcanoJobTrainer}
 
 	for _, init := range trainerInits {
 		trainers = append(trainers, init(client))

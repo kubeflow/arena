@@ -1,0 +1,88 @@
+{{- $gpuCount := .Values.gpuCount -}}
+{{- $dataDirs := .Values.dataDirs -}}
+{{- $dot := . }}
+apiVersion: "batch.volcano.sh/v1alpha1"
+kind: "Job"
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ template "volcanojob.name" . }}
+    chart: {{ template "volcanojob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "VolcanoJob"
+spec:
+  schedulerName: {{ .Values.schedulerName | default "kube-batch" | quote }}
+  minAvailable: {{ .Values.minAvailable }}
+  queue: {{ .Values.queue | default "default" | quote }}
+  tasks:
+    {{- range $key, $value := .Values.tasks }}
+    - name: {{ $value.taskName }}
+      replicas: {{ $value.taskReplicas }}
+      template:
+        metadata:
+          labels:
+            app: {{ include "volcanojob.name" $dot }}
+            chart: {{ include "volcanojob.chart" $dot}}
+            release: {{ $dot.Release.Name }}
+            heritage: {{ $dot.Release.Service }}
+            {{- if eq (int $key) 0}}
+            volcano-role: "driver"
+            {{- end}}
+            createdBy: "VolcanoJob"
+        spec:
+            schedulerName: {{ $dot.Values.schedulerName | default "kube-batch" | quote }}
+            containers:
+              - name: {{ $value.taskName }}
+                image: {{ $value.taskImage }}
+                imagePullPolicy: {{ $dot.Values.imagePullPolicy }}
+                resources:
+                  requests:
+                    {{- if gt (int $gpuCount) 0}}
+                      {{- if $dot.Values.nvidiaPath }}
+                      alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+                      {{- else}}
+                      nvidia.com/gpu: {{ $gpuCount | quote }}
+                      {{- end}}
+                    {{- end}}
+                      {{- if $value.taskCPU }}
+                      cpu: {{ $value.taskCPU | quote }}
+                      {{- end}}
+                      {{- if $value.taskMemory }}
+                      memory: {{ $value.taskMemory | quote }}
+                      {{- end}}
+                  limits:
+                    {{- if gt (int $gpuCount) 0}}
+                      {{- if .Values.nvidiaPath }}
+                      alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+                      {{- else}}
+                      nvidia.com/gpu: {{ $gpuCount | quote }}
+                      {{- end}}
+                    {{- end}}
+                      {{- if $value.taskCPU }}
+                      cpu: {{ $value.taskCPU | quote }}
+                      {{- end}}
+                      {{- if $value.taskMemory }}
+                      memory: {{ $value.taskMemory | quote }}
+                      {{- end}}
+                {{- if $value.taskPort }}
+                ports:
+                  - containerPort: {{ $value.taskPort }}
+                    name: job-port-{{$key}}
+                {{- end}}
+                {{- if $dot.Values.command }}
+                command:
+                  - "sh"
+                  - "-c"
+                  - {{ $dot.Values.command }}
+                {{- end}}
+                {{- if $dot.Values.envs }}
+                env:
+                {{- range $key, $value := $dot.Values.envs }}
+                - name: "{{ $key }}"
+                  value: "{{ $value }}"
+                {{- end }}
+                {{- end }}
+  {{- end }}
+
+
