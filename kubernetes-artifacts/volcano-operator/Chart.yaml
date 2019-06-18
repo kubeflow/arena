@@ -1,0 +1,10 @@
+apiVersion: v1
+description: A Helm chart for Kubernetes
+name: volcano
+version: 0.0.1
+appVersion: 0.1
+icon: https://github.com/volcano-sh/volcano/blob/master/docs/images/volcano-logo.png
+home: https://volcano.sh
+sources:
+  - https://github.com/volcano-sh/volcano
+
