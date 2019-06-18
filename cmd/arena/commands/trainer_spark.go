@@ -377,7 +377,7 @@ func (st *SparkJobTrainer) getTrainingJob(name, namespace string) (job TrainingJ
 		return nil, err
 	}
 	if len(sparkjobList.Items) == 0 {
-		return nil, nil
+		return nil, fmt.Errorf("Failed to find the job for %s", name)
 	} else {
 		sparkjob = sparkjobList.Items[0]
 	}
