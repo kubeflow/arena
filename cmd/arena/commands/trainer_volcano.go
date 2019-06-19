@@ -144,7 +144,7 @@ func (vj *VolcanoJob) Duration() time.Duration {
 	}
 	// need to update once the back end changes are done
 	// TODO
-	return 0
+	return metav1.Now().Sub(job.Status.State.LastTransitionTime.Time)
 }
 
 func (vj *VolcanoJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {

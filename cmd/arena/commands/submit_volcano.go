@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
-	"strconv"
 )
 
 var (
@@ -57,25 +56,26 @@ func NewVolcanoJobCommand() *cobra.Command {
 }
 
 func NewSubmitVolcanoJobArgs() *submitVolcanoJobArgs {
-	return &submitVolcanoJobArgs{
-		Tasks: make([]Task, 3, 10),
-	}
+	return &submitVolcanoJobArgs{}
 }
 
 type submitVolcanoJobArgs struct {
-	MinAvailable  int    `yaml:"minAvailable"`
-	Queue         string `yaml:"queue"`
+	// The MinAvailable available pods to run for this Job
+	MinAvailable int `yaml:"minAvailable"`
+	// Specifies the queue that will be used in the scheduler, "default" queue is used this leaves empty.
+	Queue string `yaml:"queue"`
+	// SchedulerName is the default value of `tasks.template.spec.schedulerName`.
 	SchedulerName string `yaml:"schedulerName"`
-	Tasks         []Task `yaml:"tasks"`
-}
-
-type Task struct {
-	TaskName     string `yaml:"taskName"`
-	TaskImage    string `yaml:"taskImage"`
-	TaskReplicas int    `yaml:"taskReplicas"`
-	TaskCPU      string `yaml:"taskCPU"`
-	TaskMemory   string `yaml:"taskMemory"`
-	TaskPort     int    `yaml:"taskPort"`
+	// TaskName specifies the name of task
+	TaskName   string   `yaml:"taskName"`
+	TaskImages []string `yaml:"taskImages"`
+	// TaskReplicas specifies the replicas of this Task in Job
+	TaskReplicas int `yaml:"taskReplicas"`
+	// TaskCPU specifies the cpu resource required for each replica of Task in Job. default is 250m
+	TaskCPU string `yaml:"taskCPU"`
+	// TaskMemory specifies the memory resource required for each replica of Task in Job. default is 128Mi
+	TaskMemory string `yaml:"taskMemory"`
+	TaskPort   int    `yaml:"taskPort"`
 }
 
 // add flags to submit spark args
@@ -83,35 +83,29 @@ func (sa *submitVolcanoJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&name, "name", "", "override name")
 	command.MarkFlagRequired("name")
 
-	command.Flags().IntVar(&(sa.MinAvailable), "minAvailable", 1, "The minimal available pods to run for this Job.")
+	command.Flags().IntVar(&(sa.MinAvailable), "minAvailable", 1, "The minimal available pods to run for this Job. default value is 1")
 	command.Flags().StringVar(&(sa.Queue), "queue", "default", "Specifies the queue that will be used in the scheduler, default queue is used this leaves empty")
 	command.Flags().StringVar(&(sa.SchedulerName), "schedulerName", "kube-batch", "Specifies the scheduler Name, default  is kube-batch used this leaves empty")
-
-	for i := 0; i < 3; i++ {
-
-		command.Flags().StringVar(&(sa.Tasks[i].TaskName), "taskName"+strconv.Itoa(i), "task"+strconv.Itoa(i), "the task name of volcano job")
-		command.Flags().StringVar(&(sa.Tasks[i].TaskImage), "taskImage"+strconv.Itoa(i), "nginx", "the docker image name of task job")
-		command.Flags().IntVar(&(sa.Tasks[i].TaskReplicas), "taskReplicas"+strconv.Itoa(i), 1, "the task replica's number to run the distributed task.")
-		// cpu and memory request
-		command.Flags().StringVar(&(sa.Tasks[i].TaskCPU), "taskCPU"+strconv.Itoa(i), "250m", "cpu request for task pod")
-		command.Flags().StringVar(&(sa.Tasks[i].TaskMemory), "taskMemory"+strconv.Itoa(i), "128Mi", "memory request for task pod (min is 128Mi)")
-		command.Flags().IntVar(&(sa.Tasks[i].TaskPort), "taskPort"+strconv.Itoa(i), 2222+i, "the task port number.")
-	}
+	// each task related information name,image,replica number
+	command.Flags().StringVar(&(sa.TaskName), "taskName", "task", "the task name of volcano job, default value is task")
+	command.Flags().StringSliceVar(&(sa.TaskImages), "taskImages", []string{"ubuntu", "nginx", "busybox"}, "the docker images of different tasks of volcano job. default used 3 tasks with ubuntu,nginx and busybox images")
+	command.Flags().IntVar(&(sa.TaskReplicas), "taskReplicas", 1, "the task replica's number to run the distributed tasks. default value is 1")
+	// cpu and memory request
+	command.Flags().StringVar(&(sa.TaskCPU), "taskCPU", "250m", "cpu request for each task replica / pod. default value is 250m")
+	command.Flags().StringVar(&(sa.TaskMemory), "taskMemory", "128Mi", "memory request for each task replica/pod.default value is 128Mi)")
+	command.Flags().IntVar(&(sa.TaskPort), "taskPort", 2222, "the task port number. default value is 2222")
 
 }
 
-// TODO add more check
 // check params
 func (sa *submitVolcanoJobArgs) isValid() error {
 
-	if len(sa.Tasks) == 0 {
-		return errors.New("tasks should be there")
+	if len(sa.TaskName) == 0 {
+		return errors.New("Default task Name should be there")
 	}
 
-	for i := 0; i < len(sa.Tasks); i++ {
-		if sa.Tasks[i].TaskImage == "" {
-			return errors.New("Image should be there in each task")
-		}
+	if len(sa.TaskImages) == 0 {
+		return errors.New("TaskImages should be there")
 	}
 
 	return nil

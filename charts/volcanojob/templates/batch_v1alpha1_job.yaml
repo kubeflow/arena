@@ -16,9 +16,9 @@ spec:
   minAvailable: {{ .Values.minAvailable }}
   queue: {{ .Values.queue | default "default" | quote }}
   tasks:
-    {{- range $key, $value := .Values.tasks }}
-    - name: {{ $value.taskName }}
-      replicas: {{ $value.taskReplicas }}
+    {{- range $key, $value := .Values.taskImages }}
+    - name: {{ $dot.Values.taskName }}-{{$key}}
+      replicas: {{ $dot.Values.taskReplicas }}
       template:
         metadata:
           labels:
@@ -32,9 +32,10 @@ spec:
             createdBy: "VolcanoJob"
         spec:
             schedulerName: {{ $dot.Values.schedulerName | default "kube-batch" | quote }}
+            restartPolicy: {{ $dot.Values.restartPolicy | default "Never" | quote }}
             containers:
-              - name: {{ $value.taskName }}
-                image: {{ $value.taskImage }}
+              - name: {{ $dot.Values.taskName }}
+                image: {{ $value }}
                 imagePullPolicy: {{ $dot.Values.imagePullPolicy }}
                 resources:
                   requests:
@@ -45,11 +46,11 @@ spec:
                       nvidia.com/gpu: {{ $gpuCount | quote }}
                       {{- end}}
                     {{- end}}
-                      {{- if $value.taskCPU }}
-                      cpu: {{ $value.taskCPU | quote }}
+                      {{- if $dot.Values.taskCPU }}
+                      cpu: {{ $dot.Values.taskCPU | quote }}
                       {{- end}}
-                      {{- if $value.taskMemory }}
-                      memory: {{ $value.taskMemory | quote }}
+                      {{- if $dot.Values.taskMemory }}
+                      memory: {{ $dot.Values.taskMemory | quote }}
                       {{- end}}
                   limits:
                     {{- if gt (int $gpuCount) 0}}
@@ -59,15 +60,15 @@ spec:
                       nvidia.com/gpu: {{ $gpuCount | quote }}
                       {{- end}}
                     {{- end}}
-                      {{- if $value.taskCPU }}
-                      cpu: {{ $value.taskCPU | quote }}
+                      {{- if $dot.Values.taskCPU }}
+                      cpu: {{ $dot.Values.taskCPU | quote }}
                       {{- end}}
-                      {{- if $value.taskMemory }}
-                      memory: {{ $value.taskMemory | quote }}
+                      {{- if $dot.Values.taskMemory }}
+                      memory: {{ $dot.Values.taskMemory | quote }}
                       {{- end}}
-                {{- if $value.taskPort }}
+                {{- if $dot.Values.taskPort }}
                 ports:
-                  - containerPort: {{ $value.taskPort }}
+                  - containerPort: {{ $dot.Values.taskPort }}
                     name: job-port-{{$key}}
                 {{- end}}
                 {{- if $dot.Values.command }}
