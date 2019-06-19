@@ -2,34 +2,22 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-
+# The minimal available pods to run for this Job
 minAvailable: 1
 queue: "default"            # user define
 schedulerName: kube-batch
 
 gpuCount: 0                 # user define
 imagePullPolicy: Always
+restartPolicy: Never
 
-tasks:
-  - taskName: "task0"
-    taskImage: nginx        # user define
-    taskReplicas: 1         # user define
-    taskCPU: 250m           # user define
-    taskMemory: 256Mi       # user define
-    taskPort: 2222          # user define
+taskName: "task"
+taskReplicas: 1         # user define
+taskCPU: 250m           # user define
+taskMemory: 128Mi       # user define
+taskPort: 2222          # user define
 
-  - taskName: "task1"
-    taskImage: nginx       # user define
-    taskReplicas: 1        # user define
-    taskCPU: 250m          # user define
-    taskMemory: 128Mi      # user define
-    taskPort: 3333         # user define
-
-  - taskName: "task2"
-    taskImage: nginx       # user define
-    taskReplicas: 1        # user define
-    taskCPU: 250m          # user define
-    taskMemory: 128Mi      # user define
-    taskPort: 4444         # user define
-
-
+taskImages:
+  - ubuntu        # user define
+  - nginx
+  - busybox
