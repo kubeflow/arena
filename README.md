@@ -34,7 +34,7 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [9. Monitor GPUs of the training job ](docs/userguide/9-top-job-gpu-metric.md)
 - [10. Run a distributed training job with RDMA](docs/userguide/10-rdma-integration.md)
 - [11. Run a distributed spark job](docs/userguide/11-sparkjob-distributed.md)
-
+- [12. Run a Volcano job](docks/12-volcanojob.md)
 ## Demo
 
 [![](demo.jpg)](http://cloud.video.taobao.com/play/u/2987821887/p/1/e/6/t/1/50210690772.mp4)
