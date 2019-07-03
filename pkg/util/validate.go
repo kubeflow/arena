@@ -17,6 +17,8 @@ package util
 import (
 	"fmt"
 	"regexp"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 const dns1123SubdomainFmt string = dns1123LabelFmt + "(\\." + dns1123LabelFmt + ")*"
@@ -45,5 +47,11 @@ func ValidateJobName(value string) error {
 	if !dns1123LabelRegexp.MatchString(value) {
 		return fmt.Errorf("The job name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character.")
 	}
+	return nil
+}
+
+// Check if PriorityClassName exists
+func ValidatePriorityClassName(client *kubernetes.Clientset, prioityClassName string) error {
+	// client.SchedulingV1alpha1()
 	return nil
 }
