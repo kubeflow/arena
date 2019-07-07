@@ -108,7 +108,7 @@ Allocated/Total GPUs In Cluster:  1/1 (100%)
     "mpirun tail -f /dev/null"
 ```
 
-7.Check MPI Training Job `medium`, and find it's preempted by critical-worker-0
+7.检查MPI训练任务`medium`的相关事件，可以发现它被驱逐了。而它被驱逐的原因是由于被更重要的任务`critical`下的Pod也在申请GPU资源，而集群内只有一个可用的GPU资源，所以较低优先级的任务`medium`的`medium-worker-0`被驱逐
 
 ```
 # kubectl get events --field-selector involvedObject.name=medium-worker-0
@@ -121,7 +121,7 @@ LAST SEEN   TYPE     REASON      OBJECT                MESSAGE
 2m32s       Normal   Killing     pod/medium-worker-0   Stopping container mpi
 ```
 
-8.Check the details of the MPI Training Job `medium`, and it's turned to fail
+8.查看MPI训练任务`medium`的细节信息，发现这个任务已经处于失败状态。
 
 ```
 # arena get medium
@@ -133,7 +133,7 @@ NAME    STATUS  TRAINER  AGE  INSTANCE               NODE
 medium  FAILED  MPIJOB   20m  medium-launcher-sz5xj  192.168.0.23
 ```
 
-9.And check the details of the MPI Training Job `critical`, it's running.
+9.查看MPI训练任务`critical`的细节信息，发现这个任务已经处于运行状态。
 
 ```
 # arena get critical
@@ -146,7 +146,7 @@ critical  RUNNING  MPIJOB   10m  critical-launcher-mfffs  192.168.0.23
 critical  RUNNING  MPIJOB   10m  critical-worker-0        192.168.0.23
 ```
 
-10.And we can find the only GPU is used by the MPI Training Job `critical`
+10.而且也可以通过`arena top node -d`发现这个GPU已经被MPI训练任务`critical`占用。
 
 ```
 # arena top node -d

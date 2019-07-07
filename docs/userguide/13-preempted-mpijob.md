@@ -163,4 +163,4 @@ Allocated GPUs In Node cn-hangzhou.192.168.0.23:  1 (100%)
 -----------------------------------------------------------------------------------------
 ```
 
-Congratulations! You've run the batch/distributed volcano job with `arena` successfully.
+Congratulations! You've run the the job in priorities and preemptions with `arena` successfully.
