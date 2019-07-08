@@ -162,4 +162,4 @@ Allocated GPUs In Node cn-hangzhou.192.168.0.23:  1 (100%)
 -----------------------------------------------------------------------------------------
 ```
 
-Congratulations! You've run the batch/distributed volcano job with `arena` successfully.
+恭喜! 你已经可以通过arena实现对于MPIJob优先级抢占。
