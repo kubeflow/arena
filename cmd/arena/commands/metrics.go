@@ -163,7 +163,6 @@ func getPodMetrics() (map[string]v1.ResourceList, error) {
 	return res, nil
 }
 
-
 // calculate the CPU count of each node
 func calculateNodeCPU(nodeInfo NodeInfo, nodeMetrics map[string]v1.ResourceList) (int64, int64) {
 	usedCPU := nodeMetrics[nodeInfo.node.Name][v1.ResourceCPU]
@@ -178,13 +177,13 @@ func calculateNodeMemory(nodeInfo NodeInfo, nodeMetrics map[string]v1.ResourceLi
 
 // CPU usage in a pod
 func cpuInPod(pod v1.Pod, podMetrics map[string]v1.ResourceList) int64 {
-	usedCPU :=  podMetrics[pod.Name][v1.ResourceCPU]
+	usedCPU := podMetrics[pod.Name][v1.ResourceCPU]
 	return usedCPU.MilliValue()
 }
 
 // memory usage in a pod
 func memoryInPod(pod v1.Pod, podMetrics map[string]v1.ResourceList) int64 {
-	usedMemory :=  podMetrics[pod.Name][v1.ResourceMemory]
+	usedMemory := podMetrics[pod.Name][v1.ResourceMemory]
 	return usedMemory.Value()
 }
 

@@ -124,12 +124,12 @@ func displayTopNode(nodes []NodeInfo) {
 func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
-		totalGPUsInCluster     	 int64
-		allocatedGPUsInCluster 	 int64
-		totalCPUsInCluster       int64
-		usedCPUsInCluster        int64
-		totalMemoryInCluster     int64
-		usedMemoryInCluster      int64
+		totalGPUsInCluster     int64
+		allocatedGPUsInCluster int64
+		totalCPUsInCluster     int64
+		usedCPUsInCluster      int64
+		totalMemoryInCluster   int64
+		usedMemoryInCluster    int64
 	)
 
 	// TODO: judge whether the kubernetes system enables metrics server or not
