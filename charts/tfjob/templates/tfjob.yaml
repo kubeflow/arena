@@ -2,7 +2,7 @@
 {{- $syncMode := .Values.syncMode -}}
 {{- $cleanPodPolicy := .Values.cleanPodPolicy -}}
 {{- $dataDirs := .Values.dataDirs -}}
-apiVersion: "kubeflow.org/v1alpha2"
+apiVersion: "kubeflow.org/v1"
 kind: "TFJob"
 metadata:
   name: {{ .Release.Name }}
