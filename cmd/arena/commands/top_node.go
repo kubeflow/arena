@@ -25,6 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
@@ -125,17 +126,35 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	var (
 		totalGPUsInCluster     int64
 		allocatedGPUsInCluster int64
+		totalCPUsInCluster     int64
+		usedCPUsInCluster      int64
+		totalMemoryInCluster   int64
+		usedMemoryInCluster    int64
 	)
 
-	fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tGPU(Total)\tGPU(Allocated)\n")
+	// TODO: judge whether the kubernetes system enables metrics server or not
+	nodeMetrics, err := getNodeMetrics()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tGPU(Total)\tGPU(Allocated)\tCPU(Total)\tCPU(Used)\tMEMORY(Total)\tMEMORY(Used)\n")
 	for _, nodeInfo := range nodeInfos {
 		// Skip NotReady node
 		//if ! isNodeReady(nodeInfo.node) {
 		//	continue
 		//}
 		totalGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
+		totalCPU, usedCPU := calculateNodeCPU(nodeInfo, nodeMetrics)
+		totalMemory, usedMemory := calculateNodeMemory(nodeInfo, nodeMetrics)
+
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
+		totalCPUsInCluster += totalCPU
+		usedCPUsInCluster += usedCPU
+		totalMemoryInCluster += totalMemory
+		usedMemoryInCluster += usedMemory
 
 		address := getNodeInternalAddress(nodeInfo.node)
 
@@ -144,13 +163,17 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 			role = "<none>"
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 			address,
 			role,
 			strconv.FormatInt(totalGPU, 10),
-			strconv.FormatInt(allocatedGPU, 10))
+			strconv.FormatInt(allocatedGPU, 10),
+			resource.NewMilliQuantity(totalCPU, resource.DecimalSI).String(),
+			resource.NewMilliQuantity(usedCPU, resource.DecimalSI).String(),
+			fmt.Sprintf("%vMi", totalMemory/(1024*1024)),
+			fmt.Sprintf("%vMi", usedMemory/(1024*1024)))
 	}
-	fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
+	fmt.Fprintf(w, "--------------------------------------------------------------------------------------------------------------------------------------\n")
 	fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\n")
 	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(totalGPUsInCluster, 10),
 		strconv.FormatInt(allocatedGPUsInCluster, 10))
@@ -164,6 +187,28 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		int64(gpuUsage))
 	// fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ...)
 
+	fmt.Fprintf(w, "Used/Total CPUs In Cluster:\n")
+	log.Debugf("cpu: %s, used CPUs %s", resource.NewMilliQuantity(totalCPUsInCluster, resource.DecimalSI).String(),
+		resource.NewMilliQuantity(usedCPUsInCluster, resource.DecimalSI).String())
+	var cpuUsage float64 = 0
+	if totalCPUsInCluster > 0 {
+		cpuUsage = float64(usedCPUsInCluster) / float64(totalCPUsInCluster) * 100
+	}
+	fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+		resource.NewMilliQuantity(usedCPUsInCluster, resource.DecimalSI).String(),
+		resource.NewMilliQuantity(totalCPUsInCluster, resource.DecimalSI).String(),
+		int64(cpuUsage))
+	fmt.Fprintf(w, "Used/Total Memory In Cluster:\n")
+	log.Debugf("Memory: %s, used Memory %s", fmt.Sprintf("%vMi", usedMemoryInCluster/(1024*1024)),
+		fmt.Sprintf("%vMi", totalMemoryInCluster/(1024*1024)))
+	var memoryUsage float64 = 0
+	if totalMemoryInCluster > 0 {
+		memoryUsage = float64(usedMemoryInCluster) / float64(totalMemoryInCluster) * 100
+	}
+	fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+		fmt.Sprintf("%vMi", usedMemoryInCluster/(1024*1024)),
+		fmt.Sprintf("%vMi", totalMemoryInCluster/(1024*1024)),
+		int64(memoryUsage))
 	_ = w.Flush()
 }
 
@@ -172,7 +217,23 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 	var (
 		totalGPUsInCluster     int64
 		allocatedGPUsInCluster int64
+		totalCPUsInCluster     int64
+		usedCPUsInCluster      int64
+		totalMemoryInCluster   int64
+		usedMemoryInCluster    int64
 	)
+
+	// TODO: judge whether the kubernetes system enables metrics server or not
+	nodeMetrics, err := getNodeMetrics()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	podMetrics, err := getPodMetrics()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	fmt.Fprintf(w, "\n")
 	for _, nodeInfo := range nodeInfos {
@@ -182,8 +243,15 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		//}
 
 		totalGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
+		totalCPU, usedCPU := calculateNodeCPU(nodeInfo, nodeMetrics)
+		totalMemory, usedMemory := calculateNodeMemory(nodeInfo, nodeMetrics)
+
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
+		totalCPUsInCluster += totalCPU
+		usedCPUsInCluster += usedCPU
+		totalMemoryInCluster += totalMemory
+		usedMemoryInCluster += usedMemory
 
 		address := getNodeInternalAddress(nodeInfo.node)
 
@@ -197,15 +265,19 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		fmt.Fprintf(w, "IPADDRESS:\t%s\n", address)
 		fmt.Fprintf(w, "ROLE:\t%s\n", role)
 
-		pods := gpuPods(nodeInfo.pods)
+		// TODO: which pod should we show in the node detail info?
+		pods := resourcePods(nodeInfo.pods, podMetrics)
+
 		if len(pods) > 0 {
 			fmt.Fprintf(w, "\n")
-			fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\tGPU LIMITS\n")
+			fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\tGPU LIMITS\tCPU USAGE\tMEM USAGE\n")
 			for _, pod := range pods {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", pod.Namespace,
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", pod.Namespace,
 					pod.Name,
 					strconv.FormatInt(gpuInPod(pod), 10),
-					strconv.FormatInt(gpuInPod(pod), 10))
+					strconv.FormatInt(gpuInPod(pod), 10),
+					resource.NewMilliQuantity(cpuInPod(pod, podMetrics), resource.DecimalSI).String(),
+					fmt.Sprintf("%vMi", memoryInPod(pod, podMetrics)/(1024*1024)))
 			}
 			fmt.Fprintf(w, "\n")
 		}
@@ -215,13 +287,35 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		} else {
 			fmt.Fprintf(w, "\n")
 		}
+		var cpuUsageInNode float64 = 0
+		if totalCPU > 0 {
+			cpuUsageInNode = float64(usedCPU) / float64(totalCPU) * 100
+		} else {
+			fmt.Fprintf(w, "\n")
+		}
+		var memoryUsageInNode float64 = 0
+		if totalMemory > 0 {
+			memoryUsageInNode = float64(usedMemory) / float64(totalMemory) * 100
+		} else {
+			fmt.Fprintf(w, "\n")
+		}
 
 		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", nodeInfo.node.Name, strconv.FormatInt(totalGPU, 10))
 		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", nodeInfo.node.Name, strconv.FormatInt(allocatedGPU, 10), int64(gpuUsageInNode))
 		log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(totalGPU, 10),
 			strconv.FormatInt(allocatedGPU, 10))
 
-		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
+		// TODO: double check the correctness of the output messages, need a further discussion
+		fmt.Fprintf(w, "Total CPUs In Node %s:\t%s \t\n", nodeInfo.node.Name, resource.NewMilliQuantity(totalCPU, resource.DecimalSI).String())
+		fmt.Fprintf(w, "Used CPUs In Node %s:\t%s (%d%%)\t\n", nodeInfo.node.Name, resource.NewMilliQuantity(usedCPU, resource.DecimalSI).String(), int64(cpuUsageInNode))
+		log.Debugf("cpu: %s, allocated CPUs %s", resource.NewMilliQuantity(totalCPU, resource.DecimalSI).String(),
+			resource.NewMilliQuantity(usedCPU, resource.DecimalSI).String())
+		fmt.Fprintf(w, "Total Memory In Node %s:\t%s \t\n", nodeInfo.node.Name, fmt.Sprintf("%vMi", totalMemory/(1024*1024)))
+		fmt.Fprintf(w, "Used Memory In Node %s:\t%s (%d%%)\t\n", nodeInfo.node.Name, fmt.Sprintf("%vMi", usedMemory/(1024*1024)), int64(memoryUsageInNode))
+		log.Debugf("memory: %s, allocated Memory %s", fmt.Sprintf("%vMi", totalMemory/(1024*1024)),
+			fmt.Sprintf("%vMi", usedMemory/(1024*1024)))
+		fmt.Fprintf(w, "--------------------------------------------------------------------------------------------------------------------------------------\n")
+
 	}
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "\n")
@@ -237,7 +331,28 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		strconv.FormatInt(allocatedGPUsInCluster, 10),
 		strconv.FormatInt(totalGPUsInCluster, 10),
 		int64(gpuUsage))
-	// fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ...)
+	fmt.Fprintf(w, "Used/Total CPUs In Cluster:\t")
+	log.Debugf("cpu: %s, used CPUs %s", resource.NewMilliQuantity(totalCPUsInCluster, resource.DecimalSI).String(),
+		resource.NewMilliQuantity(usedCPUsInCluster, resource.DecimalSI).String())
+	var cpuUsage float64 = 0
+	if totalCPUsInCluster > 0 {
+		cpuUsage = float64(usedCPUsInCluster) / float64(totalCPUsInCluster) * 100
+	}
+	fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+		resource.NewMilliQuantity(usedCPUsInCluster, resource.DecimalSI).String(),
+		resource.NewMilliQuantity(totalCPUsInCluster, resource.DecimalSI).String(),
+		int64(cpuUsage))
+	fmt.Fprintf(w, "Used/Total Memory In Cluster:\t")
+	log.Debugf("memory: %s, used Memory %s", fmt.Sprintf("%vMi", totalMemoryInCluster/(1024*1024)),
+		fmt.Sprintf("%vMi", usedMemoryInCluster/(1024*1024)))
+	var memoryUsage float64 = 0
+	if totalMemoryInCluster > 0 {
+		memoryUsage = float64(usedMemoryInCluster) / float64(totalMemoryInCluster) * 100
+	}
+	fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+		fmt.Sprintf("%vMi", usedMemoryInCluster/(1024*1024)),
+		fmt.Sprintf("%vMi", totalMemoryInCluster/(1024*1024)),
+		int64(memoryUsage))
 
 	_ = w.Flush()
 }

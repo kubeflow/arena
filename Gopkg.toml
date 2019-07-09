@@ -38,8 +38,8 @@
   version = "2.2.1"
 
 [[constraint]]
-  branch = "release-1.9"
   name = "k8s.io/api"
+  branch = "release-1.9"
 
 [[constraint]]
   name = "k8s.io/client-go"
@@ -48,6 +48,10 @@
 [[constraint]]
   name = "k8s.io/apimachinery"
   branch = "release-1.9"
+
+[[constraint]]
+  name = "k8s.io/metrics"
+  version = "kubernetes-1.11.6"
 
 [[constraint]]
   name = "github.com/kubeflow/tf-operator"
