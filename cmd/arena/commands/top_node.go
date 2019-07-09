@@ -123,11 +123,12 @@ func displayTopNode(nodes []NodeInfo) {
 func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
-		totalGPUsInCluster     int64
-		allocatedGPUsInCluster int64
+		totalGPUsInCluster            int64
+		allocatedGPUsInCluster        int64
+		totalGPUsOnReadyNodeInCluster int64
 	)
 
-	fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tGPU(Total)\tGPU(Allocated)\n")
+	fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\n")
 	for _, nodeInfo := range nodeInfos {
 		// Skip NotReady node
 		//if ! isNodeReady(nodeInfo.node) {
@@ -144,9 +145,17 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 			role = "<none>"
 		}
 
+		status := "ready"
+		if !isNodeReady(nodeInfo.node) {
+			status = "notReady"
+		} else {
+			totalGPUsOnReadyNodeInCluster += totalGPU
+		}
+
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 			address,
 			role,
+			status,
 			strconv.FormatInt(totalGPU, 10),
 			strconv.FormatInt(allocatedGPU, 10))
 	}
@@ -162,6 +171,19 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		strconv.FormatInt(allocatedGPUsInCluster, 10),
 		strconv.FormatInt(totalGPUsInCluster, 10),
 		int64(gpuUsage))
+	if totalGPUsInCluster != totalGPUsOnReadyNodeInCluster {
+		if totalGPUsOnReadyNodeInCluster > 0 {
+			gpuUsage = float64(allocatedGPUsInCluster) / float64(totalGPUsOnReadyNodeInCluster) * 100
+		} else {
+			gpuUsage = 0
+		}
+		fmt.Fprintf(w, "Allocated/Total GPUs(Active) In Cluster:\n")
+		fmt.Fprintf(w, "%s/%s (%d%%)\t\n",
+			strconv.FormatInt(allocatedGPUsInCluster, 10),
+			strconv.FormatInt(totalGPUsOnReadyNodeInCluster, 10),
+			int64(gpuUsage))
+	}
+
 	// fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ...)
 
 	_ = w.Flush()
