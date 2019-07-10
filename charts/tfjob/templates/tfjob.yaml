@@ -62,7 +62,7 @@ spec:
                         operator: In
                         values:
                           - "{{ .Release.Name }}"
-                      - key: group_name
+                      - key: group-name
                         operator: In
                         values:
                           - "kubeflow.org"
@@ -303,7 +303,7 @@ spec:
                         operator: In
                         values:
                           - "{{ .Release.Name }}"
-                      - key: group_name
+                      - key: group-name
                         operator: In
                         values:
                           - "kubeflow.org"
@@ -580,7 +580,7 @@ spec:
                         operator: In
                         values:
                           - "{{ .Release.Name }}"
-                      - key: group_name
+                      - key: group-name
                         operator: In
                         values:
                           - "kubeflow.org"

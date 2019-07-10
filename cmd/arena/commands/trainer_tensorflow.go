@@ -32,6 +32,15 @@ import (
 	commonv1 "github.com/kubeflow/arena/pkg/tf-operator/apis/common/v1"
 )
 
+const (
+	// tf-operator added labels for pods and servers.
+	tfReplicaTypeLabel  = "tf-replica-type"
+	tfReplicaIndexLabel = "tf-replica-index"
+	labelGroupName      = "group-name"
+	labelTFJobName      = "tf-job-name"
+	labelTFJobRole      = "tf-job-role"
+)
+
 var (
 	allTfjobs []tfv1.TFJob
 )
@@ -390,7 +399,7 @@ func (tt *TensorFlowJobTrainer) isChiefPod(tfjob tfv1.TFJob, item v1.Pod) bool {
 	// find chief pod in chief mode
 	if _, ok := tfjob.Spec.TFReplicaSpecs[tfv1.TFReplicaTypeChief]; ok {
 		log.Debugf("The distributed tensorflow is in chief mode")
-		if val, ok := item.Labels["tf-replica-type"]; ok && (val == "chief") {
+		if val, ok := item.Labels[tfReplicaTypeLabel]; ok && (val == "chief") {
 			log.Debugf("the tfjob %s with labels %s is the chief pod", item.Name, val)
 			return true
 		} else {
@@ -398,13 +407,13 @@ func (tt *TensorFlowJobTrainer) isChiefPod(tfjob tfv1.TFJob, item v1.Pod) bool {
 		}
 	}
 
-	if val, ok := item.Labels["tf-replica-type"]; ok && (val == "worker") {
+	if val, ok := item.Labels[tfReplicaTypeLabel]; ok && (val == "worker") {
 		log.Debugf("the tfjob %s with labels %s is the chief pod", item.Name, val)
 	} else {
 		return false
 	}
 
-	if val, ok := item.Labels["tf-replica-index"]; ok && (val == "0") {
+	if val, ok := item.Labels[tfReplicaIndexLabel]; ok && (val == "0") {
 		log.Debugf("the chief pod of tfjob %s with labels %s is found.", item.Name, val)
 	} else {
 		return false
@@ -446,7 +455,7 @@ func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item v1.Pod) bo
 		return false
 	}
 
-	if val, ok := item.Labels["group_name"]; ok && (val == "kubeflow.org") {
+	if val, ok := item.Labels[labelGroupName]; ok && (val == "kubeflow.org") {
 		log.Debugf("the tfjob %s with labels %s is found.", item.Name, val)
 	} else {
 		return false
