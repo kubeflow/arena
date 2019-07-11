@@ -233,10 +233,13 @@ func (m *HorovodJobTrainer) getTrainingJob(name, namespace string) (TrainingJob,
 
 	return &HorovodJob{
 		JobInfo: &JobInfo{
+			BasicJobInfo: &BasicJobInfo{
+				name:      name,
+				resources: podResources(pods),
+			},
 			job:         job,
 			jobPod:      jobPod,
 			pods:        pods,
-			name:        name,
 			trainerType: m.Type(),
 		},
 	}, nil
@@ -308,10 +311,13 @@ func (m *HorovodJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJo
 
 	return &HorovodJob{
 		JobInfo: &JobInfo{
+			BasicJobInfo: &BasicJobInfo{
+				name:      name,
+				resources: podResources(pods),
+			},
 			job:         job,
 			jobPod:      jobPod,
 			pods:        pods,
-			name:        name,
 			trainerType: m.Type(),
 		},
 	}, nil
