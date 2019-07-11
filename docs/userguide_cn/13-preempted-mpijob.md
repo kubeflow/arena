@@ -1,11 +1,11 @@
 
-# Arena supports Priority and Preemption for MPIJob
+# Arena 支持MPIJob任务抢占的示例
 
-## prerequisites
+## 前提条件
 
 - k8s > 1.11
 
-1.Create `PriorityClass` with the yaml below:
+1.利用下列yaml创建`PriorityClass`对象，这里定义了两个优先级`critical`和`medium`:
 
 ```yaml
 apiVersion: scheduling.k8s.io/v1
@@ -25,13 +25,13 @@ metadata:
 value: 1000000
 ```
 
-Save the template that applies in a file named `pc.yaml`, and create the `PriorityClass`:
+将上述内容保存到`pc.yaml`文件，并且通过下列命令创建:
 
 ```
 kubectl create -f pc.yaml
 ```
 
-2.There is only 1 GPU available in the Kubernetes cluster
+2.通过arena命令可以看到：在当前Kubernetes集群中只有一张可用GPU卡:
 
 ```
 # arena top node
@@ -45,10 +45,9 @@ Allocated/Total GPUs In Cluster:
 0/1 (0%)
 ```
 
-3.Run the MPI training Job with `medium` priority:
+3.提交一个MPI训练任务，该任务的优先级为`medium`:
 
-
-The following command is an example. 
+参考如下例子 
 
 ```
 # arena submit mpi          \
@@ -65,7 +64,7 @@ INFO[0000] The Job medium has been submitted successfully
 INFO[0000] You can run `arena get medium --type mpijob` to check the job status
 ```
 
-4.Get the details of the specific job
+4.查看该任务的运行状态
 
 ```
 # arena get medium
@@ -78,7 +77,7 @@ medium  RUNNING  MPIJOB   58s  medium-launcher-sz5xj  192.168.0.23
 medium  RUNNING  MPIJOB   58s  medium-worker-0        192.168.0.23
 ```
 
-5.The only one GPU is used by MPI training Job `medium`
+5.可以看到该任务占用了唯一的一张GPU卡
 
 ```
 # arena top node -d
@@ -97,7 +96,7 @@ Allocated GPUs In Node cn-hangzhou.192.168.0.23:  1 (100%)
 Allocated/Total GPUs In Cluster:  1/1 (100%)
 ```
 
-6.Run the MPI training Job with `critical` priority:
+6.再提交一个MPI训练任务，该任务的优先级为`critical`:
 
 ```
 # arena submit mpi          \
@@ -109,7 +108,7 @@ Allocated/Total GPUs In Cluster:  1/1 (100%)
     "mpirun tail -f /dev/null"
 ```
 
-7.Check MPI Training Job `medium`, and find it's preempted by critical-worker-0
+7.检查MPI训练任务`medium`的相关事件，可以发现它被驱逐了。而它被驱逐的原因是由于被更重要的任务`critical`下的Pod也在申请GPU资源，而集群内只有一个可用的GPU资源，所以较低优先级的任务`medium`的`medium-worker-0`被驱逐
 
 ```
 # kubectl get events --field-selector involvedObject.name=medium-worker-0
@@ -122,7 +121,7 @@ LAST SEEN   TYPE     REASON      OBJECT                MESSAGE
 2m32s       Normal   Killing     pod/medium-worker-0   Stopping container mpi
 ```
 
-8.Check the details of the MPI Training Job `medium`, and it's turned to fail
+8.查看MPI训练任务`medium`的细节信息，发现这个任务已经处于失败状态。
 
 ```
 # arena get medium
@@ -134,7 +133,7 @@ NAME    STATUS  TRAINER  AGE  INSTANCE               NODE
 medium  FAILED  MPIJOB   20m  medium-launcher-sz5xj  192.168.0.23
 ```
 
-9.And check the details of the MPI Training Job `critical`, it's running.
+9.查看MPI训练任务`critical`的细节信息，发现这个任务已经处于运行状态。
 
 ```
 # arena get critical
@@ -147,7 +146,7 @@ critical  RUNNING  MPIJOB   10m  critical-launcher-mfffs  192.168.0.23
 critical  RUNNING  MPIJOB   10m  critical-worker-0        192.168.0.23
 ```
 
-10.And we can find the only GPU is used by the MPI Training Job `critical`
+10.而且也可以通过`arena top node -d`发现这个GPU已经被MPI训练任务`critical`占用。
 
 ```
 # arena top node -d
@@ -163,4 +162,4 @@ Allocated GPUs In Node cn-hangzhou.192.168.0.23:  1 (100%)
 -----------------------------------------------------------------------------------------
 ```
 
-Congratulations! You've run the the job in priorities and preemptions with `arena` successfully.
+恭喜! 你已经可以通过arena实现对于MPIJob优先级抢占。
