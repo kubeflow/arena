@@ -17,7 +17,7 @@
 package v1alpha2
 
 import (
-	v1alpha2 "github.com/kubeflow/arena/pgk/tf-operator/apis/tensorflow/v1alpha2"
+	v1alpha2 "github.com/kubeflow/arena/pkg/tf-operator/apis/tensorflow/v1alpha2"
 	scheme "github.com/kubeflow/arena/pkg/tf-operator/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
