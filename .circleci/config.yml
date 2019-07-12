@@ -14,7 +14,7 @@ jobs:
     - run:
         name: run tests
         command: |
-          test -z $(go fmt ./...)
+          test -z "$(go fmt ./... 2>/dev/null | tee /dev/stderr)" || (echo "please format Go code with 'gofmt'")
           go vet ./...
           go test -race -v ./...
     - run: docker build -t acs/arena:$CIRCLE_BUILD_NUM -f Dockerfile.install .

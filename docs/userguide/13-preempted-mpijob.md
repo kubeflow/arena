@@ -8,7 +8,7 @@
 1.Create `PriorityClass` with the yaml below:
 
 ```yaml
-apiVersion: scheduling.k8s.io/v1beta1
+apiVersion: scheduling.k8s.io/v1
 description: Used for the critical app
 kind: PriorityClass
 metadata:
@@ -17,7 +17,7 @@ value: 1100000
 
 ---
 
-apiVersion: scheduling.k8s.io/v1beta1
+apiVersion: scheduling.k8s.io/v1
 description: Used for the medium app
 kind: PriorityClass
 metadata:
