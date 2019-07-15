@@ -38,20 +38,16 @@
   version = "2.2.1"
 
 [[constraint]]
-  branch = "release-1.9"
   name = "k8s.io/api"
+  version = "kubernetes-1.11.2"
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "~6.0.0"
+  version = "kubernetes-1.11.2"
 
 [[constraint]]
   name = "k8s.io/apimachinery"
-  branch = "release-1.9"
-
-[[constraint]]
-  name = "github.com/kubeflow/tf-operator"
-  version = "v0.2.0-rc1"
+  version = "kubernetes-1.11.2"
 
 [[constraint]]
   name = "github.com/gogo/protobuf"
