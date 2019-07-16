@@ -94,6 +94,7 @@ func BuildJobInfo(job TrainingJob) *types.JobInfo {
 		Status:      types.JobStatus(GetJobRealStatus(job)),
 		Duration:    util.ShortHumanDuration(job.Duration()),
 		Trainer:     job.Trainer(),
+		Priority:    getPriorityClass(job),
 		Tensorboard: tensorboard,
 		ChiefName:   job.ChiefPod().Name,
 		Instances:   instances,
