@@ -34,11 +34,12 @@ import (
 
 const (
 	// tf-operator added labels for pods and servers.
-	tfReplicaTypeLabel  = "tf-replica-type"
-	tfReplicaIndexLabel = "tf-replica-index"
-	labelGroupName      = "group-name"
-	labelTFJobName      = "tf-job-name"
-	labelTFJobRole      = "tf-job-role"
+	tfReplicaTypeLabel     = "tf-replica-type"
+	tfReplicaIndexLabel    = "tf-replica-index"
+	labelGroupName         = "group-name"
+	labelGroupNameV1alpha2 = "group_name"
+	labelTFJobName         = "tf-job-name"
+	labelTFJobRole         = "tf-job-role"
 )
 
 var (
@@ -457,6 +458,8 @@ func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item v1.Pod) bo
 
 	if val, ok := item.Labels[labelGroupName]; ok && (val == "kubeflow.org") {
 		log.Debugf("the tfjob %s with labels %s is found.", item.Name, val)
+	} else if val, ok := item.Labels[labelGroupNameV1alpha2]; ok && (val == "kubeflow.org") {
+		log.Debugf("the tfjob v1alpha2 %s with labels %s is found.", item.Name, val)
 	} else {
 		return false
 	}

@@ -43,7 +43,14 @@ if ! kubectl get serviceaccount --all-namespaces | grep jobmon; then
 fi
 
 if ! kubectl get serviceaccount --all-namespaces | grep tf-job-operator; then
+    kubectl apply -f /root/kubernetes-artifacts/tf-operator/tf-crd.yaml
     kubectl apply -f /root/kubernetes-artifacts/tf-operator/tf-operator.yaml
+else
+    if kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2'; then
+        kubectl delete -f /root/kubernetes-artifacts/tf-operator/tf-operator-v1apha2.yaml
+        kubectl apply -f /root/kubernetes-artifacts/tf-operator/tf-crd.yaml
+        kubectl apply -f /root/kubernetes-artifacts/tf-operator/tf-operator.yaml
+    fi
 fi
 if ! kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
     kubectl apply -f /root/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
@@ -67,9 +74,13 @@ fi
 
 
 if [ -d "/host" ]; then
+    now=$(date "+%Y%m%d%H%M%S")
+    if [ -f "/host/usr/local/bin/arena" ]; then
+        mv /host/usr/local/bin/arena /host/usr/local/bin/arena-$now
+    fi
     cp /usr/local/bin/arena /host/usr/local/bin/arena
     if [ -d "/host/charts" ]; then
-        mv /host/charts /host/charts_$(date "+%Y%m%d%H%M%S")
+        mv /host/charts /host/charts-$now
     fi
     cp -r /charts /host
 fi
