@@ -226,6 +226,21 @@ func (tj *TensorFlowJob) HostIPOfChief() (hostIP string) {
 	return hostIP
 }
 
+// Get PriorityClass
+func (t *TensorFlowJob) GetPriorityClass() string {
+	pc := ""
+	specs := t.tfjob.Spec.TFReplicaSpecs
+	log.Debugf("specs %v", specs)
+	for _, spec := range specs {
+		if spec.Template.Spec.PriorityClassName != "" {
+			pc = spec.Template.Spec.PriorityClassName
+			break
+		}
+	}
+
+	return pc
+}
+
 // TensorFlow Job trainer
 type TensorFlowJobTrainer struct {
 	client      *kubernetes.Clientset

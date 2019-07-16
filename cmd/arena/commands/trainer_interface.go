@@ -62,6 +62,9 @@ type TrainingJob interface {
 
 	// the host ip of the chief pod
 	HostIPOfChief() string
+
+	// The priority class name of the training job
+	GetPriorityClass() string
 }
 
 type Trainer interface {

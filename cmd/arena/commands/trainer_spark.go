@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/kubeflow/arena/pkg/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
 	"github.com/kubeflow/arena/pkg/spark-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
@@ -9,7 +11,6 @@ import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"time"
 )
 
 // all spark jobs cache
@@ -214,6 +215,11 @@ func (sj *SparkJob) HostIPOfChief() (hostIP string) {
 
 func (sj *SparkJob) Namespace() string {
 	return sj.sparkjob.Namespace
+}
+
+// Get PriorityClass TODO: @moyuan
+func (sj *SparkJob) GetPriorityClass() string {
+	return ""
 }
 
 func NewSparkJobTrainer(client *kubernetes.Clientset) Trainer {

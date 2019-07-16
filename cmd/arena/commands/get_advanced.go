@@ -99,3 +99,10 @@ func BuildJobInfo(job TrainingJob) *types.JobInfo {
 		Instances:   instances,
 	}
 }
+
+/**
+* getPriorityClass returns priority class name
+ */
+func getPriorityClass(job TrainingJob) string {
+	return ""
+}

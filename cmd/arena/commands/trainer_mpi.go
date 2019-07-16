@@ -581,6 +581,12 @@ func (mj *MPIJob) isPending() bool {
 	return false
 }
 
+// Get PriorityClass
+func (m *MPIJob) GetPriorityClass() string {
+	// return ""
+	return m.mpijob.Spec.Template.Spec.PriorityClassName
+}
+
 func getPodsOfMPIJob(name string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v1.Pod, chiefPod v1.Pod) {
 	pods = []v1.Pod{}
 	for _, item := range podList {
