@@ -10,7 +10,7 @@ Arena doesn't have to run can be run within Kubernetes cluster. It can also be r
 
 ### Requirements
 
-  * Kubernetes >= 1.10, kubectl >= 1.10
+  * Kubernetes >= 1.11, kubectl >= 1.11
   * helm version [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) or later 
   * tiller with ths same version of helm should be also installed (https://docs.helm.sh/using_helm/#installing-tiller)
 
