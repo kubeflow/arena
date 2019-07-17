@@ -46,6 +46,9 @@ tensorboardResources: {}
 annotations: {}
 # annotations:
 
+# enable RDMA support
+enableRDMA: false
+
 ingress: false
 
 # enable PodSecurityContext
