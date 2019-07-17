@@ -107,7 +107,7 @@ func BuildJobInfo(job TrainingJob) *types.JobInfo {
 func getPriorityClass(job TrainingJob) string {
 	pc := job.GetPriorityClass()
 	if len(pc) == 0 {
-		pc = "NO SET"
+		pc = "N/A"
 	}
 
 	return pc
