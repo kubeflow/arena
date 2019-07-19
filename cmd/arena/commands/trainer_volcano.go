@@ -227,6 +227,11 @@ func (vj *VolcanoJob) Namespace() string {
 	return vj.volcanoJob.Namespace
 }
 
+// Get PriorityClass
+func (vj *VolcanoJob) GetPriorityClass() string {
+	return ""
+}
+
 func NewVolcanoJobTrainer(client *kubernetes.Clientset) Trainer {
 	log.Debugf("Init Volcano job trainer")
 	jobClient, err := initVolcanoJobClient()

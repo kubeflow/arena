@@ -70,6 +70,7 @@ INFO[0000] You can run `arena get medium --type mpijob` to check the job status
 # arena get medium
 STATUS: RUNNING
 NAMESPACE: default
+PRIORITY: medium
 TRAINING DURATION: 58s
 
 NAME    STATUS   TRAINER  AGE  INSTANCE               NODE
@@ -127,6 +128,7 @@ LAST SEEN   TYPE     REASON      OBJECT                MESSAGE
 # arena get medium
 STATUS: FAILED
 NAMESPACE: default
+PRIORITY: medium
 TRAINING DURATION: 12m
 
 NAME    STATUS  TRAINER  AGE  INSTANCE               NODE
@@ -139,6 +141,7 @@ medium  FAILED  MPIJOB   20m  medium-launcher-sz5xj  192.168.0.23
 # arena get critical
 STATUS: RUNNING
 NAMESPACE: default
+PRIORITY: critical
 TRAINING DURATION: 10m
 
 NAME      STATUS   TRAINER  AGE  INSTANCE                 NODE

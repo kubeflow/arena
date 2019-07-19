@@ -1,3 +1,23 @@
+## [Release 0.3.0]
+
+### Added
+
+- Add Priority class support for MPIJob and TFJob
+
+
+## [Release 0.2.0]
+
+### Added
+
+- Add spark and volcano Job
+- Add multiple users and add PodSecurityContext for Training Job
+- Add TensorRT
+
+### Changed
+
+- Refactoring code to remove dependency of helm create
+- Enhance cluster management
+
 ## [Release 0.1.0]
 
 ### Added

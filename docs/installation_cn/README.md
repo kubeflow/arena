@@ -10,7 +10,7 @@ Arena 并非必需在 Kubernetes 集群内运行。它也可以在您的笔记�
 
 ### 要求
 
-  * Kubernetes >= 1.10, kubectl >= 1.10
+  * Kubernetes >= 1.11, kubectl >= 1.11
   * helm 版本 [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) 或更新版本 
   * 此外还要部署与 helm 版本相同的 tiller(https://docs.helm.sh/using_helm/#installing-tiller)
 
