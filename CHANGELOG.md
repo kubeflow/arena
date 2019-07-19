@@ -1,3 +1,10 @@
+## [Release 0.3.0]
+
+### Added
+
+- Add Priority class support for MPIJob and TFJob
+
+
 ## [Release 0.1.0]
 
 ### Added
