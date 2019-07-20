@@ -1,4 +1,5 @@
 {{- $gpuCount := .Values.gpuCount -}}
+{{- $gpuMemory := .Values.gpuMemory -}}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -60,14 +61,12 @@ spec:
           - "{{ .Values.command }}"
           {{- else }}
           command:
-            - "/usr/bin/tensorflow_model_server"
+          - "sh"
+          - "-c"
           args:
-            - "--port={{ .Values.port }}"
-            {{- if .Values.rest_api_port }}
-            - "--rest_api_port={{ .Values.rest_api_port }}"
-            {{- end }}
-            {{- if ne .Values.modelConfigFileContent "" }}
-            - "--model_config_file=/tmp/config"
+            - |
+              /usr/bin/tensorflow_model_server --port={{ .Values.port }}{{- if .Values.rest_api_port }} --rest_api_port={{ .Values.rest_api_port }}
+            {{- end }}{{- if ne .Values.modelConfigFileContent "" }} --model_config_file=/tmp/config{{- end }}{{- if gt (int $gpuMemory) 0 }} --per_process_gpu_memory_fraction=$(awk 'BEGIN{printf "%.2f",'$ALIYUN_COM_GPU_MEM_CONTAINER'/'$ALIYUN_COM_GPU_MEM_DEV'}')
             {{- end }}
           {{- end }}
           ports:
@@ -91,6 +90,9 @@ spec:
               {{- end }}
               {{- if gt (int $gpuCount) 0}}
               nvidia.com/gpu: {{ .Values.gpuCount }}
+              {{- end }}
+              {{- if gt (int $gpuMemory) 0}}
+              aliyun.com/gpu-mem: {{ .Values.gpuMemory }}
               {{- end }}
           volumeMounts:
             {{- if .Values.modelDirs }}
