@@ -43,8 +43,8 @@ Arena 是一种命令行界面，支持轻而易举地运行和监控机器学�
 - Go >= 1.8
 
 ```
-mkdir -p $GOPATH/src/github.com/kubeflow
-cd $GOPATH/src/github.com/kubeflow
+mkdir -p $(go env GOPATH)/src/github.com/kubeflow
+cd $(go env GOPATH)/src/github.com/kubeflow
 git clone https://github.com/kubeflow/arena.git
 cd arena
 make

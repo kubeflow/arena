@@ -10,7 +10,7 @@ Arena 并非必需在 Kubernetes 集群内运行。它也可以在您的笔记�
 
 ### 要求
 
-  * Kubernetes >= 1.10, kubectl >= 1.10
+  * Kubernetes >= 1.11, kubectl >= 1.11
   * helm 版本 [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) 或更新版本 
   * 此外还要部署与 helm 版本相同的 tiller(https://docs.helm.sh/using_helm/#installing-tiller)
 
@@ -70,8 +70,8 @@ kubectl create -f arena/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
 - Go >= 1.8
 
 ```
-mkdir -p $GOPATH/src/github.com/kubeflow
-cd $GOPATH/src/github.com/kubeflow
+mkdir -p $(go env GOPATH)/src/github.com/kubeflow
+cd $(go env GOPATH)/src/github.com/kubeflow
 git clone https://github.com/kubeflow/arena.git
 cd arena
 make

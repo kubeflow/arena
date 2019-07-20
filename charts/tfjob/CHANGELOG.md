@@ -83,3 +83,11 @@
 ### 0.20.0
 
 * Add PodSecurityContext support for RunAsUser, RunAsGroup, RunAsNonRoot, SupplementalGroups
+
+### 0.21.0
+
+* Add Priority Class
+
+### 0.21.1
+
+* Upgrade TFJob to kubeflow.org/v1

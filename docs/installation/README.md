@@ -10,7 +10,7 @@ Arena doesn't have to run can be run within Kubernetes cluster. It can also be r
 
 ### Requirements
 
-  * Kubernetes >= 1.10, kubectl >= 1.10
+  * Kubernetes >= 1.11, kubectl >= 1.11
   * helm version [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) or later 
   * tiller with ths same version of helm should be also installed (https://docs.helm.sh/using_helm/#installing-tiller)
 
@@ -70,8 +70,8 @@ Prerequisites:
 - Go >= 1.8
 
 ```
-mkdir -p $GOPATH/src/github.com/kubeflow
-cd $GOPATH/src/github.com/kubeflow
+mkdir -p $(go env GOPATH)/src/github.com/kubeflow
+cd $(go env GOPATH)/src/github.com/kubeflow
 git clone https://github.com/kubeflow/arena.git
 cd arena
 make

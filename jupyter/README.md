@@ -3,8 +3,8 @@
 1. Build jupyter notebook with `arena` by yourself
 
 ```
-mkdir -p $GOPATH/src/github.com/kubeflow
-cd $GOPATH/src/github.com/kubeflow
+mkdir -p $(go env GOPATH)/src/github.com/kubeflow
+cd $(go env GOPATH)/src/github.com/kubeflow
 git clone https://github.com/kubeflow/arena.git
 cd arena
 make notebook-image-cpu

@@ -68,3 +68,7 @@
 ### 0.16.0
 
 * Add PodSecurityContext support for RunAsUser, RunAsGroup, RunAsNonRoot, SupplementalGroups
+
+### 0.17.0
+
+* Add Priority Class

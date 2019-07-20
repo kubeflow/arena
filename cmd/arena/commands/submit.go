@@ -57,6 +57,8 @@ type submitArgs struct {
 
 	IsNonRoot          bool                      `yaml:"isNonRoot"`
 	PodSecurityContext limitedPodSecurityContext `yaml:"podSecurityContext"`
+
+	PriorityClassName string `yaml:"priorityClassName"`
 }
 
 type dataDirVolume struct {
@@ -81,6 +83,13 @@ func (s submitArgs) check() error {
 	err := util.ValidateJobName(name)
 	if err != nil {
 		return err
+	}
+
+	if s.PriorityClassName != "" {
+		err = util.ValidatePriorityClassName(clientset, s.PriorityClassName)
+		if err != nil {
+			return err
+		}
 	}
 
 	// if s.DataDir == "" {
@@ -128,7 +137,7 @@ func (s *submitArgs) transform() (err error) {
 	// 4. handle PodSecurityContext: runAsUser, runAsGroup, supplementalGroups, runAsNonRoot
 	callerUid := os.Getuid()
 	callerGid := os.Getgid()
-	log.Debugf("Current user: ", callerUid)
+	log.Debugf("Current user: %d", callerUid)
 	if callerUid != 0 {
 		// only config PodSecurityContext for non-root user
 		s.IsNonRoot = true
@@ -185,6 +194,9 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
 	// enable RDMA or not, support hostnetwork for now
 	command.Flags().BoolVar(&submitArgs.EnableRDMA, "rdma", false, "enable RDMA")
+
+	// use priority
+	command.Flags().StringVarP(&submitArgs.PriorityClassName, "priority", "p", "", "priority class name")
 }
 
 func init() {
