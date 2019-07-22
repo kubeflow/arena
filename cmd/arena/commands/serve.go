@@ -94,23 +94,44 @@ func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 
 	// create subcommands
 	command.Flags().StringVar(&serveArgs.ImagePullPolicy, "imagePullPolicy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
+	command.Flags().MarkDeprecated("imagePullPolicy", "please use --image-pull-policy instead")
+	command.Flags().StringVar(&serveArgs.ImagePullPolicy, "image-pull-policy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
+
 	command.Flags().StringVar(&serveArgs.Command, "command", "", "the command will inject to container's command.")
 	command.Flags().IntVar(&serveArgs.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.GPUMemory, "gpumemory", 0, "the limit GPU memory of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.Replicas, "replicas", 1, "the replicas number of the serve job.")
+
 	command.Flags().StringVar(&serveArgs.ModelPath, "modelPath", "", "the model path for serving in the container")
+	command.Flags().MarkDeprecated("modelPath", "please use --model-path instead")
+	command.Flags().StringVar(&serveArgs.ModelPath, "model-path", "", "the model path for serving in the container")
+
 	command.Flags().StringArrayVarP(&envs, "envs", "e", []string{}, "the environment variables")
+
 	command.Flags().StringVar(&serveArgs.ModelName, "modelName", "", "the model name for serving")
+	command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
+	command.Flags().StringVar(&serveArgs.ModelName, "model-name", "", "the model name for serving")
+
 	command.Flags().BoolVar(&serveArgs.EnableIstio, "enableIstio", false, "enable Istio for serving or not (disable Istio by default)")
+	command.Flags().MarkDeprecated("enableIstio", "please use --enable-istio instead")
+	command.Flags().BoolVar(&serveArgs.EnableIstio, "enable-istio", false, "enable Istio for serving or not (disable Istio by default)")
+
 	command.Flags().BoolVar(&serveArgs.ExposeService, "exposeService", false, "expose service using Istio gateway for external access or not (not expose by default)")
+	command.Flags().MarkDeprecated("exposeService", "please use --expose-service instead")
+	command.Flags().BoolVar(&serveArgs.ExposeService, "expose-service", false, "expose service using Istio gateway for external access or not (not expose by default)")
+
 	command.Flags().StringVar(&serveArgs.ServingName, "servingName", "", "the serving name")
+	command.Flags().MarkDeprecated("servingName", "please use --name instead")
+	command.Flags().StringVar(&serveArgs.ServingName, "name", "", "the serving name")
+
 	command.Flags().StringVar(&serveArgs.ServingVersion, "servingVersion", "", "the serving version")
+	command.Flags().MarkDeprecated("servingVersion", "please use --version instead")
+	command.Flags().StringVar(&serveArgs.ServingVersion, "version", "", "the serving version")
+
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")
-
-	command.MarkFlagRequired("servingName")
-
+	command.MarkFlagRequired("name")
 }
 
 func init() {
