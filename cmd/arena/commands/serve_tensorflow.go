@@ -50,6 +50,10 @@ func NewServingTensorFlowCommand() *cobra.Command {
 				os.Exit(1)
 			}*/
 
+			if serveTensorFlowArgs.GPUMemory != 0 && serveTensorFlowArgs.GPUCount != 0 {
+				fmt.Println("gpucount and gpumemory should not be used at the same time.You can only choose one mode")
+				os.Exit(1)
+			}
 			util.SetLogLevel(logLevel)
 			setupKubeconfig()
 			client, err := initKubeClient()

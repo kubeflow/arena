@@ -1,4 +1,5 @@
 {{- $gpuCount := .Values.gpuCount -}}
+{{- $gpuMemory := .Values.gpuMemory -}}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -92,6 +93,9 @@ spec:
               {{- end }}
               {{- if gt (int $gpuCount) 0}}
               nvidia.com/gpu: {{ .Values.gpuCount }}
+              {{- end }}
+              {{- if gt (int $gpuMemory) 0}}
+              aliyun.com/gpu-mem: {{ .Values.gpuMemory }}
               {{- end }}
           volumeMounts:
             {{- if .Values.modelDirs }}
