@@ -271,9 +271,12 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 }
 
 func printEvents(w io.Writer, namespace string, job TrainingJob) {
-	eventsMap, _ := GetResourcesEvents(clientset, namespace, job.Resources())
-
 	fmt.Fprintf(w, "\nEvents: \n")
+	eventsMap, err := GetResourcesEvents(clientset, namespace, job.Resources())
+	if err != nil {
+		fmt.Fprintln(w, "Get job events failed, due to: %v", err)
+		return
+	}
 	if len(eventsMap) == 0 {
 		fmt.Fprintln(w, "No events for resources")
 		return
