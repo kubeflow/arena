@@ -20,8 +20,7 @@ The following command is an example. In this example, it defines 2 workers and 1
               --syncMode=git \
               --syncSource=https://github.com/tensorflow/benchmarks.git \
               --tensorboard \
-              "mpirun python code/benchmarks/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py --model resnet101 --batch_size 64     --variable_update horovod --train_dir=/training_logs --summary_verbosity=3 
-              --save_summaries_steps=10"
+              "mpirun python code/benchmarks/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py --model resnet101 --batch_size 64 --variable_update horovod --train_dir=/training_logs --summary_verbosity=3 --save_summaries_steps=10"
 ```
 
 2\. Get the details of the specific job
