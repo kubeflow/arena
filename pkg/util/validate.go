@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -51,7 +53,12 @@ func ValidateJobName(value string) error {
 }
 
 // Check if PriorityClassName exists
-func ValidatePriorityClassName(client *kubernetes.Clientset, prioityClassName string) error {
+func ValidatePriorityClassName(client *kubernetes.Clientset, name string) error {
 	// client.SchedulingV1alpha1()
-	return nil
+	_, err := client.Scheduling().PriorityClasses().Get(name, metav1.GetOptions{})
+	if err != nil && errors.IsNotFound(err) {
+		err = fmt.Errorf("The priority %s doesn't exist. Please check with `kubectl get pc` to get a valid priority.", name)
+	}
+
+	return err
 }

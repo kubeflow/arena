@@ -264,6 +264,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 func printJobSummary(w io.Writer, job TrainingJob) {
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
+	fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))
 	fmt.Fprintf(w, "TRAINING DURATION: %s\n", util.ShortHumanDuration(job.Duration()))
 	fmt.Fprintln(w, "")
 

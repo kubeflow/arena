@@ -72,6 +72,11 @@ func (sj *StandaloneJob) GetJobDashboards(client *kubernetes.Clientset) ([]strin
 	return urls, nil
 }
 
+// Get PriorityClass
+func (sj *StandaloneJob) GetPriorityClass() string {
+	return sj.JobInfo.job.Spec.Template.Spec.PriorityClassName
+}
+
 // Standalone Job trainer
 type StandaloneJobTrainer struct {
 	client      *kubernetes.Clientset

@@ -2,7 +2,7 @@
 {{- $syncMode := .Values.syncMode -}}
 {{- $cleanPodPolicy := .Values.cleanPodPolicy -}}
 {{- $dataDirs := .Values.dataDirs -}}
-apiVersion: "kubeflow.org/v1alpha2"
+apiVersion: "kubeflow.org/v1"
 kind: "TFJob"
 metadata:
   name: {{ .Release.Name }}
@@ -62,7 +62,7 @@ spec:
                         operator: In
                         values:
                           - "{{ .Release.Name }}"
-                      - key: group_name
+                      - key: group-name
                         operator: In
                         values:
                           - "kubeflow.org"
@@ -303,7 +303,7 @@ spec:
                         operator: In
                         values:
                           - "{{ .Release.Name }}"
-                      - key: group_name
+                      - key: group-name
                         operator: In
                         values:
                           - "kubeflow.org"
@@ -580,7 +580,7 @@ spec:
                         operator: In
                         values:
                           - "{{ .Release.Name }}"
-                      - key: group_name
+                      - key: group-name
                         operator: In
                         values:
                           - "kubeflow.org"

@@ -137,7 +137,7 @@ func (s *submitArgs) transform() (err error) {
 	// 4. handle PodSecurityContext: runAsUser, runAsGroup, supplementalGroups, runAsNonRoot
 	callerUid := os.Getuid()
 	callerGid := os.Getgid()
-	log.Debugf("Current user: ", callerUid)
+	log.Debugf("Current user: %d", callerUid)
 	if callerUid != 0 {
 		// only config PodSecurityContext for non-root user
 		s.IsNonRoot = true

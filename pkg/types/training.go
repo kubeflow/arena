@@ -20,6 +20,9 @@ type JobInfo struct {
 
 	// The instances under the training job
 	Instances []Instance `json:"instances"`
+
+	// The priority of the training job
+	Priority string `json:"priority"`
 }
 
 // all the kinds of JobStatus

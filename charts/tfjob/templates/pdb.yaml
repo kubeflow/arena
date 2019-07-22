@@ -23,7 +23,7 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      tf_job_name: {{ .Release.Name }}
+      tf-job-name: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 {{- end }}

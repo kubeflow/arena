@@ -96,6 +96,11 @@ func (hj *HorovodJob) HostIPOfChief() (hostIP string) {
 	return hostIP
 }
 
+// Get PriorityClass
+func (hj *HorovodJob) GetPriorityClass() string {
+	return ""
+}
+
 // Horovod Job trainer
 type HorovodJobTrainer struct {
 	client      *kubernetes.Clientset
