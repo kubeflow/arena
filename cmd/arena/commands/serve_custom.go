@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	predictChart = util.GetChartsFolder() + "/predict"
+	predictChart = util.GetChartsFolder() + "/custom"
 )
 
 func NewServingCustomCommand() *cobra.Command {
@@ -35,8 +35,8 @@ func NewServingCustomCommand() *cobra.Command {
 	)
 
 	var command = &cobra.Command{
-		Use:     "predict",
-		Short:   "Submit common predict job to deploy and serve machine learning models.",
+		Use:     "custom",
+		Short:   "Submit custom serving to deploy and serve machine learning models.",
 		Aliases: []string{"tf"},
 		Run: func(cmd *cobra.Command, args []string) {
 			/*if len(args) == 0 {
