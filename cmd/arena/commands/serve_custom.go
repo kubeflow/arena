@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
@@ -91,6 +92,7 @@ type ServeCustomArgs struct {
 
 func (serveCustomArgs *ServeCustomArgs) preprocess(client *kubernetes.Clientset, args []string) (err error) {
 	//serveCustomArgs.Command = strings.Join(args, " ")
+	serveCustomArgs.Command = strings.Join(args, " ")
 	log.Debugf("command: %s", serveCustomArgs.Command)
 
 	if serveCustomArgs.Image == "" {

@@ -82,7 +82,6 @@ func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("imagePullPolicy", "please use --image-pull-policy instead")
 	command.Flags().StringVar(&serveArgs.ImagePullPolicy, "image-pull-policy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
 
-	command.Flags().StringVar(&serveArgs.Command, "command", "", "the command will inject to container's command.")
 	command.Flags().IntVar(&serveArgs.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.GPUMemory, "gpumemory", 0, "the limit GPU memory of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
