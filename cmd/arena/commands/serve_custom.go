@@ -77,8 +77,8 @@ func NewServingCustomCommand() *cobra.Command {
 	// add grpc port and rest api port
 	command.Flags().StringVar(&serveCustomArgs.Image, "image", "", "the docker image name of serve job")
 	command.Flags().StringVar(&serveCustomArgs.Version, "version", "", "the version of serve job")
-	command.Flags().IntVar(&serveCustomArgs.Port, "port", 8500, "the port of Predict gRPC listening port")
-	command.Flags().IntVar(&serveCustomArgs.RestfulPort, "restful-port", 8501, "the port of Predict RESTful listening port")
+	command.Flags().IntVar(&serveCustomArgs.Port, "port", 8500, "the port of gRPC listening port")
+	command.Flags().IntVar(&serveCustomArgs.RestfulPort, "restful-port", 8501, "the port of RESTful listening port")
 
 	return command
 }
