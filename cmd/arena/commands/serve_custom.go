@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	predictChart = util.GetChartsFolder() + "/custom"
+	customChart = util.GetChartsFolder() + "/custom"
 )
 
 func NewServingCustomCommand() *cobra.Command {
@@ -76,7 +76,6 @@ func NewServingCustomCommand() *cobra.Command {
 	// TFServingJob
 	// add grpc port and rest api port
 	command.Flags().StringVar(&serveCustomArgs.Image, "image", "", "the docker image name of serve job")
-	command.Flags().StringVar(&serveCustomArgs.Version, "version", "", "the version of serve job")
 	command.Flags().IntVar(&serveCustomArgs.Port, "port", 8500, "the port of gRPC listening port")
 	command.Flags().IntVar(&serveCustomArgs.RestfulPort, "restful-port", 8501, "the port of RESTful listening port")
 
@@ -84,8 +83,8 @@ func NewServingCustomCommand() *cobra.Command {
 }
 
 type ServeCustomArgs struct {
-	Version string `yaml:"version"` // --version
-	Image   string `yaml:"image"`   // --image
+	// Version string `yaml:"version"` // --version
+	Image string `yaml:"image"` // --image
 
 	ServeArgs `yaml:",inline"`
 }
@@ -136,8 +135,8 @@ func servePredict(args []string, serveCustomArgs *ServeCustomArgs, client *kuber
 	}
 
 	name = serveCustomArgs.ServingName
-	if serveCustomArgs.Version != "" {
-		name += "-" + serveCustomArgs.Version
+	if serveCustomArgs.ServingVersion != "" {
+		name += "-" + serveCustomArgs.ServingVersion
 	}
-	return workflow.SubmitJob(name, "predict", namespace, serveCustomArgs, predictChart)
+	return workflow.SubmitJob(name, "custom", namespace, serveCustomArgs, customChart)
 }
