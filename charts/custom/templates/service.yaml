@@ -6,8 +6,8 @@ metadata:
   labels:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
-    chart: {{ template "predict.chart" . }}
-    app: {{ template "predict.name" . }}
+    chart: {{ template "custom-serving.chart" . }}
+    app: {{ template "custom-serving.name" . }}
     servingName: {{ .Values.servingName }}
 spec:
   type: {{ .Values.serviceType }}
@@ -19,7 +19,7 @@ spec:
       port: {{ .Values.restApiPort }}
       targetPort: {{ .Values.restApiPort }}
   selector:
-    app: {{ template "predict.name" . }}
+    app: {{ template "custom-serving.name" . }}
     serviceName: "{{ .Values.servingName }}"
     {{- if .Values.serviceVersion }}
     serviceVersion: {{ .Values.serviceVersion }}
@@ -33,8 +33,8 @@ metadata:
   labels:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
-    chart: {{ template "predict.chart" . }}
-    app: {{ template "predict.name" . }}
+    chart: {{ template "custom-serving.chart" . }}
+    app: {{ template "custom-serving.name" . }}
     servingName: {{ .Values.servingName }}
     serviceVersion: {{ .Values.serviceVersion }}
 spec:
@@ -47,7 +47,7 @@ spec:
       port: {{ .Values.restApiPort }}
       targetPort: {{ .Values.restApiPort }}
   selector:
-    app: {{ template "predict.name" . }}
+    app: {{ template "custom-serving.name" . }}
     {{- if .Values.serviceVersion }}
     serviceVersion: {{ .Values.serviceVersion }}
     {{- end }}

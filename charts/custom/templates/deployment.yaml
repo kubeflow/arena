@@ -3,14 +3,14 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "predict.fullname" . }}
+  name: {{ template "custom-serving.fullname" . }}
   labels:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
-    chart: {{ template "predict.chart" . }}
-    app: {{ template "predict.name" . }}
+    chart: {{ template "custom-serving.chart" . }}
+    app: {{ template "custom-serving.name" . }}
     servingName: "{{ .Values.servingName }}"
-    servingType: "predict-serving"
+    servingType: "custom-serving"
     serviceName: "{{ .Values.servingName }}"
     serviceVersion: "{{ .Values.servingVersion }}"
   annotations:
@@ -22,7 +22,7 @@ spec:
   selector:
     matchLabels:
       release: {{ .Release.Name | quote }}
-      app: {{ template "predict.name" . }} 
+      app: {{ template "custom-serving.name" . }} 
   template:
     metadata:
       {{- if eq .Values.enableIstio true }}
@@ -32,13 +32,13 @@ spec:
       labels:
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name | quote }}
-        chart: {{ template "predict.chart" . }}
-        app: {{ template "predict.name" . }}
+        chart: {{ template "custom-serving.chart" . }}
+        app: {{ template "custom-serving.name" . }}
         serviceName: "{{ .Values.servingName }}"
         serviceVersion: "{{ .Values.servingVersion }}"
     spec:
       containers:
-        - name: predict
+        - name: custom-serving
           {{- if .Values.image }}
           image: "{{ .Values.image }}"
           {{- end }}
@@ -60,13 +60,13 @@ spec:
           {{- end }}
           ports:
             - containerPort: {{ .Values.port }}
-              name: predict
+              name: custom-serving
               protocol: TCP
             - containerPort: {{ .Values.restApiPort }}
-              name: http-predict
+              name: http-custom-serving
           readinessProbe:
             tcpSocket:
-              port: predict
+              port: custom-serving
             initialDelaySeconds: 15
             timeoutSeconds: 1
           resources:

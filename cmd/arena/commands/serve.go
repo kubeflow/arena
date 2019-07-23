@@ -139,6 +139,8 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewServingTensorFlowCommand())
 	command.AddCommand(NewServingListCommand())
 	command.AddCommand(NewServingDeleteCommand())
+	command.AddCommand(NewServingCustomCommand())
 	command.AddCommand(NewTrafficRouterSplitCommand())
+
 	return command
 }

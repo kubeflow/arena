@@ -29,9 +29,9 @@ var (
 	predictChart = util.GetChartsFolder() + "/predict"
 )
 
-func NewServingPredictCommand() *cobra.Command {
+func NewServingCustomCommand() *cobra.Command {
 	var (
-		servePredictArgs ServePredictArgs
+		serveCustomArgs ServeCustomArgs
 	)
 
 	var command = &cobra.Command{
@@ -44,7 +44,7 @@ func NewServingPredictCommand() *cobra.Command {
 				os.Exit(1)
 			}*/
 
-			if servePredictArgs.GPUMemory != 0 && servePredictArgs.GPUCount != 0 {
+			if serveCustomArgs.GPUMemory != 0 && serveCustomArgs.GPUCount != 0 {
 				fmt.Println("gpucount and gpumemory should not be used at the same time.You can only choose one mode")
 				os.Exit(1)
 			}
@@ -63,7 +63,7 @@ func NewServingPredictCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = servePredict(args, &servePredictArgs, client)
+			err = servePredict(args, &serveCustomArgs, client)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -71,30 +71,30 @@ func NewServingPredictCommand() *cobra.Command {
 		},
 	}
 
-	servePredictArgs.addServeCommonFlags(command)
+	serveCustomArgs.addServeCommonFlags(command)
 
 	// TFServingJob
 	// add grpc port and rest api port
-	command.Flags().StringVar(&servePredictArgs.Image, "image", "", "the docker image name of serve job")
-	command.Flags().StringVar(&servePredictArgs.Version, "version", "", "the version of serve job")
-	command.Flags().IntVar(&servePredictArgs.Port, "port", 8500, "the port of Predict gRPC listening port")
-	command.Flags().IntVar(&servePredictArgs.RestfulPort, "restful-port", 8501, "the port of Predict RESTful listening port")
+	command.Flags().StringVar(&serveCustomArgs.Image, "image", "", "the docker image name of serve job")
+	command.Flags().StringVar(&serveCustomArgs.Version, "version", "", "the version of serve job")
+	command.Flags().IntVar(&serveCustomArgs.Port, "port", 8500, "the port of Predict gRPC listening port")
+	command.Flags().IntVar(&serveCustomArgs.RestfulPort, "restful-port", 8501, "the port of Predict RESTful listening port")
 
 	return command
 }
 
-type ServePredictArgs struct {
+type ServeCustomArgs struct {
 	Version string `yaml:"version"` // --version
 	Image   string `yaml:"image"`   // --image
 
 	ServeArgs `yaml:",inline"`
 }
 
-func (servePredictArgs *ServePredictArgs) preprocess(client *kubernetes.Clientset, args []string) (err error) {
-	//servePredictArgs.Command = strings.Join(args, " ")
-	log.Debugf("command: %s", servePredictArgs.Command)
+func (serveCustomArgs *ServeCustomArgs) preprocess(client *kubernetes.Clientset, args []string) (err error) {
+	//serveCustomArgs.Command = strings.Join(args, " ")
+	log.Debugf("command: %s", serveCustomArgs.Command)
 
-	if servePredictArgs.Image == "" {
+	if serveCustomArgs.Image == "" {
 		return fmt.Errorf("image must be specified.")
 	}
 
@@ -104,40 +104,40 @@ func (servePredictArgs *ServePredictArgs) preprocess(client *kubernetes.Clientse
 		if err != nil {
 			return fmt.Errorf("--data has wrong value: %s", err)
 		}
-		servePredictArgs.ModelDirs = transformSliceToMap(dataset, ":")
+		serveCustomArgs.ModelDirs = transformSliceToMap(dataset, ":")
 	}
 
-	log.Debugf("models:%s", servePredictArgs.ModelDirs)
+	log.Debugf("models:%s", serveCustomArgs.ModelDirs)
 
 	//validate Istio enablement
-	err = servePredictArgs.ServeArgs.validateIstioEnablement()
+	err = serveCustomArgs.ServeArgs.validateIstioEnablement()
 	if err != nil {
 		return err
 	}
 
 	// populate environment variables
 	if len(envs) > 0 {
-		servePredictArgs.Envs = transformSliceToMap(envs, "=")
+		serveCustomArgs.Envs = transformSliceToMap(envs, "=")
 	}
 
-	modelServiceExists, err := checkServiceExists(client, namespace, servePredictArgs.ServingName)
+	modelServiceExists, err := checkServiceExists(client, namespace, serveCustomArgs.ServingName)
 	if err != nil {
 		return err
 	}
-	servePredictArgs.ModelServiceExists = modelServiceExists
+	serveCustomArgs.ModelServiceExists = modelServiceExists
 
 	return nil
 }
 
-func servePredict(args []string, servePredictArgs *ServePredictArgs, client *kubernetes.Clientset) (err error) {
-	err = servePredictArgs.preprocess(client, args)
+func servePredict(args []string, serveCustomArgs *ServeCustomArgs, client *kubernetes.Clientset) (err error) {
+	err = serveCustomArgs.preprocess(client, args)
 	if err != nil {
 		return err
 	}
 
-	name = servePredictArgs.ServingName
-	if servePredictArgs.Version != "" {
-		name += "-" + servePredictArgs.Version
+	name = serveCustomArgs.ServingName
+	if serveCustomArgs.Version != "" {
+		name += "-" + serveCustomArgs.Version
 	}
-	return workflow.SubmitJob(name, "predict", namespace, servePredictArgs, predictChart)
+	return workflow.SubmitJob(name, "predict", namespace, serveCustomArgs, predictChart)
 }
