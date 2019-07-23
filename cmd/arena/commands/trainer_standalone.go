@@ -197,10 +197,13 @@ func (s *StandaloneJobTrainer) getTrainingJob(name, namespace string) (TrainingJ
 
 	return &StandaloneJob{
 		JobInfo: &JobInfo{
+			BasicJobInfo: &BasicJobInfo{
+				resources: podResources(pods),
+				name:      name,
+			},
 			job:         job,
 			jobPod:      jobPod,
 			pods:        pods,
-			name:        name,
 			trainerType: s.Type(),
 		},
 	}, nil
@@ -253,10 +256,13 @@ func (s *StandaloneJobTrainer) getTrainingJobFromCache(name, ns string) (Trainin
 
 	return &StandaloneJob{
 		JobInfo: &JobInfo{
+			BasicJobInfo: &BasicJobInfo{
+				resources: podResources(pods),
+				name:      name,
+			},
 			job:         job,
 			jobPod:      jobPod,
 			pods:        pods,
-			name:        name,
 			trainerType: s.Type(),
 		},
 	}, nil

@@ -36,6 +36,9 @@ type TrainingJob interface {
 	// Get all the pods of the Training Job
 	AllPods() []v1.Pod
 
+	// Get all the kubernetes resource of the Training Job
+	Resources() []Resource
+
 	// Get the Status of the Job: RUNNING, PENDING,
 	GetStatus() string
 

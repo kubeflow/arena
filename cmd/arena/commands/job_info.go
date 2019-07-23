@@ -24,8 +24,8 @@ import (
 )
 
 type JobInfo struct {
+	*BasicJobInfo
 	job          batchv1.Job
-	name         string
 	pods         []v1.Pod // all the pods including statefulset and job
 	jobPod       v1.Pod   // the pod of job
 	gpuCount     int64
@@ -36,6 +36,10 @@ type JobInfo struct {
 
 func (ji *JobInfo) Name() string {
 	return ji.name
+}
+
+func (ji *JobInfo) Uid() string {
+	return string(ji.job.UID)
 }
 
 func (ji *JobInfo) Trainer() string {

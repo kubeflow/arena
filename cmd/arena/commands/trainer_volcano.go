@@ -35,7 +35,7 @@ var (
 
 // volcano Job wrapper
 type VolcanoJob struct {
-	name         string
+	*BasicJobInfo
 	volcanoJob   v1alpha1.Job
 	trainerType  string
 	pods         []v1.Pod
@@ -46,6 +46,10 @@ type VolcanoJob struct {
 
 func (vj *VolcanoJob) Name() string {
 	return vj.name
+}
+
+func (vj *VolcanoJob) Uid() string {
+	return string(vj.volcanoJob.UID)
 }
 
 // return driver pod
@@ -421,10 +425,13 @@ func (st *VolcanoJobTrainer) getTrainingJobFromCache(name, namespace string) (jo
 	pods, chiefPod := getPodsOfVolcanoJob(name, st, allPods)
 
 	return &VolcanoJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      name,
+		},
 		chiefPod:    chiefPod,
 		volcanoJob:  volcanoJob,
 		pods:        pods,
-		name:        name,
 		trainerType: st.Type(),
 	}, nil
 }
@@ -465,10 +472,13 @@ func (st *VolcanoJobTrainer) getTrainingJob(name, namespace string, flag bool) (
 	pods, chiefPod := getPodsOfVolcanoJob(name, st, podList.Items)
 
 	return &VolcanoJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      name,
+		},
 		volcanoJob:  volcanoJob,
 		chiefPod:    chiefPod,
 		pods:        pods,
-		name:        name,
 		trainerType: st.Type(),
 	}, nil
 }

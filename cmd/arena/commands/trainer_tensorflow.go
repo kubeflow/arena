@@ -62,7 +62,7 @@ func initTFJobClient() (tfjobClientset *versioned.Clientset, err error) {
 
 // TensorFlow Job Information
 type TensorFlowJob struct {
-	name         string
+	*BasicJobInfo
 	tfjob        tfv1.TFJob
 	pods         []v1.Pod // all the pods including statefulset and job
 	chiefPod     v1.Pod   // the chief pod
@@ -73,6 +73,10 @@ type TensorFlowJob struct {
 
 func (tj *TensorFlowJob) Name() string {
 	return tj.name
+}
+
+func (tj *TensorFlowJob) Uid() string {
+	return string(tj.tfjob.UID)
 }
 
 // Get the chief Pod of the Job.
@@ -374,10 +378,13 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 	pods, chiefPod := getPodsOfTFJob(name, tt, tfjob, podList.Items)
 
 	return &TensorFlowJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      name,
+		},
 		tfjob:       tfjob,
 		chiefPod:    chiefPod,
 		pods:        pods,
-		name:        name,
 		trainerType: tt.Type(),
 	}, nil
 
@@ -402,10 +409,13 @@ func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, ns string) (Traini
 	pods, chiefPod := getPodsOfTFJob(name, tt, tfjob, allPods)
 
 	return &TensorFlowJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      name,
+		},
 		tfjob:       tfjob,
 		chiefPod:    chiefPod,
 		pods:        pods,
-		name:        name,
 		trainerType: tt.Type(),
 	}, nil
 }

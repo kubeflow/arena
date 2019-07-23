@@ -254,7 +254,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	}
 
 	if printArgs.ShowEvents {
-		printEvents(w, job.ChiefPod().Namespace, pods)
+		printEvents(w, job.ChiefPod().Namespace, job)
 	}
 
 	_ = w.Flush()
@@ -270,27 +270,23 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 
 }
 
-func printEvents(w io.Writer, namespace string, pods []v1.Pod) {
-	eventsMap, _ := GetPodEvents(clientset, namespace, pods)
-	pendingPods := []v1.Pod{}
-	for _, pod := range pods {
-		if pod.Status.Phase == v1.PodRunning || pod.Status.Phase == v1.PodSucceeded {
-			continue
-		}
-		pendingPods = append(pendingPods, pod)
-	}
+func printEvents(w io.Writer, namespace string, job TrainingJob) {
 	fmt.Fprintf(w, "\nEvents: \n")
-	if len(pendingPods) == 0 {
-		fmt.Fprintln(w, "No events for pending pod")
+	eventsMap, err := GetResourcesEvents(clientset, namespace, job.Resources())
+	if err != nil {
+		fmt.Fprintf(w, "Get job events failed, due to: %v", err)
 		return
 	}
-	fmt.Fprintf(w, "INSTANCE\tTYPE\tAGE\tMESSAGE\n")
+	if len(eventsMap) == 0 {
+		fmt.Fprintln(w, "No events for resources")
+		return
+	}
+	fmt.Fprintf(w, "SOURCE\tTYPE\tAGE\tMESSAGE\n")
 	fmt.Fprintf(w, "--------\t----\t---\t-------\n")
 
-	for _, pod := range pendingPods {
-		events := eventsMap[pod.Name]
+	for resourceName, events := range eventsMap {
 		for _, event := range events {
-			instanceName := pod.Name
+			instanceName := fmt.Sprintf("%s/%s", strings.ToLower(event.InvolvedObject.Kind), resourceName)
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
 				instanceName,
 				event.Type,
@@ -324,17 +320,17 @@ func GetJobRealStatus(job TrainingJob) string {
 }
 
 // Get Event of the Job
-func GetPodEvents(client *kubernetes.Clientset, namespace string, pods []v1.Pod) (map[string][]v1.Event, error) {
+func GetResourcesEvents(client *kubernetes.Clientset, namespace string, resources []Resource) (map[string][]v1.Event, error) {
 	eventMap := make(map[string][]v1.Event)
 	events, err := client.CoreV1().Events(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return eventMap, err
 	}
-	for _, pod := range pods {
-		eventMap[pod.Name] = []v1.Event{}
+	for _, resource := range resources {
+		eventMap[resource.Name] = []v1.Event{}
 		for _, event := range events.Items {
-			if event.InvolvedObject.Kind == "Pod" && event.InvolvedObject.Name == pod.Name {
-				eventMap[pod.Name] = append(eventMap[pod.Name], event)
+			if event.InvolvedObject.Kind == string(resource.ResourceType) && string(event.InvolvedObject.UID) == resource.Uid {
+				eventMap[resource.Name] = append(eventMap[resource.Name], event)
 			}
 		}
 	}

@@ -20,7 +20,7 @@ var (
 
 // spark application wrapper
 type SparkJob struct {
-	name        string
+	*BasicJobInfo
 	sparkjob    v1beta1.SparkApplication
 	trainerType string
 	pods        []v1.Pod
@@ -29,6 +29,10 @@ type SparkJob struct {
 
 func (sj *SparkJob) Name() string {
 	return sj.name
+}
+
+func (sj *SparkJob) Uid() string {
+	return string(sj.sparkjob.UID)
 }
 
 // return driver pod
@@ -363,10 +367,13 @@ func (st *SparkJobTrainer) getTrainingJobFromCache(name, namespace string) (job 
 	pods, chiefPod := getPodsOfSparkJob(name, st, allPods)
 
 	return &SparkJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      name,
+		},
 		chiefPod:    chiefPod,
 		sparkjob:    sparkJob,
 		pods:        pods,
-		name:        name,
 		trainerType: st.Type(),
 	}, nil
 }
@@ -402,10 +409,13 @@ func (st *SparkJobTrainer) getTrainingJob(name, namespace string) (job TrainingJ
 	pods, chiefPod := getPodsOfSparkJob(name, st, podList.Items)
 
 	return &SparkJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      name,
+		},
 		sparkjob:    sparkjob,
 		chiefPod:    chiefPod,
 		pods:        pods,
-		name:        name,
 		trainerType: st.Type(),
 	}, nil
 }

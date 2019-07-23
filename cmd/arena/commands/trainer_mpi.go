@@ -50,7 +50,7 @@ func initMPIJobClient() (mpijobClientset *versioned.Clientset, err error) {
 
 // MPI Job Information
 type MPIJob struct {
-	name         string
+	*BasicJobInfo
 	mpijob       v1alpha1.MPIJob
 	chiefjob     batchv1.Job
 	pods         []v1.Pod // all the pods including statefulset and job
@@ -62,6 +62,10 @@ type MPIJob struct {
 
 func (mj *MPIJob) Name() string {
 	return mj.name
+}
+
+func (mj *MPIJob) Uid() string {
+	return string(mj.mpijob.UID)
 }
 
 // Get the chief Pod of the Job.
@@ -358,12 +362,20 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 
 	pods, chiefPod := getPodsOfMPIJob(name, tt, podList.Items)
 
+	// 3. Find the other resources, like statefulset,job
+	resources, err := tt.resources(name, namespace, pods)
+	if err != nil {
+		return nil, err
+	}
 	return &MPIJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: resources,
+			name:      name,
+		},
 		mpijob:      mpijob,
 		chiefPod:    chiefPod,
 		chiefjob:    job,
 		pods:        pods,
-		name:        name,
 		trainerType: tt.Type(),
 	}, nil
 
@@ -398,10 +410,13 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJob, 
 	pods, chiefPod := getPodsOfMPIJob(name, tt, allPods)
 
 	return &MPIJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      name,
+		},
 		mpijob:      mpijob,
 		chiefPod:    chiefPod,
 		pods:        pods,
-		name:        name,
 		chiefjob:    job,
 		trainerType: tt.Type(),
 	}, nil
@@ -522,6 +537,48 @@ func (tt *MPIJobTrainer) isMPIPod(name, ns string, item v1.Pod) bool {
 		return false
 	}
 	return true
+}
+
+func (tt *MPIJobTrainer) resources(name string, namespace string, pods []v1.Pod) ([]Resource, error) {
+	resources := []Resource{}
+
+	// 2. Find the pod list, and determine the pod of the job
+	stsList, err := tt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("mpi_job_name=%s", name),
+	})
+	if err != nil {
+		return resources, err
+	}
+	for _, sts := range stsList.Items {
+		resources = append(resources, Resource{
+			Name:         sts.Name,
+			Uid:          string(sts.UID),
+			ResourceType: ResourceTypeStatefulSet,
+		})
+	}
+
+	// 2. Find the pod list, and determine the pod of the job
+	jobs, err := tt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("mpi_job_name=%s", name),
+	})
+	if err != nil {
+		return resources, err
+	}
+	for _, job := range jobs.Items {
+		resources = append(resources, Resource{
+			Name:         job.Name,
+			Uid:          string(job.UID),
+			ResourceType: ResourceTypeJob,
+		})
+	}
+	resources = append(resources, podResources(pods)...)
+	return resources, nil
 }
 
 /**
