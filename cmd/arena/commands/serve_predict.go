@@ -17,32 +17,26 @@ package commands
 import (
 	"fmt"
 	"os"
-	"strings"
-
-	"bytes"
-	"io/ioutil"
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 var (
-	predictChart          = util.GetChartsFolder() + "/predict"
-	defaultTfServingImage = "tensorflow/serving:latest"
+	predictChart = util.GetChartsFolder() + "/predict"
 )
 
-func NewServingTensorFlowCommand() *cobra.Command {
+func NewServingPredictCommand() *cobra.Command {
 	var (
-		serveTensorFlowArgs ServeTensorFlowArgs
+		servePredictArgs ServePredictArgs
 	)
 
 	var command = &cobra.Command{
-		Use:     "tensorflow",
-		Short:   "Submit tensorflow serving job to deploy and serve machine learning models.",
+		Use:     "predict",
+		Short:   "Submit common predict job to deploy and serve machine learning models.",
 		Aliases: []string{"tf"},
 		Run: func(cmd *cobra.Command, args []string) {
 			/*if len(args) == 0 {
@@ -50,7 +44,7 @@ func NewServingTensorFlowCommand() *cobra.Command {
 				os.Exit(1)
 			}*/
 
-			if serveTensorFlowArgs.GPUMemory != 0 && serveTensorFlowArgs.GPUCount != 0 {
+			if servePredictArgs.GPUMemory != 0 && servePredictArgs.GPUCount != 0 {
 				fmt.Println("gpucount and gpumemory should not be used at the same time.You can only choose one mode")
 				os.Exit(1)
 			}
@@ -69,7 +63,7 @@ func NewServingTensorFlowCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = serveTensorFlow(args, &serveTensorFlowArgs, client)
+			err = servePredict(args, &servePredictArgs, client)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -77,174 +71,73 @@ func NewServingTensorFlowCommand() *cobra.Command {
 		},
 	}
 
-	serveTensorFlowArgs.addServeCommonFlags(command)
+	servePredictArgs.addServeCommonFlags(command)
 
 	// TFServingJob
 	// add grpc port and rest api port
-	command.Flags().StringVar(&serveTensorFlowArgs.Image, "image", defaultTfServingImage, "the docker image name of serve job, and the default image is "+defaultTfServingImage)
-	command.Flags().IntVar(&serveTensorFlowArgs.Port, "port", 8500, "the port of tensorflow gRPC listening port")
-	command.Flags().IntVar(&serveTensorFlowArgs.RestfulPort, "restfulPort", 8501, "the port of tensorflow RESTful listening port")
-
-	command.Flags().StringVar(&serveTensorFlowArgs.ModelConfigFile, "modelConfigFile", "", "Corresponding with --model_config_file in tensorflow serving")
-	command.Flags().StringVar(&serveTensorFlowArgs.VersionPolicy, "versionPolicy", "", "support latest, latest:N, specific:N, all")
+	command.Flags().StringVar(&servePredictArgs.Image, "image", "", "the docker image name of serve job")
+	command.Flags().StringVar(&servePredictArgs.Version, "version", "", "the version of serve job")
+	command.Flags().IntVar(&servePredictArgs.Port, "port", 8500, "the port of Predict gRPC listening port")
+	command.Flags().IntVar(&servePredictArgs.RestfulPort, "restful-port", 8501, "the port of Predict RESTful listening port")
 
 	return command
 }
 
-type ServeTensorFlowArgs struct {
-	VersionPolicy          string `yaml:"versionPolicy"`   // --versionPolicy
-	ModelConfigFile        string `yaml:"modelConfigFile"` // --modelConfigFile
-	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
-	Image                  string `yaml:"image"` // --image
+type ServePredictArgs struct {
+	Version string `yaml:"version"` // --version
+	Image   string `yaml:"image"`   // --image
 
 	ServeArgs `yaml:",inline"`
-
-	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
 }
 
-func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Clientset, args []string) (err error) {
-	//serveTensorFlowArgs.Command = strings.Join(args, " ")
-	log.Debugf("command: %s", serveTensorFlowArgs.Command)
+func (servePredictArgs *ServePredictArgs) preprocess(client *kubernetes.Clientset, args []string) (err error) {
+	//servePredictArgs.Command = strings.Join(args, " ")
+	log.Debugf("command: %s", servePredictArgs.Command)
 
-	if serveTensorFlowArgs.ModelConfigFile == "" {
-		// need to validate modelName, modelPath and versionPolicy if not specify modelConfigFile
-		// 1. validate modelName
-		err := serveTensorFlowArgs.ServeArgs.validateModelName()
-		if err != nil {
-			return err
-		}
-		//2. validate modelPath
-		if serveTensorFlowArgs.ModelPath == "" {
-			return fmt.Errorf("modelPath should be specified if no modelConfigFile is specified")
-		}
-
-		//3. validate versionPolicy
-		err = serveTensorFlowArgs.validateVersionPolicy()
-		if err != nil {
-			return err
-		}
-		//populate content according to CLI parameters
-		serveTensorFlowArgs.ModelConfigFileContent = generateModelConfigFileContent(*serveTensorFlowArgs)
-
-	} else {
-		//populate content from modelConfigFile
-		if serveTensorFlowArgs.ModelName != "" {
-			return fmt.Errorf("modelConfigFile=%s is specified, so --modelName cannot be used", serveTensorFlowArgs.ModelConfigFile)
-		}
-		if serveTensorFlowArgs.ModelPath != "" {
-			return fmt.Errorf("modelConfigFile=%s is specified, so --modelPath cannot be used", serveTensorFlowArgs.ModelConfigFile)
-		}
-
-		modelConfigFileContentBytes, err := ioutil.ReadFile(serveTensorFlowArgs.ModelConfigFile)
-		if err != nil {
-			return fmt.Errorf("cannot read the modelConfigFile[%s]: %s", serveTensorFlowArgs.ModelConfigFile, err)
-		}
-		modelConfigString := string(modelConfigFileContentBytes)
-		log.Debugf("The content of modelConfigFile[%s] is: %s", serveTensorFlowArgs.ModelConfigFile, modelConfigString)
-		serveTensorFlowArgs.ModelConfigFileContent = modelConfigString
+	if servePredictArgs.Image == "" {
+		return fmt.Errorf("image must be specified.")
 	}
+
 	// validate models data
 	if len(dataset) > 0 {
 		err := ParseMountPath(dataset)
 		if err != nil {
 			return fmt.Errorf("--data has wrong value: %s", err)
 		}
-		serveTensorFlowArgs.ModelDirs = transformSliceToMap(dataset, ":")
+		servePredictArgs.ModelDirs = transformSliceToMap(dataset, ":")
 	}
 
-	log.Debugf("models:%s", serveTensorFlowArgs.ModelDirs)
+	log.Debugf("models:%s", servePredictArgs.ModelDirs)
 
 	//validate Istio enablement
-	err = serveTensorFlowArgs.ServeArgs.validateIstioEnablement()
+	err = servePredictArgs.ServeArgs.validateIstioEnablement()
 	if err != nil {
 		return err
 	}
 
 	// populate environment variables
 	if len(envs) > 0 {
-		serveTensorFlowArgs.Envs = transformSliceToMap(envs, "=")
+		servePredictArgs.Envs = transformSliceToMap(envs, "=")
 	}
 
-	modelServiceExists, err := checkServiceExists(client, namespace, serveTensorFlowArgs.ServingName)
-	serveTensorFlowArgs.ModelServiceExists = modelServiceExists
-
-	return nil
-}
-
-func checkServiceExists(client *kubernetes.Clientset, namespace string, name string) (bool, error) {
-	service, err := client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+	modelServiceExists, err := checkServiceExists(client, namespace, servePredictArgs.ServingName)
 	if err != nil {
-		return false, err
+		return err
 	}
-	if service == nil {
-		return false, nil
-	}
-	return true, nil
-}
-
-func (serveTensorFlowArgs *ServeTensorFlowArgs) validateVersionPolicy() error {
-	// validate version policy
-	if serveTensorFlowArgs.VersionPolicy == "" {
-		serveTensorFlowArgs.VersionPolicy = "latest"
-	}
-	versionPolicyName := strings.Split(serveTensorFlowArgs.VersionPolicy, ":")
-	switch versionPolicyName[0] {
-	case "latest", "specific", "all":
-		log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
-		//serveTensorFlowArgs.ServeArgs.ModelVersion = strings.Replace(serveTensorFlowArgs.VersionPolicy, ":", "-", -1)
-	default:
-		return fmt.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
-	}
+	servePredictArgs.ModelServiceExists = modelServiceExists
 
 	return nil
 }
 
-func serveTensorFlow(args []string, serveTensorFlowArgs *ServeTensorFlowArgs, client *kubernetes.Clientset) (err error) {
-	err = serveTensorFlowArgs.preprocess(client, args)
+func servePredict(args []string, servePredictArgs *ServePredictArgs, client *kubernetes.Clientset) (err error) {
+	err = servePredictArgs.preprocess(client, args)
 	if err != nil {
 		return err
 	}
 
-	name = serveTensorFlowArgs.ServingName
-	if serveTensorFlowArgs.ServingVersion != "" {
-		name += "-" + serveTensorFlowArgs.ServingVersion
+	name = servePredictArgs.ServingName
+	if servePredictArgs.Version != "" {
+		name += "-" + servePredictArgs.Version
 	}
-	return workflow.SubmitJob(name, "tf-serving", namespace, serveTensorFlowArgs, tfservingChart)
-}
-
-func generateModelConfigFileContent(serveTensorFlowArgs ServeTensorFlowArgs) string {
-	modelName := serveTensorFlowArgs.ModelName
-	versionPolicy := serveTensorFlowArgs.VersionPolicy
-	mountPath := serveTensorFlowArgs.ModelPath
-	versionPolicyName := strings.Split(versionPolicy, ":")
-
-	var buffer bytes.Buffer
-	buffer.WriteString("model_config_list: { config: { name: ")
-	buffer.WriteString("\"" + modelName + "\" base_path: \"")
-	buffer.WriteString(mountPath + "\" model_platform: \"")
-	buffer.WriteString("tensorflow\" model_version_policy: { ")
-	switch versionPolicyName[0] {
-	case "all":
-		buffer.WriteString(versionPolicyName[0] + ": {} } } }")
-	case "specific":
-		if len(versionPolicyName) > 1 {
-			buffer.WriteString(versionPolicyName[0] + ": { " + "versions: " + versionPolicyName[1] + " } } } }")
-		} else {
-			log.Errorf("[specific] version policy scheme should be specific:N")
-		}
-	case "latest":
-		if len(versionPolicyName) > 1 {
-			buffer.WriteString(versionPolicyName[0] + ": { " + "num_versions: " + versionPolicyName[1] + " } } } }")
-		} else {
-			buffer.WriteString(versionPolicyName[0] + ": { " + "num_versions: 1 } } } }")
-		}
-	default:
-		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
-		buffer.Reset()
-	}
-
-	result := buffer.String()
-	log.Debugf("generateModelConfigFileContent: \n%s", result)
-
-	return result
+	return workflow.SubmitJob(name, "predict", namespace, servePredictArgs, predictChart)
 }

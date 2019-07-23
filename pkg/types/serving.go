@@ -4,6 +4,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	app_v1 "k8s.io/api/apps/v1"
@@ -25,8 +26,9 @@ var SERVING_CHARTS = map[string]string{
 	"tensorrt-inference-server-0.0.1": "TensorRT",
 }
 var SERVING_TYPE = map[string]string{
-	"tf-serving":  "Tensorflow",
-	"trt-serving": "TensorRT",
+	"tf-serving":      "Tensorflow",
+	"trt-serving":     "TensorRT",
+	"predict-serving": "Predict",
 }
 
 func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPods []v1.Pod) Serving {

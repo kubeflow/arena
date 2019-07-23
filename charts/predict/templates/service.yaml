@@ -1,0 +1,53 @@
+{{- if eq .Values.modelServiceExists false }}
+apiVersion: v1
+kind: Service
+metadata:
+  name:  {{ .Values.servingName }}
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "predict.chart" . }}
+    app: {{ template "predict.name" . }}
+    servingName: {{ .Values.servingName }}
+spec:
+  type: {{ .Values.serviceType }}
+  ports:
+    - name: serving
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}
+    - name: http-serving
+      port: {{ .Values.restApiPort }}
+      targetPort: {{ .Values.restApiPort }}
+  selector:
+    app: {{ template "predict.name" . }}
+    serviceName: "{{ .Values.servingName }}"
+    {{- if .Values.serviceVersion }}
+    serviceVersion: {{ .Values.serviceVersion }}
+    {{- end }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:  {{ .Values.servingName }}-{{ .Values.servingVersion }}
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "predict.chart" . }}
+    app: {{ template "predict.name" . }}
+    servingName: {{ .Values.servingName }}
+    serviceVersion: {{ .Values.serviceVersion }}
+spec:
+  type: {{ .Values.serviceType }}
+  ports:
+    - name: serving
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}
+    - name: http-serving
+      port: {{ .Values.restApiPort }}
+      targetPort: {{ .Values.restApiPort }}
+  selector:
+    app: {{ template "predict.name" . }}
+    {{- if .Values.serviceVersion }}
+    serviceVersion: {{ .Values.serviceVersion }}
+    {{- end }}

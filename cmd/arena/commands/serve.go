@@ -40,14 +40,14 @@ type ServeArgs struct {
 	Command         string            `yaml:"command"`         // --command
 	Replicas        int               `yaml:"replicas"`        // --replicas
 	Port            int               `yaml:"port"`            // --port
-	RestfulPort     int               `yaml:"rest_api_port"`   // --restfulPort
-	ModelName       string            `yaml:"modelName"`       // --modelName
-	ModelPath       string            `yaml:"modelPath"`       // --modelPath
+	RestfulPort     int               `yaml:"restApiPort"`     // --restfulPort
 	EnableIstio     bool              `yaml:"enableIstio"`     // --enableIstio
 	ExposeService   bool              `yaml:"exposeService"`   // --exposeService
 	ServingName     string            `yaml:"servingName"`     // --servingName
 	ServingVersion  string            `yaml:"servingVersion"`  // --servingVersion
 	ModelDirs       map[string]string `yaml:"modelDirs"`
+
+	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
 }
 
 func (s ServeArgs) validateIstioEnablement() error {
@@ -65,21 +65,6 @@ func (s ServeArgs) validateIstioEnablement() error {
 	log.Debugf("--serviceVersion=%s is specified.", s.ServingVersion)
 	if s.ServingVersion == "" {
 		return fmt.Errorf("--serviceVersion must be specified if enableIstio=true")
-	}
-
-	return nil
-}
-
-func (s ServeArgs) validateModelName() error {
-	if s.ModelName == "" {
-		return fmt.Errorf("--modelName cannot be blank")
-	}
-
-	var reg *regexp.Regexp
-	reg = regexp.MustCompile(regexp4serviceName)
-	matched := reg.MatchString(s.ModelName)
-	if !matched {
-		return fmt.Errorf("--modelName should be numbers, letters, dashes, and underscores ONLY")
 	}
 
 	return nil
@@ -104,15 +89,7 @@ func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&serveArgs.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.Replicas, "replicas", 1, "the replicas number of the serve job.")
 
-	command.Flags().StringVar(&serveArgs.ModelPath, "modelPath", "", "the model path for serving in the container")
-	command.Flags().MarkDeprecated("modelPath", "please use --model-path instead")
-	command.Flags().StringVar(&serveArgs.ModelPath, "model-path", "", "the model path for serving in the container")
-
 	command.Flags().StringArrayVarP(&envs, "envs", "e", []string{}, "the environment variables")
-
-	command.Flags().StringVar(&serveArgs.ModelName, "modelName", "", "the model name for serving")
-	command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
-	command.Flags().StringVar(&serveArgs.ModelName, "model-name", "", "the model name for serving")
 
 	command.Flags().BoolVar(&serveArgs.EnableIstio, "enableIstio", false, "enable Istio for serving or not (disable Istio by default)")
 	command.Flags().MarkDeprecated("enableIstio", "please use --enable-istio instead")

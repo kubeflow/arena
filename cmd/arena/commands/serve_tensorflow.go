@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"bytes"
@@ -85,6 +86,14 @@ func NewServingTensorFlowCommand() *cobra.Command {
 	command.Flags().IntVar(&serveTensorFlowArgs.Port, "port", 8500, "the port of tensorflow gRPC listening port")
 	command.Flags().IntVar(&serveTensorFlowArgs.RestfulPort, "restfulPort", 8501, "the port of tensorflow RESTful listening port")
 
+	command.Flags().StringVar(&serveTensorFlowArgs.ModelName, "modelName", "", "the model name for serving")
+	command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
+	command.Flags().StringVar(&serveTensorFlowArgs.ModelName, "model-name", "", "the model name for serving")
+
+	command.Flags().StringVar(&serveTensorFlowArgs.ModelPath, "modelPath", "", "the model path for serving in the container")
+	command.Flags().MarkDeprecated("modelPath", "please use --model-path instead")
+	command.Flags().StringVar(&serveTensorFlowArgs.ModelPath, "model-path", "", "the model path for serving in the container")
+
 	command.Flags().StringVar(&serveTensorFlowArgs.ModelConfigFile, "modelConfigFile", "", "Corresponding with --model_config_file in tensorflow serving")
 	command.Flags().StringVar(&serveTensorFlowArgs.VersionPolicy, "versionPolicy", "", "support latest, latest:N, specific:N, all")
 
@@ -95,11 +104,28 @@ type ServeTensorFlowArgs struct {
 	VersionPolicy          string `yaml:"versionPolicy"`   // --versionPolicy
 	ModelConfigFile        string `yaml:"modelConfigFile"` // --modelConfigFile
 	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
-	Image                  string `yaml:"image"` // --image
+	Image                  string `yaml:"image"`     // --image
+	ModelName              string `yaml:"modelName"` // --modelName
+	ModelPath              string `yaml:"modelPath"` // --modelPath
 
 	ServeArgs `yaml:",inline"`
 
-	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
+	// ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
+}
+
+func (serveTensorFlowArgs ServeTensorFlowArgs) validateModelName() error {
+	if serveTensorFlowArgs.ModelName == "" {
+		return fmt.Errorf("--modelName cannot be blank")
+	}
+
+	var reg *regexp.Regexp
+	reg = regexp.MustCompile(regexp4serviceName)
+	matched := reg.MatchString(serveTensorFlowArgs.ModelName)
+	if !matched {
+		return fmt.Errorf("--modelName should be numbers, letters, dashes, and underscores ONLY")
+	}
+
+	return nil
 }
 
 func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Clientset, args []string) (err error) {
@@ -109,7 +135,7 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 	if serveTensorFlowArgs.ModelConfigFile == "" {
 		// need to validate modelName, modelPath and versionPolicy if not specify modelConfigFile
 		// 1. validate modelName
-		err := serveTensorFlowArgs.ServeArgs.validateModelName()
+		err := serveTensorFlowArgs.validateModelName()
 		if err != nil {
 			return err
 		}
