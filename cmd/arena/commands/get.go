@@ -274,7 +274,7 @@ func printEvents(w io.Writer, namespace string, job TrainingJob) {
 	fmt.Fprintf(w, "\nEvents: \n")
 	eventsMap, err := GetResourcesEvents(clientset, namespace, job.Resources())
 	if err != nil {
-		fmt.Fprintln(w, "Get job events failed, due to: %v", err)
+		fmt.Fprintf(w, "Get job events failed, due to: %v", err)
 		return
 	}
 	if len(eventsMap) == 0 {
