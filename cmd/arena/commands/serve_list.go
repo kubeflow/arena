@@ -107,8 +107,11 @@ func ListServingsByName(client *kubernetes.Clientset, name string) (servings []t
 		return nil, err
 	}
 
+	log.Debugf("ListServingsByName: deployments %v", deployList.Items)
+
 	servings = []types.Serving{}
 	for _, deploy := range deployList.Items {
+		log.Debugf("ListServingsByName: find deploy %v", deploy)
 		servingType := deploy.Labels["servingType"]
 		servingVersion := deploy.Labels["servingVersion"]
 		// servingName := deploy.Labels["servingName"]
