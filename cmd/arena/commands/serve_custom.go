@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
@@ -27,7 +28,7 @@ import (
 )
 
 var (
-	customChart = util.GetChartsFolder() + "/custom"
+	customChart = util.GetChartsFolder() + "/custom-serving"
 )
 
 func NewServingCustomCommand() *cobra.Command {
@@ -137,8 +138,11 @@ func servePredict(args []string, serveCustomArgs *ServeCustomArgs, client *kuber
 	}
 
 	name = serveCustomArgs.ServingName
-	if serveCustomArgs.ServingVersion != "" {
-		name += "-" + serveCustomArgs.ServingVersion
+	if serveCustomArgs.ServingVersion == "" {
+		t := time.Now()
+		serveCustomArgs.ServingVersion = fmt.Sprint(t.Format("200601021504"))
 	}
-	return workflow.SubmitJob(name, "custom", namespace, serveCustomArgs, customChart)
+
+	name += "-" + serveCustomArgs.ServingVersion
+	return workflow.SubmitJob(name, "custom-serving", namespace, serveCustomArgs, customChart)
 }
