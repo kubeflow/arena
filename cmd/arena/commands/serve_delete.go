@@ -18,11 +18,16 @@ import (
 	"os"
 
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+)
+
+var (
+	servingVersion string
 )
 
 // NewDeleteCommand
@@ -49,6 +54,8 @@ func NewServingDeleteCommand() *cobra.Command {
 			}
 		},
 	}
+	command.Flags().StringVar(&servingVersion, "version", "", "The serving version to delete.")
+	command.MarkFlagRequired("version")
 
 	return command
 }
@@ -63,19 +70,25 @@ func deleteServingJob(servingJob string) error {
 
 	log.Debugf("%s wasn't deleted by helm due to %v", servingJob, err)
 
+	servingJobWithVersion := servingJob + "-" + servingVersion
+
 	// 2. Handle serving jobs created by arena
-	servingTypes = getServingTypes(servingJob, namespace)
+	servingTypes = getServingTypes(servingJobWithVersion, namespace)
 	if len(servingTypes) == 0 {
 		return fmt.Errorf("There is no serving job found with the name %s, please check it with `arena serve list | grep %s`",
 			servingJob,
 			servingJob)
+	} else if len(servingTypes) > 1 {
+		return fmt.Errorf("There are more than one serving job found with the name %s, please check it with `arena serve list | grep %s`",
+			servingJob,
+			servingJob)
 	}
 
-	err = workflow.DeleteJob(servingJob, namespace, servingTypes[0])
+	err = workflow.DeleteJob(servingJobWithVersion, namespace, servingTypes[0])
 	if err != nil {
 		return err
 	}
-	log.Infof("The Serving job %s has been deleted successfully", servingJob)
+	log.Infof("The Serving job %s with version %s has been deleted successfully", servingJob, servingVersion)
 	return nil
 }
 
