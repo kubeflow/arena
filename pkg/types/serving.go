@@ -26,9 +26,9 @@ var SERVING_CHARTS = map[string]string{
 	"tensorrt-inference-server-0.0.1": "TensorRT",
 }
 var SERVING_TYPE = map[string]string{
-	"tf-serving":     "Tensorflow",
-	"trt-serving":    "TensorRT",
-	"custom-serving": "Custom",
+	"tf-serving":     "TENSORFLOW",
+	"trt-serving":    "TENSORRT",
+	"custom-serving": "CUSTOM",
 }
 
 func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPods []v1.Pod) Serving {

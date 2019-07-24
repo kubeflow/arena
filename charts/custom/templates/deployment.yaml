@@ -60,15 +60,16 @@ spec:
           {{- end }}
           ports:
             - containerPort: {{ .Values.port }}
-              name: custom-serving
+              name: grpc
               protocol: TCP
             - containerPort: {{ .Values.restApiPort }}
-              name: http-custom-serving
-          readinessProbe:
-            tcpSocket:
-              port: custom-serving
-            initialDelaySeconds: 15
-            timeoutSeconds: 1
+              name: rest
+              protocol: TCP
+          #readinessProbe:
+          #  tcpSocket:
+          #    port: grpc
+          #  initialDelaySeconds: 15
+          #  timeoutSeconds: 1
           resources:
             limits:
               {{- if .Values.cpu }}
