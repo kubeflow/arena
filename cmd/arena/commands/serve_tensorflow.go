@@ -27,6 +27,7 @@ import (
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -197,15 +198,22 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 	return nil
 }
 
-func checkServiceExists(client *kubernetes.Clientset, namespace string, name string) (bool, error) {
+func checkServiceExists(client *kubernetes.Clientset, namespace string, name string) (found bool, err error) {
 	service, err := client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+
 	if err != nil {
-		return false, err
+		if errors.IsNotFound(err) {
+			log.Debugf("service %s in namespace %s due to %v is not found.", name, namespace, err)
+			err = nil
+		}
+		return found, err
 	}
-	if service == nil {
-		return false, nil
+
+	if service != nil {
+		found = true
 	}
-	return true, nil
+
+	return found, err
 }
 
 func (serveTensorFlowArgs *ServeTensorFlowArgs) validateVersionPolicy() error {
