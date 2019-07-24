@@ -24,6 +24,7 @@ import (
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -42,7 +43,13 @@ func NewServingDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			setupKubeconfig()
-			err := updateNamespace(cmd)
+			client, err := initKubeClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			err = updateNamespace(cmd)
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
@@ -50,17 +57,22 @@ func NewServingDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				deleteServingJob(jobName)
+				err = deleteServingJob(client, jobName)
+				if err != nil {
+					log.Debugf("Failed due to %v", err)
+					fmt.Println(err)
+					os.Exit(1)
+				}
 			}
 		},
 	}
 	command.Flags().StringVar(&servingVersion, "version", "", "The serving version to delete.")
-	command.MarkFlagRequired("version")
+	// command.MarkFlagRequired("version")
 
 	return command
 }
 
-func deleteServingJob(servingJob string) error {
+func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 	var servingTypes []string
 	err := helm.DeleteRelease(servingJob)
 	if err == nil {
@@ -69,6 +81,24 @@ func deleteServingJob(servingJob string) error {
 	}
 
 	log.Debugf("%s wasn't deleted by helm due to %v", servingJob, err)
+
+	if servingVersion == "" {
+		servings, err := ListServingsByName(client, name)
+		if err != nil {
+			return err
+		}
+		if len(servings) == 0 {
+			return fmt.Errorf("There is no serving job found with the name %s, please check it with `arena serve list | grep %s`",
+				servingJob,
+				servingJob)
+		} else if len(servings) > 1 {
+			return fmt.Errorf("There are more than one serving job found with the name %s, please check it with `arena serve list | grep %s`",
+				servingJob,
+				servingJob)
+		}
+
+		servingVersion = servings[0].Version
+	}
 
 	servingJobWithVersion := servingJob + "-" + servingVersion
 

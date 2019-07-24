@@ -22,7 +22,7 @@ spec:
     app: {{ template "custom-serving.name" . }}
     serviceName: "{{ .Values.servingName }}"
     {{- if .Values.servingVersion }}
-    serviceVersion: {{ .Values.servingVersion }}
+    servingVersion: {{ .Values.servingVersion }}
     {{- end }}
 {{- end }}
 ---
@@ -37,7 +37,7 @@ metadata:
     chart: {{ template "custom-serving.chart" . }}
     app: {{ template "custom-serving.name" . }}
     servingName: {{ .Values.servingName }}
-    serviceVersion: {{ .Values.servingVersion }}
+    servingVersion: {{ .Values.servingVersion }}
 spec:
   type: {{ .Values.serviceType }}
   ports:
@@ -49,5 +49,5 @@ spec:
       targetPort: {{ .Values.restApiPort }}
   selector:
     app: {{ template "custom-serving.name" . }}
-    serviceVersion: {{ .Values.servingVersion }}
+    servingVersion: {{ .Values.servingVersion }}
 {{- end }}

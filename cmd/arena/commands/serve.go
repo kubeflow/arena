@@ -62,9 +62,9 @@ func (s ServeArgs) validateIstioEnablement() error {
 	if !matched {
 		return fmt.Errorf("--serviceName should be numbers, letters, dashes, and underscores ONLY")
 	}
-	log.Debugf("--serviceVersion=%s is specified.", s.ServingVersion)
+	log.Debugf("--servingVersion=%s is specified.", s.ServingVersion)
 	if s.ServingVersion == "" {
-		return fmt.Errorf("--serviceVersion must be specified if enableIstio=true")
+		return fmt.Errorf("--servingVersion must be specified if enableIstio=true")
 	}
 
 	return nil

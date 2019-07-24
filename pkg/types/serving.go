@@ -33,7 +33,7 @@ var SERVING_TYPE = map[string]string{
 
 func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPods []v1.Pod) Serving {
 	servingTypeLabel := deploy.Labels["servingType"]
-	serviceVersion := deploy.Labels["serviceVersion"]
+	servingVersion := deploy.Labels["servingVersion"]
 	servingName := deploy.Labels["servingName"]
 	servingType := "Tensorflow"
 	if serveType, ok := SERVING_TYPE[servingTypeLabel]; ok {
@@ -44,7 +44,7 @@ func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPo
 		client:    client,
 		ServeType: servingType,
 		Namespace: deploy.Namespace,
-		Version:   serviceVersion,
+		Version:   servingVersion,
 		deploy:    deploy,
 	}
 	for _, pod := range allPods {

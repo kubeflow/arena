@@ -68,6 +68,7 @@ func NewServingListCommand() *cobra.Command {
 	return command
 }
 
+// ListServing returns a list of serving
 func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
 	jobs := []types.Serving{}
 	ns := GetNamespace()
@@ -94,6 +95,32 @@ func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
 	return jobs, nil
 }
 
+// List Servings by name
+func ListServingsByName(client *kubernetes.Clientset, name string) (servings []types.Serving, err error) {
+	ns := GetNamespace()
+	labels := fmt.Sprintf("servingName=%s")
+	deployList, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
+		LabelSelector: labels,
+	})
+	if err != nil {
+		log.Debugf("Failed due to %v", err)
+		return nil, err
+	}
+
+	servings = []types.Serving{}
+	for _, deploy := range deployList.Items {
+		servingType := deploy.Labels["servingType"]
+		servingVersion := deploy.Labels["servingVersion"]
+		// servingName := deploy.Labels["servingName"]
+		servings = append(servings, types.Serving{
+			Name:      name,
+			ServeType: servingType,
+			Version:   servingVersion,
+		})
+	}
+	return servings, nil
+}
+
 func ListServingJobsByHelm() ([]types.Serving, error) {
 	releaseMap, err := helm.ListAllReleasesWithDetail()
 	if err != nil {
@@ -110,16 +137,16 @@ func ListServingJobsByHelm() ([]types.Serving, error) {
 		if serveType, ok := types.SERVING_CHARTS[chart]; ok {
 			index := strings.Index(name, "-")
 			//serviceName := name[0:index]
-			serviceVersion := ""
+			servingVersion := ""
 			if index > -1 {
-				serviceVersion = name[index+1:]
+				servingVersion = name[index+1:]
 			}
 			nameAndVersion := strings.Split(name, "-")
 			log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
 			servings = append(servings, types.Serving{
 				Name:      nameAndVersion[0],
 				Namespace: namespace,
-				Version:   serviceVersion,
+				Version:   servingVersion,
 				ServeType: serveType,
 				//Status: status,
 			})

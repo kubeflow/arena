@@ -12,7 +12,7 @@ metadata:
     servingName: "{{ .Values.servingName }}"
     servingType: "custom-serving"
     serviceName: "{{ .Values.servingName }}"
-    serviceVersion: "{{ .Values.servingVersion }}"
+    servingVersion: "{{ .Values.servingVersion }}"
   annotations:
     "helm.sh/created": {{ .Release.Time.Seconds | quote }}
 spec:
@@ -35,7 +35,7 @@ spec:
         chart: {{ template "custom-serving.chart" . }}
         app: {{ template "custom-serving.name" . }}
         serviceName: "{{ .Values.servingName }}"
-        serviceVersion: "{{ .Values.servingVersion }}"
+        servingVersion: "{{ .Values.servingVersion }}"
     spec:
       containers:
         - name: custom-serving

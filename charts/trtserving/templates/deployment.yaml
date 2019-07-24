@@ -30,7 +30,7 @@ spec:
         chart: {{ template "tensorrt-inference-server.chart" . }}
         app: {{ template "tensorrt-inference-server.name" . }}
         serviceName: "{{ .Values.servingName }}"
-        serviceVersion: "{{ .Values.servingVersion }}"
+        servingVersion: "{{ .Values.servingVersion }}"
     spec:
       initContainers:
 
