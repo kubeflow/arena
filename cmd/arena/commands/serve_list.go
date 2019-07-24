@@ -98,12 +98,12 @@ func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
 // List Servings by name
 func ListServingsByName(client *kubernetes.Clientset, name string) (servings []types.Serving, err error) {
 	ns := GetNamespace()
-	labels := fmt.Sprintf("servingName=%s")
+	labels := fmt.Sprintf("servingName=%s", name)
 	deployList, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
 		LabelSelector: labels,
 	})
 	if err != nil {
-		log.Debugf("Failed due to %v", err)
+		log.Debugf("Failed to ListServingsByName due to %v", err)
 		return nil, err
 	}
 
