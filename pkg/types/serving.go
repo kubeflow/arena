@@ -56,9 +56,9 @@ func NewServingJob(client *kubernetes.Clientset, deploy app_v1.Deployment, allPo
 }
 
 func (s Serving) GetName() string {
-	if s.Version != "" {
-		return fmt.Sprintf("%s-%s", s.Name, s.Version)
-	}
+	// if s.Version != "" {
+	// 	return fmt.Sprintf("%s-%s", s.Name, s.Version)
+	// }
 	return s.Name
 }
 
