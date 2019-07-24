@@ -26,6 +26,7 @@ spec:
     {{- end }}
 {{- end }}
 ---
+{{- if .Values.serviceVersion }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -48,6 +49,5 @@ spec:
       targetPort: {{ .Values.restApiPort }}
   selector:
     app: {{ template "custom-serving.name" . }}
-    {{- if .Values.serviceVersion }}
     serviceVersion: {{ .Values.serviceVersion }}
-    {{- end }}
+{{- end }}
