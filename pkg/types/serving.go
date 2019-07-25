@@ -3,8 +3,6 @@ package types
 import (
 	v1 "k8s.io/api/core/v1"
 
-	"fmt"
-
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	app_v1 "k8s.io/api/apps/v1"
@@ -67,16 +65,21 @@ func (s Serving) AllPods() []v1.Pod {
 }
 
 func (s Serving) GetClusterIP() string {
-	serviceName := fmt.Sprintf("%s-%s", s.deploy.Labels["release"], s.deploy.Labels["app"])
+	// serviceName := fmt.Sprintf("%s-%s", s.deploy.Labels["release"], s.deploy.Labels["app"])
 	allServices, err := util.AcquireServingServices(s.Namespace, s.client)
 	if err != nil {
 		log.Errorf("failed to list serving services, err: %++v", err)
 		return "N/A"
 	}
 	for _, service := range allServices {
-		if service.Name == serviceName {
+		if service.Labels["servingName"] == s.Name &&
+			service.Labels["servingVersion"] == s.ServeType {
 			return service.Spec.ClusterIP
 		}
+
+		// if service.Name == serviceName {
+		// 	return service.Spec.ClusterIP
+		// }
 	}
 	return "N/A"
 }
