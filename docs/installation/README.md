@@ -48,6 +48,7 @@ cp -r arena/charts/* /charts
 
 ```
 kubectl create -f arena/kubernetes-artifacts/jobmon/jobmon-role.yaml
+kubectl create -f arena/kubernetes-artifacts/tf-operator/tf-crd.yaml
 kubectl create -f arena/kubernetes-artifacts/tf-operator/tf-operator.yaml
 ```
 
