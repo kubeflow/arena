@@ -83,7 +83,7 @@ func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 	log.Debugf("%s wasn't deleted by helm due to %v", servingJob, err)
 
 	if servingVersion == "" {
-		servings, err := ListServingsByName(client, name)
+		servings, err := ListServingsByName(client, servingJob)
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 				servingJob,
 				servingJob)
 		} else if len(servings) > 1 {
-			return fmt.Errorf("There are more than one serving job found with the name %s, please check it with `arena serve list | grep %s`",
+			return fmt.Errorf("There are more than one serving job found with the name %s, please check it with `arena serve delete %s --version {version}`",
 				servingJob,
 				servingJob)
 		}
