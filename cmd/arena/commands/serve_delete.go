@@ -29,6 +29,7 @@ import (
 
 var (
 	servingVersion string
+	servingType    string
 )
 
 // NewDeleteCommand
@@ -67,6 +68,8 @@ func NewServingDeleteCommand() *cobra.Command {
 		},
 	}
 	command.Flags().StringVar(&servingVersion, "version", "", "The serving version to delete.")
+	command.Flags().StringVar(&servingType, "type", "", "The serving type to delete, the possible option is custom, tf-serving, trt-servign. (optional)")
+
 	// command.MarkFlagRequired("version")
 
 	return command
@@ -81,7 +84,7 @@ func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 	}
 
 	log.Debugf("%s wasn't deleted by helm due to %v", servingJob, err)
-
+	// 1. If serving Version is not set, detect it automatically
 	if servingVersion == "" {
 		servings, err := ListServingsByName(client, servingJob)
 		if err != nil {
@@ -102,19 +105,24 @@ func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 
 	servingJobWithVersion := servingJob + "-" + servingVersion
 
-	// 2. Handle serving jobs created by arena
-	servingTypes = getServingTypes(servingJobWithVersion, namespace)
-	if len(servingTypes) == 0 {
-		return fmt.Errorf("There is no serving job found with the name %s, please check it with `arena serve list | grep %s`",
-			servingJob,
-			servingJob)
-	} else if len(servingTypes) > 1 {
-		return fmt.Errorf("There are more than one serving job found with the name %s, please check it with `arena serve list | grep %s`",
-			servingJob,
-			servingJob)
+	// 2. If serving Type is not set, detect it automatically
+	if servingType == "" {
+		servingTypes = getServingTypes(servingJobWithVersion, namespace)
+		if len(servingTypes) == 0 {
+			return fmt.Errorf("There is no serving job found with the name %s, please check it with `arena serve list | grep %s`",
+				servingJob,
+				servingJob)
+		} else if len(servingTypes) > 1 {
+			return fmt.Errorf("There are more than one serving job found with the name %s, please check it with `arena serve list | grep %s`",
+				servingJob,
+				servingJob)
+		}
+
+		servingType = servingTypes[0]
 	}
 
-	err = workflow.DeleteJob(servingJobWithVersion, namespace, servingTypes[0])
+	// 3. Delete serving
+	err = workflow.DeleteJob(servingJobWithVersion, namespace, servingType)
 	if err != nil {
 		return err
 	}
