@@ -86,6 +86,16 @@ func (s Serving) GetClusterIP() string {
 	return "N/A"
 }
 
+// Available instances
+func (s Serving) AvailableInstances() int32 {
+	return s.deploy.Status.AvailableReplicas
+}
+
+// Desired Instances
+func (s Serving) DesiredInstances() int32 {
+	return s.deploy.Status.Replicas
+}
+
 func (s Serving) GetStatus() string {
 	hasPendingPod := false
 	for _, pod := range s.pods {
