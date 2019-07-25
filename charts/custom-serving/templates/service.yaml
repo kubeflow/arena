@@ -9,6 +9,7 @@ metadata:
     chart: {{ template "custom-serving.chart" . }}
     app: {{ template "custom-serving.name" . }}
     servingName: {{ .Values.servingName }}
+    servingType: "custom-serving"
 spec:
   type: {{ .Values.serviceType }}
   ports:
@@ -38,6 +39,7 @@ metadata:
     app: {{ template "custom-serving.name" . }}
     servingName: {{ .Values.servingName }}
     servingVersion: "{{ .Values.servingVersion }}"
+    servingType: "custom-serving"
 spec:
   type: {{ .Values.serviceType }}
   ports:

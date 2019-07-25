@@ -10,7 +10,7 @@ metadata:
     chart: {{ template "tensorrt-inference-server.chart" . }}
     app: {{ template "tensorrt-inference-server.name" . }}
     servingName: "{{ .Values.servingName }}"
-    serviceName: "{{ .Values.servingName }}"
+    servingVersion: "{{ .Values.servingVersion }}"
     servingType: "trt-serving"
   annotations:
     "helm.sh/created": {{ .Release.Time.Seconds | quote }}

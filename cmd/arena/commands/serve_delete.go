@@ -84,18 +84,20 @@ func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 	}
 
 	log.Debugf("%s wasn't deleted by helm due to %v", servingJob, err)
+
 	// 1. If serving Version is not set, detect it automatically
 	if servingVersion == "" {
 		servings, err := ListServingsByName(client, servingJob)
 		if err != nil {
 			return err
 		}
+
 		if len(servings) == 0 {
 			return fmt.Errorf("There is no serving job found with the name %s, please check it with `arena serve list | grep %s`",
 				servingJob,
 				servingJob)
 		} else if len(servings) > 1 {
-			return fmt.Errorf("There are more than one serving job found with the name %s, please check it with `arena serve delete %s --version {version}`",
+			return fmt.Errorf("There are more than one serving job found with the name %s, please delete it with `arena serve delete %s --version {version}`",
 				servingJob,
 				servingJob)
 		}
@@ -121,7 +123,7 @@ func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 		servingType = servingTypes[0]
 	}
 
-	// 3. Delete serving
+	// 4. Delete serving
 	err = workflow.DeleteJob(servingJobWithVersion, namespace, servingType)
 	if err != nil {
 		return err

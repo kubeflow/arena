@@ -45,7 +45,7 @@ func NewServingListCommand() *cobra.Command {
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-			fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tSTATUS\tCLUSTER-IP\n")
+			fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tSTATUS\tACCESS-IP\n")
 			jobs, err := ListServing(client)
 			if err != nil {
 				fmt.Println(err)

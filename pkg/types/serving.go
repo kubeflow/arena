@@ -71,9 +71,11 @@ func (s Serving) GetClusterIP() string {
 		log.Errorf("failed to list serving services, err: %++v", err)
 		return "N/A"
 	}
+
+	log.Debugf("try to get Endpoint IP for name %s and %s", s.Name, s.Version)
 	for _, service := range allServices {
 		if service.Labels["servingName"] == s.Name &&
-			service.Labels["servingVersion"] == s.ServeType {
+			service.Labels["servingVersion"] == s.Version {
 			return service.Spec.ClusterIP
 		}
 
