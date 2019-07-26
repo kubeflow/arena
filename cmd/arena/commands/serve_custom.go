@@ -144,5 +144,15 @@ func servePredict(args []string, serveCustomArgs *ServeCustomArgs, client *kuber
 	}
 
 	name += "-" + serveCustomArgs.ServingVersion
+
+	servingTypes := getServingTypes(name, namespace)
+	if len(servingTypes) > 1 {
+		return fmt.Errorf("The serving job with the name %s and version %s, please delete it first. `arena serve delete %s --version %s --type custom`",
+			serveCustomArgs.ServingName,
+			serveCustomArgs.ServingVersion,
+			serveCustomArgs.ServingName,
+			serveCustomArgs.ServingVersion)
+	}
+
 	return workflow.SubmitJob(name, "custom-serving", namespace, serveCustomArgs, customChart)
 }
