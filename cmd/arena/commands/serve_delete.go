@@ -111,8 +111,9 @@ func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 	if servingType == "" {
 		servingTypes = getServingTypes(servingJobWithVersion, namespace)
 		if len(servingTypes) == 0 {
-			return fmt.Errorf("There is no serving job found with the name %s, please check it with `arena serve list | grep %s`",
+			return fmt.Errorf("There is no serving job found with the name %s with version %s, please check it with `arena serve list | grep %s`",
 				servingJob,
+				servingType,
 				servingJob)
 		} else if len(servingTypes) > 1 {
 			return fmt.Errorf("There are more than one serving job found with the name %s, please check it with `arena serve list | grep %s`",
