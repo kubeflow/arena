@@ -1,6 +1,9 @@
 package types
 
 import (
+	"fmt"
+	"strings"
+
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/kubeflow/arena/pkg/util"
@@ -15,6 +18,7 @@ type Serving struct {
 	Namespace string
 	Version   string
 	pods      []v1.Pod
+	svcs      []v1.Service
 	deploy    app_v1.Deployment
 	client    *kubernetes.Clientset
 }
@@ -64,25 +68,50 @@ func (s Serving) AllPods() []v1.Pod {
 	return s.pods
 }
 
-func (s Serving) GetClusterIP() string {
-	// serviceName := fmt.Sprintf("%s-%s", s.deploy.Labels["release"], s.deploy.Labels["app"])
-	allServices, err := util.AcquireServingServices(s.Namespace, s.client)
-	if err != nil {
-		log.Errorf("failed to list serving services, err: %++v", err)
-		return "N/A"
-	}
-
-	log.Debugf("try to get Endpoint IP for name %s and %s", s.Name, s.Version)
-	for _, service := range allServices {
-		if service.Labels["servingName"] == s.Name &&
-			service.Labels["servingVersion"] == s.Version {
-			return service.Spec.ClusterIP
+func (s Serving) AllSvcs() (svcs []v1.Service) {
+	svcs = []v1.Service{}
+	if len(s.svcs) == 0 {
+		allServices, err := util.AcquireServingServices(s.Namespace, s.client)
+		if err != nil {
+			log.Errorf("failed to list serving services, err: %++v", err)
+			return svcs
 		}
 
-		// if service.Name == serviceName {
-		// 	return service.Spec.ClusterIP
-		// }
+		log.Debugf("try to get Endpoint IP for name %s and %s", s.Name, s.Version)
+		for _, service := range allServices {
+			if service.Labels["servingName"] == s.Name &&
+				service.Labels["servingVersion"] == s.Version {
+				// return service.Spec.ClusterIP
+				svcs = append(svcs, service)
+			}
+		}
+		s.svcs = svcs
 	}
+	return s.svcs
+}
+
+// Cluster IP
+func (s Serving) GetClusterIP() string {
+	if len(s.AllSvcs()) > 0 {
+		return s.AllSvcs()[0].Spec.ClusterIP
+	}
+
+	return "N/A"
+}
+
+func (s Serving) GetPorts() string {
+	portList := []string{}
+
+	if len(s.AllSvcs()) > 0 {
+		// return s.AllSvcs().Spec.ClusterIP
+		svc := s.AllSvcs()[0]
+		ports := svc.Spec.Ports
+		for _, port := range ports {
+			portList = append(portList, fmt.Sprintf("%s:%d", port.Name, port.Port))
+		}
+		return strings.Join(portList, ",")
+	}
+
 	return "N/A"
 }
 
