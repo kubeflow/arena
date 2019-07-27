@@ -19,6 +19,9 @@ const (
 	// GPUResourceName is the extended name of the GPU resource since v1.8
 	// this uses the device plugin mechanism
 	NVIDIAGPUResourceName = "nvidia.com/gpu"
+	resourceName          = "aliyun.com/gpu-mem"
+	resourceCount         = "aliyun.com/gpu-count"
+	envNVGPUID            = "ALIYUN_COM_GPU_MEM_IDX"
 
 	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
 
