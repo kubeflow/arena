@@ -74,6 +74,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewVersionCmd(CLIName))
 	command.AddCommand(NewDataCommand())
 	command.AddCommand(NewCompletionCommand())
+	command.AddCommand(NewDiagnoseCommand())
 	// command.AddCommand(NewWaitCommand())
 	// command.AddCommand(cmd.NewVersionCmd(CLIName))
 
