@@ -168,7 +168,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 			totalGPUsOnReadyNodeInCluster += totalGPU
 		}
 		if hasUnhealthyGPUNode {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 				address,
 				role,
 				status,
