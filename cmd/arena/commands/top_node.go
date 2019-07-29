@@ -40,6 +40,16 @@ type NodeInfo struct {
 	pods []v1.Pod
 }
 
+func isGPUCountNode(node v1.Node) bool {
+	value, ok := node.Status.Allocatable[NVIDIAGPUResourceName]
+
+	if ok {
+		ok = (int(value.Value()) > 0)
+	}
+
+	return ok
+}
+
 func NewTopNodeCommand() *cobra.Command {
 
 	var command = &cobra.Command{
@@ -61,6 +71,18 @@ func NewTopNodeCommand() *cobra.Command {
 			nodeInfos, err := nd.getAllNodeInfos()
 			if err != nil {
 				fmt.Println(err)
+				os.Exit(1)
+			}
+			tmp := false
+
+			for _, nodeInfo := range nodeInfos {
+				if isGPUSharingNode(nodeInfo.node) && isGPUCountNode(nodeInfo.node) {
+					fmt.Printf("GPUCount and GPUShare are both used in node %s .Please use one mode of them\n", nodeInfo.node.Name)
+					tmp = true
+				}
+			}
+			if tmp {
+				displayTopNode(nodeInfos)
 				os.Exit(1)
 			}
 			if showGPUShare {
