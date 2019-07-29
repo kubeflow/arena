@@ -195,7 +195,7 @@ func generateDestinationRule(namespace string, serviceName string, versionArray 
 
 	for i := 0; i < length; i++ {
 		label := map[string]string{}
-		label["serviceVersion"] = versionArray[i]
+		label["servingVersion"] = versionArray[i]
 		subsets[i] = &istiov1alpha3.Subset{
 			Name:   "subset-" + versionArray[i],
 			Labels: label,
