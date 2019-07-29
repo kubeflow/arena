@@ -234,6 +234,7 @@ spec:
         kustomize.component: tf-job-operator
         name: tf-job-dashboard
     spec:
+      priorityClassName: system-cluster-critical
       containers:
         - command:
             - /opt/tensorflow_k8s/dashboard/backend
@@ -243,6 +244,13 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
           image: registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v0.6.0.rc0
+          resources:
+            limits:
+              memory: "200Mi"
+              cpu: "30m"
+            requests:
+              memory: "200Mi"
+              cpu: "30m"
           name: tf-job-dashboard
           ports:
             - containerPort: 8080
@@ -266,6 +274,7 @@ spec:
         kustomize.component: tf-job-operator
         name: tf-job-operator
     spec:
+      priorityClassName: system-cluster-critical
       containers:
         - command:
             - /opt/kubeflow/tf-operator.v1
@@ -282,6 +291,13 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
           image: registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v0.6.0.rc0
+          resources:
+            limits:
+              memory: "800Mi"
+              cpu: "300m"
+            requests:
+              memory: "300Mi"
+              cpu: "300m"
           name: tf-job-operator
           volumeMounts:
             - mountPath: /etc/config

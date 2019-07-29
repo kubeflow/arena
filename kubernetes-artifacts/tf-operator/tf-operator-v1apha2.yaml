@@ -184,6 +184,7 @@ spec:
       labels:
         name: tf-job-dashboard
     spec:
+      priorityClassName: system-cluster-critical
       hostNetwork: true
       hostPID: true
       dnsPolicy: ClusterFirstWithHostNet
@@ -192,6 +193,13 @@ spec:
         - /opt/tensorflow_k8s/dashboard/backend
         image: registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v20180901-454c5c1a
         name: tf-job-dashboard
+        resources:
+            limits:
+              memory: "200Mi"
+              cpu: "30m"
+            requests:
+              memory: "200Mi"
+              cpu: "30m"
         ports:
         - containerPort: 8080
       serviceAccountName: tf-job-dashboard
@@ -208,11 +216,19 @@ spec:
       labels:
         name: tf-job-operator
     spec:
+      priorityClassName: system-cluster-critical
       containers:
       - command:
         - /opt/kubeflow/tf-operator.v2
         - --alsologtostderr
         - -v=1
+        resources:
+            limits:
+              memory: "800Mi"
+              cpu: "30m"
+            requests:
+              memory: "800Mi"
+              cpu: "30m"
         env:
         - name: MY_POD_NAMESPACE
           valueFrom:

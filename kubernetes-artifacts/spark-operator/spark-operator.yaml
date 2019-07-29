@@ -78,6 +78,7 @@ spec:
         pending: []
     spec:
       serviceAccountName: sparkoperator
+      priorityClassName: system-cluster-critical
       containers:
       - name: sparkoperator
         image: registry.cn-zhangjiakou.aliyuncs.com/acs/spark-operator:v2.4.0-v1beta1-0.8.1

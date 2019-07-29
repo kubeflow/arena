@@ -14,6 +14,7 @@ spec:
       labels:
         name: rdma-sriov-dp-ds
     spec:
+      priorityClassName: system-node-critical
       hostNetwork: true
       nodeSelector:
         accelerator/rdma: "true"
@@ -25,6 +26,13 @@ spec:
       containers:
       - image: rdma/k8s-rdma-sriov-dev-plugin
         name: k8s-rdma-sriov-dp-ds
+        resources:
+            limits:
+              memory: "800Mi"
+              cpu: "300m"
+            requests:
+              memory: "300Mi"
+              cpu: "300m"
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
