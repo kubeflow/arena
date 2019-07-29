@@ -28,11 +28,11 @@ spec:
         name: k8s-rdma-sriov-dp-ds
         resources:
             limits:
-              memory: "800Mi"
-              cpu: "300m"
+              memory: "200Mi"
+              cpu: "100m"
             requests:
-              memory: "300Mi"
-              cpu: "300m"
+              memory: "50Mi"
+              cpu: "100m"
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true

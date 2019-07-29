@@ -158,6 +158,7 @@ spec:
       labels:
         app: mpi-operator
     spec:
+      priorityClassName: system-cluster-critical
       serviceAccountName: mpi-operator
       containers:
       - name: mpi-operator
@@ -170,4 +171,11 @@ spec:
           "-v=5"
         ]
         imagePullPolicy: Always
+        resources:
+            limits:
+              memory: "200Mi"
+              cpu: "100m"
+            requests:
+              memory: "50Mi"
+              cpu: "200m"
 ---

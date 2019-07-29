@@ -12,6 +12,7 @@ spec:
       labels:
         app: node-gpu-exporter
     spec:
+      priorityClassName: system-node-critical
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -41,7 +42,6 @@ spec:
         volumeMounts:
         - mountPath: /var/run/docker.sock
           name: docker-sock
-
 ---
 apiVersion: v1
 kind: Service
