@@ -178,4 +178,3 @@ spec:
             requests:
               memory: "50Mi"
               cpu: "200m"
----
