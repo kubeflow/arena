@@ -184,7 +184,11 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 				strconv.FormatInt(allocatedGPU, 10))
 		}
 	}
-	fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
+	if hasUnhealthyGPUNode {
+		fmt.Fprintf(w, "---------------------------------------------------------------------------------------------------\n")
+	} else {
+		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
+	}
 	fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\n")
 	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(totalGPUsInCluster, 10),
 		strconv.FormatInt(allocatedGPUsInCluster, 10))
@@ -318,7 +322,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		int64(gpuUsage))
 	// fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ...)
 	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "Unhealthy/Total GPUs In Cluster:\n")
+		fmt.Fprintf(w, "Unhealthy/Total GPUs In Cluster:")
 		var gpuUnhealthyPercentage float64 = 0
 		if totalGPUsInCluster > 0 {
 			gpuUnhealthyPercentage = float64(totalUnhealthyGPUsInCluster) / float64(totalGPUsInCluster) * 100
