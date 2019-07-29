@@ -2,6 +2,7 @@
 {{- $syncMode := .Values.syncMode -}}
 {{- $cleanPodPolicy := .Values.cleanPodPolicy -}}
 {{- $dataDirs := .Values.dataDirs -}}
+{{- $tfNodeSelectors :=.Values.tfNodeSelectors -}}
 apiVersion: "kubeflow.org/v1"
 kind: "TFJob"
 metadata:
@@ -39,6 +40,23 @@ spec:
           {{ $key }}: {{ $value | quote }}
         {{- end }}
         spec:
+          {{- if ne (len $tfNodeSelectors.PS) 0 }}
+          nodeSelector:
+          {{- range $nodeKey,$nodeVal := $tfNodeSelectors.PS }}
+            {{ $nodeKey }}: "{{ $nodeVal }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.tolerations) 0 }}
+          tolerations:
+          {{- range $tolerationKey := .Values.tolerations }}
+            {{- if eq $tolerationKey "all" }}
+            - operator: "Exists"
+            {{- else }}
+            - key: "{{ $tolerationKey }}"
+              operator: "Exists"
+            {{- end }}
+          {{- end }}
+          {{- end }}
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
@@ -279,6 +297,23 @@ spec:
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
+          {{- if ne (len $tfNodeSelectors.Worker) 0 }}
+          nodeSelector:
+          {{- range $nodeKey,$nodeVal := $tfNodeSelectors.Worker }}
+            {{ $nodeKey }}: "{{ $nodeVal }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.tolerations) 0 }}
+          tolerations:
+          {{- range $tolerationKey := .Values.tolerations }}
+            {{- if eq $tolerationKey "all" }}
+            - operator: "Exists"
+            {{- else }}
+            - key: "{{ $tolerationKey }}"
+              operator: "Exists"
+            {{- end }}
+          {{- end }}
+          {{- end }}
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
@@ -556,6 +591,23 @@ spec:
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
+          {{- if ne (len $tfNodeSelectors.Chief) 0 }}
+          nodeSelector:
+          {{- range $nodeKey,$nodeVal := $tfNodeSelectors.Chief }}
+            {{ $nodeKey }}: "{{ $nodeVal }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.tolerations) 0 }}
+          tolerations:
+          {{- range $tolerationKey := .Values.tolerations }}
+            {{- if eq $tolerationKey "all" }}
+            - operator: "Exists"
+            {{- else }}
+            - key: "{{ $tolerationKey }}"
+              operator: "Exists"
+            {{- end }}
+          {{- end }}
+          {{- end }}
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
@@ -830,6 +882,23 @@ spec:
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
+          {{- if ne (len $tfNodeSelectors.Evaluator) 0 }}
+          nodeSelector:
+          {{- range $nodeKey,$nodeVal := $tfNodeSelectors.Evaluator }}
+            {{ $nodeKey }}: "{{ $nodeVal }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.tolerations) 0 }}
+          tolerations:
+          {{- range $tolerationKey := .Values.tolerations }}
+            {{- if eq $tolerationKey "all" }}
+            - operator: "Exists"
+            {{- else }}
+            - key: "{{ $tolerationKey }}"
+              operator: "Exists"
+            {{- end }}
+          {{- end }}
+          {{- end }}
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}

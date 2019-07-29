@@ -41,7 +41,11 @@ tensorboardResources: {}
 #   requests:
 #     cpu: 500m
 #     memory: 500Mi
+# given node label for scheduling job
+nodeSelectors: {}
 
+# give toleration label for taints
+tolerations: {}
 
 annotations: {}
 # annotations:
