@@ -72,7 +72,6 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 
 	command.Flags().StringVar(&submitArgs.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&submitArgs.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
-
 	// Tensorboard
 	command.Flags().BoolVar(&submitArgs.UseTensorboard, "tensorboard", false, "enable tensorboard")
 
@@ -92,7 +91,6 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 type submitMPIJobArgs struct {
 	Cpu    string `yaml:"cpu"`    // --cpu
 	Memory string `yaml:"memory"` // --memory
-
 	// for common args
 	submitArgs `yaml:",inline"`
 
@@ -128,7 +126,10 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	if len(envs) > 0 {
 		submitArgs.Envs = transformSliceToMap(envs, "=")
 	}
-
+	// add node labels,if given
+	submitArgs.addMPINodeSelectors()
+	// add tolerations, if given 
+	submitArgs.addMPITolerations()
 	submitArgs.addMPIInfoToEnv()
 
 	return nil
@@ -146,7 +147,14 @@ func (submitArgs submitMPIJobArgs) check() error {
 
 	return nil
 }
-
+// add k8s nodes labels
+func (submitArgs *submitMPIJobArgs) addMPINodeSelectors() {
+	submitArgs.addNodeSelectors()
+}
+// add k8s tolerations for taints
+func (submitArgs *submitMPIJobArgs) addMPITolerations() {
+	submitArgs.addTolerations()
+}
 func (submitArgs *submitMPIJobArgs) addMPIInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
 }
