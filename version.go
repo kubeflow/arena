@@ -85,7 +85,6 @@ func GetVersion() Version {
 
 func getChartsVersion() map[string]string {
 	chartsFolder := util.GetChartsFolder()
-	chartsFolder = "./charts" // FIXME: judge local folder or remote server's folder?
 	charts := []string{}
 	chartFolder, err := ioutil.ReadDir(chartsFolder)
 	if err != nil {

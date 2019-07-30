@@ -22,7 +22,10 @@ import (
 )
 
 func NewVersionCmd(cliName string) *cobra.Command {
-	var short bool
+	var (
+		short   bool
+		verbose bool
+	)
 	versionCmd := cobra.Command{
 		Use:   "version",
 		Short: fmt.Sprintf("Print version information"),
@@ -41,12 +44,15 @@ func NewVersionCmd(cliName string) *cobra.Command {
 			fmt.Printf("  GoVersion: %s\n", version.GoVersion)
 			fmt.Printf("  Compiler: %s\n", version.Compiler)
 			fmt.Printf("  Platform: %s\n", version.Platform)
-			fmt.Printf("  ChartsVersion: \n")
-			for chartName, chartVersion := range version.ChartsVersion {
-				fmt.Printf("    %s: %s\n", chartName, chartVersion)
+			if verbose {
+				fmt.Printf("  ChartsVersion: \n")
+				for chartName, chartVersion := range version.ChartsVersion {
+					fmt.Printf("    %s: %s\n", chartName, chartVersion)
+				}
 			}
 		},
 	}
 	versionCmd.Flags().BoolVar(&short, "short", false, "print just the version number")
+	versionCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "print the supported charts version number")
 	return &versionCmd
 }
