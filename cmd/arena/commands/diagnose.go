@@ -38,23 +38,24 @@ import (
 
 type DiagnoseArgs struct {
 	outputDir string
+	jobType   string
 }
 
 var (
 	env = os.Environ()
 )
 
-const(
-	DIR_PATH = "/tmp/"
-	KUBECTL_BIN = "kubectl"
+const (
+	DIR_PATH      = "/tmp/"
+	KUBECTL_BIN   = "kubectl"
 	KUBE_DESCRIBE = "describe"
-	KUBE_GET = "get"
-	KUBE_LOGS = "logs"
-	KUBE_EVENTS = "events"
-	KUBE_POD = "pod"
-	KUBE_STS = "statefulsets"
-	KUBE_JOB = "jobs"
-	KUBE_NODE = "nodes"
+	KUBE_GET      = "get"
+	KUBE_LOGS     = "logs"
+	KUBE_EVENTS   = "events"
+	KUBE_POD      = "pod"
+	KUBE_STS      = "statefulsets"
+	KUBE_JOB      = "jobs"
+	KUBE_NODE     = "nodes"
 )
 
 func NewDiagnoseCommand() *cobra.Command {
@@ -89,6 +90,11 @@ func NewDiagnoseCommand() *cobra.Command {
 			if len(diagnoseArgs.outputDir) != 0 {
 				path = diagnoseArgs.outputDir
 			}
+			// FIXME: only supports mpijobs now
+			if diagnoseArgs.jobType != "mpijob" {
+				fmt.Printf("Unsupported job type: %s.\n", diagnoseArgs.jobType)
+				return
+			}
 			fmt.Printf("Collecting relevant logs of job %s in %v, please wait...\n", jobName, path)
 			diagnoseJob(client, jobName, path)
 			fmt.Println("Done.")
@@ -96,6 +102,11 @@ func NewDiagnoseCommand() *cobra.Command {
 	}
 
 	command.Flags().StringVarP(&diagnoseArgs.outputDir, "outputDir", "o", "", "The output direction of the collected logs.")
+	command.Flags().StringVarP(&diagnoseArgs.jobType, "jobType", "t", "", "The job type of the selected job.")
+	if err := command.MarkFlagRequired("jobType"); err != nil {
+		fmt.Println(err)
+		return nil
+	}
 	return command
 }
 
