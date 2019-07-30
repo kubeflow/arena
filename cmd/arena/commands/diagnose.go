@@ -58,6 +58,8 @@ const (
 	KUBE_NODE     = "nodes"
 )
 
+// 写一个struct 描述job所有包含的资源有哪些
+// 创建一个类，然后这个类里面包含各种获取job资源的方法
 func NewDiagnoseCommand() *cobra.Command {
 	diagnoseArgs := DiagnoseArgs{}
 
