@@ -15,7 +15,7 @@ Istio 默认 [拒绝访问外部数据流量](https://istio.io/docs/tasks/traffi
 在 NFS Server 中创建 /tfmodel，执行如下命令准备 mnist 模型：
 
 ```
-mount -t nfs -o vers=4.0 NFS_SERVER_IP://tfmodel/
+mount -t nfs -o vers=4.0 NFS_SERVER_IP:/ /tfmodel/
 wget https://github.com/osswangxining/tensorflow-sample-code/raw/master/models/tensorflow/mnist.tar.gz
 tar xvf mnist.tar.gz
 ``` 
