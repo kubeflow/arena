@@ -1,6 +1,6 @@
 
 
-Arena supports submiting a job with tolerating k8s node taints(Currently only support mpi job and tf job).
+Arena supports submiting a job with tolerating k8s nodes with taints(Currently only support mpi job and tf job).
 
 some usage examples in here.
  
@@ -50,7 +50,7 @@ mpi-dist  RUNNING  MPIJOB   29s  mpi-dist-worker-0        192.168.3.230
 Your tensorboard will be available on:
 http://192.168.3.225:30052
 ```
-the jobs have been running  on node cn-beijing.192.168.3.230(ip is 192.168.3.230,taint is ssd_node=invalid).
+the jobs are running  on node cn-beijing.192.168.3.230(ip is 192.168.3.230,taint is ssd_node=invalid).
 
 4.you can use "--toleration" multiple times,for example you can use  "--toleration gpu_node --toleration ssd_node" in arena submit command,it represents that the job tolerates nodes which own taint "gpu_node=invalid" and taint "ssd_node=invalid".
 

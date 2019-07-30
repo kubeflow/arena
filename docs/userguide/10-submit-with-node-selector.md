@@ -1,6 +1,6 @@
 
 
-Arena supports submiting a job with k8s node selector(Currently only support mpi job and tf job).
+Arena supports assigning jobs to some k8s particular nodes(Currently only support mpi job and tf job).
 
 some usage examples in here.
  
@@ -51,7 +51,7 @@ mpi-dist  RUNNING  MPIJOB   21s  mpi-dist-worker-0        192.168.3.229
 Your tensorboard will be available on:
 http://192.168.3.225:31611
 ```
-the jobs have been running  on node cn-beijing.192.168.3.229(ip is 192.168.3.229).
+the jobs are running  on node cn-beijing.192.168.3.229(ip is 192.168.3.229).
 
 3.you can use "--selector" multiple times,for example you can use  "--selector gpu_node=ok --selector ssd_node=ok" in arena submit command,it represents that the job should be running on nodes which own label "gpu_node=ok" and label "ssd_node=ok".
 

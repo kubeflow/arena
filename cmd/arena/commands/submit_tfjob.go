@@ -118,7 +118,7 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.PSMemory, "psMemory", "", "the memory resource to use for the parameter servers, like 1Gi.")
 	command.Flags().MarkDeprecated("psMemory", "please use --ps-memory instead")
 	command.Flags().StringVar(&submitArgs.PSMemory, "ps-memory", "", "the memory resource to use for the parameter servers, like 1Gi.")
-	command.Flags().StringArrayVarP(&psSelectors,"ps-selector","",[]string{},`scheduling a job on some nodes(this option would cover --selector), format: "--ps-selector=key=value"`)
+	command.Flags().StringArrayVarP(&psSelectors,"ps-selector","",[]string{},`assigning jobs with "PS" role to some k8s particular nodes(this option would cover --selector), usage: "--ps-selector=key=value"`)
 	// How to clean up Task
 	command.Flags().StringVar(&submitArgs.CleanPodPolicy, "cleanTaskPolicy", "Running", "How to clean tasks after Training is done, only support Running, None.")
 	command.Flags().MarkDeprecated("cleanTaskPolicy", "please use --clean-task-policy instead")
@@ -154,9 +154,9 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().IntVar(&submitArgs.ChiefPort, "chiefPort", 0, "the port of the chief.")
 	command.Flags().MarkDeprecated("chiefPort", "please use --chief-port instead")
 	command.Flags().IntVar(&submitArgs.ChiefPort, "chief-port", 0, "the port of the chief.")
-	command.Flags().StringArrayVarP(&workerSelectors,"worker-selector","",[]string{},`scheduling a job on some nodes(this option would cover --selector), format: "--worker-selector=key=value"`)
-	command.Flags().StringArrayVarP(&chiefSelectors,"chief-selector","",[]string{},`scheduling a job on some nodes(this option would cover --selector), format: "--chief-selector=key=value"`)
-	command.Flags().StringArrayVarP(&evaluatorSelectors,"evaluator-selector","",[]string{},`scheduling a job on some nodes(this option would cover --selector), format: "--evaluator-selector=key=value"`)
+	command.Flags().StringArrayVarP(&workerSelectors,"worker-selector","",[]string{},`assigning jobs with "Worker" role to some k8s particular nodes(this option would cover --selector), usage: "--worker-selector=key=value"`)
+	command.Flags().StringArrayVarP(&chiefSelectors,"chief-selector","",[]string{},`assigning jobs with "Chief" role to some k8s particular nodes(this option would cover --selector), usage: "--chief-selector=key=value"`)
+	command.Flags().StringArrayVarP(&evaluatorSelectors,"evaluator-selector","",[]string{},`assigning jobs with "Evaluator" role to some k8s particular nodes(this option would cover --selector), usage: "--evaluator-selector=key=value"`)
 
 	// command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
 	return command

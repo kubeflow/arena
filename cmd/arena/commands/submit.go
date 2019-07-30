@@ -228,8 +228,8 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	// use priority
 	command.Flags().StringVarP(&submitArgs.PriorityClassName, "priority", "p", "", "priority class name")
 	// toleration
-	command.Flags().StringArrayVarP(&tolerations,"toleration","",[]string{},`tolerate some k8s taints,format: "--toleration taint-key" or "--toleration all" `)
-	command.Flags().StringArrayVarP(&selectors,"selector","",[]string{},`scheduling job to some k8s nodes,format: "--selector=key=value" or "--selector key=value" `)
+	command.Flags().StringArrayVarP(&tolerations,"toleration","",[]string{},`tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVarP(&selectors,"selector","",[]string{},`assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 }
 
 func init() {
