@@ -43,7 +43,7 @@ func DisplayShareDetails(nodeInfos []*ShareNodeInfo) {
 		usedGPUMemInNode := 0
 		var buf bytes.Buffer
 		buf.WriteString("NAME\tNAMESPACE\t")
-		for i := 0; i < nodeInfo.gpuCount; i++ {
+		for i := 0; i < nodeInfo.GpuCount; i++ {
 			buf.WriteString(fmt.Sprintf("GPU%d(Allocated)\t", i))
 		}
 
@@ -54,18 +54,18 @@ func DisplayShareDetails(nodeInfos []*ShareNodeInfo) {
 		fmt.Fprintf(w, buf.String())
 
 		var buffer bytes.Buffer
-		for i, dev := range nodeInfo.devs {
-			usedGPUMemInNode += dev.usedGPUMem
+		for i, dev := range nodeInfo.Devs {
+			usedGPUMemInNode += dev.UsedGPUMem
 			for _, pod := range dev.pods {
 
 				buffer.WriteString(fmt.Sprintf("%s\t%s\t", pod.Name, pod.Namespace))
-				count := nodeInfo.gpuCount
+				count := nodeInfo.GpuCount
 				if nodeInfo.hasPendingGPUMemory() {
 					count += 1
 				}
 
 				for k := 0; k < count; k++ {
-					if k == i || (i == -1 && k == nodeInfo.gpuCount) {
+					if k == i || (i == -1 && k == nodeInfo.GpuCount) {
 						buffer.WriteString(fmt.Sprintf("%d\t", getGPUMemoryInPod(pod)))
 					} else {
 						buffer.WriteString("0\t")
@@ -165,17 +165,17 @@ func DisplayShareSummary(nodeInfos []*ShareNodeInfo) {
 
 		for i := 0; i < maxGPUCount; i++ {
 			gpuMemInfo := "0/0"
-			if dev, ok := nodeInfo.devs[i]; ok {
+			if dev, ok := nodeInfo.Devs[i]; ok {
 				gpuMemInfo = dev.String()
-				usedGPUMemInNode += dev.usedGPUMem
+				usedGPUMemInNode += dev.UsedGPUMem
 			}
 			gpuMemInfos = append(gpuMemInfos, gpuMemInfo)
 		}
 
 		// check if there is pending dev
-		if dev, ok := nodeInfo.devs[-1]; ok {
-			pendingGPUMemInfo = fmt.Sprintf("%d", dev.usedGPUMem)
-			usedGPUMemInNode += dev.usedGPUMem
+		if dev, ok := nodeInfo.Devs[-1]; ok {
+			pendingGPUMemInfo = fmt.Sprintf("%d", dev.UsedGPUMem)
+			usedGPUMemInNode += dev.UsedGPUMem
 		}
 
 		var buf bytes.Buffer
@@ -234,8 +234,8 @@ func getGPUMemoryInPod(pod v1.Pod) int {
 
 func getMaxGPUCount(nodeInfos []*ShareNodeInfo) (max int) {
 	for _, node := range nodeInfos {
-		if node.gpuCount > max {
-			max = node.gpuCount
+		if node.GpuCount > max {
+			max = node.GpuCount
 		}
 	}
 

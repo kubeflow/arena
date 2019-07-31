@@ -53,7 +53,7 @@ func NewTopNodeCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			allPods, err := acquireAllActivePods(client)
+			allPods, err = acquireAllActivePods(client)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -67,7 +67,7 @@ func NewTopNodeCommand() *cobra.Command {
 			tmp := false
 			for _, nodeInfo := range nodeInfos {
 				if NodeShare.IsGPUSharingNode(nodeInfo.node) && isGPUCountNode(nodeInfo.node) {
-					fmt.Printf("GPUCount and GPUShare are both used in node %s .Please use one mode of them\n", nodeInfo.node.Name)
+					log.Debugf("GPUCount and GPUShare are both used in node %s .Please use one mode of them\n", nodeInfo.node.Name)
 					tmp = true
 				}
 			}
@@ -77,12 +77,12 @@ func NewTopNodeCommand() *cobra.Command {
 			}
 			if showGPUShare {
 
-				Sharenodes, err := NodeShare.GetAllSharedGPUNode()
+				Sharenodes, err := GetAllSharedGPUNode()
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
-				pods, err := NodeShare.GetActivePodsInAllNodes()
+				pods, err := acquireAllActivePods(client)
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -104,6 +104,7 @@ func NewTopNodeCommand() *cobra.Command {
 	}
 
 	command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
+	command.Flags().BoolVarP(&showGPUShare, "gpushare", "s", false, "Display GPUShare node information")
 	return command
 }
 
@@ -165,6 +166,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		allocatedGPUsInCluster        int64
 		totalGPUsOnReadyNodeInCluster int64
 		hasUnhealthyGPUNode           bool
+		gpushare                      bool
 	)
 
 	for _, NodeInfo := range nodeInfos {
@@ -174,10 +176,27 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		}
 	}
 
-	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPU(Unhealthy)\n")
+	//check if there is any gpushare node in cluster
+	for _, nodeInfo := range nodeInfos {
+		if NodeShare.IsGPUSharingNode(nodeInfo.node) {
+			gpushare = true
+			break
+		}
+	}
+
+	if gpushare {
+
+		if hasUnhealthyGPUNode {
+			fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPU(Unhealthy)\tGPUShare\n")
+		} else {
+			fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPUShare\n")
+		}
 	} else {
-		fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\n")
+		if hasUnhealthyGPUNode {
+			fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPU(Unhealthy)\n")
+		} else {
+			fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\n")
+		}
 	}
 
 	for _, nodeInfo := range nodeInfos {
@@ -185,7 +204,33 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		//if ! isNodeReady(nodeInfo.node) {
 		//	continue
 		//}
-		totalGPU, allocatableGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
+		var totalGPU int64
+		var allocatableGPU int64
+		var allocatedGPU int64
+		// GPUShare nodes and normal nodes  calculate the allocatedGPU and total GPU in different way
+		if NodeShare.IsGPUSharingNode(nodeInfo.node) {
+			setupKubeconfig()
+			client, err := initKubeClient()
+			pods, err := acquireAllActivePods(client)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			SharenodeInfo, err := NodeShare.BuildShareNodeInfo(pods, nodeInfo.node)
+			if err != nil {
+				fmt.Printf("Failed due to %v", err)
+				os.Exit(1)
+			}
+			totalGPU = int64(SharenodeInfo.GpuCount)
+			for i := 0; i < int(totalGPU); i++ {
+				if SharenodeInfo.Devs[i].UsedGPUMem > 0 {
+					allocatedGPU += 1
+				}
+			}
+			allocatableGPU = totalGPU
+		} else {
+			totalGPU, allocatableGPU, allocatedGPU = calculateNodeGPU(nodeInfo)
+		}
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
 		unhealthGPU := totalGPU - allocatableGPU
@@ -204,27 +249,66 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		} else {
 			totalGPUsOnReadyNodeInCluster += totalGPU
 		}
-		if hasUnhealthyGPUNode {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
-				address,
-				role,
-				status,
-				strconv.FormatInt(totalGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10),
-				strconv.FormatInt(unhealthGPU, 10))
+		if gpushare {
+			if hasUnhealthyGPUNode {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s", nodeInfo.node.Name,
+					address,
+					role,
+					status,
+					strconv.FormatInt(totalGPU, 10),
+					strconv.FormatInt(allocatedGPU, 10),
+					strconv.FormatInt(unhealthGPU, 10))
+				if NodeShare.IsGPUSharingNode(nodeInfo.node) {
+					fmt.Fprintf(w, "\t%s\n", "Shareable")
+				} else {
+					fmt.Fprintf(w, "\t%s\n", "N/A")
+				}
+			} else {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s", nodeInfo.node.Name,
+					address,
+					role,
+					status,
+					strconv.FormatInt(totalGPU, 10),
+					strconv.FormatInt(allocatedGPU, 10))
+				if NodeShare.IsGPUSharingNode(nodeInfo.node) {
+					fmt.Fprintf(w, "\t%s\n", "Shareable")
+				} else {
+					fmt.Fprintf(w, "\t%s\n", "N/A")
+				}
+			}
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
-				address,
-				role,
-				status,
-				strconv.FormatInt(totalGPU, 10),
-				strconv.FormatInt(allocatedGPU, 10))
+			if hasUnhealthyGPUNode {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s", nodeInfo.node.Name,
+					address,
+					role,
+					status,
+					strconv.FormatInt(totalGPU, 10),
+					strconv.FormatInt(allocatedGPU, 10),
+					strconv.FormatInt(unhealthGPU, 10))
+			} else {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s", nodeInfo.node.Name,
+					address,
+					role,
+					status,
+					strconv.FormatInt(totalGPU, 10),
+					strconv.FormatInt(allocatedGPU, 10))
+
+			}
 		}
 	}
+
 	if hasUnhealthyGPUNode {
-		fmt.Fprintf(w, "---------------------------------------------------------------------------------------------------\n")
+		if gpushare {
+			fmt.Fprintf(w, "-----------------------------------------------------------------------------------------------------------\n")
+		} else {
+			fmt.Fprintf(w, "---------------------------------------------------------------------------------------------------\n")
+		}
 	} else {
-		fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
+		if gpushare {
+			fmt.Fprintf(w, "------------------------------------------------------------------------------------------------\n")
+		} else {
+			fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
+		}
 	}
 	fmt.Fprintf(w, "Allocated/Total GPUs In Cluster:\n")
 	log.Debugf("gpu: %s, allocated GPUs %s", strconv.FormatInt(totalGPUsInCluster, 10),
@@ -289,8 +373,33 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		//if ! isNodeReady(nodeInfo.node) {
 		//	continue
 		//}
-
-		totalGPU, allocatableGPU, allocatedGPU := calculateNodeGPU(nodeInfo)
+		var totalGPU int64
+		var allocatableGPU int64
+		var allocatedGPU int64
+		// GPUShare nodes and normal nodes  calculate the allocatedGPU and total GPU in different way
+		if NodeShare.IsGPUSharingNode(nodeInfo.node) {
+			setupKubeconfig()
+			client, err := initKubeClient()
+			pods, err := acquireAllActivePods(client)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			SharenodeInfo, err := NodeShare.BuildShareNodeInfo(pods, nodeInfo.node)
+			if err != nil {
+				fmt.Printf("Failed due to %v", err)
+				os.Exit(1)
+			}
+			totalGPU = int64(SharenodeInfo.GpuCount)
+			for i := 0; i < int(totalGPU); i++ {
+				if SharenodeInfo.Devs[i].UsedGPUMem > 0 {
+					allocatedGPU += 1
+				}
+			}
+			allocatableGPU = totalGPU
+		} else {
+			totalGPU, allocatableGPU, allocatedGPU = calculateNodeGPU(nodeInfo)
+		}
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
 		unhealthyGPUs := totalGPU - allocatableGPU
@@ -334,6 +443,9 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 
 		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", nodeInfo.node.Name, strconv.FormatInt(totalGPU, 10))
 		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", nodeInfo.node.Name, strconv.FormatInt(allocatedGPU, 10), int64(gpuUsageInNode))
+		if NodeShare.IsGPUSharingNode(nodeInfo.node) {
+			fmt.Fprintf(w, "If Node is Shareable :\tYes \n")
+		}
 		if hasUnhealthyGPUNode {
 			fmt.Fprintf(w, "Unhealthy GPUs In Node %s:\t%s (%d%%)\t\n", nodeInfo.node.Name, strconv.FormatInt(unhealthyGPUs, 10), int64(gpuUnhealthyPercentageInNode))
 
@@ -401,6 +513,22 @@ func hasUnhealthyGPU(nodeInfo NodeInfo) (unhealthy bool) {
 	}
 
 	return unhealthy
+}
+
+func GetAllSharedGPUNode() ([]v1.Node, error) {
+	nodes := []v1.Node{}
+	allNodes, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nodes, err
+	}
+
+	for _, item := range allNodes.Items {
+		if NodeShare.IsGPUSharingNode(item) {
+			nodes = append(nodes, item)
+		}
+	}
+
+	return nodes, nil
 }
 
 func isMasterNode(node v1.Node) bool {

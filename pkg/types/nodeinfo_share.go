@@ -17,24 +17,24 @@ const (
 type ShareNodeInfo struct {
 	pods           []v1.Pod
 	node           v1.Node
-	devs           map[int]*DeviceInfo
-	gpuCount       int
+	Devs           map[int]*DeviceInfo
+	GpuCount       int
 	gpuTotalMemory int
 }
 
 type DeviceInfo struct {
 	idx         int
 	pods        []v1.Pod
-	usedGPUMem  int
+	UsedGPUMem  int
 	totalGPUMem int
 	node        v1.Node
 }
 
 func (d *DeviceInfo) String() string {
 	if d.idx == -1 {
-		return fmt.Sprintf("%d", d.usedGPUMem)
+		return fmt.Sprintf("%d", d.UsedGPUMem)
 	}
-	return fmt.Sprintf("%d/%d", d.usedGPUMem, d.totalGPUMem)
+	return fmt.Sprintf("%d/%d", d.UsedGPUMem, d.totalGPUMem)
 }
 
 //For all GPUShare nodes,decide whether the memory of GPU is measured by MiB or GiB
@@ -42,7 +42,7 @@ func BuildAllShareNodeInfos(allPods []v1.Pod, nodes []v1.Node) ([]*ShareNodeInfo
 	SharenodeInfos := buildShareNodeInfosWithPods(allPods, nodes)
 	for _, SharenodeInfo := range SharenodeInfos {
 		if SharenodeInfo.gpuTotalMemory > 0 {
-			setUnit(SharenodeInfo.gpuTotalMemory, SharenodeInfo.gpuCount)
+			setUnit(SharenodeInfo.gpuTotalMemory, SharenodeInfo.GpuCount)
 			err := SharenodeInfo.buildDeviceInfo()
 			if err != nil {
 				log.Warningf("Failed due to %v", err)
@@ -58,7 +58,7 @@ func BuildShareNodeInfo(allPods []v1.Pod, node v1.Node) (*ShareNodeInfo, error) 
 	SharenodeInfo := buildShareNodeInfoWithPods(allPods, node)
 
 	if SharenodeInfo.gpuTotalMemory > 0 {
-		setUnit(SharenodeInfo.gpuTotalMemory, SharenodeInfo.gpuCount)
+		setUnit(SharenodeInfo.gpuTotalMemory, SharenodeInfo.GpuCount)
 		err := SharenodeInfo.buildDeviceInfo()
 		if err != nil {
 			log.Warningf("Failed due to %v", err)
@@ -81,18 +81,18 @@ func buildShareNodeInfosWithPods(pods []v1.Pod, nodes []v1.Node) []*ShareNodeInf
 			nodeMap[node.Name] = info
 			info.node = node
 			info.pods = []v1.Pod{}
-			info.gpuCount = getGPUCountInNode(node)
+			info.GpuCount = getGPUCountInNode(node)
 			info.gpuTotalMemory = getTotalGPUMemory(node)
-			info.devs = map[int]*DeviceInfo{}
+			info.Devs = map[int]*DeviceInfo{}
 
-			for i := 0; i < info.gpuCount; i++ {
+			for i := 0; i < info.GpuCount; i++ {
 				dev := &DeviceInfo{
 					pods:        []v1.Pod{},
 					idx:         i,
-					totalGPUMem: info.gpuTotalMemory / info.gpuCount,
+					totalGPUMem: info.gpuTotalMemory / info.GpuCount,
 					node:        info.node,
 				}
-				info.devs[i] = dev
+				info.Devs[i] = dev
 			}
 
 		}
@@ -116,18 +116,18 @@ func buildShareNodeInfoWithPods(pods []v1.Pod, node v1.Node) *ShareNodeInfo {
 	var info *ShareNodeInfo = &ShareNodeInfo{}
 	info.node = node
 	info.pods = []v1.Pod{}
-	info.gpuCount = getGPUCountInNode(node)
+	info.GpuCount = getGPUCountInNode(node)
 	info.gpuTotalMemory = getTotalGPUMemory(node)
-	info.devs = map[int]*DeviceInfo{}
+	info.Devs = map[int]*DeviceInfo{}
 
-	for i := 0; i < info.gpuCount; i++ {
+	for i := 0; i < info.GpuCount; i++ {
 		dev := &DeviceInfo{
 			pods:        []v1.Pod{},
 			idx:         i,
-			totalGPUMem: info.gpuTotalMemory / info.gpuCount,
+			totalGPUMem: info.gpuTotalMemory / info.GpuCount,
 			node:        info.node,
 		}
-		info.devs[i] = dev
+		info.Devs[i] = dev
 	}
 
 	for _, pod := range pods {
@@ -159,6 +159,18 @@ func getGPUCountInNode(node v1.Node) int {
 	return int(val.Value())
 }
 
+func gpuMemoryInPod(pod v1.Pod) int {
+	var total int
+	containers := pod.Spec.Containers
+	for _, container := range containers {
+		if val, ok := container.Resources.Limits[resourceName]; ok {
+			total += int(val.Value())
+		}
+	}
+
+	return total
+}
+
 // Get Deviceinfo of ShareNodeinfo
 func (n *ShareNodeInfo) buildDeviceInfo() error {
 
@@ -172,10 +184,10 @@ GPUSearchLoop:
 
 		var dev *DeviceInfo
 		ok := false
-		if dev, ok = n.devs[devID]; !ok {
+		if dev, ok = n.Devs[devID]; !ok {
 			totalGPUMem := 0
-			if n.gpuCount > 0 {
-				totalGPUMem = n.gpuTotalMemory / n.gpuCount
+			if n.GpuCount > 0 {
+				totalGPUMem = n.gpuTotalMemory / n.GpuCount
 			}
 
 			dev = &DeviceInfo{
@@ -184,10 +196,10 @@ GPUSearchLoop:
 				totalGPUMem: totalGPUMem,
 				node:        n.node,
 			}
-			n.devs[devID] = dev
+			n.Devs[devID] = dev
 		}
 
-		dev.usedGPUMem = dev.usedGPUMem + usedGPUMem
+		dev.UsedGPUMem = dev.UsedGPUMem + usedGPUMem
 		dev.pods = append(dev.pods, pod)
 	}
 
@@ -231,7 +243,7 @@ func hasPendingGPUMemory(nodeInfos []*ShareNodeInfo) (found bool) {
 }
 
 func (n *ShareNodeInfo) hasPendingGPUMemory() bool {
-	_, found := n.devs[-1]
+	_, found := n.Devs[-1]
 	return found
 }
 
