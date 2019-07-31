@@ -23,6 +23,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	NodeShare "github.com/kubeflow/arena/pkg/types"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +32,8 @@ import (
 )
 
 var (
-	showDetails bool
+	showDetails  bool
+	showGPUShare bool
 )
 
 type NodeInfo struct {
@@ -51,7 +53,7 @@ func NewTopNodeCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			allPods, err = acquireAllActivePods(client)
+			allPods, err := acquireAllActivePods(client)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -60,6 +62,41 @@ func NewTopNodeCommand() *cobra.Command {
 			nodeInfos, err := nd.getAllNodeInfos()
 			if err != nil {
 				fmt.Println(err)
+				os.Exit(1)
+			}
+			tmp := false
+			for _, nodeInfo := range nodeInfos {
+				if NodeShare.IsGPUSharingNode(nodeInfo.node) && isGPUCountNode(nodeInfo.node) {
+					fmt.Printf("GPUCount and GPUShare are both used in node %s .Please use one mode of them\n", nodeInfo.node.Name)
+					tmp = true
+				}
+			}
+			if tmp {
+				displayTopNode(nodeInfos)
+				os.Exit(1)
+			}
+			if showGPUShare {
+
+				Sharenodes, err := NodeShare.GetAllSharedGPUNode()
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				pods, err := NodeShare.GetActivePodsInAllNodes()
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				SharenodeInfos, err := NodeShare.BuildAllShareNodeInfos(pods, Sharenodes)
+				if err != nil {
+					fmt.Printf("Failed due to %v", err)
+					os.Exit(1)
+				}
+				if showDetails {
+					NodeShare.DisplayShareDetails(SharenodeInfos)
+					os.Exit(1)
+				}
+				NodeShare.DisplayShareSummary(SharenodeInfos)
 				os.Exit(1)
 			}
 			displayTopNode(nodeInfos)
@@ -372,6 +409,16 @@ func isMasterNode(node v1.Node) bool {
 	}
 
 	return false
+}
+
+func isGPUCountNode(node v1.Node) bool {
+	value, ok := node.Status.Allocatable[NVIDIAGPUResourceName]
+
+	if ok {
+		ok = (int(value.Value()) > 0)
+	}
+
+	return ok
 }
 
 // findNodeRoles returns the roles of a given node.
