@@ -45,8 +45,9 @@ func NewVersionCmd(cliName string) *cobra.Command {
 			fmt.Printf("  Compiler: %s\n", version.Compiler)
 			fmt.Printf("  Platform: %s\n", version.Platform)
 			if verbose {
+				fmt.Printf("  ChartsHome: %s\n", version.ChartsInfo.ChartsHome)
 				fmt.Printf("  ChartsVersion: \n")
-				for chartName, chartVersion := range version.ChartsVersion {
+				for chartName, chartVersion := range version.ChartsInfo.ChartsVersion {
 					fmt.Printf("    %s: %s\n", chartName, chartVersion)
 				}
 			}

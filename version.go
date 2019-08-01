@@ -34,15 +34,20 @@ var (
 
 // Version contains Arena version information
 type Version struct {
-	Version       string
-	BuildDate     string
-	GitCommit     string
-	GitTag        string
-	GitTreeState  string
-	GoVersion     string
-	Compiler      string
-	Platform      string
+	Version      string
+	BuildDate    string
+	GitCommit    string
+	GitTag       string
+	GitTreeState string
+	GoVersion    string
+	Compiler     string
+	Platform     string
+	ChartsInfo   ChartsInfo
+}
+
+type ChartsInfo struct {
 	ChartsVersion map[string]string
+	ChartsHome    string
 }
 
 func (v Version) String() string {
@@ -69,21 +74,20 @@ func GetVersion() Version {
 			versionStr += "+unknown"
 		}
 	}
-	chartsVersion := getChartsVersion()
 	return Version{
-		Version:       versionStr,
-		BuildDate:     buildDate,
-		GitCommit:     gitCommit,
-		GitTag:        gitTag,
-		GitTreeState:  gitTreeState,
-		GoVersion:     runtime.Version(),
-		Compiler:      runtime.Compiler,
-		Platform:      fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
-		ChartsVersion: chartsVersion,
+		Version:      versionStr,
+		BuildDate:    buildDate,
+		GitCommit:    gitCommit,
+		GitTag:       gitTag,
+		GitTreeState: gitTreeState,
+		GoVersion:    runtime.Version(),
+		Compiler:     runtime.Compiler,
+		Platform:     fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+		ChartsInfo:   getChartsInfo(),
 	}
 }
 
-func getChartsVersion() map[string]string {
+func getChartsInfo() ChartsInfo {
 	chartsFolder := util.GetChartsFolder()
 	charts := []string{}
 	chartFolder, err := ioutil.ReadDir(chartsFolder)
@@ -110,5 +114,8 @@ func getChartsVersion() map[string]string {
 			chartMap[chartName] = chartVersion
 		}
 	}
-	return chartMap
+	return ChartsInfo{
+		ChartsVersion: chartMap,
+		ChartsHome:    chartsFolder,
+	}
 }
