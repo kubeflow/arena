@@ -187,9 +187,9 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	if gpushare {
 
 		if hasUnhealthyGPUNode {
-			fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPU(Unhealthy)\tGPUShare\n")
+			fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPU(Unhealthy)\tGPU(Shareable)\n")
 		} else {
-			fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPUShare\n")
+			fmt.Fprintf(w, "NAME\tIPADDRESS\tROLE\tSTATUS\tGPU(Total)\tGPU(Allocated)\tGPU(Shareable)\n")
 		}
 	} else {
 		if hasUnhealthyGPUNode {
@@ -259,9 +259,9 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 					strconv.FormatInt(allocatedGPU, 10),
 					strconv.FormatInt(unhealthGPU, 10))
 				if NodeShare.IsGPUSharingNode(nodeInfo.node) {
-					fmt.Fprintf(w, "\t%s\n", "Shareable")
+					fmt.Fprintf(w, "\t%s\n", "Yes")
 				} else {
-					fmt.Fprintf(w, "\t%s\n", "N/A")
+					fmt.Fprintf(w, "\t%s\n", "No")
 				}
 			} else {
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s", nodeInfo.node.Name,
@@ -271,14 +271,14 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 					strconv.FormatInt(totalGPU, 10),
 					strconv.FormatInt(allocatedGPU, 10))
 				if NodeShare.IsGPUSharingNode(nodeInfo.node) {
-					fmt.Fprintf(w, "\t%s\n", "Shareable")
+					fmt.Fprintf(w, "\t%s\n", "Yes")
 				} else {
-					fmt.Fprintf(w, "\t%s\n", "N/A")
+					fmt.Fprintf(w, "\t%s\n", "No")
 				}
 			}
 		} else {
 			if hasUnhealthyGPUNode {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s", nodeInfo.node.Name,
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 					address,
 					role,
 					status,
@@ -286,7 +286,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 					strconv.FormatInt(allocatedGPU, 10),
 					strconv.FormatInt(unhealthGPU, 10))
 			} else {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s", nodeInfo.node.Name,
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", nodeInfo.node.Name,
 					address,
 					role,
 					status,
@@ -376,6 +376,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		var totalGPU int64
 		var allocatableGPU int64
 		var allocatedGPU int64
+		var SharenodeInfo *NodeShare.ShareNodeInfo
 		// GPUShare nodes and normal nodes  calculate the allocatedGPU and total GPU in different way
 		if NodeShare.IsGPUSharingNode(nodeInfo.node) {
 			setupKubeconfig()
@@ -385,7 +386,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			SharenodeInfo, err := NodeShare.BuildShareNodeInfo(pods, nodeInfo.node)
+			SharenodeInfo, err = NodeShare.BuildShareNodeInfo(pods, nodeInfo.node)
 			if err != nil {
 				fmt.Printf("Failed due to %v", err)
 				os.Exit(1)
@@ -416,18 +417,40 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		fmt.Fprintf(w, "NAME:\t%s\n", nodeInfo.node.Name)
 		fmt.Fprintf(w, "IPADDRESS:\t%s\n", address)
 		fmt.Fprintf(w, "ROLE:\t%s\n", role)
-
-		pods := gpuPods(nodeInfo.pods)
-		if len(pods) > 0 {
-			fmt.Fprintf(w, "\n")
-			fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\tGPU LIMITS\n")
-			for _, pod := range pods {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", pod.Namespace,
-					pod.Name,
-					strconv.FormatInt(gpuInPod(pod), 10),
-					strconv.FormatInt(gpuInPod(pod), 10))
+		if NodeShare.IsGPUSharingNode(nodeInfo.node) {
+			var Pods []v1.Pod
+			for _, dev := range SharenodeInfo.Devs {
+				for _, pod := range dev.Pods {
+					Pods = append(Pods, pod)
+				}
 			}
-			fmt.Fprintf(w, "\n")
+			if len(Pods) > 0 {
+				fmt.Fprintf(w, "\n")
+				fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\t \n")
+				for _, pod := range Pods {
+					var podpercentage float64
+					podgpumem := NodeShare.GetGPUMemoryInPod(pod)
+					devgpumem := SharenodeInfo.Devs[0].TotalGPUMem
+					podpercentage = float64(podgpumem) / float64(devgpumem)
+
+					fmt.Fprintf(w, "%s\t%s\t%s\t\n", pod.Namespace,
+						pod.Name,
+						strconv.FormatFloat(podpercentage, 'f', 2, 64))
+				}
+				fmt.Fprintf(w, "\n")
+			}
+		} else {
+			pods := gpuPods(nodeInfo.pods)
+			if len(pods) > 0 {
+				fmt.Fprintf(w, "\n")
+				fmt.Fprintf(w, "NAMESPACE\tNAME\tGPU REQUESTS\t \n")
+				for _, pod := range pods {
+					fmt.Fprintf(w, "%s\t%s\t%s\t\n", pod.Namespace,
+						pod.Name,
+						strconv.FormatInt(gpuInPod(pod), 10))
+				}
+				fmt.Fprintf(w, "\n")
+			}
 		}
 		var gpuUsageInNode float64 = 0
 		if totalGPU > 0 {

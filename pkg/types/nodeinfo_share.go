@@ -24,9 +24,9 @@ type ShareNodeInfo struct {
 
 type DeviceInfo struct {
 	idx         int
-	pods        []v1.Pod
+	Pods        []v1.Pod
 	UsedGPUMem  int
-	totalGPUMem int
+	TotalGPUMem int
 	node        v1.Node
 }
 
@@ -34,7 +34,7 @@ func (d *DeviceInfo) String() string {
 	if d.idx == -1 {
 		return fmt.Sprintf("%d", d.UsedGPUMem)
 	}
-	return fmt.Sprintf("%d/%d", d.UsedGPUMem, d.totalGPUMem)
+	return fmt.Sprintf("%d/%d", d.UsedGPUMem, d.TotalGPUMem)
 }
 
 //For all GPUShare nodes,decide whether the memory of GPU is measured by MiB or GiB
@@ -87,9 +87,9 @@ func buildShareNodeInfosWithPods(pods []v1.Pod, nodes []v1.Node) []*ShareNodeInf
 
 			for i := 0; i < info.GpuCount; i++ {
 				dev := &DeviceInfo{
-					pods:        []v1.Pod{},
+					Pods:        []v1.Pod{},
 					idx:         i,
-					totalGPUMem: info.gpuTotalMemory / info.GpuCount,
+					TotalGPUMem: info.gpuTotalMemory / info.GpuCount,
 					node:        info.node,
 				}
 				info.Devs[i] = dev
@@ -122,9 +122,9 @@ func buildShareNodeInfoWithPods(pods []v1.Pod, node v1.Node) *ShareNodeInfo {
 
 	for i := 0; i < info.GpuCount; i++ {
 		dev := &DeviceInfo{
-			pods:        []v1.Pod{},
+			Pods:        []v1.Pod{},
 			idx:         i,
-			totalGPUMem: info.gpuTotalMemory / info.GpuCount,
+			TotalGPUMem: info.gpuTotalMemory / info.GpuCount,
 			node:        info.node,
 		}
 		info.Devs[i] = dev
@@ -191,16 +191,16 @@ GPUSearchLoop:
 			}
 
 			dev = &DeviceInfo{
-				pods:        []v1.Pod{},
+				Pods:        []v1.Pod{},
 				idx:         devID,
-				totalGPUMem: totalGPUMem,
+				TotalGPUMem: totalGPUMem,
 				node:        n.node,
 			}
 			n.Devs[devID] = dev
 		}
 
 		dev.UsedGPUMem = dev.UsedGPUMem + usedGPUMem
-		dev.pods = append(dev.pods, pod)
+		dev.Pods = append(dev.Pods, pod)
 	}
 
 	return nil
