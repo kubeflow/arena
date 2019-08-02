@@ -47,26 +47,20 @@ func DisplayShareDetails(nodeInfos []*ShareNodeInfo) {
 			buf.WriteString(fmt.Sprintf("GPU%d(Allocated)\t", i))
 		}
 
-		if nodeInfo.hasPendingGPUMemory() {
-			buf.WriteString("Pending(Allocated)\t")
-		}
 		buf.WriteString("\n")
 		fmt.Fprintf(w, buf.String())
 
 		var buffer bytes.Buffer
 		for i, dev := range nodeInfo.Devs {
 			usedGPUMemInNode += dev.UsedGPUMem
-			for _, pod := range dev.pods {
+			for _, pod := range dev.Pods {
 
 				buffer.WriteString(fmt.Sprintf("%s\t%s\t", pod.Name, pod.Namespace))
 				count := nodeInfo.GpuCount
-				if nodeInfo.hasPendingGPUMemory() {
-					count += 1
-				}
 
 				for k := 0; k < count; k++ {
 					if k == i || (i == -1 && k == nodeInfo.GpuCount) {
-						buffer.WriteString(fmt.Sprintf("%d\t", getGPUMemoryInPod(pod)))
+						buffer.WriteString(fmt.Sprintf("%d\t", GetGPUMemoryInPod(pod)))
 					} else {
 						buffer.WriteString("0\t")
 					}
@@ -100,7 +94,7 @@ func DisplayShareDetails(nodeInfos []*ShareNodeInfo) {
 	}
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "Allocated/Total GPU Memory In Cluster:\n")
+	fmt.Fprintf(w, "Allocated/Total GPU Memory In GPUShare Node:\n")
 	log.V(2).Infof("gpu: %s, allocated GPU Memory %s", strconv.FormatInt(totalGPUMemInCluster, 10),
 		strconv.FormatInt(usedGPUMemInCluster, 10))
 
@@ -127,8 +121,6 @@ func DisplayShareSummary(nodeInfos []*ShareNodeInfo) {
 		prtLineLen           int
 	)
 
-	hasPendingGPU := hasPendingGPUMemory(nodeInfos)
-
 	maxGPUCount = getMaxGPUCount(nodeInfos)
 
 	var buffer bytes.Buffer
@@ -137,9 +129,6 @@ func DisplayShareSummary(nodeInfos []*ShareNodeInfo) {
 		buffer.WriteString(fmt.Sprintf("GPU%d(Allocated/Total)\t", i))
 	}
 
-	if hasPendingGPU {
-		buffer.WriteString("PENDING(Allocated)\t")
-	}
 	buffer.WriteString(fmt.Sprintf("\n"))
 
 	fmt.Fprintf(w, buffer.String())
@@ -156,7 +145,7 @@ func DisplayShareSummary(nodeInfos []*ShareNodeInfo) {
 		}
 
 		gpuMemInfos := []string{}
-		pendingGPUMemInfo := ""
+
 		usedGPUMemInNode := 0
 		totalGPUMemInNode := nodeInfo.gpuTotalMemory
 		if totalGPUMemInNode <= 0 {
@@ -172,19 +161,10 @@ func DisplayShareSummary(nodeInfos []*ShareNodeInfo) {
 			gpuMemInfos = append(gpuMemInfos, gpuMemInfo)
 		}
 
-		// check if there is pending dev
-		if dev, ok := nodeInfo.Devs[-1]; ok {
-			pendingGPUMemInfo = fmt.Sprintf("%d", dev.UsedGPUMem)
-			usedGPUMemInNode += dev.UsedGPUMem
-		}
-
 		var buf bytes.Buffer
 		buf.WriteString(fmt.Sprintf("%s\t%s\t", nodeInfo.node.Name, address))
 		for i := 0; i < maxGPUCount; i++ {
 			buf.WriteString(fmt.Sprintf("%s\t", gpuMemInfos[i]))
-		}
-		if hasPendingGPU {
-			buf.WriteString(fmt.Sprintf("%s\t", pendingGPUMemInfo))
 		}
 
 		buf.WriteString(fmt.Sprintf("\n"))
@@ -205,7 +185,7 @@ func DisplayShareSummary(nodeInfos []*ShareNodeInfo) {
 	prtLine.WriteString("\n")
 	fmt.Fprint(w, prtLine.String())
 
-	fmt.Fprintf(w, "Allocated/Total GPU Memory In Cluster:\n")
+	fmt.Fprintf(w, "Allocated/Total GPU Memory In GPUShare Node:\n")
 	log.V(2).Infof("gpu: %s, allocated GPU Memory %s", strconv.FormatInt(totalGPUMemInCluster, 10),
 		strconv.FormatInt(usedGPUMemInCluster, 10))
 	var gpuUsage float64 = 0
@@ -222,7 +202,7 @@ func DisplayShareSummary(nodeInfos []*ShareNodeInfo) {
 	_ = w.Flush()
 }
 
-func getGPUMemoryInPod(pod v1.Pod) int {
+func GetGPUMemoryInPod(pod v1.Pod) int {
 	gpuMem := 0
 	for _, container := range pod.Spec.Containers {
 		if val, ok := container.Resources.Limits[resourceName]; ok {
