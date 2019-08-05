@@ -80,6 +80,7 @@ func NewServingTensorRTCommand() *cobra.Command {
 	command.Flags().IntVar(&serveTensorRTArgs.GrpcPort, "grpcPort", 8001, "the port of grpc serving server")
 	command.Flags().IntVar(&serveTensorRTArgs.MetricsPort, "metricPort", 8002, "the port of metrics server")
 	command.Flags().BoolVar(&serveTensorRTArgs.AllowMetrics, "allowMetrics", false, "Open Metric")
+	command.Flags().StringVar(&serveTensorRTArgs.Command, "command", "", "the command will inject to container's command.")
 
 	return command
 }

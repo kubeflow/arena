@@ -3,6 +3,8 @@
 ### Added
 
 - Add Priority class support for MPIJob and TFJob
+- Display Unhealthy GPU devices
+- Integrate GPUShare capablities
 
 
 ## [Release 0.2.0]

@@ -15,7 +15,11 @@ package arena
 
 import (
 	"fmt"
+	"io/ioutil"
 	"runtime"
+
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/helm"
 )
 
 // Version information set by link flags during build. We fall back to these sane
@@ -38,6 +42,12 @@ type Version struct {
 	GoVersion    string
 	Compiler     string
 	Platform     string
+	ChartsInfo   ChartsInfo
+}
+
+type ChartsInfo struct {
+	ChartsVersion map[string]string
+	ChartsHome    string
 }
 
 func (v Version) String() string {
@@ -73,5 +83,39 @@ func GetVersion() Version {
 		GoVersion:    runtime.Version(),
 		Compiler:     runtime.Compiler,
 		Platform:     fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+		ChartsInfo:   getChartsInfo(),
+	}
+}
+
+func getChartsInfo() ChartsInfo {
+	chartsFolder := util.GetChartsFolder()
+	charts := []string{}
+	chartFolder, err := ioutil.ReadDir(chartsFolder)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		for _, c := range chartFolder {
+			if c.IsDir() {
+				if !util.StringInSlice(c.Name(), charts) {
+					charts = append(charts, c.Name())
+				}
+			}
+		}
+	}
+
+	chartMap := make(map[string]string, len(charts))
+	for _, c := range charts {
+		chart := chartsFolder + "/" + c
+		chartName := helm.GetChartName(chart)
+		chartVersion, err := helm.GetChartVersion(chart)
+		if err != nil {
+			chartMap[chartName] = ""
+		} else {
+			chartMap[chartName] = chartVersion
+		}
+	}
+	return ChartsInfo{
+		ChartsVersion: chartMap,
+		ChartsHome:    chartsFolder,
 	}
 }
