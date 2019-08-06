@@ -68,7 +68,7 @@ spec:
             - containerPort: {{ .Values.restApiPort }}
               name: restful
               protocol: TCP
-			{{- end }}
+            {{- end }}
           #readinessProbe:
           #  tcpSocket:
           #    port: grpc
