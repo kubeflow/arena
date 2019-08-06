@@ -70,6 +70,21 @@ func (s ServeArgs) validateIstioEnablement() error {
 	return nil
 }
 
+func (s ServeArgs) PreCheck() error {
+	return s.checkPortsIsOk()
+}
+
+func (s ServeArgs) checkPortsIsOk() error {
+	switch {
+	case s.Port != 0:
+		return nil
+	case s.RestfulPort != 0:
+		return nil
+	default:
+		return fmt.Errorf("all  ports are 0,invalid configuration.")
+	}
+}
+
 func ParseMountPath(dataset []string) (err error) {
 	err = validate.ValidateDatasets(dataset)
 	return err

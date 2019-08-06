@@ -86,13 +86,15 @@ func NewServingCustomCommand() *cobra.Command {
 
 type ServeCustomArgs struct {
 	// Version string `yaml:"version"` // --version
-	Image     string         `yaml:"image"` // --image
-	Ports     map[string]int `yaml:"ports"`
+	Image     string `yaml:"image"` // --image
 	ServeArgs `yaml:",inline"`
 }
 
 func (serveCustomArgs *ServeCustomArgs) preprocess(client *kubernetes.Clientset, args []string) (err error) {
 	//serveCustomArgs.Command = strings.Join(args, " ")
+	if err := serveCustomArgs.PreCheck(); err != nil {
+		return err
+	}
 	serveCustomArgs.Command = strings.Join(args, " ")
 	log.Debugf("command: %s", serveCustomArgs.Command)
 
@@ -127,13 +129,6 @@ func (serveCustomArgs *ServeCustomArgs) preprocess(client *kubernetes.Clientset,
 		return err
 	}
 	serveCustomArgs.ModelServiceExists = modelServiceExists
-	serveCustomArgs.Ports = map[string]int{}
-	if serveCustomArgs.Port != 0 {
-		serveCustomArgs.Ports["grpc"] = serveCustomArgs.Port
-	}
-	if serveCustomArgs.RestfulPort != 0 {
-		serveCustomArgs.Ports["restful"] = serveCustomArgs.RestfulPort
-	}
 	return nil
 }
 
