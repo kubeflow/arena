@@ -65,11 +65,11 @@ fast-style-transfer-alpha   ClusterIP   172.21.1.114   <none>        5000/TCP   
 ```
 # curl -o /root/output/beijing_out.jpg  -F "file=@/root/input/beijing.jpg" http://fast-style-transfer-alpha:5000
 ```
-在上面的命令中，输入文件的名称为[beijing.jpg](15-custom-serving-sample-beijing.jpg)，存放的路径为"/root/input"，输出文件的路径为"/root/output/beijing_out.jpg"，现在需要退出容器然后在master节点上执行kubectl cp命令将结果从容器中拷贝出来：
+在上面的命令中，输入文件的名称为![beijing.jpg](15-custom-serving-sample-beijing.jpg)，存放的路径为"/root/input"，输出文件的路径为"/root/output/beijing_out.jpg"，现在需要退出容器然后在master节点上执行kubectl cp命令将结果从容器中拷贝出来：
 ```
 # kubectl cp sample-client:/root/output/beijing_out.jpg ~/beijing_out.jpg
 ```
-图片[beijing_out.jpg](15-custom-serving-sample-beijing_out.jpg),将会复制到当前用户的家目录下面。
+图片![beijing_out.jpg](15-custom-serving-sample-beijing_out.jpg)将会复制到当前用户的家目录下面。
 
 
 
