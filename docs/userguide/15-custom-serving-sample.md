@@ -70,11 +70,11 @@ then we use "curl" command to access the custom serving job:
 ```
 # curl -o /root/output/beijing_out.jpg  -F "file=@/root/input/beijing.jpg" http://fast-style-transfer-alpha:5000
 ```
-the input is an image which name is ![beijing.jpg](15-custom-serving-sample-beijing.jpg),the image is stored in "/root/input",the output is  stored in "/root/output". you can use "kubectl cp" command to copy output image from container to host:
+the input is an image which name is "beijing.jpg" ![beijing.jpg](15-custom-serving-sample-beijing.jpg),the image is stored in "/root/input",the output is  stored in "/root/output". you can use "kubectl cp" command to copy output image from container to host:
 ```
 # kubectl cp sample-client:/root/output/beijing_out.jpg ~/beijing_out.jpg
 ```
-now you can view the image in ~/beijing_out.jpg,there is ![beijing_out.jpg](15-custom-serving-sample-beijing_out.jpg)
+now you can view the image in ~/beijing_out.jpg,there is "beijing_out.jpg" ![beijing_out.jpg](15-custom-serving-sample-beijing_out.jpg)
 
 
 
