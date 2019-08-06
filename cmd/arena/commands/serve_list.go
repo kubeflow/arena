@@ -44,29 +44,47 @@ func NewServingListCommand() *cobra.Command {
 			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-
-			fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tDESIRED\tAVAILABLE\tENDPOINT_ADDRESS\tPORTS\n")
+			if allNamespaces {
+				fmt.Fprintf(w, "NAME\tTYPE\tNAMESPACE\tVERSION\tDESIRED\tAVAILABLE\tENDPOINT_ADDRESS\tPORTS\n")
+			} else {
+				fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tDESIRED\tAVAILABLE\tENDPOINT_ADDRESS\tPORTS\n")
+			}
 			jobs, err := ListServing(client)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 			for _, servingJob := range jobs {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%d\t%s\t%s\n",
-					servingJob.GetName(),
-					servingJob.ServeType,
-					servingJob.Version,
-					servingJob.DesiredInstances(),
-					servingJob.AvailableInstances(),
-					servingJob.GetClusterIP(),
-					servingJob.GetPorts(),
-				)
+				if allNamespaces {
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%d\t%s\t%s\n",
+						servingJob.GetName(),
+						servingJob.ServeType,
+						servingJob.Namespace,
+						servingJob.Version,
+						servingJob.DesiredInstances(),
+						servingJob.AvailableInstances(),
+						servingJob.GetClusterIP(),
+						servingJob.GetPorts(),
+					)
+
+				} else {
+					fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%d\t%s\t%s\n",
+						servingJob.GetName(),
+						servingJob.ServeType,
+						servingJob.Version,
+						servingJob.DesiredInstances(),
+						servingJob.AvailableInstances(),
+						servingJob.GetClusterIP(),
+						servingJob.GetPorts(),
+					)
+
+				}
 			}
 
 			_ = w.Flush()
 		},
 	}
-
+	command.Flags().BoolVar(&allNamespaces, "all-namespaces", false, "all namespace")
 	return command
 }
 
