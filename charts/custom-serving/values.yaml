@@ -1,0 +1,25 @@
+# Default values for custom-serving.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+serviceType: ClusterIP
+
+## serving name and version
+# servingName: 
+# servingVersion:
+
+## expose the service to the grpc client
+port: 8500
+restApiPort: 8501
+replicas: 1
+
+# repository: "cheyang/tf-model-server-gpu"
+image: "tensorflow/serving:latest"
+
+imagePullPolicy: "IfNotPresent"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

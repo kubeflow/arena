@@ -8,6 +8,8 @@ metadata:
     chart: {{ template "tensorrt-inference-server.chart" . }}
     app: {{ template "tensorrt-inference-server.name" . }}
     servingName: {{ .Values.servingName }}
+    servingType: "trt-serving"
+    servingVersion: "{{ .Values.servingVersion }}"
 spec:
   type: {{ .Values.serviceType }}
   ports:

@@ -30,3 +30,12 @@ func GetChartsFolder() string {
 	}
 	return chartFolder
 }
+
+func StringInSlice(x string, list []string) bool {
+	for _, y := range list {
+		if y == x {
+			return true
+		}
+	}
+	return false
+}

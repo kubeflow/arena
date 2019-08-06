@@ -20,8 +20,8 @@ spec:
       port: {{ .Values.port }}
       targetPort: {{ .Values.port }}
     - name: http-serving
-      port: {{ .Values.rest_api_port }}
-      targetPort: {{ .Values.rest_api_port }}
+      port: {{ .Values.restApiPort }}
+      targetPort: {{ .Values.restApiPort }}
   selector:
     {{ if eq .Values.enableIstio true }}
     app: {{ template "tensorflow-serving.name" . }}
