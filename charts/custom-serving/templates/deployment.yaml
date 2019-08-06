@@ -58,13 +58,14 @@ spec:
           - "-c"
           - "{{ .Values.command }}"
           {{- end }}
+          {{- if ne (len .Values.ports ) 0 }}
           ports:
-            - containerPort: {{ .Values.port }}
-              name: grpc
+            {{- range $portKey,$portVal := .Values.ports }}
+            - containerPort: {{ $portVal }}
+              name: {{ $portKey }}
               protocol: TCP
-            - containerPort: {{ .Values.restApiPort }}
-              name: restful
-              protocol: TCP
+            {{- end }}
+          {{- end }}
           #readinessProbe:
           #  tcpSocket:
           #    port: grpc

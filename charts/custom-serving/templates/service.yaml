@@ -27,7 +27,7 @@
 #    {{- end }}
 #{{- end }}
 ---
-{{- if .Values.servingVersion }}
+{{- if and .Values.servingVersion (ne (len .Values.ports) 0) }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -43,12 +43,11 @@ metadata:
 spec:
   type: {{ .Values.serviceType }}
   ports:
-    - name: grpc
-      port: {{ .Values.port }}
-      targetPort: {{ .Values.port }}
-    - name: restful
-      port: {{ .Values.restApiPort }}
-      targetPort: {{ .Values.restApiPort }}
+    {{- range $portKey,$portVal := .Values.ports }}
+    - name: {{ $portKey }}
+      port: {{ $portVal }}
+      targetPort: {{ $portVal }}
+    {{- end }}
   selector:
     app: {{ template "custom-serving.name" . }}
     servingVersion: "{{ .Values.servingVersion }}"

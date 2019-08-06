@@ -69,12 +69,14 @@ spec:
             {{- end }}{{- if ne .Values.modelConfigFileContent "" }} --model_config_file=/tmp/config{{- end }}{{- if gt (int $gpuMemory) 0 }} --per_process_gpu_memory_fraction=$(awk 'BEGIN{printf "%.2f",'$ALIYUN_COM_GPU_MEM_CONTAINER'/'$ALIYUN_COM_GPU_MEM_DEV'}')
             {{- end }}
           {{- end }}
+          {{- if ne (len .Values.ports ) 0 }}
           ports:
-            - containerPort: {{ .Values.port }}
-              name: serving
+            {{- range $portKey,$portVal := .Values.ports }}
+            - containerPort: {{ $portVal }}
+              name: {{ $portKey }}
               protocol: TCP
-            - containerPort: {{ .Values.restApiPort }}
-              name: http-serving
+            {{- end }}
+          {{- end }}
           readinessProbe:
             tcpSocket:
               port: serving

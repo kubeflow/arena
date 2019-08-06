@@ -84,8 +84,8 @@ func NewServingTensorFlowCommand() *cobra.Command {
 	// TFServingJob
 	// add grpc port and rest api port
 	command.Flags().StringVar(&serveTensorFlowArgs.Image, "image", defaultTfServingImage, "the docker image name of serve job, and the default image is "+defaultTfServingImage)
-	command.Flags().IntVar(&serveTensorFlowArgs.Port, "port", 8500, "the port of tensorflow gRPC listening port")
-	command.Flags().IntVar(&serveTensorFlowArgs.RestfulPort, "restfulPort", 8501, "the port of tensorflow RESTful listening port")
+	command.Flags().IntVar(&serveTensorFlowArgs.Port, "port", 0, "the port of tensorflow gRPC listening port,default is 0 represents that do not expose this port.")
+	command.Flags().IntVar(&serveTensorFlowArgs.RestfulPort, "restfulPort", 0, "the port of tensorflow RESTful listening port,default is 0 represents that do not expose this port.")
 
 	command.Flags().StringVar(&serveTensorFlowArgs.ModelName, "modelName", "", "the model name for serving")
 	command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
@@ -194,7 +194,13 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 
 	modelServiceExists, err := checkServiceExists(client, namespace, serveTensorFlowArgs.ServingName)
 	serveTensorFlowArgs.ModelServiceExists = modelServiceExists
-
+	serveTensorFlowArgs.Ports = map[string]int{}
+	if serveTensorFlowArgs.Port != 0 {
+		serveTensorFlowArgs.Ports["gprc"] = serveTensorFlowArgs.Port
+	}
+	if serveTensorFlowArgs.RestfulPort != 0 {
+		serveTensorFlowArgs.Ports["restful"] = serveTensorFlowArgs.RestfulPort
+	}
 	return nil
 }
 

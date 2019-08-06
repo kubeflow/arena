@@ -20,6 +20,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
+
 	//log "github.com/sirupsen/logrus"
 	"github.com/kubeflow/arena/pkg/workflow"
 	"github.com/spf13/cobra"
@@ -76,9 +77,9 @@ func NewServingTensorRTCommand() *cobra.Command {
 	// TRTServingJob
 	command.Flags().StringVar(&serveTensorRTArgs.Image, "image", defaultTRTServingImage, "the docker image name of serve job, and the default image is "+defaultTRTServingImage)
 	command.Flags().StringVar(&serveTensorRTArgs.ModelStore, "modelStore", "", "the path of tensorRT model path")
-	command.Flags().IntVar(&serveTensorRTArgs.HttpPort, "httpPort", 8000, "the port of http serving server")
-	command.Flags().IntVar(&serveTensorRTArgs.GrpcPort, "grpcPort", 8001, "the port of grpc serving server")
-	command.Flags().IntVar(&serveTensorRTArgs.MetricsPort, "metricPort", 8002, "the port of metrics server")
+	command.Flags().IntVar(&serveTensorRTArgs.HttpPort, "httpPort", 0, "the port of http serving server,default is 0 represents that do not expose this port.")
+	command.Flags().IntVar(&serveTensorRTArgs.GrpcPort, "grpcPort", 0, "the port of grpc serving server,default is 0 represents that do not expose this port.")
+	command.Flags().IntVar(&serveTensorRTArgs.MetricsPort, "metricPort", 0, "the port of metrics server,default is 0 represents that do not expose this port.")
 	command.Flags().BoolVar(&serveTensorRTArgs.AllowMetrics, "allowMetrics", false, "Open Metric")
 	command.Flags().StringVar(&serveTensorRTArgs.Command, "command", "", "the command will inject to container's command.")
 
@@ -111,6 +112,16 @@ func (serveTensorRTArgs *ServeTensorRTArgs) preprocess() (err error) {
 			return fmt.Errorf("--data has wrong value: %s", err)
 		}
 		serveTensorRTArgs.ModelDirs = transformSliceToMap(dataset, ":")
+	}
+	serveTensorRTArgs.Ports = map[string]int{}
+	if serveTensorRTArgs.Port != 0 {
+		serveTensorRTArgs.Ports["gprc"] = serveTensorRTArgs.Port
+	}
+	if serveTensorRTArgs.RestfulPort != 0 {
+		serveTensorRTArgs.Ports["restful"] = serveTensorRTArgs.RestfulPort
+	}
+	if serveTensorRTArgs.MetricsPort != 0 {
+		serveTensorRTArgs.Ports["metrics"] = serveTensorRTArgs.MetricsPort
 	}
 	return nil
 }

@@ -69,14 +69,13 @@ spec:
             - "--model-store={{ .Values.modelStore }}"
             {{- end }}
           {{- end }}
+          {{- if ne (len .Values.ports ) 0 }}
           ports:
-            - containerPort: {{ .Values.httpPort }}
-              name: http-serving
-              protocol: TCP
-            - containerPort: {{ .Values.grpcPort }}
-              name: grpc-serving
-            - containerPort: {{ .Values.metricsPort }}
-              name: metrics-server
+            {{- range $portKey,$portVal := .Values.ports }}
+            - containerPort: {{ $portVal }}
+              name: {{ $portKey }}
+            {{- end }}
+          {{- end }}
           readinessProbe:
             httpGet:
               port: http-serving

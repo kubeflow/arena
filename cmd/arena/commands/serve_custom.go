@@ -78,8 +78,8 @@ func NewServingCustomCommand() *cobra.Command {
 	// TFServingJob
 	// add grpc port and rest api port
 	command.Flags().StringVar(&serveCustomArgs.Image, "image", "", "the docker image name of serve job")
-	command.Flags().IntVar(&serveCustomArgs.Port, "port", 8001, "the port of gRPC listening port")
-	command.Flags().IntVar(&serveCustomArgs.RestfulPort, "restful-port", 8000, "the port of RESTful listening port")
+	command.Flags().IntVar(&serveCustomArgs.Port, "port", 0, "the port of gRPC listening port,default is 0 represents that do not expose this port.")
+	command.Flags().IntVar(&serveCustomArgs.RestfulPort, "restful-port", 0, "the port of RESTful listening port,default is 0 represents that do not expose this port.")
 
 	return command
 }
@@ -127,6 +127,13 @@ func (serveCustomArgs *ServeCustomArgs) preprocess(client *kubernetes.Clientset,
 		return err
 	}
 	serveCustomArgs.ModelServiceExists = modelServiceExists
+	serveCustomArgs.Ports = map[string]int{}
+	if serveCustomArgs.Port != 0 {
+		serveCustomArgs.Ports["gprc"] = serveCustomArgs.Port
+	}
+	if serveCustomArgs.RestfulPort != 0 {
+		serveCustomArgs.Ports["restful"] = serveCustomArgs.RestfulPort
+	}
 
 	return nil
 }

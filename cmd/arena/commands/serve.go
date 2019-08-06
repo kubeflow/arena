@@ -31,23 +31,23 @@ var (
 )
 
 type ServeArgs struct {
-	ImagePullPolicy string            `yaml:"imagePullPolicy"` // --imagePullPolicy
-	GPUCount        int               `yaml:"gpuCount"`        // --gpus
-	GPUMemory       int               `yaml:"gpuMemory"`       // --gpumemory
-	Cpu             string            `yaml:"cpu"`             // --cpu
-	Memory          string            `yaml:"memory"`          // --memory
-	Envs            map[string]string `yaml:"envs"`            // --envs
-	Command         string            `yaml:"command"`         // --command
-	Replicas        int               `yaml:"replicas"`        // --replicas
-	Port            int               `yaml:"port"`            // --port
-	RestfulPort     int               `yaml:"restApiPort"`     // --restfulPort
-	EnableIstio     bool              `yaml:"enableIstio"`     // --enableIstio
-	ExposeService   bool              `yaml:"exposeService"`   // --exposeService
-	ServingName     string            `yaml:"servingName"`     // --servingName
-	ServingVersion  string            `yaml:"servingVersion"`  // --servingVersion
-	ModelDirs       map[string]string `yaml:"modelDirs"`
-
-	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
+	ImagePullPolicy    string            `yaml:"imagePullPolicy"` // --imagePullPolicy
+	GPUCount           int               `yaml:"gpuCount"`        // --gpus
+	GPUMemory          int               `yaml:"gpuMemory"`       // --gpumemory
+	Cpu                string            `yaml:"cpu"`             // --cpu
+	Memory             string            `yaml:"memory"`          // --memory
+	Envs               map[string]string `yaml:"envs"`            // --envs
+	Command            string            `yaml:"command"`         // --command
+	Replicas           int               `yaml:"replicas"`        // --replicas
+	Port               int               `yaml:"port"`            // --port
+	RestfulPort        int               `yaml:"restApiPort"`     // --restfulPort
+	EnableIstio        bool              `yaml:"enableIstio"`     // --enableIstio
+	ExposeService      bool              `yaml:"exposeService"`   // --exposeService
+	ServingName        string            `yaml:"servingName"`     // --servingName
+	ServingVersion     string            `yaml:"servingVersion"`  // --servingVersion
+	ModelDirs          map[string]string `yaml:"modelDirs"`
+	Ports              map[string]int    `yaml:"ports"`
+	ModelServiceExists bool              `yaml:"modelServiceExists"` // --modelServiceExists
 }
 
 func (s ServeArgs) validateIstioEnablement() error {
@@ -140,6 +140,7 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewServingDeleteCommand())
 	command.AddCommand(NewServingCustomCommand())
 	command.AddCommand(NewTrafficRouterSplitCommand())
+	command.AddCommand(NewServingGetCommand())
 
 	return command
 }
