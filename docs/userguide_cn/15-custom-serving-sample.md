@@ -29,7 +29,7 @@ fast-style-transfer  CUSTOM  alpha    1        0          172.21.8.94       grpc
 # kubectl get po
 NAME                                                        READY   STATUS              RESTARTS   AGE
 fast-style-transfer-alpha-custom-serving-845ffbf7dd-btbhj   0/1     ContainerCreating   0          6m44s
-
+```
 
 ### 2.访问服务 
 
