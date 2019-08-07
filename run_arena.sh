@@ -47,7 +47,7 @@ if ! kubectl get serviceaccount --all-namespaces | grep tf-job-operator; then
     kubectl apply -f /root/kubernetes-artifacts/tf-operator/tf-operator.yaml
 else
     if kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2'; then
-        kubectl delete -f /root/kubernetes-artifacts/tf-operator/tf-operator-v1apha2.yaml
+        kubectl delete -f /root/kubernetes-artifacts/tf-operator/tf-operator-v1alpha2.yaml
         kubectl apply -f /root/kubernetes-artifacts/tf-operator/tf-crd.yaml
         kubectl apply -f /root/kubernetes-artifacts/tf-operator/tf-operator.yaml
     fi
