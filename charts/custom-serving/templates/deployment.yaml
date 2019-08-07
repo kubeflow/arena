@@ -59,12 +59,16 @@ spec:
           - "{{ .Values.command }}"
           {{- end }}
           ports:
+            {{- if ne (int .Values.port) 0 }} 
             - containerPort: {{ .Values.port }}
               name: grpc
               protocol: TCP
+            {{- end }}
+            {{- if ne (int .Values.restApiPort) 0 }} 
             - containerPort: {{ .Values.restApiPort }}
               name: restful
               protocol: TCP
+            {{- end }}
           #readinessProbe:
           #  tcpSocket:
           #    port: grpc
