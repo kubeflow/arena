@@ -70,7 +70,7 @@ func (s ServeArgs) validateIstioEnablement() error {
 	return nil
 }
 
-// PreCheck gives some checking for args from command.
+// PreCheck gives some checking for args.
 func (s ServeArgs) PreCheck() error {
 	return s.checkPortsIsOk()
 }
@@ -157,6 +157,7 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewServingDeleteCommand())
 	command.AddCommand(NewServingCustomCommand())
 	command.AddCommand(NewTrafficRouterSplitCommand())
+	command.AddCommand(NewServingGetCommand())
 
 	return command
 }

@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -126,18 +127,24 @@ func (s Serving) DesiredInstances() int32 {
 }
 
 func (s Serving) GetStatus() string {
-	hasPendingPod := false
 	for _, pod := range s.pods {
 		if pod.Status.Phase == v1.PodPending {
 			log.Debugf("pod %s is pending", pod.Name)
-			hasPendingPod = true
-			break
-		}
-		if hasPendingPod {
 			return "PENDING"
 		}
 	}
 	return "RUNNING"
+}
+
+// GetAge returns the time string for serving job is running
+func (s Serving) GetAge() string {
+	for _, pod := range s.pods {
+		if pod.Status.Phase == v1.PodPending {
+			return "N/A"
+		}
+	}
+	return util.ShortHumanDuration(time.Now().Sub(s.pods[0].ObjectMeta.CreationTimestamp.Time))
+
 }
 
 func IsPodControllerByDeploment(pod v1.Pod, deploy app_v1.Deployment) bool {
