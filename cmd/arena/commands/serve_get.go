@@ -31,7 +31,6 @@ import (
 	//"io"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -50,20 +49,16 @@ var (
 	// get format from command option
 	printFormat string
 	// format template for "wide"
-	tablePrintTemplate = `Query Result %d:
-%s
-NAME:             %s
+	tablePrintTemplate = `NAME:             %s
 NAMESPACE:        %s	
 VERSION:          %s
-STATUS:           %s
 DESIRED:          %d
 AVAILABLE:        %d
 SERVING TYPE:     %s
 ENDPOINT ADDRESS: %s
 ENDPOINT PORTS:   %s
-SERVING DURATION: %s
-%s
-%s
+AGE:              %s
+
 %s
 `
 
@@ -72,7 +67,6 @@ SERVING DURATION: %s
 	// how many space equal a table?
 	oneTableEqualManySpace = 2
 	extraSpaces            = 8 * oneTableEqualManySpace
-	printAllJobs           bool
 	// define a map for serving type
 	SERVINGTYPE = map[string]ServingType{
 		"tf-serving":     ServingTF,
@@ -82,14 +76,14 @@ SERVING DURATION: %s
 	// get serving type from command option
 	stype           string
 	ErrNotFoundJobs = errors.New(`not found jobs under the assigned conditions.`)
+	ErrTooManyJobs  = errors.New(`found jobs more than one,please use --version or --type to filter.`)
 )
 
 // ServingJobPrint defines the print format
-type ServingJobPrint struct {
+type ServingJobPrintFormat struct {
 	Name            string         `yaml:"name" json:"name"`
 	Namespace       string         `yaml:"namespace" json:"namespace"`
 	Version         string         `yaml:"version" json:"version"`
-	Status          string         `yaml:"status" json:"status"`
 	Desired         int32          `yaml:"desired" json:"desired"`
 	Available       int32          `yaml:"available" json:"available"`
 	ServingDuration string         `yaml:"serving_duration" json:"serving_duration"`
@@ -105,7 +99,7 @@ type PodPrintInfo struct {
 	// how long the pod is running
 	Age string `yaml:"age" json:"age"`
 	// pod' status,there is "Running" and "Pending"
-	Status v1.PodPhase `yaml:"status" json:"status"`
+	Status string `yaml:"status" json:"status"`
 	// the node ip
 	HostIP       string `yaml:"host_ip" json:"host_ip"`
 	Ready        string `yaml:"ready" json:"ready"`
@@ -138,7 +132,6 @@ func NewServingGetCommand() *cobra.Command {
 	}
 	//command.Flags().BoolVar(&allNamespaces, "all-namespaces", false, "all namespace")
 	command.Flags().StringVar(&servingVersion, "version", "", "assign the serving job version")
-	command.Flags().BoolVar(&printAllJobs, "all", false, "display all jobs whose name is matched the one user gives.")
 	command.Flags().StringVar(&printFormat, "format", "wide", `set the print format,format can be "yaml" or "json"`)
 	command.Flags().StringVar(&stype, "type", "", `assign the serving job type,type can be "tf"("tensorflow"),"trt"("tensorrt"),"custom"`)
 
@@ -182,20 +175,20 @@ func ServingGetExecute(client *kubernetes.Clientset, servingName string) {
 		log.Errorf(err.Error())
 		os.Exit(1)
 	}
-	// create the print format
-	servingJobsForPrinting, err := NewServingJobsPrintList(filterJobs)
-	if err != nil {
-		log.Errorf(err.Error())
-		os.Exit(1)
-	}
 	// if jobs count is large than 1,print the help information
-	if len(servingJobsForPrinting) > 1 && !printAllJobs {
-		printString := GetMulJobsHelpInfo(servingJobsForPrinting)
+	if len(filterJobs) > 1 {
+		printString := GetMulJobsHelpInfo(filterJobs)
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, oneTableEqualManySpace, ' ', 0)
 		fmt.Fprintf(w, printString)
 		os.Exit(1)
 	}
-	printInfoToBytes, err := FormatServingJobs(printFormat, servingJobsForPrinting)
+	// create the print format
+	servingJob, err := NewServingJobPrintFormat(filterJobs[0])
+	if err != nil {
+		log.Errorf(err.Error())
+		os.Exit(1)
+	}
+	printInfoToBytes, err := FormatServingJobs(printFormat, servingJob)
 	if err != nil {
 		log.Errorf(err.Error())
 		os.Exit(1)
@@ -203,21 +196,22 @@ func ServingGetExecute(client *kubernetes.Clientset, servingName string) {
 	if printFormat == "wide" {
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, oneTableEqualManySpace, ' ', 0)
 		fmt.Fprintf(w, string(printInfoToBytes))
+		w.Flush()
 	} else {
 		fmt.Println(string(printInfoToBytes))
 	}
 }
 
 // if there is some jobs match the conditons given by user,print the all jobs and make user to chose one job.
-func GetMulJobsHelpInfo(jobs []ServingJobPrint) string {
-	header := fmt.Sprintf("%d jobs have been found:", len(jobs))
+func GetMulJobsHelpInfo(jobs []types.Serving) string {
+	header := fmt.Sprintf("There is %d jobs have been found:", len(jobs))
 	tableHeader := "NAME\tTYPE\tVERSION"
 	printLines := []string{tableHeader}
-	footer := fmt.Sprintf("please use \"--type\" or \"--version\" to filter,or use \"--all\" to display all jobs.")
+	footer := fmt.Sprintf("please use \"--type\" or \"--version\" to filter.")
 	for _, job := range jobs {
 		line := fmt.Sprintf("%s\t%s\t%s",
 			job.Name,
-			job.ServingType,
+			job.ServeType,
 			job.Version,
 		)
 		printLines = append(printLines, line)
@@ -302,156 +296,87 @@ func FilterServingJobs(jobs []types.Serving, servingVersion, servingType string)
 }
 
 // create a list to store the jobs with printing format
-func NewServingJobsPrintList(jobs []types.Serving) ([]ServingJobPrint, error) {
-	servingJobPrintList := []ServingJobPrint{}
-	for _, job := range jobs {
-		podPrintList := []PodPrintInfo{}
-		for _, pod := range job.AllPods() {
-			var hostIP, age, restartCount, ready string
-			switch pod.Status.Phase {
-			case v1.PodPending:
-				age = "N/A"
-				hostIP = "N/A"
-				restartCount = "N/A"
-				ready = "N/A"
-			default:
-				hostIP = pod.Status.HostIP
-				age = util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
-			}
-			if restartCount != "N/A" {
-				container, err := GetContainerStatus(pod.Status.ContainerStatuses, pod.ObjectMeta.Labels["app"])
-				if err != nil {
-					return nil, err
-				}
-				restartCount = fmt.Sprintf("%d", container.RestartCount)
-			}
-			if ready != "N/A" {
-				ready = GetReadyContainerCount(pod.Status.ContainerStatuses)
-			}
-			podPrintInfo := PodPrintInfo{
-				PodName:           path.Base(pod.ObjectMeta.SelfLink),
-				CreationTimestamp: pod.ObjectMeta.CreationTimestamp,
-				Age:               age,
-				Status:            pod.Status.Phase,
-				HostIP:            hostIP,
-				RestartCount:      restartCount,
-				Ready:             ready,
-			}
-			podPrintList = append(podPrintList, podPrintInfo)
+func NewServingJobPrintFormat(job types.Serving) (ServingJobPrintFormat, error) {
+	podPrintList := []PodPrintInfo{}
+	for ind, pod := range job.AllPods() {
+		hostIP := pod.Status.HostIP
+		if hostIP == "" {
+			hostIP = "N/A"
 		}
-		jobPrintObj := ServingJobPrint{
-			Name:            job.Name,
-			Namespace:       job.Namespace,
-			Status:          job.GetStatus(),
-			Desired:         job.DesiredInstances(),
-			Available:       job.AvailableInstances(),
-			EndpointAddress: job.GetClusterIP(),
-			EndpointPorts:   job.GetPorts(),
-			ServingDuration: job.GetAge(),
-			Version:         job.Version,
-			ServingType:     job.ServeType,
-			Pods:            podPrintList,
+		if debugPod, err := yaml.Marshal(pod); err == nil {
+			log.Debugf("Pod %d:\n%s", ind, string(debugPod))
+		} else {
+			log.Errorf("failed to marshal pod,reason: %s", err.Error())
 		}
-		servingJobPrintList = append(servingJobPrintList, jobPrintObj)
+		status, totalContainers, restarts, readyCount := types.DefinePodPhaseStatus(pod)
+		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
+		podPrintInfo := PodPrintInfo{
+			PodName:           path.Base(pod.ObjectMeta.SelfLink),
+			CreationTimestamp: pod.ObjectMeta.CreationTimestamp,
+			Age:               age,
+			Status:            status,
+			HostIP:            hostIP,
+			RestartCount:      fmt.Sprintf("%d", restarts),
+			Ready:             fmt.Sprintf("%d/%d", readyCount, totalContainers),
+		}
+		podPrintList = append(podPrintList, podPrintInfo)
 	}
-	return servingJobPrintList, nil
+	jobPrintFormatObj := ServingJobPrintFormat{
+		Name:            job.Name,
+		Namespace:       job.Namespace,
+		Desired:         job.DesiredInstances(),
+		Available:       job.AvailableInstances(),
+		EndpointAddress: job.GetClusterIP(),
+		EndpointPorts:   job.GetPorts(),
+		ServingDuration: job.GetAge(),
+		Version:         job.Version,
+		ServingType:     job.ServeType,
+		Pods:            podPrintList,
+	}
+	return jobPrintFormatObj, nil
 
 }
-
-// get count of containers which status is ready in a pod
-func GetReadyContainerCount(containers []v1.ContainerStatus) string {
-	if len(containers) == 0 {
-		return "0/0"
-	}
-	readyCount := 0
-	for _, con := range containers {
-		if con.Ready {
-			readyCount++
-		}
-	}
-	return fmt.Sprintf("%v/%v", readyCount, len(containers))
-}
-
-// get the container status
-func GetContainerStatus(containers []v1.ContainerStatus, containerName string) (v1.ContainerStatus, error) {
-	for _, con := range containers {
-		if con.Name == containerName {
-			return con, nil
-		}
-		log.Debugf("container name: %s,target name: %s\n", con.Name, containerName)
-	}
-	return v1.ContainerStatus{}, fmt.Errorf("not found container status whose name is %s", containerName)
-}
-
-// matchTargetCondition checks serving job is matching the namespace or version
 
 // format the serving jobs information
-func FormatServingJobs(format string, servingJobPrintInfoList []ServingJobPrint) ([]byte, error) {
+func FormatServingJobs(format string, jobFormat ServingJobPrintFormat) ([]byte, error) {
 	switch format {
 	case "json":
-		return json.Marshal(servingJobPrintInfoList)
+		return json.Marshal(jobFormat)
 	case "yaml":
-		return yaml.Marshal(servingJobPrintInfoList)
+		return yaml.Marshal(jobFormat)
 	default:
-		return []byte(customFormat(servingJobPrintInfoList)), nil
+		return []byte(customFormat(jobFormat)), nil
 	}
 }
 
 // if format type is "wide",define our printable string
 // 	subtableHeader = "INSTANCE\tSTATUS\tAGE\tRESTARTS\tNODE"
 
-func customFormat(servingJobList []ServingJobPrint) string {
-	var printInfoList = []string{}
-	for index, job := range servingJobList {
-		podInfoStringArray := []string{subtableHeader}
-		maxStringLen := len(subtableHeader) + extraSpaces
-		for _, pod := range job.Pods {
-			podInfoStringLine := fmt.Sprintf("%s\t%v\t%s\t%s\t%s\t%s",
-				pod.PodName,
-				pod.Status,
-				pod.Age,
-				pod.Ready,
-				pod.RestartCount,
-				pod.HostIP,
-			)
-			if len(podInfoStringLine)+extraSpaces > maxStringLen {
-				maxStringLen = len(podInfoStringLine) + extraSpaces
-			}
-			podInfoStringArray = append(podInfoStringArray, podInfoStringLine)
-		}
-		singleJobPrintInfo := fmt.Sprintf(
-			tablePrintTemplate,
-			index,
-			JoinCharToLine("=", maxStringLen),
-			job.Name,
-			job.Namespace,
-			job.Version,
-			job.Status,
-			job.Desired,
-			job.Available,
-			job.ServingType,
-			job.EndpointAddress,
-			job.EndpointPorts,
-			job.ServingDuration,
-			JoinCharToLine("-", maxStringLen),
-			strings.Join(podInfoStringArray, "\n"),
-			JoinCharToLine("=", maxStringLen),
+func customFormat(job ServingJobPrintFormat) string {
+	podInfoStringArray := []string{subtableHeader}
+	for _, pod := range job.Pods {
+		podInfoStringLine := fmt.Sprintf("%s\t%v\t%s\t%s\t%s\t%s",
+			pod.PodName,
+			pod.Status,
+			pod.Age,
+			pod.Ready,
+			pod.RestartCount,
+			pod.HostIP,
 		)
-		printInfoList = append(printInfoList, singleJobPrintInfo)
-
+		podInfoStringArray = append(podInfoStringArray, podInfoStringLine)
 	}
-	return strings.Join(printInfoList, "\n")
-}
-
-// get a string with expect length
-func JoinCharToLine(ch string, length int) string {
-	if length == 0 {
-		return ""
-	}
-	var line = []string{}
-	for i := 0; i < length; i++ {
-		line = append(line, ch)
-	}
-	return strings.Join(line, "")
-
+	jobPrintString := fmt.Sprintf(
+		tablePrintTemplate,
+		job.Name,
+		job.Namespace,
+		job.Version,
+		job.Desired,
+		job.Available,
+		job.ServingType,
+		job.EndpointAddress,
+		job.EndpointPorts,
+		job.ServingDuration,
+		strings.Join(podInfoStringArray, "\n"),
+	)
+	return jobPrintString
 }
