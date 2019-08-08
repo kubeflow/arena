@@ -14,35 +14,23 @@
 package commands
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/kubeflow/arena/pkg/printer"
 
 	"github.com/kubeflow/arena/pkg/types"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 
 	//"io"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-)
-
-// define serving type
-type ServingType string
-
-// three serving types
-const (
-	ServingTF     ServingType = "TENSORFLOW"
-	ServingTRT    ServingType = "TENSORRT"
-	ServingCustom ServingType = "CUSTOM"
 )
 
 var (
@@ -61,50 +49,15 @@ AGE:              %s
 
 %s
 `
-
 	// table header
 	subtableHeader = "INSTANCE\tSTATUS\tAGE\tREADY\tRESTARTS\tNODE"
 	// how many space equal a table?
 	oneTableEqualManySpace = 2
-	extraSpaces            = 8 * oneTableEqualManySpace
-	// define a map for serving type
-	SERVINGTYPE = map[string]ServingType{
-		"tf-serving":     ServingTF,
-		"trt-serving":    ServingTRT,
-		"custom-serving": ServingCustom,
-	}
 	// get serving type from command option
 	stype           string
 	ErrNotFoundJobs = errors.New(`not found jobs under the assigned conditions.`)
 	ErrTooManyJobs  = errors.New(`found jobs more than one,please use --version or --type to filter.`)
 )
-
-// ServingJobPrint defines the print format
-type ServingJobPrintFormat struct {
-	Name            string         `yaml:"name" json:"name"`
-	Namespace       string         `yaml:"namespace" json:"namespace"`
-	Version         string         `yaml:"version" json:"version"`
-	Desired         int32          `yaml:"desired" json:"desired"`
-	Available       int32          `yaml:"available" json:"available"`
-	ServingDuration string         `yaml:"serving_duration" json:"serving_duration"`
-	ServingType     string         `yaml:"serving_type" json:"serving_type"`
-	EndpointAddress string         `yaml:"endpoint_address" json:"endpoint_address"`
-	EndpointPorts   string         `yaml:"endpoint_ports" json:"endpoint_ports"`
-	Pods            []PodPrintInfo `yaml:"instances" json:"instances"`
-}
-type PodPrintInfo struct {
-	PodName string `yaml:"pod_name" json:"pod_name"` // selfLink
-	// create timestamp
-	CreationTimestamp metav1.Time `yaml:"-" json:"-"`
-	// how long the pod is running
-	Age string `yaml:"age" json:"age"`
-	// pod' status,there is "Running" and "Pending"
-	Status string `yaml:"status" json:"status"`
-	// the node ip
-	HostIP       string `yaml:"host_ip" json:"host_ip"`
-	Ready        string `yaml:"ready" json:"ready"`
-	RestartCount string `yaml:"restart_count" json:"restart_count"`
-}
 
 // NewServingGetCommand starts the command
 func NewServingGetCommand() *cobra.Command {
@@ -141,18 +94,13 @@ func NewServingGetCommand() *cobra.Command {
 
 // check the serving type and transfer it
 func checkServingTypeIsOk() error {
-	var st = map[string]ServingType{
-		"trt":    ServingTRT,
-		"tf":     ServingTF,
-		"custom": ServingCustom,
-	}
 	if stype == "" {
 		return nil
 	}
-	if _, ok := st[stype]; !ok {
+	if types.KeyMapServingType(stype) == types.ServingType("") {
 		return fmt.Errorf("unknow serving type: %s", stype)
 	}
-	stype = string(st[stype])
+	stype = string(types.KeyMapServingType(stype))
 	return nil
 }
 
@@ -182,13 +130,7 @@ func ServingGetExecute(client *kubernetes.Clientset, servingName string) {
 		fmt.Fprintf(w, printString)
 		os.Exit(1)
 	}
-	// create the print format
-	servingJob, err := NewServingJobPrintFormat(filterJobs[0])
-	if err != nil {
-		log.Errorf(err.Error())
-		os.Exit(1)
-	}
-	printInfoToBytes, err := FormatServingJobs(printFormat, servingJob)
+	printInfoToBytes, err := FormatServingJobs(printFormat, filterJobs[0])
 	if err != nil {
 		log.Errorf(err.Error())
 		os.Exit(1)
@@ -203,16 +145,16 @@ func ServingGetExecute(client *kubernetes.Clientset, servingName string) {
 }
 
 // if there is some jobs match the conditons given by user,print the all jobs and make user to chose one job.
-func GetMulJobsHelpInfo(jobs []types.Serving) string {
+func GetMulJobsHelpInfo(jobs []printer.ServingJobPrinter) string {
 	header := fmt.Sprintf("There is %d jobs have been found:", len(jobs))
 	tableHeader := "NAME\tTYPE\tVERSION"
 	printLines := []string{tableHeader}
 	footer := fmt.Sprintf("please use \"--type\" or \"--version\" to filter.")
 	for _, job := range jobs {
 		line := fmt.Sprintf("%s\t%s\t%s",
-			job.Name,
-			job.ServeType,
-			job.Version,
+			job.GetName(),
+			job.GetType(),
+			job.GetVersion(),
 		)
 		printLines = append(printLines, line)
 	}
@@ -229,8 +171,8 @@ func PrepareCheck() error {
 }
 
 // get all jobs whose name meet the  given one.
-func GetServingJobsByName(client *kubernetes.Clientset, servingName string) ([]types.Serving, error) {
-	jobs := []types.Serving{}
+func GetServingJobsByName(client *kubernetes.Clientset, servingName string) ([]printer.ServingJobPrinter, error) {
+	jobs := []printer.ServingJobPrinter{}
 	ns := GetNamespace()
 	deployments, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("serviceName=%s", servingName),
@@ -251,7 +193,7 @@ func GetServingJobsByName(client *kubernetes.Clientset, servingName string) ([]t
 	}
 
 	for _, deploy := range deployments.Items {
-		jobs = append(jobs, types.NewServingJob(client, deploy, podListObject.Items))
+		jobs = append(jobs, printer.NewServingJobPrinter(client, deploy, podListObject.Items))
 	}
 
 	log.Debugf("Serving jobs list is %++v", jobs)
@@ -261,30 +203,14 @@ func GetServingJobsByName(client *kubernetes.Clientset, servingName string) ([]t
 	return jobs, nil
 }
 
-// check namespace,version,type is matched the given one or not
-func servingJobIsMatched(target string, matchType string, servingJob types.Serving) bool {
-	switch {
-	case target == "":
-		return true
-	case matchType == "NAMESPACE" && target == servingJob.Namespace:
-		return true
-	case matchType == "VERSION" && target == servingJob.Version:
-		return true
-	case matchType == "TYPE" && target == servingJob.ServeType:
-		return true
-	default:
-		return false
-	}
-}
-
 // FilterServingJobs filters serving jobs under some conditions
-func FilterServingJobs(jobs []types.Serving, servingVersion, servingType string) ([]types.Serving, error) {
-	filterJobs := []types.Serving{}
+func FilterServingJobs(jobs []printer.ServingJobPrinter, servingVersion, servingType string) ([]printer.ServingJobPrinter, error) {
+	filterJobs := []printer.ServingJobPrinter{}
 	for _, job := range jobs {
-		namespaceIsMatched := servingJobIsMatched(namespace, "NAMESPACE", job)
-		versionIsMatched := servingJobIsMatched(servingVersion, "VERSION", job)
-		typeIsMatched := servingJobIsMatched(servingType, "TYPE", job)
-		log.Debugf("name: %v,namespaceIsOk: %v,versionIsOk: %v,typeIsMatched: %v", job.Name, namespaceIsMatched, versionIsMatched, typeIsMatched)
+		namespaceIsMatched := job.IsMatchedGivenNamespace(namespace)
+		versionIsMatched := job.IsMatchedGivenVersion(servingVersion)
+		typeIsMatched := job.IsMatchedGivenType(servingType)
+		log.Debugf("name: %v,namespaceIsOk: %v,versionIsOk: %v,typeIsMatched: %v", job.GetName(), namespaceIsMatched, versionIsMatched, typeIsMatched)
 		if namespaceIsMatched && versionIsMatched && typeIsMatched {
 			filterJobs = append(filterJobs, job)
 		}
@@ -295,64 +221,22 @@ func FilterServingJobs(jobs []types.Serving, servingVersion, servingType string)
 	return filterJobs, nil
 }
 
-// create a list to store the jobs with printing format
-func NewServingJobPrintFormat(job types.Serving) (ServingJobPrintFormat, error) {
-	podPrintList := []PodPrintInfo{}
-	for ind, pod := range job.AllPods() {
-		hostIP := pod.Status.HostIP
-		if hostIP == "" {
-			hostIP = "N/A"
-		}
-		if debugPod, err := yaml.Marshal(pod); err == nil {
-			log.Debugf("Pod %d:\n%s", ind, string(debugPod))
-		} else {
-			log.Errorf("failed to marshal pod,reason: %s", err.Error())
-		}
-		status, totalContainers, restarts, readyCount := types.DefinePodPhaseStatus(pod)
-		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
-		podPrintInfo := PodPrintInfo{
-			PodName:           path.Base(pod.ObjectMeta.SelfLink),
-			CreationTimestamp: pod.ObjectMeta.CreationTimestamp,
-			Age:               age,
-			Status:            status,
-			HostIP:            hostIP,
-			RestartCount:      fmt.Sprintf("%d", restarts),
-			Ready:             fmt.Sprintf("%d/%d", readyCount, totalContainers),
-		}
-		podPrintList = append(podPrintList, podPrintInfo)
-	}
-	jobPrintFormatObj := ServingJobPrintFormat{
-		Name:            job.Name,
-		Namespace:       job.Namespace,
-		Desired:         job.DesiredInstances(),
-		Available:       job.AvailableInstances(),
-		EndpointAddress: job.GetClusterIP(),
-		EndpointPorts:   job.GetPorts(),
-		ServingDuration: job.GetAge(),
-		Version:         job.Version,
-		ServingType:     job.ServeType,
-		Pods:            podPrintList,
-	}
-	return jobPrintFormatObj, nil
-
-}
-
 // format the serving jobs information
-func FormatServingJobs(format string, jobFormat ServingJobPrintFormat) ([]byte, error) {
+func FormatServingJobs(format string, job printer.ServingJobPrinter) ([]byte, error) {
 	switch format {
 	case "json":
-		return json.Marshal(jobFormat)
+		return job.GetJson()
 	case "yaml":
-		return yaml.Marshal(jobFormat)
+		return job.GetYaml()
 	default:
-		return []byte(customFormat(jobFormat)), nil
+		return []byte(customFormat(job)), nil
 	}
 }
 
 // if format type is "wide",define our printable string
 // 	subtableHeader = "INSTANCE\tSTATUS\tAGE\tRESTARTS\tNODE"
 
-func customFormat(job ServingJobPrintFormat) string {
+func customFormat(job printer.ServingJobPrinter) string {
 	podInfoStringArray := []string{subtableHeader}
 	for _, pod := range job.Pods {
 		podInfoStringLine := fmt.Sprintf("%s\t%v\t%s\t%s\t%s\t%s",
@@ -367,15 +251,15 @@ func customFormat(job ServingJobPrintFormat) string {
 	}
 	jobPrintString := fmt.Sprintf(
 		tablePrintTemplate,
-		job.Name,
-		job.Namespace,
-		job.Version,
+		job.GetName(),
+		job.GetNamespace(),
+		job.GetVersion(),
 		job.Desired,
 		job.Available,
-		job.ServingType,
+		job.GetType(),
 		job.EndpointAddress,
 		job.EndpointPorts,
-		job.ServingDuration,
+		job.Age,
 		strings.Join(podInfoStringArray, "\n"),
 	)
 	return jobPrintString
