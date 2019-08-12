@@ -21,9 +21,9 @@ var SERVING_CHARTS = map[string]string{
 
 func KeyMapServingType(servingKey string) ServingType {
 	switch servingKey {
-	case "tf", "tf-serving":
+	case "tf", "tf-serving", "tensorflow-serving":
 		return ServingTF
-	case "trt", "trt-serving":
+	case "trt", "trt-serving", "tensorrt-serving":
 		return ServingTRT
 	case "custom", "custom-serving":
 		return ServingCustom

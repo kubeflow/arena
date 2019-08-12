@@ -68,6 +68,7 @@ func (s Serving) AllSvcs() (svcs []v1.Service) {
 		log.Debugf("try to get Endpoint IP for name %s and %s", s.Name, s.Version)
 		for _, service := range allServices {
 			if service.Labels["servingName"] == s.Name &&
+				KeyMapServingType(service.Labels["servingType"]) == s.ServeType &&
 				service.Labels["servingVersion"] == s.Version {
 				// return service.Spec.ClusterIP
 				svcs = append(svcs, service)
