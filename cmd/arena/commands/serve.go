@@ -138,7 +138,7 @@ var (
 
 Available Commands:
   tensorflow,tf  Submit a TensorFlow Serving Job.
-    `
+  tensorrt,trt   Submit a TensorRT Job  `
 )
 
 func NewServeCommand() *cobra.Command {

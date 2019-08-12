@@ -8,7 +8,7 @@ serve a job.
 
 Available Commands:
   tensorflow,tf  Submit a TensorFlow Serving Job.
-    
+  tensorrt,trt   Submit a TensorRT Job
 
 ```
 arena serve [flags]
