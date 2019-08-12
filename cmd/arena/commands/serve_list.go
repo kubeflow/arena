@@ -137,7 +137,7 @@ func ListServingsByName(client *kubernetes.Clientset, name string) (servings []t
 		// servingName := deploy.Labels["servingName"]
 		servings = append(servings, types.Serving{
 			Name:      name,
-			ServeType: servingType,
+			ServeType: types.KeyMapServingType(servingType),
 			Version:   servingVersion,
 		})
 	}
@@ -170,7 +170,7 @@ func ListServingJobsByHelm() ([]types.Serving, error) {
 				Name:      nameAndVersion[0],
 				Namespace: namespace,
 				Version:   servingVersion,
-				ServeType: serveType,
+				ServeType: types.KeyMapServingType(serveType),
 				//Status: status,
 			})
 		}

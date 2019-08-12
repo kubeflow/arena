@@ -1,4 +1,4 @@
-FROM registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v20180621-38b886a0
+FROM registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v1.0.0-rc.0-d746bde
 
 COPY backend /opt/tensorflow_k8s/dashboard/
 
