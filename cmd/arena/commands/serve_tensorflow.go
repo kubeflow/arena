@@ -19,6 +19,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"bytes"
 	"io/ioutil"
@@ -191,7 +192,10 @@ func (serveTensorFlowArgs *ServeTensorFlowArgs) preprocess(client *kubernetes.Cl
 	if len(envs) > 0 {
 		serveTensorFlowArgs.Envs = transformSliceToMap(envs, "=")
 	}
-
+	if serveTensorFlowArgs.ServingVersion == "" {
+		t := time.Now()
+		serveTensorFlowArgs.ServingVersion = fmt.Sprint(t.Format("200601021504"))
+	}
 	modelServiceExists, err := checkServiceExists(client, namespace, serveTensorFlowArgs.ServingName)
 	serveTensorFlowArgs.ModelServiceExists = modelServiceExists
 
