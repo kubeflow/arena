@@ -20,8 +20,8 @@ import (
 
 	"k8s.io/api/core/v1"
 
-	common "github.com/kubeflow/arena/pkg/tf-operator/apis/common/v1beta2"
-	"github.com/kubeflow/arena/pkg/tf-operator/util"
+	common "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1beta2"
+	"github.com/kubeflow/arena/pkg/operators/tf-operator/util"
 )
 
 const (
