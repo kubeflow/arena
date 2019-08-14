@@ -12,6 +12,12 @@ ARG COMMIT=stable
 
 FROM golang:$GOLANG_VERSION-stretch as build
 
+ENV KUBE_VERSION=$KUBE_VERSION
+ENV HELM_VERSION=$HELM_VERSION
+ENV VERSION=$VERSION
+ENV OS_ARCH=$OS_ARCH
+ENV COMMIT=$COMMIT
+
 RUN mkdir -p /go/src/github.com/kubeflow/arena
 
 WORKDIR /go/src/github.com/kubeflow/arena
