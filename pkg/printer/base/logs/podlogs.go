@@ -50,6 +50,8 @@ func (slp *PodLogPrinter) CheckPodIsInJob() error {
 		if podName == "" {
 			slp.PodLog.Args.PodName = names[0]
 			return nil
+		} else if podName == names[0] {
+			return nil
 		}
 		return ErrPodNotFound
 	default:
