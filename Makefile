@@ -102,3 +102,16 @@ notebook-image-kubeflow:
 notebook-image:
 	docker build --build-arg "BASE_IMAGE=tensorflow/tensorflow:1.12.0-devel-py3" -t cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT}-cpu -f Dockerfile.notebook.cpu .
 	docker tag cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT}-cpu cheyang/arena-notebook:cpu
+
+.PHONY: build-pkg
+build-pkg:
+	docker build --build-arg "KUBE_VERSION=v1.11.2" \
+				 --build-arg "HELM_VERSION=v2.9.1" \
+				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
+				 --build-arg "VERSION=${VERSION}" \
+				 --build-arg "OS_ARCH=amd64" \
+				 --build-arg "GOLANG_VERSION=1.10" \
+	-t cheyang/arena-build -f Dockerfile.build .
+	docker run -itd --name=arena-pkg cheyang/arena-build /bin/bash
+	docker cp arena-pkg:/arena-${VERSION}-${GIT_SHORT_COMMIT}.tar.gz .
+	docker rm -f arena-pkg
