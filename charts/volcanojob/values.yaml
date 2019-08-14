@@ -5,7 +5,7 @@
 # The minimal available pods to run for this Job
 minAvailable: 1
 queue: "default"            # user define
-schedulerName: kube-batch
+schedulerName: volcano
 
 gpuCount: 0                 # user define
 imagePullPolicy: Always

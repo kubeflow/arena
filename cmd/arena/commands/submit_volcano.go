@@ -85,7 +85,7 @@ func (sa *submitVolcanoJobArgs) addFlags(command *cobra.Command) {
 
 	command.Flags().IntVar(&(sa.MinAvailable), "minAvailable", 1, "The minimal available pods to run for this Job. default value is 1")
 	command.Flags().StringVar(&(sa.Queue), "queue", "default", "Specifies the queue that will be used in the scheduler, default queue is used this leaves empty")
-	command.Flags().StringVar(&(sa.SchedulerName), "schedulerName", "kube-batch", "Specifies the scheduler Name, default  is kube-batch used this leaves empty")
+	command.Flags().StringVar(&(sa.SchedulerName), "schedulerName", "volcano", "Specifies the scheduler Name, default is volcano when not specified")
 	// each task related information name,image,replica number
 	command.Flags().StringVar(&(sa.TaskName), "taskName", "task", "the task name of volcano job, default value is task")
 	command.Flags().StringSliceVar(&(sa.TaskImages), "taskImages", []string{"ubuntu", "nginx", "busybox"}, "the docker images of different tasks of volcano job. default used 3 tasks with ubuntu,nginx and busybox images")

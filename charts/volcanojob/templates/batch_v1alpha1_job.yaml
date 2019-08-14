@@ -12,7 +12,7 @@ metadata:
     heritage: {{ .Release.Service }}
     createdBy: "VolcanoJob"
 spec:
-  schedulerName: {{ .Values.schedulerName | default "kube-batch" | quote }}
+  schedulerName: {{ .Values.schedulerName | default "volcano" | quote }}
   minAvailable: {{ .Values.minAvailable }}
   queue: {{ .Values.queue | default "default" | quote }}
   tasks:
@@ -31,7 +31,7 @@ spec:
             {{- end}}
             createdBy: "VolcanoJob"
         spec:
-            schedulerName: {{ $dot.Values.schedulerName | default "kube-batch" | quote }}
+            schedulerName: {{ $dot.Values.schedulerName | default "volcano" | quote }}
             restartPolicy: {{ $dot.Values.restartPolicy | default "Never" | quote }}
             containers:
               - name: {{ $dot.Values.taskName }}
