@@ -17,7 +17,7 @@ Kubernetes that are commonly required by many classes of batch & elastic workloa
 --minAvailable int       The minimal available pods to run for this Job. default value is 1 (default 1)
 --name string            override name
 --queue string           Specifies the queue that will be used in the scheduler, default queue is used this leaves empty (default "default")
---schedulerName string   Specifies the scheduler Name, default  is kube-batch used this leaves empty (default "kube-batch")
+--schedulerName string   Specifies the scheduler Name, default is volcano when not specified (default "volcano")
 --taskCPU string         cpu request for each task replica / pod. default value is 250m (default "250m")
 --taskImages strings     the docker images of different tasks of volcano job. default used 3 tasks with ubuntu,nginx and busybox images (default [ubuntu,nginx,busybox])
 --taskMemory string      memory request for each task replica/pod.default value is 128Mi) (default "128Mi")
