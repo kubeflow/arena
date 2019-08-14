@@ -9,8 +9,8 @@ import (
 	servejob "github.com/kubeflow/arena/pkg/jobs/serving"
 	printer "github.com/kubeflow/arena/pkg/printer/serving"
 	"github.com/kubeflow/arena/pkg/types"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/kubernetes/pkg/kubelet/kubeletconfig/util/log"
 )
 
 var (
