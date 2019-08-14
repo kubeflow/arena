@@ -44,30 +44,51 @@ func NewServingListCommand() *cobra.Command {
 			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-
-			fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tSTATUS\tCLUSTER-IP\n")
+			if allNamespaces {
+				fmt.Fprintf(w, "NAME\tTYPE\tNAMESPACE\tVERSION\tDESIRED\tAVAILABLE\tENDPOINT_ADDRESS\tPORTS\n")
+			} else {
+				fmt.Fprintf(w, "NAME\tTYPE\tVERSION\tDESIRED\tAVAILABLE\tENDPOINT_ADDRESS\tPORTS\n")
+			}
 			jobs, err := ListServing(client)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 			for _, servingJob := range jobs {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-					servingJob.GetName(),
-					servingJob.ServeType,
-					servingJob.Version,
-					servingJob.GetStatus(),
-					servingJob.GetClusterIP(),
-				)
+				if allNamespaces {
+					fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%d\t%s\t%s\n",
+						servingJob.GetName(),
+						servingJob.ServeType,
+						servingJob.Namespace,
+						servingJob.Version,
+						servingJob.DesiredInstances(),
+						servingJob.AvailableInstances(),
+						servingJob.GetClusterIP(),
+						servingJob.GetPorts(),
+					)
+
+				} else {
+					fmt.Fprintf(w, "%s\t%s\t%s\t%d\t%d\t%s\t%s\n",
+						servingJob.GetName(),
+						servingJob.ServeType,
+						servingJob.Version,
+						servingJob.DesiredInstances(),
+						servingJob.AvailableInstances(),
+						servingJob.GetClusterIP(),
+						servingJob.GetPorts(),
+					)
+
+				}
 			}
 
 			_ = w.Flush()
 		},
 	}
-
+	command.Flags().BoolVar(&allNamespaces, "all-namespaces", false, "all namespace")
 	return command
 }
 
+// ListServing returns a list of serving
 func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
 	jobs := []types.Serving{}
 	ns := GetNamespace()
@@ -94,6 +115,35 @@ func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
 	return jobs, nil
 }
 
+// List Servings by name
+func ListServingsByName(client *kubernetes.Clientset, name string) (servings []types.Serving, err error) {
+	ns := GetNamespace()
+	labels := fmt.Sprintf("servingName=%s", name)
+	deployList, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
+		LabelSelector: labels,
+	})
+	if err != nil {
+		log.Debugf("Failed to ListServingsByName due to %v", err)
+		return nil, err
+	}
+
+	log.Debugf("ListServingsByName: deployments %v with labels %v", deployList.Items, labels)
+
+	servings = []types.Serving{}
+	for _, deploy := range deployList.Items {
+		log.Debugf("ListServingsByName: find deploy %v", deploy)
+		servingType := deploy.Labels["servingType"]
+		servingVersion := deploy.Labels["servingVersion"]
+		// servingName := deploy.Labels["servingName"]
+		servings = append(servings, types.Serving{
+			Name:      name,
+			ServeType: types.KeyMapServingType(servingType),
+			Version:   servingVersion,
+		})
+	}
+	return servings, nil
+}
+
 func ListServingJobsByHelm() ([]types.Serving, error) {
 	releaseMap, err := helm.ListAllReleasesWithDetail()
 	if err != nil {
@@ -110,17 +160,17 @@ func ListServingJobsByHelm() ([]types.Serving, error) {
 		if serveType, ok := types.SERVING_CHARTS[chart]; ok {
 			index := strings.Index(name, "-")
 			//serviceName := name[0:index]
-			serviceVersion := ""
+			servingVersion := ""
 			if index > -1 {
-				serviceVersion = name[index+1:]
+				servingVersion = name[index+1:]
 			}
 			nameAndVersion := strings.Split(name, "-")
 			log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
 			servings = append(servings, types.Serving{
 				Name:      nameAndVersion[0],
 				Namespace: namespace,
-				Version:   serviceVersion,
-				ServeType: serveType,
+				Version:   servingVersion,
+				ServeType: types.KeyMapServingType(serveType),
 				//Status: status,
 			})
 		}

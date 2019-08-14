@@ -28,8 +28,19 @@ func gpuPods(pods []v1.Pod) (podsWithGPU []v1.Pod) {
 	return podsWithGPU
 }
 
-// The way to get GPU Count of Node: nvidia.com/gpu
-func gpuInNode(node v1.Node) int64 {
+// The way to get total GPU Count of Node: nvidia.com/gpu
+func totalGpuInNode(node v1.Node) int64 {
+	val, ok := node.Status.Capacity[NVIDIAGPUResourceName]
+
+	if !ok {
+		return gpuInNodeDeprecated(node)
+	}
+
+	return val.Value()
+}
+
+// The way to get allocatble GPU Count of Node: nvidia.com/gpu
+func allocatableGpuInNode(node v1.Node) int64 {
 	val, ok := node.Status.Allocatable[NVIDIAGPUResourceName]
 
 	if !ok {

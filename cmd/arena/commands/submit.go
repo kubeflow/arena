@@ -28,6 +28,8 @@ import (
 
 var (
 	envs        []string
+	selectors   []string
+	tolerations []string
 	dataset     []string
 	dataDirs    []string
 	annotations []string
@@ -36,6 +38,8 @@ var (
 // The common parts of the submitAthd
 type submitArgs struct {
 	// Name       string   `yaml:"name"`       // --name
+	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
+	Tolerations  []string `yaml:"tolerations"` // --toleration
 	Image      string            `yaml:"image"`      // --image
 	GPUCount   int               `yaml:"gpuCount"`   // --gpuCount
 	Envs       map[string]string `yaml:"envs"`       // --envs
@@ -156,6 +160,32 @@ func (s *submitArgs) transform() (err error) {
 	}
 	return nil
 }
+// get node selectors
+func (submitArgs *submitArgs) addNodeSelectors() {
+	log.Debugf("node selectors: %v",selectors)
+	if len(selectors) == 0 {
+		submitArgs.NodeSelectors = map[string]string{}
+		return 
+	}
+	submitArgs.NodeSelectors = transformSliceToMap(selectors,"=")
+}
+
+// get tolerations labels
+func (submitArgs *submitArgs) addTolerations() {
+	log.Debugf("tolerations: %v",tolerations)
+	if len(tolerations) == 0 {
+		submitArgs.Tolerations = []string{}
+		return 
+	}
+	submitArgs.Tolerations = []string{}
+	for _,taintKey := range tolerations {
+		if taintKey == "all" {
+			submitArgs.Tolerations = []string{"all"}
+			return 
+		}
+		submitArgs.Tolerations = append(submitArgs.Tolerations,taintKey)
+	}
+}
 
 func (submitArgs *submitArgs) addJobInfoToEnv() {
 	if len(submitArgs.Envs) == 0 {
@@ -183,7 +213,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&submitArgs.WorkingDir, "workingDir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
 	command.Flags().MarkDeprecated("workingDir", "please use --working-dir instead")
 	command.Flags().StringVar(&submitArgs.WorkingDir, "working-dir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
-
+  
 	// command.MarkFlagRequired("workingDir")
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
@@ -197,6 +227,9 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 
 	// use priority
 	command.Flags().StringVarP(&submitArgs.PriorityClassName, "priority", "p", "", "priority class name")
+	// toleration
+	command.Flags().StringArrayVarP(&tolerations,"toleration","",[]string{},`tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVarP(&selectors,"selector","",[]string{},`assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 }
 
 func init() {

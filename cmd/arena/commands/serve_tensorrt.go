@@ -17,9 +17,11 @@ package commands
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
+
 	//log "github.com/sirupsen/logrus"
 	"github.com/kubeflow/arena/pkg/workflow"
 	"github.com/spf13/cobra"
@@ -80,6 +82,7 @@ func NewServingTensorRTCommand() *cobra.Command {
 	command.Flags().IntVar(&serveTensorRTArgs.GrpcPort, "grpcPort", 8001, "the port of grpc serving server")
 	command.Flags().IntVar(&serveTensorRTArgs.MetricsPort, "metricPort", 8002, "the port of metrics server")
 	command.Flags().BoolVar(&serveTensorRTArgs.AllowMetrics, "allowMetrics", false, "Open Metric")
+	command.Flags().StringVar(&serveTensorRTArgs.Command, "command", "", "the command will inject to container's command.")
 
 	return command
 }
@@ -110,6 +113,10 @@ func (serveTensorRTArgs *ServeTensorRTArgs) preprocess() (err error) {
 			return fmt.Errorf("--data has wrong value: %s", err)
 		}
 		serveTensorRTArgs.ModelDirs = transformSliceToMap(dataset, ":")
+	}
+	if serveTensorRTArgs.ServingVersion == "" {
+		t := time.Now()
+		serveTensorRTArgs.ServingVersion = fmt.Sprint(t.Format("200601021504"))
 	}
 	return nil
 }

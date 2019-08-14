@@ -28,6 +28,14 @@ import (
 )
 
 var (
+	// to receive values from command operation --worker-selector
+	workerSelectors []string
+	// to receive values from command operation --evaluator-selector
+	evaluatorSelectors []string
+	// to receive values from command operation --ps-selector
+	psSelectors []string
+	// to receive values from command operation --chief-selector
+	chiefSelectors []string 
 	tfjob_chart = util.GetChartsFolder() + "/tfjob"
 )
 
@@ -110,7 +118,7 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.PSMemory, "psMemory", "", "the memory resource to use for the parameter servers, like 1Gi.")
 	command.Flags().MarkDeprecated("psMemory", "please use --ps-memory instead")
 	command.Flags().StringVar(&submitArgs.PSMemory, "ps-memory", "", "the memory resource to use for the parameter servers, like 1Gi.")
-
+	command.Flags().StringArrayVarP(&psSelectors,"ps-selector","",[]string{},`assigning jobs with "PS" role to some k8s particular nodes(this option would cover --selector), usage: "--ps-selector=key=value"`)
 	// How to clean up Task
 	command.Flags().StringVar(&submitArgs.CleanPodPolicy, "cleanTaskPolicy", "Running", "How to clean tasks after Training is done, only support Running, None.")
 	command.Flags().MarkDeprecated("cleanTaskPolicy", "please use --clean-task-policy instead")
@@ -146,19 +154,25 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().IntVar(&submitArgs.ChiefPort, "chiefPort", 0, "the port of the chief.")
 	command.Flags().MarkDeprecated("chiefPort", "please use --chief-port instead")
 	command.Flags().IntVar(&submitArgs.ChiefPort, "chief-port", 0, "the port of the chief.")
+	command.Flags().StringArrayVarP(&workerSelectors,"worker-selector","",[]string{},`assigning jobs with "Worker" role to some k8s particular nodes(this option would cover --selector), usage: "--worker-selector=key=value"`)
+	command.Flags().StringArrayVarP(&chiefSelectors,"chief-selector","",[]string{},`assigning jobs with "Chief" role to some k8s particular nodes(this option would cover --selector), usage: "--chief-selector=key=value"`)
+	command.Flags().StringArrayVarP(&evaluatorSelectors,"evaluator-selector","",[]string{},`assigning jobs with "Evaluator" role to some k8s particular nodes(this option would cover --selector), usage: "--evaluator-selector=key=value"`)
 
 	// command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
 	return command
 }
 
 type submitTFJobArgs struct {
+	TFNodeSelectors  map[string]map[string]string `yaml:"tfNodeSelectors"`
 	Port           int    // --port, it's used set workerPort and PSPort if they are not set
 	WorkerImage    string `yaml:"workerImage"`    // --workerImage
 	WorkerPort     int    `yaml:"workerPort"`     // --workerPort
 	PSPort         int    `yaml:"psPort"`         // --psPort
+	//PSNodeSelectors map[string]string `yaml:"psNodeSelectors"` // --ps-selector 
 	PSCount        int    `yaml:"ps"`             // --ps
 	PSImage        string `yaml:"psImage"`        // --psImage
 	WorkerCpu      string `yaml:"workerCPU"`      // --workerCpu
+	//WorkerNodeSelectors map[string]string `yaml:"workerNodeSelectors"` // --worker-selector
 	WorkerMemory   string `yaml:"workerMemory"`   // --workerMemory
 	PSCpu          string `yaml:"psCPU"`          // --psCpu
 	PSMemory       string `yaml:"psMemory"`       // --psMemory
@@ -168,9 +182,11 @@ type submitTFJobArgs struct {
 	ChiefCount      int    `yaml:"chief"`
 	UseEvaluator    bool   `yaml:",omitempty"`      // --evaluator
 	ChiefPort       int    `yaml:"chiefPort"`       // --chiefPort
+	//ChiefNodeSelectors map[string]string `yaml:"chiefNodeSelectors"` // --chief-selector
 	ChiefCpu        string `yaml:"chiefCPU"`        // --chiefCpu
 	ChiefMemory     string `yaml:"chiefMemory"`     // --chiefMemory
 	EvaluatorCpu    string `yaml:"evaluatorCPU"`    // --evaluatorCpu
+	//EvaluatorNodeSelectors map[string]string `yaml:"evaluatorNodeSelectors"` // --evaluator-selector
 	EvaluatorMemory string `yaml:"evaluatorMemory"` // --evaluatorMemory
 	EvaluatorCount  int    `yaml:"evaluator"`
 
@@ -220,6 +236,10 @@ func (submitArgs *submitTFJobArgs) prepare(args []string) (err error) {
 	// pass the workers, gpu to environment variables
 	// addTFJobInfoToEnv(submitArgs)
 	submitArgs.addTFJobInfoToEnv()
+	// add node selectors, if given
+	submitArgs.addTFNodeSelectors()
+	// add tolerations, if given`
+	submitArgs.addTFTolerations()
 	return nil
 }
 
@@ -307,6 +327,51 @@ func (submitArgs *submitTFJobArgs) transform() error {
 	return nil
 }
 
+// add node selectors 
+func (submitArgs *submitTFJobArgs) addTFNodeSelectors() {
+	submitArgs.addNodeSelectors()
+	submitArgs.TFNodeSelectors = make(map[string]map[string]string)
+	for _,role := range []string{"PS","Worker","Evaluator","Chief"} {
+		switch role {
+		case "PS":
+			log.Debugf("psSelectors: %v",psSelectors)
+			submitArgs.transformSelectorArrayToMap(psSelectors,"PS")
+			break
+		case "Worker":
+			log.Debugf("workerSelectors: %v",workerSelectors)
+			submitArgs.transformSelectorArrayToMap(workerSelectors,"Worker")
+			break
+		case "Chief":
+			log.Debugf("chiefSelectors: %v",chiefSelectors)
+			submitArgs.transformSelectorArrayToMap(chiefSelectors,"Chief")
+			break
+		case "Evaluator":
+			log.Debugf("evaluatorSelectors: %v",evaluatorSelectors)
+			submitArgs.transformSelectorArrayToMap(evaluatorSelectors,"Evaluator")
+			break
+		}
+
+	}
+}
+
+func(submitArgs *submitTFJobArgs) transformSelectorArrayToMap(selectorArray []string,role string) {
+	if len(selectorArray) != 0 {
+		submitArgs.TFNodeSelectors[role] =transformSliceToMap(selectorArray,"=") 
+		return 
+	}
+	if len(submitArgs.NodeSelectors) == 0 {
+		submitArgs.TFNodeSelectors[role] = map[string]string{}
+		return 
+	}
+	submitArgs.TFNodeSelectors[role] = submitArgs.NodeSelectors
+
+
+}
+
+// add tolerations
+func (submitArgs *submitTFJobArgs) addTFTolerations() {
+	submitArgs.addTolerations()
+}
 func (submitArgs *submitTFJobArgs) addTFJobInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
 }

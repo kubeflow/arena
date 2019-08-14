@@ -27,7 +27,7 @@ spec:
   subsets:
   - name: "subset-{{ .Values.servingVersion }}"
     labels:
-      serviceVersion: "{{ .Values.servingVersion }}"
+      servingVersion: "{{ .Values.servingVersion }}"
 ---
 {{- if eq .Values.exposeService true }}
 apiVersion: networking.istio.io/v1alpha3

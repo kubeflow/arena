@@ -20,6 +20,7 @@ arena serve tensorrt [flags]
       --enableIstio              enable Istio for serving or not (disable Istio by default)
   -e, --envs stringArray         the environment variables
       --exposeService            expose service using Istio gateway for external access or not (not expose by default)
+      --gpumemory int            the limit GPU memory of each replica to run the serve.
       --gpus int                 the limit GPU count of each replica to run the serve.
       --grpcPort int             the port of grpc serving server (default 8001)
   -h, --help                     help for tensorrt

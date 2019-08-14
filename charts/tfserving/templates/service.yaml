@@ -13,6 +13,8 @@ metadata:
     chart: {{ template "tensorflow-serving.chart" . }}
     app: {{ template "tensorflow-serving.name" . }}
     servingName: {{ .Values.servingName }}
+    servingVersion: "{{ .Values.servingVersion }}"
+    servingType: "tensorflow-serving"
 spec:
   type: {{ .Values.serviceType }}
   ports:
@@ -20,8 +22,8 @@ spec:
       port: {{ .Values.port }}
       targetPort: {{ .Values.port }}
     - name: http-serving
-      port: {{ .Values.rest_api_port }}
-      targetPort: {{ .Values.rest_api_port }}
+      port: {{ .Values.restApiPort }}
+      targetPort: {{ .Values.restApiPort }}
   selector:
     {{ if eq .Values.enableIstio true }}
     app: {{ template "tensorflow-serving.name" . }}

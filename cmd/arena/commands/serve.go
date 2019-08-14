@@ -40,14 +40,14 @@ type ServeArgs struct {
 	Command         string            `yaml:"command"`         // --command
 	Replicas        int               `yaml:"replicas"`        // --replicas
 	Port            int               `yaml:"port"`            // --port
-	RestfulPort     int               `yaml:"rest_api_port"`   // --restfulPort
-	ModelName       string            `yaml:"modelName"`       // --modelName
-	ModelPath       string            `yaml:"modelPath"`       // --modelPath
+	RestfulPort     int               `yaml:"restApiPort"`     // --restfulPort
 	EnableIstio     bool              `yaml:"enableIstio"`     // --enableIstio
 	ExposeService   bool              `yaml:"exposeService"`   // --exposeService
 	ServingName     string            `yaml:"servingName"`     // --servingName
 	ServingVersion  string            `yaml:"servingVersion"`  // --servingVersion
 	ModelDirs       map[string]string `yaml:"modelDirs"`
+
+	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
 }
 
 func (s ServeArgs) validateIstioEnablement() error {
@@ -62,27 +62,29 @@ func (s ServeArgs) validateIstioEnablement() error {
 	if !matched {
 		return fmt.Errorf("--serviceName should be numbers, letters, dashes, and underscores ONLY")
 	}
-	log.Debugf("--serviceVersion=%s is specified.", s.ServingVersion)
+	log.Debugf("--servingVersion=%s is specified.", s.ServingVersion)
 	if s.ServingVersion == "" {
-		return fmt.Errorf("--serviceVersion must be specified if enableIstio=true")
+		return fmt.Errorf("--servingVersion must be specified if enableIstio=true")
 	}
 
 	return nil
 }
 
-func (s ServeArgs) validateModelName() error {
-	if s.ModelName == "" {
-		return fmt.Errorf("--modelName cannot be blank")
-	}
+// PreCheck gives some checking for args.
+func (s ServeArgs) PreCheck() error {
+	return s.checkPortsIsOk()
+}
 
-	var reg *regexp.Regexp
-	reg = regexp.MustCompile(regexp4serviceName)
-	matched := reg.MatchString(s.ModelName)
-	if !matched {
-		return fmt.Errorf("--modelName should be numbers, letters, dashes, and underscores ONLY")
+// check all ports is ok
+func (s ServeArgs) checkPortsIsOk() error {
+	switch {
+	case s.Port != 0:
+		return nil
+	case s.RestfulPort != 0:
+		return nil
+	default:
+		return fmt.Errorf("all  ports are 0,invalid configuration.")
 	}
-
-	return nil
 }
 
 func ParseMountPath(dataset []string) (err error) {
@@ -94,23 +96,35 @@ func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 
 	// create subcommands
 	command.Flags().StringVar(&serveArgs.ImagePullPolicy, "imagePullPolicy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
-	command.Flags().StringVar(&serveArgs.Command, "command", "", "the command will inject to container's command.")
+	command.Flags().MarkDeprecated("imagePullPolicy", "please use --image-pull-policy instead")
+	command.Flags().StringVar(&serveArgs.ImagePullPolicy, "image-pull-policy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
+
 	command.Flags().IntVar(&serveArgs.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.GPUMemory, "gpumemory", 0, "the limit GPU memory of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&serveArgs.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&serveArgs.Replicas, "replicas", 1, "the replicas number of the serve job.")
-	command.Flags().StringVar(&serveArgs.ModelPath, "modelPath", "", "the model path for serving in the container")
+
 	command.Flags().StringArrayVarP(&envs, "envs", "e", []string{}, "the environment variables")
-	command.Flags().StringVar(&serveArgs.ModelName, "modelName", "", "the model name for serving")
+
 	command.Flags().BoolVar(&serveArgs.EnableIstio, "enableIstio", false, "enable Istio for serving or not (disable Istio by default)")
+	command.Flags().MarkDeprecated("enableIstio", "please use --enable-istio instead")
+	command.Flags().BoolVar(&serveArgs.EnableIstio, "enable-istio", false, "enable Istio for serving or not (disable Istio by default)")
+
 	command.Flags().BoolVar(&serveArgs.ExposeService, "exposeService", false, "expose service using Istio gateway for external access or not (not expose by default)")
+	command.Flags().MarkDeprecated("exposeService", "please use --expose-service instead")
+	command.Flags().BoolVar(&serveArgs.ExposeService, "expose-service", false, "expose service using Istio gateway for external access or not (not expose by default)")
+
 	command.Flags().StringVar(&serveArgs.ServingName, "servingName", "", "the serving name")
+	command.Flags().MarkDeprecated("servingName", "please use --name instead")
+	command.Flags().StringVar(&serveArgs.ServingName, "name", "", "the serving name")
+
 	command.Flags().StringVar(&serveArgs.ServingVersion, "servingVersion", "", "the serving version")
+	command.Flags().MarkDeprecated("servingVersion", "please use --version instead")
+	command.Flags().StringVar(&serveArgs.ServingVersion, "version", "", "the serving version")
+
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")
-
-	command.MarkFlagRequired("servingName")
-
+	command.MarkFlagRequired("name")
 }
 
 func init() {
@@ -124,7 +138,7 @@ var (
 
 Available Commands:
   tensorflow,tf  Submit a TensorFlow Serving Job.
-    `
+  tensorrt,trt   Submit a TensorRT Job  `
 )
 
 func NewServeCommand() *cobra.Command {
@@ -141,6 +155,9 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewServingTensorFlowCommand())
 	command.AddCommand(NewServingListCommand())
 	command.AddCommand(NewServingDeleteCommand())
+	command.AddCommand(NewServingCustomCommand())
 	command.AddCommand(NewTrafficRouterSplitCommand())
+	command.AddCommand(NewServingGetCommand())
+
 	return command
 }
