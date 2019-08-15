@@ -114,7 +114,7 @@ build-pkg:
 				 --build-arg "OS_ARCH=${OS_ARCH}" \
 				 --build-arg "GOLANG_VERSION=1.10" \
 				 --build-arg "TARGET=cli-linux-amd64" \
-	-t cheyang/arena-build -f Dockerfile.build .
-	docker run -itd --name=arena-pkg cheyang/arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} /bin/bash
+	-t arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} -f Dockerfile.build .
+	docker run -itd --name=arena-pkg arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} /bin/bash
 	docker cp arena-pkg:/arena-${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH}.tar.gz .
 	docker rm -f arena-pkg
