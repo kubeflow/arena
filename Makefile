@@ -3,7 +3,7 @@ CURRENT_DIR=$(shell pwd)
 DIST_DIR=${CURRENT_DIR}/bin
 ARENA_CLI_NAME=arena
 JOB_MONITOR=jobmon
-OS_ARCH=linux-amd64
+OS_ARCH?=linux-amd64
 
 VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
