@@ -3,6 +3,7 @@ CURRENT_DIR=$(shell pwd)
 DIST_DIR=${CURRENT_DIR}/bin
 ARENA_CLI_NAME=arena
 JOB_MONITOR=jobmon
+OS_ARCH=amd64
 
 VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -110,7 +111,7 @@ build-pkg:
 				 --build-arg "HELM_VERSION=v2.9.1" \
 				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
 				 --build-arg "VERSION=${VERSION}" \
-				 --build-arg "OS_ARCH=amd64" \
+				 --build-arg "OS_ARCH=${OS_ARCH}" \
 				 --build-arg "GOLANG_VERSION=1.10" \
 				 --build-arg "TARGET=cli-linux-amd64" \
 	-t cheyang/arena-build -f Dockerfile.build .
