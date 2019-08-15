@@ -9,7 +9,7 @@ ARG HELM_VERSION=v2.9.1
 ARG VERSION=v0.3.0-rc
 ARG OS_ARCH=linux-amd64
 ARG COMMIT=stable
-ARG TARGET=cli-linux-amd64
+ARG TARGET=cli-$OS_ARCH
 
 
 FROM golang:$GOLANG_VERSION-stretch as build
