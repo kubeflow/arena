@@ -7,7 +7,7 @@ ARG GOLANG_VERSION=1.10
 ARG KUBE_VERSION=v1.11.2
 ARG HELM_VERSION=v2.9.1
 ARG VERSION=v0.3.0-rc
-ARG OS_ARCH=amd64
+ARG OS_ARCH=linux-amd64
 ARG COMMIT=stable
 ARG TARGET=cli-linux-amd64
 
@@ -33,13 +33,13 @@ COPY . .
 
 RUN make $TARGET
 
-RUN wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-$OS_ARCH.tar.gz && \
-    tar -xvf helm-$HELM_VERSION-linux-$OS_ARCH.tar.gz && \
+RUN wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-$OS_ARCH.tar.gz && \
+    tar -xvf helm-$HELM_VERSION-$OS_ARCH.tar.gz && \
     mv linux-$OS_ARCH/helm /usr/local/bin/helm && \
     chmod u+x /usr/local/bin/helm && \
     chmod u+x /go/src/github.com/kubeflow/arena/install.sh
 
-RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && \
+RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/${OS_ARCH/-/\/}/amd64/kubectl && \
     chmod +x /usr/local/bin/kubectl
 
 
