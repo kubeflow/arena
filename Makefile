@@ -67,7 +67,7 @@ $(info "Building on Linux")
 default: cli-linux-amd64
 else ifeq ($(UNAME_S),Darwin)
 $(info "Building on Darwin")
-default: cli-darwin
+default: cli-darwin-amd64
 else
 $(error "The OS is not supported")
 endif
@@ -79,7 +79,7 @@ cli-linux-amd64:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} cmd/job-monitor/*.go
 
-.PHONY: cli-darwin
+.PHONY: cli-darwin-amd64
 cli-darwin:
 	mkdir -p bin
 	CGO_ENABLED=0 GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
