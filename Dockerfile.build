@@ -39,7 +39,9 @@ RUN wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-$OS_A
     chmod u+x /usr/local/bin/helm && \
     chmod u+x /go/src/github.com/kubeflow/arena/install.sh
 
-RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/${OS_ARCH/-/\/}/kubectl && \
+RUN OS=$(echo $OS_ARCH | cut -f1 -d-) && \
+    ARCH=$(echo $OS_ARCH | cut -f2 -d-) && \
+    curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/${OS}/${ARCH}/kubectl && \
     chmod +x /usr/local/bin/kubectl
 
 
