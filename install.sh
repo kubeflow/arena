@@ -22,12 +22,13 @@ function log() {
     echo $(date +"[%Y%m%d %H:%M:%S]: ") $1
 }
 
-if ! which kuebctl; then
+if ! which kuebctl >/dev/null 2>&1; then
 	cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/kubectl
 fi
 
-if ! kubectl cluster-info; then
+if ! kubectl cluster-info >/dev/null 2>&1; then
     log "Please setup kubeconfig correctly before installing arena"
+    exit 1
 fi
 
 # set +e
