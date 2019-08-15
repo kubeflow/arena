@@ -22,34 +22,33 @@ function log() {
     echo $(date +"[%Y%m%d %H:%M:%S]: ") $1
 }
 
-if ! [ -f $KUBECONFIG ]; then
-    log "Failed to find $KUBECONFIG. Please mount kubeconfig file into the pod and make sure it's $KUBECONFIG"
-    exit 1
-fi
-
 if ! which kuebctl; then
 	cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/kubectl
 fi
 
-set +e
-
-if [[ ! -z "${registry}" ]]; then
-    find $SCRIPT_DIR/charts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${registry}/g"
-    find $SCRIPT_DIR/charts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${registry}/g"
-    find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${registry}/g"
-    find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${registry}/g"
+if ! kubectl cluster-info; then
+    log "Please setup kubeconfig correctly before installing arena"
 fi
 
-if [[ ! -z "${namespace}" ]]; then
-    find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/arena-system/${namespace}/g"
+# set +e
+
+if [[ ! -z "${DOCKER_REGISTRY}" ]]; then
+    find $SCRIPT_DIR/charts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${DOCKER_REGISTRY}/g"
+    find $SCRIPT_DIR/charts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${DOCKER_REGISTRY}/g"
+    find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${DOCKER_REGISTRY}/g"
+    find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/registry.cn-hangzhou.aliyuncs.com/${DOCKER_REGISTRY}/g"
 fi
 
-if [[ ! -z "${repo_namespace}" ]]; then
-    find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${repo_namespace}/g"
-    find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${repo_namespace}/g"
+if [[ ! -z "${NAMESPACE}" ]]; then
+    find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/arena-system/${NAMESPACE}/g"
 fi
 
-if [ "$useLoadBlancer" == "true" ]; then
+if [[ ! -z "${REGISTRY_REPO_NAMESPACE}" ]]; then
+    find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${REGISTRY_REPO_NAMESPACE}/g"
+    find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${REGISTRY_REPO_NAMESPACE}/g"
+fi
+
+if [ "$USE_LOADBALANCER" == "true" ]; then
     find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
     find $SCRIPT_DIR/kubernetes-artifacts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
 fi
@@ -73,8 +72,8 @@ if ! kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
     kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
 fi
 
-if [ "$usePrometheus" == "true" ]; then
-    if [ "$platform" == "ack" ]; then
+if [ "$USE_PROMETHEUS" == "true" ]; then
+    if [ "$PLATFORM" == "ack" ]; then
         sed -i 's|accelerator/nvidia_gpu|aliyun.accelerator/nvidia_count|g' $SCRIPT_DIR/kubernetes-artifacts/prometheus/gpu-exporter.yaml
     fi
     if ! kubectl get serviceaccount --all-namespaces | grep prometheus; then
@@ -83,12 +82,11 @@ if [ "$usePrometheus" == "true" ]; then
      kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/prometheus/grafana.yaml
     fi
 fi
-set -e
+# set -e
 
-if [ "$useHostNetwork" == "true" ]; then
+if [ "$USE_HOSTNETWORK" == "true" ]; then
     find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
 fi
-
 
 now=$(date "+%Y%m%d%H%M%S")
 if [ -f "/usr/local/bin/arena" ]; then
