@@ -9,6 +9,7 @@ ARG HELM_VERSION=v2.9.1
 ARG VERSION=v0.3.0-rc
 ARG OS_ARCH=amd64
 ARG COMMIT=stable
+ARG TARGET=cli-linux-amd64
 
 FROM golang:$GOLANG_VERSION-stretch as build
 
@@ -17,13 +18,14 @@ ENV HELM_VERSION=$HELM_VERSION
 ENV VERSION=$VERSION
 ENV OS_ARCH=$OS_ARCH
 ENV COMMIT=$COMMIT
+ENV TARGET=$TARGET
 
 RUN mkdir -p /go/src/github.com/kubeflow/arena
 
 WORKDIR /go/src/github.com/kubeflow/arena
 COPY . .
 
-RUN make
+RUN make $TARGET
 
 RUN wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-$OS_ARCH.tar.gz && \
     tar -xvf helm-$HELM_VERSION-linux-$OS_ARCH.tar.gz && \
