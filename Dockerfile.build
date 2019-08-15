@@ -41,7 +41,7 @@ RUN wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-$OS_A
 
 RUN OS=$(echo $OS_ARCH | cut -f1 -d-) && \
     ARCH=$(echo $OS_ARCH | cut -f2 -d-) && \
-    curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/${OS}/${ARCH}/kubectl && \
+    curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/${OS}/${ARCH}/kubectl && \
     chmod +x /usr/local/bin/kubectl
 
 
@@ -81,5 +81,5 @@ COPY --from=build /usr/local/bin/kubectl $ARENA_HOME/bin/kubectl
 
 COPY --from=build /go/src/github.com/kubeflow/arena/charts $ARENA_HOME/charts
 
-RUN tar -C $ARENA_HOME/* -zcf $ARENA_TARFILE
+RUN tar -zcvf $ARENA_TARFILE $ARENA_HOME
 
