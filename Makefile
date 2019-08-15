@@ -105,6 +105,7 @@ notebook-image:
 
 .PHONY: build-pkg
 build-pkg:
+	docker rm -f arena-pkg || true
 	docker build --build-arg "KUBE_VERSION=v1.11.2" \
 				 --build-arg "HELM_VERSION=v2.9.1" \
 				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
@@ -114,5 +115,5 @@ build-pkg:
 				 --build-arg "TARGET=cli-linux-amd64" \
 	-t cheyang/arena-build -f Dockerfile.build .
 	docker run -itd --name=arena-pkg cheyang/arena-build /bin/bash
-	docker cp arena-pkg:/arena-${VERSION}-${GIT_SHORT_COMMIT}.tar.gz .
+	docker cp arena-pkg:/arena-${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH}.tar.gz .
 	docker rm -f arena-pkg
