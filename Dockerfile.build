@@ -82,4 +82,3 @@ COPY --from=build /usr/local/bin/kubectl $ARENA_HOME/bin/kubectl
 COPY --from=build /go/src/github.com/kubeflow/arena/charts $ARENA_HOME/charts
 
 RUN tar -zcvf $ARENA_TARFILE $ARENA_HOME
-
