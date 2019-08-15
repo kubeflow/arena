@@ -64,7 +64,7 @@ export USE_LOADBALANCER=true
 
 ```
 # cd arena-installer
-# ./install.sh
+# sudo ./install.sh
 ```
 
 6\. Enable shell autocompletion
