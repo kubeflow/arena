@@ -77,12 +77,33 @@ On CentOS Linux, you may need to install the bash-completion package which is no
 yum install bash-completion -y
 ```
 
-To add arena autocompletion to your current shell, run source <(arena completion bash).
+On Debian or Ubuntu Linux you may need to install with 
+
+```
+apt-get install bash-completion
+```
+
+To add arena autocompletion to your current shell, run `source <(arena completion bash)`.
+
+On MacOS, please use bash
+
+You can install it with Homebrew:
+
+```
+brew install bash-completion@2
+```
 
 To add arena autocompletion to your profile, so it is automatically loaded in future shells run:
 
 ```
 echo "source <(arena completion bash)" >> ~/.bashrc
+chmod u+x ~/.bashrc
+```
+
+For MacOS, add the following to your `~/.bashrc` file: 
+
+```
+echo "sour $(brew --prefix)/etc/profile.d/bash_completion.sh" >> ~/.bashrc
 ```
 
 Then you can use [tab] to auto complete the command
