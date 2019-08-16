@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	ErrPodNotFound      = errors.New(`no logs return,because not found instance.`)
+	ErrPodNotFound      = errors.New(`no logs return,because not found instance`)
 	ErrTooManyPodsFound = errors.New(`too many pods found in the job,`)
 )
 
@@ -87,7 +87,7 @@ func (slp *PodLogPrinter) Print() (int, error) {
 }
 func (slp *PodLogPrinter) PrintMultiPodsHelp() {
 	header := "There is more than one instance in the job:"
-	footer := "please use --instance to filter"
+	footer := "please use --instance or -i to filter"
 	lines := []string{header}
 	for _, name := range slp.PodNames {
 		lines = append(lines, "    "+name)

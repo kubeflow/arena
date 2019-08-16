@@ -79,7 +79,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 			code, err := logPrinter.Print()
 			if err != nil {
-				log.Errorf(err.Error())
+				log.Errorf("%s, %s", err.Error(), "please use \"arena get\" to get more information.")
 				os.Exit(1)
 			} else if code != 0 {
 				os.Exit(code)
@@ -92,7 +92,7 @@ func NewLogsCommand() *cobra.Command {
 	command.Flags().BoolVarP(&outerArgs.Follow, "follow", "f", false, "Specify if the logs should be streamed.")
 	command.Flags().StringVar(&outerArgs.SinceSeconds, "since", "", "Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.")
 	command.Flags().StringVar(&outerArgs.SinceTime, "since-time", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
-	command.Flags().IntVar(&outerArgs.Tail, "tail", -1, "Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.")
+	command.Flags().IntVarP(&outerArgs.Tail, "tail", "t", -1, "Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.")
 	command.Flags().BoolVar(&outerArgs.Timestamps, "timestamps", false, "Include timestamps on each line in the log output")
 
 	// command.Flags().StringVar(&printer.pod, "instance", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")

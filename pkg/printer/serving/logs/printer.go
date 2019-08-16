@@ -37,7 +37,7 @@ func LogPrint(client *kubernetes.Clientset, ns, servingName, servingTypeKey, ver
 	}
 	code, err := logPrinter.Print()
 	if err != nil {
-		log.Errorf(err.Error())
+		log.Errorf("%s, %s", err.Error(), "please use \"arena serve get\" to get more information.")
 	}
 	return code
 }

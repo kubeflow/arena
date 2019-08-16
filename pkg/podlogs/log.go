@@ -1,13 +1,21 @@
 package podlogs
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"time"
 
+	servejob "github.com/kubeflow/arena/pkg/jobs/serving"
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+)
+
+var (
+	ErrPodNotRunning    = errors.New(`is not running`)
+	ErrPodStatusUnknown = errors.New(`status is unknown`)
 )
 
 type PodLogArgs struct {
@@ -65,27 +73,18 @@ func (pl *PodLog) ensureContainerStarted() error {
 		if err != nil {
 			return err
 		}
-		if len(pod.Status.ContainerStatuses) == 0 {
-			time.Sleep(pl.Args.RetryTimeout)
-			pl.Args.RetryCnt--
-			continue
-		}
-		// warning: would be a bug if container in a pod more than one.
-		var containerStatus *v1.ContainerStatus = &pod.Status.ContainerStatuses[0]
-		// for _, status := range pod.Status.ContainerStatuses {
-		// 	if status.Name == container {
-		// 		containerStatus = &status
-		// 		break
-		// 	}
-		// }
-		if containerStatus == nil || containerStatus.State.Waiting != nil {
-			time.Sleep(pl.Args.RetryTimeout)
-			pl.Args.RetryCnt--
-		} else {
+		status, _, _, _ := servejob.DefinePodPhaseStatus(*pod)
+		log.Debugf("pod:%s,pod phase: %v\n", pl.Args.PodName, pod.Status.Phase)
+		log.Debugf("pod print status: %s\n", status)
+		switch podPhase := pod.Status.Phase; {
+		case podPhase == v1.PodRunning && status != "Unknown":
+			return nil
+		case podPhase == v1.PodFailed || podPhase == v1.PodSucceeded:
 			return nil
 		}
+		pl.Args.RetryCnt--
 	}
-	return fmt.Errorf("pod '%s' has not been started.", pl.Args.PodName)
+	return fmt.Errorf("instance %s %s", pl.Args.PodName, ErrPodNotRunning.Error())
 }
 func checkAndTransferArgs(out *OuterRequestArgs) (*PodLogArgs, error) {
 	podLogArgs := &PodLogArgs{
