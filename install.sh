@@ -103,3 +103,6 @@ if [ -d "/charts" ]; then
     mv /charts /charts-$now
 fi
 cp -r $SCRIPT_DIR/charts /
+
+log "--------------------------------"
+log "Arena has been installed successfully!"
