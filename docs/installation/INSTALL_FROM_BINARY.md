@@ -103,7 +103,7 @@ chmod u+x ~/.bashrc
 For MacOS, add the following to your `~/.bashrc` file: 
 
 ```
-echo "sour $(brew --prefix)/etc/profile.d/bash_completion.sh" >> ~/.bashrc
+echo "source $(brew --prefix)/etc/profile.d/bash_completion.sh" >> ~/.bashrc
 ```
 
 Then you can use [tab] to auto complete the command
