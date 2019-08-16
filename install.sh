@@ -91,7 +91,7 @@ fi
 
 now=$(date "+%Y%m%d%H%M%S")
 if [ -f "/usr/local/bin/arena" ]; then
-    mv $SCRIPT_DIR/bin/arena /usr/local/bin/arena-$now
+    cp /usr/local/bin/arena /usr/local/bin/arena-$now
 fi
 cp $SCRIPT_DIR/bin/arena /usr/local/bin/arena
 
@@ -102,4 +102,4 @@ fi
 if [ -d "/charts" ]; then
     mv /charts /charts-$now
 fi
-cp -r /charts /
+cp -r $SCRIPT_DIR/charts /
