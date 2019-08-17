@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/tf-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
@@ -25,8 +26,6 @@ import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-
-	"time"
 
 	commonv1 "github.com/kubeflow/arena/pkg/tf-operator/apis/common/v1"
 	tfv1 "github.com/kubeflow/arena/pkg/tf-operator/apis/tensorflow/v1"
@@ -596,4 +595,43 @@ func getPodsOfTFJob(name string, tt *TensorFlowJobTrainer, tfjob tfv1.TFJob, pod
 		log.Debugf("add pod %v to pods", item)
 	}
 	return pods, chiefPod
+}
+
+func (tj *TensorFlowJob) GetTrainingJobResources(client *kubernetes.Clientset, jobName string) TrainingJobResources {
+	return TrainingJobResources{
+		statefulsetList: nil,
+		jobList:         nil,
+		podList:         tj.GetPodsOfJob(client, jobName),
+		operatorPodList: tj.GetOperatorPodOfJob(client, jobName),
+	}
+}
+
+// filter out the dest pods by the "release" label
+func (tj *TensorFlowJob) GetPodsOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release=%s,app=tfjob", jobName),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
+}
+
+// filter out the dest operator pods by the "app" label
+func (tj *TensorFlowJob) GetOperatorPodOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods("arena-system").List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: "kustomize.component=tf-job-operator",
+	})
+	if err != nil {
+		fmt.Printf("Failed to get operator pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
 }

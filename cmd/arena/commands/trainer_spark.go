@@ -497,3 +497,42 @@ func getPodsOfSparkJob(name string, st *SparkJobTrainer, podList []v1.Pod) (pods
 	}
 	return pods, chiefPod
 }
+
+func (sj *SparkJob) GetTrainingJobResources(client *kubernetes.Clientset, jobName string) TrainingJobResources {
+	return TrainingJobResources{
+		statefulsetList: nil,
+		jobList:         nil,
+		podList:         sj.GetPodsOfJob(client, jobName),
+		operatorPodList: sj.GetOperatorPodOfJob(client, jobName),
+	}
+}
+
+// filter out the dest pods by the "release" label
+func (sj *SparkJob) GetPodsOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release=%s,app=sparkjob", jobName),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
+}
+
+// filter out the dest operator pods by the "app" label
+func (sj *SparkJob) GetOperatorPodOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods("arena-system").List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: "app.kubernetes.io/name=sparkoperator",
+	})
+	if err != nil {
+		fmt.Printf("Failed to get operator pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
+}

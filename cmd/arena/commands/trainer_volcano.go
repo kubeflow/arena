@@ -18,12 +18,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/kubeflow/arena/pkg/types"
 	"github.com/kubeflow/arena/pkg/volcano-operator/apis/batch/v1alpha1"
 	"github.com/kubeflow/arena/pkg/volcano-operator/client/clientset/versioned"
 )
@@ -559,4 +560,58 @@ func getPodsOfVolcanoJob(name string, st *VolcanoJobTrainer, podList []v1.Pod) (
 		log.Debugf("add pod %v to pods", item)
 	}
 	return pods, chiefPod
+}
+
+func (vj *VolcanoJob) GetTrainingJobResources(client *kubernetes.Clientset, jobName string) TrainingJobResources {
+	return TrainingJobResources{
+		statefulsetList: nil,
+		jobList:         vj.GetBatchJobsOfJob(client, jobName),
+		podList:         vj.GetPodsOfJob(client, jobName),
+		operatorPodList: vj.GetOperatorPodOfJob(client, jobName),
+	}
+}
+
+// filter out the dest pods by the "release" label
+func (vj *VolcanoJob) GetPodsOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release=%s,app=volcanojob", jobName),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
+}
+
+// filter out the dest batch jobs by the "app" label
+func (vj *VolcanoJob) GetBatchJobsOfJob(client *kubernetes.Clientset, jobName string) *batchv1.JobList {
+	jobs, err := client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("app=volcano-admission-init"),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get batchjobs of the job due to %v\n", err)
+		return nil
+	}
+	return jobs
+}
+
+// filter out the dest operator pods by the "app" label
+func (vj *VolcanoJob) GetOperatorPodOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods(v1.NamespaceDefault).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: "app in (volcano-admission, volcano-controller, volcano-scheduler)",
+	})
+	if err != nil {
+		fmt.Printf("Failed to get operator pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
 }

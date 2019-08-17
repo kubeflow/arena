@@ -16,18 +16,18 @@ package commands
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/mpi-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/api/apps/v1beta1"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"time"
-
-	v1alpha1 "github.com/kubeflow/arena/pkg/mpi-operator/apis/kubeflow/v1alpha1"
+	"github.com/kubeflow/arena/pkg/mpi-operator/apis/kubeflow/v1alpha1"
 )
 
 var (
@@ -663,4 +663,74 @@ func getPodsOfMPIJob(name string, tt *MPIJobTrainer, podList []v1.Pod) (pods []v
 		log.Debugf("add pod %v to pods", item)
 	}
 	return pods, chiefPod
+}
+
+// Get MPIJob Resources
+func (mj *MPIJob) GetTrainingJobResources(client *kubernetes.Clientset, jobName string) TrainingJobResources {
+	return TrainingJobResources{
+		statefulsetList: mj.GetStatefulSetsOfJob(client, jobName),
+		jobList:         mj.GetBatchJobsOfJob(client, jobName),
+		podList:         mj.GetPodsOfJob(client, jobName),
+		operatorPodList: mj.GetOperatorPodOfJob(client, jobName),
+	}
+}
+
+// filter out the dest pods by the "release" label
+func (mj *MPIJob) GetPodsOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release=%s,app=mpijob", jobName),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
+}
+
+// filter out the dest statefulsets by the "release" label
+func (mj *MPIJob) GetStatefulSetsOfJob(client *kubernetes.Clientset, jobName string) *v1beta1.StatefulSetList {
+	sts, err := client.AppsV1beta1().StatefulSets(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("mpi_job_name=%s", jobName),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get statefulsets of the job due to %v\n", err)
+		return nil
+	}
+	return sts
+}
+
+// filter out the dest batch jobs by the "mpi_job_name" label
+func (mj *MPIJob) GetBatchJobsOfJob(client *kubernetes.Clientset, jobName string) *batchv1.JobList {
+	jobs, err := client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("mpi_job_name=%s", jobName),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get batchjobs of the job due to %v\n", err)
+		return nil
+	}
+	return jobs
+}
+
+// filter out the dest operator pods by the "app" label
+func (mj *MPIJob) GetOperatorPodOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods("arena-system").List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: "app=mpi-operator",
+	})
+	if err != nil {
+		fmt.Printf("Failed to get operator pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
 }
