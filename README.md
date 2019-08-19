@@ -17,7 +17,7 @@ For the Chinese version, please refer to [中文文档](README_cn.md)
 
 ## Setup
 
-You can follow up the [Installation guide](docs/installation/README.md)
+You can follow up the [Installation guide](docs/installation/INSTALL_FROM_BINARY.md)
 
 ## User Guide
 
@@ -56,6 +56,8 @@ make
 ```
 
 `arena` binary is located in directory `arena/bin`. You may want to add the directory to `$PATH`.
+
+Then you can follow [Installation guide for developer](docs/installation/INSTALL_FROM_SOURCE.md)
 
 ## CPU Profiling
 

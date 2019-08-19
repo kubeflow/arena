@@ -64,7 +64,7 @@ kubectl create -f arena/kubernetes-artifacts/dashboard/dashboard.yaml
 kubectl create -f arena/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
 ```
 
-8\. Install arena
+8\. Build arena
 
 Prerequisites:
 

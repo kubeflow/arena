@@ -3,6 +3,7 @@ CURRENT_DIR=$(shell pwd)
 DIST_DIR=${CURRENT_DIR}/bin
 ARENA_CLI_NAME=arena
 JOB_MONITOR=jobmon
+OS_ARCH?=linux-amd64
 
 VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -66,7 +67,7 @@ $(info "Building on Linux")
 default: cli-linux-amd64
 else ifeq ($(UNAME_S),Darwin)
 $(info "Building on Darwin")
-default: cli-darwin
+default: cli-darwin-amd64
 else
 $(error "The OS is not supported")
 endif
@@ -78,8 +79,8 @@ cli-linux-amd64:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} cmd/job-monitor/*.go
 
-.PHONY: cli-darwin
-cli-darwin:
+.PHONY: cli-darwin-amd64
+cli-darwin-amd64:
 	mkdir -p bin
 	CGO_ENABLED=0 GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
 
@@ -102,3 +103,19 @@ notebook-image-kubeflow:
 notebook-image:
 	docker build --build-arg "BASE_IMAGE=tensorflow/tensorflow:1.12.0-devel-py3" -t cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT}-cpu -f Dockerfile.notebook.cpu .
 	docker tag cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT}-cpu cheyang/arena-notebook:cpu
+
+# make OS_ARCH=darwin-amd64 build-pkg for mac
+.PHONY: build-pkg
+build-pkg:
+	docker rm -f arena-pkg || true
+	docker build --build-arg "KUBE_VERSION=v1.11.2" \
+				 --build-arg "HELM_VERSION=v2.9.1" \
+				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
+				 --build-arg "VERSION=${VERSION}" \
+				 --build-arg "OS_ARCH=${OS_ARCH}" \
+				 --build-arg "GOLANG_VERSION=1.10" \
+				 --build-arg "TARGET=cli-${OS_ARCH}" \
+	-t arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} -f Dockerfile.build .
+	docker run -itd --name=arena-pkg arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} /bin/bash
+	docker cp arena-pkg:/arena-installer-${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH}.tar.gz .
+	docker rm -f arena-pkg
