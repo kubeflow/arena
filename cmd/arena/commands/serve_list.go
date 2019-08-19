@@ -20,6 +20,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	servejob "github.com/kubeflow/arena/pkg/jobs/serving"
 	"github.com/kubeflow/arena/pkg/types"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
@@ -89,8 +90,8 @@ func NewServingListCommand() *cobra.Command {
 }
 
 // ListServing returns a list of serving
-func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
-	jobs := []types.Serving{}
+func ListServing(client *kubernetes.Clientset) ([]servejob.Serving, error) {
+	jobs := []servejob.Serving{}
 	ns := GetNamespace()
 	serviceNameLabel := "servingName"
 	deployments, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
@@ -109,14 +110,14 @@ func ListServing(client *kubernetes.Clientset) ([]types.Serving, error) {
 
 	log.Debugf("Serving deployments Items is %++v", deployments.Items)
 	for _, deploy := range deployments.Items {
-		jobs = append(jobs, types.NewServingJob(client, deploy, allPods))
+		jobs = append(jobs, servejob.NewServingJob(client, deploy, allPods))
 	}
 	log.Debugf("Serving jobs list is %++v", jobs)
 	return jobs, nil
 }
 
 // List Servings by name
-func ListServingsByName(client *kubernetes.Clientset, name string) (servings []types.Serving, err error) {
+func ListServingsByName(client *kubernetes.Clientset, name string) (servings []servejob.Serving, err error) {
 	ns := GetNamespace()
 	labels := fmt.Sprintf("servingName=%s", name)
 	deployList, err := client.AppsV1().Deployments(ns).List(metav1.ListOptions{
@@ -129,28 +130,28 @@ func ListServingsByName(client *kubernetes.Clientset, name string) (servings []t
 
 	log.Debugf("ListServingsByName: deployments %v with labels %v", deployList.Items, labels)
 
-	servings = []types.Serving{}
+	servings = []servejob.Serving{}
 	for _, deploy := range deployList.Items {
 		log.Debugf("ListServingsByName: find deploy %v", deploy)
 		servingType := deploy.Labels["servingType"]
 		servingVersion := deploy.Labels["servingVersion"]
 		// servingName := deploy.Labels["servingName"]
-		servings = append(servings, types.Serving{
+		servings = append(servings, servejob.Serving{
 			Name:      name,
-			ServeType: types.KeyMapServingType(servingType),
+			ServeType: servejob.KeyMapServingType(servingType),
 			Version:   servingVersion,
 		})
 	}
 	return servings, nil
 }
 
-func ListServingJobsByHelm() ([]types.Serving, error) {
+func ListServingJobsByHelm() ([]servejob.Serving, error) {
 	releaseMap, err := helm.ListAllReleasesWithDetail()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	servings := []types.Serving{}
+	servings := []servejob.Serving{}
 	for name, cols := range releaseMap {
 		log.Debugf("name: %s, cols: %s", name, cols)
 		namespace := cols[len(cols)-1]
@@ -166,11 +167,11 @@ func ListServingJobsByHelm() ([]types.Serving, error) {
 			}
 			nameAndVersion := strings.Split(name, "-")
 			log.Debugf("nameAndVersion: %s, len(nameAndVersion): %d", nameAndVersion, len(nameAndVersion))
-			servings = append(servings, types.Serving{
+			servings = append(servings, servejob.Serving{
 				Name:      nameAndVersion[0],
 				Namespace: namespace,
 				Version:   servingVersion,
-				ServeType: types.KeyMapServingType(serveType),
+				ServeType: servejob.KeyMapServingType(serveType),
 				//Status: status,
 			})
 		}
