@@ -67,39 +67,28 @@ func NewTopNodeCommand() *cobra.Command {
 			isGPUModeConflict := false
 			for _, nodeInfo := range nodeInfos {
 				if gpushare.IsGPUSharingNode(nodeInfo.node) && isGPUCountNode(nodeInfo.node) {
-					log.Debugf("GPUCount and GPUShare are both used in node %s .Please use one mode of them\n", nodeInfo.node.Name)
+					fmt.Printf("GPUCount and GPUShare are both used in node %s .Please use one mode of them\n", nodeInfo.node.Name)
 					isGPUModeConflict = true
 				}
 			}
 			if isGPUModeConflict {
-				displayTopNode(nodeInfos)
 				os.Exit(1)
 			}
 			if showGPUShare {
-
 				Sharenodes, err := GetAllSharedGPUNode()
 				if err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
-				pods, err := acquireAllActivePods(client)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
-				SharenodeInfos, err := gpushare.BuildAllShareNodeInfos(pods, Sharenodes)
+				SharenodeInfos, err := gpushare.BuildAllShareNodeInfos(allPods, Sharenodes)
 				if err != nil {
 					fmt.Printf("Failed due to %v", err)
 					os.Exit(1)
 				}
-				if showDetails {
-					gpushare.DisplayShareDetails(SharenodeInfos)
-					os.Exit(1)
-				}
-				gpushare.DisplayShareSummary(SharenodeInfos)
-				os.Exit(1)
+				displayShareTopNode(SharenodeInfos)
+			} else {
+				displayTopNode(nodeInfos)
 			}
-			displayTopNode(nodeInfos)
 		},
 	}
 
@@ -157,7 +146,13 @@ func displayTopNode(nodes []NodeInfo) {
 		displayTopNodeSummary(nodes)
 	}
 }
-
+func displayShareTopNode(nodeInfos []*gpushare.ShareNodeInfo) {
+	if showDetails {
+		gpushare.DisplayShareDetails(nodeInfos)
+	} else {
+		gpushare.DisplayShareSummary(nodeInfos)
+	}
+}
 func displayTopNodeSummary(nodeInfos []NodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
