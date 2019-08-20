@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	log "github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 )
 
@@ -14,7 +14,7 @@ const (
 	envNVGPUID    = "ALIYUN_COM_GPU_MEM_IDX"
 )
 
-type ShareNodeInfo struct {
+type GPUShareNodeInfo struct {
 	pods           []v1.Pod
 	node           v1.Node
 	Devs           map[int]*DeviceInfo
@@ -38,9 +38,9 @@ func (d *DeviceInfo) String() string {
 }
 
 //For all GPUShare nodes,decide whether the memory of GPU is measured by MiB or GiB
-func BuildAllShareNodeInfos(allPods []v1.Pod, nodes []v1.Node) ([]*ShareNodeInfo, error) {
-	SharenodeInfos := buildShareNodeInfosWithPods(allPods, nodes)
-	for _, SharenodeInfo := range SharenodeInfos {
+func BuildAllGPUShareNodeInfos(allPods []v1.Pod, nodes []v1.Node) ([]*GPUShareNodeInfo, error) {
+	gpushareNodeInfos := buildGPUShareNodeInfosWithPods(allPods, nodes)
+	for _, SharenodeInfo := range gpushareNodeInfos {
 		if SharenodeInfo.gpuTotalMemory > 0 {
 			setUnit(SharenodeInfo.gpuTotalMemory, SharenodeInfo.GpuCount)
 			err := SharenodeInfo.buildDeviceInfo()
@@ -50,31 +50,31 @@ func BuildAllShareNodeInfos(allPods []v1.Pod, nodes []v1.Node) ([]*ShareNodeInfo
 			}
 		}
 	}
-	return SharenodeInfos, nil
+	return gpushareNodeInfos, nil
 }
 
 //For one GPUShare node,decide whether the memory of GPU is measured by MiB or GiB
-func BuildShareNodeInfo(allPods []v1.Pod, node v1.Node) (*ShareNodeInfo, error) {
-	SharenodeInfo := buildShareNodeInfoWithPods(allPods, node)
+func BuildGPUShareNodeInfo(allPods []v1.Pod, node v1.Node) (*GPUShareNodeInfo, error) {
+	gpushareNodeInfo := buildGPUShareNodeInfoWithPods(allPods, node)
 
-	if SharenodeInfo.gpuTotalMemory > 0 {
-		setUnit(SharenodeInfo.gpuTotalMemory, SharenodeInfo.GpuCount)
-		err := SharenodeInfo.buildDeviceInfo()
+	if gpushareNodeInfo.gpuTotalMemory > 0 {
+		setUnit(gpushareNodeInfo.gpuTotalMemory, gpushareNodeInfo.GpuCount)
+		err := gpushareNodeInfo.buildDeviceInfo()
 		if err != nil {
 			log.Warningf("Failed due to %v", err)
 		}
 	}
 
-	return SharenodeInfo, nil
+	return gpushareNodeInfo, nil
 }
 
 //Create  ShareNodeInfos for all gpushare nodes
-func buildShareNodeInfosWithPods(pods []v1.Pod, nodes []v1.Node) []*ShareNodeInfo {
-	nodeMap := map[string]*ShareNodeInfo{}
-	nodeList := []*ShareNodeInfo{}
+func buildGPUShareNodeInfosWithPods(pods []v1.Pod, nodes []v1.Node) []*GPUShareNodeInfo {
+	nodeMap := map[string]*GPUShareNodeInfo{}
+	nodeList := []*GPUShareNodeInfo{}
 
 	for _, node := range nodes {
-		var info *ShareNodeInfo = &ShareNodeInfo{}
+		var info *GPUShareNodeInfo = &GPUShareNodeInfo{}
 		if value, ok := nodeMap[node.Name]; ok {
 			info = value
 		} else {
@@ -111,9 +111,9 @@ func buildShareNodeInfosWithPods(pods []v1.Pod, nodes []v1.Node) []*ShareNodeInf
 }
 
 //Create  ShareNodeInfo for one node
-func buildShareNodeInfoWithPods(pods []v1.Pod, node v1.Node) *ShareNodeInfo {
+func buildGPUShareNodeInfoWithPods(pods []v1.Pod, node v1.Node) *GPUShareNodeInfo {
 
-	var info *ShareNodeInfo = &ShareNodeInfo{}
+	var info *GPUShareNodeInfo = &GPUShareNodeInfo{}
 	info.node = node
 	info.pods = []v1.Pod{}
 	info.GpuCount = getGPUCountInNode(node)
@@ -172,7 +172,7 @@ func gpuMemoryInPod(pod v1.Pod) int {
 }
 
 // Get Deviceinfo of ShareNodeinfo
-func (n *ShareNodeInfo) buildDeviceInfo() error {
+func (n *GPUShareNodeInfo) buildDeviceInfo() error {
 
 GPUSearchLoop:
 	for _, pod := range n.pods {
@@ -206,7 +206,7 @@ GPUSearchLoop:
 	return nil
 }
 
-func (n *ShareNodeInfo) getDeivceInfo(pod v1.Pod) (devIdx int, gpuMemory int) {
+func (n *GPUShareNodeInfo) getDeivceInfo(pod v1.Pod) (devIdx int, gpuMemory int) {
 	var err error
 	id := -1
 
@@ -232,7 +232,7 @@ func (n *ShareNodeInfo) getDeivceInfo(pod v1.Pod) (devIdx int, gpuMemory int) {
 	return id, gpuMemoryInPod(pod)
 }
 
-func IsGPUSharingNode(node v1.Node) bool {
+func IsGPUShareNode(node v1.Node) bool {
 	value, ok := node.Status.Allocatable[resourceName]
 
 	if ok {

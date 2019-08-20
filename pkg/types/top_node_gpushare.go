@@ -10,7 +10,7 @@ import (
 	"text/tabwriter"
 )
 
-func DisplayShareDetails(nodeInfos []*ShareNodeInfo) {
+func DisplayGPUShareDetails(nodeInfos []*GPUShareNodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
 		totalGPUMemInCluster int64
@@ -112,7 +112,7 @@ func DisplayShareDetails(nodeInfos []*ShareNodeInfo) {
 	_ = w.Flush()
 }
 
-func DisplayShareSummary(nodeInfos []*ShareNodeInfo) {
+func DisplayGPUShareSummary(nodeInfos []*GPUShareNodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
 		maxGPUCount          int
@@ -212,7 +212,7 @@ func GetGPUMemoryInPod(pod v1.Pod) int {
 	return gpuMem
 }
 
-func getMaxGPUCount(nodeInfos []*ShareNodeInfo) (max int) {
+func getMaxGPUCount(nodeInfos []*GPUShareNodeInfo) (max int) {
 	for _, node := range nodeInfos {
 		if node.GpuCount > max {
 			max = node.GpuCount
