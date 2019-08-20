@@ -5,7 +5,9 @@
 - Add Priority class support for MPIJob and TFJob
 - Display Unhealthy GPU devices
 - Integrate GPUShare capablities
-
+- Upgrade TFJob to V1 (commit id: d746bde)
+- Add Customize Serving
+- Add GPUsharing features for Serving Job
 
 ## [Release 0.2.0]
 

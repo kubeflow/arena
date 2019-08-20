@@ -17,17 +17,17 @@ package commands
 import (
 	"fmt"
 
-	"github.com/kubeflow/arena/pkg/mpi-operator/client/clientset/versioned"
+	"github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"time"
 
-	v1alpha1 "github.com/kubeflow/arena/pkg/mpi-operator/apis/kubeflow/v1alpha1"
+	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
 )
 
 var (
