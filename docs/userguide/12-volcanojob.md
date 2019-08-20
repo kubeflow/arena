@@ -39,7 +39,7 @@ deploy the volcano following the steps from kubernetes-artifacts/volcano-operato
 To install the chart with the release name `volcano-release`
 
 ```bash
-$ helm install --name volcano-release kubernetes-artifacts/volcano-operator
+$ helm install --name volcano-release --namespace arena-system kubernetes-artifacts/volcano-operator
 ```
 
 TO verify all deployments are running use the below command

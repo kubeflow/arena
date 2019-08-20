@@ -68,6 +68,9 @@ type TrainingJob interface {
 
 	// The priority class name of the training job
 	GetPriorityClass() string
+
+	// Get trainingJob resources
+	GetTrainingJobResources(client *kubernetes.Clientset, jobName string) TrainingJobResources
 }
 
 type Trainer interface {
