@@ -51,10 +51,10 @@ __custom_func() {
             __arena_parse_get
             return
             ;;
-		arena_serve_get | arena_serve_logs | arena_serve_delete)
-			__arena_parse_serve_get
-			return
-			;;
+        arena_serve_get | arena_serve_logs | arena_serve_delete)
+            __arena_parse_serve_get
+            return
+            ;;
         *)
             ;;
     esac
