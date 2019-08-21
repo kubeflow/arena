@@ -28,6 +28,7 @@ __arena_serve_all_namespace() {
 	if arena_output=$(arena serve list --all-namespaces | grep -v -E 'NAME.*TYPE.*NAMESPACE' 2>/dev/null); then
 		out=($(echo "${arena_output}" | awk '{print $3}'))
 		COMPREPLY=( $( compgen -W "${out[*]}" -- "$cur" ) )
+
 	fi
 }
 
