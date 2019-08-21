@@ -32,7 +32,7 @@ var (
 
 // NewServingGetCommand starts the command
 func NewServingGetCommand() *cobra.Command {
-	var bashCompletionFlags = map[string]string{
+    var bashCompletionFlags = map[string]string{
         "version": "__arena_serve_all_version",
         "type":   "__arena_serve_all_type",
     }
