@@ -57,13 +57,6 @@ __custom_func() {
         *)
             ;;
     esac
-	case ${cur} in 
-		"--version" )
-			__arena_serve_all_version
-			return
-			;;
-		*)
-	esac
 }
 
 __arena_override_flag_list=(--namespace=)
