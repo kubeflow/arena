@@ -232,16 +232,6 @@ func (n *GPUShareNodeInfo) getDeivceInfo(pod v1.Pod) (devIdx int, gpuMemory int)
 	return id, gpuMemoryInPod(pod)
 }
 
-func IsGPUShareNode(node v1.Node) bool {
-	value, ok := node.Status.Allocatable[resourceName]
-
-	if ok {
-		ok = (int(value.Value()) > 0)
-	}
-
-	return ok
-}
-
 var (
 	memoryUnit = ""
 )
