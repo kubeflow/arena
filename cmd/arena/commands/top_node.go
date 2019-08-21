@@ -37,8 +37,9 @@ var (
 )
 
 type NodeInfo struct {
-	node v1.Node
-	pods []v1.Pod
+	node       v1.Node
+	pods       []v1.Pod
+	isGpushare bool
 }
 
 func NewTopNodeCommand() *cobra.Command {
@@ -59,18 +60,24 @@ func NewTopNodeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			nd := newNodeDescriber(client, allPods)
-			nodeInfos, gpushareNodes, err := nd.getAllNodeInfos()
+			nodeInfos, err := nd.getAllNodeInfos()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 			for _, nodeInfo := range nodeInfos {
-				if isGPUShareNode(nodeInfo) && isGPUCountNode(nodeInfo) {
+				if nodeInfo.isGPUShareNode() && nodeInfo.isGPUExclusiveNode() {
 					fmt.Printf("nvidia.com/gpu and aliyun.com/gpu-mem are both used in node %s .Please use one kind resource of them\n", nodeInfo.node.Name)
 					os.Exit(1)
 				}
 			}
 			if showGPUShare {
+				gpushareNodes := []v1.Node{}
+				for _, nodeInfo := range nodeInfos {
+					if nodeInfo.isGpushare {
+						gpushareNodes = append(gpushareNodes, nodeInfo.node)
+					}
+				}
 				gpushareNodeInfos, err := gpushare.BuildAllGPUShareNodeInfos(allPods, gpushareNodes)
 				if err != nil {
 					fmt.Printf("Failed due to %v", err)
@@ -100,30 +107,29 @@ func newNodeDescriber(client *kubernetes.Clientset, pods []v1.Pod) *NodeDescribe
 	}
 }
 
-func (d *NodeDescriber) getAllNodeInfos() ([]NodeInfo, []v1.Node, error) {
+func (d *NodeDescriber) getAllNodeInfos() ([]NodeInfo, error) {
 	nodeInfoList := []NodeInfo{}
-	gpushareNodes := []v1.Node{}
 
 	nodeList, err := d.client.CoreV1().Nodes().List(metav1.ListOptions{})
 
 	if err != nil {
-		return nodeInfoList, gpushareNodes, err
+		return nodeInfoList, err
 	}
 
 	for _, node := range nodeList.Items {
 
 		pods := d.getPodsFromNode(node)
-		nodeInfoList = append(nodeInfoList, NodeInfo{
-			node: node,
-			pods: pods,
-		})
-		if isGPUShareNode(NodeInfo{
-			node: node,
-			pods: pods}) {
-			gpushareNodes = append(gpushareNodes, node)
+		nodeInfo := NodeInfo{
+			node:       node,
+			pods:       pods,
+			isGpushare: false}
+		if nodeInfo.isGPUShareNode() {
+			nodeInfo.isGpushare = true
 		}
+
+		nodeInfoList = append(nodeInfoList, nodeInfo)
 	}
-	return nodeInfoList, gpushareNodes, nil
+	return nodeInfoList, nil
 }
 
 func (d *NodeDescriber) getPodsFromNode(node v1.Node) []v1.Pod {
@@ -171,7 +177,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 
 	//check if there is any gpushare node in cluster
 	for _, nodeInfo := range nodeInfos {
-		if isGPUShareNode(nodeInfo) {
+		if nodeInfo.isGPUShareNode() {
 			isGPUshare = true
 			break
 		}
@@ -201,7 +207,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 		var allocatableGPU int64
 		var allocatedGPU int64
 		// GPUShare nodes and normal nodes  calculate the allocatedGPU and total GPU in different way
-		if isGPUShareNode(nodeInfo) {
+		if nodeInfo.isGpushare {
 			gpushareNodeInfo, err := gpushare.BuildGPUShareNodeInfo(allPods, nodeInfo.node)
 			if err != nil {
 				fmt.Printf("Failed due to %v", err)
@@ -244,7 +250,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 					strconv.FormatInt(totalGPU, 10),
 					strconv.FormatInt(allocatedGPU, 10),
 					strconv.FormatInt(unhealthGPU, 10))
-				if isGPUShareNode(nodeInfo) {
+				if nodeInfo.isGPUShareNode() {
 					fmt.Fprintf(w, "\t%s\n", "Yes")
 				} else {
 					fmt.Fprintf(w, "\t%s\n", "No")
@@ -256,7 +262,7 @@ func displayTopNodeSummary(nodeInfos []NodeInfo) {
 					status,
 					strconv.FormatInt(totalGPU, 10),
 					strconv.FormatInt(allocatedGPU, 10))
-				if isGPUShareNode(nodeInfo) {
+				if nodeInfo.isGPUShareNode() {
 					fmt.Fprintf(w, "\t%s\n", "Yes")
 				} else {
 					fmt.Fprintf(w, "\t%s\n", "No")
@@ -364,7 +370,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		var allocatedGPU int64
 		var gpushareNodeInfo *gpushare.GPUShareNodeInfo
 		// GPUShare nodes and normal nodes  calculate the allocatedGPU and total GPU in different way
-		if isGPUShareNode(nodeInfo) {
+		if nodeInfo.isGpushare {
 			var err error
 			gpushareNodeInfo, err = gpushare.BuildGPUShareNodeInfo(allPods, nodeInfo.node)
 			if err != nil {
@@ -397,7 +403,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		fmt.Fprintf(w, "NAME:\t%s\n", nodeInfo.node.Name)
 		fmt.Fprintf(w, "IPADDRESS:\t%s\n", address)
 		fmt.Fprintf(w, "ROLE:\t%s\n", role)
-		if isGPUShareNode(nodeInfo) {
+		if nodeInfo.isGpushare {
 			var Pods []v1.Pod
 			for _, dev := range gpushareNodeInfo.Devs {
 				for _, pod := range dev.Pods {
@@ -446,7 +452,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 
 		fmt.Fprintf(w, "Total GPUs In Node %s:\t%s \t\n", nodeInfo.node.Name, strconv.FormatInt(totalGPU, 10))
 		fmt.Fprintf(w, "Allocated GPUs In Node %s:\t%s (%d%%)\t\n", nodeInfo.node.Name, strconv.FormatInt(allocatedGPU, 10), int64(gpuUsageInNode))
-		if isGPUShareNode(nodeInfo) {
+		if nodeInfo.isGpushare {
 			fmt.Fprintf(w, "If Node is Shareable :\tYes \n")
 		}
 		if hasUnhealthyGPUNode {
@@ -526,7 +532,7 @@ func isMasterNode(node v1.Node) bool {
 	return false
 }
 
-func isGPUCountNode(nodeInfo NodeInfo) bool {
+func (nodeInfo NodeInfo) isGPUExclusiveNode() bool {
 	value, ok := nodeInfo.node.Status.Allocatable[NVIDIAGPUResourceName]
 
 	if ok {
@@ -536,8 +542,8 @@ func isGPUCountNode(nodeInfo NodeInfo) bool {
 	return ok
 }
 
-func isGPUShareNode(nodeInfo NodeInfo) bool {
-	value, ok := nodeInfo.node.Status.Allocatable[resourceName]
+func (nodeInfo NodeInfo) isGPUShareNode() bool {
+	value, ok := nodeInfo.node.Status.Allocatable[ALIYUNGPUResourceName]
 
 	if ok {
 		ok = (int(value.Value()) > 0)
