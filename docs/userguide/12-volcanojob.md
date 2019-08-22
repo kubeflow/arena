@@ -14,6 +14,8 @@ Kubernetes that are commonly required by many classes of batch & elastic workloa
 - deploy the volcano following the steps from kubernetes-artifacts/volcano-operator/README.md
 
 ### 1. To run a batch/distributed volcano job, you may need to specify:
+
+```
 --minAvailable int       The minimal available pods to run for this Job. default value is 1 (default 1)
 --name string            override name
 --queue string           Specifies the queue that will be used in the scheduler, default queue is used this leaves empty (default "default")
@@ -24,6 +26,7 @@ Kubernetes that are commonly required by many classes of batch & elastic workloa
 --taskName string        the task name of volcano job, default value is task (default "task")
 --taskPort int           the task port number. default value is 2222 (default 2222)
 --taskReplicas int       the task replica's number to run the distributed tasks. default value is 1 (default 1)
+```
 
 ### 2. More information related to volcano job.
 
@@ -49,11 +52,12 @@ TO verify all deployments are running use the below command
 ```
 We should get similar output like given below, where three deployments for controller, admission, scheduler should be running.
 
-
+```bash
 NAME                       READY  UP-TO-DATE  AVAILABLE  AGE
 {release_name}-admission    1/1    1           1          4s
 {release_name}-controllers  1/1    1           1          4s
 {release_name}-scheduler    1/1    1           1          4s
+```
 
 TO verify all pods are running use the below command
 
@@ -63,12 +67,13 @@ TO verify all pods are running use the below command
 
 We should get similar output like given below, where three pods for controller, admission,admissioninit, scheduler should be running.
 
+```bash
 NAMESPACE     NAME                                          READY    STATUS             RESTARTS   AGE
 default       volcano-release-admission-cbfdb8549-dz5hg      1/1     Running            0          33s
 default       volcano-release-admission-init-7xmzd           0/1     Completed          0          33s
 default       volcano-release-controllers-7967fffb8d-7vnn9   1/1     Running            0          33s
 default       volcano-release-scheduler-746f6557d8-9pfg6     1/1     Running            0          33s
-
+```
 
 ##### submit a volcano job
 
