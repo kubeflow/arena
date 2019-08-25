@@ -402,3 +402,27 @@ func isHorovodPod(name, ns string, item v1.Pod) bool {
 	}
 	return true
 }
+
+func (hj *HorovodJob) GetTrainingJobResources(client *kubernetes.Clientset, jobName string) TrainingJobResources {
+	return TrainingJobResources{
+		statefulsetList: nil,
+		jobList:         nil,
+		podList:         hj.GetPodsOfJob(client, jobName),
+		operatorPodList: nil,
+	}
+}
+
+// filter out the dest pods by the "release" label
+func (hj *HorovodJob) GetPodsOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release=%s,app=horovodjob", jobName),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
+}

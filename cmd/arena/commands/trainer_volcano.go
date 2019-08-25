@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +25,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
+	"github.com/kubeflow/arena/pkg/types"
 )
 
 // all volcano jobs cache
@@ -559,4 +559,43 @@ func getPodsOfVolcanoJob(name string, st *VolcanoJobTrainer, podList []v1.Pod) (
 		log.Debugf("add pod %v to pods", item)
 	}
 	return pods, chiefPod
+}
+
+func (vj *VolcanoJob) GetTrainingJobResources(client *kubernetes.Clientset, jobName string) TrainingJobResources {
+	return TrainingJobResources{
+		statefulsetList: nil,
+		jobList:         nil,
+		podList:         vj.GetPodsOfJob(client, jobName),
+		operatorPodList: vj.GetOperatorPodOfJob(client, jobName),
+	}
+}
+
+// filter out the dest pods by the "release" label
+func (vj *VolcanoJob) GetPodsOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release=%s,app=volcanojob", jobName),
+	})
+	if err != nil {
+		fmt.Printf("Failed to get pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
+}
+
+// filter out the dest operator pods by the "app" label
+func (vj *VolcanoJob) GetOperatorPodOfJob(client *kubernetes.Clientset, jobName string) *v1.PodList {
+	pods, err := client.CoreV1().Pods("arena-system").List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: "app in (volcano-admission, volcano-controller, volcano-scheduler)",
+	})
+	if err != nil {
+		fmt.Printf("Failed to get operator pods of the job due to %v\n", err)
+		return nil
+	}
+	return pods
 }
