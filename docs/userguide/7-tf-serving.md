@@ -77,40 +77,55 @@ You can deploy and serve a Tensorflow model without Istio enabled.
 Submit tensorflow serving job to deploy and serve machine learning models using the following command.
 
 ```
-arena serve tensorflow [flags]
+Usage:
+  arena serve tensorflow [flags]
 
-options:
-      --command string           the command will inject to container's command.
-      --cpu string               the request cpu of each replica to run the serve.
-  -d, --data stringArray         specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>
-      --enableIstio              enable Istio for serving or not (disable Istio by default)
-  -e, --envs stringArray         the environment variables
-      --gpus int                 the limit GPU count of each replica to run the serve.
-  -h, --help                     help for tensorflow
-      --image string             the docker image name of serve job, default image is tensorflow/serving:latest (default "tensorflow/serving:latest")
-      --memory string            the request memory of each replica to run the serve.
-      --modelConfigFile string   Corresponding with --model_config_file in tensorflow serving
-      --modelName string         the model name for serving
-      --modelPath string         the model path for serving in the container
-      --port int                 the port of tensorflow gRPC listening port (default 8500)
-      --replicas int             the replicas number of the serve job. (default 1)
-      --restfulPort int          the port of tensorflow RESTful listening port (default 8501)
-      --servingName string       the serving name
-      --servingVersion string    the serving version
-      --versionPolicy string     support latest, latest:N, specific:N, all
+Aliases:
+  tensorflow, tf
 
-Options inherited from parent commands
-      --arenaNamespace string   The namespace of arena system service, like TFJob (default "arena-system")
-      --config string           Path to a kube config. Only required if out-of-cluster
-      --loglevel string         Set the logging level. One of: debug|info|warn|error (default "info")
-      --namespace string        the namespace of the job (default "default")
-      --pprof                   enable cpu profile      
+Flags:
+      --command string             the command will inject to container's command.
+      --cpu string                 the request cpu of each replica to run the serve.
+  -d, --data stringArray           specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>
+      --enable-istio               enable Istio for serving or not (disable Istio by default)
+  -e, --envs stringArray           the environment variables
+      --expose-service             expose service using Istio gateway for external access or not (not expose by default)
+      --gpumemory int              the limit GPU memory of each replica to run the serve.
+      --gpus int                   the limit GPU count of each replica to run the serve.
+  -h, --help                       help for tensorflow
+      --image string               the docker image name of serve job, and the default image is tensorflow/serving:latest (default "tensorflow/serving:latest")
+      --image-pull-policy string   the policy to pull the image, and the default policy is IfNotPresent (default "IfNotPresent")
+      --memory string              the request memory of each replica to run the serve.
+      --model-name string          the model name for serving
+      --model-path string          the model path for serving in the container
+      --modelConfigFile string     Corresponding with --model_config_file in tensorflow serving
+      --name string                the serving name
+      --port int                   the port of tensorflow gRPC listening port (default 8500)
+      --replicas int               the replicas number of the serve job. (default 1)
+      --restfulPort int            the port of tensorflow RESTful listening port (default 8501)
+      --version string             the serving version
+      --versionPolicy string       support latest, latest:N, specific:N, all
+
+Options inherited from parent commands:
+      --arena-namespace string   The namespace of arena system service, like tf-operator (default "arena-system")
+      --config string            Path to a kube config. Only required if out-of-cluster
+      --loglevel string          Set the logging level. One of: debug|info|warn|error (default "info")
+  -n, --namespace string         the namespace of the job (default "default")
+      --pprof                    enable cpu profile
+      --trace                    enable trace
 ```
 
 For example, you can submit a Tensorflow model with specific version policy as below.
 
 ```
-arena serve tensorflow --servingName=mymnist --modelName=mnist --image=tensorflow/serving:latest  --data=tfmodel:/tfmodel --modelPath=/tfmodel/mnist --versionPolicy=specific:1  --loglevel=debug
+arena serve tensorflow \
+  --name=mymnist \
+  --model-name=mnist \
+  --image=tensorflow/serving:latest \
+  --data=tfmodel:/tfmodel \
+  --model-path=/tfmodel/mnist \
+  --versionPolicy=specific:1  \
+  --loglevel=debug
 ```
 
 Once this command is triggered, one Kubernetes service will be created to expose gRPC and RESTful APIs of mnist model.
@@ -123,7 +138,14 @@ If you need to enable Istio for Tensorflow serving,  you can append the paramete
 For example,  you can submit a Tensorflow model with Istio enabled as below.
 
 ```
-# arena serve tensorflow --enableIstio --servingName=mymnist --servingVersion=v1 --modelName=mnist  --data=myoss1pvc:/data2 --modelPath=/data2/models/mnist --versionPolicy=specific:1 
+$ arena serve tensorflow \
+  --enableIstio \
+  --name=mymnist \
+  --servingVersion=v1 \
+  --model-name=mnist \
+  --data=myoss1pvc:/data2 \
+  --model-path=/data2/models/mnist \
+  --versionPolicy=specific:1 \
 
 NAME:   mymnist-v1
 LAST DEPLOYED: Wed Sep 26 17:28:13 2018
@@ -181,13 +203,22 @@ You can leverage Istio to control traffic routing to multiple versions of your s
 
 Supposing you've performed step 4, and had v1 model serving deployed already. Now deploy one new version of Tensorflow model with Istio enabled:
 ```
-# arena serve tensorflow --enableIstio --servingName=mymnist --servingVersion=v2 --modelName=mnist  --data=myoss1pvc:/data2 --modelPath=/data2/models/mnist 
+arena serve tensorflow \
+  --enableIstio \
+  --name=mymnist \
+  --servingVersion=v2 \
+  --modelName=mnist  \
+  --data=myoss1pvc:/data2 \
+  --model-path=/data2/models/mnist 
 ```
 
 Then you can adjust traffic routing dynamically with relative weights for both two versions of tfserving jobs.
             
 ```
-# arena serve traffic-router-split --servingName=mymnist  --servingVersions=v1,v2 --weights=50,50
+arena serve traffic-router-split \
+  --name=mymnist \
+  --servingVersions=v1,v2 \
+  --weights=50,50
 ```
 
 7\. Test RESTful APIs of serving models 
@@ -267,6 +298,6 @@ So you may get response as below. It means the model predicts the input data as 
 You can use the following command to delete a tfserving job and its associated pods
                                      
 ```
-# arena serve delete mymnist-v1
+# arena serve delete mymnist --version v1
 release "mymnist-v1" deleted
 ```

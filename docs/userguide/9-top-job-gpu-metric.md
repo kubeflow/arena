@@ -33,7 +33,7 @@ kubectl apply -f kubernetes-artifacts/prometheus/gpu-exporter.yaml
 3\. You can check the GPU metrics by prometheus SQL request
 
 ```
-# kubectl get --raw '/api/v1/namespaces/kube-system/services/prometheus-svc:prometheus/proxy/api/v1/query?query=nvidia_gpu_num_devices'
+# kubectl get --raw '/api/v1/namespaces/arena-system/services/prometheus-svc:prometheus/proxy/api/v1/query?query=nvidia_gpu_num_devices'
 
 {"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"nvidia_gpu_num_devices","app":"node-gpu-exporter","instance":"172.16.1.144:9445","job":"kubernetes-service-endpoints","k8s_app":"node-gpu-exporter","kubernetes_name":"node-gpu-exporter","node_name":"mynode"},"value":[1543202894.919,"2"]}]}}
 

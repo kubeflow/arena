@@ -158,6 +158,7 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewServingCustomCommand())
 	command.AddCommand(NewTrafficRouterSplitCommand())
 	command.AddCommand(NewServingGetCommand())
+	command.AddCommand(NewServingLogCommand())
 
 	return command
 }

@@ -124,7 +124,7 @@ func submitSparkApplicationJob(args []string, submitArgs *submitSparkJobArgs) er
 
 	job, err := trainer.GetTrainingJob(name, namespace)
 	if err != nil {
-		return fmt.Errorf("failed to create sparkjob %s due to error %v", name, err)
+		log.Debugf("Check %s exist due to error %v", name, err)
 	}
 
 	if job != nil {

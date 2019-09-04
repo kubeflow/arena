@@ -8,7 +8,7 @@
 1.利用下列yaml创建`PriorityClass`对象，这里定义了两个优先级`critical`和`medium`:
 
 ```yaml
-apiVersion: scheduling.k8s.io/v1
+apiVersion: scheduling.k8s.io/v1beta1
 description: Used for the critical app
 kind: PriorityClass
 metadata:
@@ -17,7 +17,7 @@ value: 1100000
 
 ---
 
-apiVersion: scheduling.k8s.io/v1
+apiVersion: scheduling.k8s.io/v1beta1
 description: Used for the medium app
 kind: PriorityClass
 metadata:
