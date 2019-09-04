@@ -577,6 +577,7 @@ spec:
 {{- end }}
 {{- if .Values.chief }}
 {{ .Values.chiefName | indent  4}}:
+      replicas: 1
       restartPolicy: Never
       template:
         metadata:
@@ -868,6 +869,7 @@ spec:
 {{- end }}
 {{- if .Values.evaluator }}
     Evaluator:
+      replicas: 1
       restartPolicy: Never
       template:
         metadata:
