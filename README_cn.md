@@ -30,6 +30,10 @@ Arena 是一种命令行界面，支持轻而易举地运行和监控机器学�
 - [6.使用群调度器运行分布式 TensorFlow 训练作业](docs/userguide_cn/6-tfjob-gangschd.md)
 - [7.运行 TensorFlow Serving](docs/userguide_cn/7-tf-serving.md)
 - [8.运行 TensorFlow Estimator](docs/userguide_cn/8-tfjob-estimator.md)
+- [9. 监控训练任务的GPUs  ](docs/userguide/9-top-job-gpu-metric.md)
+- [10. 运行training job with RDMA](docs/userguide/10-rdma-integration.md)
+- [11. 运行spark job](docs/userguide/11-sparkjob-distributed.md)
+- [12. 运行Volcano job](docs/userguide/12-volcanojob.md)
 
 ## 演示
 
