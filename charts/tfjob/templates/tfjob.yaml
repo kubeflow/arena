@@ -23,7 +23,7 @@ spec:
 {{- end }}
 {{- end }}
   tfReplicaSpecs:
-{{- if .Values.ps }}
+{{- if (gt (int .Values.ps) 0) -}}
     PS:
       replicas: {{ .Values.ps }}
       restartPolicy: Never
@@ -60,7 +60,7 @@ spec:
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
           schedulerName: {{ .Values.schedulerName }}
@@ -276,10 +276,10 @@ spec:
                 {{- end }}
                 {{- end }}
 {{- end }}
-{{- if .Values.workers }}
+{{- if (gt (int .Values.workers) 0) -}}
     Worker:
       replicas: {{ .Values.workers }}
-      {{- if .Values.chief }}
+      {{- if (gt (int .Values.chief) 0) -}}
       restartPolicy: OnFailure
       {{- else }}
       restartPolicy: Never
@@ -317,14 +317,14 @@ spec:
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
           schedulerName: {{ .Values.schedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.binpack }}
           affinity:
             podAffinity:
@@ -362,7 +362,7 @@ spec:
                           - worker      
           {{- end }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.useHostNetwork }}
           {{- if not .Values.useENI }}
           hostNetwork: {{ .Values.useHostNetwork }}
@@ -575,7 +575,7 @@ spec:
                 {{- end }}
 
 {{- end }}
-{{- if .Values.chief }}
+{{- if (gt (int .Values.chief) 0) -}}
 {{ .Values.chiefName | indent  4}}:
       restartPolicy: Never
       template:
@@ -611,14 +611,14 @@ spec:
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
           schedulerName: {{ .Values.schedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.binpack }}
           affinity:
             podAffinity:
@@ -656,7 +656,7 @@ spec:
                           - worker      
           {{- end }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.useHostNetwork }}
           {{- if not .Values.useENI }}
           hostNetwork: {{ .Values.useHostNetwork }}
@@ -866,7 +866,7 @@ spec:
                 {{- end }}
                 {{- end }}
 {{- end }}
-{{- if .Values.evaluator }}
+{{- if (gt (int .Values.evaluator) 0) -}}
     Evaluator:
       restartPolicy: Never
       template:
@@ -902,14 +902,14 @@ spec:
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
           schedulerName: {{ .Values.schedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if (gt (int .Values.ps) 0) -}}
           {{- if .Values.useHostNetwork }}
           {{- if not .Values.useENI }}
           hostNetwork: {{ .Values.useHostNetwork }}

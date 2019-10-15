@@ -91,3 +91,8 @@
 ### 0.21.1
 
 * Upgrade TFJob to kubeflow.org/v1
+
+### 0.22.0
+
+* Add Node Selector
+* Support Helm 1.15 and above: https://github.com/helm/helm/issues/3164
