@@ -18,7 +18,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -74,6 +74,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewVersionCmd(CLIName))
 	command.AddCommand(NewDataCommand())
 	command.AddCommand(NewCompletionCommand())
+	command.AddCommand(NewExecCommand())
 	// command.AddCommand(NewWaitCommand())
 	// command.AddCommand(cmd.NewVersionCmd(CLIName))
 
