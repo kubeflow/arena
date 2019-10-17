@@ -3,7 +3,8 @@ Arena支持给提交的任务指定运行的节点（目前仅支持mpi和tf类�
 
 下面展示一些使用例子。
 
-1.查询k8s集群信息： 
+1.查询k8s集群信息：
+``` 
 # kubectl get nodes
 NAME                       STATUS   ROLES    AGE     VERSION
 cn-beijing.192.168.3.225   Ready    master   2d23h   v1.12.6-aliyun.1
