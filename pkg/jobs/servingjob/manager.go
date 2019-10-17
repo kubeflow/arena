@@ -6,12 +6,16 @@ import (
 	"github.com/kubeflow/arena/pkg/types"
 	"k8s.io/client-go/kubernetes"
 )
-
+// job manager manages all jobs 
 type ServingJobManager interface {
+	// return all jobs of manager
 	GetAllServingJob() []ServingJob
+	// user gives filter args,return jobs matched the conditions
 	GetTargetServingJob(filter ServingJobFilterArgs) ([]ServingJob)
+	// print the manager information
 	Printer
 }
+// this is use to 
 type ServingJobFilterArgs struct {
 	Namespace string
 	Type string
@@ -116,7 +120,4 @@ func (m *manager) GetHelpInfo(objs ...interface{}) (string, error) {
 	}
 	helpInfo := fmt.Sprintf("%s\n\n%s\n\n%s\n", header, strings.Join(printLines, "\n"), footer)
 	return helpInfo,nil
-	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	//fmt.Fprintf(w, helpInfo)
-	//w.Flush()
 }
