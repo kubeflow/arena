@@ -65,39 +65,45 @@ func isTrainingConfigExist(name, trainingType, namespace string) bool {
 /**
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
-func BuildJobInfo(job TrainingJob) *types.JobInfo {
+func BuildJobInfo(job TrainingJob) *types.TrainingJobPrinterInfo {
 
 	tensorboard, err := tensorboardURL(job.Name(), job.ChiefPod().Namespace)
 	if tensorboard == "" || err != nil {
 		log.Debugf("Tensorboard dones't show up because of %v, or tensorboard url %s", err, tensorboard)
 	}
 
-	instances := []types.Instance{}
+	//instances := []types.TrainingInstance{}
+	instances := []interface{}{}
 	for _, pod := range job.AllPods() {
 		isChief := false
 		if pod.Name == job.ChiefPod().Name {
 			isChief = true
 		}
 
-		instances = append(instances, types.Instance{
-			Name:    pod.Name,
-			Status:  strings.ToUpper(string(pod.Status.Phase)),
-			Age:     util.ShortHumanDuration(job.Age()),
-			Node:    pod.Status.HostIP,
+		instance := types.TrainingInstance{
+			Instance: types.Instance{
+				Status: strings.ToUpper(string(pod.Status.Phase)),
+				Name: pod.Name,
+				Age:     util.ShortHumanDuration(job.Age()),
+				Node:    pod.Status.HostIP,
+			},
 			IsChief: isChief,
-		})
+		}
+		instances = append(instances,interface{}(instance))
 	}
 
-	return &types.JobInfo{
-		Name:        job.Name(),
-		Namespace:   job.Namespace(),
-		Status:      types.JobStatus(GetJobRealStatus(job)),
-		Duration:    util.ShortHumanDuration(job.Duration()),
-		Trainer:     job.Trainer(),
+	return &types.TrainingJobPrinterInfo{
+		JobPrinterInfo: types.JobPrinterInfo{
+			Name:        job.Name(),
+			Namespace:   job.Namespace(),
+			Status:      interface{}(types.JobStatus(GetJobRealStatus(job))),
+			Age:         util.ShortHumanDuration(job.Duration()),
+			Type:        job.Trainer(),
+			Instances:   instances,
+		},
 		Priority:    getPriorityClass(job),
 		Tensorboard: tensorboard,
 		ChiefName:   job.ChiefPod().Name,
-		Instances:   instances,
 	}
 }
 
