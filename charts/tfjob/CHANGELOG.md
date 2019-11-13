@@ -91,3 +91,7 @@
 ### 0.21.1
 
 * Upgrade TFJob to kubeflow.org/v1
+
+### 0.22.0
+
+* Support node selector labels and tolerations
