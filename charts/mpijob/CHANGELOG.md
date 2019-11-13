@@ -72,3 +72,6 @@
 ### 0.17.0
 
 * Add Priority Class
+### 0.18.0
+
+* Support node selector labels and tolerations
