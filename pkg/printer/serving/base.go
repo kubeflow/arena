@@ -67,7 +67,7 @@ func NewServingJobPrinter(job servejob.Serving) ServingJobPrinter {
 		Desired:         job.DesiredInstances(),
 		Available:       job.AvailableInstances(),
 		Age:             job.GetAge(),
-		EndpointAddress: job.GetClusterIP(),
+		EndpointAddress: job.GetEndpointIP(),
 		EndpointPorts:   job.GetPorts(),
 		Pods:            simplePodList,
 		Serving:         job,
