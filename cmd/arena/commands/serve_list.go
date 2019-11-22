@@ -64,7 +64,7 @@ func NewServingListCommand() *cobra.Command {
 						servingJob.Version,
 						servingJob.DesiredInstances(),
 						servingJob.AvailableInstances(),
-						servingJob.GetClusterIP(),
+						servingJob.GetEndpointIP(),
 						servingJob.GetPorts(),
 					)
 
@@ -75,7 +75,7 @@ func NewServingListCommand() *cobra.Command {
 						servingJob.Version,
 						servingJob.DesiredInstances(),
 						servingJob.AvailableInstances(),
-						servingJob.GetClusterIP(),
+						servingJob.GetEndpointIP(),
 						servingJob.GetPorts(),
 					)
 

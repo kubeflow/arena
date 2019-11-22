@@ -80,6 +80,28 @@ func (s Serving) AllSvcs() (svcs []v1.Service) {
 	return s.svcs
 }
 
+/** Get the endpoint IP
+ * Try to get load balancer id first, if failed, turn to
+ */
+func (s Serving) GetEndpointIP() string {
+
+	if len(s.AllSvcs()) > 0 {
+		service := s.AllSvcs()[0]
+
+		// 1.Get Address for loadbalancer
+		if service.Spec.Type == v1.ServiceTypeLoadBalancer {
+			if len(service.Status.LoadBalancer.Ingress) > 0 {
+				return service.Status.LoadBalancer.Ingress[0].IP
+			}
+		}
+
+		// 2.Get SVC endpoint address
+		return service.Spec.ClusterIP
+	}
+
+	return "N/A"
+}
+
 // Cluster IP
 func (s Serving) GetClusterIP() string {
 	if len(s.AllSvcs()) > 0 {
