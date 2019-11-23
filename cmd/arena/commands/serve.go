@@ -122,9 +122,6 @@ func (s *ServeArgs) addAnnotations() {
 	log.Debugf("annotations: %v", annotations)
 	if len(annotations) > 0 {
 		s.Annotations = transformSliceToMap(annotations, "=")
-		if value, _ := s.Annotations[aliyunENIAnnotation]; value == "true" {
-			s.UseENI = true
-		}
 	}
 }
 
