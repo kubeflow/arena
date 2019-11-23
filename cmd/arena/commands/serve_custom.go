@@ -129,6 +129,10 @@ func (serveCustomArgs *ServeCustomArgs) preprocess(client *kubernetes.Clientset,
 		return err
 	}
 	serveCustomArgs.ModelServiceExists = modelServiceExists
+
+	serveCustomArgs.addNodeSelectors()
+	serveCustomArgs.addTolerations()
+
 	return nil
 }
 

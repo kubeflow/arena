@@ -46,6 +46,8 @@ type ServeArgs struct {
 	ServingName     string            `yaml:"servingName"`     // --servingName
 	ServingVersion  string            `yaml:"servingVersion"`  // --servingVersion
 	ModelDirs       map[string]string `yaml:"modelDirs"`
+	NodeSelectors   map[string]string `yaml:"nodeSelectors"` // --selector
+	Tolerations     []string          `yaml:"tolerations"`   // --toleration
 
 	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
 }
@@ -87,6 +89,33 @@ func (s ServeArgs) checkPortsIsOk() error {
 	}
 }
 
+// get node selectors
+func (s *ServeArgs) addNodeSelectors() {
+	log.Debugf("node selectors: %v", selectors)
+	if len(selectors) == 0 {
+		s.NodeSelectors = map[string]string{}
+		return
+	}
+	s.NodeSelectors = transformSliceToMap(selectors, "=")
+}
+
+// get tolerations labels
+func (s *ServeArgs) addTolerations() {
+	log.Debugf("tolerations: %v", tolerations)
+	if len(tolerations) == 0 {
+		s.Tolerations = []string{}
+		return
+	}
+	s.Tolerations = []string{}
+	for _, taintKey := range tolerations {
+		if taintKey == "all" {
+			s.Tolerations = []string{"all"}
+			return
+		}
+		s.Tolerations = append(s.Tolerations, taintKey)
+	}
+}
+
 func ParseMountPath(dataset []string) (err error) {
 	err = validate.ValidateDatasets(dataset)
 	return err
@@ -125,6 +154,9 @@ func (serveArgs *ServeArgs) addServeCommonFlags(command *cobra.Command) {
 
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")
 	command.MarkFlagRequired("name")
+
+	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 }
 
 func init() {
