@@ -132,6 +132,7 @@ func (serveCustomArgs *ServeCustomArgs) preprocess(client *kubernetes.Clientset,
 
 	serveCustomArgs.addNodeSelectors()
 	serveCustomArgs.addTolerations()
+	serveCustomArgs.addAnnotations()
 
 	return nil
 }

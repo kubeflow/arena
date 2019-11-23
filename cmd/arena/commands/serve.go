@@ -48,6 +48,7 @@ type ServeArgs struct {
 	ModelDirs       map[string]string `yaml:"modelDirs"`
 	NodeSelectors   map[string]string `yaml:"nodeSelectors"` // --selector
 	Tolerations     []string          `yaml:"tolerations"`   // --toleration
+	Annotations     map[string]string `yaml:"annotations"`
 
 	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
 }
@@ -113,6 +114,17 @@ func (s *ServeArgs) addTolerations() {
 			return
 		}
 		s.Tolerations = append(s.Tolerations, taintKey)
+	}
+}
+
+// get annotations
+func (s *ServeArgs) addAnnotations() {
+	log.Debugf("annotations: %v", annotations)
+	if len(annotations) > 0 {
+		s.Annotations = transformSliceToMap(annotations, "=")
+		if value, _ := s.Annotations[aliyunENIAnnotation]; value == "true" {
+			s.UseENI = true
+		}
 	}
 }
 

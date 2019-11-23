@@ -25,9 +25,12 @@ spec:
       app: {{ template "custom-serving.name" . }} 
   template:
     metadata:
-      {{- if eq .Values.enableIstio true }}
       annotations:
+      {{- if eq .Values.enableIstio true }}
         sidecar.istio.io/inject: "true"
+      {{- end }}
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value | quote }}
       {{- end }}
       labels:
         heritage: {{ .Release.Service | quote }}

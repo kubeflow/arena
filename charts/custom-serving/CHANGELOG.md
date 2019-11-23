@@ -7,3 +7,4 @@
 
 * support NodePort and LoadBalancer
 * support labels, tolerance
+* support annotations
