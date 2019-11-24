@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: "Job"
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+    chart: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "RunaiJob"
+spec:
+  template:
+    metadata:
+      annotations:
+        project: {{ .Values.project }}
+    spec:
+      schedulerName: runai-scheduler
+      restartPolicy: Never
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ .Values.image }}
+          resources:
+            limits:
+              nvidia.com/gpu: {{ .Values.gpus }}
+
+

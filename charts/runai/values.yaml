@@ -1,0 +1,8 @@
+# Default values for runai-job.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# The minimal available pods to run for this Job
+project: "default"
+gpus: 1
+image: ""

@@ -165,7 +165,7 @@ func (submitArgs *submitArgs) addNodeSelectors() {
 	log.Debugf("node selectors: %v",selectors)
 	if len(selectors) == 0 {
 		submitArgs.NodeSelectors = map[string]string{}
-		return 
+		return
 	}
 	submitArgs.NodeSelectors = transformSliceToMap(selectors,"=")
 }
@@ -175,13 +175,13 @@ func (submitArgs *submitArgs) addTolerations() {
 	log.Debugf("tolerations: %v",tolerations)
 	if len(tolerations) == 0 {
 		submitArgs.Tolerations = []string{}
-		return 
+		return
 	}
 	submitArgs.Tolerations = []string{}
 	for _,taintKey := range tolerations {
 		if taintKey == "all" {
 			submitArgs.Tolerations = []string{"all"}
-			return 
+			return
 		}
 		submitArgs.Tolerations = append(submitArgs.Tolerations,taintKey)
 	}
@@ -213,7 +213,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&submitArgs.WorkingDir, "workingDir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
 	command.Flags().MarkDeprecated("workingDir", "please use --working-dir instead")
 	command.Flags().StringVar(&submitArgs.WorkingDir, "working-dir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
-  
+
 	// command.MarkFlagRequired("workingDir")
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
@@ -269,6 +269,7 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewSparkApplicationCommand())
 
 	command.AddCommand(NewVolcanoJobCommand())
+	command.AddCommand(NewRunaiJobCommand())
 
 	return command
 }

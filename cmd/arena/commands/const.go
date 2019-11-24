@@ -38,6 +38,6 @@ const (
 )
 
 var (
-	knownTrainingTypes = []string{"tfjob", "mpijob", "standalonejob", "horovodjob", "sparkjob", "volcanojob"}
+	knownTrainingTypes = []string{"tfjob", "mpijob", "standalonejob", "horovodjob", "sparkjob", "volcanojob", "runai"}
 	knownServingTypes  = []string{"tf-serving", "trt-serving", "custom-serving"}
 )
