@@ -23,11 +23,17 @@ BUILDER_CMD=docker run --rm \
   -v ${DIST_DIR}/pkg:/root/go/pkg \
   -w /root/go/src/${PACKAGE} ${BUILDER_IMAGE}
 
+ifeq ($(ENV),local)
+$(info "Building local version")
+CHARTS_FOLDER=${CURRENT_DIR}/charts
+endif
+
 override LDFLAGS += \
   -X ${PACKAGE}.version=${VERSION} \
   -X ${PACKAGE}.buildDate=${BUILD_DATE} \
   -X ${PACKAGE}.gitCommit=${GIT_COMMIT} \
   -X ${PACKAGE}.gitTreeState=${GIT_TREE_STATE} \
+  -X ${PACKAGE}/pkg/util.chartFolder=$(CHARTS_FOLDER) \
   -extldflags "-static"
 
 # docker image publishing options
