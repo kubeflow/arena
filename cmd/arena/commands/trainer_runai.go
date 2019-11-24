@@ -37,10 +37,10 @@ func (rj *RunaiJob) AllPods() []v1.Pod {
 	return []v1.Pod{rj.chiefPod}
 }
 
-// // Get all the kubernetes resource of the Training Job
-// func (rj *RunaiJob) Resources() []Resource {
-// 	return rj.resources
-// }
+// Get all the kubernetes resource of the Training Job
+func (rj *RunaiJob) Resources() []Resource {
+	return rj.resources
+}
 
 // Get the Status of the Job: RUNNING, PENDING,
 func (rj *RunaiJob) GetStatus() string {
