@@ -16,6 +16,7 @@ spec:
     spec:
       schedulerName: runai-scheduler
       restartPolicy: Never
+      hostIPC: {{ .Values.hostIPC }}
       containers:
         - name: {{ .Release.Name }}
           image: {{ .Values.image }}

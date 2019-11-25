@@ -6,3 +6,4 @@
 project: "default"
 gpus: 1
 image: ""
+hostIPC: false
