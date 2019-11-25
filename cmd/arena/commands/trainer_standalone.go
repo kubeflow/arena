@@ -113,7 +113,7 @@ func (s *StandaloneJobTrainer) IsSupported(name, ns string) bool {
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s", name),
+			}, LabelSelector: fmt.Sprintf("release=%s,app=training", name),
 		})
 		if err != nil {
 			log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
