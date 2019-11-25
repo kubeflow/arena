@@ -43,10 +43,6 @@ func NewSubmitHorovodJobCommand() *cobra.Command {
 		Short:   "Submit horovodjob as training job.",
 		Aliases: []string{"hj"},
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				cmd.HelpFunc()(cmd, args)
-				os.Exit(1)
-			}
 
 			util.SetLogLevel(logLevel)
 			setupKubeconfig()
