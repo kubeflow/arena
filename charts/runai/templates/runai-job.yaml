@@ -23,5 +23,21 @@ spec:
           resources:
             limits:
               nvidia.com/gpu: {{ .Values.gpus }}
+          volumeMounts:
+            {{- range $index, $volume := .Values.volumes}}
+            {{ $parts := split ":" $volume }}
+            - mountPath: {{ $parts._1 }}
+              name: "volume-{{ $index }}"
+            {{- end }}
+      volumes:
+        {{- range $index, $volume := .Values.volumes}}
+        {{ $parts := split ":" $volume }}
+          - name: "volume-{{ $index }}"
+            hostPath: 
+              path: {{ $parts._0 }}
+              type: Directory
+        {{- end }}
+
+
 
 

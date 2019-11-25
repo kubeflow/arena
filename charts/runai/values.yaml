@@ -7,3 +7,6 @@ project: "default"
 gpus: 1
 image: ""
 hostIPC: false
+
+# volumes:
+#   - /path/on/host:/dest/container/path

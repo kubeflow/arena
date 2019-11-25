@@ -59,11 +59,12 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 }
 
 type submitRunaiJobArgs struct {
-	Project string `yaml:"project"`
-	GPUS    int    `yaml:"gpus"`
-	Image   string `yaml:"image"`
-	Name    string `yaml:"name"`
-	HostIPC bool   `yaml:"hostIPC"`
+	Project string   `yaml:"project"`
+	GPUS    int      `yaml:"gpus"`
+	Image   string   `yaml:"image"`
+	Name    string   `yaml:"name"`
+	HostIPC bool     `yaml:"hostIPC"`
+	Volumes []string `yaml:"volumes"`
 }
 
 // add flags to submit spark args
@@ -75,6 +76,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&(sa.Project), "project", "default", "Specifies the project to use for this job, leave empty to use default project")
 	command.Flags().StringVar(&(sa.Image), "image", "", "Specifies job image")
 	command.Flags().BoolVar(&(sa.HostIPC), "host-ipc", false, "Use the host's ipc namespace. Optional: Default to false.")
+	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container")
 	command.MarkFlagRequired("image")
 }
 
