@@ -121,7 +121,7 @@ func NewRunaiTrainer(client *kubernetes.Clientset) Trainer {
 
 func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 	runaiList, err := rt.client.Batch().Jobs(ns).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release=%s", name),
+		LabelSelector: fmt.Sprintf("release=%s,app=runaijob", name),
 	})
 
 	if err != nil {
@@ -135,14 +135,13 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 	}
 }
 
-//TODO
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
 	var (
 		job batchv1.Job
 	)
 
 	runaiList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release=%s,chart=runaijob", name),
+		LabelSelector: fmt.Sprintf("release=%s,app=runaijob", name),
 	})
 
 	if err != nil {
