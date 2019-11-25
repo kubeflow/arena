@@ -142,7 +142,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	)
 
 	runaiList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release=%s", name),
+		LabelSelector: fmt.Sprintf("release=%s,chart=runaijob", name),
 	})
 
 	if err != nil {
