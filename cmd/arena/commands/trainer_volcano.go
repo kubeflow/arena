@@ -357,7 +357,9 @@ func (st *VolcanoJobTrainer) IsSupported(name, ns string) bool {
 			}
 		}
 	} else {
-		volcanoJobList, err := st.volcanoJobClient.BatchV1alpha1().Jobs(ns).List(metav1.ListOptions{})
+		volcanoJobList, err := st.volcanoJobClient.BatchV1alpha1().Jobs(ns).List(metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("release=%s", name),
+		})
 
 		if err != nil {
 			log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
