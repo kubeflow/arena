@@ -92,11 +92,11 @@ func (rj *RunaiJob) RequestedGPU() int64 {
 func (rj *RunaiJob) AllocatedGPU() int64 {
 	pod := rj.chiefPod
 
-	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
-		return 0
+	if pod.Status.Phase == v1.PodRunning {
+		return rj.RequestedGPU()
 	}
 
-	return rj.RequestedGPU()
+	return 0
 }
 
 // the host ip of the chief pod
