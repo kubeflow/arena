@@ -1,5 +1,6 @@
 bin/
 **/*.tgz
+**/*.tar.gz
 **/.DS_Store
 .idea
 .kube

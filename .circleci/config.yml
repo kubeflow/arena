@@ -5,21 +5,27 @@ version: 2
 jobs:
   build:
     docker:
-    - image: circleci/golang:1.10
+    - image: circleci/golang:1.12
     working_directory: /go/src/github.com/kubeflow/arena
     steps:
     - checkout
-    - setup_remote_docker:
-          docker_layer_caching: true
     - run:
-        name: run tests
-        command: |
-          test -z "$(go fmt ./... 2>/dev/null | tee /dev/stderr)" || (echo "please format Go code with 'gofmt'")
-          go vet ./...
-          go test -race -v ./...
-    - run: docker build -t acs/arena:$CIRCLE_BUILD_NUM -f Dockerfile.install .
+        name: general-prep
+        command: rm .env
     - run:
-        name: codecov
+        name: build-mac
         command: |
-          go test -race -coverprofile=coverage.txt -covermode=atomic ./...
-          bash <(curl -s https://codecov.io/bash)
+          make cli-darwin-amd64
+          tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts
+    - run: 
+        name: build-linux
+        command: |
+          make cli-linux-amd64
+          tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
+    - run:
+        name: push-binaries
+        command: |
+          REGION="us-east-1"
+          BUKECT="runai-cli"
+          aws s3 cp linux-amd64.tar.gz s3://${BUCKET}/linux-amd64.tar.gz --region ${REGION} --content-disposition 0
+          aws s3 cp cli-darwin-amd64.tar.gz s3://${BUCKET}/cli-darwin-amd64.tar.gz --region ${REGION} --content-disposition 0
