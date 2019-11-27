@@ -5,7 +5,7 @@ ARENA_CLI_NAME=arena
 JOB_MONITOR=jobmon
 OS_ARCH?=linux-amd64
 
-# Use .env file if exists
+# Use .env file if exists - for local development
 -include .env
 
 VERSION=$(shell cat ${CURRENT_DIR}/VERSION)

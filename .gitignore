@@ -5,3 +5,4 @@ bin/
 .kube
 Library
 .vscode
+.env
