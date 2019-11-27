@@ -8,6 +8,10 @@ OS_ARCH?=linux-amd64
 # Use .env file if exists - for local development
 -include .env
 
+ifndef CHARTS_FOLDER
+CHARTS_FOLDER=/etc/arena/charts
+endif
+
 VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GIT_COMMIT=$(shell git rev-parse HEAD)
