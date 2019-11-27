@@ -1,21 +1,31 @@
+{{- if .Values.interactive }}
+apiVersion: apps/v1
+kind: "StatefulSet"
+{{- else }}
 apiVersion: batch/v1
 kind: "Job"
+{{- end }}
 metadata:
   name: {{ .Release.Name }}
-  labels:
-    app: {{ template "runai.name" . }}
-    chart: {{ template "runai.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-    createdBy: "RunaiJob"
+  {{- include "chart.labels" . | indent 2}}
 spec:
+  {{- if .Values.interactive }}
+  serviceName: {{ .Release.Name }}
+  replicas: 1
+  selector: 
+    matchLabels: 
+      release: {{ .Release.Name }}
+  {{- end }}
   template:
     metadata:
       annotations:
         project: {{ .Values.project }}
+      {{- include "chart.labels" . | indent 6}}
     spec:
       schedulerName: runai-scheduler
+      {{- if eq .Values.interactive false}}
       restartPolicy: Never
+      {{- end}}
       hostIPC: {{ .Values.hostIPC }}
       containers:
         - name: {{ .Release.Name }}

@@ -3,111 +3,12 @@ package commands
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"time"
 )
-
-type RunaiJob struct {
-	*BasicJobInfo
-	job         batchv1.Job
-	trainerType string
-	chiefPod    v1.Pod
-}
-
-// // Get the chief Pod of the Job.
-func (rj *RunaiJob) ChiefPod() v1.Pod {
-	return rj.chiefPod
-}
-
-// Get the name of the Training Job
-func (rj *RunaiJob) Name() string {
-	return rj.name
-}
-
-// Get the namespace of the Training Job
-func (rj *RunaiJob) Namespace() string {
-	return rj.job.Namespace
-}
-
-// Get all the pods of the Training Job
-func (rj *RunaiJob) AllPods() []v1.Pod {
-	return []v1.Pod{rj.chiefPod}
-}
-
-// Get all the kubernetes resource of the Training Job
-func (rj *RunaiJob) Resources() []Resource {
-	return rj.resources
-}
-
-// Get the Status of the Job: RUNNING, PENDING,
-func (rj *RunaiJob) GetStatus() string {
-	return string(rj.chiefPod.Status.Phase)
-}
-
-// Return trainer Type, support MPI, standalone, tensorflow
-func (rj *RunaiJob) Trainer() string {
-	return rj.trainerType
-}
-
-// Get the Job Age
-func (rj *RunaiJob) Age() time.Duration {
-	job := rj.job
-	if job.CreationTimestamp.IsZero() {
-		return 0
-	}
-	return metav1.Now().Sub(job.CreationTimestamp.Time)
-}
-
-// TODO
-// Get the Job Duration
-func (rj *RunaiJob) Duration() time.Duration {
-	return 0
-}
-
-// TODO
-// Get start time
-func (rj *RunaiJob) StartTime() *metav1.Time {
-	return &rj.job.CreationTimestamp
-}
-
-// Get Dashboard
-func (rj *RunaiJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
-	return []string{}, nil
-}
-
-// Requested GPU count of the Job
-func (rj *RunaiJob) RequestedGPU() int64 {
-	val, ok := rj.job.Spec.Template.Spec.Containers[0].Resources.Limits[NVIDIAGPUResourceName]
-	if !ok {
-		return 0
-	}
-
-	return val.Value()
-}
-
-// Requested GPU count of the Job
-func (rj *RunaiJob) AllocatedGPU() int64 {
-	pod := rj.chiefPod
-
-	if pod.Status.Phase == v1.PodRunning {
-		return rj.RequestedGPU()
-	}
-
-	return 0
-}
-
-// the host ip of the chief pod
-func (rj *RunaiJob) HostIPOfChief() string {
-	return ""
-}
-
-// The priority class name of the training job
-func (rj *RunaiJob) GetPriorityClass() string {
-	return ""
-}
 
 type RunaiTrainer struct {
 	client *kubernetes.Clientset
@@ -120,7 +21,7 @@ func NewRunaiTrainer(client *kubernetes.Clientset) Trainer {
 }
 
 func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
-	runaiList, err := rt.client.Batch().Jobs(ns).List(metav1.ListOptions{
+	runaiJobList, err := rt.client.Batch().Jobs(ns).List(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("release=%s,app=runaijob", name),
 	})
 
@@ -128,19 +29,28 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
 	}
 
-	if len(runaiList.Items) > 0 {
+	if len(runaiJobList.Items) > 0 {
 		return true
-	} else {
-		return false
 	}
+
+	runaiStatefulSetsList, err := rt.client.Apps().StatefulSets(ns).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("release=%s,app=runaijob", name),
+	})
+
+	if err != nil {
+		log.Debugf("failed to search job %s in namespace %s due to %v", name, ns, err)
+	}
+
+	if len(runaiStatefulSetsList.Items) > 0 {
+		return true
+	}
+
+	return false
 }
 
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
-	var (
-		job batchv1.Job
-	)
 
-	runaiList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
+	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("release=%s,app=runaijob", name),
 	})
 
@@ -148,18 +58,61 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		log.Debugf("failed to search job %s in namespace %s due to %v", name, namespace, err)
 	}
 
-	if len(runaiList.Items) == 0 {
-		return nil, fmt.Errorf("Failed to find the job for %s", name)
-	} else {
-		job = runaiList.Items[0]
+	if len(runaiJobList.Items) > 0 {
+		return rt.getTrainingJob(runaiJobList.Items[0])
 	}
 
-	return rt.getTrainingJob(job)
+	runaiStatufulsetList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("release=%s,app=runaijob", name),
+	})
 
+	if len(runaiStatufulsetList.Items) > 0 {
+		return rt.getTrainingStatefulset(runaiStatufulsetList.Items[0])
+	}
+
+	return nil, fmt.Errorf("Failed to find the job for %s", name)
 }
 
 func (rt *RunaiTrainer) Type() string {
 	return defaultRunaiTrainingType
+}
+
+func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (TrainingJob, error) {
+	var (
+		lastCreatedPod v1.Pod
+	)
+
+	podList, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		},
+		LabelSelector: fmt.Sprintf("release=%s,app=runaijob", statefulset.Name),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Last created pod will be the chief pod
+	pods := podList.Items
+	lastCreatedPod = pods[0]
+	otherPods := pods[1:]
+	for _, item := range otherPods {
+		if lastCreatedPod.CreationTimestamp.Before(&item.CreationTimestamp) {
+			lastCreatedPod = item
+		}
+	}
+
+	return &RunaiStatefulSet{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      statefulset.Name,
+		},
+		chiefPod:    lastCreatedPod,
+		statefulSet: statefulset,
+		trainerType: rt.Type(),
+	}, nil
 }
 
 func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
@@ -203,7 +156,7 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	runaiJobs := []TrainingJob{}
 
-	runaiList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
+	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%s", "runaijob"),
 	})
 
@@ -211,7 +164,15 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 		return nil, err
 	}
 
-	for _, item := range runaiList.Items {
+	runaiStatefulSetList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=%s", "runaijob"),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range runaiJobList.Items {
 		runaiJob, err := rt.getTrainingJob(item)
 
 		if err != nil {
@@ -219,6 +180,16 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 		}
 
 		runaiJobs = append(runaiJobs, runaiJob)
+	}
+
+	for _, item := range runaiStatefulSetList.Items {
+		runaiStatefulSet, err := rt.getTrainingStatefulset(item)
+
+		if err != nil {
+			return nil, err
+		}
+
+		runaiJobs = append(runaiJobs, runaiStatefulSet)
 	}
 
 	return runaiJobs, nil
