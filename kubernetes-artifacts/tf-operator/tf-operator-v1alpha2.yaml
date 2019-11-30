@@ -173,7 +173,7 @@ metadata:
   name: tf-job-dashboard
   namespace: arena-system
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tf-job-dashboard
@@ -196,7 +196,7 @@ spec:
         - containerPort: 8080
       serviceAccountName: tf-job-dashboard
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tf-job-operator-v1alpha2

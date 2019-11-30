@@ -228,7 +228,7 @@ Deploy the `sleep` pod so you can use `curl` to test above serving models via RE
 If you disable Istio, run the following:
 ```
 # cat <<EOF | kubectl create -f -
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sleep
@@ -250,7 +250,7 @@ EOF
 If you enable Istio, run the following:
 ```
 # cat <<EOF | istioctl kube-inject -f - | kubectl create -f -
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sleep
