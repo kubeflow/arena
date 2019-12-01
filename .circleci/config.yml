@@ -25,7 +25,4 @@ jobs:
     - run:
         name: push-binaries
         command: |
-          REGION="us-east-1"
-          BUCKET="runai-cli"
-          aws s3 cp linux-amd64.tar.gz s3://$BUCKET/linux-amd64.tar.gz --region $REGION --content-disposition 0
-          aws s3 cp cli-darwin-amd64.tar.gz s3://$BUCKET/cli-darwin-amd64.tar.gz --region $REGION --content-disposition 0
+          hub release edit -F darwin-amd64.tar.gz -F linux-amd64.tar.gz v1.0.0
