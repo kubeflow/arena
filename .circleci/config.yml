@@ -25,4 +25,4 @@ jobs:
     - run:
         name: push-binaries
         command: |
-          hub release edit -F darwin-amd64.tar.gz -F linux-amd64.tar.gz v1.0.0
+          hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz v1.0.0
