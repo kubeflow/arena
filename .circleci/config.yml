@@ -25,5 +25,8 @@ jobs:
     - run:
         name: push-binaries
         command: |
-          set -ex 
-          hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -m "" v1.0.0
+          if [ "$CIRCLE_BRANCH" == "runai-master" ]
+          then
+            set -ex 
+            hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -m "" v1.0.0
+          fi
