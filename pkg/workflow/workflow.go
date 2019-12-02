@@ -72,7 +72,11 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		return err
 	}
-
+	// create namespace before creating configmap,this is required in helm v3
+	out, err := kubectl.CreateNamespace(namespace)
+	if err != nil {
+		return fmt.Errorf("error: %v,message: %v", err, out)
+	}
 	err = kubectl.CreateAppConfigmap(name,
 		trainingType,
 		namespace,
