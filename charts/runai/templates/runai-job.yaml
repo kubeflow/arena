@@ -22,6 +22,10 @@ spec:
         project: {{ .Values.project }}
       {{- include "chart.labels" . | indent 6}}
     spec:
+      {{- if .Values.node_type }}
+      nodeSelector:
+        run.ai/type: {{ .Values.node_type }}
+      {{- end}}
       schedulerName: runai-scheduler
       {{- if eq .Values.interactive false}}
       restartPolicy: Never

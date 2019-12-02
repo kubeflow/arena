@@ -66,6 +66,7 @@ type submitRunaiJobArgs struct {
 	HostIPC     bool     `yaml:"hostIPC"`
 	Interactive bool     `yaml:"interactive"`
 	Volumes     []string `yaml:"volumes"`
+	NodeType    string   `yaml:"node_type"`
 }
 
 // add flags to submit spark args
@@ -79,6 +80,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&(sa.HostIPC), "host-ipc", false, "Use the host's ipc namespace. Optional: Default to false.")
 	command.Flags().BoolVar(&(sa.Interactive), "interactive", false, "Create an interactive job")
 	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container")
+	command.Flags().StringVar(&(sa.NodeType), "node-type", "", "Define node type for the job")
 	command.MarkFlagRequired("image")
 }
 

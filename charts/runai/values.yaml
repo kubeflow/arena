@@ -9,5 +9,6 @@ image: ""
 hostIPC: false
 interactive: false
 
+node_type: ""
 # volumes:
 #   - /path/on/host:/dest/container/path
