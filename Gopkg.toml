@@ -61,3 +61,7 @@
   go-tests = true
   unused-packages = true
 
+
+[[constraint]]
+  name = "github.com/mholt/archiver"
+  version = "3.3.0"
