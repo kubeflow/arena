@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-serviceType: ClusterIP
+serviceType: NodePort
 
 ## serving name and version
 # servingName: 

@@ -25,9 +25,12 @@ spec:
       app: {{ template "custom-serving.name" . }} 
   template:
     metadata:
-      {{- if eq .Values.enableIstio true }}
       annotations:
+      {{- if eq .Values.enableIstio true }}
         sidecar.istio.io/inject: "true"
+      {{- end }}
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value | quote }}
       {{- end }}
       labels:
         heritage: {{ .Release.Service | quote }}
@@ -37,6 +40,23 @@ spec:
         serviceName: "{{ .Values.servingName }}"
         servingVersion: "{{ .Values.servingVersion }}"
     spec:
+      {{- if ne (len .Values.nodeSelectors) 0 }}
+      nodeSelector:
+      {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+        {{ $nodeKey }}: "{{ $nodeVal }}"  
+      {{- end }}
+      {{- end }}
+      {{- if ne (len .Values.tolerations) 0 }}
+      tolerations:
+      {{- range $tolerationKey := .Values.tolerations }}
+        {{- if eq $tolerationKey "all" }}
+        - operator: "Exists"
+        {{- else }}
+        - key: "{{ $tolerationKey }}"
+          operator: "Exists"
+        {{- end }}
+      {{- end }}
+      {{- end }}
       containers:
         - name: custom-serving
           {{- if .Values.image }}
