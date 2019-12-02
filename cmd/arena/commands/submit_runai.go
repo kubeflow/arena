@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
+	"os/user"
 )
 
 var (
@@ -67,10 +68,14 @@ type submitRunaiJobArgs struct {
 	Interactive bool     `yaml:"interactive"`
 	Volumes     []string `yaml:"volumes"`
 	NodeType    string   `yaml:"node_type"`
+	User        string   `yaml:"user"`
 }
 
 // add flags to submit spark args
 func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
+	currentUser, _ := user.Current()
+	defaultUser := currentUser.Username
+
 	command.Flags().StringVar(&name, "name", "", "override name")
 	command.MarkFlagRequired("name")
 
@@ -81,6 +86,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&(sa.Interactive), "interactive", false, "Create an interactive job")
 	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container")
 	command.Flags().StringVar(&(sa.NodeType), "node-type", "", "Define node type for the job")
+	command.Flags().StringVar(&(sa.User), "user", defaultUser, "Use different user to run the job")
 	command.MarkFlagRequired("image")
 }
 

@@ -20,6 +20,8 @@ spec:
     metadata:
       annotations:
         project: {{ .Values.project }}
+        interactive: {{ quote .Values.interactive }}
+        user: {{ .Values.user }}
       {{- include "chart.labels" . | indent 6}}
     spec:
       {{- if .Values.node_type }}

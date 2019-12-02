@@ -10,5 +10,6 @@ hostIPC: false
 interactive: false
 
 node_type: ""
+user: ""
 # volumes:
 #   - /path/on/host:/dest/container/path
