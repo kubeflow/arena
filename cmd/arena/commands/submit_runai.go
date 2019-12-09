@@ -3,11 +3,13 @@ package commands
 import (
 	"fmt"
 	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/kubectl"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
 	"os/user"
+	"strings"
 )
 
 var (
@@ -47,6 +49,28 @@ func NewRunaiJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+
+			if submitArgs.ServiceType == "portforward" {
+				localPorts := []string{}
+				for _, port := range submitArgs.Ports {
+					split := strings.Split(port, ":")
+					localPorts = append(localPorts, split[0])
+				}
+
+				err = kubectl.WaitForReadyStatefulSet(name, namespace)
+
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+
+				err = kubectl.PortForward(localPorts, name, namespace)
+
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+			}
 		},
 	}
 
@@ -63,12 +87,13 @@ type submitRunaiJobArgs struct {
 	Project     string   `yaml:"project"`
 	GPUS        int      `yaml:"gpus"`
 	Image       string   `yaml:"image"`
-	Name        string   `yaml:"name"`
 	HostIPC     bool     `yaml:"hostIPC"`
 	Interactive bool     `yaml:"interactive"`
 	Volumes     []string `yaml:"volumes"`
 	NodeType    string   `yaml:"node_type"`
 	User        string   `yaml:"user"`
+	Ports       []string `yaml:"ports"`
+	ServiceType string   `yaml:"serviceType"`
 }
 
 // add flags to submit spark args
@@ -79,14 +104,16 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&name, "name", "", "override name")
 	command.MarkFlagRequired("name")
 
-	command.Flags().IntVar(&(sa.GPUS), "gpus", 1, "Number of GPUs the job requires.")
-	command.Flags().StringVar(&(sa.Project), "project", "default", "Specifies the project to use for this job, leave empty to use default project")
-	command.Flags().StringVar(&(sa.Image), "image", "", "Specifies job image")
+	command.Flags().IntVarP(&(sa.GPUS), "gpus", "g", 1, "Number of GPUs the job requires.")
+	command.Flags().StringVarP(&(sa.Project), "project", "p", "default", "Specifies the project to use for this job, leave empty to use default project")
+	command.Flags().StringVarP(&(sa.Image), "image", "i", "", "Specifies job image")
 	command.Flags().BoolVar(&(sa.HostIPC), "host-ipc", false, "Use the host's ipc namespace. Optional: Default to false.")
 	command.Flags().BoolVar(&(sa.Interactive), "interactive", false, "Create an interactive job")
-	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container")
+	command.Flags().StringArrayVarP(&(sa.Volumes), "volumes", "v", []string{}, "Volumes to mount into the container")
 	command.Flags().StringVar(&(sa.NodeType), "node-type", "", "Define node type for the job")
-	command.Flags().StringVar(&(sa.User), "user", defaultUser, "Use different user to run the job")
+	command.Flags().StringVarP(&(sa.User), "user", "u", defaultUser, "Use different user to run the job")
+	command.Flags().StringArrayVar(&(sa.Ports), "port", []string{}, "Add port mapping to job")
+	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", defaultUser, "Service type for the interactive job. Options are: portforward, loadbalancer, nodeport")
 	command.MarkFlagRequired("image")
 }
 

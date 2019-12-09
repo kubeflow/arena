@@ -8,6 +8,10 @@ gpus: 1
 image: ""
 hostIPC: false
 interactive: false
+serviceType: "nodeport"
+# ports:
+#   - 30000:8888
+#   - 80:30001
 
 node_type: ""
 user: ""

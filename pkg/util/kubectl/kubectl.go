@@ -276,6 +276,67 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 	return fileName, err
 }
 
+func WaitForReadyStatefulSet(name string, namespace string) error {
+	binary, err := exec.LookPath(kubectlCmd[0])
+	if err != nil {
+		return err
+	}
+
+	env := os.Environ()
+	if types.KubeConfig != "" {
+		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
+	}
+
+	log.Infof("Waiting for job to start")
+	args := []string{"-c", fmt.Sprintf("while [ $(%s get statefulset %s -n %s -o custom-columns=READY:.status.readyReplicas --no-headers ) != \"1\" ]; do echo \"waiting for pod to start\" && sleep 5; done", binary, name, namespace)}
+	cmd := exec.Command("bash", args...)
+	cmd.Env = env
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	err = cmd.Run()
+
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Job started")
+	return nil
+}
+
+func PortForward(ports []string, serviceName string, namespace string) error {
+	args := []string{"port-forward", fmt.Sprintf("service/%s", serviceName), "--pod-running-timeout=1m0s", "-n", namespace}
+	args = append(args, ports...)
+	return kubectlAttched(args)
+}
+
+func kubectlAttched(args []string) error {
+	binary, err := exec.LookPath(kubectlCmd[0])
+	if err != nil {
+		return err
+	}
+
+	// 1. prepare the arguments
+	// args := []string{"create", "configmap", name, "--namespace", namespace, fmt.Sprintf("--from-file=%s=%s", name, configFileName)}
+	log.Debugf("Exec %s, %v", binary, args)
+
+	env := os.Environ()
+	if types.KubeConfig != "" {
+		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
+	}
+
+	// return syscall.Exec(cmd, args, env)
+	// 2. execute the command
+	cmd := exec.Command(binary, args...)
+	cmd.Env = env
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+
+	return nil
+}
+
 func kubectl(args []string) ([]byte, error) {
 	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
