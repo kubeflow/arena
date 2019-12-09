@@ -35,6 +35,8 @@ spec:
       hostIPC: {{ .Values.hostIPC }}
       containers:
         - name: {{ .Release.Name }}
+          command: {{ .Values.command }}
+          args: {{ .Values.args }}
           image: {{ .Values.image }}
           resources:
             limits:

@@ -14,6 +14,11 @@ serviceType: "nodeport"
 #   - 80:30001
 #   - 8080
 
+command:
+  - 'start-notebook.sh'
+args:
+  - '--NotebookApp.base_url={url}'
+
 node_type: ""
 user: ""
 # volumes:

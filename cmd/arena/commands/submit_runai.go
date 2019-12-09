@@ -94,6 +94,8 @@ type submitRunaiJobArgs struct {
 	User        string   `yaml:"user"`
 	Ports       []string `yaml:"ports"`
 	ServiceType string   `yaml:"serviceType"`
+	Command     []string `yaml:"command"`
+	Args        []string `yaml:"args"`
 }
 
 // add flags to submit spark args
@@ -114,6 +116,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVarP(&(sa.User), "user", "u", defaultUser, "Use different user to run the job")
 	command.Flags().StringArrayVar(&(sa.Ports), "port", []string{}, "Add port mapping to job")
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Service type for the interactive job. Options are: portforward, loadbalancer, nodeport, ingress")
+	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Command to run in the job contaner.")
+	command.Flags().StringArrayVar(&(sa.Args), "args", []string{}, "Arguments to pass to the command")
 	command.MarkFlagRequired("image")
 }
 
