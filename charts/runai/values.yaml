@@ -12,6 +12,7 @@ serviceType: "nodeport"
 # ports:
 #   - 30000:8888
 #   - 80:30001
+#   - 8080
 
 node_type: ""
 user: ""

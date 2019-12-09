@@ -17,10 +17,11 @@ spec:
   ports:
     {{- range $index, $port := .Values.ports }}
     {{ $parts := split ":" $port }}
-    - name: "{{ $parts._1 }}-port"
+    {{ $targetPort := $parts._1 | default $parts._0}}
+    - name: "{{ $targetPort }}-port"
       protocol: 'TCP'
       port: {{ $parts._0 }}
-      targetPort: {{ $parts._1 }}
+      targetPort: {{ $targetPort }}
       {{ if eq $.Values.serviceType "nodeport" }}
       nodePort: {{ $parts._0 }}
       {{ end }}
