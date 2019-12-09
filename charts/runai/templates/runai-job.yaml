@@ -38,7 +38,7 @@ spec:
           image: {{ .Values.image }}
           resources:
             limits:
-              nvidia.com/gpu: {{ .Values.gpus }}
+              nvidia.com/gpu: {{ .Values.gpu }}
           volumeMounts:
             {{- range $index, $volume := .Values.volumes}}
             {{ $parts := split ":" $volume }}

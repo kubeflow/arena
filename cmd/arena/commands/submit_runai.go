@@ -85,7 +85,7 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 
 type submitRunaiJobArgs struct {
 	Project     string   `yaml:"project"`
-	GPUS        int      `yaml:"gpus"`
+	GPU         int      `yaml:"gpu"`
 	Image       string   `yaml:"image"`
 	HostIPC     bool     `yaml:"hostIPC"`
 	Interactive bool     `yaml:"interactive"`
@@ -104,7 +104,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&name, "name", "", "override name")
 	command.MarkFlagRequired("name")
 
-	command.Flags().IntVarP(&(sa.GPUS), "gpus", "g", 1, "Number of GPUs the job requires.")
+	command.Flags().IntVarP(&(sa.GPU), "gpu", "g", 1, "Number of GPUs the job requires.")
 	command.Flags().StringVarP(&(sa.Project), "project", "p", "default", "Specifies the project to use for this job, leave empty to use default project")
 	command.Flags().StringVarP(&(sa.Image), "image", "i", "", "Specifies job image")
 	command.Flags().BoolVar(&(sa.HostIPC), "host-ipc", false, "Use the host's ipc namespace. Optional: Default to false.")
