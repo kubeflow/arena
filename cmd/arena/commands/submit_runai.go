@@ -113,7 +113,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&(sa.NodeType), "node-type", "", "Define node type for the job")
 	command.Flags().StringVarP(&(sa.User), "user", "u", defaultUser, "Use different user to run the job")
 	command.Flags().StringArrayVar(&(sa.Ports), "port", []string{}, "Add port mapping to job")
-	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", defaultUser, "Service type for the interactive job. Options are: portforward, loadbalancer, nodeport")
+	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Service type for the interactive job. Options are: portforward, loadbalancer, nodeport, ingress")
 	command.MarkFlagRequired("image")
 }
 

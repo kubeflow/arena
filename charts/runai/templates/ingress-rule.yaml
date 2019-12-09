@@ -1,0 +1,29 @@
+{{if and (eq .Values.serviceType "ingress") .Values.interactive }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}
+  annotations:
+      kubernetes.io/ingress.class: nginx
+  {{- include "chart.labels" . | indent 2}}
+spec:
+  rules:
+    - http:
+        paths:
+          {{- if eq (len .Values.ports) 1}}
+          - path: /{{ .Release.Name }}
+            backend:
+              {{ $port := index .Values.ports 0 }}
+              {{ $parts := split ":" $port}}
+              serviceName: {{ .Release.Name }}
+              servicePort: {{ $parts._0 }}
+          {{-  else}}
+          {{- range $port := .Values.ports }}
+          {{ $parts := split ":" $port}}
+          - path: /{{ $.Release.Name }}-{{ $parts._0 }}
+            backend:
+              serviceName: {{ $.Release.Name }}
+              servicePort: {{ $parts._0 }}
+          {{- end}}
+          {{- end}}
+{{end}}
