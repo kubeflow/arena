@@ -105,28 +105,28 @@ type submitRunaiJobArgs struct {
 
 func (sa *submitRunaiJobArgs) UseJupiterDefaultValues() {
 	var (
-		jupiterPort    = "8888"
-		jupiterImage   = "jupyter/scipy-notebook"
-		jupiterCommand = "start-notebook.sh"
-		jupiterArgs    = "--NotebookApp.base_url=/%s"
+		jupyterPort    = "8888"
+		jupyterImage   = "jupyter/scipy-notebook"
+		jupyterCommand = "start-notebook.sh"
+		jupyterArgs    = "--NotebookApp.base_url=/%s"
 	)
 
 	if len(sa.Ports) == 0 {
-		sa.Ports = []string{jupiterPort}
-		log.Infof("Expose default jupiter notebook port %s", jupiterPort)
+		sa.Ports = []string{jupyterPort}
+		log.Infof("Exposing default jupyter notebook port %s", jupyterPort)
 	}
 	if sa.Image == "" {
 		sa.Image = "jupyter/scipy-notebook"
-		log.Infof("Use default jupiter notebook image \"%s\"", jupiterImage)
+		log.Infof("Using default jupyter notebook image \"%s\"", jupyterImage)
 	}
 	if len(sa.Command) == 0 && sa.ServiceType == "ingress" {
-		sa.Command = []string{jupiterCommand}
-		log.Infof("Use default jupiter notebook command for using ingress service \"%s\"", jupiterCommand)
+		sa.Command = []string{jupyterCommand}
+		log.Infof("Using default jupyter notebook command for using ingress service \"%s\"", jupyterCommand)
 	}
 	if len(sa.Args) == 0 && sa.ServiceType == "ingress" {
-		baseUrlArg := fmt.Sprintf(jupiterArgs, name)
+		baseUrlArg := fmt.Sprintf(jupyterArgs, name)
 		sa.Args = []string{baseUrlArg}
-		log.Infof("Use default jupiter notebook arg for using ingress service \"%s\"", baseUrlArg)
+		log.Infof("Using default jupyter notebook command argument for using ingress service \"%s\"", baseUrlArg)
 	}
 }
 
