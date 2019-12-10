@@ -44,7 +44,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if submitArgs.IsJupiter {
+			if submitArgs.IsJupyter {
 				submitArgs.UseJupiterDefaultValues()
 			}
 
@@ -100,7 +100,7 @@ type submitRunaiJobArgs struct {
 	ServiceType string   `yaml:"serviceType"`
 	Command     []string `yaml:"command"`
 	Args        []string `yaml:"args"`
-	IsJupiter   bool
+	IsJupyter   bool
 }
 
 func (sa *submitRunaiJobArgs) UseJupiterDefaultValues() {
@@ -139,10 +139,10 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.MarkFlagRequired("name")
 
 	command.Flags().IntVarP(&(sa.GPU), "gpu", "g", 1, "Number of GPUs to allocation to the Job.")
-	command.Flags().StringVarP(&(sa.Project), "project", "p", "default", "Specifies the Run:AI project to use for this Job".)
+	command.Flags().StringVarP(&(sa.Project), "project", "p", "default", "Specifies the Run:AI project to use for this Job.")
 	command.Flags().StringVarP(&(sa.Image), "image", "i", "", "Image to use when creating the container for this Job.")
-	command.Flags().BoolVar(&(sa.HostIPC), "host-ipc", false, "Use the host's ipc namespace. (default \'false\')")
-	command.Flags().BoolVar(&(sa.Interactive), "interactive", false, "Mark this Job as unattended or interactive. (default \'false\')")
+	command.Flags().BoolVar(&(sa.HostIPC), "host-ipc", false, "Use the host's ipc namespace. (default 'false').")
+	command.Flags().BoolVar(&(sa.Interactive), "interactive", false, "Mark this Job as unattended or interactive. (default 'false')")
 	command.Flags().StringArrayVarP(&(sa.Volumes), "volumes", "v", []string{}, "Volumes to mount into the container.")
 	command.Flags().StringVar(&(sa.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
 	command.Flags().StringVarP(&(sa.User), "user", "u", defaultUser, "Use different user to run the Job.")
@@ -150,7 +150,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Service exposure method for interactive Job. Options are: portforward, loadbalancer, nodeport, ingress.")
 	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().StringArrayVar(&(sa.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
-	command.Flags().BoolVar(&(sa.IsJupiter), "jupyter", false, "Shortcut for running a jupyter notebook container. Uses a pre-created image and a default notebookd configuration.")
+	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook container. Uses a pre-created image and a default notebookd configuration.")
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
