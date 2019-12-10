@@ -45,7 +45,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			if submitArgs.IsJupyter {
-				submitArgs.UseJupiterDefaultValues()
+				submitArgs.UseJupyterDefaultValues()
 			}
 
 			err = submitRunaiJob(args, submitArgs)
@@ -103,7 +103,7 @@ type submitRunaiJobArgs struct {
 	IsJupyter   bool
 }
 
-func (sa *submitRunaiJobArgs) UseJupiterDefaultValues() {
+func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 	var (
 		jupyterPort    = "8888"
 		jupyterImage   = "jupyter/scipy-notebook"
