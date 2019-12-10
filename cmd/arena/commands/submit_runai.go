@@ -44,6 +44,10 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			if submitArgs.IsJupiter {
+				submitArgs.UseJupiterDefaultValues()
+			}
+
 			err = submitRunaiJob(args, submitArgs)
 			if err != nil {
 				fmt.Println(err)
@@ -96,6 +100,34 @@ type submitRunaiJobArgs struct {
 	ServiceType string   `yaml:"serviceType"`
 	Command     []string `yaml:"command"`
 	Args        []string `yaml:"args"`
+	IsJupiter   bool
+}
+
+func (sa *submitRunaiJobArgs) UseJupiterDefaultValues() {
+	var (
+		jupiterPort    = "8888"
+		jupiterImage   = "jupyter/scipy-notebook"
+		jupiterCommand = "start-notebook.sh"
+		jupiterArgs    = "--NotebookApp.base_url=/%s"
+	)
+
+	if len(sa.Ports) == 0 {
+		sa.Ports = []string{jupiterPort}
+		log.Infof("Expose default jupiter notebook port %s", jupiterPort)
+	}
+	if sa.Image == "" {
+		sa.Image = "jupyter/scipy-notebook"
+		log.Infof("Use default jupiter notebook image \"%s\"", jupiterImage)
+	}
+	if len(sa.Command) == 0 && sa.ServiceType == "ingress" {
+		sa.Command = []string{jupiterCommand}
+		log.Infof("Use default jupiter notebook command for using ingress service \"%s\"", jupiterCommand)
+	}
+	if len(sa.Args) == 0 && sa.ServiceType == "ingress" {
+		baseUrlArg := fmt.Sprintf(jupiterArgs, name)
+		sa.Args = []string{baseUrlArg}
+		log.Infof("Use default jupiter notebook arg for using ingress service \"%s\"", baseUrlArg)
+	}
 }
 
 // add flags to submit spark args
@@ -118,7 +150,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVarP(&(sa.ServiceType), "service-type", "s", "", "Service type for the interactive job. Options are: portforward, loadbalancer, nodeport, ingress")
 	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Command to run in the job contaner.")
 	command.Flags().StringArrayVar(&(sa.Args), "args", []string{}, "Arguments to pass to the command")
-	command.MarkFlagRequired("image")
+	command.Flags().BoolVar(&(sa.IsJupiter), "jupiter", false, "Is this job a jupiter notebook server. Will use default configuration for jupiter notebook")
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
