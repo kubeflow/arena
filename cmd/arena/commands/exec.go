@@ -1,0 +1,61 @@
+package commands
+
+import (
+	"fmt"
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/kubectl"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"os"
+)
+
+func NewExecCommand() *cobra.Command {
+	var (
+		interactive bool
+		TTY         bool
+	)
+
+	var command = &cobra.Command{
+		Use:   "exec",
+		Short: "execute a command inside a running job",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				os.Exit(1)
+			}
+
+			name = args[0]
+			command := args[1]
+			commandArgs := args[2:]
+
+			util.SetLogLevel(logLevel)
+			setupKubeconfig()
+			_, err := initKubeClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			err = updateNamespace(cmd)
+			if err != nil {
+				log.Debugf("Failed due to %v", err)
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			job, err := searchTrainingJob(name, trainingType, namespace)
+			if err != nil {
+				log.Errorln(err)
+				os.Exit(1)
+			}
+
+			kubectl.Exec(job.ChiefPod().Name, job.ChiefPod().Namespace, command, commandArgs, interactive, TTY)
+		},
+	}
+
+	command.Flags().StringVar(&trainingType, "type", "", "The training type to get, the possible option is tfjob, mpijob, sparkjob,volcanojob,horovodjob or standalonejob. (optional)")
+	command.Flags().BoolVarP(&interactive, "stdin", "i", false, "Pass stdin to the container")
+	command.Flags().BoolVarP(&TTY, "tty", "t", false, "Stdin is a TTY")
+
+	return command
+}

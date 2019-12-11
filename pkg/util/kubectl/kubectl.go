@@ -304,6 +304,12 @@ func WaitForReadyStatefulSet(name string, namespace string) error {
 	return nil
 }
 
+func Exec(podName string, namespace string, command string, commandArgs []string, interactive bool, TTY bool) error {
+	args := []string{"exec", podName, fmt.Sprintf("-i=%t", interactive), fmt.Sprintf("-t=%t", TTY), "-n", namespace, command}
+	args = append(args, commandArgs...)
+	return kubectlAttched(args)
+}
+
 func PortForward(ports []string, serviceName string, namespace string) error {
 	args := []string{"port-forward", fmt.Sprintf("service/%s", serviceName), "--pod-running-timeout=1m0s", "-n", namespace}
 	args = append(args, ports...)
