@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
+	"strings"
 )
 
 func NewExecCommand() *cobra.Command {
@@ -53,7 +54,9 @@ func NewExecCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&trainingType, "type", "", "The training type to get, the possible option is tfjob, mpijob, sparkjob,volcanojob,horovodjob or standalonejob. (optional)")
+	trainerTypes := getAllTrainingTypes(clientset)
+	joinedString := strings.Join(trainerTypes, ", ")
+	command.Flags().StringVar(&trainingType, "type", "", fmt.Sprintf("The training type to use, the possible options are %s. (optional)", joinedString))
 	command.Flags().BoolVarP(&interactive, "stdin", "i", false, "Pass stdin to the container")
 	command.Flags().BoolVarP(&TTY, "tty", "t", false, "Stdin is a TTY")
 

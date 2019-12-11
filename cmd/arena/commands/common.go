@@ -102,3 +102,13 @@ func updateNamespace(cmd *cobra.Command) (err error) {
 	}
 	return nil
 }
+
+func getAllTrainingTypes(clientset *kubernetes.Clientset) []string {
+	trainers := NewTrainers(clientset)
+	trainerNames := []string{}
+	for _, trainer := range trainers {
+		trainerNames = append(trainerNames, trainer.Type())
+	}
+
+	return trainerNames
+}
