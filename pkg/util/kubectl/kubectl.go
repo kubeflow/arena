@@ -310,6 +310,11 @@ func Exec(podName string, namespace string, command string, commandArgs []string
 	return kubectlAttched(args)
 }
 
+func Logs(podName string, namespace string) ([]byte, error) {
+	args := []string{"logs", podName, "-n", namespace}
+	return kubectl(args)
+}
+
 func PortForward(ports []string, serviceName string, namespace string) error {
 	args := []string{"port-forward", fmt.Sprintf("service/%s", serviceName), "--pod-running-timeout=1m0s", "-n", namespace}
 	args = append(args, ports...)

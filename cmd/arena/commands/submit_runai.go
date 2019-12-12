@@ -54,13 +54,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if submitArgs.ServiceType == "portforward" {
-				localPorts := []string{}
-				for _, port := range submitArgs.Ports {
-					split := strings.Split(port, ":")
-					localPorts = append(localPorts, split[0])
-				}
-
+			if submitArgs.IsJupyter || submitArgs.ServiceType == "portforward" {
 				err = kubectl.WaitForReadyStatefulSet(name, namespace)
 
 				if err != nil {
@@ -68,11 +62,38 @@ func NewRunaiJobCommand() *cobra.Command {
 					os.Exit(1)
 				}
 
-				err = kubectl.PortForward(localPorts, name, namespace)
+				if submitArgs.IsJupyter {
+					runaiTrainer := NewRunaiTrainer(clientset)
+					job, err := runaiTrainer.GetTrainingJob(name, namespace)
 
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+
+					pod := job.ChiefPod()
+					logs, err := kubectl.Logs(pod.Name, pod.Namespace)
+
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
+
+					fmt.Println(string(logs))
+				}
+
+				if submitArgs.ServiceType == "portforward" {
+					localPorts := []string{}
+					for _, port := range submitArgs.Ports {
+						split := strings.Split(port, ":")
+						localPorts = append(localPorts, split[0])
+					}
+
+					err = kubectl.PortForward(localPorts, name, namespace)
+					if err != nil {
+						fmt.Println(err)
+						os.Exit(1)
+					}
 				}
 			}
 		},
@@ -111,6 +132,7 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 		jupyterArgs    = "--NotebookApp.base_url=/%s"
 	)
 
+	sa.Interactive = true
 	if len(sa.Ports) == 0 {
 		sa.Ports = []string{jupyterPort}
 		log.Infof("Exposing default jupyter notebook port %s", jupyterPort)
