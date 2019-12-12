@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"os/user"
+	"regexp"
 	"strings"
 )
 
@@ -74,12 +75,14 @@ func NewRunaiJobCommand() *cobra.Command {
 					pod := job.ChiefPod()
 					logs, err := kubectl.Logs(pod.Name, pod.Namespace)
 
+					token, err := getTokenFromJupyterLogs(string(logs))
+
 					if err != nil {
 						fmt.Println(err)
 						os.Exit(1)
 					}
 
-					fmt.Println(string(logs))
+					fmt.Printf("Jupyter notebook token: %s\n", token)
 				}
 
 				if submitArgs.ServiceType == "portforward" {
@@ -102,6 +105,19 @@ func NewRunaiJobCommand() *cobra.Command {
 	submitArgs.addFlags(command)
 
 	return command
+}
+
+func getTokenFromJupyterLogs(logs string) (string, error) {
+	re, err := regexp.Compile(`\?token=(.*)\n`)
+	if err != nil {
+		return "", err
+	}
+
+	res := re.FindStringSubmatch(logs)
+	if len(res) < 2 {
+		return "", fmt.Errorf("Could not find token string in logs")
+	}
+	return res[1], nil
 }
 
 func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {

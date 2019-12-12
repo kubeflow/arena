@@ -288,7 +288,7 @@ func WaitForReadyStatefulSet(name string, namespace string) error {
 	}
 
 	log.Infof("Waiting for job to start")
-	args := []string{"-c", fmt.Sprintf("while [ $(%s get statefulset %s -n %s -o custom-columns=READY:.status.readyReplicas --no-headers ) != \"1\" ]; do echo \"waiting for pod to start\" && sleep 5; done", binary, name, namespace)}
+	args := []string{"-c", fmt.Sprintf("while [ $(%s get statefulset %s -n %s -o custom-columns=READY:.status.readyReplicas --no-headers ) != \"1\" ]; do echo \"Waiting for job to start\" && sleep 5; done", binary, name, namespace)}
 	cmd := exec.Command("bash", args...)
 	cmd.Env = env
 	cmd.Stdout = os.Stdout
