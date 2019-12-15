@@ -31,9 +31,18 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{- define "charts.label-addition"}}
+app: {{ template "runai.name" . }}
+chart: {{ template "runai.chart" . }}
+release: {{ .Release.Name }}
+heritage: {{ .Release.Service }}
+createdBy: "RunaiJob"
+{{- end }}
+
 {{/* Generate basic labels */}}
 {{- define "chart.labels" }}
 labels:
+  {{include "charts.label-addition" . | indent 2}}
   app: {{ template "runai.name" . }}
   chart: {{ template "runai.chart" . }}
   release: {{ .Release.Name }}
