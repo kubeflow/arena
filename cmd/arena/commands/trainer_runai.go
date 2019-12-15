@@ -104,14 +104,14 @@ func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (
 		}
 	}
 
-	return &RunaiStatefulSet{
+	return &RunaiJob{
 		BasicJobInfo: &BasicJobInfo{
 			resources: podResources(pods),
 			name:      statefulset.Name,
 		},
-		chiefPod:    lastCreatedPod,
-		statefulSet: statefulset,
-		trainerType: rt.Type(),
+		chiefPod:          lastCreatedPod,
+		creationTimestamp: statefulset.CreationTimestamp,
+		trainerType:       rt.Type(),
 	}, nil
 }
 
@@ -142,19 +142,14 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 		}
 	}
 
-	lastCreatedPodArray := []v1.Pod{lastCreatedPod}
-
 	return &RunaiJob{
-		JobInfo: &JobInfo{
-			BasicJobInfo: &BasicJobInfo{
-				resources: podResources(pods),
-				name:      job.Name,
-			},
-			job:         job,
-			jobPod:      lastCreatedPod,
-			pods:        lastCreatedPodArray,
-			trainerType: rt.Type(),
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(pods),
+			name:      job.Name,
 		},
+		chiefPod:          lastCreatedPod,
+		creationTimestamp: job.CreationTimestamp,
+		trainerType:       rt.Type(),
 	}, nil
 }
 
