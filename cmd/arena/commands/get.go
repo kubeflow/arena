@@ -230,8 +230,13 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	for _, pod := range pods {
 		// hostIP := "N/A"
 
+		var hostIP string
+		if pod.Spec.NodeName != "" {
+			hostIP = pod.Spec.NodeName + "/" + pod.Status.HostIP
+		} else {
+			hostIP = pod.Status.HostIP
+		}
 		// if pod.Status.Phase == v1.PodRunning {
-		hostIP := pod.Status.HostIP
 		// }
 
 		if len(hostIP) == 0 {
