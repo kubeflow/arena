@@ -142,14 +142,19 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 		}
 	}
 
+	lastCreatedPodArray := []v1.Pod{lastCreatedPod}
+
 	return &RunaiJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(pods),
-			name:      job.Name,
+		JobInfo: &JobInfo{
+			BasicJobInfo: &BasicJobInfo{
+				resources: podResources(pods),
+				name:      job.Name,
+			},
+			job:         job,
+			jobPod:      lastCreatedPod,
+			pods:        lastCreatedPodArray,
+			trainerType: rt.Type(),
 		},
-		chiefPod:    lastCreatedPod,
-		job:         job,
-		trainerType: rt.Type(),
 	}, nil
 }
 
