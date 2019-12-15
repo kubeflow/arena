@@ -14,6 +14,26 @@ type RunaiJob struct {
 	creationTimestamp metav1.Time
 }
 
+func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string) *RunaiJob {
+	lastCreatedPod := pods[0]
+	otherPods := pods[1:]
+	for _, item := range otherPods {
+		if lastCreatedPod.CreationTimestamp.Before(&item.CreationTimestamp) {
+			lastCreatedPod = item
+		}
+	}
+
+	return &RunaiJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources([]v1.Pod{lastCreatedPod}),
+			name:      jobName,
+		},
+		chiefPod:          lastCreatedPod,
+		creationTimestamp: creationTimestamp,
+		trainerType:       trainingType,
+	}
+}
+
 // // Get the chief Pod of the Job.
 func (rj *RunaiJob) ChiefPod() v1.Pod {
 	return rj.chiefPod

@@ -5,7 +5,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -78,10 +77,6 @@ func (rt *RunaiTrainer) Type() string {
 }
 
 func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (TrainingJob, error) {
-	var (
-		lastCreatedPod v1.Pod
-	)
-
 	podList, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
@@ -96,30 +91,10 @@ func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (
 
 	// Last created pod will be the chief pod
 	pods := podList.Items
-	lastCreatedPod = pods[0]
-	otherPods := pods[1:]
-	for _, item := range otherPods {
-		if lastCreatedPod.CreationTimestamp.Before(&item.CreationTimestamp) {
-			lastCreatedPod = item
-		}
-	}
-
-	return &RunaiJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(pods),
-			name:      statefulset.Name,
-		},
-		chiefPod:          lastCreatedPod,
-		creationTimestamp: statefulset.CreationTimestamp,
-		trainerType:       rt.Type(),
-	}, nil
+	return NewRunaiJob(pods, statefulset.CreationTimestamp, rt.Type(), statefulset.Name), nil
 }
 
 func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
-	var (
-		lastCreatedPod v1.Pod
-	)
-
 	podList, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
@@ -134,23 +109,7 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 
 	// Last created pod will be the chief pod
 	pods := podList.Items
-	lastCreatedPod = pods[0]
-	otherPods := pods[1:]
-	for _, item := range otherPods {
-		if lastCreatedPod.CreationTimestamp.Before(&item.CreationTimestamp) {
-			lastCreatedPod = item
-		}
-	}
-
-	return &RunaiJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(pods),
-			name:      job.Name,
-		},
-		chiefPod:          lastCreatedPod,
-		creationTimestamp: job.CreationTimestamp,
-		trainerType:       rt.Type(),
-	}, nil
+	return NewRunaiJob(pods, job.CreationTimestamp, rt.Type(), job.Name), nil
 }
 
 func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
