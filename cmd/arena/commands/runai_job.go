@@ -4,6 +4,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"strconv"
 	"time"
 )
 
@@ -12,9 +13,10 @@ type RunaiJob struct {
 	trainerType       string
 	chiefPod          v1.Pod
 	creationTimestamp metav1.Time
+	interactive       bool
 }
 
-func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string) *RunaiJob {
+func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool) *RunaiJob {
 	lastCreatedPod := pods[0]
 	otherPods := pods[1:]
 	for _, item := range otherPods {
@@ -31,6 +33,7 @@ func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType stri
 		chiefPod:          lastCreatedPod,
 		creationTimestamp: creationTimestamp,
 		trainerType:       trainingType,
+		interactive:       interactive,
 	}
 }
 
@@ -146,10 +149,26 @@ func (rj *RunaiJob) AllocatedGPU() int64 {
 
 // the host ip of the chief pod
 func (rj *RunaiJob) HostIPOfChief() string {
-	return ""
+	return rj.ChiefPod().Status.HostIP
 }
 
 // The priority class name of the training job
 func (rj *RunaiJob) GetPriorityClass() string {
 	return ""
+}
+
+func (rj *RunaiJob) Image() string {
+	return rj.ChiefPod().Spec.Containers[0].Image
+}
+
+func (rj *RunaiJob) Interactive() string {
+	return strconv.FormatBool(rj.interactive)
+}
+
+func (rj *RunaiJob) Project() string {
+	return rj.ChiefPod().Labels["project"]
+}
+
+func (rj *RunaiJob) User() string {
+	return rj.ChiefPod().Labels["user"]
 }

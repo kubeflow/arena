@@ -91,7 +91,7 @@ func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (
 
 	// Last created pod will be the chief pod
 	pods := podList.Items
-	return NewRunaiJob(pods, statefulset.CreationTimestamp, rt.Type(), statefulset.Name), nil
+	return NewRunaiJob(pods, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, false), nil
 }
 
 func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
@@ -109,7 +109,7 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 
 	// Last created pod will be the chief pod
 	pods := podList.Items
-	return NewRunaiJob(pods, job.CreationTimestamp, rt.Type(), job.Name), nil
+	return NewRunaiJob(pods, job.CreationTimestamp, rt.Type(), job.Name, true), nil
 }
 
 func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {

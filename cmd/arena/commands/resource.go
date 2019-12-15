@@ -33,3 +33,19 @@ type BasicJobInfo struct {
 func (j *BasicJobInfo) Resources() []Resource {
 	return j.resources
 }
+
+func (j *BasicJobInfo) Project() string {
+	return ""
+}
+
+func (j *BasicJobInfo) User() string {
+	return ""
+}
+
+func (j *BasicJobInfo) Interactive() string {
+	return ""
+}
+
+func (j *BasicJobInfo) Image() string {
+	return ""
+}
