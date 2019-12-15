@@ -149,7 +149,10 @@ func (rj *RunaiJob) AllocatedGPU() int64 {
 
 // the host ip of the chief pod
 func (rj *RunaiJob) HostIPOfChief() string {
-	return rj.ChiefPod().Status.HostIP
+	// This will hold the node name even if not actually specified on pod spec by the user.
+	// Copied from describe function of kubectl.
+	// https://github.com/kubernetes/kubectl/blob/a20db94d5b5f052d991eaf29d626fb730b4886b7/pkg/describe/versioned/describe.go
+	return rj.ChiefPod().Spec.NodeName
 }
 
 // The priority class name of the training job
