@@ -22,17 +22,16 @@ jobs:
         command: |
           make cli-linux-amd64
           tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
-
     - run: 
         name: build-windows
         command: |
           make cli-windows
-          tar -czvf windows-amd64.tar.gz bin install-runai.sh charts
+          zip -r windows-amd64.zip bin install-runai.sh charts
     - run:
         name: push-binaries
         command: |
           if [ "$CIRCLE_BRANCH" == "runai-master" ]
           then
             set -ex 
-            hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz windows-amd64.tar.gz -m "" v1.0.0
+            hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -a windows-amd64.zip -m "" v1.0.0
           fi
