@@ -9,12 +9,13 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"os/user"
+	"path"
 	"regexp"
 	"strings"
 )
 
 var (
-	runaiChart = util.GetChartsFolder() + "/runai"
+	runaiChart = path.Join(util.GetChartsFolder(), "runai")
 )
 
 const (
