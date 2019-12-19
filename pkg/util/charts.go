@@ -16,8 +16,12 @@ func pathExists(path string) bool {
 }
 
 var chartFolder = ""
+var chartFolderEnv = os.Getenv("CHARTS_FOLDER")
 
 func GetChartsFolder() string {
+	if chartFolderEnv != "" {
+		return chartFolderEnv
+	}
 	if chartFolder != "" {
 		return chartFolder
 	}
