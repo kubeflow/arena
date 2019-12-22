@@ -22,11 +22,6 @@ jobs:
         command: |
           make cli-linux-amd64
           tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
-    - run: 
-        name: build-windows
-        command: |
-          make cli-windows
-          zip -r windows-amd64.zip bin install-runai.sh charts
     - run:
         name: push-binaries
         command: |
