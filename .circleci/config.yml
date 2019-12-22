@@ -28,5 +28,5 @@ jobs:
           if [ "$CIRCLE_BRANCH" == "runai-master" ]
           then
             set -ex 
-            hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -a windows-amd64.zip -m "" v1.0.0
+            hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -m "" v1.0.0
           fi
