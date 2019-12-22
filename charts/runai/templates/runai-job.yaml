@@ -12,8 +12,8 @@ spec:
   {{- if .Values.interactive }}
   serviceName: {{ .Release.Name }}
   replicas: 1
-  selector: 
-    matchLabels: 
+  selector:
+    matchLabels:
       release: {{ .Release.Name }}
   {{- end }}
   template:
@@ -52,15 +52,18 @@ spec:
             - protocol: 'TCP'
               containerPort: {{ $parts._1 | default $parts._0 }}
             {{- end}}
+          env:
+            - name: podUUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: reporterGatewayURL
+              value: 'runai-prometheus-pushgateway.runai.svc.cluster.local:9091'
       volumes:
         {{- range $index, $volume := .Values.volumes}}
         {{ $parts := split ":" $volume }}
           - name: "volume-{{ $index }}"
-            hostPath: 
+            hostPath:
               path: {{ $parts._0 }}
               type: Directory
         {{- end }}
-
-
-
-
