@@ -73,7 +73,7 @@ func NewLogsCommand() *cobra.Command {
 				names = append(names, path.Base(pod.ObjectMeta.SelfLink))
 			}
 			chiefPod := job.ChiefPod()
-			if len(names) > 1  && outerArgs.PodName == "" {
+			if len(names) > 1 && outerArgs.PodName == "" {
 				names = []string{path.Base(chiefPod.ObjectMeta.SelfLink)}
 			}
 			logPrinter, err := tlogs.NewPodLogPrinter(names, outerArgs)
@@ -91,7 +91,7 @@ func NewLogsCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&trainingType, "type", "", "The training type to show logging, the possible option is tfjob, mpijob, horovodjob or standalonejob. (optional)")
+	// command.Flags().StringVar(&trainingType, "type", "", "The training type to show logging, the possible option is tfjob, mpijob, horovodjob or standalonejob. (optional)")
 
 	command.Flags().BoolVarP(&outerArgs.Follow, "follow", "f", false, "Specify if the logs should be streamed.")
 	command.Flags().StringVar(&outerArgs.SinceSeconds, "since", "", "Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.")

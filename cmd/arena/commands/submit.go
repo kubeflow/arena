@@ -39,12 +39,12 @@ var (
 type submitArgs struct {
 	// Name       string   `yaml:"name"`       // --name
 	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
-	Tolerations  []string `yaml:"tolerations"` // --toleration
-	Image      string            `yaml:"image"`      // --image
-	GPUCount   int               `yaml:"gpuCount"`   // --gpuCount
-	Envs       map[string]string `yaml:"envs"`       // --envs
-	WorkingDir string            `yaml:"workingDir"` // --workingDir
-	Command    string            `yaml:"command"`
+	Tolerations   []string          `yaml:"tolerations"`   // --toleration
+	Image         string            `yaml:"image"`         // --image
+	GPUCount      int               `yaml:"gpuCount"`      // --gpuCount
+	Envs          map[string]string `yaml:"envs"`          // --envs
+	WorkingDir    string            `yaml:"workingDir"`    // --workingDir
+	Command       string            `yaml:"command"`
 	// for horovod
 	Mode        string `yaml:"mode"`    // --mode
 	WorkerCount int    `yaml:"workers"` // --workers
@@ -160,30 +160,31 @@ func (s *submitArgs) transform() (err error) {
 	}
 	return nil
 }
+
 // get node selectors
 func (submitArgs *submitArgs) addNodeSelectors() {
-	log.Debugf("node selectors: %v",selectors)
+	log.Debugf("node selectors: %v", selectors)
 	if len(selectors) == 0 {
 		submitArgs.NodeSelectors = map[string]string{}
 		return
 	}
-	submitArgs.NodeSelectors = transformSliceToMap(selectors,"=")
+	submitArgs.NodeSelectors = transformSliceToMap(selectors, "=")
 }
 
 // get tolerations labels
 func (submitArgs *submitArgs) addTolerations() {
-	log.Debugf("tolerations: %v",tolerations)
+	log.Debugf("tolerations: %v", tolerations)
 	if len(tolerations) == 0 {
 		submitArgs.Tolerations = []string{}
 		return
 	}
 	submitArgs.Tolerations = []string{}
-	for _,taintKey := range tolerations {
+	for _, taintKey := range tolerations {
 		if taintKey == "all" {
 			submitArgs.Tolerations = []string{"all"}
 			return
 		}
-		submitArgs.Tolerations = append(submitArgs.Tolerations,taintKey)
+		submitArgs.Tolerations = append(submitArgs.Tolerations, taintKey)
 	}
 }
 
@@ -228,8 +229,8 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	// use priority
 	command.Flags().StringVarP(&submitArgs.PriorityClassName, "priority", "p", "", "priority class name")
 	// toleration
-	command.Flags().StringArrayVarP(&tolerations,"toleration","",[]string{},`tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
-	command.Flags().StringArrayVarP(&selectors,"selector","",[]string{},`assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
+	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 }
 
 func init() {
@@ -252,26 +253,27 @@ Available Commands:
 )
 
 func NewSubmitCommand() *cobra.Command {
-	var command = &cobra.Command{
-		Use:   "submit",
-		Short: "Submit a job.",
-		Long:  submitLong,
-		Run: func(cmd *cobra.Command, args []string) {
-			cmd.HelpFunc()(cmd, args)
-		},
-	}
+	return NewRunaiJobCommand()
+	// var command = &cobra.Command{
+	// 	Use:   "submit",
+	// 	Short: "Submit a job.",
+	// 	Long:  submitLong,
+	// 	Run: func(cmd *cobra.Command, args []string) {
+	// 		cmd.HelpFunc()(cmd, args)
+	// 	},
+	// }
 
-	command.AddCommand(NewSubmitTFJobCommand())
-	command.AddCommand(NewSubmitMPIJobCommand())
-	command.AddCommand(NewSubmitHorovodJobCommand())
-	// This will be deprecated soon.
-	command.AddCommand(NewSubmitStandaloneJobCommand())
-	command.AddCommand(NewSparkApplicationCommand())
+	// command.AddCommand(NewSubmitTFJobCommand())
+	// command.AddCommand(NewSubmitMPIJobCommand())
+	// command.AddCommand(NewSubmitHorovodJobCommand())
+	// // This will be deprecated soon.
+	// command.AddCommand(NewSubmitStandaloneJobCommand())
+	// command.AddCommand(NewSparkApplicationCommand())
 
-	command.AddCommand(NewVolcanoJobCommand())
-	command.AddCommand(NewRunaiJobCommand())
+	// command.AddCommand(NewVolcanoJobCommand())
+	// command.AddCommand(NewRunaiJobCommand())
 
-	return command
+	// return command
 }
 
 func transformSliceToMap(sets []string, split string) (valuesMap map[string]string) {

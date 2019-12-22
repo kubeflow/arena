@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
@@ -63,7 +64,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 		},
 	}
-	command.Flags().StringVar(&trainingType, "type", "", "The training type to delete, the possible option is tfjob, mpijob, sparkjob,volcanojob,horovodjob or standalonejob. (optional)")
+	// command.Flags().StringVar(&trainingType, "type", "", "The training type to delete, the possible option is tfjob, mpijob, sparkjob,volcanojob,horovodjob or standalonejob. (optional)")
 
 	return command
 }
@@ -83,13 +84,16 @@ func deleteTrainingJob(jobName, trainingType string) error {
 	if trainingType == "" {
 		trainingTypes = getTrainingTypes(jobName, namespace)
 		if len(trainingTypes) == 0 {
-			return fmt.Errorf("There is no training job found with the name %s, please check it with `arena list | grep %s`",
+			return fmt.Errorf("There is no training job found with the name %s, please check it with `%s list | grep %s`",
 				jobName,
+				config.CLIName,
 				jobName)
 		} else if len(trainingTypes) > 1 {
-			return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one.",
+			return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `%s list | grep %s`. And use `%s delete %s --type` to delete the exact one.",
 				jobName,
+				config.CLIName,
 				jobName,
+				config.CLIName,
 				jobName)
 		}
 	} else {

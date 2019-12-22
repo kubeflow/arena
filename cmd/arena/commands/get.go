@@ -30,6 +30,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/kubeflow/arena/pkg/config"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -100,8 +101,9 @@ func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob
 			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)
 			if err != nil {
 				if isTrainingConfigExist(jobName, trainingType, namespace) {
-					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s --type %s'.",
+					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s --type %s'.",
 						jobName,
+						config.CLIName,
 						jobName,
 						trainingType)
 				}
@@ -116,16 +118,18 @@ func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob
 		jobs, err := getTrainingJobsByName(clientset, jobName, namespace)
 		if err != nil {
 			if len(getTrainingTypes(jobName, namespace)) > 0 {
-				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s'.",
+				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s'.",
 					jobName,
+					config.CLIName,
 					jobName)
 			}
 			return nil, err
 		}
 
 		if len(jobs) > 1 {
-			return nil, fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`",
+			return nil, fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `%s list | grep %s`",
 				jobName,
+				config.CLIName,
 				jobName)
 		} else {
 			job = jobs[0]
@@ -186,7 +190,7 @@ func getTrainingJobsByName(client *kubernetes.Clientset, name, namespace string)
 
 	if len(jobs) == 0 {
 		log.Debugf("Failed to find the training job %s in namespace %s", name, namespace)
-		return nil, fmt.Errorf("The job %s in namespace %s doesn't exist, please create it first. use 'arena submit'\n", name, namespace)
+		return nil, fmt.Errorf("The job %s in namespace %s doesn't exist, please create it first. use '%s submit'\n", name, namespace, config.CLIName)
 	}
 
 	return jobs, nil

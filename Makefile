@@ -1,7 +1,7 @@
 PACKAGE=github.com/kubeflow/arena
 CURRENT_DIR=$(shell pwd)
 DIST_DIR=${CURRENT_DIR}/bin
-ARENA_CLI_NAME=arena
+ARENA_CLI_NAME=runai
 JOB_MONITOR=jobmon
 OS_ARCH?=linux-amd64
 

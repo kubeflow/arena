@@ -15,8 +15,7 @@
 package commands
 
 import (
-	"os"
-
+	"github.com/kubeflow/arena/pkg/config"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -24,11 +23,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
-)
-
-const (
-	// CLIName is the name of the CLI
-	CLIName = "arena"
+	"os"
 )
 
 var (
@@ -41,8 +36,8 @@ var (
 // NewCommand returns a new instance of an Arena command
 func NewCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   CLIName,
-		Short: "arena is the command line interface to Arena",
+		Use:   config.CLIName,
+		Short: "runai is the command line interface to RunAI",
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},
@@ -62,18 +57,18 @@ func NewCommand() *cobra.Command {
 	command.PersistentFlags().MarkDeprecated("arenaNamespace", "please use --arena-namespace")
 	command.PersistentFlags().StringVar(&arenaNamespace, "arena-namespace", "arena-system", "The namespace of arena system service, like tf-operator")
 
-	command.AddCommand(NewSubmitCommand())
-	command.AddCommand(NewServeCommand())
+	command.AddCommand(NewRunaiJobCommand())
+	// command.AddCommand(NewServeCommand())
 	command.AddCommand(NewListCommand())
-	command.AddCommand(NewPruneCommand())
+	// command.AddCommand(NewPruneCommand())
 	command.AddCommand(NewGetCommand())
-	command.AddCommand(NewLogViewerCommand())
+	// command.AddCommand(NewLogViewerCommand())
 	command.AddCommand(NewLogsCommand())
 	command.AddCommand(NewDeleteCommand())
 	command.AddCommand(NewTopCommand())
-	command.AddCommand(NewVersionCmd(CLIName))
-	command.AddCommand(NewDataCommand())
-	command.AddCommand(NewCompletionCommand())
+	command.AddCommand(NewVersionCmd(config.CLIName))
+	// command.AddCommand(NewDataCommand())
+	// command.AddCommand(NewCompletionCommand())
 	command.AddCommand(NewUpdateCommand())
 	command.AddCommand(NewExecCommand())
 	// command.AddCommand(NewWaitCommand())

@@ -25,12 +25,12 @@ func NewTrainers(client *kubernetes.Clientset) []Trainer {
 
 	trainers := []Trainer{}
 	trainerInits := []func(client *kubernetes.Clientset) Trainer{
-		NewHorovodJobTrainer,
-		NewStandaloneJobTrainer,
-		NewTensorFlowJobTrainer,
-		NewMPIJobTrainer,
-		NewSparkJobTrainer,
-		NewVolcanoJobTrainer,
+		// NewHorovodJobTrainer,
+		// NewStandaloneJobTrainer,
+		// NewTensorFlowJobTrainer,
+		// NewMPIJobTrainer,
+		// NewSparkJobTrainer,
+		// NewVolcanoJobTrainer,
 		NewRunaiTrainer}
 
 	for _, init := range trainerInits {

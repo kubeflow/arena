@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	"github.com/kubeflow/arena/pkg/workflow"
@@ -25,7 +26,7 @@ const (
 func NewRunaiJobCommand() *cobra.Command {
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:     "runai",
+		Use:     "submit",
 		Short:   "Submit a Runai job.",
 		Aliases: []string{"ra"},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -202,6 +203,6 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	}
 
 	log.Infof("The Job %s has been submitted successfully", name)
-	log.Infof("You can run `arena get %s --type %s` to check the job status", name, defaultRunaiTrainingType)
+	log.Infof("You can run `%s get %s` to check the job status", config.CLIName, name)
 	return nil
 }
