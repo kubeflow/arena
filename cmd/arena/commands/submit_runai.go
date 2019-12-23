@@ -57,7 +57,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if submitArgs.IsJupyter || submitArgs.ServiceType == "portforward" {
+			if submitArgs.IsJupyter || (submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
 				err = kubectl.WaitForReadyStatefulSet(name, namespace)
 
 				if err != nil {
@@ -87,7 +87,7 @@ func NewRunaiJobCommand() *cobra.Command {
 					fmt.Printf("Jupyter notebook token: %s\n", token)
 				}
 
-				if submitArgs.ServiceType == "portforward" {
+				if submitArgs.Interactive && submitArgs.ServiceType == "portforward" {
 					localPorts := []string{}
 					for _, port := range submitArgs.Ports {
 						split := strings.Split(port, ":")
