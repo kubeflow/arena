@@ -68,7 +68,16 @@ func (rj *RunaiJob) getStatus() v1.PodPhase {
 
 // Get the Status of the Job: RUNNING, PENDING,
 func (rj *RunaiJob) GetStatus() string {
-	return string(rj.getStatus())
+	podStatus := rj.chiefPod.Status.Phase
+	if podStatus == v1.PodPending {
+		for _, containerStatus := range rj.chiefPod.Status.ContainerStatuses {
+			if containerStatus.State.Waiting != nil {
+				return containerStatus.State.Waiting.Reason
+			}
+		}
+	}
+
+	return string(podStatus)
 }
 
 // Return trainer Type, support MPI, standalone, tensorflow
