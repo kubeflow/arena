@@ -40,8 +40,15 @@ spec:
           args: {{ .Values.args }}
           image: {{ .Values.image }}
           resources:
-            limits:
+            limits: 
               nvidia.com/gpu: {{ .Values.gpu }}
+            requests:
+              {{- if .Values.cpu}}
+              cpu: {{ .Values.cpu }}
+              {{- end}}
+              {{- if .Values.memory}}
+              memory: {{ .Values.memory }}
+              {{- end }}
           volumeMounts:
             {{- range $index, $volume := .Values.volumes}}
             {{ $parts := split ":" $volume }}

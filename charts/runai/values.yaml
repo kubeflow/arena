@@ -6,6 +6,8 @@
 project: "default"
 gpu: 1
 image: ""
+cpu: ""
+memory: ""
 hostIPC: false
 interactive: false
 serviceType: "nodeport"
