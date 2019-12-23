@@ -100,7 +100,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		// clean configmap
 		log.Infof("clean up the config map %s because creating application failed.", name)
-		log.Warnf("Please clean up the training job by using `arena delete %s --type %s`", name, trainingType)
+		log.Warnf("Please clean up the training job by using `%s delete %s`", config.CLIName, name)
 		return err
 	}
 
