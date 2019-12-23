@@ -217,7 +217,7 @@ spec:
     name: tf-job-operator
   type: ClusterIP
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
@@ -248,7 +248,7 @@ spec:
             - containerPort: 8080
       serviceAccountName: tf-job-dashboard
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:

@@ -1,6 +1,6 @@
 {{- $gpuCount := .Values.gpuCount -}}
 {{- $gpuMemory := .Values.gpuMemory -}}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "tensorflow-serving.fullname" . }}

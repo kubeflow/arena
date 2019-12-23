@@ -179,7 +179,7 @@ Deploy the `sleep` pod so you can use `curl` to test above serving models via RE
 
 ```
 # cat <<EOF | kubectl create -f -
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sleep

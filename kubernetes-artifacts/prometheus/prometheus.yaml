@@ -46,7 +46,7 @@ subjects:
   name: prometheus
   namespace: arena-system # 如果部署在其他namespace下， 需要修改这里的namespace配置
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus-deployment

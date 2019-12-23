@@ -194,7 +194,7 @@ Getting Started:
 
 ```
 #cat <<EOF | istioctl kube-inject -f - | kubectl create -f -
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sleep
