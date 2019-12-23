@@ -9,7 +9,7 @@ OS_ARCH?=linux-amd64
 -include .env
 
 ifndef CHARTS_FOLDER
-CHARTS_FOLDER=/etc/arena/charts
+CHARTS_FOLDER=/etc/runai/charts
 endif
 
 VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
