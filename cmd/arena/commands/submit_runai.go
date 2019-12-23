@@ -172,8 +172,13 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 
 // add flags to submit spark args
 func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
-	currentUser, _ := user.Current()
-	defaultUser := currentUser.Username
+	var defaultUser string
+	currentUser, err := user.Current()
+	if err != nil {
+		defaultUser = ""
+	} else {
+		defaultUser = currentUser.Username
+	}
 
 	command.Flags().StringVar(&name, "name", "", "Job name")
 	command.MarkFlagRequired("name")
