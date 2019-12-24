@@ -76,6 +76,8 @@ type TrainingJob interface {
 	Interactive() string
 
 	Image() string
+
+	CreatedByCLI() bool
 }
 
 type Trainer interface {

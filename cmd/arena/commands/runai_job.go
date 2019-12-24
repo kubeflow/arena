@@ -13,6 +13,7 @@ type RunaiJobInfo struct {
 	kind              string
 	creationTimestamp metav1.Time
 	pods              []v1.Pod
+	createdByCLI      bool
 }
 
 type RunaiJob struct {
@@ -21,6 +22,7 @@ type RunaiJob struct {
 	chiefPod          v1.Pod
 	creationTimestamp metav1.Time
 	interactive       bool
+	createdByCLI      bool
 }
 
 func NewRunaiJobFromInfo(jobInfo *RunaiJobInfo) *RunaiJob {
@@ -48,10 +50,11 @@ func NewRunaiJobFromInfo(jobInfo *RunaiJobInfo) *RunaiJob {
 		creationTimestamp: jobInfo.creationTimestamp,
 		trainerType:       "runai",
 		interactive:       interactive,
+		createdByCLI:      jobInfo.createdByCLI,
 	}
 }
 
-func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool) *RunaiJob {
+func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool) *RunaiJob {
 	lastCreatedPod := pods[0]
 	otherPods := pods[1:]
 	for _, item := range otherPods {
@@ -69,6 +72,7 @@ func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType stri
 		creationTimestamp: creationTimestamp,
 		trainerType:       trainingType,
 		interactive:       interactive,
+		createdByCLI:      createdByCLI,
 	}
 }
 
@@ -152,7 +156,10 @@ func (rj *RunaiJob) Duration() time.Duration {
 	return finishTime.Sub(startTime.Time)
 }
 
-// TODO
+func (rj *RunaiJob) CreatedByCLI() bool {
+	return rj.createdByCLI
+}
+
 // Get start time
 func (rj *RunaiJob) StartTime() *metav1.Time {
 	pod := rj.ChiefPod()

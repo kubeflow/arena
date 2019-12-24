@@ -30,6 +30,7 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"strconv"
 )
 
 func NewListCommand() *cobra.Command {
@@ -155,7 +156,7 @@ func trainingJobList(client *kubernetes.Clientset) ([]TrainingJob, error) {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "INTERACTIVE", "PROJECT", "USER"}
+	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "INTERACTIVE", "PROJECT", "USER", "CREATED BY CLI"}
 
 	PrintLine(w, labelField...)
 
@@ -165,7 +166,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 		PrintLine(w, jobInfo.Name(),
 			status,
 			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP, jobInfo.Image(), jobInfo.Interactive(), jobInfo.Project(), jobInfo.User())
+			hostIP, jobInfo.Image(), jobInfo.Interactive(), jobInfo.Project(), jobInfo.User(), strconv.FormatBool(jobInfo.CreatedByCLI()))
 	}
 	_ = w.Flush()
 }

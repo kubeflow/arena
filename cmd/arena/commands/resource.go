@@ -49,3 +49,7 @@ func (j *BasicJobInfo) Interactive() string {
 func (j *BasicJobInfo) Image() string {
 	return ""
 }
+
+func (*BasicJobInfo) CreatedByCLI() bool {
+	return false
+}

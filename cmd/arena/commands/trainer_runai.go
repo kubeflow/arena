@@ -142,7 +142,7 @@ func (rt *RunaiTrainer) getTrainingReplicaSet(replicaSet appsv1.ReplicaSet) (Tra
 
 	// Last created pod will be the chief pod
 	pods := podList.Items
-	return NewRunaiJob(pods, replicaSet.CreationTimestamp, rt.Type(), replicaSet.Name, false), nil
+	return NewRunaiJob(pods, replicaSet.CreationTimestamp, rt.Type(), replicaSet.Name, false, replicaSet.Labels["app"] == "runai"), nil
 }
 
 func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (TrainingJob, error) {
@@ -165,7 +165,7 @@ func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (
 
 	// Last created pod will be the chief pod
 	pods := podList.Items
-	return NewRunaiJob(pods, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, false), nil
+	return NewRunaiJob(pods, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, false, statefulset.Labels["app"] == "runai"), nil
 }
 
 func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
@@ -183,7 +183,7 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 
 	// Last created pod will be the chief pod
 	pods := podList.Items
-	return NewRunaiJob(pods, job.CreationTimestamp, rt.Type(), job.Name, true), nil
+	return NewRunaiJob(pods, job.CreationTimestamp, rt.Type(), job.Name, true, job.Labels["app"] == "runai"), nil
 }
 
 func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
@@ -232,6 +232,10 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	for _, job := range runaiJobList.Items {
 		if jobPodMap[job.Name] != nil {
 			jobPodMap[job.Name].creationTimestamp = job.CreationTimestamp
+
+			if job.Labels["app"] == "runaijob" {
+				jobPodMap[job.Name].createdByCLI = true
+			}
 		}
 	}
 
@@ -240,6 +244,10 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	for _, statefulSet := range runaiStatefulSetsList.Items {
 		if jobPodMap[statefulSet.Name] != nil {
 			jobPodMap[statefulSet.Name].creationTimestamp = statefulSet.CreationTimestamp
+			
+			if statefulSet.Labels["app"] == "runaijob" {
+				jobPodMap[statefulSet.Name].createdByCLI = true
+			}
 		}
 	}
 
@@ -248,6 +256,10 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	for _, replicaSet := range runaiReplicaSetsList.Items {
 		if jobPodMap[replicaSet.Name] != nil {
 			jobPodMap[replicaSet.Name].creationTimestamp = replicaSet.CreationTimestamp
+
+			if replicaSet.Labels["app"] == "runaijob" {
+				jobPodMap[replicaSet.Name].createdByCLI = true
+			}
 		}
 	}
 

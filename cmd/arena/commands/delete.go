@@ -84,6 +84,12 @@ func deleteTrainingJob(jobName, trainingType string) error {
 	if trainingType == "" {
 		trainingTypes = getTrainingTypes(jobName, namespace)
 		if len(trainingTypes) == 0 {
+			runaiTrainer := NewRunaiTrainer(clientset)
+			job, err := runaiTrainer.GetTrainingJob(jobName, namespace)
+			if err == nil && !job.CreatedByCLI() {
+				return fmt.Errorf("the job exists but was not created by the runai cli")
+			}
+
 			return fmt.Errorf("There is no training job found with the name %s, please check it with `%s list | grep %s`",
 				jobName,
 				config.CLIName,
