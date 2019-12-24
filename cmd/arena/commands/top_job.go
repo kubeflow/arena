@@ -104,7 +104,12 @@ func NewTopJobCommand() *cobra.Command {
 						log.Errorf("Failed due to %v", err)
 						os.Exit(1)
 					}
-					jobs = append(jobs, trainingJobs...)
+
+					for _, job := range trainingJobs {
+						if job.GetStatus() != string(v1.PodSucceeded) {
+							jobs = append(jobs, job)
+						}
+					}
 				}
 			}
 
