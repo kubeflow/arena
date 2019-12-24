@@ -8,12 +8,47 @@ import (
 	"time"
 )
 
+type RunaiJobInfo struct {
+	name              string
+	kind              string
+	creationTimestamp metav1.Time
+	pods              []v1.Pod
+}
+
 type RunaiJob struct {
 	*BasicJobInfo
 	trainerType       string
 	chiefPod          v1.Pod
 	creationTimestamp metav1.Time
 	interactive       bool
+}
+
+func NewRunaiJobFromInfo(jobInfo *RunaiJobInfo) *RunaiJob {
+	lastCreatedPod := jobInfo.pods[0]
+	otherPods := jobInfo.pods[1:]
+	for _, item := range otherPods {
+		if lastCreatedPod.CreationTimestamp.Before(&item.CreationTimestamp) {
+			lastCreatedPod = item
+		}
+	}
+
+	var interactive bool
+	if jobInfo.kind == "ReplicaSet" || jobInfo.kind == "StatefulSet" {
+		interactive = true
+	} else {
+		interactive = false
+	}
+
+	return &RunaiJob{
+		BasicJobInfo: &BasicJobInfo{
+			resources: podResources(jobInfo.pods),
+			name:      jobInfo.name,
+		},
+		chiefPod:          lastCreatedPod,
+		creationTimestamp: jobInfo.creationTimestamp,
+		trainerType:       "runai",
+		interactive:       interactive,
+	}
 }
 
 func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool) *RunaiJob {
@@ -27,7 +62,7 @@ func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType stri
 
 	return &RunaiJob{
 		BasicJobInfo: &BasicJobInfo{
-			resources: podResources([]v1.Pod{lastCreatedPod}),
+			resources: podResources(pods),
 			name:      jobName,
 		},
 		chiefPod:          lastCreatedPod,
