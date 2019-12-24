@@ -106,12 +106,9 @@ func checkAndTransferArgs(out *OuterRequestArgs) (*PodLogArgs, error) {
 		}
 		podLogArgs.SinceTime = st
 	}
-	if out.SinceSeconds != "" {
-		ss, err := ParseSinceSeconds(out.SinceSeconds)
-		if err != nil {
-			return nil, err
-		}
-		podLogArgs.SinceSeconds = ss
+	if out.SinceSeconds != 0 {
+		rounded := RoundSeconds(out.SinceSeconds)
+		podLogArgs.SinceSeconds = &rounded
 	}
 	return podLogArgs, nil
 }

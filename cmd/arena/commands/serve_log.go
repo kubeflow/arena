@@ -17,7 +17,7 @@ var (
 	instance     string
 	isFollow     bool
 	sinceTime    string
-	sinceSeconds string
+	sinceSeconds time.Duration
 	tailLines    int
 )
 
@@ -70,7 +70,7 @@ func NewServingLogCommand() *cobra.Command {
 	command.Flags().StringVar(&stype, "type", "", `assign the serving job type,type can be "tf"("tensorflow"),"trt"("tensorrt"),"custom"`)
 	command.Flags().StringVarP(&instance, "instance", "i", "", `assign the instance name of the job`)
 	command.Flags().StringVar(&sinceTime, "since-time", "", `Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used`)
-	command.Flags().StringVar(&sinceSeconds, "since-seconds", "", `Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.`)
+	command.Flags().DurationVar(&sinceSeconds, "since-seconds", 0, `Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.`)
 	command.Flags().BoolVarP(&isFollow, "follow", "f", false, `Specify if the logs should be streamed.`)
 	command.Flags().IntVarP(&tailLines, "tail", "t", 0, `assign how many log lines from the end we want to read`)
 	return command

@@ -1,7 +1,6 @@
 package podlogs
 
 import (
-	"strconv"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,7 +14,7 @@ type OuterRequestArgs struct {
 	Tail         int
 	RetryCount   int
 	RetryTimeout time.Duration
-	SinceSeconds string
+	SinceSeconds time.Duration
 	SinceTime    string
 	Timestamps   bool
 	KubeClient   kubernetes.Interface
@@ -34,11 +33,6 @@ func ParseSinceTime(sinceTime string) (*metav1.Time, error) {
 
 }
 
-func ParseSinceSeconds(since string) (*int64, error) {
-	invalidReturn := int64(0)
-	parsedSince, err := strconv.ParseInt(since, 10, 64)
-	if err != nil {
-		return &invalidReturn, err
-	}
-	return &parsedSince, nil
+func RoundSeconds(since time.Duration) int64 {
+	return int64(since.Round(time.Second).Seconds())
 }
