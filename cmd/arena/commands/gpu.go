@@ -70,8 +70,12 @@ func gpuInPod(pod v1.Pod) (gpuCount int64) {
 	return gpuCount
 }
 
+// Get gpu number from the active pod
 func gpuInActivePod(pod v1.Pod) (gpuCount int64) {
-	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+	// if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+	// 	return 0
+	// }
+	if pod.Status.Phase != v1.PodRunning {
 		return 0
 	}
 
