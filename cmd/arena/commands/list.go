@@ -156,7 +156,7 @@ func trainingJobList(client *kubernetes.Clientset) ([]TrainingJob, error) {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "INTERACTIVE", "PROJECT", "USER", "CREATED BY CLI"}
+	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "INTERACTIVE", "PROJECT", "USER", "CREATED BY CLI", "SERVICE URL(S)"}
 
 	PrintLine(w, labelField...)
 
@@ -166,7 +166,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 		PrintLine(w, jobInfo.Name(),
 			status,
 			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP, jobInfo.Image(), jobInfo.Interactive(), jobInfo.Project(), jobInfo.User(), strconv.FormatBool(jobInfo.CreatedByCLI()))
+			hostIP, jobInfo.Image(), jobInfo.Interactive(), jobInfo.Project(), jobInfo.User(), strconv.FormatBool(jobInfo.CreatedByCLI()), strings.Join(jobInfo.ServiceURLs(), ", "))
 	}
 	_ = w.Flush()
 }

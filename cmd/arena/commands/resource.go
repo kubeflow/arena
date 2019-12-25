@@ -53,3 +53,7 @@ func (j *BasicJobInfo) Image() string {
 func (*BasicJobInfo) CreatedByCLI() bool {
 	return false
 }
+
+func (*BasicJobInfo) ServiceURLs() []string {
+	return []string{}
+}

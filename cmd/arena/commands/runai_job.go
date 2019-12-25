@@ -8,14 +8,6 @@ import (
 	"time"
 )
 
-type RunaiJobInfo struct {
-	name              string
-	kind              string
-	creationTimestamp metav1.Time
-	pods              []v1.Pod
-	createdByCLI      bool
-}
-
 type RunaiJob struct {
 	*BasicJobInfo
 	trainerType       string
@@ -23,46 +15,10 @@ type RunaiJob struct {
 	creationTimestamp metav1.Time
 	interactive       bool
 	createdByCLI      bool
+	serviceUrls       []string
 }
 
-func NewRunaiJobFromInfo(jobInfo *RunaiJobInfo) *RunaiJob {
-	lastCreatedPod := jobInfo.pods[0]
-	otherPods := jobInfo.pods[1:]
-	for _, item := range otherPods {
-		if lastCreatedPod.CreationTimestamp.Before(&item.CreationTimestamp) {
-			lastCreatedPod = item
-		}
-	}
-
-	var interactive bool
-	if jobInfo.kind == "ReplicaSet" || jobInfo.kind == "StatefulSet" {
-		interactive = true
-	} else {
-		interactive = false
-	}
-
-	return &RunaiJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(jobInfo.pods),
-			name:      jobInfo.name,
-		},
-		chiefPod:          lastCreatedPod,
-		creationTimestamp: jobInfo.creationTimestamp,
-		trainerType:       "runai",
-		interactive:       interactive,
-		createdByCLI:      jobInfo.createdByCLI,
-	}
-}
-
-func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool) *RunaiJob {
-	lastCreatedPod := pods[0]
-	otherPods := pods[1:]
-	for _, item := range otherPods {
-		if lastCreatedPod.CreationTimestamp.Before(&item.CreationTimestamp) {
-			lastCreatedPod = item
-		}
-	}
-
+func NewRunaiJob(pods []v1.Pod, lastCreatedPod v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string) *RunaiJob {
 	return &RunaiJob{
 		BasicJobInfo: &BasicJobInfo{
 			resources: podResources(pods),
@@ -73,6 +29,7 @@ func NewRunaiJob(pods []v1.Pod, creationTimestamp metav1.Time, trainingType stri
 		trainerType:       trainingType,
 		interactive:       interactive,
 		createdByCLI:      createdByCLI,
+		serviceUrls:       serviceUrls,
 	}
 }
 
@@ -225,4 +182,8 @@ func (rj *RunaiJob) Project() string {
 
 func (rj *RunaiJob) User() string {
 	return rj.ChiefPod().Labels["user"]
+}
+
+func (rj *RunaiJob) ServiceURLs() []string {
+	return rj.serviceUrls
 }

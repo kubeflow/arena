@@ -78,6 +78,8 @@ type TrainingJob interface {
 	Image() string
 
 	CreatedByCLI() bool
+
+	ServiceURLs() []string
 }
 
 type Trainer interface {
