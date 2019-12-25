@@ -13,6 +13,12 @@ metadata:
     createdBy: "TFJob"
     role: tensorboard
 spec:
+  selector:
+    matchLabels:
+      app: {{ template "tfjob.name" . }}
+      chart: {{ template "tfjob.chart" . }}
+      release: {{ .Release.Name }}
+      role: tensorboard
   template:
     metadata:
       labels:

@@ -72,6 +72,11 @@
 ### 0.17.0
 
 * Add Priority Class
+
 ### 0.18.0
 
 * Support node selector labels and tolerations
+
+### 0.19.0
+
+* Upgrade deployment to apps/v1

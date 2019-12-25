@@ -95,3 +95,7 @@
 ### 0.22.0
 
 * Support node selector labels and tolerations
+
+### 0.23.0
+
+* Upgrade deployment to apps/v1
