@@ -94,6 +94,13 @@ func NewRunaiJobCommand() *cobra.Command {
 						localPorts = append(localPorts, split[0])
 					}
 
+					localUrls := []string{}
+					for _, localPort := range localPorts {
+						localUrls = append(localUrls, fmt.Sprintf("localhost:%s", localPort))
+					}
+
+					accessPoints := strings.Join(localUrls, ",")
+					fmt.Printf("Open access point(s) to service from %s", accessPoints)
 					err = kubectl.PortForward(localPorts, name, namespace)
 					if err != nil {
 						fmt.Println(err)

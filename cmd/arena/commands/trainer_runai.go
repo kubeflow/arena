@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	extensionsv1 "k8s.io/api/extensions/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -212,6 +213,18 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 		return nil, err
 	}
 
+	ingressService, err := getIngressService()
+	
+	if err != nil {
+		return nil, err
+	}
+
+	ingresses, err := getIngressesForNamespace(namespace)
+
+	if err != nil {
+		return nil, err
+	}
+
 	// Get all pods running with runai scheduler
 	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
 		FieldSelector: "spec.schedulerName=runai-scheduler",
@@ -294,7 +307,7 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 
 		serviceUrls := []string{}
 		if serviceOfPod != nil {
-			serviceUrls = getServiceUrls(nodeIp, *serviceOfPod)
+			serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
 		}
 
 		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, *lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls))
@@ -324,11 +337,20 @@ func getNodeIp() (string, error) {
 	return "", nil
 }
 
-func getServiceUrls(nodeIp string, service v1.Service) []string {
+func getServiceEndpoints(nodeIp string, service v1.Service) []string{
 	if service.Status.LoadBalancer.Ingress != nil && len(service.Status.LoadBalancer.Ingress) != 0 {
 		urls := []string{}
 		for _, port := range service.Spec.Ports {
-			urls = append(urls, fmt.Sprintf("%s:%d", service.Status.LoadBalancer.Ingress[0].IP, port.Port))
+			serviceIp := service.Status.LoadBalancer.Ingress[0].IP
+			var url string
+			if port.Port == 80 {
+				url = fmt.Sprintf("http://%s", serviceIp)
+			} else if port.Port == 443 {
+				url = fmt.Sprintf("https://%s", serviceIp)
+			} else {
+				url = fmt.Sprintf("http://%s:%d", serviceIp, port.Port)
+			}
+			urls = append(urls, url)
 		}
 
 		return urls
@@ -337,7 +359,31 @@ func getServiceUrls(nodeIp string, service v1.Service) []string {
 	if service.Spec.Type == v1.ServiceTypeNodePort {
 		urls := []string{}
 		for _, port := range service.Spec.Ports {
-			urls = append(urls, fmt.Sprintf("%s:%d", nodeIp, port.NodePort))
+			urls = append(urls, fmt.Sprintf("http://%s:%d", nodeIp, port.NodePort))
+		}
+
+		return urls
+	}
+
+	return []string{}
+}
+
+func getServiceUrls(ingressService *v1.Service, ingresses []extensionsv1.Ingress, nodeIp string, service v1.Service) []string{
+	ingressEndpoints := []string{}
+	if ingressService != nil {
+		ingressEndpoints = getServiceEndpoints(nodeIp, *ingressService) 
+	}
+
+	if service.Spec.Type == v1.ServiceTypeNodePort || service.Spec.Type == v1.ServiceTypeLoadBalancer {
+		return getServiceEndpoints(nodeIp, service)
+	} else {
+		urls := []string{}
+		for _, servicePortConfig := range service.Spec.Ports {
+			servicePort := servicePortConfig.Port
+			ingressPathForService := getIngressPathOfService(ingresses, service, servicePort)
+			for _, ingressEndpoint := range ingressEndpoints {
+				urls = append(urls, fmt.Sprintf("%s%s", ingressEndpoint, ingressPathForService))
+			}	
 		}
 
 		return urls
@@ -386,4 +432,56 @@ func getServicesInNamespace(namespace string) ([]v1.Service, error) {
 		return []v1.Service{}, err
 	}
 	return servicesList.Items, nil
+}
+
+func getIngressesForNamespace(namespace string) ([]extensionsv1.Ingress, error){
+	ingresses, err := clientset.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{
+	})
+
+	if err != nil {
+		return []extensionsv1.Ingress{}, nil
+	}
+
+	ngnixIngresses := []extensionsv1.Ingress{}
+	for _, ingress := range ingresses.Items {
+
+		// Support only ngnix ingresses
+		if ingress.Annotations["kubernetes.io/ingress.class"] == "nginx" {
+			ngnixIngresses = append(ngnixIngresses, ingress)
+		}
+	}
+
+	return ngnixIngresses, nil
+}
+
+func getIngressPathOfService(ingresses []extensionsv1.Ingress, service v1.Service, port int32) string{
+	for _, ingress := range ingresses {
+		rules := ingress.Spec.Rules
+		for _, rule := range rules {
+			paths := rule.HTTP.Paths
+			for _, path := range paths {
+				if path.Backend.ServiceName == service.Name && path.Backend.ServicePort.IntVal == port {
+					return path.Path
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+func getIngressService() (*v1.Service, error) {
+	servicesList, err := clientset.Core().Services(namespace).List(metav1.ListOptions{
+		LabelSelector: "app=nginx-ingress",
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(servicesList.Items) > 0 {
+		return &servicesList.Items[0], nil
+	}
+
+	return nil, nil
 }
