@@ -356,6 +356,10 @@ func getServiceEndpoints(nodeIp string, service v1.Service) []string{
 		return urls
 	}
 
+	if service.Spec.Type == v1.ServiceTypeLoadBalancer {
+		return []string{"<pending>"}
+	}
+
 	if service.Spec.Type == v1.ServiceTypeNodePort {
 		urls := []string{}
 		for _, port := range service.Spec.Ports {
@@ -381,6 +385,9 @@ func getServiceUrls(ingressService *v1.Service, ingresses []extensionsv1.Ingress
 		for _, servicePortConfig := range service.Spec.Ports {
 			servicePort := servicePortConfig.Port
 			ingressPathForService := getIngressPathOfService(ingresses, service, servicePort)
+			if len(ingressEndpoints) > 0 && ingressEndpoints[0] == "<pending>" {
+				return []string{"<pending>"}
+			}
 			for _, ingressEndpoint := range ingressEndpoints {
 				urls = append(urls, fmt.Sprintf("%s%s", ingressEndpoint, ingressPathForService))
 			}	
