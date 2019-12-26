@@ -149,6 +149,7 @@ type submitRunaiJobArgs struct {
 	IsJupyter   bool
 	CPU         string `yaml:"cpu"`
 	Memory      string `yaml:"memory"`
+	Elastic     bool   `yaml:"elastic"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -207,6 +208,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().StringArrayVar(&(sa.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook container. Uses a pre-created image and a default notebook configuration.")
+	command.Flags().BoolVar(&(sa.Elastic), "elastic", false, "Mark the job as elastic.")
 
 	command.Flags().MarkHidden("user")
 }

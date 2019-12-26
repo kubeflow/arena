@@ -9,6 +9,7 @@ image: ""
 cpu: ""
 memory: ""
 hostIPC: false
+elastic: false
 interactive: false
 serviceType: "nodeport"
 # ports:

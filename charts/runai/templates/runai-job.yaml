@@ -18,6 +18,10 @@ spec:
   {{- end }}
   template:
     metadata:
+      annotations:
+        {{- if .Values.elastic }}
+        elastic: {{ .Values.elastic | quote }}
+        {{- end }}
       labels:
         {{- include "charts.label-addition" . | indent 8}}
         project: {{ .Values.project }}
