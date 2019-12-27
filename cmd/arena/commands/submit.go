@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -29,6 +30,7 @@ import (
 var (
 	envs        []string
 	selectors   []string
+	configFiles []string
 	tolerations []string
 	dataset     []string
 	dataDirs    []string
@@ -39,12 +41,14 @@ var (
 type submitArgs struct {
 	// Name       string   `yaml:"name"`       // --name
 	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
-	Tolerations  []string `yaml:"tolerations"` // --toleration
-	Image      string            `yaml:"image"`      // --image
-	GPUCount   int               `yaml:"gpuCount"`   // --gpuCount
-	Envs       map[string]string `yaml:"envs"`       // --envs
-	WorkingDir string            `yaml:"workingDir"` // --workingDir
-	Command    string            `yaml:"command"`
+	// key is container path
+	ConfigFiles map[string]map[string]configFileInfo `yaml:"configFiles"` // --config-file
+	Tolerations []string                             `yaml:"tolerations"` // --toleration
+	Image       string                               `yaml:"image"`       // --image
+	GPUCount    int                                  `yaml:"gpuCount"`    // --gpuCount
+	Envs        map[string]string                    `yaml:"envs"`        // --envs
+	WorkingDir  string                               `yaml:"workingDir"`  // --workingDir
+	Command     string                               `yaml:"command"`
 	// for horovod
 	Mode        string `yaml:"mode"`    // --mode
 	WorkerCount int    `yaml:"workers"` // --workers
@@ -76,6 +80,13 @@ type limitedPodSecurityContext struct {
 	RunAsNonRoot       bool    `yaml:"runAsNonRoot"`
 	RunAsGroup         int64   `yaml:"runAsGroup"`
 	SupplementalGroups []int64 `yaml:"supplementalGroups"`
+}
+
+type configFileInfo struct {
+	ContainerFileName string `yaml:"containerFileName"`
+	HostFile          string `yaml:"hostFile"`
+	Key               string `yaml:"key"`
+	ContainerFilePath string `yaml:"containerFilePath"`
 }
 
 func (s submitArgs) check() error {
@@ -160,31 +171,101 @@ func (s *submitArgs) transform() (err error) {
 	}
 	return nil
 }
+
 // get node selectors
 func (submitArgs *submitArgs) addNodeSelectors() {
-	log.Debugf("node selectors: %v",selectors)
+	log.Debugf("node selectors: %v", selectors)
 	if len(selectors) == 0 {
 		submitArgs.NodeSelectors = map[string]string{}
-		return 
+		return
 	}
-	submitArgs.NodeSelectors = transformSliceToMap(selectors,"=")
+	submitArgs.NodeSelectors = transformSliceToMap(selectors, "=")
 }
 
 // get tolerations labels
 func (submitArgs *submitArgs) addTolerations() {
-	log.Debugf("tolerations: %v",tolerations)
+	log.Debugf("tolerations: %v", tolerations)
 	if len(tolerations) == 0 {
 		submitArgs.Tolerations = []string{}
-		return 
+		return
 	}
 	submitArgs.Tolerations = []string{}
-	for _,taintKey := range tolerations {
+	for _, taintKey := range tolerations {
 		if taintKey == "all" {
 			submitArgs.Tolerations = []string{"all"}
-			return 
+			return
 		}
-		submitArgs.Tolerations = append(submitArgs.Tolerations,taintKey)
+		submitArgs.Tolerations = append(submitArgs.Tolerations, taintKey)
 	}
+}
+
+// this function is used to create config file information
+// if the contianer path of file is the same,they will be merged to a configmap
+func (submitArgs *submitArgs) addJobConfigFiles() error {
+	if len(submitArgs.ConfigFiles) == 0 {
+		submitArgs.ConfigFiles = map[string]map[string]configFileInfo{}
+	}
+	for _, val := range configFiles {
+		var (
+			containerFile string
+			err           error
+		)
+		// use md5 rather than index,the reason is that if user gives a option twice,index can't filter it
+		configFileKey := fmt.Sprintf("%v", util.GetMd5V2(val)[0:10])
+		files := strings.Split(val, ":")
+		hostFile := files[0]
+		// change ~ to user home directory
+		if strings.Index(hostFile, "~/") == 0 {
+			hostFile = strings.Replace(hostFile, "~", os.Getenv("HOME"), -1)
+		}
+		// change relative path to absolute path
+		hostFile, err = filepath.Abs(hostFile)
+		if err != nil {
+			return err
+		}
+		// the option gives container path or not,if not, we see the container path is same as host path
+		switch len(files) {
+		case 1:
+			containerFile = hostFile
+		case 2:
+			containerFile = files[1]
+		default:
+			return fmt.Errorf("invalid format for assigning config file,it should be '--config-file <host_path_file>:<container_path_file>'")
+		}
+		// if the container path is not absolute path,return error
+		if !path.IsAbs(containerFile) {
+			return fmt.Errorf("the path of file in container must be absolute path")
+		}
+		// check the host path file is exist or not
+		_, err = os.Stat(hostFile)
+		if os.IsNotExist(err) {
+			return err
+		}
+		info := configFileInfo{
+			Key:               configFileKey,
+			ContainerFileName: path.Base(containerFile),
+			ContainerFilePath: path.Dir(containerFile),
+			HostFile:          hostFile,
+		}
+		// classify the files by container path
+		containerPathKey := util.GetMd5V2(path.Dir(containerFile))[0:10]
+		if _, ok := submitArgs.ConfigFiles[containerPathKey]; !ok {
+			submitArgs.ConfigFiles[containerPathKey] = map[string]configFileInfo{}
+		}
+		submitArgs.ConfigFiles[containerPathKey][configFileKey] = info
+	}
+	return nil
+}
+
+func (submitArgs *submitArgs) addHelmOptions() []string {
+	options := []string{}
+	for containerPathkey, val := range submitArgs.ConfigFiles {
+		for configFileKey, info := range val {
+			options = append(options,
+				fmt.Sprintf("--set-file configFiles.%v.%v.content=%v", containerPathkey, configFileKey, info.HostFile))
+		}
+	}
+	return options
 }
 
 func (submitArgs *submitArgs) addJobInfoToEnv() {
@@ -213,7 +294,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringVar(&submitArgs.WorkingDir, "workingDir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
 	command.Flags().MarkDeprecated("workingDir", "please use --working-dir instead")
 	command.Flags().StringVar(&submitArgs.WorkingDir, "working-dir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
-  
+
 	// command.MarkFlagRequired("workingDir")
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
@@ -228,8 +309,9 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	// use priority
 	command.Flags().StringVarP(&submitArgs.PriorityClassName, "priority", "p", "", "priority class name")
 	// toleration
-	command.Flags().StringArrayVarP(&tolerations,"toleration","",[]string{},`tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
-	command.Flags().StringArrayVarP(&selectors,"selector","",[]string{},`assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
+	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
+	command.Flags().StringArrayVarP(&configFiles, "config-file", "", []string{}, `giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"`)
 }
 
 func init() {

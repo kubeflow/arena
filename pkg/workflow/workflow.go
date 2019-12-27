@@ -42,7 +42,7 @@ func DeleteJob(name, namespace, trainingType string) error {
 *	Submit training job
 **/
 
-func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string) error {
+func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string, options ...string) error {
 	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 	if found {
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
@@ -55,7 +55,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 2. Generate Template file
-	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart)
+	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart, options...)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,10 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		return err
 	}
-
+	// if namespace is not exist,so we should create it
+	if _, err := kubectl.CreateNamespace(namespace); err != nil {
+		return err
+	}
 	err = kubectl.CreateAppConfigmap(name,
 		trainingType,
 		namespace,

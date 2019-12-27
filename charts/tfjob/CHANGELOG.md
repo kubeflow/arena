@@ -99,3 +99,7 @@
 ### 0.23.0
 
 * Upgrade deployment to apps/v1
+
+### 0.23.1
+
+* Support adding configuration files when submitting jobs

@@ -27,6 +27,19 @@ import (
 
 var kubectlCmd = []string{"kubectl"}
 
+func CreateNamespace(namespace string) ([]byte, error) {
+	args := []string{"get", "ns", namespace}
+	out, err := kubectl(args)
+	if err == nil {
+		return []byte(""), nil
+	}
+	if strings.Contains(string(out), "(NotFound)") {
+		args = []string{"create", "ns", namespace}
+		return kubectl(args)
+	}
+	return out, err
+}
+
 /**
 * dry-run creating kubernetes App Info for delete in future
 * Exec /usr/local/bin/kubectl, [create --dry-run -f /tmp/values313606961 --namespace default]
