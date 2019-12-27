@@ -81,6 +81,6 @@
 
 * Upgrade deployment to apps/v1
 
-### 0.19.1
+### 0.20.0
 
 * Support assigning configuration files when submitting jobs

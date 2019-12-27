@@ -205,13 +205,14 @@ func (submitArgs *submitArgs) addJobConfigFiles() error {
 	if len(submitArgs.ConfigFiles) == 0 {
 		submitArgs.ConfigFiles = map[string]map[string]configFileInfo{}
 	}
-	for _, val := range configFiles {
+	exists := map[string]bool{}
+	for ind, val := range configFiles {
 		var (
 			containerFile string
 			err           error
 		)
 		// use md5 rather than index,the reason is that if user gives a option twice,index can't filter it
-		configFileKey := fmt.Sprintf("%v", util.GetMd5V2(val)[0:10])
+		configFileKey := fmt.Sprintf("config-%v", ind)
 		files := strings.Split(val, ":")
 		hostFile := files[0]
 		// change ~ to user home directory
@@ -232,6 +233,10 @@ func (submitArgs *submitArgs) addJobConfigFiles() error {
 		default:
 			return fmt.Errorf("invalid format for assigning config file,it should be '--config-file <host_path_file>:<container_path_file>'")
 		}
+		if _, ok := exists[fmt.Sprintf("%v:%v", hostFile, containerFile)]; ok {
+			continue
+		}
+		exists[fmt.Sprintf("%v:%v", hostFile, containerFile)] = true
 		// if the container path is not absolute path,return error
 		if !path.IsAbs(containerFile) {
 			return fmt.Errorf("the path of file in container must be absolute path")
@@ -248,7 +253,7 @@ func (submitArgs *submitArgs) addJobConfigFiles() error {
 			HostFile:          hostFile,
 		}
 		// classify the files by container path
-		containerPathKey := util.GetMd5V2(path.Dir(containerFile))[0:10]
+		containerPathKey := util.GetMd5V2(path.Dir(containerFile))[0:15]
 		if _, ok := submitArgs.ConfigFiles[containerPathKey]; !ok {
 			submitArgs.ConfigFiles[containerPathKey] = map[string]configFileInfo{}
 		}

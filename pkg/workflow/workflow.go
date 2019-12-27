@@ -72,10 +72,6 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		return err
 	}
-	// if namespace is not exist,so we should create it
-	if _, err := kubectl.CreateNamespace(namespace); err != nil {
-		return err
-	}
 	err = kubectl.CreateAppConfigmap(name,
 		trainingType,
 		namespace,
