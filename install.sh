@@ -95,9 +95,9 @@ if [ -f "/usr/local/bin/arena" ]; then
 fi
 cp $SCRIPT_DIR/bin/arena /usr/local/bin/arena
 
-if ! which helm; then
-	cp $SCRIPT_DIR/bin/helm /usr/local/bin/helm
-fi
+rm -rf /usr/local/bin/arena-helm
+
+cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
 
 if [ -d "/charts" ]; then
     mv /charts /charts-$now

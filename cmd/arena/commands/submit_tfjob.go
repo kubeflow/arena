@@ -380,10 +380,6 @@ func (submitArgs *submitTFJobArgs) addConfigFiles() error {
 	return submitArgs.addJobConfigFiles()
 }
 
-func (submitArgs *submitTFJobArgs) addHelmTemplateOptions() []string {
-	return submitArgs.addHelmOptions()
-}
-
 func (submitArgs *submitTFJobArgs) checkGangCapablitiesInCluster() {
 	gangCapablity := false
 	if clientset != nil {
@@ -418,7 +414,7 @@ func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart, submitArgs.addHelmTemplateOptions()...)
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart, submitArgs.addHelmOptions()...)
 	if err != nil {
 		return err
 	}

@@ -7,10 +7,6 @@ this feature only support follow jobs:
 * tfjob
 * mpijob
 
-and requirements are:
-
-* helm version >= 2.14.1 and not support helm v3
-  
 ## 1.usage
 
 you can use `--config-file <host_path_file>:<container_path_file>` to assign a configuration file to container.and there is some rules:

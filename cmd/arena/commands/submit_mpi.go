@@ -166,9 +166,6 @@ func (submitArgs *submitMPIJobArgs) addMPIInfoToEnv() {
 func (submitArgs *submitMPIJobArgs) addConfigFiles() error {
 	return submitArgs.addJobConfigFiles()
 }
-func (submitArgs *submitMPIJobArgs) addHelmTemplateOptions() []string {
-	return submitArgs.addHelmOptions()
-}
 
 // Submit MPIJob
 func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
@@ -190,7 +187,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, mpijob_chart, submitArgs.addHelmTemplateOptions()...)
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, mpijob_chart, submitArgs.addHelmOptions()...)
 	if err != nil {
 		return err
 	}

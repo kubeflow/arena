@@ -39,7 +39,7 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [14. Submit jobs with node selectors](docs/userguide/14-submit-with-node-selector.md)
 - [15. Submit jobs with tolerating taints](docs/userguide/14-submit-with-node-toleration.md)
 - [16. Run a custom serving job](docs/userguide/15-custom-serving-sample.md)
-- [17. Assign configuration files when submitting jobs](docs/userguide/16-assign-config-file.md)
+- [17. Run a training Job with configuration files](docs/userguide/16-assign-config-file.md)
 
 ## Demo
 

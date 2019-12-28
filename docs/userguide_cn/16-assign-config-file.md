@@ -7,11 +7,6 @@
 * tfjob
 * mpijob
 
-需要满足如下条件:
-
-* helm version >= 2.14.1
-* 不支持helm v3
-  
 ## 1.用法
 
 当提交训练任务时，通过 `--config-file <host_path_file>:<container_path_file>` 为训练任务指定配置文件，该选项有一些规则：

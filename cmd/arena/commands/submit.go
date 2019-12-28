@@ -253,7 +253,7 @@ func (submitArgs *submitArgs) addJobConfigFiles() error {
 			HostFile:          hostFile,
 		}
 		// classify the files by container path
-		containerPathKey := util.GetMd5V2(path.Dir(containerFile))[0:15]
+		containerPathKey := util.Md5(path.Dir(containerFile))[0:15]
 		if _, ok := submitArgs.ConfigFiles[containerPathKey]; !ok {
 			submitArgs.ConfigFiles[containerPathKey] = map[string]configFileInfo{}
 		}
