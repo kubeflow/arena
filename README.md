@@ -1,87 +1,51 @@
-# Arena
-
-[![CircleCI](https://circleci.com/gh/kubeflow/arena.svg?style=svg)](https://circleci.com/gh/kubeflow/arena)
-[![Build Status](https://travis-ci.org/kubeflow/arena.svg?branch=master)](https://travis-ci.org/kubeflow/arena) 
-[![Go Report Card](https://goreportcard.com/badge/github.com/kubeflow/arena)](https://goreportcard.com/report/github.com/kubeflow/arena)
-
-
+# Run:AI
 ## Overview
 
-Arena is a command-line interface for the data scientists to run and monitor the machine learning training jobs and check their results in an easy way. Currently it supports solo/distributed TensorFlow training. In the backend, it is based on Kubernetes, helm and Kubeflow. But the data scientists can have very little knowledge about kubernetes.
+Run:AI CLI is a command-line interface for the data scientists to run and monitor the machine learning training jobs on top of Run:AI software and Kubernestes.
 
-Meanwhile, the end users require GPU resource and node management. Arena also provides `top` command to check available GPU resources in the Kubernetes cluster.
-
-In one word, Arena's goal is to make the data scientists feel like to work on a single machine but with the Power of GPU clusters indeed.
-
-For the Chinese version, please refer to [中文文档](README_cn.md)
-
+## Prerequisites
+* Kubernetes 1.15+
+* Kubectl installed and configured to acceess your cluster. Please refer to https://kubernetes.io/docs/tasks/tools/install-kubectl/
+* Install Helm. See https://v2.helm.sh/docs/using_helm/#quickstart . Run:AI currently supports Helm 2 only. Helm 3 (the default) is not supported
+* Run:AI software installed on your Kubernetes cluster. Please refer to https://support.run.ai/hc/en-us/articles/360010280179-Installing-Run-AI-on-an-on-premise-Kubernetes-Cluster for installation, if you haven't done so already.
 ## Setup
 
-You can follow up the [Installation guide](docs/installation/INSTALL_FROM_BINARY.md)
-
-## User Guide
-
-Arena is a command-line interface to run and monitor the machine learning training jobs and check their results in an easy way. Currently it supports solo/distributed training.
-
-- [1. Run a training Job with source code from git](docs/userguide/1-tfjob-standalone.md)
-- [2. Run a training Job with tensorboard](docs/userguide/2-tfjob-tensorboard.md)
-- [3. Run a distributed training Job](docs/userguide/3-tfjob-distributed.md)
-- [4. Run a distributed training Job with external data](docs/userguide/4-tfjob-distributed-data.md)
-- [5. Run a distributed training Job based on MPI](docs/userguide/5-mpijob-distributed.md)
-- [6. Run a distributed TensorFlow training job with gang scheduler](docs/userguide/6-tfjob-gangschd.md)
-- [7. Run TensorFlow Serving](docs/userguide/7-tf-serving.md)
-- [8. Run TensorFlow Estimator](docs/userguide/8-tfjob-estimator.md)
-- [9. Monitor GPUs of the training job ](docs/userguide/9-top-job-gpu-metric.md)
-- [10. Run a distributed training job with RDMA](docs/userguide/10-rdma-integration.md)
-- [11. Run a distributed spark job](docs/userguide/11-sparkjob-distributed.md)
-- [12. Run a Volcano job](docs/userguide/12-volcanojob.md)
-
-## Demo
-
-[![](demo.jpg)](http://cloud.video.taobao.com/play/u/2987821887/p/1/e/6/t/1/50210690772.mp4)
-
-
-## Developing
-
-Prerequisites:
-
-- Go >= 1.8
-
+Download latest release from the releases page. https://github.com/run-ai/arena/releases. Unarchive the downloaded file.
+For installation:
 ```
-mkdir -p $(go env GOPATH)/src/github.com/kubeflow
-cd $(go env GOPATH)/src/github.com/kubeflow
-git clone https://github.com/kubeflow/arena.git
-cd arena
-make
+sudo ./install-runai.sh
 ```
-
-`arena` binary is located in directory `arena/bin`. You may want to add the directory to `$PATH`.
-
-Then you can follow [Installation guide for developer](docs/installation/INSTALL_FROM_SOURCE.md)
-
-## CPU Profiling
-
+To verify installation:
 ```
-# set profile rate (HZ)
-export PROFILE_RATE=1000
-
-# arena {command} --pprof
-arena list --pprof
-INFO[0000] Dump cpu profile file into /tmp/cpu_profile
+runai --help
 ```
+## Quickstart
 
-Then you can analyze the profile by following [Go CPU profiling: pprof and speedscope](https://coder.today/go-profiling-pprof-and-speedscope-b05b812cc429)
+For help on Run:AI CLI run
+```
+runai --help
+```
+To verify the status of your cluster, use the `top` command.
+```
+runai top job
+runai top node
+```
+These commands will give you valuble information about your cluster's and jobs' GPUs allocation status.
 
-
-
-## FAQ
-
-Please refer to [FAQ](FAQ.md)
-
-## CLI Document
-
-Please refer to [arena.md](docs/cli/arena.md)
-
-## RoadMap
-
-See [RoadMap](ROADMAP.md)
+To run a sample job using runai sample training container please run:
+```
+runai submit -g 1 --name runai-test --project {your_project} -i gcr.io/run-ai-lab/quickstart -g 1
+```
+This will run a job using Run:AI scheduler on top of the kubernetes cluster using Run:AI quickstart image and requesting 1 GPU for the job. Now to see the status of the running job please run:
+```
+runai list
+```
+Once the job in running, you can view its logs by running:
+```
+runai logs runai-test
+```
+At last, to delete the job prior to it's compleation you can run:
+```
+runai delete runai-test
+```
+Happy running :)
