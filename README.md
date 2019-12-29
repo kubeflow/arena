@@ -48,4 +48,3 @@ At last, to delete the job prior to it's compleation you can run:
 ```
 runai delete runai-test
 ```
-Happy running :)
