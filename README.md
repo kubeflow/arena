@@ -44,7 +44,7 @@ Once the job in running, you can view its logs by running:
 ```
 runai logs runai-test
 ```
-At last, to delete the job prior to it's compleation you can run:
+At last, to delete the job prior to its compleation you can run:
 ```
 runai delete runai-test
 ```
