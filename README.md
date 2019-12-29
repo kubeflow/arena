@@ -51,7 +51,7 @@ runai delete runai-test
 ```
 
 ## Updating the Run:AI CLI
-To update the CLI run
+To update the CLI to the latest version run:
 ```
 sudo runai update
 ```
