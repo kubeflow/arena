@@ -5,7 +5,7 @@ Run:AI CLI is a command-line interface for the data scientists to run and monito
 
 ## Prerequisites
 * Kubernetes 1.15+
-* Kubectl installed and configured to acceess your cluster. Please refer to https://kubernetes.io/docs/tasks/tools/install-kubectl/
+* Kubectl installed and configured to access your cluster. Please refer to https://kubernetes.io/docs/tasks/tools/install-kubectl/
 * Install Helm. See https://v2.helm.sh/docs/using_helm/#quickstart . Run:AI currently supports Helm 2 only. Helm 3 (the default) is not supported
 * Run:AI software installed on your Kubernetes cluster. Please refer to https://support.run.ai/hc/en-us/articles/360010280179-Installing-Run-AI-on-an-on-premise-Kubernetes-Cluster for installation, if you haven't done so already.
 ## Setup
@@ -30,7 +30,7 @@ To verify the status of your cluster, use the `top` command.
 runai top job
 runai top node
 ```
-These commands will give you valuble information about your cluster's and jobs' GPUs allocation status.
+These commands will give you valuable information about your cluster's and jobs' GPUs allocation status.
 
 To run a sample job using runai sample training container please run:
 ```
@@ -44,7 +44,7 @@ Once the job in running, you can view its logs by running:
 ```
 runai logs runai-test
 ```
-At last, to delete the job prior to its compleation you can run:
+At last, to delete the job prior to its completion you can run:
 ```
 runai delete runai-test
 ```
