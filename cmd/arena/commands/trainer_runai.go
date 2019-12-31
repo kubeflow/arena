@@ -478,7 +478,7 @@ func getIngressPathOfService(ingresses []extensionsv1.Ingress, service v1.Servic
 }
 
 func getIngressService() (*v1.Service, error) {
-	servicesList, err := clientset.Core().Services(namespace).List(metav1.ListOptions{
+	servicesList, err := clientset.Core().Services("").List(metav1.ListOptions{
 		LabelSelector: "app=nginx-ingress",
 	})
 
