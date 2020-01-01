@@ -385,11 +385,17 @@ func getServiceUrls(ingressService *v1.Service, ingresses []extensionsv1.Ingress
 		for _, servicePortConfig := range service.Spec.Ports {
 			servicePort := servicePortConfig.Port
 			ingressPathForService := getIngressPathOfService(ingresses, service, servicePort)
+
+			// No path specified
+			if ingressPathForService == nil {
+				continue;
+			}
+
 			if len(ingressEndpoints) > 0 && ingressEndpoints[0] == "<pending>" {
 				return []string{"<pending>"}
 			}
 			for _, ingressEndpoint := range ingressEndpoints {
-				urls = append(urls, fmt.Sprintf("%s%s", ingressEndpoint, ingressPathForService))
+				urls = append(urls, fmt.Sprintf("%s%s", ingressEndpoint, *ingressPathForService))
 			}	
 		}
 
@@ -461,20 +467,23 @@ func getIngressesForNamespace(namespace string) ([]extensionsv1.Ingress, error){
 	return ngnixIngresses, nil
 }
 
-func getIngressPathOfService(ingresses []extensionsv1.Ingress, service v1.Service, port int32) string{
+func getIngressPathOfService(ingresses []extensionsv1.Ingress, service v1.Service, port int32) *string{
+	var ingressPath string
+
 	for _, ingress := range ingresses {
 		rules := ingress.Spec.Rules
 		for _, rule := range rules {
 			paths := rule.HTTP.Paths
 			for _, path := range paths {
 				if path.Backend.ServiceName == service.Name && path.Backend.ServicePort.IntVal == port {
-					return path.Path
+					ingressPath = path.Path
+					return &ingressPath
 				}
 			}
 		}
 	}
 
-	return ""
+	return nil
 }
 
 func getIngressService() (*v1.Service, error) {
