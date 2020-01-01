@@ -86,7 +86,7 @@ func NewRunaiJobCommand() *cobra.Command {
 
 					if err != nil {
 						fmt.Println(err)
-						os.Exit(1)
+						fmt.Printf("Please run '%s logs %s' to view the logs.\n", config.CLIName, name)
 					}
 
 					fmt.Printf("Jupyter notebook token: %s\n", token)
@@ -105,7 +105,7 @@ func NewRunaiJobCommand() *cobra.Command {
 					}
 
 					accessPoints := strings.Join(localUrls, ",")
-					fmt.Printf("Open access point(s) to service from %s", accessPoints)
+					fmt.Printf("Open access point(s) to service from %s\n", accessPoints)
 					err = kubectl.PortForward(localPorts, name, namespace)
 					if err != nil {
 						fmt.Println(err)
@@ -159,10 +159,11 @@ type submitRunaiJobArgs struct {
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 	var (
-		jupyterPort    = "8888"
-		jupyterImage   = "jupyter/scipy-notebook"
-		jupyterCommand = "start-notebook.sh"
-		jupyterArgs    = "--NotebookApp.base_url=/%s"
+		jupyterPort        = "8888"
+		jupyterImage       = "jupyter/scipy-notebook"
+		jupyterCommand     = "start-notebook.sh"
+		jupyterArgs        = "--NotebookApp.base_url=/%s"
+		jupyterServiceType = "portforward"
 	)
 
 	sa.Interactive = true
@@ -173,6 +174,10 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 	if sa.Image == "" {
 		sa.Image = "jupyter/scipy-notebook"
 		log.Infof("Using default jupyter notebook image \"%s\"", jupyterImage)
+	}
+	if sa.ServiceType == "" {
+		sa.ServiceType = jupyterServiceType
+		log.Infof("Using default jupyter notebook service type %s", jupyterServiceType)
 	}
 	if len(sa.Command) == 0 && sa.ServiceType == "ingress" {
 		sa.Command = []string{jupyterCommand}
