@@ -10,6 +10,25 @@ import (
 	"strings"
 )
 
+func NewBashCommand() *cobra.Command {
+	var command = &cobra.Command{
+		Use:   "bash",
+		Short: "get a bash session inside a running job",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				os.Exit(1)
+			}
+
+			name = args[0]
+
+			execute(cmd, name, "/bin/bash", []string{}, true, true)
+		},
+	}
+
+	return command
+}
+
 func NewExecCommand() *cobra.Command {
 	var (
 		interactive bool
@@ -29,28 +48,7 @@ func NewExecCommand() *cobra.Command {
 			command := args[1]
 			commandArgs := args[2:]
 
-			util.SetLogLevel(logLevel)
-			setupKubeconfig()
-			_, err := initKubeClient()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			err = updateNamespace(cmd)
-			if err != nil {
-				log.Debugf("Failed due to %v", err)
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			job, err := searchTrainingJob(name, trainingType, namespace)
-			if err != nil {
-				log.Errorln(err)
-				os.Exit(1)
-			}
-
-			kubectl.Exec(job.ChiefPod().Name, job.ChiefPod().Namespace, command, commandArgs, interactive, TTY)
+			execute(cmd, name, command, commandArgs, interactive, TTY)
 		},
 	}
 
@@ -61,4 +59,30 @@ func NewExecCommand() *cobra.Command {
 	command.Flags().BoolVarP(&TTY, "tty", "t", false, "Stdin is a TTY")
 
 	return command
+}
+
+func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool) {
+
+	util.SetLogLevel(logLevel)
+	setupKubeconfig()
+	_, err := initKubeClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = updateNamespace(cmd)
+	if err != nil {
+		log.Debugf("Failed due to %v", err)
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	job, err := searchTrainingJob(name, trainingType, namespace)
+	if err != nil {
+		log.Errorln(err)
+		os.Exit(1)
+	}
+
+	kubectl.Exec(job.ChiefPod().Name, job.ChiefPod().Namespace, command, commandArgs, interactive, TTY)
 }
