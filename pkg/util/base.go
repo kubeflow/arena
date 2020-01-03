@@ -1,10 +1,13 @@
 package util
 
 import (
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"crypto/md5"
+	"fmt"
 	"os"
 	"testing"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func GetClientSetForTest(t *testing.T) *kubernetes.Clientset {
@@ -27,4 +30,11 @@ func GetClientSetForTest(t *testing.T) *kubernetes.Clientset {
 		t.Errorf("failed to NewForConfig, %++v", err)
 	}
 	return clientset
+}
+
+func Md5(str string) string {
+	data := []byte(str)
+	has := md5.Sum(data)
+	md5str := fmt.Sprintf("%x", has)
+	return md5str
 }

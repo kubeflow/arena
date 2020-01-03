@@ -80,6 +80,14 @@ spec:
       {{- end }}
       {{- end }}
       volumes:
+      {{- if ne (len .Values.configFiles) 0 }}
+      {{- $releaseName := .Release.Name }}
+      {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+      - name: {{ $containerPathKey }}
+        configMap:
+          name: {{ $releaseName }}-{{ $containerPathKey }}
+      {{- end }}
+      {{- end }}
       {{- if .Values.useTensorboard }}
       {{- if .Values.isLocalLogging }}
       - hostPath:
@@ -230,6 +238,19 @@ spec:
             - IPC_LOCK
         {{- end }}
         volumeMounts:
+        {{- if ne (len .Values.configFiles) 0 }}
+        {{- $releaseName := .Release.Name }}
+        {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+        {{- $visit := "false" }}
+        {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+        {{- if eq  "false" $visit }}
+        - mountPath: {{ $configFileInfo.containerFilePath }}
+          name: {{ $containerPathKey }}
+        {{- $visit = "true" }}  
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
         {{- if .Values.useTensorboard }}
         {{- if .Values.isLocalLogging }}
         - mountPath: {{ .Values.trainingLogdir }}

@@ -35,6 +35,11 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [10. Run a distributed training job with RDMA](docs/userguide/10-rdma-integration.md)
 - [11. Run a distributed spark job](docs/userguide/11-sparkjob-distributed.md)
 - [12. Run a Volcano job](docs/userguide/12-volcanojob.md)
+- [13. Preempted mpi job](docs/userguide/13-preempted-mpijob.md)
+- [14. Submit jobs with node selectors](docs/userguide/14-submit-with-node-selector.md)
+- [15. Submit jobs with tolerating taints](docs/userguide/14-submit-with-node-toleration.md)
+- [16. Run a custom serving job](docs/userguide/15-custom-serving-sample.md)
+- [17. Run a training Job with configuration files](docs/userguide/16-assign-config-file.md)
 
 ## Demo
 
