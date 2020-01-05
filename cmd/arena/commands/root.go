@@ -53,9 +53,6 @@ func NewCommand() *cobra.Command {
 	command.PersistentFlags().StringVar(&logLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
 	command.PersistentFlags().BoolVar(&enablePProf, "pprof", false, "enable cpu profile")
 	command.PersistentFlags().BoolVar(&enableTrace, "trace", false, "enable trace")
-	command.PersistentFlags().StringVar(&arenaNamespace, "arenaNamespace", "arena-system", "The namespace of arena system service, like tf-operator")
-	command.PersistentFlags().MarkDeprecated("arenaNamespace", "please use --arena-namespace")
-	command.PersistentFlags().StringVar(&arenaNamespace, "arena-namespace", "arena-system", "The namespace of arena system service, like tf-operator")
 
 	command.AddCommand(NewRunaiJobCommand())
 	// command.AddCommand(NewServeCommand())
