@@ -16,14 +16,61 @@ package helm
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
+
+type HELM_VERSION string
+
+const (
+	HELM_3 HELM_VERSION = "helm-3"
+	HELM_2 HELM_VERSION = "helm-2"
+)
+
+var (
+	helmVersion HELM_VERSION
+)
+
+func init() {
+}
+
+func getHelmVersion() (HELM_VERSION, error) {
+
+	binary, err := exec.LookPath(helmCmd[0])
+	if err != nil {
+		return "", err
+	}
+
+	args := []string{binary, "version", "--client", "--short"}
+
+	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
+	out, err := cmd.CombinedOutput()
+
+	re, err := regexp.Compile("v(.)")
+	if err != nil {
+		return "", err
+	}
+
+	output := string(out)
+	res := re.FindStringSubmatch(output)
+	if len(res) < 2 {
+		return "", fmt.Errorf("Could not find helm command version")
+	}
+
+	majorVersion := res[1]
+	if majorVersion == "3" {
+		return HELM_3, nil
+	} else if majorVersion == "2" {
+		return HELM_2, nil
+	} else {
+		return "", fmt.Errorf("Could not identify helm version")
+	}
+}
 
 /*
 * Generate value file
@@ -69,10 +116,22 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, c
 	}
 	// }
 
-	// 4. prepare the arguments
-	args := []string{binary, "template", "-f", valueFileName,
-		"--namespace", namespace,
-		"--name", name, chartName, ">", templateFileName}
+	helmVersion, err := getHelmVersion()
+
+	if err != nil {
+		return "", err
+	}
+
+	var args []string
+
+	if helmVersion == HELM_3 {
+		args = []string{binary, "template", name, chartName, "-f", valueFileName,
+			"--namespace", namespace, ">", templateFileName}
+	} else {
+		args = []string{binary, "template", "-f", valueFileName,
+			"--namespace", namespace,
+			"--name", name, chartName, ">", templateFileName}
+	}
 
 	log.Debugf("Exec bash -c %v", args)
 
