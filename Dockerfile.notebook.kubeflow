@@ -23,7 +23,7 @@ FROM $BASE_IMAGE
 
 COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena /usr/local/bin/arena
 
-COPY --from=build /usr/local/bin/helm /usr/local/bin/helm
+COPY --from=build /usr/local/bin/helm /usr/local/bin/arena-helm
 
 COPY --from=build /go/src/github.com/kubeflow/arena/charts /charts
 
