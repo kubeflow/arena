@@ -314,7 +314,7 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
           annotations:
-          {{- range $key, $value := .Values.workerAnnotations }}
+          {{- range $key, $value := .Values.annotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
@@ -629,7 +629,7 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
           annotations:
-          {{- range $key, $value := .Values.chiefAnnotations }}
+          {{- range $key, $value := .Values.annotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
@@ -941,7 +941,7 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
           annotations:
-          {{- range $key, $value := .Values.evaluatorAnnotations }}
+          {{- range $key, $value := .Values.annotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:

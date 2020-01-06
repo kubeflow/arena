@@ -103,3 +103,7 @@
 ### 0.24.0
 
 * Support adding configuration files when submitting jobs
+
+### 0.25.0
+
+* Fix annotations issue
