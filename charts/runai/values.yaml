@@ -11,6 +11,7 @@ memory: ""
 hostIPC: false
 elastic: false
 interactive: false
+shm: false
 # serviceType: "nodeport"
 # ports:
 #   - 30000:8888

@@ -65,6 +65,10 @@ spec:
             - mountPath: {{ $parts._1 }}
               name: "volume-{{ $index }}"
             {{- end }}
+            {{- if .Values.shm }}
+            - mountPath: /dev/shm
+              name: dshm
+            {{- end }}
           ports:
             {{- range $port := .Values.ports}}
             {{ $parts := split ":" $port }}
@@ -85,4 +89,9 @@ spec:
             hostPath:
               path: {{ $parts._0 }}
               type: Directory
+        {{- end }}
+        {{- if .Values.shm }}
+          - name: dshm
+            emptyDir:
+              medium: Memory
         {{- end }}
