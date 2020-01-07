@@ -40,8 +40,14 @@ spec:
       hostIPC: {{ .Values.hostIPC }}
       containers:
         - name: {{ .Release.Name }}
-          command: {{ .Values.command }}
-          args: {{ .Values.args }}
+          command:
+          {{ range $index, $command := .Values.command }}
+          - {{ quote $command }}
+          {{- end}}
+          args: 
+          {{ range $index, $arg := .Values.args }}
+          - {{ quote $arg }}
+          {{- end}}
           image: {{ .Values.image }}
           resources:
             limits: 
