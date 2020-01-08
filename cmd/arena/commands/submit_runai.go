@@ -222,7 +222,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook container. Uses a pre-created image and a default notebook configuration.")
 	command.Flags().BoolVar(&(sa.Elastic), "elastic", false, "Mark the job as elastic.")
 	command.Flags().BoolVar(&(sa.LargeShm), "large-shm", false, "Mount a large /dev/shm device. Specific software might need this feature.")
-	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container")
+	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
 	command.Flags().MarkHidden("user")
 }
