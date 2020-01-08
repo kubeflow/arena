@@ -12,6 +12,10 @@ hostIPC: false
 elastic: false
 interactive: false
 shm: false
+
+# environment:
+# - name
+#   value
 # serviceType: "nodeport"
 # ports:
 #   - 30000:8888
