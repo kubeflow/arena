@@ -4,7 +4,7 @@
 
 # The minimal available pods to run for this Job
 project: "default"
-gpu: 1
+gpu: 0
 image: ""
 cpu: ""
 memory: ""
