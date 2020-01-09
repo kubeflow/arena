@@ -67,6 +67,9 @@ spec:
             {{ $parts := split ":" $volume }}
             - mountPath: {{ $parts._1 }}
               name: "volume-{{ $index }}"
+            {{- if eq $parts._2 "ro" }}
+              readOnly: true
+            {{- end}}
             {{- end }}
             {{- if .Values.shm }}
             - mountPath: /dev/shm
