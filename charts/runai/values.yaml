@@ -12,6 +12,7 @@ hostIPC: false
 elastic: false
 interactive: false
 shm: false
+localImage: false
 
 # environment:
 # - name

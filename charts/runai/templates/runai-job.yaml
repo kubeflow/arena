@@ -49,6 +49,9 @@ spec:
           - {{ quote $arg }}
           {{- end}}
           image: {{ .Values.image }}
+          {{- if .Values.localImage}}
+          imagePullPolicy: Never
+          {{- end }}
           resources:
             limits: 
               nvidia.com/gpu: {{ .Values.gpu }}
