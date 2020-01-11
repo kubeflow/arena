@@ -11,7 +11,7 @@ Arena 并非必需在 Kubernetes 集群内运行。它也可以在您的笔记�
 ### 要求
 
   * Kubernetes >= 1.11, kubectl >= 1.11
-  * helm 版本 [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) 或更新版本 
+  * helm 版本 [v2.14.1](https://docs.helm.sh/using_helm/#installing-helm) 或更新版本 
   * 此外还要部署与 helm 版本相同的 tiller(https://docs.helm.sh/using_helm/#installing-tiller)
 
 ### 步骤
@@ -26,7 +26,7 @@ Arena 并非必需在 Kubernetes 集群内运行。它也可以在您的笔记�
 
 - 从 [github.com] 下载 Helm 客户端(https://github.com/helm/helm/releases)  
 - 将下载到的文件解压缩 (tar -zxvf helm-v2.8.2-linux-amd64.tgz)
-- 在解压缩目录中找到 `helm` 二进制文件，将其移到所需目标位置 (mv linux-amd64/helm /usr/local/bin/helm)
+- 在解压缩目录中找到 `helm` 二进制文件，将其移到所需目标位置 (mv linux-amd64/helm /usr/local/bin/arena-helm)
 
 然后运行 `helm list` 以检查 helm 能否成功管理 kubernetes。
 

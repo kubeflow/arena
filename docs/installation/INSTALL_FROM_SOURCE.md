@@ -11,7 +11,7 @@ Arena doesn't have to run can be run within Kubernetes cluster. It can also be r
 ### Requirements
 
   * Kubernetes >= 1.11, kubectl >= 1.11
-  * helm version [v2.8.2](https://docs.helm.sh/using_helm/#installing-helm) or later 
+  * helm version [v2.14.1](https://docs.helm.sh/using_helm/#installing-helm) or later 
   * tiller with ths same version of helm should be also installed (https://docs.helm.sh/using_helm/#installing-tiller)
 
 ### Steps
@@ -25,13 +25,13 @@ Please follow [kubectl installation guide](https://kubernetes.io/docs/tasks/tool
 3\. Install Helm client
 
 - Download Helm client from [github.com](https://github.com/helm/helm/releases)  
-- Unpack it (tar -zxvf helm-v2.8.2-linux-amd64.tgz)
-- Find the `helm` binary in the unpacked directory, and move it to its desired destination (mv linux-amd64/helm /usr/local/bin/helm)
+- Unpack it (tar -zxvf helm-v2.14.1-linux-amd64.tgz)
+- Find the `helm` binary in the unpacked directory, and move it to its desired destination (mv linux-amd64/helm /usr/local/bin/arena-helm)
 
 Then run `helm list` to check if the the kubernetes can be managed successfully by helm.
 
 ```
-# helm list
+# arena-helm list
 # echo $?
 0
 ```
