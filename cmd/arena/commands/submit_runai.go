@@ -8,15 +8,20 @@ import (
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"os/user"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
 var (
 	runaiChart = path.Join(util.GetChartsFolder(), "runai")
+	nameArg    string
+	noIndex    bool
 )
 
 const (
@@ -45,6 +50,18 @@ func NewRunaiJobCommand() *cobra.Command {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
 				os.Exit(1)
+			}
+
+			if noIndex {
+				name = nameArg
+			} else {
+				index, err := getJobIndex()
+				if err != nil {
+					log.Error("Could not get index for new job")
+					os.Exit(1)
+				}
+
+				name = fmt.Sprintf("%s-%s", nameArg, index)
 			}
 
 			if submitArgs.IsJupyter {
@@ -119,6 +136,66 @@ func NewRunaiJobCommand() *cobra.Command {
 	submitArgs.addFlags(command)
 
 	return command
+}
+
+func getJobIndex() (string, error) {
+	for true {
+		index, shouldTryAgain, err := tryGetJobIndexOnce()
+
+		if index != "" || !shouldTryAgain {
+			return index, err
+		}
+	}
+
+	return "", nil
+}
+
+func tryGetJobIndexOnce() (string, bool, error) {
+	var (
+		indexKey       = "index"
+		runaiNamespace = "runai"
+		configMapName  = "runai-cli-index"
+	)
+
+	configMap, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Get(configMapName, metav1.GetOptions{})
+
+	// If configmap does not exists try to create it
+	if err != nil {
+		data := make(map[string]string)
+		data[indexKey] = "1"
+		configMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: configMapName,
+			},
+			Data: data,
+		}
+
+		_, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Create(configMap)
+
+		// Might be someone already created this configmap. Try the process again.
+		if err != nil {
+			return "", true, nil
+		}
+
+		return "1", false, nil
+	}
+
+	lastIndex, err := strconv.Atoi(configMap.Data[indexKey])
+
+	if err != nil {
+		return "", false, err
+	}
+
+	newIndex := fmt.Sprintf("%d", lastIndex+1)
+	configMap.Data[indexKey] = newIndex
+	_, err = clientset.CoreV1().ConfigMaps(runaiNamespace).Update(configMap)
+
+	// Might be someone already updated this configmap. Try the process again.
+	if err != nil {
+		return "", true, err
+	}
+
+	return newIndex, false, nil
 }
 
 func getTokenFromJupyterLogs(logs string) (string, error) {
@@ -203,7 +280,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 		defaultUser = currentUser.Username
 	}
 
-	command.Flags().StringVar(&name, "name", "", "Job name")
+	command.Flags().StringVar(&nameArg, "name", "", "Job name")
 	command.MarkFlagRequired("name")
 
 	command.Flags().IntVarP(&(sa.GPU), "gpu", "g", 0, "Number of GPUs to allocation to the Job.")
@@ -224,6 +301,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&(sa.Elastic), "elastic", false, "Mark the job as elastic.")
 	command.Flags().BoolVar(&(sa.LargeShm), "large-shm", false, "Mount a large /dev/shm device. Specific software might need this feature.")
 	command.Flags().BoolVar(&(sa.LocalImage), "local-image", false, "Use a local image for this job. NOTE: this image must exists on the local server.")
+	command.Flags().BoolVar(&(noIndex), "no-index", false, "Do not add index number to created job.")
 	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
 	command.Flags().MarkHidden("user")
