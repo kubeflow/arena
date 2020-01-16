@@ -13,6 +13,7 @@ elastic: false
 interactive: false
 shm: false
 localImage: false
+# ttlSecondsAfterFinished: 0
 
 # environment:
 # - name

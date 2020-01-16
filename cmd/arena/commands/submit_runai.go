@@ -10,18 +10,21 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"math"
 	"os"
 	"os/user"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
-	runaiChart = path.Join(util.GetChartsFolder(), "runai")
-	nameArg    string
-	noIndex    bool
+	runaiChart              = path.Join(util.GetChartsFolder(), "runai")
+	nameArg                 string
+	noIndex                 bool
+	ttlSecondsAfterFinished string
 )
 
 const (
@@ -62,6 +65,18 @@ func NewRunaiJobCommand() *cobra.Command {
 				}
 
 				name = fmt.Sprintf("%s-%s", nameArg, index)
+			}
+
+			if ttlSecondsAfterFinished != "" {
+				ttl, err := time.ParseDuration(ttlSecondsAfterFinished)
+				if err != nil {
+					fmt.Println("Wrong format for duration argument")
+					os.Exit(1)
+				}
+
+				ttlSeconds := int(math.Round(ttl.Seconds()))
+				log.Debugf("Using time to live seconds %d", ttlSeconds)
+				submitArgs.TTL = &ttlSeconds
 			}
 
 			if submitArgs.IsJupyter {
@@ -235,6 +250,7 @@ type submitRunaiJobArgs struct {
 	LargeShm            bool     `yaml:"shm"`
 	EnvironmentVariable []string `yaml:"environment"`
 	LocalImage          bool     `yaml:"localImage"`
+	TTL                 *int     `yaml:"ttlSecondsAfterFinished"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -303,6 +319,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&(sa.LocalImage), "local-image", false, "Use a local image for this job. NOTE: this image must exists on the local server.")
 	command.Flags().BoolVar(&(noIndex), "no-index", false, "Do not add index number to created job.")
 	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
+
+	command.Flags().StringVar(&(ttlSecondsAfterFinished), "ttl", "", "Define the duration for this job after it has finished execution.")
 
 	command.Flags().MarkHidden("user")
 }

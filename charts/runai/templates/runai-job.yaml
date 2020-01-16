@@ -15,6 +15,10 @@ spec:
   selector:
     matchLabels:
       release: {{ .Release.Name }}
+  {{- else }}
+    {{- if or .Values.ttlSecondsAfterFinished (eq (quote .Values.ttlSecondsAfterFinished) (quote 0))}}
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+    {{- end }}
   {{- end }}
   template:
     metadata:
@@ -33,7 +37,7 @@ spec:
       nodeSelector:
         run.ai/type: {{ .Values.node_type }}
       {{- end}}
-      schedulerName: runai-scheduler
+      # schedulerName: runai-scheduler
       {{- if eq .Values.interactive false}}
       restartPolicy: Never
       {{- end}}
