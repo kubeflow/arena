@@ -309,7 +309,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 
-	err := workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, runaiChart)
+	err := workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, runaiChart, clientset)
 	if err != nil {
 		return err
 	}

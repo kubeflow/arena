@@ -131,7 +131,7 @@ func submitSparkApplicationJob(args []string, submitArgs *submitSparkJobArgs) er
 		return fmt.Errorf("the job %s already exist, please delete it first. use 'arena delete %s'", name, name)
 	}
 
-	err = workflow.SubmitJob(name, defaultSparkJobTrainingType, namespace, submitArgs, sparkChart)
+	err = workflow.SubmitJob(name, defaultSparkJobTrainingType, namespace, submitArgs, sparkChart, clientset)
 	if err != nil {
 		return err
 	}

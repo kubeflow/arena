@@ -125,7 +125,7 @@ func deleteServingJob(client *kubernetes.Clientset, servingJob string) error {
 	}
 
 	// 4. Delete serving
-	err = workflow.DeleteJob(servingJobWithVersion, namespace, servingType)
+	err = workflow.DeleteJob(servingJobWithVersion, namespace, servingType, clientset)
 	if err != nil {
 		return err
 	}

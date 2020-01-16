@@ -128,7 +128,7 @@ func submitVolcanoJob(args []string, submitArgs *submitVolcanoJobArgs) error {
 		return fmt.Errorf("the job %s already exist, please delete it first. use 'arena delete %s'", name, name)
 	}
 
-	err = workflow.SubmitJob(name, defaultVolcanoJobTrainingType, namespace, submitArgs, volcanoChart)
+	err = workflow.SubmitJob(name, defaultVolcanoJobTrainingType, namespace, submitArgs, volcanoChart, clientset)
 	if err != nil {
 		return err
 	}

@@ -247,7 +247,7 @@ func serveTensorFlow(args []string, serveTensorFlowArgs *ServeTensorFlowArgs, cl
 	if serveTensorFlowArgs.ServingVersion != "" {
 		name += "-" + serveTensorFlowArgs.ServingVersion
 	}
-	return workflow.SubmitJob(name, "tf-serving", namespace, serveTensorFlowArgs, tfservingChart)
+	return workflow.SubmitJob(name, "tf-serving", namespace, serveTensorFlowArgs, tfservingChart, clientset)
 }
 
 func generateModelConfigFileContent(serveTensorFlowArgs ServeTensorFlowArgs) string {

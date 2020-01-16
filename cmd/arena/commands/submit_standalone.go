@@ -158,7 +158,7 @@ func submitStandaloneJob(args []string, submitArgs *submitStandaloneJobArgs) (er
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
 	}
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, standalone_training_chart)
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, standalone_training_chart, clientset)
 	if err != nil {
 		return err
 	}

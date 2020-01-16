@@ -128,7 +128,7 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	}
 	// add node labels,if given
 	submitArgs.addMPINodeSelectors()
-	// add tolerations, if given 
+	// add tolerations, if given
 	submitArgs.addMPITolerations()
 	submitArgs.addMPIInfoToEnv()
 
@@ -147,10 +147,12 @@ func (submitArgs submitMPIJobArgs) check() error {
 
 	return nil
 }
+
 // add k8s nodes labels
 func (submitArgs *submitMPIJobArgs) addMPINodeSelectors() {
 	submitArgs.addNodeSelectors()
 }
+
 // add k8s tolerations for taints
 func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 	submitArgs.addTolerations()
@@ -179,7 +181,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, mpijob_chart)
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, mpijob_chart, clientset)
 	if err != nil {
 		return err
 	}

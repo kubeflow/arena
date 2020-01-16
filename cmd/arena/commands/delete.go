@@ -106,7 +106,7 @@ func deleteTrainingJob(jobName, trainingType string) error {
 		trainingTypes = []string{trainingType}
 	}
 
-	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0])
+	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0], clientset)
 	if err != nil {
 		return err
 	}

@@ -410,7 +410,7 @@ func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart)
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart, clientset)
 	if err != nil {
 		return err
 	}
