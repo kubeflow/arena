@@ -37,7 +37,7 @@ spec:
       nodeSelector:
         run.ai/type: {{ .Values.node_type }}
       {{- end}}
-      # schedulerName: runai-scheduler
+      schedulerName: runai-scheduler
       {{- if eq .Values.interactive false}}
       restartPolicy: Never
       {{- end}}
