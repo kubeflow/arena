@@ -13,6 +13,8 @@ elastic: false
 interactive: false
 shm: false
 localImage: false
+# labels:
+#   runai/label: "label"
 # ttlSecondsAfterFinished: 0
 
 # environment:

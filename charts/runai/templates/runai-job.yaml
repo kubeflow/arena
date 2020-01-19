@@ -7,7 +7,9 @@ kind: "Job"
 {{- end }}
 metadata:
   name: {{ .Release.Name }}
-  {{- include "chart.labels" . | indent 2}}
+  labels:
+  {{- include "charts.label-addition" . | indent 3 }}
+  {{ toYaml .Values.labels | indent 1}}
 spec:
   {{- if .Values.interactive }}
   serviceName: {{ .Release.Name }}

@@ -22,8 +22,6 @@ import (
 
 var (
 	runaiChart              = path.Join(util.GetChartsFolder(), "runai")
-	nameArg                 string
-	noIndex                 bool
 	ttlSecondsAfterFinished string
 )
 
@@ -55,17 +53,9 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if noIndex {
-				name = nameArg
-			} else {
-				index, err := getJobIndex()
-				if err != nil {
-					log.Error("Could not get index for new job")
-					os.Exit(1)
-				}
-
-				name = fmt.Sprintf("%s-%s", nameArg, index)
-			}
+			index, err := getJobIndex()
+			submitArgs.Labels = make(map[string]string)
+			submitArgs.Labels["runai/job-index"] = index
 
 			if ttlSecondsAfterFinished != "" {
 				ttl, err := time.ParseDuration(ttlSecondsAfterFinished)
@@ -231,26 +221,27 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 }
 
 type submitRunaiJobArgs struct {
-	Project             string   `yaml:"project"`
-	GPU                 int      `yaml:"gpu"`
-	Image               string   `yaml:"image"`
-	HostIPC             bool     `yaml:"hostIPC"`
-	Interactive         bool     `yaml:"interactive"`
-	Volumes             []string `yaml:"volumes"`
-	NodeType            string   `yaml:"node_type"`
-	User                string   `yaml:"user"`
-	Ports               []string `yaml:"ports"`
-	ServiceType         string   `yaml:"serviceType"`
-	Command             []string `yaml:"command"`
-	Args                []string `yaml:"args"`
+	Project             string            `yaml:"project"`
+	GPU                 int               `yaml:"gpu"`
+	Image               string            `yaml:"image"`
+	HostIPC             bool              `yaml:"hostIPC"`
+	Interactive         bool              `yaml:"interactive"`
+	Volumes             []string          `yaml:"volumes"`
+	NodeType            string            `yaml:"node_type"`
+	User                string            `yaml:"user"`
+	Ports               []string          `yaml:"ports"`
+	ServiceType         string            `yaml:"serviceType"`
+	Command             []string          `yaml:"command"`
+	Args                []string          `yaml:"args"`
+	CPU                 string            `yaml:"cpu"`
+	Memory              string            `yaml:"memory"`
+	Elastic             bool              `yaml:"elastic"`
+	LargeShm            bool              `yaml:"shm"`
+	EnvironmentVariable []string          `yaml:"environment"`
+	LocalImage          bool              `yaml:"localImage"`
+	TTL                 *int              `yaml:"ttlSecondsAfterFinished"`
+	Labels              map[string]string `yaml:"labels"`
 	IsJupyter           bool
-	CPU                 string   `yaml:"cpu"`
-	Memory              string   `yaml:"memory"`
-	Elastic             bool     `yaml:"elastic"`
-	LargeShm            bool     `yaml:"shm"`
-	EnvironmentVariable []string `yaml:"environment"`
-	LocalImage          bool     `yaml:"localImage"`
-	TTL                 *int     `yaml:"ttlSecondsAfterFinished"`
 }
 
 func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
@@ -296,7 +287,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 		defaultUser = currentUser.Username
 	}
 
-	command.Flags().StringVar(&nameArg, "name", "", "Job name")
+	command.Flags().StringVar(&name, "name", "", "Job name")
 	command.MarkFlagRequired("name")
 
 	command.Flags().IntVarP(&(sa.GPU), "gpu", "g", 0, "Number of GPUs to allocation to the Job.")
@@ -317,7 +308,6 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&(sa.Elastic), "elastic", false, "Mark the job as elastic.")
 	command.Flags().BoolVar(&(sa.LargeShm), "large-shm", false, "Mount a large /dev/shm device. Specific software might need this feature.")
 	command.Flags().BoolVar(&(sa.LocalImage), "local-image", false, "Use a local image for this job. NOTE: this image must exists on the local server.")
-	command.Flags().BoolVar(&(noIndex), "no-index", false, "Do not add index number to created job.")
 	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
 	command.Flags().StringVar(&(ttlSecondsAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
