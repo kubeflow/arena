@@ -320,7 +320,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&(noIndex), "no-index", false, "Do not add index number to created job.")
 	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
-	command.Flags().StringVar(&(ttlSecondsAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted.")
+	command.Flags().StringVar(&(ttlSecondsAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, or 3h, .etc).")
 
 	command.Flags().MarkHidden("user")
 }
