@@ -9,7 +9,9 @@ metadata:
   name: {{ .Release.Name }}
   labels:
   {{- include "charts.label-addition" . | indent 3 }}
+  {{- if .Values.labels }}
   {{ toYaml .Values.labels | indent 1}}
+  {{- end}}
 spec:
   {{- if .Values.interactive }}
   serviceName: {{ .Release.Name }}

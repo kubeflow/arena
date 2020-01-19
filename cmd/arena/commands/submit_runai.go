@@ -54,13 +54,13 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			index, err := getJobIndex()
-			
+
 			if err != nil {
 				log.Debug("Could not get job index. Will not set a label.")
+			} else {
+				submitArgs.Labels = make(map[string]string)
+				submitArgs.Labels["runai/job-index"] = index
 			}
-
-			submitArgs.Labels = make(map[string]string)
-			submitArgs.Labels["runai/job-index"] = index
 
 			if ttlSecondsAfterFinished != "" {
 				ttl, err := time.ParseDuration(ttlSecondsAfterFinished)
