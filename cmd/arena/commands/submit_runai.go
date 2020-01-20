@@ -302,7 +302,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().IntVarP(&(sa.GPU), "gpu", "g", 0, "Number of GPUs to allocation to the Job.")
 	command.Flags().StringVar(&(sa.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
 	command.Flags().StringVar(&(sa.Memory), "memory", "", "Memory to allocate for this job (1G, 20M, .etc)")
-	command.Flags().StringVarP(&(sa.Project), "project", "p", "default", "Specifies the Run:AI project to use for this Job.")
+	command.Flags().StringVarP(&(sa.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
 	command.Flags().StringVarP(&(sa.Image), "image", "i", "", "Image to use when creating the container for this Job.")
 	command.Flags().BoolVar(&(sa.HostIPC), "host-ipc", false, "Use the host's ipc namespace. (default 'false').")
 	command.Flags().BoolVar(&(sa.Interactive), "interactive", false, "Mark this Job as unattended or interactive. (default 'false')")
