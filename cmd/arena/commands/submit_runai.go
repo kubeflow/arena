@@ -226,26 +226,28 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 }
 
 type submitRunaiJobArgs struct {
-	Project             string            `yaml:"project"`
-	GPU                 int               `yaml:"gpu"`
-	Image               string            `yaml:"image"`
-	HostIPC             bool              `yaml:"hostIPC"`
+	// These arguments should be omitted when empty, to support default values file created in the cluster
+	// So any empty ones won't override the default values
+	Project             string            `yaml:"project,omitempty"`
+	GPU                 int               `yaml:"gpu,omitempty"`
+	Image               string            `yaml:"image,omitempty"`
+	HostIPC             bool              `yaml:"hostIPC,omitempty"`
 	Interactive         bool              `yaml:"interactive"`
-	Volumes             []string          `yaml:"volumes"`
-	NodeType            string            `yaml:"node_type"`
-	User                string            `yaml:"user"`
-	Ports               []string          `yaml:"ports"`
-	ServiceType         string            `yaml:"serviceType"`
-	Command             []string          `yaml:"command"`
-	Args                []string          `yaml:"args"`
-	CPU                 string            `yaml:"cpu"`
-	Memory              string            `yaml:"memory"`
-	Elastic             bool              `yaml:"elastic"`
-	LargeShm            bool              `yaml:"shm"`
+	Volumes             []string          `yaml:"volumes,omitempty"`
+	NodeType            string            `yaml:"node_type,omitempty"`
+	User                string            `yaml:"user,omitempty"`
+	Ports               []string          `yaml:"ports,omitempty"`
+	ServiceType         string            `yaml:"serviceType,omitempty"`
+	Command             []string          `yaml:"command,omitempty"`
+	Args                []string          `yaml:"args,omitempty"`
+	CPU                 string            `yaml:"cpu,omitempty"`
+	Memory              string            `yaml:"memory,omitempty"`
+	Elastic             bool              `yaml:"elastic,omitempty"`
+	LargeShm            bool              `yaml:"shm,omitempty"`
 	EnvironmentVariable []string          `yaml:"environment"`
-	LocalImage          bool              `yaml:"localImage"`
-	TTL                 *int              `yaml:"ttlSecondsAfterFinished"`
-	Labels              map[string]string `yaml:"labels"`
+	LocalImage          bool              `yaml:"localImage,omitempty"`
+	TTL                 *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
+	Labels              map[string]string `yaml:"labels,omitempty"`
 	IsJupyter           bool
 }
 

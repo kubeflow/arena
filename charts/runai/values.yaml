@@ -3,35 +3,35 @@
 # Declare variables to be passed into your templates.
 
 # The minimal available pods to run for this Job
-project: "default"
-gpu: 0
-image: ""
-cpu: ""
-memory: ""
+# project: "default"
+# gpu: 0
+# image: ""
+# cpu: ""
+# memory: ""
 hostIPC: false
 elastic: false
 interactive: false
 shm: false
 localImage: false
 # labels:
-#   runai/label: "label"
+#   runai/label: label
 # ttlSecondsAfterFinished: 0
 
 # environment:
 # - name
 #   value
-# serviceType: "nodeport"
+serviceType: "nodeport"
 # ports:
 #   - 30000:8888
 #   - 80:30001
 #   - 8080
 
-command:
-  - 'start-notebook.sh'
-args:
-  - '--NotebookApp.base_url={url}'
+# command:
+#   - 'start-notebook.sh'
+# args:
+#   - '--NotebookApp.base_url={url}'
 
-node_type: ""
+# node_type: ""
 user: ""
 # volumes:
 #   - /path/on/host:/dest/container/path

@@ -8,6 +8,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -51,6 +52,29 @@ func DeleteJob(name, namespace, trainingType string, clientset *kubernetes.Clien
 /**
 *	Submit training job
 **/
+
+func GetDefaultValuesConfigmap(clientset *kubernetes.Clientset) (string, error) {
+	configMap, err := clientset.CoreV1().ConfigMaps("runai").Get("cli-defaults", metav1.GetOptions{})
+	if err != nil {
+		return "", nil
+	}
+
+	values := configMap.Data["values"]
+	valueFile, err := ioutil.TempFile(os.TempDir(), "values")
+	if err != nil {
+		return "", err
+	}
+
+	_, err = valueFile.WriteString(values)
+
+	if err != nil {
+		return "", err
+	}
+
+	log.Debugf("Wrote default cluster values file to path %s", valueFile.Name())
+
+	return valueFile.Name(), nil
+}
 
 func UpdateConfigmapWithOwnerReference(name string, trainingType string, namespace string, clientset *kubernetes.Clientset) error {
 	job, err := clientset.BatchV1().Jobs(namespace).Get(name, metav1.GetOptions{})
@@ -102,8 +126,15 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
+	defaultValuesFile, err := GetDefaultValuesConfigmap(clientset)
+
+	if err != nil {
+		log.Debugln(err)
+		return fmt.Errorf("Error getting default values file of cluster")
+	}
+
 	// 2. Generate Template file
-	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart)
+	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, defaultValuesFile, chart)
 	if err != nil {
 		return err
 	}
@@ -125,6 +156,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		trainingType,
 		namespace,
 		valueFileName,
+		defaultValuesFile,
 		appInfoFileName,
 		chartName,
 		chartVersion)

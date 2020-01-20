@@ -8,9 +8,11 @@ kind: "Job"
 metadata:
   name: {{ .Release.Name }}
   labels:
-  {{- include "charts.label-addition" . | indent 3 }}
+  {{- include "charts.label-addition" . | indent 4 }}
   {{- if .Values.labels }}
-  {{ toYaml .Values.labels | indent 1}}
+    {{- range $key, $val := .Values.labels }}
+    {{ $key }}: {{ $val | quote }}
+    {{- end }}
   {{- end}}
 spec:
   {{- if .Values.interactive }}

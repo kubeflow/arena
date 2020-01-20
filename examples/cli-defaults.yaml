@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  values: |
+    labels:
+      image: ubuntu
+    hostIPC: true
+kind: ConfigMap
+metadata:
+  name: cli-defaults
+  namespace: runai
