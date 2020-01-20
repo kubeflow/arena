@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
@@ -22,9 +23,9 @@ import (
 )
 
 var (
-	runaiChart              = path.Join(util.GetChartsFolder(), "runai")
-	ttlSecondsAfterFinished string
-	configArg               string
+	runaiChart       = path.Join(util.GetChartsFolder(), "runai")
+	ttlAfterFinished *time.Duration
+	configArg        string
 )
 
 const (
@@ -64,14 +65,8 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.Labels["runai/job-index"] = index
 			}
 
-			if ttlSecondsAfterFinished != "" {
-				ttl, err := time.ParseDuration(ttlSecondsAfterFinished)
-				if err != nil {
-					fmt.Println("Wrong format for duration argument")
-					os.Exit(1)
-				}
-
-				ttlSeconds := int(math.Round(ttl.Seconds()))
+			if ttlAfterFinished != nil {
+				ttlSeconds := int(math.Round(ttlAfterFinished.Seconds()))
 				log.Debugf("Using time to live seconds %d", ttlSeconds)
 				submitArgs.TTL = &ttlSeconds
 			}
@@ -91,7 +86,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if submitArgs.IsJupyter || (submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
+			if submitArgs.IsJupyter || (*submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
 				err = kubectl.WaitForReadyStatefulSet(name, namespace)
 
 				if err != nil {
@@ -121,7 +116,7 @@ func NewRunaiJobCommand() *cobra.Command {
 					fmt.Printf("Jupyter notebook token: %s\n", token)
 				}
 
-				if submitArgs.Interactive && submitArgs.ServiceType == "portforward" {
+				if *submitArgs.Interactive && submitArgs.ServiceType == "portforward" {
 					localPorts := []string{}
 					for _, port := range submitArgs.Ports {
 						split := strings.Split(port, ":")
@@ -231,10 +226,10 @@ type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
 	Project             string            `yaml:"project,omitempty"`
-	GPU                 int               `yaml:"gpu,omitempty"`
+	GPU                 *int              `yaml:"gpu,omitempty"`
 	Image               string            `yaml:"image,omitempty"`
-	HostIPC             bool              `yaml:"hostIPC,omitempty"`
-	Interactive         bool              `yaml:"interactive"`
+	HostIPC             *bool             `yaml:"hostIPC,omitempty"`
+	Interactive         *bool             `yaml:"interactive,omitempty"`
 	Volumes             []string          `yaml:"volumes,omitempty"`
 	NodeType            string            `yaml:"node_type,omitempty"`
 	User                string            `yaml:"user,omitempty"`
@@ -244,10 +239,10 @@ type submitRunaiJobArgs struct {
 	Args                []string          `yaml:"args,omitempty"`
 	CPU                 string            `yaml:"cpu,omitempty"`
 	Memory              string            `yaml:"memory,omitempty"`
-	Elastic             bool              `yaml:"elastic,omitempty"`
-	LargeShm            bool              `yaml:"shm,omitempty"`
+	Elastic             *bool             `yaml:"elastic,omitempty"`
+	LargeShm            *bool             `yaml:"shm,omitempty"`
 	EnvironmentVariable []string          `yaml:"environment"`
-	LocalImage          bool              `yaml:"localImage,omitempty"`
+	LocalImage          *bool             `yaml:"localImage,omitempty"`
 	TTL                 *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Labels              map[string]string `yaml:"labels,omitempty"`
 	IsJupyter           bool
@@ -262,7 +257,7 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 		jupyterServiceType = "portforward"
 	)
 
-	sa.Interactive = true
+	*sa.Interactive = true
 	if len(sa.Ports) == 0 {
 		sa.Ports = []string{jupyterPort}
 		log.Infof("Exposing default jupyter notebook port %s", jupyterPort)
@@ -299,13 +294,13 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&name, "name", "", "Job name")
 	command.MarkFlagRequired("name")
 
-	command.Flags().IntVarP(&(sa.GPU), "gpu", "g", 0, "Number of GPUs to allocation to the Job.")
+	flags.AddIntNullableFlagP(command.Flags(), &(sa.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
 	command.Flags().StringVar(&(sa.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
 	command.Flags().StringVar(&(sa.Memory), "memory", "", "Memory to allocate for this job (1G, 20M, .etc)")
 	command.Flags().StringVarP(&(sa.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
 	command.Flags().StringVarP(&(sa.Image), "image", "i", "", "Image to use when creating the container for this Job.")
-	command.Flags().BoolVar(&(sa.HostIPC), "host-ipc", false, "Use the host's ipc namespace. (default 'false').")
-	command.Flags().BoolVar(&(sa.Interactive), "interactive", false, "Mark this Job as unattended or interactive. (default 'false')")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostIPC), "host-ipc", "Use the host's ipc namespace.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.Interactive), "interactive", "Mark this Job as unattended or interactive.")
 	command.Flags().StringArrayVarP(&(sa.Volumes), "volumes", "v", []string{}, "Volumes to mount into the container.")
 	command.Flags().StringVar(&(sa.NodeType), "node-type", "", "Enforce node type affinity by setting a node-type label.")
 	command.Flags().StringVarP(&(sa.User), "user", "u", defaultUser, "Use different user to run the Job.")
@@ -314,12 +309,12 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringArrayVar(&(sa.Command), "command", []string{}, "Run this command on container start. Use together with --args.")
 	command.Flags().StringArrayVar(&(sa.Args), "args", []string{}, "Arguments to pass to the command run on container start. Use together with --command.")
 	command.Flags().BoolVar(&(sa.IsJupyter), "jupyter", false, "Shortcut for running a jupyter notebook container. Uses a pre-created image and a default notebook configuration.")
-	command.Flags().BoolVar(&(sa.Elastic), "elastic", false, "Mark the job as elastic.")
-	command.Flags().BoolVar(&(sa.LargeShm), "large-shm", false, "Mount a large /dev/shm device. Specific software might need this feature.")
-	command.Flags().BoolVar(&(sa.LocalImage), "local-image", false, "Use a local image for this job. NOTE: this image must exists on the local server.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device. Specific software might need this feature.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use a local image for this job. NOTE: this image must exists on the local server.")
 	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
-	command.Flags().StringVar(&(ttlSecondsAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
+	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
 
 	command.Flags().StringVar(&(configArg), "runai-env", "", "Use a specific environment to run this job. (otherwise use the default one if exists)")
 
