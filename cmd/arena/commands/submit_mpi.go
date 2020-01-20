@@ -181,7 +181,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, mpijob_chart, clientset)
+	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, "", mpijob_chart, clientset)
 	if err != nil {
 		return err
 	}

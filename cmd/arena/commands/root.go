@@ -69,6 +69,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewUpdateCommand())
 	command.AddCommand(NewBashCommand())
 	command.AddCommand(NewExecCommand())
+	command.AddCommand(NewEnvironmentCommand())
 	// command.AddCommand(NewWaitCommand())
 	// command.AddCommand(cmd.NewVersionCmd(CLIName))
 

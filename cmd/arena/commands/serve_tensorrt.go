@@ -141,5 +141,5 @@ func serveTensorRT(serveTensorRTArgs *ServeTensorRTArgs) (err error) {
 	name = serveTensorRTArgs.ServingName
 
 	//return helm.InstallRelease(name, namespace, serveTensorRTArgs, trtservingChart)
-	return workflow.SubmitJob(name, "trt-serving", namespace, serveTensorRTArgs, trtservingChart, clientset)
+	return workflow.SubmitJob(name, "trt-serving", namespace, serveTensorRTArgs, "", trtservingChart, clientset)
 }

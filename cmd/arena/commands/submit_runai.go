@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
@@ -23,6 +24,7 @@ import (
 var (
 	runaiChart              = path.Join(util.GetChartsFolder(), "runai")
 	ttlSecondsAfterFinished string
+	configArg               string
 )
 
 const (
@@ -319,12 +321,35 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 	command.Flags().StringVar(&(ttlSecondsAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
 
+	command.Flags().StringVar(&(configArg), "runai-env", "", "Use a specific environment to run this job. (otherwise use the default one if exists)")
+
 	command.Flags().MarkHidden("user")
 }
 
 func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
+	configs := clusterConfig.NewClusterConfigs(clientset)
 
-	err := workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, runaiChart, clientset)
+	var configToUse *clusterConfig.ClusterConfig
+	var err error
+	if configArg == "" {
+		configToUse, err = configs.GetClusterDefaultConfig()
+	} else {
+		configToUse, err = configs.GetClusterConfig(configArg)
+		if configToUse == nil {
+			return fmt.Errorf("Could not find runai environment %s. Please run '%s env list'", configArg, config.CLIName)
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	configValues := ""
+	if configToUse != nil {
+		configValues = configToUse.Values
+	}
+
+	err = workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, configValues, runaiChart, clientset)
 	if err != nil {
 		return err
 	}

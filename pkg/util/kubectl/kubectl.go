@@ -162,7 +162,7 @@ func InstallApps(fileName, namespace string) (output string, err error) {
 * This name should be <job-type>-<job-name>
 * create configMap by using name, namespace and configFile
 **/
-func CreateAppConfigmap(name, trainingType, namespace, configFileName, defaultValuesFile, appInfoFileName, chartName, chartVersion string) (err error) {
+func CreateAppConfigmap(name, trainingType, namespace, configFileName, envValuesFile, appInfoFileName, chartName, chartVersion string) (err error) {
 	if _, err = os.Stat(configFileName); os.IsNotExist(err) {
 		return err
 	}
@@ -177,8 +177,8 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, defaultVa
 		fmt.Sprintf("--from-file=%s=%s", "app", appInfoFileName),
 		fmt.Sprintf("--from-literal=%s=%s", chartName, chartVersion)}
 	// "--overrides='{\"metadata\":{\"label\":\"createdBy\": \"arena\"}}'"}
-	if defaultValuesFile != "" {
-		args = append(args, fmt.Sprintf("--from-file=%s=%s", "default-values", defaultValuesFile))
+	if envValuesFile != "" {
+		args = append(args, fmt.Sprintf("--from-file=%s=%s", "env-values", envValuesFile))
 	}
 
 	out, err := kubectl(args)

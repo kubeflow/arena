@@ -1,14 +1,14 @@
 apiVersion: v1
 data:
-  name: "default"
+  name: "custom"
+  description: "some descriptions"
   values: |
     image: ubuntu
-    hostIPC: true
+    hostIPC: false
+    shm: true
 kind: ConfigMap
 metadata:
-  name: cli-defaults
+  name: cli-custom-defaults
   namespace: runai
-  annotations:
-    runai/default: "true"
   labels:
     runai/environment: "true"

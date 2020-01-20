@@ -53,19 +53,13 @@ func DeleteJob(name, namespace, trainingType string, clientset *kubernetes.Clien
 *	Submit training job
 **/
 
-func GetDefaultValuesConfigmap(clientset *kubernetes.Clientset) (string, error) {
-	configMap, err := clientset.CoreV1().ConfigMaps("runai").Get("cli-defaults", metav1.GetOptions{})
-	if err != nil {
-		return "", nil
-	}
-
-	values := configMap.Data["values"]
+func GetDefaultValuesFile(environmentValues string) (string, error) {
 	valueFile, err := ioutil.TempFile(os.TempDir(), "values")
 	if err != nil {
 		return "", err
 	}
 
-	_, err = valueFile.WriteString(values)
+	_, err = valueFile.WriteString(environmentValues)
 
 	if err != nil {
 		return "", err
@@ -114,7 +108,7 @@ func UpdateConfigmapWithOwnerReference(name string, trainingType string, namespa
 	return nil
 }
 
-func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string, clientset *kubernetes.Clientset) error {
+func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset *kubernetes.Clientset) error {
 	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 	if found {
 		return fmt.Errorf("the job %s is already exist, please delete it first. use '%s delete %s'", name, config.CLIName, name)
@@ -126,7 +120,14 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		return err
 	}
 
-	defaultValuesFile, err := GetDefaultValuesConfigmap(clientset)
+	envValuesFile := ""
+	if environmentValues != "" {
+		envValuesFile, err = GetDefaultValuesFile(environmentValues)
+		if err != nil {
+			log.Debugln(err)
+			return fmt.Errorf("Error getting default values file of cluster")
+		}
+	}
 
 	if err != nil {
 		log.Debugln(err)
@@ -134,7 +135,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 2. Generate Template file
-	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, defaultValuesFile, chart)
+	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, envValuesFile, chart)
 	if err != nil {
 		return err
 	}
@@ -156,7 +157,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		trainingType,
 		namespace,
 		valueFileName,
-		defaultValuesFile,
+		envValuesFile,
 		appInfoFileName,
 		chartName,
 		chartVersion)

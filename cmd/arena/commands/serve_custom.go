@@ -160,5 +160,5 @@ func servePredict(args []string, serveCustomArgs *ServeCustomArgs, client *kuber
 			serveCustomArgs.ServingVersion)
 	}
 
-	return workflow.SubmitJob(name, "custom-serving", namespace, serveCustomArgs, customChart, clientset)
+	return workflow.SubmitJob(name, "custom-serving", namespace, serveCustomArgs, "", customChart, clientset)
 }
