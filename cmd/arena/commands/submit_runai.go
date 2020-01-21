@@ -86,7 +86,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if submitArgs.IsJupyter || (*submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
+			if submitArgs.IsJupyter || (submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward") {
 				err = kubectl.WaitForReadyStatefulSet(name, namespace)
 
 				if err != nil {

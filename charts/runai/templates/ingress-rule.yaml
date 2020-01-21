@@ -1,3 +1,4 @@
+{{if .Values.serviceType }}
 {{if and (eq .Values.serviceType "ingress") .Values.interactive }}
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -26,4 +27,5 @@ spec:
               servicePort: {{ $parts._0 }}
           {{- end}}
           {{- end}}
+{{end}}
 {{end}}

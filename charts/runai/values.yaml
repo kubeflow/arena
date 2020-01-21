@@ -20,7 +20,7 @@ localImage: false
 # environment:
 # - name
 #   value
-serviceType: "nodeport"
+# serviceType: "nodeport"
 # ports:
 #   - 30000:8888
 #   - 80:30001
