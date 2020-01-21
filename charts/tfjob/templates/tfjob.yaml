@@ -620,6 +620,7 @@ spec:
 {{- if .Values.chief }}
 {{ .Values.chiefName | indent  4}}:
       restartPolicy: Never
+      replicas: 1
       template:
         metadata:
           labels:
@@ -932,6 +933,7 @@ spec:
 {{- if .Values.evaluator }}
     Evaluator:
       restartPolicy: Never
+      replicas: 1
       template:
         metadata:
           labels:
