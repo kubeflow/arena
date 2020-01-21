@@ -107,3 +107,8 @@
 ### 0.25.0
 
 * Fix annotations issue
+
+
+### 0.26.0
+
+* chief and evaluator should have replicas
