@@ -116,7 +116,7 @@ func NewRunaiJobCommand() *cobra.Command {
 					fmt.Printf("Jupyter notebook token: %s\n", token)
 				}
 
-				if *submitArgs.Interactive && submitArgs.ServiceType == "portforward" {
+				if submitArgs.Interactive != nil && *submitArgs.Interactive && submitArgs.ServiceType == "portforward" {
 					localPorts := []string{}
 					for _, port := range submitArgs.Ports {
 						split := strings.Split(port, ":")
@@ -257,7 +257,8 @@ func (sa *submitRunaiJobArgs) UseJupyterDefaultValues() {
 		jupyterServiceType = "portforward"
 	)
 
-	*sa.Interactive = true
+	interactive := true
+	sa.Interactive = &interactive
 	if len(sa.Ports) == 0 {
 		sa.Ports = []string{jupyterPort}
 		log.Infof("Exposing default jupyter notebook port %s", jupyterPort)
