@@ -80,6 +80,8 @@ workflows:
             branches:
               only:
                - runai-master
+            tags:
+              ignore: /.*/
   release:
     jobs:
       - release:
