@@ -41,7 +41,7 @@ jobs:
           name: push
           command: |
             set -ex 
-            echo $STAGING_GCLOUD_SERVICE_JSON_CONTENT >> ./key_file
+            echo $GCP_SERVICE_ACCOUNT >> ./key_file
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
             gsutil cp /tmp/workspace/binaries/darwin-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz
             gsutil cp /tmp/workspace/binaries/linux-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz
