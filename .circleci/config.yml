@@ -26,7 +26,7 @@ jobs:
         command: |
           make cli-linux-amd64
           tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
-          mv darwin-amd64.tar.gz workspace/binaries
+          mv linux-amd64.tar.gz workspace/binaries
     - run:
         name: push-binaries
         command: |
@@ -58,6 +58,8 @@ workflows:
           name: build
       - push:
           name: push
+          requires:
+            - build
           filters:
             branches:
               only:
