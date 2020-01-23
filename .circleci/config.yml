@@ -1,11 +1,17 @@
+
+executors:
+  runai-executor:
+    docker:
+      - image: runai/circleci-go 
+
 version: 2.1
 jobs:
   build:
-    docker:
-    - image: runai/circleci-go
+    executor: runai-executor
     working_directory: /go/src/github.com/kubeflow/arena
     steps:
     - checkout
+    - run: mkdir -p workspace/binaries
     - run:
         name: general-prep
         command: rm .env
@@ -14,11 +20,13 @@ jobs:
         command: |
           make cli-darwin-amd64
           tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts
+          mv darwin-amd64.tar.gz workspace/binaries
     - run: 
         name: build-linux
         command: |
           make cli-linux-amd64
           tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
+          mv darwin-amd64.tar.gz workspace/binaries
     - run:
         name: push-binaries
         command: |
@@ -27,6 +35,19 @@ jobs:
             set -ex 
             hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -m "" v1.0.0
           fi
+    - persist_to_workspace:
+        root: workspace
+        paths:
+          - binaries
+  push:
+    executor: runai-executor
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: print
+          command: : |
+            ls /tmp/workspace
 
 workflows:
   version: 2.1
@@ -35,6 +56,8 @@ workflows:
     jobs:
       - build: 
           name: build
+      - push:
+          name: push
           filters:
             branches:
               only:
