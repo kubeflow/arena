@@ -20,13 +20,13 @@ jobs:
         command: |
           make cli-darwin-amd64
           tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts
-          mv darwin-amd64.tar.gz workspace/binaries
+          cp darwin-amd64.tar.gz workspace/binaries
     - run: 
         name: build-linux
         command: |
           make cli-linux-amd64
           tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
-          mv linux-amd64.tar.gz workspace/binaries
+          cp linux-amd64.tar.gz workspace/binaries
     - run:
         name: push-binaries
         command: |
