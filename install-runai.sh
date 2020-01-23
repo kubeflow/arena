@@ -15,3 +15,4 @@ fi
 
 mkdir ${SCRIPT_FILES}
 cp -R "${SCRIPT_DIR}/charts" ${SCRIPT_CHARTS}
+cp "${SCRIPT_DIR}/VERSION" ${SCRIPT_FILES}

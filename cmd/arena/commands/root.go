@@ -63,7 +63,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewLogsCommand())
 	command.AddCommand(NewDeleteCommand())
 	command.AddCommand(NewTopCommand())
-	command.AddCommand(NewVersionCmd(config.CLIName))
+	command.AddCommand(NewVersionCmd())
 	// command.AddCommand(NewDataCommand())
 	// command.AddCommand(NewCompletionCommand())
 	command.AddCommand(NewUpdateCommand())

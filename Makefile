@@ -8,17 +8,18 @@ OS_ARCH?=linux-amd64
 # Use .env file if exists - for local development
 -include .env
 
-ifndef CHARTS_FOLDER
-CHARTS_FOLDER=/etc/runai/charts
+ifndef RUNAI_CONFIG
+RUNAI_CONFIG=/etc/runai
 endif
 
-VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
+CHARTS_FOLDER=$(RUNAI_CONFIG)/charts
+VESRION_FILE=$(RUNAI_CONFIG)/VERSION
+
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GIT_COMMIT=$(shell git rev-parse HEAD)
 GIT_SHORT_COMMIT=$(shell git rev-parse --short HEAD)
 DOCKER_BUILD_DATE=$(shell date -u +'%Y%m%d%H%M%S')
 GIT_TAG=$(shell if [ -z "`git status --porcelain`" ]; then git describe --exact-match --tags HEAD 2>/dev/null; fi)
-GIT_TREE_STATE=$(shell if [ -z "`git status --porcelain`" ]; then echo "clean" ; else echo "dirty"; fi)
 PACKR_CMD=$(shell if [ "`which packr`" ]; then echo "packr"; else echo "go run vendor/github.com/gobuffalo/packr/packr/main.go"; fi)
 
 BUILDER_IMAGE=arena-builder
@@ -31,10 +32,9 @@ BUILDER_CMD=docker run --rm \
   -w /root/go/src/${PACKAGE} ${BUILDER_IMAGE}
 
 override LDFLAGS += \
-  -X ${PACKAGE}.version=${VERSION} \
-  -X ${PACKAGE}.buildDate=${BUILD_DATE} \
-  -X ${PACKAGE}.gitCommit=${GIT_COMMIT} \
-  -X ${PACKAGE}.gitTreeState=${GIT_TREE_STATE} \
+  -X ${PACKAGE}/pkg/version.buildDate=${BUILD_DATE} \
+  -X ${PACKAGE}/pkg/version.gitCommit=${GIT_COMMIT} \
+  -X ${PACKAGE}/pkg/version.versionFile=${VESRION_FILE} \
   -X ${PACKAGE}/pkg/util.chartFolder=${CHARTS_FOLDER} \
   -extldflags "-static"
 

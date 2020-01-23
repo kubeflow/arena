@@ -45,7 +45,6 @@ jobs:
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
             gsutil cp /tmp/workspace/binaries/darwin-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz
             gsutil cp /tmp/workspace/binaries/linux-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz
-            # hub release edit -a /tmp/workspace/binaries/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/workspace/binaries/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" v1.0.1
   release:
     executor: runai-executor
     steps:
@@ -59,6 +58,17 @@ jobs:
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
             gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/packages/darwin-amd64.tar.gz
             gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/packages/linux-amd64.tar.gz
+      - run:
+          name: update-version
+          command: |
+            set -ex
+            echo <<pipeline.git.tag>> >> VERSION
+            gunzip darwin-amd64.tar.gz
+            gunzip linux-amd64.tar.gz
+            tar rf darwin-amd64.tar VERSION
+            tar rf linux-amd64.tar VERSION
+            gzip darwin-amd64.tar
+            gzip linux-amd64.tar
       - run:
           name: upload-version
           command: |
