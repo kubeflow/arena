@@ -62,7 +62,7 @@ jobs:
       - run:
           name: upload-version
           command: |
-            hub release edit -a /tmp/packages/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/packages/linux-amd64.tar.gz#linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
+            hub release edit -a /tmp/packages/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/packages/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
 
 
 workflows:
