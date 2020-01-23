@@ -15,7 +15,6 @@ func NewEnvironmentListCommand() *cobra.Command {
 		Short: "List different environments in the cluster",
 		Run: func(cmd *cobra.Command, args []string) {
 			util.SetLogLevel(logLevel)
-			setupKubeconfig()
 
 			_, err := initKubeClient()
 			if err != nil {

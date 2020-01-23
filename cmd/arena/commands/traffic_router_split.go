@@ -50,7 +50,6 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 			}*/
 
 			util.SetLogLevel(logLevel)
-			setupKubeconfig()
 			client, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

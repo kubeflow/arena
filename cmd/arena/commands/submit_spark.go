@@ -33,7 +33,6 @@ func NewSparkApplicationCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			util.SetLogLevel(logLevel)
-			setupKubeconfig()
 
 			_, err := initKubeClient()
 			if err != nil {

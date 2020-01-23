@@ -15,9 +15,6 @@
 package commands
 
 import (
-	"os"
-
-	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -61,25 +58,6 @@ func initKubeClient() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	return clientset, nil
-}
-
-func setupKubeconfig() {
-	// rules := clientcmd.NewDefaultClientConfigLoadingRules()
-	if len(loadingRules.ExplicitPath) == 0 {
-		if len(os.Getenv("KUBECONFIG")) > 0 {
-			loadingRules.ExplicitPath = os.Getenv("KUBECONFIG")
-		}
-	}
-
-	if len(loadingRules.ExplicitPath) > 0 {
-		if _, err := os.Stat(loadingRules.ExplicitPath); err != nil {
-			log.Warnf("Illegal kubeconfig file: %s", loadingRules.ExplicitPath)
-		} else {
-			log.Debugf("Use specified kubeconfig file %s", loadingRules.ExplicitPath)
-			types.KubeConfig = loadingRules.ExplicitPath
-			os.Setenv("KUBECONFIG", loadingRules.ExplicitPath)
-		}
-	}
 }
 
 // Update namespace if it's not set by user

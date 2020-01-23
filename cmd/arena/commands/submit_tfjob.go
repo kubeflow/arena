@@ -57,7 +57,6 @@ func NewSubmitTFJobCommand() *cobra.Command {
 			}
 
 			util.SetLogLevel(logLevel)
-			setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
 				log.Debugf("Failed due to %v", err)

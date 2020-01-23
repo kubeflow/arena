@@ -40,7 +40,6 @@ func NewLogsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			name = args[0]
-			setupKubeconfig()
 			conf, err := clientConfig.ClientConfig()
 			if err != nil {
 				fmt.Println(err)

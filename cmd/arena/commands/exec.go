@@ -64,7 +64,6 @@ func NewExecCommand() *cobra.Command {
 func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool) {
 
 	util.SetLogLevel(logLevel)
-	setupKubeconfig()
 	_, err := initKubeClient()
 	if err != nil {
 		fmt.Println(err)

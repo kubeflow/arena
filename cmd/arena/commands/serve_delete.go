@@ -43,7 +43,6 @@ func NewServingDeleteCommand() *cobra.Command {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
 			}
-			setupKubeconfig()
 			client, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

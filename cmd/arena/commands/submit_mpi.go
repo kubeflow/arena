@@ -48,7 +48,6 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 			}
 
 			util.SetLogLevel(logLevel)
-			setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

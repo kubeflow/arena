@@ -42,7 +42,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			util.SetLogLevel(logLevel)
-			setupKubeconfig()
+			// setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

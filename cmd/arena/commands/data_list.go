@@ -46,7 +46,6 @@ func NewDataListCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			util.SetLogLevel(logLevel)
 
-			setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

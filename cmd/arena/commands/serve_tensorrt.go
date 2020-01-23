@@ -52,7 +52,6 @@ func NewServingTensorRTCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			util.SetLogLevel(logLevel)
-			setupKubeconfig()
 			client, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

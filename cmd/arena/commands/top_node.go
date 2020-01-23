@@ -47,7 +47,6 @@ func NewTopNodeCommand() *cobra.Command {
 		Use:   "node",
 		Short: "Display Resource (GPU) usage of nodes.",
 		Run: func(cmd *cobra.Command, args []string) {
-			setupKubeconfig()
 			client, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

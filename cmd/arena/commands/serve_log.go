@@ -34,7 +34,6 @@ func NewServingLogCommand() *cobra.Command {
 			// set loglevel
 			util.SetLogLevel(logLevel)
 			// initate kubenetes client
-			setupKubeconfig()
 			conf, err := clientConfig.ClientConfig()
 			if err != nil {
 				fmt.Println(err)

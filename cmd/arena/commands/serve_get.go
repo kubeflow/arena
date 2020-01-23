@@ -32,10 +32,10 @@ var (
 
 // NewServingGetCommand starts the command
 func NewServingGetCommand() *cobra.Command {
-    var bashCompletionFlags = map[string]string{
-        "version": "__arena_serve_all_version",
-        "type":   "__arena_serve_all_type",
-    }
+	var bashCompletionFlags = map[string]string{
+		"version": "__arena_serve_all_version",
+		"type":    "__arena_serve_all_type",
+	}
 	var command = &cobra.Command{
 		Use:   "get ServingJobName",
 		Short: "display details of a serving job",
@@ -48,7 +48,6 @@ func NewServingGetCommand() *cobra.Command {
 			// set loglevel
 			util.SetLogLevel(logLevel)
 			// initate kubenetes client
-			setupKubeconfig()
 			client, err := initKubeClient()
 			if err != nil {
 				log.Errorf(err.Error())
@@ -62,17 +61,17 @@ func NewServingGetCommand() *cobra.Command {
 	command.Flags().StringVar(&servingVersion, "version", "", "assign the serving job version")
 	command.Flags().StringVar(&printFormat, "format", "wide", `set the print format,format can be "yaml" or "json"`)
 	command.Flags().StringVar(&stype, "type", "", `assign the serving job type,type can be "tf"("tensorflow"),"trt"("tensorrt"),"custom"`)
-    for name, completion := range bashCompletionFlags {
-        if command.Flag(name) != nil {
-            if command.Flag(name).Annotations == nil {
-                command.Flag(name).Annotations = map[string][]string{}
-            }
-            command.Flag(name).Annotations[cobra.BashCompCustom] = append(
-                command.Flag(name).Annotations[cobra.BashCompCustom],
-                completion,
-            )
-        }
-    }
+	for name, completion := range bashCompletionFlags {
+		if command.Flag(name) != nil {
+			if command.Flag(name).Annotations == nil {
+				command.Flag(name).Annotations = map[string][]string{}
+			}
+			command.Flag(name).Annotations[cobra.BashCompCustom] = append(
+				command.Flag(name).Annotations[cobra.BashCompCustom],
+				completion,
+			)
+		}
+	}
 
 	return command
 

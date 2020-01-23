@@ -39,7 +39,6 @@ func NewPruneCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			util.SetLogLevel(logLevel)
 
-			setupKubeconfig()
 			client, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

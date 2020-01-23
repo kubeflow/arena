@@ -49,7 +49,6 @@ func NewSubmitStandaloneJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)
