@@ -63,12 +63,12 @@ jobs:
           command: |
             set -ex
             echo <<pipeline.git.tag>> >> VERSION
-            gunzip darwin-amd64.tar.gz
-            gunzip linux-amd64.tar.gz
-            tar rf darwin-amd64.tar VERSION
-            tar rf linux-amd64.tar VERSION
-            gzip darwin-amd64.tar
-            gzip linux-amd64.tar
+            gunzip /tmp/packages/darwin-amd64.tar.gz
+            gunzip /tmp/packages/linux-amd64.tar.gz
+            tar rf /tmp/packages/darwin-amd64.tar VERSION
+            tar rf /tmp/packages/linux-amd64.tar VERSION
+            gzip /tmp/packages/darwin-amd64.tar
+            gzip /tmp/packages/linux-amd64.tar
       - run:
           name: upload-version
           command: |
