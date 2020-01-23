@@ -1,9 +1,6 @@
 version: 2.1
 jobs:
   build:
-    filters:
-      branches:
-        runai-master
     docker:
     - image: runai/circleci-go
     working_directory: /go/src/github.com/kubeflow/arena
@@ -30,3 +27,14 @@ jobs:
             set -ex 
             hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -m "" v1.0.0
           fi
+
+workflows:
+  version: 2.1
+
+  staging:
+    jobs:
+      - build: 
+          name: build
+          filters:
+            branches:
+              runai-master
