@@ -85,5 +85,7 @@ workflows:
       - release:
           name: release
           filters:
+            branches:
+              ignore: /.*/  
             tags:
               only: /^v.*/
