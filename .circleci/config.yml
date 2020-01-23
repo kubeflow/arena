@@ -3,7 +3,7 @@ executors:
   runai-executor:
     docker:
       - image: runai/circleci-go 
-      working_directory: /go/src/github.com/kubeflow/arena
+    working_directory: /go/src/github.com/kubeflow/arena
 
 version: 2.1
 jobs:
