@@ -46,7 +46,7 @@ jobs:
           at: /tmp/workspace
       - run:
           name: print
-          command: : |
+          command: |
             ls /tmp/workspace
 
 workflows:
