@@ -20,21 +20,13 @@ jobs:
         command: |
           make cli-darwin-amd64
           tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts
-          cp darwin-amd64.tar.gz workspace/binaries
+          mv darwin-amd64.tar.gz workspace/binaries
     - run: 
         name: build-linux
         command: |
           make cli-linux-amd64
           tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
-          cp linux-amd64.tar.gz workspace/binaries
-    - run:
-        name: push-binaries
-        command: |
-          if [ "$CIRCLE_BRANCH" == "runai-master" ]
-          then
-            set -ex 
-            hub release edit -a darwin-amd64.tar.gz -a linux-amd64.tar.gz -m "" v1.0.0
-          fi
+          mv linux-amd64.tar.gz workspace/binaries
     - persist_to_workspace:
         root: workspace
         paths:
@@ -47,7 +39,8 @@ jobs:
       - run:
           name: print
           command: |
-            ls /tmp/workspace
+            set -ex 
+            hub release edit -a /tmp/workspace/darwin-amd64.tar.gz -a /tmp/workspace/linux-amd64.tar.gz -m "" v1.0.0
 
 workflows:
   version: 2.1
