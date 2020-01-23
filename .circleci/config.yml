@@ -46,6 +46,23 @@ jobs:
             gsutil cp /tmp/workspace/binaries/darwin-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz
             gsutil cp /tmp/workspace/binaries/linux-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz
             # hub release edit -a /tmp/workspace/binaries/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/workspace/binaries/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" v1.0.1
+  release:
+    executor: runai-executor
+    steps:
+      - checkout
+      - run:
+          name: get-packages
+          command: |
+            set -ex 
+            mkdir -p /tmp/packages
+            echo $GCP_SERVICE_ACCOUNT >> ./key_file
+            gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz /tmp/packages/darwin-amd64.tar.gz
+            gsutil cp gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz /tmp/packages/linux-amd64.tar.gz
+      - run:
+          name: upload-version
+          command: |
+            hub release edit -a /tmp/packages/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/packages/linux-amd64.tar.gz#linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
 
 
 workflows:
@@ -63,3 +80,10 @@ workflows:
             branches:
               only:
                - runai-master
+  release:
+    jobs:
+      - release:
+          name: release
+          filters:
+            tags:
+              only: /^v.*/
