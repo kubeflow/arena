@@ -37,4 +37,5 @@ workflows:
           name: build
           filters:
             branches:
-              runai-master
+              only:
+               - runai-master
