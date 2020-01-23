@@ -62,7 +62,7 @@ jobs:
           name: update-version
           command: |
             set -ex
-            echo <<pipeline.git.tag>> >> VERSION
+            echo <<pipeline.git.tag>> > VERSION
             gunzip /tmp/packages/darwin-amd64.tar.gz
             gunzip /tmp/packages/linux-amd64.tar.gz
             tar rf /tmp/packages/darwin-amd64.tar VERSION
