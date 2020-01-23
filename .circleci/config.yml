@@ -3,12 +3,12 @@ executors:
   runai-executor:
     docker:
       - image: runai/circleci-go 
+      working_directory: /go/src/github.com/kubeflow/arena
 
 version: 2.1
 jobs:
   build:
     executor: runai-executor
-    working_directory: /go/src/github.com/kubeflow/arena
     steps:
     - checkout
     - run: mkdir -p workspace/binaries
@@ -36,8 +36,9 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
+      - checkout
       - run:
-          name: print
+          name: push
           command: |
             set -ex 
             hub release edit -a /tmp/workspace/binaries/darwin-amd64.tar.gz -a /tmp/workspace/binaries/linux-amd64.tar.gz -m "" v1.0.0
