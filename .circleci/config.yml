@@ -41,7 +41,7 @@ jobs:
           name: push
           command: |
             set -ex 
-            hub release edit -a /tmp/workspace/binaries/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/workspace/binaries/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" v1.0.0
+            hub release edit -a /tmp/workspace/binaries/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/workspace/binaries/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" v1.0.1
 
 workflows:
   version: 2.1
