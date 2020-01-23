@@ -2,7 +2,7 @@
 executors:
   runai-executor:
     docker:
-      - image: runai/circleci-go 
+      - image: runai/circleci-go-gcloud
     working_directory: /go/src/github.com/kubeflow/arena
 
 version: 2.1
@@ -41,7 +41,12 @@ jobs:
           name: push
           command: |
             set -ex 
-            hub release edit -a /tmp/workspace/binaries/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/workspace/binaries/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" v1.0.1
+            echo $STAGING_GCLOUD_SERVICE_JSON_CONTENT >> ./key_file
+            gcloud auth activate-service-account --key-file ./key_file
+            gsutil cp /tmp/workspace/binaries/darwin-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz
+            gsutil cp /tmp/workspace/binaries/linux-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz
+            # hub release edit -a /tmp/workspace/binaries/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/workspace/binaries/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" v1.0.1
+
 
 workflows:
   version: 2.1
