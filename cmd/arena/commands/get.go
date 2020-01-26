@@ -78,7 +78,7 @@ func NewGetCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Specify if show pending pod's events.")
+	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Show events relating to job lifecycle.")
 	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
 	return command
 }

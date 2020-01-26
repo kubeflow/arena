@@ -35,7 +35,7 @@ func NewExecCommand() *cobra.Command {
 	)
 
 	var command = &cobra.Command{
-		Use:   "exec",
+		Use:   "exec NAME COMMAND [ARG ...]",
 		Short: "execute a command inside a running job",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
