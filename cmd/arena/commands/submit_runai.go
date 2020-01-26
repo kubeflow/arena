@@ -26,6 +26,7 @@ var (
 	runaiChart       = path.Join(util.GetChartsFolder(), "runai")
 	ttlAfterFinished *time.Duration
 	configArg        string
+	nameParameter    string
 )
 
 const (
@@ -35,13 +36,26 @@ const (
 func NewRunaiJobCommand() *cobra.Command {
 	submitArgs := NewSubmitRunaiJobArgs()
 	var command = &cobra.Command{
-		Use:     "submit",
+		Use:     "submit [NAME]",
 		Short:   "Submit a Runai job.",
 		Aliases: []string{"ra"},
 		Run: func(cmd *cobra.Command, args []string) {
 
 			util.SetLogLevel(logLevel)
-			// setupKubeconfig()
+			if len(args) > 1 {
+				cmd.HelpFunc()(cmd, args)
+				fmt.Printf("\nAccepts 1 arg, received %d\n", len(args))
+				os.Exit(1)
+			} else if len(args) == 1 {
+				name = args[0]
+			} else {
+				name = nameParameter
+			}
+
+			if name == "" {
+				fmt.Println("Name must be specified.")
+				os.Exit(1)
+			}
 
 			_, err := initKubeClient()
 			if err != nil {
@@ -292,8 +306,8 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 		defaultUser = currentUser.Username
 	}
 
-	command.Flags().StringVar(&name, "name", "", "Job name")
-	command.MarkFlagRequired("name")
+	command.Flags().StringVar(&nameParameter, "name", "", "Job name")
+	command.Flags().MarkDeprecated("name", "please use positional argument instead")
 
 	flags.AddIntNullableFlagP(command.Flags(), &(sa.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
 	command.Flags().StringVar(&(sa.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
