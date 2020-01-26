@@ -26,10 +26,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	trainingType string
-)
-
 // NewDeleteCommand
 func NewDeleteCommand() *cobra.Command {
 	var command = &cobra.Command{
@@ -57,14 +53,13 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = deleteTrainingJob(jobName, trainingType)
+				err = deleteTrainingJob(jobName, "")
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
 			}
 		},
 	}
-	// command.Flags().StringVar(&trainingType, "type", "", "The training type to delete, the possible option is tfjob, mpijob, sparkjob,volcanojob,horovodjob or standalonejob. (optional)")
 
 	return command
 }

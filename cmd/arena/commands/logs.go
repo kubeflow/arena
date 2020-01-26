@@ -59,7 +59,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 
 			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
-			job, err := searchTrainingJob(name, trainingType, namespace)
+			job, err := searchTrainingJob(name, "", namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -89,8 +89,6 @@ func NewLogsCommand() *cobra.Command {
 			}
 		},
 	}
-
-	// command.Flags().StringVar(&trainingType, "type", "", "The training type to show logging, the possible option is tfjob, mpijob, horovodjob or standalonejob. (optional)")
 
 	command.Flags().BoolVarP(&outerArgs.Follow, "follow", "f", false, "Specify if the logs should be streamed.")
 	command.Flags().DurationVar(&outerArgs.SinceSeconds, "since", 0, "Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.")

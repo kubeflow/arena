@@ -7,7 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
-	"strings"
 )
 
 func NewBashCommand() *cobra.Command {
@@ -52,9 +51,6 @@ func NewExecCommand() *cobra.Command {
 		},
 	}
 
-	trainerTypes := getAllTrainingTypes(clientset)
-	joinedString := strings.Join(trainerTypes, ", ")
-	command.Flags().StringVar(&trainingType, "type", "", fmt.Sprintf("The training type to use, the possible options are %s. (optional)", joinedString))
 	command.Flags().BoolVarP(&interactive, "stdin", "i", false, "Pass stdin to the container")
 	command.Flags().BoolVarP(&TTY, "tty", "t", false, "Stdin is a TTY")
 
@@ -77,7 +73,7 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 		os.Exit(1)
 	}
 
-	job, err := searchTrainingJob(name, trainingType, namespace)
+	job, err := searchTrainingJob(name, "", namespace)
 	if err != nil {
 		log.Errorln(err)
 		os.Exit(1)
