@@ -29,8 +29,6 @@ import (
 var (
 	loadingRules *clientcmd.ClientConfigLoadingRules
 	logLevel     string
-	enablePProf  bool
-	enableTrace  bool
 )
 
 // NewCommand returns a new instance of an Arena command
@@ -51,8 +49,6 @@ func NewCommand() *cobra.Command {
 
 	// enable logging
 	command.PersistentFlags().StringVar(&logLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
-	command.PersistentFlags().BoolVar(&enablePProf, "pprof", false, "enable cpu profile")
-	command.PersistentFlags().BoolVar(&enableTrace, "trace", false, "enable trace")
 
 	command.AddCommand(NewRunaiJobCommand())
 	// command.AddCommand(NewServeCommand())
