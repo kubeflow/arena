@@ -11,4 +11,4 @@ metadata:
   name: cli-custom-defaults
   namespace: runai
   labels:
-    runai/environment: "true"
+    runai/template: "true"

@@ -11,4 +11,4 @@ metadata:
   annotations:
     runai/default: "true"
   labels:
-    runai/environment: "true"
+    runai/template: "true"

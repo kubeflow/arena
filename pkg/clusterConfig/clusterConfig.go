@@ -20,7 +20,7 @@ type ClusterConfigs struct {
 
 var (
 	runaiNamespace         = "runai"
-	runaiConfigLabel       = "runai/environment"
+	runaiConfigLabel       = "runai/template"
 	runaiNameLabel         = "runai/name"
 	runaiDefaultAnnotation = "runai/default"
 )
@@ -40,7 +40,7 @@ func (cg *ClusterConfigs) ListClusterConfigs() ([]ClusterConfig, error) {
 		return []ClusterConfig{}, err
 	}
 
-	log.Debugf("Found %d environments", len(configsList.Items))
+	log.Debugf("Found %d templates", len(configsList.Items))
 
 	clusterConfigs := []ClusterConfig{}
 

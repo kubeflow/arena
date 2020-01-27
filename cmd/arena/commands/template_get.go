@@ -8,10 +8,10 @@ import (
 	"os"
 )
 
-func NewEnvironmentGetCommand() *cobra.Command {
+func NewTemplateGetCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "get",
-		Short: "Get information on one of the environments in the system",
+		Short: "Get information on one of the templates in the system",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
@@ -36,7 +36,7 @@ func NewEnvironmentGetCommand() *cobra.Command {
 			}
 
 			if config == nil {
-				fmt.Printf("Environment '%s' not found\n", configName)
+				fmt.Printf("Template '%s' not found\n", configName)
 				os.Exit(1)
 			}
 

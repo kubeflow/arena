@@ -9,10 +9,10 @@ import (
 	"text/tabwriter"
 )
 
-func NewEnvironmentListCommand() *cobra.Command {
+func NewTemplateListCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "list",
-		Short: "List different environments in the cluster",
+		Short: "List different templates in the cluster",
 		Run: func(cmd *cobra.Command, args []string) {
 			util.SetLogLevel(logLevel)
 
@@ -30,14 +30,14 @@ func NewEnvironmentListCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			PrintEnvironments(configs)
+			PrintTemplates(configs)
 		},
 	}
 
 	return command
 }
 
-func PrintEnvironments(configs []clusterConfig.ClusterConfig) {
+func PrintTemplates(configs []clusterConfig.ClusterConfig) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	labelField := []string{"NAME", "DESCRIPTION"}
 

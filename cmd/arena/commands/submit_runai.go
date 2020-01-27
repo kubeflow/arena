@@ -331,7 +331,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")
 
-	command.Flags().StringVar(&(configArg), "runai-env", "", "Use a specific environment to run this job. (otherwise use the default one if exists)")
+	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job. (otherwise use the default one if exists)")
 
 	command.Flags().MarkHidden("user")
 	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
@@ -348,7 +348,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	} else {
 		configToUse, err = configs.GetClusterConfig(configArg)
 		if configToUse == nil {
-			return fmt.Errorf("Could not find runai environment %s. Please run '%s env list'", configArg, config.CLIName)
+			return fmt.Errorf("Could not find runai template %s. Please run '%s template list'", configArg, config.CLIName)
 		}
 	}
 
