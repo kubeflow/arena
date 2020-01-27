@@ -19,13 +19,13 @@ jobs:
         name: build-mac
         command: |
           make cli-darwin-amd64
-          tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts
+          tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts VERSION
           mv darwin-amd64.tar.gz workspace/binaries
     - run: 
         name: build-linux
         command: |
           make cli-linux-amd64
-          tar -czvf linux-amd64.tar.gz bin install-runai.sh charts
+          tar -czvf linux-amd64.tar.gz bin install-runai.sh charts VERSION
           mv linux-amd64.tar.gz workspace/binaries
     - persist_to_workspace:
         root: workspace
@@ -62,17 +62,21 @@ jobs:
           name: update-version
           command: |
             set -ex
-            echo <<pipeline.git.tag>> > VERSION
-            gunzip /tmp/packages/darwin-amd64.tar.gz
-            gunzip /tmp/packages/linux-amd64.tar.gz
-            tar rf /tmp/packages/darwin-amd64.tar VERSION
-            tar rf /tmp/packages/linux-amd64.tar VERSION
-            gzip /tmp/packages/darwin-amd64.tar
-            gzip /tmp/packages/linux-amd64.tar
+            mkdir darwin
+            mkdir linux
+            tar -C darwin -zxvf /tmp/packages/darwin-amd64.tar.gz
+            tar -C linux -zxvf /tmp/packages/linux-amd64.tar.gz
+            echo <<pipeline.git.tag>> > darwin/VERSION
+            echo <<pipeline.git.tag>> > linux/VERSION
+            cd darwin
+            tar -czvf darwin-amd64.tar.gz bin install-runai.sh charts VERSION
+            cd ../linux
+            tar -czvf linux-amd64.tar.gz bin install-runai.sh charts VERSION
+            cd ../
       - run:
           name: upload-version
           command: |
-            hub release edit -a /tmp/packages/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a /tmp/packages/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
+            hub release edit -a darwin/darwin-amd64.tar.gz#darwin-amd64.tar.gz -a linux/linux-amd64.tar.gz#linux-amd64.tar.gz -m "" <<pipeline.git.tag>>
 
 
 workflows:
