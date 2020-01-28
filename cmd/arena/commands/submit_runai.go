@@ -255,7 +255,7 @@ type submitRunaiJobArgs struct {
 	Memory              string            `yaml:"memory,omitempty"`
 	Elastic             *bool             `yaml:"elastic,omitempty"`
 	LargeShm            *bool             `yaml:"shm,omitempty"`
-	EnvironmentVariable []string          `yaml:"environment"`
+	EnvironmentVariable []string          `yaml:"environment,omitempty"`
 	LocalImage          *bool             `yaml:"localImage,omitempty"`
 	TTL                 *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Labels              map[string]string `yaml:"labels,omitempty"`
