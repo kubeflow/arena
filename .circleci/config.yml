@@ -94,6 +94,8 @@ workflows:
             branches:
               only:
                - runai-master
+               # regular expression to match for version branches. any branch that represents a version: v1.0.0, v1.0.0-rc, v1.x.x, .etc
+               - /v.+?\..+?\..+/
             tags:
               ignore: /.*/
   release:
