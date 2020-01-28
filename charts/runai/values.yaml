@@ -13,13 +13,14 @@ elastic: false
 interactive: false
 shm: false
 localImage: false
+hostNetwork: false
 # labels:
 #   runai/label: label
 # ttlSecondsAfterFinished: 0
 
 # environment:
-# - name
-#   value
+# - name=value
+# - name2=value2
 # serviceType: "nodeport"
 # ports:
 #   - 30000:8888

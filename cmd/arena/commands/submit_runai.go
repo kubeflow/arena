@@ -257,6 +257,7 @@ type submitRunaiJobArgs struct {
 	LargeShm            *bool             `yaml:"shm,omitempty"`
 	EnvironmentVariable []string          `yaml:"environment,omitempty"`
 	LocalImage          *bool             `yaml:"localImage,omitempty"`
+	HostNetwork         *bool             `yaml:"hostNetwork,omitempty"`
 	TTL                 *int              `yaml:"ttlSecondsAfterFinished,omitempty"`
 	Labels              map[string]string `yaml:"labels,omitempty"`
 	IsJupyter           bool
@@ -327,6 +328,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Elastic), "elastic", "Mark the job as elastic.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LargeShm), "large-shm", "Mount a large /dev/shm device. Specific software might need this feature.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.LocalImage), "local-image", "Use a local image for this job. NOTE: this image must exists on the local server.")
+	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostNetwork), "host-network", "Use the host's network stack inside the container.")
 	command.Flags().StringArrayVarP(&(sa.EnvironmentVariable), "environment", "e", []string{}, "Define environment variable to be set in the container.")
 
 	flags.AddDurationNullableFlagP(command.Flags(), &(ttlAfterFinished), "ttl-after-finish", "", "Define the duration, post job finish, after which the job is automatically deleted (5s, 2m, 3h, .etc).")

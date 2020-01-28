@@ -48,6 +48,7 @@ spec:
       restartPolicy: Never
       {{- end}}
       hostIPC: {{ .Values.hostIPC }}
+      hostNetwork: {{ .Values.hostNetwork }}
       containers:
         - name: {{ .Release.Name }}
           command:
