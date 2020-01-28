@@ -22,9 +22,9 @@ localImage: false
 #   value
 # serviceType: "nodeport"
 # ports:
-#   - 30000:8888
-#   - 80:30001
-#   - 8080
+#   - '30000:8888'
+#   - '80:30001'
+#   - '8080'
 
 # command:
 #   - 'start-notebook.sh'
@@ -33,5 +33,5 @@ localImage: false
 
 # node_type: ""
 user: ""
-# volumes:
+# volume:
 #   - /path/on/host:/dest/container/path
