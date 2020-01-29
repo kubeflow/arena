@@ -244,7 +244,7 @@ type submitRunaiJobArgs struct {
 	Image               string            `yaml:"image,omitempty"`
 	HostIPC             *bool             `yaml:"hostIPC,omitempty"`
 	Interactive         *bool             `yaml:"interactive,omitempty"`
-	Volumes             []string          `yaml:"volumes,omitempty"`
+	Volumes             []string          `yaml:"volume,omitempty"`
 	NodeType            string            `yaml:"node_type,omitempty"`
 	User                string            `yaml:"user,omitempty"`
 	Ports               []string          `yaml:"ports,omitempty"`

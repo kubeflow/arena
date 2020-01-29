@@ -76,7 +76,7 @@ spec:
               memory: {{ .Values.memory }}
               {{- end }}
           volumeMounts:
-            {{- range $index, $volume := .Values.volumes}}
+            {{- range $index, $volume := .Values.volume}}
             {{ $parts := split ":" $volume }}
             - mountPath: {{ $parts._1 }}
               name: "volume-{{ $index }}"
@@ -113,7 +113,7 @@ spec:
               value: {{ quote $parts._1}}
             {{- end }}  
       volumes:
-        {{- range $index, $volume := .Values.volumes}}
+        {{- range $index, $volume := .Values.volume}}
         {{ $parts := split ":" $volume }}
           - name: "volume-{{ $index }}"
             hostPath:
