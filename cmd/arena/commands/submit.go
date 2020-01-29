@@ -17,7 +17,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -231,12 +230,6 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	// toleration
 	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
-}
-
-func init() {
-	if os.Getenv(CHART_PKG_LOC) != "" {
-		standalone_training_chart = filepath.Join(os.Getenv(CHART_PKG_LOC), "training")
-	}
 }
 
 var (
