@@ -107,7 +107,8 @@ spec:
                   fieldPath: metadata.uid
             - name: reporterGatewayURL
               value: 'runai-prometheus-pushgateway.runai.svc.cluster.local:9091'
-            {{- range $index, $env := .Values.environment}}
+            {{ $combinedEnv := concat (.Values.environment | default list) (.Values.environmentDefault | default list)}}
+            {{- range $index, $env := $combinedEnv }}
             {{ $parts := split "=" $env }}
             - name: {{ quote $parts._0 }}
               value: {{ quote $parts._1}}

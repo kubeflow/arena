@@ -18,9 +18,16 @@ hostNetwork: false
 #   runai/label: label
 # ttlSecondsAfterFinished: 0
 
-# environment:
+# will be overriden by cli argument
+# environment: 
+# - name3=value3
+# - name4=value4
+
+# will be merged with cli argument
+# environmentDefault:
 # - name=value
 # - name2=value2
+
 # serviceType: "nodeport"
 # ports:
 #   - '30000:8888'
