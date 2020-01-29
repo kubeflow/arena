@@ -108,10 +108,12 @@ func UpdateConfigmapWithOwnerReference(name string, trainingType string, namespa
 	return nil
 }
 
-func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset *kubernetes.Clientset) error {
-	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
-	if found {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use '%s delete %s'", name, config.CLIName, name)
+func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset *kubernetes.Clientset, dryRun bool) error {
+	if !dryRun {
+		found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
+		if found {
+			return fmt.Errorf("the job %s is already exist, please delete it first. use '%s delete %s'", name, config.CLIName, name)
+		}
 	}
 
 	// 1. Generate value file
@@ -138,6 +140,12 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, envValuesFile, chart)
 	if err != nil {
 		return err
+	}
+
+	if dryRun {
+		fmt.Println("Generate the template on:")
+		fmt.Println(template)
+		return nil
 	}
 
 	// 3. Generate AppInfo file

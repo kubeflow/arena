@@ -27,6 +27,7 @@ var (
 	ttlAfterFinished *time.Duration
 	configArg        string
 	nameParameter    string
+	dryRun           bool
 )
 
 const (
@@ -336,6 +337,10 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVarP(&(configArg), "template", "t", "", "Use a specific template to run this job. (otherwise use the default one if exists)")
 
 	command.Flags().MarkHidden("user")
+	// Will not submit the job to the cluster, just print the template to the screen
+	command.Flags().BoolVar(&dryRun, "dry-run", false, "run as dry run")
+	command.Flags().MarkHidden("dry-run")
+
 	command.Flags().StringArrayVar(&(sa.Volumes), "volumes", []string{}, "Volumes to mount into the container.")
 	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
 }
@@ -363,7 +368,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 		configValues = configToUse.Values
 	}
 
-	err = workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, configValues, runaiChart, clientset)
+	err = workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, configValues, runaiChart, clientset, dryRun)
 	if err != nil {
 		return err
 	}
