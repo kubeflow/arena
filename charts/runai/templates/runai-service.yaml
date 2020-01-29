@@ -16,6 +16,16 @@ spec:
     release: {{ .Release.Name }}
   ports:
     {{- range $index, $port := .Values.ports }}
+    # float will be the type when it's not quoted
+      {{- if kindIs "float64" $port }}
+    - name: "{{ $port }}-port"
+      protocol: 'TCP'
+      port: {{ $port }}
+      targetPort: {{ $port }}
+      {{ if eq $.Values.serviceType "nodeport" }}
+      nodePort: {{ $port }}
+      {{ end }}
+      {{- else }}
     {{ $parts := split ":" $port }}
     {{ $targetPort := $parts._1 | default $parts._0}}
     - name: "{{ $targetPort }}-port"
@@ -25,5 +35,6 @@ spec:
       {{ if eq $.Values.serviceType "nodeport" }}
       nodePort: {{ $parts._0 }}
       {{ end }}
+      {{- end}}
     {{- end}}
 {{- end}}

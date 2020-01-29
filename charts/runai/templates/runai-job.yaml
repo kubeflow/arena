@@ -90,9 +90,15 @@ spec:
             {{- end }}
           ports:
             {{- range $port := .Values.ports}}
+            # float will be the type when it's not quoted
+              {{- if kindIs "float64" $port }}
+            - protocol: 'TCP'
+              containerPort: {{$port}}
+              {{- else }}
             {{ $parts := split ":" $port }}
             - protocol: 'TCP'
               containerPort: {{ $parts._1 | default $parts._0 }}
+              {{- end}}
             {{- end}}
           env:
             - name: podUUID
@@ -103,8 +109,8 @@ spec:
               value: 'runai-prometheus-pushgateway.runai.svc.cluster.local:9091'
             {{- range $index, $env := .Values.environment}}
             {{ $parts := split "=" $env }}
-            - name: {{ $parts._0 }}
-              value: {{$parts._1}}
+            - name: {{ quote $parts._0 }}
+              value: {{ quote $parts._1}}
             {{- end }}  
       volumes:
         {{- range $index, $volume := .Values.volumes}}
