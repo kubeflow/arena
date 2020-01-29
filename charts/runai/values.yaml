@@ -41,5 +41,11 @@ hostNetwork: false
 
 # node_type: ""
 user: ""
+
+# will be overriden by cli argument
 # volume:
+#   - /path/on/host1:/dest/container/path1
+
+# will be merged with cli argument
+# volumeDefault:
 #   - /path/on/host:/dest/container/path

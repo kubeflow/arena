@@ -5,6 +5,7 @@ kind: "StatefulSet"
 apiVersion: batch/v1
 kind: "Job"
 {{- end }}
+{{ $combinedVolume := concat (.Values.volume | default list) (.Values.volumeDefault | default list)}}
 metadata:
   name: {{ .Release.Name }}
   labels:
@@ -76,7 +77,7 @@ spec:
               memory: {{ .Values.memory }}
               {{- end }}
           volumeMounts:
-            {{- range $index, $volume := .Values.volume}}
+            {{- range $index, $volume := $combinedVolume}}
             {{ $parts := split ":" $volume }}
             - mountPath: {{ $parts._1 }}
               name: "volume-{{ $index }}"
@@ -114,7 +115,7 @@ spec:
               value: {{ quote $parts._1}}
             {{- end }}  
       volumes:
-        {{- range $index, $volume := .Values.volume}}
+        {{- range $index, $volume := $combinedVolume}}
         {{ $parts := split ":" $volume }}
           - name: "volume-{{ $index }}"
             hostPath:
