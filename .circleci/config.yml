@@ -45,6 +45,9 @@ jobs:
             gcloud auth activate-service-account staging-ci@run-ai-staging.iam.gserviceaccount.com --key-file ./key_file
             gsutil cp /tmp/workspace/binaries/darwin-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/darwin-amd64.tar.gz
             gsutil cp /tmp/workspace/binaries/linux-amd64.tar.gz gs://cli-artifacts/<<pipeline.git.revision>>/linux-amd64.tar.gz
+            # Update latest version for branch
+            echo <<pipeline.git.revision>> > ./latest
+            gsutil cp ./latest gs://cli-artifacts/branch-versions/<<pipeline.git.branch>>
   release:
     executor: runai-executor
     steps:
