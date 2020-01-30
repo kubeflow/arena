@@ -6,6 +6,7 @@ apiVersion: batch/v1
 kind: "Job"
 {{- end }}
 {{ $combinedVolume := concat (.Values.volume | default list) (.Values.volumeDefault | default list)}}
+{{- $combinedPorts := concat (.Values.ports | default list) (.Values.portsDefault | default list)}}
 metadata:
   name: {{ .Release.Name }}
   labels:
@@ -90,7 +91,7 @@ spec:
               name: dshm
             {{- end }}
           ports:
-            {{- range $port := .Values.ports}}
+            {{- range $port := $combinedPorts}}
             # float will be the type when it's not quoted
               {{- if kindIs "float64" $port }}
             - protocol: 'TCP'

@@ -90,11 +90,6 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
-			if submitArgs.ServiceType != "" && len(submitArgs.Ports) == 0 {
-				log.Error("Ports must be specified when specifying a service type.")
-				os.Exit(1)
-			}
-
 			err = submitRunaiJob(args, submitArgs)
 			if err != nil {
 				fmt.Println(err)

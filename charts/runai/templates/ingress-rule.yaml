@@ -1,5 +1,6 @@
 {{if .Values.serviceType }}
 {{if and (eq .Values.serviceType "ingress") .Values.interactive }}
+{{- $combinedPorts := concat (.Values.ports | default list) (.Values.portsDefault | default list)}}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -11,20 +12,31 @@ spec:
   rules:
     - http:
         paths:
-          {{- if eq (len .Values.ports) 1}}
+          {{- if eq (len $combinedPorts) 1}}
           - path: /{{ .Release.Name }}
             backend:
-              {{ $port := index .Values.ports 0 }}
-              {{ $parts := split ":" $port}}
+              {{ $port := index $combinedPorts 0 }}
               serviceName: {{ .Release.Name }}
+              {{- if kindIs "float64" $port }}
+              servicePort: {{ $port }}
+              {{- else}}
+              {{ $parts := split ":" $port}}
               servicePort: {{ $parts._0 }}
+              {{- end}}
           {{-  else}}
-          {{- range $port := .Values.ports }}
+          {{- range $port := $combinedPorts }}
+            {{- if kindIs "float64" $port }}
+          - path: /{{ $.Release.Name }}-{{ $port }}
+            backend:
+              serviceName: {{ $.Release.Name }}
+              servicePort: {{ $port }}
+            {{- else}}
           {{ $parts := split ":" $port}}
           - path: /{{ $.Release.Name }}-{{ $parts._0 }}
             backend:
               serviceName: {{ $.Release.Name }}
               servicePort: {{ $parts._0 }}
+            {{- end}}
           {{- end}}
           {{- end}}
 {{end}}

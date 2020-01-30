@@ -1,4 +1,8 @@
 {{- if and .Values.interactive .Values.serviceType }}
+{{- $combinedPorts := concat (.Values.ports | default list) (.Values.portsDefault | default list)}}
+{{- if not $combinedPorts }}
+  {{ fail "Ports must be provided when exposing a service."}}
+{{- end }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -15,7 +19,7 @@ spec:
   selector: 
     release: {{ .Release.Name }}
   ports:
-    {{- range $index, $port := .Values.ports }}
+    {{- range $index, $port := $combinedPorts }}
     # float will be the type when it's not quoted
       {{- if kindIs "float64" $port }}
     - name: "{{ $port }}-port"
