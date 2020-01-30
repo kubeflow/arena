@@ -148,9 +148,11 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, d
 	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
 	// cmd.Env = env
 	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", string(out))
 	if err != nil {
-		return templateFileName, fmt.Errorf("Failed to execute %s, %v with %v", binary, args, err)
+		failReason, _ := GetHelmTemplateError(string(out))
+		return templateFileName, fmt.Errorf("Failed to execute %s, %v with:\n%v", binary, args, failReason)
+	} else {
+		fmt.Printf("%s", string(out))
 	}
 
 	// // 6. clean up the value file if needed
@@ -162,6 +164,19 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, d
 	// }
 
 	return templateFileName, nil
+}
+
+func GetHelmTemplateError(output string) (string, error) {
+	re, err := regexp.Compile(`fail "(.*?)"`)
+	if err != nil {
+		return output, err
+	}
+
+	res := re.FindStringSubmatch(output)
+	if len(res) < 2 {
+		return output, nil
+	}
+	return res[1], nil
 }
 
 /**
