@@ -251,17 +251,8 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 			hostIP)
 	}
 
-	url, err := tensorboardURL(job.Name(), job.ChiefPod().Namespace)
-	if url == "" || err != nil {
-		log.Debugf("Tensorboard dones't show up because of %v, or url %s", err, url)
-	} else {
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "Your tensorboard will be available on:")
-		fmt.Fprintf(w, "%s \t\n", url)
-	}
-
 	if printArgs.ShowEvents {
-		printEvents(w, job.ChiefPod().Namespace, job)
+		printEvents(w, job.Namespace(), job)
 	}
 
 	_ = w.Flush()

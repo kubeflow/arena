@@ -11,15 +11,18 @@ import (
 type RunaiJob struct {
 	*BasicJobInfo
 	trainerType       string
-	chiefPod          v1.Pod
+	chiefPod          *v1.Pod
 	creationTimestamp metav1.Time
 	interactive       bool
 	createdByCLI      bool
 	serviceUrls       []string
 	deleted           bool
+	podSpec           v1.PodSpec
+	podMetadata       metav1.ObjectMeta
+	namespace         string
 }
 
-func NewRunaiJob(pods []v1.Pod, lastCreatedPod v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool) *RunaiJob {
+func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, namespace string) *RunaiJob {
 	return &RunaiJob{
 		BasicJobInfo: &BasicJobInfo{
 			resources: podResources(pods),
@@ -32,11 +35,14 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod v1.Pod, creationTimestamp metav1.
 		createdByCLI:      createdByCLI,
 		serviceUrls:       serviceUrls,
 		deleted:           deleted,
+		podSpec:           podSpec,
+		podMetadata:       podMetadata,
+		namespace:         namespace,
 	}
 }
 
 // // Get the chief Pod of the Job.
-func (rj *RunaiJob) ChiefPod() v1.Pod {
+func (rj *RunaiJob) ChiefPod() *v1.Pod {
 	return rj.chiefPod
 }
 
@@ -47,12 +53,16 @@ func (rj *RunaiJob) Name() string {
 
 // Get the namespace of the Training Job
 func (rj *RunaiJob) Namespace() string {
-	return rj.chiefPod.Namespace
+	return rj.namespace
 }
 
 // Get all the pods of the Training Job
 func (rj *RunaiJob) AllPods() []v1.Pod {
-	return []v1.Pod{rj.chiefPod}
+	if rj.chiefPod == nil {
+		return []v1.Pod{}
+	}
+
+	return []v1.Pod{*rj.chiefPod}
 }
 
 // Get all the kubernetes resource of the Training Job
@@ -66,6 +76,10 @@ func (rj *RunaiJob) getStatus() v1.PodPhase {
 
 // Get the Status of the Job: RUNNING, PENDING,
 func (rj *RunaiJob) GetStatus() string {
+	if rj.chiefPod == nil {
+		return "Pending"
+	}
+
 	podStatus := rj.chiefPod.Status.Phase
 	if rj.deleted {
 		return "Terminating"
@@ -97,6 +111,10 @@ func (rj *RunaiJob) Age() time.Duration {
 // TODO
 // Get the Job Duration
 func (rj *RunaiJob) Duration() time.Duration {
+	if rj.chiefPod == nil {
+		return 0
+	}
+
 	status := rj.getStatus()
 	startTime := rj.StartTime()
 
@@ -124,6 +142,10 @@ func (rj *RunaiJob) CreatedByCLI() bool {
 
 // Get start time
 func (rj *RunaiJob) StartTime() *metav1.Time {
+	if rj.chiefPod == nil {
+		return nil
+	}
+
 	pod := rj.ChiefPod()
 	for _, condition := range pod.Status.Conditions {
 		if condition.Type == v1.PodInitialized && condition.Status == v1.ConditionTrue {
@@ -141,7 +163,7 @@ func (rj *RunaiJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, er
 
 // Requested GPU count of the Job
 func (rj *RunaiJob) RequestedGPU() int64 {
-	val, ok := rj.chiefPod.Spec.Containers[0].Resources.Limits[NVIDIAGPUResourceName]
+	val, ok := rj.podSpec.Containers[0].Resources.Limits[NVIDIAGPUResourceName]
 	if !ok {
 		return 0
 	}
@@ -151,6 +173,10 @@ func (rj *RunaiJob) RequestedGPU() int64 {
 
 // Requested GPU count of the Job
 func (rj *RunaiJob) AllocatedGPU() int64 {
+	if rj.chiefPod == nil {
+		return 0
+	}
+
 	pod := rj.chiefPod
 
 	if pod.Status.Phase == v1.PodRunning {
@@ -162,9 +188,14 @@ func (rj *RunaiJob) AllocatedGPU() int64 {
 
 // the host ip of the chief pod
 func (rj *RunaiJob) HostIPOfChief() string {
+	if rj.chiefPod == nil {
+		return ""
+	}
+
 	// This will hold the node name even if not actually specified on pod spec by the user.
 	// Copied from describe function of kubectl.
 	// https://github.com/kubernetes/kubectl/blob/a20db94d5b5f052d991eaf29d626fb730b4886b7/pkg/describe/versioned/describe.go
+
 	return rj.ChiefPod().Spec.NodeName
 }
 
@@ -174,7 +205,7 @@ func (rj *RunaiJob) GetPriorityClass() string {
 }
 
 func (rj *RunaiJob) Image() string {
-	return rj.ChiefPod().Spec.Containers[0].Image
+	return rj.podSpec.Containers[0].Image
 }
 
 func (rj *RunaiJob) Interactive() string {
@@ -182,11 +213,11 @@ func (rj *RunaiJob) Interactive() string {
 }
 
 func (rj *RunaiJob) Project() string {
-	return rj.ChiefPod().Labels["project"]
+	return rj.podMetadata.Labels["project"]
 }
 
 func (rj *RunaiJob) User() string {
-	return rj.ChiefPod().Labels["user"]
+	return rj.podMetadata.Labels["user"]
 }
 
 func (rj *RunaiJob) ServiceURLs() []string {

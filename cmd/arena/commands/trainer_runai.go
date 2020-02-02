@@ -138,14 +138,20 @@ func (rt *RunaiTrainer) getTrainingReplicaSet(replicaSet appsv1.ReplicaSet) (Tra
 		LabelSelector: strings.Join(labels, ","),
 	})
 
+	filteredPods := []v1.Pod{}
+	for _, pod := range podList.Items {
+		if pod.OwnerReferences[0].UID == replicaSet.UID{
+			filteredPods = append(filteredPods, pod)
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	// Last created pod will be the chief pod
-	pods := podList.Items
-	lastCreatedPod := getLastCreatedPod(pods)
-	return NewRunaiJob(pods, *lastCreatedPod, replicaSet.CreationTimestamp, rt.Type(), replicaSet.Name, false, replicaSet.Labels["app"] == "runai", []string{},false), nil
+	lastCreatedPod := getLastCreatedPod(filteredPods)
+	return NewRunaiJob(filteredPods, lastCreatedPod, replicaSet.CreationTimestamp, rt.Type(), replicaSet.Name, false, replicaSet.Labels["app"] == "runai", []string{},false, replicaSet.Spec.Template.Spec, replicaSet.Spec.Template.ObjectMeta, namespace), nil
 }
 
 func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (TrainingJob, error) {
@@ -162,14 +168,20 @@ func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (
 		LabelSelector: strings.Join(labels, ","),
 	})
 
+	filteredPods := []v1.Pod{}
+	for _, pod := range podList.Items {
+		if pod.OwnerReferences[0].UID == statefulset.UID{
+			filteredPods = append(filteredPods, pod)
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	// Last created pod will be the chief pod
-	pods := podList.Items
-	lastCreatedPod := getLastCreatedPod(pods)
-	return NewRunaiJob(pods, *lastCreatedPod, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, true, statefulset.Labels["app"] == "runai", []string{},false), nil
+	lastCreatedPod := getLastCreatedPod(filteredPods)
+	return NewRunaiJob(filteredPods, lastCreatedPod, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, true, statefulset.Labels["app"] == "runai", []string{},false, statefulset.Spec.Template.Spec, statefulset.Spec.Template.ObjectMeta, namespace), nil
 }
 
 func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
@@ -185,20 +197,27 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 		return nil, err
 	}
 
+	filteredPods := []v1.Pod{}
+	for _, pod := range podList.Items {
+		if pod.OwnerReferences[0].UID == job.UID{
+			filteredPods = append(filteredPods, pod)
+		}
+	}
+
 	// Last created pod will be the chief pod
-	pods := podList.Items
-	lastCreatedPod := getLastCreatedPod(pods)
-	return NewRunaiJob(pods, *lastCreatedPod, job.CreationTimestamp, rt.Type(), job.Name, true, job.Labels["app"] == "runai", []string{}, false), nil
+	lastCreatedPod := getLastCreatedPod(filteredPods)
+	return NewRunaiJob(filteredPods, lastCreatedPod, job.CreationTimestamp, rt.Type(), job.Name, true, job.Labels["app"] == "runai", []string{}, false, job.Spec.Template.Spec, job.Spec.Template.ObjectMeta, namespace), nil
 }
 
 type RunaiJobInfo struct {
 	name              string
-	kind              string
 	creationTimestamp metav1.Time
 	pods              []v1.Pod
 	createdByCLI      bool
 	interactive       bool
 	deleted	bool
+	podSpec v1.PodSpec
+	podMetadata metav1.ObjectMeta
 }
 
 func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
@@ -241,13 +260,11 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	// Group the pods by their controller
 	for _, pod := range runaiPods.Items {
 		controller := ""
-		kind := ""
 		var uid types.UID = ""
 
 		for _, owner := range pod.OwnerReferences {
 			if *owner.Controller {
 				controller = owner.Name
-				kind = owner.Kind
 				uid = owner.UID
 			}
 		}
@@ -256,9 +273,10 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 			jobPodMap[uid] = &RunaiJobInfo{
 				name: controller,
 				pods: []v1.Pod{},
-				kind: kind,
 				// Mark all jobs as deleted unless we find them at the next stage
 				deleted: true,
+				podSpec: pod.Spec,
+				podMetadata: pod.ObjectMeta,
 			}
 		}
 
@@ -272,54 +290,84 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{})
 
 	for _, job := range runaiJobList.Items {
+		var jobInfo *RunaiJobInfo
 		if jobPodMap[job.UID] != nil {
-			jobPodMap[job.UID].creationTimestamp = job.CreationTimestamp
-			jobPodMap[job.UID].deleted = false
+			jobInfo = jobPodMap[job.UID]
+		} else {
+			// Create the job even if it does not have any pods currently
+			jobInfo = &RunaiJobInfo{}
+			jobPodMap[job.UID] = jobInfo
+			jobInfo.name = job.Name
+			jobInfo.podSpec = job.Spec.Template.Spec
+			jobInfo.podMetadata = job.Spec.Template.ObjectMeta
+		}
 
-			if job.Labels["app"] == "runaijob" {
-				jobPodMap[job.UID].createdByCLI = true
-			}
+		jobInfo.creationTimestamp = job.CreationTimestamp
+		jobInfo.deleted = false
+
+		if job.Labels["app"] == "runaijob" {
+			jobInfo.createdByCLI = true
 		}
 	}
 
 	runaiStatefulSetsList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{})
 
 	for _, statefulSet := range runaiStatefulSetsList.Items {
+		var jobInfo *RunaiJobInfo
 		if jobPodMap[statefulSet.UID] != nil {
-			jobPodMap[statefulSet.UID].creationTimestamp = statefulSet.CreationTimestamp
-			jobPodMap[statefulSet.UID].interactive = true
-			jobPodMap[statefulSet.UID].deleted = false
+			jobInfo = jobPodMap[statefulSet.UID]
+		} else {
+			// Create the job even if it does not have any pods currently
+			jobInfo = &RunaiJobInfo{}
+			jobPodMap[statefulSet.UID] = jobInfo
+			jobInfo.name = statefulSet.Name
+			jobInfo.podSpec = statefulSet.Spec.Template.Spec
+			jobInfo.podMetadata = statefulSet.Spec.Template.ObjectMeta
+		}
+		jobInfo.creationTimestamp = statefulSet.CreationTimestamp
+		jobInfo.interactive = true
+		jobInfo.deleted = false
 
-			if statefulSet.Labels["app"] == "runaijob" {
-				jobPodMap[statefulSet.UID].createdByCLI = true
-			}
+		if statefulSet.Labels["app"] == "runaijob" {
+			jobInfo.createdByCLI = true
 		}
 	}
 
 	runaiReplicaSetsList, err := rt.client.Apps().ReplicaSets(namespace).List(metav1.ListOptions{})
 
 	for _, replicaSet := range runaiReplicaSetsList.Items {
-		if jobPodMap[replicaSet.UID] != nil {
-			jobPodMap[replicaSet.UID].creationTimestamp = replicaSet.CreationTimestamp
-			jobPodMap[replicaSet.UID].interactive = true
-			jobPodMap[replicaSet.UID].deleted = false
+		var jobInfo *RunaiJobInfo
+		if	jobPodMap[replicaSet.UID] != nil {
+			jobInfo = jobPodMap[replicaSet.UID]
+		} else {
+			// Create the job even if it does not have any pods currently
+			jobInfo = &RunaiJobInfo{}
+			jobPodMap[replicaSet.UID] = jobInfo
+			jobInfo.name = replicaSet.Name
+			jobInfo.podSpec = replicaSet.Spec.Template.Spec
+			jobInfo.podMetadata = replicaSet.Spec.Template.ObjectMeta
+		}
+		jobInfo.creationTimestamp = replicaSet.CreationTimestamp
+		jobInfo.interactive = true
+		jobInfo.deleted = false
 
-			if replicaSet.Labels["app"] == "runaijob" {
-				jobPodMap[replicaSet.UID].createdByCLI = true
-			}
+		if replicaSet.Labels["app"] == "runaijob" {
+			jobInfo.createdByCLI = true
 		}
 	}
 
 	for _, jobInfo := range jobPodMap {
 		lastCreatedPod := getLastCreatedPod(jobInfo.pods)
-		serviceOfPod := getServiceOfPod(services, lastCreatedPod)
 
 		serviceUrls := []string{}
-		if serviceOfPod != nil {
-			serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
+		if lastCreatedPod != nil {
+			serviceOfPod := getServiceOfPod(services, lastCreatedPod)
+			if serviceOfPod != nil {
+				serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
+			}
 		}
 
-		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, *lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted))
+		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, namespace))
 	}
 
 	return runaiJobs, nil
@@ -415,6 +463,9 @@ func getServiceUrls(ingressService *v1.Service, ingresses []extensionsv1.Ingress
 }
 
 func getLastCreatedPod(pods []v1.Pod) *v1.Pod {
+	if len(pods) == 0 {
+		 return nil
+	}
 	lastCreatedPod := pods[0]
 	otherPods := pods[1:]
 	for _, item := range otherPods {

@@ -25,7 +25,7 @@ import (
 // The Training Job can be TensorFlow, MPI and Caffe
 type TrainingJob interface {
 	// Get the chief Pod of the Job.
-	ChiefPod() v1.Pod
+	ChiefPod() *v1.Pod
 
 	// Get the name of the Training Job
 	Name() string
