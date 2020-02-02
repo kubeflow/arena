@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"strings"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type RunaiTrainer struct {
@@ -144,7 +145,7 @@ func (rt *RunaiTrainer) getTrainingReplicaSet(replicaSet appsv1.ReplicaSet) (Tra
 	// Last created pod will be the chief pod
 	pods := podList.Items
 	lastCreatedPod := getLastCreatedPod(pods)
-	return NewRunaiJob(pods, *lastCreatedPod, replicaSet.CreationTimestamp, rt.Type(), replicaSet.Name, false, replicaSet.Labels["app"] == "runai", []string{}), nil
+	return NewRunaiJob(pods, *lastCreatedPod, replicaSet.CreationTimestamp, rt.Type(), replicaSet.Name, false, replicaSet.Labels["app"] == "runai", []string{},false), nil
 }
 
 func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (TrainingJob, error) {
@@ -168,7 +169,7 @@ func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (
 	// Last created pod will be the chief pod
 	pods := podList.Items
 	lastCreatedPod := getLastCreatedPod(pods)
-	return NewRunaiJob(pods, *lastCreatedPod, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, true, statefulset.Labels["app"] == "runai", []string{}), nil
+	return NewRunaiJob(pods, *lastCreatedPod, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, true, statefulset.Labels["app"] == "runai", []string{},false), nil
 }
 
 func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
@@ -187,7 +188,7 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 	// Last created pod will be the chief pod
 	pods := podList.Items
 	lastCreatedPod := getLastCreatedPod(pods)
-	return NewRunaiJob(pods, *lastCreatedPod, job.CreationTimestamp, rt.Type(), job.Name, true, job.Labels["app"] == "runai", []string{}), nil
+	return NewRunaiJob(pods, *lastCreatedPod, job.CreationTimestamp, rt.Type(), job.Name, true, job.Labels["app"] == "runai", []string{}, false), nil
 }
 
 type RunaiJobInfo struct {
@@ -197,6 +198,7 @@ type RunaiJobInfo struct {
 	pods              []v1.Pod
 	createdByCLI      bool
 	interactive       bool
+	deleted	bool
 }
 
 func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
@@ -234,31 +236,35 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 		return nil, err
 	}
 
-	jobPodMap := make(map[string]*RunaiJobInfo)
+	jobPodMap := make(map[types.UID]*RunaiJobInfo)
 
 	// Group the pods by their controller
 	for _, pod := range runaiPods.Items {
 		controller := ""
 		kind := ""
+		var uid types.UID = ""
 
 		for _, owner := range pod.OwnerReferences {
 			if *owner.Controller {
 				controller = owner.Name
 				kind = owner.Kind
+				uid = owner.UID
 			}
 		}
 
-		if jobPodMap[controller] == nil {
-			jobPodMap[controller] = &RunaiJobInfo{
+		if jobPodMap[uid] == nil {
+			jobPodMap[uid] = &RunaiJobInfo{
 				name: controller,
 				pods: []v1.Pod{},
 				kind: kind,
+				// Mark all jobs as deleted unless we find them at the next stage
+				deleted: true,
 			}
 		}
 
 		// If controller exists for pod than add it to the map
 		if controller != "" {
-			jobPodMap[controller].pods = append(jobPodMap[controller].pods, pod)
+			jobPodMap[uid].pods = append(jobPodMap[uid].pods, pod)
 		}
 	}
 
@@ -266,11 +272,12 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{})
 
 	for _, job := range runaiJobList.Items {
-		if jobPodMap[job.Name] != nil {
-			jobPodMap[job.Name].creationTimestamp = job.CreationTimestamp
+		if jobPodMap[job.UID] != nil {
+			jobPodMap[job.UID].creationTimestamp = job.CreationTimestamp
+			jobPodMap[job.UID].deleted = false
 
 			if job.Labels["app"] == "runaijob" {
-				jobPodMap[job.Name].createdByCLI = true
+				jobPodMap[job.UID].createdByCLI = true
 			}
 		}
 	}
@@ -278,12 +285,13 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	runaiStatefulSetsList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{})
 
 	for _, statefulSet := range runaiStatefulSetsList.Items {
-		if jobPodMap[statefulSet.Name] != nil {
-			jobPodMap[statefulSet.Name].creationTimestamp = statefulSet.CreationTimestamp
-			jobPodMap[statefulSet.Name].interactive = true
+		if jobPodMap[statefulSet.UID] != nil {
+			jobPodMap[statefulSet.UID].creationTimestamp = statefulSet.CreationTimestamp
+			jobPodMap[statefulSet.UID].interactive = true
+			jobPodMap[statefulSet.UID].deleted = false
 
 			if statefulSet.Labels["app"] == "runaijob" {
-				jobPodMap[statefulSet.Name].createdByCLI = true
+				jobPodMap[statefulSet.UID].createdByCLI = true
 			}
 		}
 	}
@@ -291,12 +299,13 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 	runaiReplicaSetsList, err := rt.client.Apps().ReplicaSets(namespace).List(metav1.ListOptions{})
 
 	for _, replicaSet := range runaiReplicaSetsList.Items {
-		if jobPodMap[replicaSet.Name] != nil {
-			jobPodMap[replicaSet.Name].creationTimestamp = replicaSet.CreationTimestamp
-			jobPodMap[replicaSet.Name].interactive = true
+		if jobPodMap[replicaSet.UID] != nil {
+			jobPodMap[replicaSet.UID].creationTimestamp = replicaSet.CreationTimestamp
+			jobPodMap[replicaSet.UID].interactive = true
+			jobPodMap[replicaSet.UID].deleted = false
 
 			if replicaSet.Labels["app"] == "runaijob" {
-				jobPodMap[replicaSet.Name].createdByCLI = true
+				jobPodMap[replicaSet.UID].createdByCLI = true
 			}
 		}
 	}
@@ -310,7 +319,7 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 			serviceUrls = getServiceUrls(ingressService, ingresses, nodeIp, *serviceOfPod)
 		}
 
-		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, *lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls))
+		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, *lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted))
 	}
 
 	return runaiJobs, nil

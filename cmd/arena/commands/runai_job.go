@@ -16,9 +16,10 @@ type RunaiJob struct {
 	interactive       bool
 	createdByCLI      bool
 	serviceUrls       []string
+	deleted           bool
 }
 
-func NewRunaiJob(pods []v1.Pod, lastCreatedPod v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string) *RunaiJob {
+func NewRunaiJob(pods []v1.Pod, lastCreatedPod v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool) *RunaiJob {
 	return &RunaiJob{
 		BasicJobInfo: &BasicJobInfo{
 			resources: podResources(pods),
@@ -30,6 +31,7 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod v1.Pod, creationTimestamp metav1.
 		interactive:       interactive,
 		createdByCLI:      createdByCLI,
 		serviceUrls:       serviceUrls,
+		deleted:           deleted,
 	}
 }
 
@@ -65,6 +67,9 @@ func (rj *RunaiJob) getStatus() v1.PodPhase {
 // Get the Status of the Job: RUNNING, PENDING,
 func (rj *RunaiJob) GetStatus() string {
 	podStatus := rj.chiefPod.Status.Phase
+	if rj.deleted {
+		return "Terminating"
+	}
 	if podStatus == v1.PodPending {
 		for _, containerStatus := range rj.chiefPod.Status.ContainerStatuses {
 			if containerStatus.State.Waiting != nil {
