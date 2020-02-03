@@ -25,19 +25,19 @@ hostNetwork: false
 
 # will be merged with cli argument
 # environmentDefault:
-# - name=value
+# - NAME=value
 # - name2=value2
 
 # serviceType: "nodeport"
 
 # will be overriden by cli argument
 # ports:
-  # - '80:30001'
+#   - '80:30001'
 
 # will be merged with cli argument
 # portsDefault:
 #   - '30000:9090'
-  # - 8080
+#   - 8080
 
 # command:
 #   - 'start-notebook.sh'

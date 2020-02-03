@@ -1,5 +1,13 @@
 {{- if and .Values.interactive .Values.serviceType }}
-{{- $combinedPorts := concat (.Values.ports | default list) (.Values.portsDefault | default list)}}
+
+{{- $combinedPorts := list }}
+{{- range $port := (.Values.ports | default list) }}
+{{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+{{- range $port := (.Values.portsDefault | default list) }}
+{{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+
 {{- if not $combinedPorts }}
   {{ fail "Ports must be provided when exposing a service."}}
 {{- end }}

@@ -5,8 +5,24 @@ kind: "StatefulSet"
 apiVersion: batch/v1
 kind: "Job"
 {{- end }}
-{{ $combinedVolume := concat (.Values.volume | default list) (.Values.volumeDefault | default list)}}
-{{- $combinedPorts := concat (.Values.ports | default list) (.Values.portsDefault | default list)}}
+
+# Not using concat to support previous version of helm
+{{- $combinedVolume := list }}
+{{- range $volume := (.Values.volume | default list) }}
+{{- $combinedVolume = append $combinedVolume $volume }}
+{{- end}}
+{{- range $volume := (.Values.volumeDefault | default list) }}
+{{- $combinedVolume = append $combinedVolume $volume }}
+{{- end}}
+# Not using concat to support previous version of helm
+{{- $combinedPorts := list }}
+{{- range $port := (.Values.ports | default list) }}
+{{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+{{- range $port := (.Values.portsDefault | default list) }}
+{{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+
 metadata:
   name: {{ .Release.Name }}
   labels:
@@ -109,8 +125,13 @@ spec:
                   fieldPath: metadata.uid
             - name: reporterGatewayURL
               value: 'runai-prometheus-pushgateway.runai.svc.cluster.local:9091'
-            {{ $combinedEnv := concat (.Values.environment | default list) (.Values.environmentDefault | default list)}}
-            {{- range $index, $env := $combinedEnv }}
+            # Not using concat to support previous version of helm
+            {{- range $index, $env := .Values.environmentDefault }}
+            {{ $parts := split "=" $env }}
+            - name: {{ quote $parts._0 }}
+              value: {{ quote $parts._1}}
+            {{- end }}  
+            {{- range $index, $env := .Values.environment }}
             {{ $parts := split "=" $env }}
             - name: {{ quote $parts._0 }}
               value: {{ quote $parts._1}}

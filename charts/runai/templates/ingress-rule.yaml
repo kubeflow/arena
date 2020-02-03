@@ -1,6 +1,12 @@
 {{if .Values.serviceType }}
 {{if and (eq .Values.serviceType "ingress") .Values.interactive }}
-{{- $combinedPorts := concat (.Values.ports | default list) (.Values.portsDefault | default list)}}
+{{- $combinedPorts := list }}
+{{- range $port := (.Values.ports | default list) }}
+{{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
+{{- range $port := (.Values.portsDefault | default list) }}
+{{- $combinedPorts = append $combinedPorts $port }}
+{{- end}}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
