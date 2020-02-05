@@ -12,6 +12,9 @@ jobs:
     steps:
     - checkout
     - run:
+        name: install dependencies
+        command: dep ensure
+    - run:
         name: run test
         command: |
           ./test.sh
