@@ -78,8 +78,10 @@ func NewGetCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Show events relating to job lifecycle.")
+	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", true, "Show events relating to job lifecycle.")
 	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
+
+	command.Flags().MarkDeprecated("events", "default is true")
 	return command
 }
 
