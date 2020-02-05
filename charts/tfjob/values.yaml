@@ -17,13 +17,13 @@ chiefAnnotations: {}
 
 workers: 1
 workerImage: kubeflow/tf-dist-mnist-test:1.0
-# workerCpu: 1
+# workerCPU: 1
 # workerMemory: 1 Gi
 # workPort: 2222
 
 ps: 0
 psImage: kubeflow/tf-dist-mnist-test:1.0
-# psCpu: 1
+# psCPU: 1
 # psMemory: 1 Gi
 # psPort: 2223
 annotations: {}

@@ -112,3 +112,7 @@
 ### 0.26.0
 
 * chief and evaluator should have replicas
+
+### 0.27.0
+
+* PS cpu resource variable should be psCPU
