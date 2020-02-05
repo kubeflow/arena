@@ -65,7 +65,7 @@ func NewTopJobCommand() *cobra.Command {
 			}
 			trainers := NewTrainers(client)
 			for _, trainer := range trainers {
-				trainingJobs, err := trainer.ListTrainingJobs()
+				trainingJobs, err := trainer.ListTrainingJobs(namespace)
 				if err != nil {
 					log.Errorf("Failed due to %v", err)
 					os.Exit(1)

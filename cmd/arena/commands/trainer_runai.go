@@ -14,10 +14,10 @@ import (
 )
 
 type RunaiTrainer struct {
-	client *kubernetes.Clientset
+	client kubernetes.Interface
 }
 
-func NewRunaiTrainer(client *kubernetes.Clientset) Trainer {
+func NewRunaiTrainer(client kubernetes.Interface) Trainer {
 	return &RunaiTrainer{
 		client: client,
 	}
@@ -151,7 +151,12 @@ func (rt *RunaiTrainer) getTrainingReplicaSet(replicaSet appsv1.ReplicaSet) (Tra
 
 	// Last created pod will be the chief pod
 	lastCreatedPod := getLastCreatedPod(filteredPods)
-	return NewRunaiJob(filteredPods, lastCreatedPod, replicaSet.CreationTimestamp, rt.Type(), replicaSet.Name, false, replicaSet.Labels["app"] == "runai", []string{},false, replicaSet.Spec.Template.Spec, replicaSet.Spec.Template.ObjectMeta, namespace), nil
+	ownerResource := Resource{
+		Uid: string(replicaSet.UID),
+		ResourceType: ResourceTypeReplicaset,
+		Name: replicaSet.Name,
+	}
+	return NewRunaiJob(filteredPods, lastCreatedPod, replicaSet.CreationTimestamp, rt.Type(), replicaSet.Name, false, replicaSet.Labels["app"] == "runai", []string{},false, replicaSet.Spec.Template.Spec, replicaSet.Spec.Template.ObjectMeta, namespace, ownerResource), nil
 }
 
 func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (TrainingJob, error) {
@@ -181,7 +186,12 @@ func (rt *RunaiTrainer) getTrainingStatefulset(statefulset appsv1.StatefulSet) (
 
 	// Last created pod will be the chief pod
 	lastCreatedPod := getLastCreatedPod(filteredPods)
-	return NewRunaiJob(filteredPods, lastCreatedPod, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, true, statefulset.Labels["app"] == "runai", []string{},false, statefulset.Spec.Template.Spec, statefulset.Spec.Template.ObjectMeta, namespace), nil
+	ownerResource := Resource{
+		Uid: string(statefulset.UID),
+		ResourceType: ResourceTypeStatefulSet,
+		Name: statefulset.Name,
+	}
+	return NewRunaiJob(filteredPods, lastCreatedPod, statefulset.CreationTimestamp, rt.Type(), statefulset.Name, true, statefulset.Labels["app"] == "runai", []string{},false, statefulset.Spec.Template.Spec, statefulset.Spec.Template.ObjectMeta, namespace, ownerResource), nil
 }
 
 func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
@@ -206,7 +216,12 @@ func (rt *RunaiTrainer) getTrainingJob(job batchv1.Job) (TrainingJob, error) {
 
 	// Last created pod will be the chief pod
 	lastCreatedPod := getLastCreatedPod(filteredPods)
-	return NewRunaiJob(filteredPods, lastCreatedPod, job.CreationTimestamp, rt.Type(), job.Name, true, job.Labels["app"] == "runai", []string{}, false, job.Spec.Template.Spec, job.Spec.Template.ObjectMeta, namespace), nil
+	ownerResource := Resource{
+		Uid: string(job.UID),
+		ResourceType: ResourceTypeJob,
+		Name: job.Name,
+	}
+	return NewRunaiJob(filteredPods, lastCreatedPod, job.CreationTimestamp, rt.Type(), job.Name, true, job.Labels["app"] == "runai", []string{}, false, job.Spec.Template.Spec, job.Spec.Template.ObjectMeta, namespace, ownerResource), nil
 }
 
 type RunaiJobInfo struct {
@@ -218,29 +233,36 @@ type RunaiJobInfo struct {
 	deleted	bool
 	podSpec v1.PodSpec
 	podMetadata metav1.ObjectMeta
+	owner Resource
 }
 
-func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
+type RunaiOwnerInfo struct {
+	Name string
+	Type string
+	Uid string
+}
+
+func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error) {
 	runaiJobs := []TrainingJob{}
-	services, err := getServicesInNamespace(namespace)
+	services, err := rt.getServicesInNamespace(namespace)
 
 	if err != nil {
 		return nil, err
 	}
 
-	nodeIp, err := getNodeIp()
+	nodeIp, err := rt.getNodeIp()
 
 	if err != nil {
 		return nil, err
 	}
 
-	ingressService, err := getIngressService()
+	ingressService, err := rt.getIngressService()
 	
 	if err != nil {
 		return nil, err
 	}
 
-	ingresses, err := getIngressesForNamespace(namespace)
+	ingresses, err := rt.getIngressesForNamespace(namespace)
 
 	if err != nil {
 		return nil, err
@@ -263,7 +285,7 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 		var uid types.UID = ""
 
 		for _, owner := range pod.OwnerReferences {
-			if *owner.Controller {
+			if owner.Controller != nil && *owner.Controller {
 				controller = owner.Name
 				uid = owner.UID
 			}
@@ -304,6 +326,11 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 
 		jobInfo.creationTimestamp = job.CreationTimestamp
 		jobInfo.deleted = false
+		jobInfo.owner = Resource{
+			Name:  job.Name,
+			ResourceType: ResourceTypeJob,
+			Uid: string(job.UID),
+		}
 
 		if job.Labels["app"] == "runaijob" {
 			jobInfo.createdByCLI = true
@@ -327,6 +354,11 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 		jobInfo.creationTimestamp = statefulSet.CreationTimestamp
 		jobInfo.interactive = true
 		jobInfo.deleted = false
+		jobInfo.owner = Resource{
+			Name:  statefulSet.Name,
+			ResourceType: ResourceTypeStatefulSet,
+			Uid: string(statefulSet.UID),
+		}
 
 		if statefulSet.Labels["app"] == "runaijob" {
 			jobInfo.createdByCLI = true
@@ -350,6 +382,11 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 		jobInfo.creationTimestamp = replicaSet.CreationTimestamp
 		jobInfo.interactive = true
 		jobInfo.deleted = false
+		jobInfo.owner = Resource{
+			Name:  replicaSet.Name,
+			ResourceType: ResourceTypeReplicaset,
+			Uid: string(replicaSet.UID),
+		}
 
 		if replicaSet.Labels["app"] == "runaijob" {
 			jobInfo.createdByCLI = true
@@ -367,14 +404,14 @@ func (rt *RunaiTrainer) ListTrainingJobs() ([]TrainingJob, error) {
 			}
 		}
 
-		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, namespace))
+		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, namespace, jobInfo.owner))
 	}
 
 	return runaiJobs, nil
 }
 
-func getNodeIp() (string, error) {
-	nodesList, err := clientset.Core().Nodes().List(metav1.ListOptions{})
+func (rt *RunaiTrainer) getNodeIp() (string, error) {
+	nodesList, err := rt.client.Core().Nodes().List(metav1.ListOptions{})
 
 	if err != nil {
 		return "", err
@@ -499,16 +536,16 @@ func getServiceOfPod(services []v1.Service, pod *v1.Pod) *v1.Service {
 	return nil
 }
 
-func getServicesInNamespace(namespace string) ([]v1.Service, error) {
-	servicesList, err := clientset.Core().Services(namespace).List(metav1.ListOptions{})
+func (rt *RunaiTrainer) getServicesInNamespace(namespace string) ([]v1.Service, error) {
+	servicesList, err := rt.client.CoreV1().Services(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return []v1.Service{}, err
 	}
 	return servicesList.Items, nil
 }
 
-func getIngressesForNamespace(namespace string) ([]extensionsv1.Ingress, error){
-	ingresses, err := clientset.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{
+func (rt *RunaiTrainer) getIngressesForNamespace(namespace string) ([]extensionsv1.Ingress, error){
+	ingresses, err := rt.client.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{
 	})
 
 	if err != nil {
@@ -546,8 +583,8 @@ func getIngressPathOfService(ingresses []extensionsv1.Ingress, service v1.Servic
 	return nil
 }
 
-func getIngressService() (*v1.Service, error) {
-	servicesList, err := clientset.Core().Services("").List(metav1.ListOptions{
+func (rt *RunaiTrainer) getIngressService() (*v1.Service, error) {
+	servicesList, err := rt.client.Core().Services("").List(metav1.ListOptions{
 		LabelSelector: "app=nginx-ingress",
 	})
 
