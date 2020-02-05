@@ -22,10 +22,11 @@ type RunaiJob struct {
 	namespace         string
 }
 
-func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, namespace string) *RunaiJob {
+func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, namespace string, ownerResource Resource) *RunaiJob {
+	resources := append(podResources(pods), ownerResource)
 	return &RunaiJob{
 		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(pods),
+			resources: resources,
 			name:      jobName,
 		},
 		chiefPod:          lastCreatedPod,

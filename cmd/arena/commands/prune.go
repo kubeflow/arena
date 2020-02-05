@@ -67,7 +67,7 @@ func NewPruneCommand() *cobra.Command {
 			trainers := NewTrainers(client)
 			jobs := []TrainingJob{}
 			for _, trainer := range trainers {
-				trainingJobs, err := trainer.ListTrainingJobs()
+				trainingJobs, err := trainer.ListTrainingJobs(namespace)
 				if err != nil {
 					log.Errorf("Failed due to %v", err)
 					os.Exit(1)

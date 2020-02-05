@@ -11,6 +11,7 @@ type ResourceType string
 
 const ResourceTypePod = ResourceType("Pod")
 const ResourceTypeStatefulSet = ResourceType("StatefulSet")
+const ResourceTypeReplicaset = ResourceType("ReplicaSet")
 const ResourceTypeJob = ResourceType("Job")
 
 func podResources(pods []v1.Pod) []Resource {

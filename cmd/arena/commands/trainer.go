@@ -24,7 +24,7 @@ import (
 func NewTrainers(client *kubernetes.Clientset) []Trainer {
 
 	trainers := []Trainer{}
-	trainerInits := []func(client *kubernetes.Clientset) Trainer{
+	trainerInits := []func(client kubernetes.Interface) Trainer{
 		// NewHorovodJobTrainer,
 		// NewStandaloneJobTrainer,
 		// NewTensorFlowJobTrainer,
