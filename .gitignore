@@ -6,3 +6,4 @@ bin/
 .kube
 Library
 .vscode
+vendor

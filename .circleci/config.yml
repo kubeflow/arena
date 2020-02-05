@@ -7,6 +7,13 @@ executors:
 
 version: 2.1
 jobs:
+  test:
+    executor: runai-executor
+    steps:
+    - run:
+        name: run test
+        command: |
+          ./test.sh
   build:
     executor: runai-executor
     steps:
@@ -15,6 +22,9 @@ jobs:
     - run:
         name: general-prep
         command: rm .env
+    - run:
+        name: install dependencies
+        command: dep ensure
     - run:
         name: build-mac
         command: |
@@ -89,10 +99,13 @@ workflows:
     jobs:
       - build: 
           name: build
+      - test:
+          name: test
       - push:
           name: push
           requires:
             - build
+            - test
           filters:
             branches:
               only:
