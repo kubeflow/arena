@@ -223,7 +223,7 @@ func (n *GPUShareNodeInfo) getDeivceInfo(pod v1.Pod) (devIdx int, gpuMemory int)
 				id = -1
 			}
 		} else {
-			log.Warningf("Failed to get dev id %s for pod %s in ns %s",
+			log.Warningf("Failed to get dev id for pod %s in ns %s",
 				pod.Name,
 				pod.Namespace)
 		}
