@@ -178,15 +178,15 @@ spec:
             {{- end }}
             resources:
               requests:
-                {{- if .Values.psCpu }}
-                cpu: {{ .Values.psCpu | quote }}
+                {{- if .Values.psCPU }}
+                cpu: {{ .Values.psCPU | quote }}
                 {{- end}}
                 {{- if .Values.psMemory }}
                 memory: {{ .Values.psMemory | quote }}
                 {{- end}}
               limits:
-                {{- if .Values.psCpu }}
-                cpu: {{ .Values.psCpu | quote }}
+                {{- if .Values.psCPU }}
+                cpu: {{ .Values.psCPU | quote }}
                 {{- end}}
                 {{- if .Values.psMemory }}
                 memory: {{ .Values.psMemory | quote }}
@@ -228,8 +228,8 @@ spec:
               {{- end }}
               resources:             
                 requests:
-                  {{- if .Values.psCpu }}
-                  cpu: {{ .Values.psCpu | quote }}
+                  {{- if .Values.psCPU }}
+                  cpu: {{ .Values.psCPU | quote }}
                   {{- end}}
                   {{- if .Values.psMemory }}
                   memory: {{ .Values.psMemory | quote }}
@@ -238,8 +238,8 @@ spec:
                   rdma/hca: "1"
                   {{- end}}
                 limits:
-                  {{- if .Values.psCpu }}
-                  cpu: {{ .Values.psCpu | quote }}
+                  {{- if .Values.psCPU }}
+                  cpu: {{ .Values.psCPU | quote }}
                   {{- end}}
                   {{- if .Values.psMemory }}
                   memory: {{ .Values.psMemory | quote }}
