@@ -10,6 +10,7 @@ jobs:
   test:
     executor: runai-executor
     steps:
+    - checkout
     - run:
         name: run test
         command: |
