@@ -14,6 +14,7 @@ interactive: false
 shm: false
 localImage: false
 hostNetwork: false
+# workingDir: /path/to/working/dir
 # labels:
 #   runai/label: label
 # ttlSecondsAfterFinished: 0

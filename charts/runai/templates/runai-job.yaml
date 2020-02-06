@@ -81,6 +81,9 @@ spec:
           {{- if .Values.localImage}}
           imagePullPolicy: Never
           {{- end }}
+          {{- if .Values.workingDir }}
+          workingDir: {{ .Values.workingDir }}
+          {{- end}}
           resources:
             {{- if .Values.gpu }}
             limits: 
