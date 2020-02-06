@@ -225,8 +225,8 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	printJobSummary(w, job)
 
 	// apply a dummy FgDefault format to align tabwriter with the rest of the columns
-	fmt.Fprintf(w, "Instances:\n")
-	fmt.Fprintf(w, "INSTANCE NAME\tSTATUS\tTRAINER\tAGE\tNODE\n")
+	fmt.Fprintf(w, "Pods:\n")
+	fmt.Fprintf(w, "POD\tSTATUS\tTRAINER\tAGE\tNODE\n")
 	pods := job.AllPods()
 
 	for _, pod := range pods {
