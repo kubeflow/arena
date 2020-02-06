@@ -225,8 +225,8 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	printJobSummary(w, job)
 
 	// apply a dummy FgDefault format to align tabwriter with the rest of the columns
-
-	fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tINSTANCE\tNODE\n")
+	fmt.Fprintf(w, "Instances:\n")
+	fmt.Fprintf(w, "INSTANCE NAME\tSTATUS\tTRAINER\tAGE\tNODE\n")
 	pods := job.AllPods()
 
 	for _, pod := range pods {
@@ -245,11 +245,10 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 			hostIP = "N/A"
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", job.Name(),
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", pod.Name,
 			strings.ToUpper(string(pod.Status.Phase)),
 			strings.ToUpper(job.Trainer()),
 			util.ShortHumanDuration(job.Age()),
-			pod.Name,
 			hostIP)
 	}
 
@@ -262,6 +261,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 }
 
 func printJobSummary(w io.Writer, job TrainingJob) {
+	fmt.Fprintf(w, "NAME: %s\n", job.Name())
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
 	fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))

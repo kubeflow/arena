@@ -20,11 +20,13 @@ type RunaiJob struct {
 	podSpec           v1.PodSpec
 	podMetadata       metav1.ObjectMeta
 	namespace         string
+	pods              []v1.Pod
 }
 
 func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, namespace string, ownerResource Resource) *RunaiJob {
 	resources := append(podResources(pods), ownerResource)
 	return &RunaiJob{
+		pods: pods,
 		BasicJobInfo: &BasicJobInfo{
 			resources: resources,
 			name:      jobName,
@@ -59,11 +61,7 @@ func (rj *RunaiJob) Namespace() string {
 
 // Get all the pods of the Training Job
 func (rj *RunaiJob) AllPods() []v1.Pod {
-	if rj.chiefPod == nil {
-		return []v1.Pod{}
-	}
-
-	return []v1.Pod{*rj.chiefPod}
+	return rj.pods
 }
 
 // Get all the kubernetes resource of the Training Job

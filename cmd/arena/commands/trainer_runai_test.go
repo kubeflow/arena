@@ -18,22 +18,6 @@ var (
 func TestJobInclusionInResourcesListCommand(t *testing.T) {
 	jobName := "job-name"
 	jobUUID := "id1"
-	controller := true
-	pod := &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: NAMESPACE,
-			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
-					UID:        types.UID(jobUUID),
-					Kind:       string(ResourceTypeJob),
-					Name:       jobName,
-					Controller: &controller,
-				},
-			}},
-		Spec: v1.PodSpec{
-			SchedulerName: "runai-scheduler",
-		},
-	}
 
 	job := &batch.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -42,6 +26,8 @@ func TestJobInclusionInResourcesListCommand(t *testing.T) {
 			UID:       types.UID(jobUUID),
 		},
 	}
+
+	pod := createPodOwnedBy("pod", nil, jobUUID, string(ResourceTypeJob), jobName)
 
 	objects := []runtime.Object{pod, job}
 	client := fake.NewSimpleClientset(objects...)
@@ -146,6 +132,103 @@ func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
 	}
 }
 
+func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
+	jobName := "job-name"
+	jobUUID := "id1"
+
+	labelSelector := make(map[string]string)
+	labelSelector["job-name"] = jobName
+
+	job := &appsv1.ReplicaSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: NAMESPACE,
+			Name:      jobName,
+			UID:       types.UID(jobUUID),
+		},
+		Spec: appsv1.ReplicaSetSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labelSelector,
+			},
+		},
+	}
+
+	pod1 := createPodOwnedBy("pod1", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+	pod2 := createPodOwnedBy("pod2", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+
+	objects := []runtime.Object{job, pod1, pod2}
+	client := fake.NewSimpleClientset(objects...)
+
+	trainer := NewRunaiTrainer(client)
+	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+
+	if len(trainJob.AllPods()) != 2 {
+		t.Errorf("Did not get all pod owned by job")
+	}
+}
+
+func TestIncludeMultiplePodsInStatefulset(t *testing.T) {
+	jobName := "job-name"
+	jobUUID := "id1"
+
+	labelSelector := make(map[string]string)
+	labelSelector["job-name"] = jobName
+
+	job := &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: NAMESPACE,
+			Name:      jobName,
+			UID:       types.UID(jobUUID),
+		},
+		Spec: appsv1.StatefulSetSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labelSelector,
+			},
+		},
+	}
+
+	pod1 := createPodOwnedBy("pod1", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+	pod2 := createPodOwnedBy("pod2", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+
+	objects := []runtime.Object{job, pod1, pod2}
+	client := fake.NewSimpleClientset(objects...)
+
+	trainer := NewRunaiTrainer(client)
+	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+
+	if len(trainJob.AllPods()) != 2 {
+		t.Errorf("Did not get all pod owned by job")
+	}
+}
+
+func TestIncludeMultiplePodsInJob(t *testing.T) {
+	jobName := "job-name"
+	jobUUID := "id1"
+
+	labelSelector := make(map[string]string)
+	labelSelector["job-name"] = jobName
+
+	job := &batch.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: NAMESPACE,
+			Name:      jobName,
+			UID:       types.UID(jobUUID),
+		},
+	}
+
+	pod1 := createPodOwnedBy("pod1", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+	pod2 := createPodOwnedBy("pod2", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+
+	objects := []runtime.Object{job, pod1, pod2}
+	client := fake.NewSimpleClientset(objects...)
+
+	trainer := NewRunaiTrainer(client)
+	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+
+	if len(trainJob.AllPods()) != 2 {
+		t.Errorf("Did not get all pod owned by job")
+	}
+}
+
 func testResourceIncluded(resources []Resource, name string, resourceType ResourceType) bool {
 	for _, resource := range resources {
 		if resource.ResourceType == resourceType && resource.Name == name {
@@ -153,4 +236,25 @@ func testResourceIncluded(resources []Resource, name string, resourceType Resour
 		}
 	}
 	return false
+}
+
+func createPodOwnedBy(podName string, labelSelector map[string]string, ownerUUID string, ownerKind string, ownerName string) *v1.Pod {
+	controller := true
+	return &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: NAMESPACE,
+			Labels:    labelSelector,
+			OwnerReferences: []metav1.OwnerReference{
+				metav1.OwnerReference{
+					UID:        types.UID(ownerUUID),
+					Kind:       ownerKind,
+					Name:       ownerName,
+					Controller: &controller,
+				},
+			}},
+		Spec: v1.PodSpec{
+			SchedulerName: "runai-scheduler",
+		},
+	}
 }
