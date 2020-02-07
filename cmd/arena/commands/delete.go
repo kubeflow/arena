@@ -54,13 +54,15 @@ func NewDeleteCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
+			exitCode := 0
 			for _, jobName := range args {
 				err = deleteTrainingJob(jobName, trainingType)
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
+					exitCode = 2
 				}
 			}
+			os.Exit(exitCode)
 		},
 	}
 	command.Flags().StringVar(&trainingType, "type", "", "The training type to delete, the possible option is tfjob, mpijob, sparkjob,volcanojob,horovodjob or standalonejob. (optional)")
