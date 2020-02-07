@@ -56,15 +56,15 @@ func NewServingDeleteCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-
+			exitCode := 0
 			for _, jobName := range args {
 				err = deleteServingJob(client, jobName)
 				if err != nil {
 					log.Debugf("Failed due to %v", err)
-					fmt.Println(err)
-					os.Exit(1)
+					exitCode = 2
 				}
 			}
+			os.Exit(exitCode)
 		},
 	}
 	command.Flags().StringVar(&servingVersion, "version", "", "The serving version to delete.")
