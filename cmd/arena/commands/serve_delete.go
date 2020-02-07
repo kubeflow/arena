@@ -60,7 +60,7 @@ func NewServingDeleteCommand() *cobra.Command {
 			for _, jobName := range args {
 				err = deleteServingJob(client, jobName)
 				if err != nil {
-					log.Debugf("Failed due to %v", err)
+					log.Errorf("Failed due to %v", err)
 					exitCode = 2
 				}
 			}
