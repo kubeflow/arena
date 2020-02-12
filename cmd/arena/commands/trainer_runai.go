@@ -38,7 +38,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiJobList.Items) > 0 {
 		for _, item := range runaiJobList.Items {
-			if item.Spec.Template.Spec.SchedulerName == "runai-scheduler" {
+			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
 				return true
 			}
 		}
@@ -54,7 +54,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiStatefulSetsList.Items) > 0 {
 		for _, item := range runaiStatefulSetsList.Items {
-			if item.Spec.Template.Spec.SchedulerName == "runai-scheduler" {
+			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
 				return true
 			}
 		}
@@ -70,7 +70,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiReplicaSetsList.Items) > 0 {
 		for _, item := range runaiReplicaSetsList.Items {
-			if item.Spec.Template.Spec.SchedulerName == "runai-scheduler" {
+			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
 				return true
 			}
 		}
@@ -104,6 +104,10 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 	if len(runaiStatufulsetList.Items) > 0 {
 		return rt.getTrainingStatefulset(runaiStatufulsetList.Items[0])
 	}
+
+	rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{
+		FieldSelector: fieldSelectorByName(name),
+	})
 
 	runaiReplicaSetsList, err := rt.client.Apps().ReplicaSets(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
@@ -270,7 +274,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 	// Get all pods running with runai scheduler
 	runaiPods, err := rt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		FieldSelector: "spec.schedulerName=runai-scheduler",
+		FieldSelector: fmt.Sprintf("spec.schedulerName=%s", SchedulerName),
 	})
 
 	if err != nil {

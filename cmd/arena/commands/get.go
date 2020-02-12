@@ -17,24 +17,30 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"reflect"
+	"sort"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
-
-	"io"
-	"time"
 
 	"github.com/kubeflow/arena/pkg/config"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
+
+type eventAndName struct {
+	event v1.Event
+	name string
+}
 
 var output string
 
@@ -272,7 +278,7 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 
 func printEvents(w io.Writer, namespace string, job TrainingJob) {
 	fmt.Fprintf(w, "\nEvents: \n")
-	eventsMap, err := GetResourcesEvents(clientset, namespace, job.Resources())
+	eventsMap, err := getResourcesEvents(clientset, namespace, job)
 	if err != nil {
 		fmt.Fprintf(w, "Get job events failed, due to: %v", err)
 		return
@@ -284,15 +290,13 @@ func printEvents(w io.Writer, namespace string, job TrainingJob) {
 	fmt.Fprintf(w, "SOURCE\tTYPE\tAGE\tMESSAGE\n")
 	fmt.Fprintf(w, "--------\t----\t---\t-------\n")
 
-	for resourceName, events := range eventsMap {
-		for _, event := range events {
-			instanceName := fmt.Sprintf("%s/%s", strings.ToLower(event.InvolvedObject.Kind), resourceName)
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
-				instanceName,
-				event.Type,
-				util.ShortHumanDuration(time.Now().Sub(event.CreationTimestamp.Time)),
-				fmt.Sprintf("[%s] %s", event.Reason, event.Message))
-		}
+	for _, eventAndName := range eventsMap {
+		instanceName := fmt.Sprintf("%s/%s", strings.ToLower(eventAndName.event.InvolvedObject.Kind), eventAndName.name)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
+			instanceName,
+			eventAndName.event.Type,
+			util.ShortHumanDuration(time.Now().Sub(eventAndName.event.CreationTimestamp.Time)),
+			fmt.Sprintf("[%s] %s", eventAndName.event.Reason, eventAndName.event.Message))
 		// empty line for per pod
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", "", "", "", "", "", "")
 	}
@@ -320,19 +324,42 @@ func GetJobRealStatus(job TrainingJob) string {
 }
 
 // Get Event of the Job
-func GetResourcesEvents(client *kubernetes.Clientset, namespace string, resources []Resource) (map[string][]v1.Event, error) {
-	eventMap := make(map[string][]v1.Event)
+func getResourcesEvents(client *kubernetes.Clientset, namespace string, job TrainingJob) ([]eventAndName, error) {
 	events, err := client.CoreV1().Events(namespace).List(metav1.ListOptions{})
 	if err != nil {
-		return eventMap, err
+		return []eventAndName{}, err
 	}
-	for _, resource := range resources {
-		eventMap[resource.Name] = []v1.Event{}
-		for _, event := range events.Items {
+
+	podGroupName := ""
+	if reflect.TypeOf(job) == reflect.TypeOf(&RunaiJob{}) {
+		podGroupName = job.(*RunaiJob).GetPodGroupName()
+	}
+
+	return getSortedEvents(events.Items, job.Resources(), podGroupName), nil
+}
+
+func getSortedEvents(items []v1.Event, resources []Resource, podGroupName string) []eventAndName{
+	eventAndNames := []eventAndName{}
+	for _, event := range items {
+		for _, resource := range resources {
 			if event.InvolvedObject.Kind == string(resource.ResourceType) && string(event.InvolvedObject.UID) == resource.Uid {
-				eventMap[resource.Name] = append(eventMap[resource.Name], event)
+				eventAndNames = append(eventAndNames, eventAndName{event, resource.Name})
+				break
 			}
 		}
+
+		// TODO: We should add pogGroup as a resource of a job and remove this part.
+		if len(podGroupName) > 0  && event.InvolvedObject.Name == podGroupName {
+			eventAndNames = append(eventAndNames, eventAndName{event, podGroupName})
+		}
+
 	}
-	return eventMap, nil
+
+	sort.Slice(eventAndNames, func(i, j int) bool {
+		lv := eventAndNames[i]
+		rv := eventAndNames[j]
+		return lv.event.CreationTimestamp.Time.Before(rv.event.CreationTimestamp.Time)
+	})
+
+	return eventAndNames
 }

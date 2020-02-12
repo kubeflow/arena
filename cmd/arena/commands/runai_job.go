@@ -1,11 +1,12 @@
 package commands
 
 import (
+	"strconv"
+	"time"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"strconv"
-	"time"
 )
 
 type RunaiJob struct {
@@ -22,6 +23,8 @@ type RunaiJob struct {
 	namespace         string
 	pods              []v1.Pod
 }
+
+const PodGroupNamePrefix = "pg-"
 
 func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, namespace string, ownerResource Resource) *RunaiJob {
 	resources := append(podResources(pods), ownerResource)
@@ -221,4 +224,30 @@ func (rj *RunaiJob) User() string {
 
 func (rj *RunaiJob) ServiceURLs() []string {
 	return rj.serviceUrls
+}
+
+
+// IMPORTANT!!! This function is a duplication of GetPodGroupName in runai-scheduler repo.
+// Do not make changes without changing it in runai-scheduler as well!
+func (rj *RunaiJob) GetPodGroupName() string {
+	pod := rj.chiefPod
+	if pod.Spec.SchedulerName != SchedulerName {
+		return ""
+	}
+
+	if jobName, found := pod.Labels["job-name"]; found && len(jobName) != 0 {
+		return PodGroupNamePrefix + jobName
+	}
+
+	if pod.OwnerReferences == nil {
+		return ""
+	}
+
+	for _, ownerRef := range pod.OwnerReferences {
+		if ownerRef.Kind == "StatefulSet" {
+			return PodGroupNamePrefix + ownerRef.Name
+		}
+	}
+
+	return ""
 }

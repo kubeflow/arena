@@ -23,6 +23,8 @@ const (
 
 	DeprecatedNVIDIAGPUResourceName = "alpha.kubernetes.io/nvidia-gpu"
 
+	SchedulerName = "runai-scheduler"
+
 	masterLabelRole = "node-role.kubernetes.io/master"
 
 	gangSchdName = "kube-batchd"

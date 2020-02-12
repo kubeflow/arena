@@ -254,7 +254,7 @@ func createPodOwnedBy(podName string, labelSelector map[string]string, ownerUUID
 				},
 			}},
 		Spec: v1.PodSpec{
-			SchedulerName: "runai-scheduler",
+			SchedulerName: SchedulerName,
 		},
 	}
 }
