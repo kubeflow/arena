@@ -231,7 +231,7 @@ func (rj *RunaiJob) ServiceURLs() []string {
 // Do not make changes without changing it in runai-scheduler as well!
 func (rj *RunaiJob) GetPodGroupName() string {
 	pod := rj.chiefPod
-	if pod.Spec.SchedulerName != SchedulerName {
+	if pod == nil || pod.Spec.SchedulerName != SchedulerName {
 		return ""
 	}
 
