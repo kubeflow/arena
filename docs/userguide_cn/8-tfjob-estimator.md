@@ -80,11 +80,11 @@ tfdata ReadWriteMany this is for mnist demo myteam 43d
               --evaluator \
               --data=tfdata:/data/mnist \
               --logdir=/data/mnist/models \
-              --workerImage=tensorflow/tensorflow:1.9.0-devel-gpu \
-              --syncMode=git \
-              --syncSource=https://github.com/cheyang/models.git \
+              --work-image=tensorflow/tensorflow:1.9.0-devel-gpu \
+              --sync-mode=git \
+              --sync-source=https://github.com/cheyang/models.git \
               --ps=1 \
-              --psImage=tensorflow/tensorflow:1.9.0-devel \
+              --ps-image=tensorflow/tensorflow:1.9.0-devel \
               --tensorboard \
               "bash code/models/dist_mnist_estimator.sh --data_dir=/data/mnist/MNIST_data --model_dir=/data/mnist/models"
 configmap/tf-estimator-tfjob created

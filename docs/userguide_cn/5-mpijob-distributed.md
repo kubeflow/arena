@@ -17,8 +17,8 @@ Arena 为分布式 TensorFlow 训练（MPI 模式）提供了支持和简化。
               --workers=2 \
               --image=uber/horovod:0.13.11-tf1.10.0-torch0.4.0-py3.5 \
               --env=GIT_SYNC_BRANCH=cnn_tf_v1.9_compatible \
-              --syncMode=git \
-              --syncSource=https://github.com/tensorflow/benchmarks.git \
+              --sync-mode=git \
+              --sync-source=https://github.com/tensorflow/benchmarks.git \
               --tensorboard \
               "mpirun python code/benchmarks/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py --model resnet101 --batch_size 64 --variable_update horovod --train_dir=/training_logs --summary_verbosity=3 
               --save_summaries_steps=10"
