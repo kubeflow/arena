@@ -201,6 +201,8 @@ type submitTFJobArgs struct {
 
 	// for sync up source code
 	submitSyncCodeArgs `yaml:",inline"`
+
+	tfRuntime `yaml:"-"`
 }
 
 func (submitArgs *submitTFJobArgs) prepare(args []string) (err error) {
@@ -211,9 +213,25 @@ func (submitArgs *submitTFJobArgs) prepare(args []string) (err error) {
 		return err
 	}
 
+	// 1. Use specified runtime to transform
+	if submitArgs.tfRuntime != nil {
+		err := submitArgs.tfRuntime.transform(submitArgs)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = submitArgs.check()
 	if err != nil {
 		return err
+	}
+
+	// 2. Use specified runtime to check
+	if submitArgs.tfRuntime != nil {
+		err := submitArgs.tfRuntime.check(submitArgs)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = submitArgs.HandleSyncCode()
@@ -396,6 +414,12 @@ func (submitArgs *submitTFJobArgs) checkGangCapablitiesInCluster() {
 }
 
 func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
+	// Get runtime name
+	runtimeName := getRuntimeName()
+	if runtimeName != "" {
+		submitArgs.tfRuntime = getTFRuntime(runtimeName)
+	}
+
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
@@ -414,6 +438,9 @@ func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
+	if submitArgs.tfRuntime != nil {
+		tfjob_chart = util.GetChartsFolder() + "/" + submitArgs.tfRuntime.getChartName()
+	}
 	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, tfjob_chart, submitArgs.addHelmOptions()...)
 	if err != nil {
 		return err
