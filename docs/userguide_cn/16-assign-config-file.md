@@ -33,8 +33,8 @@
     --name=tf \
     --gpus=1              \
     --workers=1              \
-    --workerImage=cheyang/tf-mnist-distributed:gpu \
-    --psImage=cheyang/tf-mnist-distributed:cpu \
+    --work-image=cheyang/tf-mnist-distributed:gpu \
+    --ps-image=cheyang/tf-mnist-distributed:cpu \
     --ps=1              \
     --tensorboard \
     --config-file /tmp/test-config.json:/etc/config/config.json \

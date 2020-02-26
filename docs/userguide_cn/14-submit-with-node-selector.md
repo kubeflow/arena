@@ -64,8 +64,8 @@ arena submit tfjob \
       --gpus=1              \
       --workers=1              \
       --selector ssd_node=ok \
-      --workerImage=cheyang/tf-mnist-distributed:gpu \
-      --psImage=cheyang/tf-mnist-distributed:cpu \
+      --work-image=cheyang/tf-mnist-distributed:gpu \
+      --ps-image=cheyang/tf-mnist-distributed:cpu \
       --ps=1              \
       --tensorboard \
       --loglevel debug \
@@ -100,8 +100,8 @@ arena submit tfjob \
       --workers=1              \
       --ps-selector ssd_node=ok \
       --worker-selector gpu_node=ok \
-      --workerImage=cheyang/tf-mnist-distributed:gpu \
-      --psImage=cheyang/tf-mnist-distributed:cpu \
+      --work-image=cheyang/tf-mnist-distributed:gpu \
+      --ps-image=cheyang/tf-mnist-distributed:cpu \
       --ps=1              \
       --tensorboard \
       --loglevel debug \
@@ -134,8 +134,8 @@ arena submit tfjob \
       --workers=1              \
       --ps-selector ssd_node=ok \
       --selector gpu_node=ok \
-      --workerImage=cheyang/tf-mnist-distributed:gpu \
-      --psImage=cheyang/tf-mnist-distributed:cpu \
+      --work-image=cheyang/tf-mnist-distributed:gpu \
+      --ps-image=cheyang/tf-mnist-distributed:cpu \
       --ps=1              \
       --tensorboard \
       --loglevel debug \

@@ -19,11 +19,11 @@ Arena 为分布式 TensorFlow 训练（ps/worker 模式）提供了支持和简�
 #arena submit tf --name=tf-dist-git              \
               --gpus=1 \
               --workers=2 \
-              --workerImage=tensorflow/tensorflow:1.5.0-devel-gpu \
-              --syncMode=git \
-              --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
+              --worker-image=tensorflow/tensorflow:1.5.0-devel-gpu \
+              --sync-mode=git \
+              --sync-source=https://github.com/xigang/tensorflow-sample-code.git \
               --ps=1 \
-              --psImage=tensorflow/tensorflow:1.5.0-devel \
+              --ps-image=tensorflow/tensorflow:1.5.0-devel \
               --tensorboard \
               "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir /training_logs"
 configmap/tf-dist-git-tfjob created
