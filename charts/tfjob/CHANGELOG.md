@@ -116,3 +116,7 @@
 ### 0.27.0
 
 * PS cpu resource variable should be psCPU
+
+### 0.28.0
+
+* PS annotations should be a attribute of metadata yaml node.
