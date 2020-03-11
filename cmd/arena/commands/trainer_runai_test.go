@@ -15,19 +15,89 @@ var (
 	NAMESPACE string = "default"
 )
 
-func TestJobInclusionInResourcesListCommand(t *testing.T) {
+var runaiPodTemplate = v1.PodTemplateSpec{
+	Spec: v1.PodSpec{
+		SchedulerName: SchedulerName,
+	},
+}
+
+func getRunaiReplicaSet() *appsv1.ReplicaSet {
 	jobName := "job-name"
 	jobUUID := "id1"
 
-	job := &batch.Job{
+	labelSelector := make(map[string]string)
+
+	return &appsv1.ReplicaSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: NAMESPACE,
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
 		},
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ReplicaSet",
+		},
+		Spec: appsv1.ReplicaSetSpec{
+			Template: runaiPodTemplate,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labelSelector,
+			},
+		},
 	}
+}
 
-	pod := createPodOwnedBy("pod", nil, jobUUID, string(ResourceTypeJob), jobName)
+func getRunaiStatefulSet() *appsv1.StatefulSet {
+	jobName := "job-name"
+	jobUUID := "id1"
+
+	labelSelector := make(map[string]string)
+
+	return &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: NAMESPACE,
+			Name:      jobName,
+			UID:       types.UID(jobUUID),
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind: "StatefulSet",
+		},
+		Spec: appsv1.StatefulSetSpec{
+			Template: runaiPodTemplate,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labelSelector,
+			},
+		},
+	}
+}
+
+func getRunaiJob() *batch.Job {
+	jobName := "job-name"
+	jobUUID := "id1"
+
+	var labelSelector = make(map[string]string)
+	labelSelector["controller-uid"] = jobUUID
+
+	return &batch.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: NAMESPACE,
+			Name:      jobName,
+			UID:       types.UID(jobUUID),
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Job",
+		},
+		Spec: batch.JobSpec{
+			Template: runaiPodTemplate,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labelSelector,
+			},
+		},
+	}
+}
+
+func TestJobInclusionInResourcesListCommand(t *testing.T) {
+	job := getRunaiJob()
+
+	pod := createPodOwnedBy("pod", nil, string(job.UID), string(ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{pod, job}
 	client := fake.NewSimpleClientset(objects...)
@@ -38,20 +108,27 @@ func TestJobInclusionInResourcesListCommand(t *testing.T) {
 	trainJob := jobs[0]
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, jobName, ResourceTypeJob) {
+	if !testResourceIncluded(resources, job.Name, ResourceTypeJob) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
 
-func TestJobInclusionInResourcesGetCommand(t *testing.T) {
-	jobName := "job-name"
-	jobUUID := "id1"
-
+func TestDontListNonRunaiJobs(t *testing.T) {
 	job := &batch.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: NAMESPACE,
-			Name:      jobName,
-			UID:       types.UID(jobUUID),
+			Name:      "name",
+			UID:       types.UID("jobUUID"),
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Job",
+		},
+		Spec: batch.JobSpec{
+			Template: v1.PodTemplateSpec{
+				Spec: v1.PodSpec{
+					SchedulerName: "some-scheduler",
+				},
+			},
 		},
 	}
 
@@ -59,107 +136,72 @@ func TestJobInclusionInResourcesGetCommand(t *testing.T) {
 	client := fake.NewSimpleClientset(objects...)
 
 	trainer := NewRunaiTrainer(client)
-	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
+
+	if len(jobs) != 0 {
+		t.Errorf("Got too many resources from list command")
+	}
+}
+
+func TestJobInclusionInResourcesGetCommand(t *testing.T) {
+	job := getRunaiJob()
+
+	objects := []runtime.Object{job}
+	client := fake.NewSimpleClientset(objects...)
+
+	trainer := NewRunaiTrainer(client)
+	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, jobName, ResourceTypeJob) {
+	if !testResourceIncluded(resources, job.Name, ResourceTypeJob) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
 
 func TestStatefulSetInclusionInResourcesGetCommand(t *testing.T) {
-	jobName := "job-name"
-	jobUUID := "id1"
-
-	labelSelector := make(map[string]string)
-
-	job := &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: NAMESPACE,
-			Name:      jobName,
-			UID:       types.UID(jobUUID),
-		},
-		Spec: appsv1.StatefulSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labelSelector,
-			},
-		},
-	}
+	job := getRunaiStatefulSet()
 
 	objects := []runtime.Object{job}
 	client := fake.NewSimpleClientset(objects...)
 
 	trainer := NewRunaiTrainer(client)
-	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, jobName, ResourceTypeStatefulSet) {
+	if !testResourceIncluded(resources, job.Name, ResourceTypeStatefulSet) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
 
 func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
-	jobName := "job-name"
-	jobUUID := "id1"
-
-	labelSelector := make(map[string]string)
-
-	job := &appsv1.ReplicaSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: NAMESPACE,
-			Name:      jobName,
-			UID:       types.UID(jobUUID),
-		},
-		Spec: appsv1.ReplicaSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labelSelector,
-			},
-		},
-	}
+	job := getRunaiReplicaSet()
 
 	objects := []runtime.Object{job}
 	client := fake.NewSimpleClientset(objects...)
 
 	trainer := NewRunaiTrainer(client)
-	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, jobName, ResourceTypeReplicaset) {
+	if !testResourceIncluded(resources, job.Name, ResourceTypeReplicaset) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
 
 func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
-	jobName := "job-name"
-	jobUUID := "id1"
+	job := getRunaiReplicaSet()
 
-	labelSelector := make(map[string]string)
-	labelSelector["job-name"] = jobName
-
-	job := &appsv1.ReplicaSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: NAMESPACE,
-			Name:      jobName,
-			UID:       types.UID(jobUUID),
-		},
-		Spec: appsv1.ReplicaSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labelSelector,
-			},
-		},
-	}
-
-	pod1 := createPodOwnedBy("pod1", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
-	pod2 := createPodOwnedBy("pod2", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
+	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
 	client := fake.NewSimpleClientset(objects...)
 
 	trainer := NewRunaiTrainer(client)
-	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
@@ -167,33 +209,16 @@ func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
 }
 
 func TestIncludeMultiplePodsInStatefulset(t *testing.T) {
-	jobName := "job-name"
-	jobUUID := "id1"
+	job := getRunaiStatefulSet()
 
-	labelSelector := make(map[string]string)
-	labelSelector["job-name"] = jobName
-
-	job := &appsv1.StatefulSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: NAMESPACE,
-			Name:      jobName,
-			UID:       types.UID(jobUUID),
-		},
-		Spec: appsv1.StatefulSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labelSelector,
-			},
-		},
-	}
-
-	pod1 := createPodOwnedBy("pod1", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
-	pod2 := createPodOwnedBy("pod2", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
+	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
 	client := fake.NewSimpleClientset(objects...)
 
 	trainer := NewRunaiTrainer(client)
-	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
@@ -201,31 +226,34 @@ func TestIncludeMultiplePodsInStatefulset(t *testing.T) {
 }
 
 func TestIncludeMultiplePodsInJob(t *testing.T) {
-	jobName := "job-name"
-	jobUUID := "id1"
+	job := getRunaiJob()
 
-	labelSelector := make(map[string]string)
-	labelSelector["job-name"] = jobName
-
-	job := &batch.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: NAMESPACE,
-			Name:      jobName,
-			UID:       types.UID(jobUUID),
-		},
-	}
-
-	pod1 := createPodOwnedBy("pod1", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
-	pod2 := createPodOwnedBy("pod2", labelSelector, jobUUID, string(ResourceTypeJob), jobName)
+	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
+	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
 	client := fake.NewSimpleClientset(objects...)
 
 	trainer := NewRunaiTrainer(client)
-	trainJob, _ := trainer.GetTrainingJob(jobName, NAMESPACE)
+	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
 
 	if len(trainJob.AllPods()) != 2 {
 		t.Errorf("Did not get all pod owned by job")
+	}
+}
+
+func TestDontGetNotRunaiJob(t *testing.T) {
+	job := getRunaiJob()
+	job.Spec.Template.Spec.SchedulerName = "some-scheduler"
+
+	objects := []runtime.Object{job}
+	client := fake.NewSimpleClientset(objects...)
+
+	trainer := NewRunaiTrainer(client)
+	trainJob, _ := trainer.GetTrainingJob(job.Name, NAMESPACE)
+
+	if trainJob != nil {
+		t.Errorf("Expected nil as return, but got a job")
 	}
 }
 
