@@ -8,7 +8,7 @@ import (
 )
 
 type PodTemplateJob struct {
-	metav1.TypeMeta
+	Type ResourceType
 	metav1.ObjectMeta
 	Selector *metav1.LabelSelector
 	Template v1.PodTemplateSpec
@@ -17,7 +17,7 @@ type PodTemplateJob struct {
 func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
 	return &PodTemplateJob{
 		ObjectMeta: job.ObjectMeta,
-		TypeMeta:   job.TypeMeta,
+		Type:       ResourceTypeJob,
 		Template:   job.Spec.Template,
 		Selector:   job.Spec.Selector,
 	}
@@ -26,7 +26,7 @@ func PodTemplateJobFromJob(job batch.Job) *PodTemplateJob {
 func PodTemplateJobFromStatefulSet(statefulSet appsv1.StatefulSet) *PodTemplateJob {
 	return &PodTemplateJob{
 		ObjectMeta: statefulSet.ObjectMeta,
-		TypeMeta:   statefulSet.TypeMeta,
+		Type:       ResourceTypeStatefulSet,
 		Template:   statefulSet.Spec.Template,
 		Selector:   statefulSet.Spec.Selector,
 	}
@@ -35,7 +35,7 @@ func PodTemplateJobFromStatefulSet(statefulSet appsv1.StatefulSet) *PodTemplateJ
 func PodTemplateJobFromReplicaSet(replicaSet appsv1.ReplicaSet) *PodTemplateJob {
 	return &PodTemplateJob{
 		ObjectMeta: replicaSet.ObjectMeta,
-		TypeMeta:   replicaSet.TypeMeta,
+		Type:       ResourceTypeReplicaset,
 		Template:   replicaSet.Spec.Template,
 		Selector:   replicaSet.Spec.Selector,
 	}

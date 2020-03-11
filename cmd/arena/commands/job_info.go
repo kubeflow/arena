@@ -15,6 +15,7 @@
 package commands
 
 import (
+	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
@@ -24,7 +25,7 @@ import (
 )
 
 type JobInfo struct {
-	*BasicJobInfo
+	*cmdTypes.BasicJobInfo
 	job          batchv1.Job
 	pods         []v1.Pod // all the pods including statefulset and job
 	jobPod       v1.Pod   // the pod of job
@@ -35,7 +36,7 @@ type JobInfo struct {
 }
 
 func (ji *JobInfo) Name() string {
-	return ji.name
+	return ji.BasicJobInfo.Name()
 }
 
 func (ji *JobInfo) Uid() string {

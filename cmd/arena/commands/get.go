@@ -31,6 +31,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/config"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,7 +40,7 @@ import (
 
 type eventAndName struct {
 	event v1.Event
-	name string
+	name  string
 }
 
 var output string
@@ -338,7 +339,7 @@ func getResourcesEvents(client *kubernetes.Clientset, namespace string, job Trai
 	return getSortedEvents(events.Items, job.Resources(), podGroupName), nil
 }
 
-func getSortedEvents(items []v1.Event, resources []Resource, podGroupName string) []eventAndName{
+func getSortedEvents(items []v1.Event, resources []cmdTypes.Resource, podGroupName string) []eventAndName {
 	eventAndNames := []eventAndName{}
 	for _, event := range items {
 		for _, resource := range resources {
@@ -349,7 +350,7 @@ func getSortedEvents(items []v1.Event, resources []Resource, podGroupName string
 		}
 
 		// TODO: We should add pogGroup as a resource of a job and remove this part.
-		if len(podGroupName) > 0  && event.InvolvedObject.Name == podGroupName {
+		if len(podGroupName) > 0 && event.InvolvedObject.Name == podGroupName {
 			eventAndNames = append(eventAndNames, eventAndName{event, podGroupName})
 		}
 

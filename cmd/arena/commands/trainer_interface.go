@@ -17,6 +17,7 @@ package commands
 import (
 	"time"
 
+	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -37,7 +38,7 @@ type TrainingJob interface {
 	AllPods() []v1.Pod
 
 	// Get all the kubernetes resource of the Training Job
-	Resources() []Resource
+	Resources() []cmdTypes.Resource
 
 	// Get the Status of the Job: RUNNING, PENDING,
 	GetStatus() string

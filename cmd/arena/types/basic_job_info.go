@@ -1,4 +1,4 @@
-package commands
+package types
 
 import "k8s.io/api/core/v1"
 
@@ -14,7 +14,7 @@ const ResourceTypeStatefulSet = ResourceType("StatefulSet")
 const ResourceTypeReplicaset = ResourceType("ReplicaSet")
 const ResourceTypeJob = ResourceType("Job")
 
-func podResources(pods []v1.Pod) []Resource {
+func PodResources(pods []v1.Pod) []Resource {
 	resources := []Resource{}
 	for _, pod := range pods {
 		resources = append(resources, Resource{
@@ -29,6 +29,17 @@ func podResources(pods []v1.Pod) []Resource {
 type BasicJobInfo struct {
 	name      string
 	resources []Resource
+}
+
+func NewBasicJobInfo(name string, resources []Resource) *BasicJobInfo {
+	return &BasicJobInfo{
+		name:      name,
+		resources: resources,
+	}
+}
+
+func (j *BasicJobInfo) Name() string {
+	return j.name
 }
 
 func (j *BasicJobInfo) Resources() []Resource {

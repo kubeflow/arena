@@ -1,6 +1,7 @@
 package commands
 
 import (
+	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	appsv1 "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -33,9 +34,6 @@ func getRunaiReplicaSet() *appsv1.ReplicaSet {
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind: "ReplicaSet",
-		},
 		Spec: appsv1.ReplicaSetSpec{
 			Template: runaiPodTemplate,
 			Selector: &metav1.LabelSelector{
@@ -56,9 +54,6 @@ func getRunaiStatefulSet() *appsv1.StatefulSet {
 			Namespace: NAMESPACE,
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind: "StatefulSet",
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Template: runaiPodTemplate,
@@ -82,9 +77,6 @@ func getRunaiJob() *batch.Job {
 			Name:      jobName,
 			UID:       types.UID(jobUUID),
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Job",
-		},
 		Spec: batch.JobSpec{
 			Template: runaiPodTemplate,
 			Selector: &metav1.LabelSelector{
@@ -97,7 +89,7 @@ func getRunaiJob() *batch.Job {
 func TestJobInclusionInResourcesListCommand(t *testing.T) {
 	job := getRunaiJob()
 
-	pod := createPodOwnedBy("pod", nil, string(job.UID), string(ResourceTypeJob), job.Name)
+	pod := createPodOwnedBy("pod", nil, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{pod, job}
 	client := fake.NewSimpleClientset(objects...)
@@ -108,7 +100,7 @@ func TestJobInclusionInResourcesListCommand(t *testing.T) {
 	trainJob := jobs[0]
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, job.Name, ResourceTypeJob) {
+	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeJob) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
@@ -119,9 +111,6 @@ func TestDontListNonRunaiJobs(t *testing.T) {
 			Namespace: NAMESPACE,
 			Name:      "name",
 			UID:       types.UID("jobUUID"),
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Job",
 		},
 		Spec: batch.JobSpec{
 			Template: v1.PodTemplateSpec{
@@ -154,7 +143,7 @@ func TestJobInclusionInResourcesGetCommand(t *testing.T) {
 
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, job.Name, ResourceTypeJob) {
+	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeJob) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
@@ -170,7 +159,7 @@ func TestStatefulSetInclusionInResourcesGetCommand(t *testing.T) {
 
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, job.Name, ResourceTypeStatefulSet) {
+	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeStatefulSet) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
@@ -186,7 +175,7 @@ func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
 
 	resources := trainJob.Resources()
 
-	if !testResourceIncluded(resources, job.Name, ResourceTypeReplicaset) {
+	if !testResourceIncluded(resources, job.Name, cmdTypes.ResourceTypeReplicaset) {
 		t.Errorf("Could not find related job in training job resources")
 	}
 }
@@ -194,8 +183,8 @@ func TestReplicaSetInclusionInResourcesGetCommand(t *testing.T) {
 func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
 	job := getRunaiReplicaSet()
 
-	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
-	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
+	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
+	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
 	client := fake.NewSimpleClientset(objects...)
@@ -211,8 +200,8 @@ func TestIncludeMultiplePodsInReplicaset(t *testing.T) {
 func TestIncludeMultiplePodsInStatefulset(t *testing.T) {
 	job := getRunaiStatefulSet()
 
-	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
-	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
+	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
+	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
 	client := fake.NewSimpleClientset(objects...)
@@ -228,8 +217,8 @@ func TestIncludeMultiplePodsInStatefulset(t *testing.T) {
 func TestIncludeMultiplePodsInJob(t *testing.T) {
 	job := getRunaiJob()
 
-	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
-	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(ResourceTypeJob), job.Name)
+	pod1 := createPodOwnedBy("pod1", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
+	pod2 := createPodOwnedBy("pod2", job.Spec.Selector.MatchLabels, string(job.UID), string(cmdTypes.ResourceTypeJob), job.Name)
 
 	objects := []runtime.Object{job, pod1, pod2}
 	client := fake.NewSimpleClientset(objects...)
@@ -257,7 +246,7 @@ func TestDontGetNotRunaiJob(t *testing.T) {
 	}
 }
 
-func testResourceIncluded(resources []Resource, name string, resourceType ResourceType) bool {
+func testResourceIncluded(resources []cmdTypes.Resource, name string, resourceType cmdTypes.ResourceType) bool {
 	for _, resource := range resources {
 		if resource.ResourceType == resourceType && resource.Name == name {
 			return true

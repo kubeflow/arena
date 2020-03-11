@@ -177,9 +177,9 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob) 
 	}
 
 	lastCreatedPod := getLastCreatedPod(filteredPods)
-	ownerResource := Resource{
+	ownerResource := cmdTypes.Resource{
 		Uid:          string(podSpecJob.UID),
-		ResourceType: ResourceType(podSpecJob.TypeMeta.Kind),
+		ResourceType: podSpecJob.Type,
 		Name:         podSpecJob.Name,
 	}
 	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, rt.Type(), podSpecJob.Name, false, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, namespace, ownerResource), nil
@@ -201,7 +201,7 @@ type RunaiJobInfo struct {
 	deleted           bool
 	podSpec           v1.PodSpec
 	podMetadata       metav1.ObjectMeta
-	owner             Resource
+	owner             cmdTypes.Resource
 }
 
 type RunaiOwnerInfo struct {
@@ -318,9 +318,9 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 		jobInfo.creationTimestamp = job.CreationTimestamp
 		jobInfo.deleted = false
-		jobInfo.owner = Resource{
+		jobInfo.owner = cmdTypes.Resource{
 			Name:         job.Name,
-			ResourceType: ResourceType(job.TypeMeta.Kind),
+			ResourceType: job.Type,
 			Uid:          string(job.UID),
 		}
 

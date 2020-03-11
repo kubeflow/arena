@@ -4,13 +4,14 @@ import (
 	"strconv"
 	"time"
 
+	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 type RunaiJob struct {
-	*BasicJobInfo
+	*cmdTypes.BasicJobInfo
 	trainerType       string
 	chiefPod          *v1.Pod
 	creationTimestamp metav1.Time
@@ -26,14 +27,11 @@ type RunaiJob struct {
 
 const PodGroupNamePrefix = "pg-"
 
-func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, namespace string, ownerResource Resource) *RunaiJob {
-	resources := append(podResources(pods), ownerResource)
+func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource) *RunaiJob {
+	resources := append(cmdTypes.PodResources(pods), ownerResource)
 	return &RunaiJob{
-		pods: pods,
-		BasicJobInfo: &BasicJobInfo{
-			resources: resources,
-			name:      jobName,
-		},
+		pods:              pods,
+		BasicJobInfo:      cmdTypes.NewBasicJobInfo(jobName, resources),
 		chiefPod:          lastCreatedPod,
 		creationTimestamp: creationTimestamp,
 		trainerType:       trainingType,
@@ -54,7 +52,7 @@ func (rj *RunaiJob) ChiefPod() *v1.Pod {
 
 // Get the name of the Training Job
 func (rj *RunaiJob) Name() string {
-	return rj.name
+	return rj.BasicJobInfo.Name()
 }
 
 // Get the namespace of the Training Job
@@ -68,8 +66,8 @@ func (rj *RunaiJob) AllPods() []v1.Pod {
 }
 
 // Get all the kubernetes resource of the Training Job
-func (rj *RunaiJob) Resources() []Resource {
-	return rj.resources
+func (rj *RunaiJob) Resources() []cmdTypes.Resource {
+	return rj.BasicJobInfo.Resources()
 }
 
 func (rj *RunaiJob) getStatus() v1.PodPhase {
@@ -225,7 +223,6 @@ func (rj *RunaiJob) User() string {
 func (rj *RunaiJob) ServiceURLs() []string {
 	return rj.serviceUrls
 }
-
 
 // IMPORTANT!!! This function is a duplication of GetPodGroupName in runai-scheduler repo.
 // Do not make changes without changing it in runai-scheduler as well!
