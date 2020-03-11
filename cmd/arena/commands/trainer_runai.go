@@ -264,9 +264,10 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 				name: controller,
 				pods: []v1.Pod{},
 				// Mark all jobs as deleted unless we find them at the next stage
-				deleted:     true,
-				podSpec:     pod.Spec,
-				podMetadata: pod.ObjectMeta,
+				deleted:      true,
+				podSpec:      pod.Spec,
+				podMetadata:  pod.ObjectMeta,
+				createdByCLI: pod.Labels["app"] == "runaijob",
 			}
 		}
 
