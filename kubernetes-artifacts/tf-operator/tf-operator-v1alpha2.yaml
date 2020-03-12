@@ -179,6 +179,9 @@ metadata:
   name: tf-job-dashboard
   namespace: arena-system
 spec:
+  selector:
+    matchLabels:
+       name: tf-job-dashboard
   template:
     metadata:
       labels:
@@ -202,6 +205,9 @@ metadata:
   name: tf-job-operator-v1alpha2
   namespace: arena-system
 spec:
+  selector:
+    matchLabels:
+       name: tf-job-operator
   replicas: 1
   template:
     metadata:
