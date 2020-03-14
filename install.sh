@@ -99,10 +99,20 @@ rm -rf /usr/local/bin/arena-helm
 
 cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
 
-if [ -d "/charts" ]; then
-    mv /charts /charts-$now
+# For non-root user, put the charts dir to the home directory
+if [ `id -u` -eq 0 ];then  
+    if [ -d "/charts" ]; then
+       mv /charts /charts-$now
+    fi
+    cp -r $SCRIPT_DIR/charts / 
+else  
+    if [ -d "~/charts" ]; then
+      mv ~/charts ~/charts-$now
+    fi
+    cp -r $SCRIPT_DIR/charts ~/  
 fi
-cp -r $SCRIPT_DIR/charts /
+
+
 
 log "--------------------------------"
 log "Arena has been installed successfully!"
