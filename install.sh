@@ -23,7 +23,7 @@ function log() {
 }
 
 if ! which kubectl >/dev/null 2>&1; then
-	cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/kubectl
+	sudo cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/kubectl
 fi
 
 if ! kubectl cluster-info >/dev/null 2>&1; then
@@ -86,18 +86,18 @@ fi
 # set -e
 
 if [ "$USE_HOSTNETWORK" == "true" ]; then
-    find /charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
+    find $SCRIPT_DIR/charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
 fi
 
 now=$(date "+%Y%m%d%H%M%S")
 if [ -f "/usr/local/bin/arena" ]; then
-    cp /usr/local/bin/arena /usr/local/bin/arena-$now
+    sudo cp /usr/local/bin/arena /usr/local/bin/arena-$now
 fi
-cp $SCRIPT_DIR/bin/arena /usr/local/bin/arena
+sudo cp $SCRIPT_DIR/bin/arena /usr/local/bin/arena
 
-rm -rf /usr/local/bin/arena-helm
+sudo rm -rf /usr/local/bin/arena-helm
 
-cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
+sudo cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
 
 # For non-root user, put the charts dir to the home directory
 if [ `id -u` -eq 0 ];then  
@@ -111,8 +111,6 @@ else
     fi
     cp -r $SCRIPT_DIR/charts ~/  
 fi
-
-
 
 log "--------------------------------"
 log "Arena has been installed successfully!"
