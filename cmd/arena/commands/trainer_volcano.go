@@ -42,7 +42,7 @@ type VolcanoJob struct {
 	pods         []v1.Pod
 	chiefPod     v1.Pod
 	requestedGPU int64
-	allocatedGPU int64
+	allocatedGPU float64
 }
 
 func (vj *VolcanoJob) Name() string {
@@ -208,7 +208,7 @@ func (vj *VolcanoJob) RequestedGPU() int64 {
 }
 
 // volcano job without gpu supported
-func (vj *VolcanoJob) AllocatedGPU() int64 {
+func (vj *VolcanoJob) AllocatedGPU() float64 {
 
 	if vj.allocatedGPU > 0 {
 		return vj.allocatedGPU

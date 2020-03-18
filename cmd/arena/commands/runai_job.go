@@ -162,17 +162,29 @@ func (rj *RunaiJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, er
 }
 
 // Requested GPU count of the Job
-func (rj *RunaiJob) RequestedGPU() int64 {
+func (rj *RunaiJob) RequestedGPU() float64 {
+	requestedGPUs := float64(0)
+	for _, pod := range rj.pods {
+		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[runaiGPUFraction], 64)
+		if GPUFractionErr == nil {
+			requestedGPUs += gpuFraction
+		}
+	}
+
+	if requestedGPUs != 0 {
+		return requestedGPUs
+	}
+
 	val, ok := rj.podSpec.Containers[0].Resources.Limits[NVIDIAGPUResourceName]
 	if !ok {
 		return 0
 	}
 
-	return val.Value()
+	return float64(val.Value())
 }
 
 // Requested GPU count of the Job
-func (rj *RunaiJob) AllocatedGPU() int64 {
+func (rj *RunaiJob) AllocatedGPU() float64 {
 	if rj.chiefPod == nil {
 		return 0
 	}
@@ -180,7 +192,7 @@ func (rj *RunaiJob) AllocatedGPU() int64 {
 	pod := rj.chiefPod
 
 	if pod.Status.Phase == v1.PodRunning {
-		return rj.RequestedGPU()
+		return float64(rj.RequestedGPU())
 	}
 
 	return 0

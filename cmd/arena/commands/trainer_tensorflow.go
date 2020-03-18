@@ -68,8 +68,8 @@ type TensorFlowJob struct {
 	tfjob        tfv1.TFJob
 	pods         []v1.Pod // all the pods including statefulset and job
 	chiefPod     v1.Pod   // the chief pod
-	requestedGPU int64
-	allocatedGPU int64
+	requestedGPU float64
+	allocatedGPU float64
 	trainerType  string // return trainer type: TENSORFLOW
 }
 
@@ -212,7 +212,7 @@ func (tj *TensorFlowJob) RequestedGPU() int64 {
 }
 
 // Requested GPU count of the Job
-func (tj *TensorFlowJob) AllocatedGPU() int64 {
+func (tj *TensorFlowJob) AllocatedGPU() float64 {
 	if tj.allocatedGPU > 0 {
 		return tj.allocatedGPU
 	}

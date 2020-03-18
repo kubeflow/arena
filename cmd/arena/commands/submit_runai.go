@@ -31,7 +31,9 @@ var (
 )
 
 const (
+	defaultNamespace         = "default"
 	defaultRunaiTrainingType = "runai"
+	runaiNamespace           = "runai"
 )
 
 func NewRunaiJobCommand() *cobra.Command {
@@ -169,9 +171,8 @@ func getJobIndex() (string, error) {
 
 func tryGetJobIndexOnce() (string, bool, error) {
 	var (
-		indexKey       = "index"
-		runaiNamespace = "runai"
-		configMapName  = "runai-cli-index"
+		indexKey      = "index"
+		configMapName = "runai-cli-index"
 	)
 
 	configMap, err := clientset.CoreV1().ConfigMaps(runaiNamespace).Get(configMapName, metav1.GetOptions{})
@@ -205,6 +206,7 @@ func tryGetJobIndexOnce() (string, bool, error) {
 
 	newIndex := fmt.Sprintf("%d", lastIndex+1)
 	configMap.Data[indexKey] = newIndex
+
 	_, err = clientset.CoreV1().ConfigMaps(runaiNamespace).Update(configMap)
 
 	// Might be someone already updated this configmap. Try the process again.
@@ -235,8 +237,12 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	Project             string            `yaml:"project,omitempty"`
-	GPU                 *int              `yaml:"gpu,omitempty"`
+	Project             string `yaml:"project,omitempty"`
+	Name                string `yaml:"name,omitempty"`
+	GPU                 *float64
+	GPUInt              *int              `yaml:"gpuInt,omitempty"`
+	GPUFraction         string            `yaml:"gpuFraction,omitempty"`
+	GPUFractionFixed    string            `yaml:"gpuFractionFixed,omitempty"`
 	Image               string            `yaml:"image,omitempty"`
 	HostIPC             *bool             `yaml:"hostIPC,omitempty"`
 	Interactive         *bool             `yaml:"interactive,omitempty"`
@@ -307,7 +313,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().StringVar(&nameParameter, "name", "", "Job name")
 	command.Flags().MarkDeprecated("name", "please use positional argument instead")
 
-	flags.AddIntNullableFlagP(command.Flags(), &(sa.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
+	flags.AddFloat64NullableFlagP(command.Flags(), &(sa.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
 	command.Flags().StringVar(&(sa.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
 	command.Flags().StringVar(&(sa.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M, .etc)")
 	command.Flags().StringVarP(&(sa.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
@@ -363,6 +369,12 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	configValues := ""
 	if configToUse != nil {
 		configValues = configToUse.Values
+	}
+
+	submitArgs.Name = name
+	err = handleSharedGPUsIfNeeded(name, submitArgs)
+	if err != nil {
+		return err
 	}
 
 	err = workflow.SubmitJob(name, defaultRunaiTrainingType, namespace, submitArgs, configValues, runaiChart, clientset, dryRun)

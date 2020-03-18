@@ -30,8 +30,8 @@ type JobInfo struct {
 	pods         []v1.Pod // all the pods including statefulset and job
 	jobPod       v1.Pod   // the pod of job
 	gpuCount     int64
-	requestedGPU int64
-	allocatedGPU int64
+	requestedGPU float64
+	allocatedGPU float64
 	trainerType  string // return trainer type: MPI, STANDALONE, TENSORFLOW
 }
 
@@ -68,18 +68,18 @@ func (ji *JobInfo) HostIPOfChief() (hostIP string) {
 }
 
 // Requested GPU count of the Job
-func (ji *JobInfo) RequestedGPU() int64 {
+func (ji *JobInfo) RequestedGPU() float64 {
 	if ji.requestedGPU > 0 {
 		return ji.requestedGPU
 	}
 	for _, pod := range ji.pods {
-		ji.requestedGPU += gpuInPod(pod)
+		ji.requestedGPU += float64(gpuInPod(pod))
 	}
 	return ji.requestedGPU
 }
 
 // Requested GPU count of the Job
-func (ji *JobInfo) AllocatedGPU() int64 {
+func (ji *JobInfo) AllocatedGPU() float64 {
 	if ji.allocatedGPU > 0 {
 		return ji.allocatedGPU
 	}

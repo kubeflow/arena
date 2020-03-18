@@ -15,6 +15,8 @@
 package commands
 
 import (
+	"strconv"
+
 	"k8s.io/api/core/v1"
 )
 
@@ -70,17 +72,28 @@ func gpuInPod(pod v1.Pod) (gpuCount int64) {
 	return gpuCount
 }
 
-func gpuInActivePod(pod v1.Pod) (gpuCount int64) {
+func gpuInActivePod(pod v1.Pod) (gpuCount float64) {
 	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
 		return 0
 	}
 
-	containers := pod.Spec.Containers
-	for _, container := range containers {
-		gpuCount += gpuInContainer(container)
+	gpuFractionUsed := getGPUFractionUsedByPod(pod)
+	if gpuFractionUsed > 0 {
+		return gpuFractionUsed
 	}
 
-	return gpuCount
+	return float64(gpuInPod(pod))
+}
+
+func getGPUFractionUsedByPod(pod v1.Pod) float64 {
+	if pod.Annotations != nil {
+		gpuFraction, GPUFractionErr := strconv.ParseFloat(pod.Annotations[runaiGPUFraction], 64)
+		if GPUFractionErr == nil {
+			return gpuFraction
+		}
+	}
+
+	return 0
 }
 
 func gpuInContainer(container v1.Container) int64 {
@@ -101,4 +114,24 @@ func gpuInContainerDeprecated(container v1.Container) int64 {
 	}
 
 	return val.Value()
+}
+
+func sharedGPUsUsedInNode(nodeInfo NodeInfo) int64 {
+	gpuIndexUsed := map[string]bool{}
+	for _, pod := range nodeInfo.pods {
+		if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+			return 0
+		}
+
+		if pod.Annotations != nil {
+			gpuIndex, found := pod.Annotations[runaiGPUIndex]
+			if !found {
+				continue
+			}
+
+			gpuIndexUsed[gpuIndex] = true
+		}
+	}
+
+	return int64(len(gpuIndexUsed))
 }

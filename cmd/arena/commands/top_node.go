@@ -31,7 +31,7 @@ import (
 )
 
 var (
-	showDetails  bool
+	showDetails bool
 )
 
 type NodeInfo struct {
@@ -265,7 +265,7 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 		var allocatableGPU int64
 		var allocatedGPU int64
 		totalGPU, allocatableGPU, allocatedGPU = calculateNodeGPU(nodeInfo)
-	
+
 		totalGPUsInCluster += totalGPU
 		allocatedGPUsInCluster += allocatedGPU
 		unhealthyGPUs := totalGPU - allocatableGPU
@@ -349,30 +349,34 @@ func displayTopNodeDetails(nodeInfos []NodeInfo) {
 }
 
 // calculate the GPU count of each node
-func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatbleGPU, allocatedGPU int64) {
+func calculateNodeGPU(nodeInfo NodeInfo) (totalGPU, allocatableGPU, allocatedGPU int64) {
 	node := nodeInfo.node
 	totalGPU = totalGpuInNode(node)
-	allocatbleGPU = allocatableGpuInNode(node)
+	allocatableGPU = allocatableGpuInNode(node)
 	// allocatedGPU = gpuInPod()
 
 	for _, pod := range nodeInfo.pods {
 		allocatedGPU += gpuInPod(pod)
 	}
 
-	return totalGPU, allocatbleGPU, allocatedGPU
+	fractionalGPUsUsedInNode := sharedGPUsUsedInNode(nodeInfo)
+	allocatedGPU += fractionalGPUsUsedInNode
+	totalGPU += fractionalGPUsUsedInNode
+
+	return totalGPU, allocatableGPU, allocatedGPU
 }
 
 // Does the node have unhealthy GPU
 func hasUnhealthyGPU(nodeInfo NodeInfo) (unhealthy bool) {
 	node := nodeInfo.node
 	totalGPU := totalGpuInNode(node)
-	allocatbleGPU := allocatableGpuInNode(node)
+	allocatableGPU := allocatableGpuInNode(node)
 
-	unhealthy = totalGPU > allocatbleGPU
+	unhealthy = totalGPU > allocatableGPU
 
 	if unhealthy {
 		log.Debugf("node: %s, allocated GPUs %s, total GPUs %s is unhealthy", nodeInfo.node.Name, strconv.FormatInt(totalGPU, 10),
-			strconv.FormatInt(allocatbleGPU, 10))
+			strconv.FormatInt(allocatableGPU, 10))
 	}
 
 	return unhealthy

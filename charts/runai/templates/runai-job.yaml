@@ -47,6 +47,9 @@ spec:
   template:
     metadata:
       annotations:
+        {{- if .Values.gpuFraction }}
+        gpu-fraction: "{{ .Values.gpuFraction }}"
+        {{- end }}
         {{- if .Values.elastic }}
         elastic: {{ .Values.elastic | quote }}
         {{- end }}
@@ -85,9 +88,9 @@ spec:
           workingDir: {{ .Values.workingDir }}
           {{- end}}
           resources:
-            {{- if .Values.gpu }}
+            {{- if .Values.gpuInt }}
             limits: 
-              nvidia.com/gpu: {{ .Values.gpu }}
+              nvidia.com/gpu: {{ .Values.gpuInt }}
             {{- end}}
             requests:
               {{- if .Values.cpu}}
@@ -122,6 +125,17 @@ spec:
               {{- end}}
             {{- end}}
           env:
+            {{- if .Values.gpuFraction }}
+            - name: RUNAI_GPU_FRACTION
+              value: "{{ .Values.gpuFractionFixed }}"
+            {{- end }}
+            {{- if .Values.gpuFraction }}
+            - name: NVIDIA_VISIBLE_DEVICES
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{  .Release.Name }}-runai-fraction-gpu"
+                  key: RUNAI-VISIBLE-DEVICES
+            {{- end}}
             - name: podUUID
               valueFrom:
                 fieldRef:
@@ -133,7 +147,7 @@ spec:
             {{ $parts := split "=" $env }}
             - name: {{ quote $parts._0 }}
               value: {{ quote $parts._1}}
-            {{- end }}  
+            {{- end }}
             {{- range $index, $env := .Values.environment }}
             {{ $parts := split "=" $env }}
             - name: {{ quote $parts._0 }}

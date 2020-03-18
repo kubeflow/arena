@@ -1,17 +1,28 @@
 package flags
 
 import (
-	flag "github.com/spf13/pflag"
 	"strconv"
 	"time"
+
+	flag "github.com/spf13/pflag"
 )
 
 type intNullableArgument struct {
 	variableToSet **int
 }
 
+type float64NullableArgument struct {
+	variableToSet **float64
+}
+
 func newIntNullableArgument(variable **int) *intNullableArgument {
 	return &intNullableArgument{
+		variableToSet: variable,
+	}
+}
+
+func newFloat64NullableArgument(variable **float64) *float64NullableArgument {
+	return &float64NullableArgument{
 		variableToSet: variable,
 	}
 }
@@ -34,8 +45,31 @@ func (argument *intNullableArgument) String() string {
 	return strconv.Itoa(**argument.variableToSet)
 }
 
+func (argument *float64NullableArgument) Set(s string) error {
+	f, err := strconv.ParseFloat(s, 64)
+	*argument.variableToSet = &f
+
+	return err
+}
+
+func (argument *float64NullableArgument) Type() string {
+	return "float64"
+}
+
+func (argument *float64NullableArgument) String() string {
+	if *argument.variableToSet == nil {
+		return ""
+	}
+
+	return strconv.FormatFloat(**argument.variableToSet, 'f', -1, 64)
+}
+
 func AddIntNullableFlagP(f *flag.FlagSet, variableToSet **int, name string, shorthand string, usage string) {
 	f.VarPF(newIntNullableArgument(variableToSet), name, shorthand, usage)
+}
+
+func AddFloat64NullableFlagP(f *flag.FlagSet, variableToSet **float64, name string, shorthand string, usage string) {
+	f.VarPF(newFloat64NullableArgument(variableToSet), name, shorthand, usage)
 }
 
 func AddIntNullableFlag(f *flag.FlagSet, variableToSet **int, name string, usage string) {

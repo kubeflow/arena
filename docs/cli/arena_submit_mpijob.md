@@ -18,7 +18,7 @@ arena submit mpijob [flags]
   -d, --data stringArray           specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>
       --data-dir stringArray       the data dir. If you specify /data, it means mounting hostpath /data into container path /data
   -e, --env stringArray            the environment variables
-      --gpus int                   the GPU count of each worker to run the training.
+      --gpus float                   the GPU count of each worker to run the training.
   -h, --help                       help for mpijob
       --image string               the docker image name of training job
       --logdir string              the training logs dir, default is /training_logs (default "/training_logs")

@@ -92,8 +92,8 @@ func NewTopJobCommand() *cobra.Command {
 func topTrainingJob(jobInfoList []TrainingJob) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var (
-		totalAllocatedGPUs int64
-		totalRequestedGPUs int64
+		totalAllocatedGPUs float64
+		totalRequestedGPUs float64
 	)
 
 	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TRAINER", "AGE", "NODE"}
@@ -109,8 +109,8 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 		totalAllocatedGPUs += allocatedGPU
 		totalRequestedGPUs += requestedGPU
 		PrintLine(w, jobInfo.Name(),
-			strconv.FormatInt(requestedGPU, 10),
-			strconv.FormatInt(allocatedGPU, 10),
+			strconv.FormatFloat(requestedGPU, 'f', -1, 64),
+			strconv.FormatFloat(allocatedGPU, 'f', -1, 64),
 			jobInfo.GetStatus(),
 			jobInfo.Trainer(),
 			util.ShortHumanDuration(jobInfo.Age()),
@@ -121,10 +121,10 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Total Allocated GPUs of Training Job:\n")
-	fmt.Fprintf(w, "%s \t\n", strconv.FormatInt(totalAllocatedGPUs, 10))
+	fmt.Fprintf(w, "%v \t\n", strconv.FormatFloat(totalAllocatedGPUs, 'f', -1, 32),)
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Total Requested GPUs of Training Job:\n")
-	fmt.Fprintf(w, "%s \t\n", strconv.FormatInt(totalRequestedGPUs, 10))
+	fmt.Fprintf(w, "%s \t\n", strconv.FormatFloat(totalRequestedGPUs, 'f', -1, 32),)
 
 	_ = w.Flush()
 }

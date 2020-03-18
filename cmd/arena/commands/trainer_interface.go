@@ -59,10 +59,10 @@ type TrainingJob interface {
 	GetJobDashboards(client *kubernetes.Clientset) ([]string, error)
 
 	// Requested GPU count of the Job
-	RequestedGPU() int64
+	RequestedGPU() float64
 
 	// Requested GPU count of the Job
-	AllocatedGPU() int64
+	AllocatedGPU() float64
 
 	// the host ip of the chief pod
 	HostIPOfChief() string
