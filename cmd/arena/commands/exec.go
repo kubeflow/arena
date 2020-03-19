@@ -6,6 +6,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 	"os"
 )
 
@@ -80,7 +81,8 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 	}
 
 	chiefPod := job.ChiefPod()
-	if chiefPod != nil {
+
+	if chiefPod == nil || chiefPod.Status.Phase != v1.PodRunning {
 		log.Errorf("Cannot %s into the job. It is still pending execution.", runaiCommandName)
 		os.Exit(1)
 	}
