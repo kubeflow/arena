@@ -5,6 +5,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -12,9 +13,10 @@ const (
 	runaiGPUFraction       = "gpu-fraction"
 	runaiGPUIndex          = "runai-gpu"
 	runaiVisibleDevices    = "RUNAI-VISIBLE-DEVICES"
+	factorForGPUFraction   = 0.7
 )
 
-func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error {
+func handleSharedGPUsIfNeeded(clientSet kubernetes.Interface, name string, submitArgs *submitRunaiJobArgs) error {
 	if submitArgs.GPU == nil {
 		return nil
 	}
@@ -32,9 +34,9 @@ func handleSharedGPUsIfNeeded(name string, submitArgs *submitRunaiJobArgs) error
 	}
 
 	submitArgs.GPUFraction = fmt.Sprintf("%v", *submitArgs.GPU)
-	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", (*submitArgs.GPU)*0.7)
+	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", (*submitArgs.GPU)*factorForGPUFraction)
 
-	return setConfigMapForFractionGPUJobs(name)
+	return setConfigMapForFractionGPUJobs(clientSet, name)
 }
 
 func validateFractionalGPUTask(submitArgs *submitRunaiJobArgs) error {
@@ -53,14 +55,14 @@ func validateFractionalGPUTask(submitArgs *submitRunaiJobArgs) error {
 	return nil
 }
 
-func setConfigMapForFractionGPUJobs(jobName string) error {
+func setConfigMapForFractionGPUJobs(clientSet kubernetes.Interface, jobName string) error {
 	configMapName := fmt.Sprintf("%v-%v", jobName, runaiFractionGPUSuffix)
-	configMap, err := clientset.CoreV1().ConfigMaps(defaultNamespace).Get(configMapName, metav1.GetOptions{})
+	configMap, err := clientSet.CoreV1().ConfigMaps(defaultNamespace).Get(configMapName, metav1.GetOptions{})
 
 	// Map already exists
 	if err == nil {
 		configMap.Data[runaiVisibleDevices] = ""
-		_, err = clientset.CoreV1().ConfigMaps(defaultNamespace).Update(configMap)
+		_, err = clientSet.CoreV1().ConfigMaps(defaultNamespace).Update(configMap)
 		return err
 	}
 
@@ -73,6 +75,6 @@ func setConfigMapForFractionGPUJobs(jobName string) error {
 		Data: data,
 	}
 
-	_, err = clientset.CoreV1().ConfigMaps(defaultNamespace).Create(configMap)
+	_, err = clientSet.CoreV1().ConfigMaps(defaultNamespace).Create(configMap)
 	return err
 }

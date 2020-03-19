@@ -372,7 +372,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	}
 
 	submitArgs.Name = name
-	err = handleSharedGPUsIfNeeded(name, submitArgs)
+	err = handleSharedGPUsIfNeeded(clientset, name, submitArgs)
 	if err != nil {
 		return err
 	}
