@@ -21,7 +21,7 @@ func NewBashCommand() *cobra.Command {
 
 			name = args[0]
 
-			execute(cmd, name, "/bin/bash", []string{}, true, true)
+			execute(cmd, name, "/bin/bash", []string{}, true, true, "bash")
 		},
 	}
 
@@ -47,7 +47,7 @@ func NewExecCommand() *cobra.Command {
 			command := args[1]
 			commandArgs := args[2:]
 
-			execute(cmd, name, command, commandArgs, interactive, TTY)
+			execute(cmd, name, command, commandArgs, interactive, TTY, "exec")
 		},
 	}
 
@@ -57,7 +57,7 @@ func NewExecCommand() *cobra.Command {
 	return command
 }
 
-func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool) {
+func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, runaiCommandName string) {
 
 	util.SetLogLevel(logLevel)
 	_, err := initKubeClient()
@@ -79,5 +79,11 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 		os.Exit(1)
 	}
 
-	kubectl.Exec(job.ChiefPod().Name, job.ChiefPod().Namespace, command, commandArgs, interactive, TTY)
+	chiefPod := job.ChiefPod()
+	if chiefPod != nil {
+		log.Errorf("Cannot %s into the job. It is still pending execution.", runaiCommandName)
+		os.Exit(1)
+	}
+
+	kubectl.Exec(chiefPod.Name, chiefPod.Namespace, command, commandArgs, interactive, TTY)
 }
