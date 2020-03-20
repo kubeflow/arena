@@ -22,8 +22,13 @@ function log() {
     echo $(date +"[%Y%m%d %H:%M:%S]: ") $1
 }
 
+sudo_prefix=""
+if [ `id -u` -ne 0 ]; then
+    sudo_prefix="sudo"
+fi
+
 if ! which kubectl >/dev/null 2>&1; then
-	sudo cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/kubectl
+	${sudo_prefix} cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/kubectl
 fi
 
 if ! kubectl cluster-info >/dev/null 2>&1; then
@@ -91,13 +96,13 @@ fi
 
 now=$(date "+%Y%m%d%H%M%S")
 if [ -f "/usr/local/bin/arena" ]; then
-    sudo cp /usr/local/bin/arena /usr/local/bin/arena-$now
+    ${sudo_prefix} cp /usr/local/bin/arena /usr/local/bin/arena-$now
 fi
-sudo cp $SCRIPT_DIR/bin/arena /usr/local/bin/arena
+${sudo_prefix} cp $SCRIPT_DIR/bin/arena /usr/local/bin/arena
 
-sudo rm -rf /usr/local/bin/arena-helm
+${sudo_prefix} rm -rf /usr/local/bin/arena-helm
 
-sudo cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
+${sudo_prefix} cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
 
 # For non-root user, put the charts dir to the home directory
 if [ `id -u` -eq 0 ];then  
