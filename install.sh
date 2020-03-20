@@ -22,6 +22,11 @@ function log() {
     echo $(date +"[%Y%m%d %H:%M:%S]: ") $1
 }
 
+sudo_prefix=""
+if [ `id -u` -ne 0 ]; then
+    sudo_prefix="sudo"
+fi
+
 if ! which kubectl >/dev/null 2>&1; then
 	${sudo_prefix} cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/kubectl
 fi
@@ -88,12 +93,6 @@ fi
 if [ "$USE_HOSTNETWORK" == "true" ]; then
     find $SCRIPT_DIR/charts/ -name values.yaml | xargs sed -i "/useHostNetwork/s/false/true/g"
 fi
-
-sudo_prefix=""
-if [ `id -u` -ne 0 ]; then
-    sudo_prefix="sudo"
-fi
-
 
 now=$(date "+%Y%m%d%H%M%S")
 if [ -f "/usr/local/bin/arena" ]; then
