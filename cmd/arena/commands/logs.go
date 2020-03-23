@@ -22,7 +22,6 @@ import (
 
 	podlogs "github.com/kubeflow/arena/pkg/podlogs"
 	tlogs "github.com/kubeflow/arena/pkg/printer/base/logs"
-	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
@@ -34,7 +33,6 @@ func NewLogsCommand() *cobra.Command {
 		Use:   "logs training job",
 		Short: "print the logs for a task of the training job",
 		Run: func(cmd *cobra.Command, args []string) {
-			util.SetLogLevel(logLevel)
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)

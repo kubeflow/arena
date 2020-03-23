@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -60,7 +59,6 @@ func NewExecCommand() *cobra.Command {
 
 func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, runaiCommandName string) {
 
-	util.SetLogLevel(logLevel)
 	_, err := initKubeClient()
 	if err != nil {
 		fmt.Println(err)

@@ -33,7 +33,6 @@ func NewTopJobCommand() *cobra.Command {
 		Use:   "job",
 		Short: "Display Resource (GPU) usage of jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
-			util.SetLogLevel(logLevel)
 			client, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

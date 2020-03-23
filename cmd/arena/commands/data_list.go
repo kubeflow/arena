@@ -44,8 +44,6 @@ func NewDataListCommand() *cobra.Command {
 		Short: "list all the data volume.",
 
 		Run: func(cmd *cobra.Command, args []string) {
-			util.SetLogLevel(logLevel)
-
 			_, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)

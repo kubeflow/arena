@@ -42,8 +42,8 @@ func NewRunaiJobCommand() *cobra.Command {
 		Short:   "Submit a Runai job.",
 		Aliases: []string{"ra"},
 		Run: func(cmd *cobra.Command, args []string) {
+			namespace := flags.GetProjectFlag(cmd)
 
-			util.SetLogLevel(logLevel)
 			if len(args) > 1 {
 				cmd.HelpFunc()(cmd, args)
 				fmt.Printf("\nAccepts 1 arg, received %d\n", len(args))

@@ -38,8 +38,6 @@ func NewListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "list all the training jobs",
 		Run: func(cmd *cobra.Command, args []string) {
-			util.SetLogLevel(logLevel)
-
 			client, err := initKubeClient()
 			if err != nil {
 				log.Errorf("Failed due to %v", err)

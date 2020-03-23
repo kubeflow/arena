@@ -15,7 +15,9 @@
 package commands
 
 import (
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/config"
+	"github.com/kubeflow/arena/pkg/util"
 	"github.com/spf13/cobra"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -38,6 +40,10 @@ func NewCommand() *cobra.Command {
 		Short: "runai is the command line interface to RunAI",
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
+		},
+		// Would be run before any child command
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			util.SetLogLevel(logLevel)
 		},
 	}
 
@@ -78,7 +84,7 @@ func addKubectlFlagsToCmd(cmd *cobra.Command) {
 	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
 	overrides := clientcmd.ConfigOverrides{}
 	// kflags := clientcmd.RecommendedConfigOverrideFlags("")
-	cmd.PersistentFlags().StringVarP(&namespace, "project", "p", "", "Specifies the Run:AI project to use for this Job.")
+	cmd.PersistentFlags().StringVarP(&namespace, flags.ProjectFlag, "p", "", "Specifies the Run:AI project to use for this Job.")
 	// clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), kflags)
 	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
 }
