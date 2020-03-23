@@ -17,10 +17,6 @@ package util
 import (
 	"fmt"
 	"regexp"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 const dns1123SubdomainFmt string = dns1123LabelFmt + "(\\." + dns1123LabelFmt + ")*"
@@ -50,15 +46,4 @@ func ValidateJobName(value string) error {
 		return fmt.Errorf("The job name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character.")
 	}
 	return nil
-}
-
-// Check if PriorityClassName exists
-func ValidatePriorityClassName(client *kubernetes.Clientset, name string) error {
-	// client.SchedulingV1alpha1()
-	_, err := client.Scheduling().PriorityClasses().Get(name, metav1.GetOptions{})
-	if err != nil && errors.IsNotFound(err) {
-		err = fmt.Errorf("The priority %s doesn't exist. Please check with `kubectl get pc` to get a valid priority.", name)
-	}
-
-	return err
 }

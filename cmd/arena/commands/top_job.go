@@ -24,21 +24,26 @@ import (
 	"strconv"
 	"text/tabwriter"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	"k8s.io/api/core/v1"
 )
 
 func NewTopJobCommand() *cobra.Command {
+	var allNamespaces bool
 	var command = &cobra.Command{
 		Use:   "job",
 		Short: "Display Resource (GPU) usage of jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
-			client, err := client.GetClientSet()
+
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			client := kubeClient.GetClientset()
+			namespace := flags.GetProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
 
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
@@ -51,13 +56,13 @@ func NewTopJobCommand() *cobra.Command {
 			)
 
 			useCache = true
-			allPods, err = acquireAllPods(client)
+			allPods, err = acquireAllPods(client, namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			allJobs, err = acquireAllJobs(client)
+			allJobs, err = acquireAllJobs(client, namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

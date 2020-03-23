@@ -80,7 +80,7 @@ func NewCommand() *cobra.Command {
 }
 
 func addKubectlFlagsToCmd(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&namespace, flags.ProjectFlag, "p", "", "Specifies the Run:AI project to use for this Job.")
+	cmd.PersistentFlags().StringP(flags.ProjectFlag, "p", "", "Specifies the Run:AI project to use for this Job.")
 }
 
 func createNamespace(client *kubernetes.Clientset, namespace string) error {
@@ -89,12 +89,12 @@ func createNamespace(client *kubernetes.Clientset, namespace string) error {
 			Name: namespace,
 		},
 	}
-	_, err := client.Core().Namespaces().Create(ns)
+	_, err := client.CoreV1().Namespaces().Create(ns)
 	return err
 }
 
 func getNamespace(client *kubernetes.Clientset, namespace string) (*v1.Namespace, error) {
-	return client.Core().Namespaces().Get(namespace, metav1.GetOptions{})
+	return client.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 }
 
 func ensureNamespace(client *kubernetes.Clientset, namespace string) error {

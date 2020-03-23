@@ -27,7 +27,6 @@ var (
 	allJobs        []batchv1.Job
 	useCache       bool
 	name           string
-	namespace      string
 	arenaNamespace string // the system namespace of arena
 )
 

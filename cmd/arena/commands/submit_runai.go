@@ -45,7 +45,6 @@ func NewRunaiJobCommand() *cobra.Command {
 		Short:   "Submit a Runai job.",
 		Aliases: []string{"ra"},
 		Run: func(cmd *cobra.Command, args []string) {
-			namespace := flags.GetProjectFlag(cmd)
 
 			if len(args) > 1 {
 				cmd.HelpFunc()(cmd, args)
@@ -62,8 +61,13 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			var err error
-			clientset, err = client.GetClientSet()
+			kubeClient, err := client.GetClient()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			clientset = kubeClient.GetClientset()
+			namespace := flags.GetProjectFlag(cmd, kubeClient)
 
 			if err != nil {
 				fmt.Println(err)
@@ -95,7 +99,7 @@ func NewRunaiJobCommand() *cobra.Command {
 				submitArgs.UseJupyterDefaultValues()
 			}
 
-			err = submitRunaiJob(args, submitArgs)
+			err = submitRunaiJob(args, namespace, submitArgs)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -349,7 +353,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
 }
 
-func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
+func submitRunaiJob(args []string, namespace string, submitArgs *submitRunaiJobArgs) error {
 	configs := clusterConfig.NewClusterConfigs(clientset)
 
 	var configToUse *clusterConfig.ClusterConfig

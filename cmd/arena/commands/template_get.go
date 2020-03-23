@@ -18,11 +18,12 @@ func NewTemplateGetCommand() *cobra.Command {
 				os.Exit(0)
 			}
 
-			clientset, err := client.GetClientSet()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			clientset := kubeClient.GetClientset()
 
 			clusterConfigs := clusterConfig.NewClusterConfigs(clientset)
 			configName := args[0]

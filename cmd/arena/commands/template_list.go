@@ -14,11 +14,12 @@ func NewTemplateListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List different templates in the cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			clientset, err := client.GetClientSet()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			clientset := kubeClient.GetClientset()
 
 			clusterConfigs := clusterConfig.NewClusterConfigs(clientset)
 			configs, err := clusterConfigs.ListClusterConfigs()

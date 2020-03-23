@@ -1,49 +1,62 @@
 package client
 
 import (
-	log "github.com/sirupsen/logrus"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"os"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 var (
-	clientset    *kubernetes.Clientset
-	clientConfig clientcmd.ClientConfig
+	client *Client
 )
 
-func GetClientConfig() (*restclient.Config, error) {
-	if clientConfig != nil {
-		return clientConfig.ClientConfig()
-	}
-
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
-	overrides := clientcmd.ConfigOverrides{}
-	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
-
-	return clientConfig.ClientConfig()
+type Client struct {
+	clientset  *kubernetes.Clientset
+	restConfig *restclient.Config
+	namespace  string
 }
 
-func GetClientSet() (*kubernetes.Clientset, error) {
-	if clientset != nil {
-		return clientset, nil
+func GetClient() (*Client, error) {
+	if client != nil {
+		return client, nil
 	}
 
-	var err error
-	restConfig, err := GetClientConfig()
+	getter := genericclioptions.NewConfigFlags(true)
+	factory := cmdutil.NewFactory(getter)
+	namespace, _, err := factory.ToRawKubeConfigLoader().Namespace()
+
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
-	// create the clientset
-	clientset, err = kubernetes.NewForConfig(restConfig)
+	clientConfig := factory.ToRawKubeConfigLoader()
+	restConfig, err := clientConfig.ClientConfig()
+
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
-	return clientset, nil
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{
+		namespace:  namespace,
+		restConfig: restConfig,
+		clientset:  clientset,
+	}, nil
+}
+
+func (c *Client) GetClientset() *kubernetes.Clientset {
+	return c.clientset
+}
+
+func (c *Client) GetRestConfig() *restclient.Config {
+	return c.restConfig
+}
+
+func (c *Client) GetDefaultNamespace() string {
+	return c.namespace
 }

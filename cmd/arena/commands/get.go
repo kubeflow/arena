@@ -32,6 +32,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	"github.com/kubeflow/arena/pkg/config"
 	"k8s.io/api/core/v1"
@@ -62,11 +63,13 @@ func NewGetCommand() *cobra.Command {
 			}
 			name = args[0]
 
-			clientset, err := client.GetClientSet()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			clientset := kubeClient.GetClientset()
+			namespace := flags.GetProjectFlag(cmd, kubeClient)
 
 			job, err := searchTrainingJob(clientset, name, "", namespace)
 			if err != nil {

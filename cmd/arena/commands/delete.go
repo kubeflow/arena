@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util/helm"
@@ -38,11 +39,13 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			clientset, err := client.GetClientSet()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			clientset := kubeClient.GetClientset()
+			namespace := flags.GetProjectFlag(cmd, kubeClient)
 
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
@@ -51,7 +54,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = deleteTrainingJob(clientset, jobName, "")
+				err = deleteTrainingJob(clientset, jobName, namespace, "")
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
@@ -62,7 +65,7 @@ func NewDeleteCommand() *cobra.Command {
 	return command
 }
 
-func deleteTrainingJob(clientset *kubernetes.Clientset, jobName, trainingType string) error {
+func deleteTrainingJob(clientset *kubernetes.Clientset, jobName, namespace string, trainingType string) error {
 	var trainingTypes []string
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)
@@ -107,10 +110,6 @@ func deleteTrainingJob(clientset *kubernetes.Clientset, jobName, trainingType st
 	log.Infof("The Job %s has been deleted successfully", jobName)
 	// (TODO: cheyang)3. Handle training jobs created by others, to implement
 	return nil
-}
-
-func deleteTrainingJobWithHelm(jobName string) error {
-	return helm.DeleteRelease(jobName)
 }
 
 func isKnownTrainingType(trainingType string) bool {

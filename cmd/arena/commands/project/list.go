@@ -37,14 +37,12 @@ type Queue struct {
 }
 
 func runListCommand(cmd *cobra.Command, args []string) error {
-	clientset, err := client.GetClientSet()
+	kubeClient, err := client.GetClient()
 	if err != nil {
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
+	clientset := kubeClient.GetClientset()
 
 	namespaceList, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
 
@@ -68,11 +66,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	clientConfig, err := client.GetClientConfig()
-	if err != nil {
-		return err
-	}
-	dynamicClient, err := dynamic.NewForConfig(clientConfig)
+	dynamicClient, err := dynamic.NewForConfig(kubeClient.GetRestConfig())
 	if err != nil {
 		return err
 	}

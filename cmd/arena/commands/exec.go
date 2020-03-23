@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
@@ -60,11 +61,13 @@ func NewExecCommand() *cobra.Command {
 
 func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, runaiCommandName string) {
 
-	clientset, err := client.GetClientSet()
+	kubeClient, err := client.GetClient()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	clientset = kubeClient.GetClientset()
+	namespace := flags.GetProjectFlag(cmd, kubeClient)
 
 	job, err := searchTrainingJob(clientset, name, "", namespace)
 	if err != nil {

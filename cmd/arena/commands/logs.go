@@ -20,6 +20,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	podlogs "github.com/kubeflow/arena/pkg/podlogs"
 	tlogs "github.com/kubeflow/arena/pkg/printer/base/logs"
@@ -39,11 +40,14 @@ func NewLogsCommand() *cobra.Command {
 			}
 			name = args[0]
 
-			clientset, err := client.GetClientSet()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			clientset := kubeClient.GetClientset()
+			namespace := flags.GetProjectFlag(cmd, kubeClient)
+
 			outerArgs.KubeClient = clientset
 			if err != nil {
 				log.Debugf("Failed due to %v", err)

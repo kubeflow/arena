@@ -46,11 +46,12 @@ func NewTopNodeCommand() *cobra.Command {
 		Use:   "node",
 		Short: "Display Resource (GPU) usage of nodes.",
 		Run: func(cmd *cobra.Command, args []string) {
-			clientset, err := client.GetClientSet()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+			clientset := kubeClient.GetClientset()
 			allPods, err = acquireAllActivePods(clientset)
 			if err != nil {
 				fmt.Println(err)
