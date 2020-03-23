@@ -46,7 +46,6 @@ func NewListCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = updateNamespace(cmd)
 			if err != nil {
 				log.Errorf("Failed due to %v", err)
 				os.Exit(1)
@@ -82,7 +81,7 @@ func NewListCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "list from all projects")
 
 	return command
 }

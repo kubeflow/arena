@@ -16,6 +16,7 @@ package helm
 
 import (
 	"fmt"
+	util "github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
@@ -122,8 +123,6 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, d
 		return "", err
 	}
 
-	var args []string
-
 	var defaultValuesFileArg string
 	if defaultValuesFile != "" {
 		defaultValuesFileArg = fmt.Sprintf("-f %s", defaultValuesFile)
@@ -131,14 +130,16 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, d
 		defaultValuesFileArg = ""
 	}
 
+	args := []string{binary, "template"}
+
 	if helmVersion == HELM_3 {
-		args = []string{binary, "template", name, chartName, defaultValuesFileArg, "-f", valueFileName,
-			"--namespace", namespace, ">", templateFileName}
+		args = append(args, name)
 	} else {
-		args = []string{binary, "template", defaultValuesFileArg, "-f", valueFileName,
-			"--namespace", namespace,
-			"--name", name, chartName, ">", templateFileName}
+		args = append(args, "--name", name)
 	}
+
+	args = util.AddNamespaceToArgs(args, namespace)
+	args = append(args, chartName, defaultValuesFileArg, "-f", valueFileName, ">", templateFileName)
 
 	log.Debugf("Exec bash -c %v", args)
 

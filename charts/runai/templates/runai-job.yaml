@@ -55,7 +55,6 @@ spec:
         {{- end }}
       labels:
         {{- include "charts.label-addition" . | indent 8}}
-        project: {{ .Values.project }}
         {{- if .Values.user }}
         user: {{ .Values.user }}
         {{- end }}

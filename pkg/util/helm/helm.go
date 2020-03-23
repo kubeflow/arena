@@ -16,6 +16,7 @@ package helm
 
 import (
 	"fmt"
+	util "github.com/kubeflow/arena/pkg/util"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -63,7 +64,8 @@ func InstallRelease(name string, namespace string, values interface{}, chartName
 	}
 
 	// 4. prepare the arguments
-	args := []string{"install", "-f", valueFile.Name(), "--namespace", namespace, "--name", name, chartName}
+	args := []string{"install", "-f", valueFile.Name(), "--name", name, chartName}
+	args = util.AddNamespaceToArgs(args, namespace)
 	log.Debugf("Exec %s, %v", binary, args)
 
 	env := os.Environ()

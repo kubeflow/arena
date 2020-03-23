@@ -16,6 +16,7 @@ package kubectl
 
 import (
 	"fmt"
+	util "github.com/kubeflow/arena/pkg/util"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -119,7 +120,9 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (output string,
 	}
 
 	args := []string{"cat", appInfoFile, "|", "xargs",
-		binary, "delete", "--namespace", namespace}
+		binary, "delete"}
+
+	args = util.AddNamespaceToArgs(args, namespace)
 
 	log.Debugf("Exec bash -c %v", args)
 
@@ -229,7 +232,8 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 * get configMap by using name, namespace
 **/
 func CheckAppConfigMap(name, namespace string) (found bool) {
-	args := []string{"get", "configmap", name, "--namespace", namespace}
+	args := []string{"get", "configmap", name}
+	args = util.AddNamespaceToArgs(args, namespace)
 	out, err := kubectl(args)
 
 	if err != nil {
@@ -260,10 +264,10 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 	}
 	fileName = file.Name()
 
-	args := []string{binary, "get", "configmap", name,
-		"--namespace", namespace,
-		fmt.Sprintf("-o=jsonpath='{.data.%s}'", key),
-		">", fileName}
+	args := []string{binary, "get", "configmap", name, fmt.Sprintf("-o=jsonpath='{.data.%s}'", key)}
+	args = util.AddNamespaceToArgs(args, namespace)
+	args = append(args, ">", fileName)
+
 	log.Debugf("Exec bash -c %s", strings.Join(args, " "))
 
 	cmd := exec.Command("bash", "-c", strings.Join(args, " "))

@@ -16,7 +16,6 @@ package commands
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
@@ -58,27 +57,6 @@ func initKubeClient() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	return clientset, nil
-}
-
-// Update namespace if it's not set by user
-func updateNamespace(cmd *cobra.Command) (err error) {
-	found := false
-	// Update the namespace
-	if !cmd.Flags().Changed("namespace") {
-		namespace, found = arenaConfigs["namespace"]
-		if !found {
-			namespace, _, err = clientConfig.Namespace()
-			log.Debugf("auto detect namespace %s", namespace)
-			if err != nil {
-				return err
-			}
-		} else {
-			log.Debugf("use arena config namespace %s", namespace)
-		}
-	} else {
-		log.Debugf("force to use namespace %s", namespace)
-	}
-	return nil
 }
 
 func getAllTrainingTypes(clientset *kubernetes.Clientset) []string {

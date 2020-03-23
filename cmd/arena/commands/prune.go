@@ -45,7 +45,6 @@ func NewPruneCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = updateNamespace(cmd)
 			if err != nil {
 				log.Errorf("Failed due to %v", err)
 				os.Exit(1)

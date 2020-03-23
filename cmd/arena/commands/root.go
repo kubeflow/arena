@@ -78,7 +78,7 @@ func addKubectlFlagsToCmd(cmd *cobra.Command) {
 	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
 	overrides := clientcmd.ConfigOverrides{}
 	// kflags := clientcmd.RecommendedConfigOverrideFlags("")
-	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "default", "the namespace of the job")
+	cmd.PersistentFlags().StringVarP(&namespace, "project", "p", "", "Specifies the Run:AI project to use for this Job.")
 	// clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), kflags)
 	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
 }

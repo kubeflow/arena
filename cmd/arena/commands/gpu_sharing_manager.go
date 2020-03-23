@@ -16,7 +16,7 @@ const (
 	factorForGPUFraction   = 0.7
 )
 
-func handleSharedGPUsIfNeeded(clientSet kubernetes.Interface, name string, submitArgs *submitRunaiJobArgs) error {
+func handleSharedGPUsIfNeeded(clientSet kubernetes.Interface, name string, namespace string, submitArgs *submitRunaiJobArgs) error {
 	if submitArgs.GPU == nil {
 		return nil
 	}
@@ -36,7 +36,7 @@ func handleSharedGPUsIfNeeded(clientSet kubernetes.Interface, name string, submi
 	submitArgs.GPUFraction = fmt.Sprintf("%v", *submitArgs.GPU)
 	submitArgs.GPUFractionFixed = fmt.Sprintf("%v", (*submitArgs.GPU)*factorForGPUFraction)
 
-	return setConfigMapForFractionGPUJobs(clientSet, name)
+	return setConfigMapForFractionGPUJobs(clientSet, name, namespace)
 }
 
 func validateFractionalGPUTask(submitArgs *submitRunaiJobArgs) error {
@@ -55,14 +55,14 @@ func validateFractionalGPUTask(submitArgs *submitRunaiJobArgs) error {
 	return nil
 }
 
-func setConfigMapForFractionGPUJobs(clientSet kubernetes.Interface, jobName string) error {
+func setConfigMapForFractionGPUJobs(clientSet kubernetes.Interface, jobName string, namespace string) error {
 	configMapName := fmt.Sprintf("%v-%v", jobName, runaiFractionGPUSuffix)
-	configMap, err := clientSet.CoreV1().ConfigMaps(defaultNamespace).Get(configMapName, metav1.GetOptions{})
+	configMap, err := clientSet.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 
 	// Map already exists
 	if err == nil {
 		configMap.Data[runaiVisibleDevices] = ""
-		_, err = clientSet.CoreV1().ConfigMaps(defaultNamespace).Update(configMap)
+		_, err = clientSet.CoreV1().ConfigMaps(namespace).Update(configMap)
 		return err
 	}
 
@@ -75,6 +75,6 @@ func setConfigMapForFractionGPUJobs(clientSet kubernetes.Interface, jobName stri
 		Data: data,
 	}
 
-	_, err = clientSet.CoreV1().ConfigMaps(defaultNamespace).Create(configMap)
+	_, err = clientSet.CoreV1().ConfigMaps(namespace).Create(configMap)
 	return err
 }

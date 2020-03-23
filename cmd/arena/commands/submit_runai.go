@@ -31,7 +31,6 @@ var (
 )
 
 const (
-	defaultNamespace         = "default"
 	defaultRunaiTrainingType = "runai"
 	runaiNamespace           = "runai"
 )
@@ -66,7 +65,6 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = updateNamespace(cmd)
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
@@ -237,7 +235,6 @@ func NewSubmitRunaiJobArgs() *submitRunaiJobArgs {
 type submitRunaiJobArgs struct {
 	// These arguments should be omitted when empty, to support default values file created in the cluster
 	// So any empty ones won't override the default values
-	Project             string `yaml:"project,omitempty"`
 	Name                string `yaml:"name,omitempty"`
 	GPU                 *float64
 	GPUInt              *int              `yaml:"gpuInt,omitempty"`
@@ -316,7 +313,6 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	flags.AddFloat64NullableFlagP(command.Flags(), &(sa.GPU), "gpu", "g", "Number of GPUs to allocation to the Job.")
 	command.Flags().StringVar(&(sa.CPU), "cpu", "", "CPU units to allocate for the job (0.5, 1, .etc)")
 	command.Flags().StringVar(&(sa.Memory), "memory", "", "CPU Memory to allocate for this job (1G, 20M, .etc)")
-	command.Flags().StringVarP(&(sa.Project), "project", "p", "", "Specifies the Run:AI project to use for this Job.")
 	command.Flags().StringVarP(&(sa.Image), "image", "i", "", "Image to use when creating the container for this Job.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.HostIPC), "host-ipc", "Use the host's ipc namespace.")
 	flags.AddBoolNullableFlag(command.Flags(), &(sa.Interactive), "interactive", "Mark this Job as unattended or interactive.")
@@ -372,7 +368,7 @@ func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs) error {
 	}
 
 	submitArgs.Name = name
-	err = handleSharedGPUsIfNeeded(clientset, name, submitArgs)
+	err = handleSharedGPUsIfNeeded(clientset, name, namespace, submitArgs)
 	if err != nil {
 		return err
 	}

@@ -56,7 +56,6 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = updateNamespace(cmd)
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)

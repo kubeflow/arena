@@ -67,7 +67,6 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 		os.Exit(1)
 	}
 
-	err = updateNamespace(cmd)
 	if err != nil {
 		log.Debugf("Failed due to %v", err)
 		fmt.Println(err)

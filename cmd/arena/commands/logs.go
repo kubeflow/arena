@@ -51,7 +51,6 @@ func NewLogsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			outerArgs.KubeClient = kubernetes.NewForConfigOrDie(conf)
-			err = updateNamespace(cmd)
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
