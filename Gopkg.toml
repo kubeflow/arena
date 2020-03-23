@@ -65,3 +65,7 @@
 [[constraint]]
   name = "github.com/mholt/archiver"
   version = "3.3.0"
+
+[[constraint]]
+  name = "github.com/mitchellh/mapstructure"
+  version = "1.2.2"

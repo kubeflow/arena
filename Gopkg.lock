@@ -285,6 +285,14 @@
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:6ea2d98ba8ae7c06a918970661b744be5d1a385c40917b9c317e9a4f2c36ac6f"
+  name = "github.com/mitchellh/mapstructure"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "694aaefbc689be1915c2ef39e880409057931a94"
+  version = "v1.2.2"
+
+[[projects]]
   digest = "1:33422d238f147d247752996a26574ac48dcf472976eda7f5134015f06bf16563"
   name = "github.com/modern-go/concurrent"
   packages = ["."]
@@ -723,6 +731,7 @@
     "github.com/golang/protobuf/proto",
     "github.com/mholt/archiver",
     "github.com/mitchellh/go-homedir",
+    "github.com/mitchellh/mapstructure",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/cobra/doc",
