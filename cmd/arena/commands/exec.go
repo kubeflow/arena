@@ -2,7 +2,7 @@ package commands
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -60,7 +60,7 @@ func NewExecCommand() *cobra.Command {
 
 func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, runaiCommandName string) {
 
-	clientset, err := util.GetClientSet()
+	clientset, err := client.GetClientSet()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

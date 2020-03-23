@@ -2,7 +2,7 @@ package project
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util/command"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +19,7 @@ import (
 // )
 
 func runListCommand(cmd *cobra.Command, args []string) error {
-	clientset, err := util.GetClientSet()
+	clientset, err := client.GetClientSet()
 	if err != nil {
 		return err
 	}

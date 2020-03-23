@@ -22,6 +22,7 @@ import (
 
 	"io"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/types"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
@@ -42,7 +43,7 @@ func NewListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "list all the training jobs",
 		Run: func(cmd *cobra.Command, args []string) {
-			client, err := util.GetClientSet()
+			client, err := client.GetClientSet()
 			if err != nil {
 				log.Errorf("Failed due to %v", err)
 				os.Exit(1)

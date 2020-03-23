@@ -20,9 +20,9 @@ import (
 	"path"
 	"time"
 
+	"github.com/kubeflow/arena/pkg/client"
 	podlogs "github.com/kubeflow/arena/pkg/podlogs"
 	tlogs "github.com/kubeflow/arena/pkg/printer/base/logs"
-	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -39,7 +39,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 			name = args[0]
 
-			clientset, err := util.GetClientSet()
+			clientset, err := client.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/config"
-	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
@@ -38,7 +38,7 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			clientset, err := util.GetClientSet()
+			clientset, err := client.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

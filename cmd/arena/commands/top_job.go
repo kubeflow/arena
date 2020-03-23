@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"text/tabwriter"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	"k8s.io/api/core/v1"
 )
@@ -33,7 +34,7 @@ func NewTopJobCommand() *cobra.Command {
 		Use:   "job",
 		Short: "Display Resource (GPU) usage of jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
-			client, err := util.GetClientSet()
+			client, err := client.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

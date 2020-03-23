@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
@@ -62,7 +63,7 @@ func NewRunaiJobCommand() *cobra.Command {
 			}
 
 			var err error
-			clientset, err = util.GetClientSet()
+			clientset, err = client.GetClientSet()
 
 			if err != nil {
 				fmt.Println(err)

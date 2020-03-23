@@ -25,6 +25,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -61,7 +62,7 @@ func NewGetCommand() *cobra.Command {
 			}
 			name = args[0]
 
-			clientset, err := util.GetClientSet()
+			clientset, err := client.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
