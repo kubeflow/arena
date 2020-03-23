@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"math"
 	"os"
 	"os/user"
@@ -28,6 +29,7 @@ var (
 	configArg        string
 	nameParameter    string
 	dryRun           bool
+	clientset        *kubernetes.Clientset
 )
 
 const (
@@ -59,7 +61,9 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			_, err := initKubeClient()
+			var err error
+			clientset, err = util.GetClientSet()
+
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

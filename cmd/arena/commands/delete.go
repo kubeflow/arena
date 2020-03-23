@@ -19,10 +19,12 @@ import (
 	"os"
 
 	"github.com/kubeflow/arena/pkg/config"
+	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/kubernetes"
 )
 
 // NewDeleteCommand
@@ -36,8 +38,7 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			// setupKubeconfig()
-			_, err := initKubeClient()
+			clientset, err := util.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -50,7 +51,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = deleteTrainingJob(jobName, "")
+				err = deleteTrainingJob(clientset, jobName, "")
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
@@ -61,7 +62,7 @@ func NewDeleteCommand() *cobra.Command {
 	return command
 }
 
-func deleteTrainingJob(jobName, trainingType string) error {
+func deleteTrainingJob(clientset *kubernetes.Clientset, jobName, trainingType string) error {
 	var trainingTypes []string
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)

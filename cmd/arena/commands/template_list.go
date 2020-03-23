@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
+	"github.com/kubeflow/arena/pkg/util"
 	"github.com/spf13/cobra"
 	"os"
 	"text/tabwriter"
@@ -13,7 +14,7 @@ func NewTemplateListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List different templates in the cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			_, err := initKubeClient()
+			clientset, err := util.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

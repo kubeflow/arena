@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
+	"github.com/kubeflow/arena/pkg/util"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -17,7 +18,7 @@ func NewTemplateGetCommand() *cobra.Command {
 				os.Exit(0)
 			}
 
-			_, err := initKubeClient()
+			clientset, err := util.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

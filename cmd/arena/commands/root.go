@@ -16,6 +16,7 @@ package commands
 
 import (
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
+	"github.com/kubeflow/arena/cmd/arena/commands/project"
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/spf13/cobra"
@@ -25,7 +26,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
-	"os"
 )
 
 var (
@@ -72,6 +72,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewBashCommand())
 	command.AddCommand(NewExecCommand())
 	command.AddCommand(NewTemplateCommand())
+	command.AddCommand(project.NewProjectCommand())
 	// command.AddCommand(NewWaitCommand())
 	// command.AddCommand(cmd.NewVersionCmd(CLIName))
 
@@ -79,14 +80,7 @@ func NewCommand() *cobra.Command {
 }
 
 func addKubectlFlagsToCmd(cmd *cobra.Command) {
-	// The "usual" clientcmd/kubectl flags
-	loadingRules = clientcmd.NewDefaultClientConfigLoadingRules()
-	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
-	overrides := clientcmd.ConfigOverrides{}
-	// kflags := clientcmd.RecommendedConfigOverrideFlags("")
 	cmd.PersistentFlags().StringVarP(&namespace, flags.ProjectFlag, "p", "", "Specifies the Run:AI project to use for this Job.")
-	// clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), kflags)
-	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
 }
 
 func createNamespace(client *kubernetes.Clientset, namespace string) error {

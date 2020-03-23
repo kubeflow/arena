@@ -61,19 +61,13 @@ func NewGetCommand() *cobra.Command {
 			}
 			name = args[0]
 
-			_, err := initKubeClient()
+			clientset, err := util.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			if err != nil {
-				log.Debugf("Failed due to %v", err)
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			job, err := searchTrainingJob(name, "", namespace)
+			job, err := searchTrainingJob(clientset, name, "", namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -98,7 +92,7 @@ type PrintArgs struct {
 /*
 * search the training job with name and training type
  */
-func searchTrainingJob(jobName, trainingType, namespace string) (job TrainingJob, err error) {
+func searchTrainingJob(clientset *kubernetes.Clientset, jobName, trainingType, namespace string) (job TrainingJob, err error) {
 	if len(trainingType) > 0 {
 		if isKnownTrainingType(trainingType) {
 			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)

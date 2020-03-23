@@ -22,9 +22,9 @@ import (
 
 	podlogs "github.com/kubeflow/arena/pkg/podlogs"
 	tlogs "github.com/kubeflow/arena/pkg/printer/base/logs"
+	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes"
 )
 
 func NewLogsCommand() *cobra.Command {
@@ -38,17 +38,13 @@ func NewLogsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			name = args[0]
-			conf, err := clientConfig.ClientConfig()
+
+			clientset, err := util.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			_, err = initKubeClient()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			outerArgs.KubeClient = kubernetes.NewForConfigOrDie(conf)
+			outerArgs.KubeClient = clientset
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
@@ -56,7 +52,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 
 			// podName, err := getPodNameFromJob(printer.kubeClient, namespace, name)
-			job, err := searchTrainingJob(name, "", namespace)
+			job, err := searchTrainingJob(clientset, name, "", namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

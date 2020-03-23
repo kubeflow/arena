@@ -33,12 +33,16 @@ import (
 	"strconv"
 )
 
+var (
+	allNamespaces bool
+)
+
 func NewListCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "list",
 		Short: "list all the training jobs",
 		Run: func(cmd *cobra.Command, args []string) {
-			client, err := initKubeClient()
+			client, err := util.GetClientSet()
 			if err != nil {
 				log.Errorf("Failed due to %v", err)
 				os.Exit(1)
@@ -139,7 +143,7 @@ func trainingJobList(client *kubernetes.Clientset) ([]TrainingJob, error) {
 	log.Debugf("job config maps: %v", cms)
 
 	for _, cm := range cms {
-		job, err := searchTrainingJob(cm.Name, cm.Type, cm.Namespace)
+		job, err := searchTrainingJob(client, cm.Name, cm.Type, cm.Namespace)
 		if err != nil {
 			log.Errorf("Failed due to %v", err)
 			return jobs, err

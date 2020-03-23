@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -59,19 +60,13 @@ func NewExecCommand() *cobra.Command {
 
 func execute(cmd *cobra.Command, name string, command string, commandArgs []string, interactive bool, TTY bool, runaiCommandName string) {
 
-	_, err := initKubeClient()
+	clientset, err := util.GetClientSet()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if err != nil {
-		log.Debugf("Failed due to %v", err)
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	job, err := searchTrainingJob(name, "", namespace)
+	job, err := searchTrainingJob(clientset, name, "", namespace)
 	if err != nil {
 		log.Errorln(err)
 		os.Exit(1)

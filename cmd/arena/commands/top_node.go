@@ -21,6 +21,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
@@ -45,7 +46,7 @@ func NewTopNodeCommand() *cobra.Command {
 		Use:   "node",
 		Short: "Display Resource (GPU) usage of nodes.",
 		Run: func(cmd *cobra.Command, args []string) {
-			client, err := initKubeClient()
+			client, err := util.GetClientSet()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

@@ -15,20 +15,13 @@
 package commands
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // Global variables
 var (
-	restConfig   *rest.Config
-	clientConfig clientcmd.ClientConfig
-	clientset    *kubernetes.Clientset
 	// To reduce client-go API call, for 'arena list' scenario
 	allPods        []v1.Pod
 	allJobs        []batchv1.Job
@@ -37,27 +30,6 @@ var (
 	namespace      string
 	arenaNamespace string // the system namespace of arena
 )
-
-func initKubeClient() (*kubernetes.Clientset, error) {
-	loadArenaConifg()
-	if clientset != nil {
-		return clientset, nil
-	}
-	var err error
-	restConfig, err = clientConfig.ClientConfig()
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
-	// create the clientset
-	clientset, err = kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	return clientset, nil
-}
 
 func getAllTrainingTypes(clientset *kubernetes.Clientset) []string {
 	trainers := NewTrainers(clientset)
