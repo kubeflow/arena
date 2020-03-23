@@ -83,7 +83,7 @@ func NewTopJobCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+	command.Flags().BoolVarP(&allNamespaces, "all-projects", "A", false, "show all projects.")
 
 	return command
 }
