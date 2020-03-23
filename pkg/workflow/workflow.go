@@ -112,7 +112,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if !dryRun {
 		found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 		if found {
-			return fmt.Errorf("the job %s is already exist, please delete it first. use '%s delete %s'", name, config.CLIName, name)
+			return fmt.Errorf("the job %s already exists, please delete it first. use '%s delete %s'", name, config.CLIName, name)
 		}
 	}
 

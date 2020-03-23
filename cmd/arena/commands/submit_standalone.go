@@ -119,7 +119,7 @@ func (submitArgs *submitStandaloneJobArgs) prepare(args []string) (err error) {
 		return err
 	}
 	if exist {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
 	}
 
 	return helm.InstallRelease(name, namespace, submitArgs, standalone_training_chart)
@@ -156,7 +156,7 @@ func submitStandaloneJob(args []string, submitArgs *submitStandaloneJobArgs) (er
 	}
 
 	if job != nil {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
 	}
 
 	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, "", standalone_training_chart, clientset)
@@ -180,7 +180,7 @@ func submitStandaloneJobWithHelm(args []string, submitArgs *submitStandaloneJobA
 		return err
 	}
 	if exist {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
 	}
 
 	return helm.InstallRelease(name, namespace, submitArgs, standalone_training_chart)
