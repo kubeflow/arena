@@ -24,9 +24,6 @@ jobs:
         name: general-prep
         command: rm .env
     - run:
-        name: install dependencies
-        command: dep ensure
-    - run:
         name: build-mac
         command: |
           make cli-darwin-amd64
