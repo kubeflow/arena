@@ -16,6 +16,7 @@ func Test_handleSharedGPUsIfNeeded(t *testing.T) {
 	elasticJobFalse := false
 	fractionalGPU := 0.2
 	wholeGPU := float64(1)
+	namespace := "default"
 
 	type args struct {
 		jobName    string
@@ -84,7 +85,7 @@ func Test_handleSharedGPUsIfNeeded(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testSubmitArgs := tt.args.submitArgs
-			if err := handleSharedGPUsIfNeeded(clientMock, tt.args.jobName, &testSubmitArgs); (err != nil) != tt.wantErr {
+			if err := handleSharedGPUsIfNeeded(clientMock, tt.args.jobName, namespace, &testSubmitArgs); (err != nil) != tt.wantErr {
 				t.Errorf("Miss amtch between error and expected error error = %v, wantErr %v", err, tt.wantErr)
 			}
 
