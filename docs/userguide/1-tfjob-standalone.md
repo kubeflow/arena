@@ -27,8 +27,8 @@ There are 3 available nodes with GPU for running training jobs.
              --name=tf-git \
              --gpus=1 \
              --image=tensorflow/tensorflow:1.5.0-devel-gpu \
-             --syncMode=git \
-             --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
+             --sync-mode=git \
+             --sync-source=https://github.com/cheyang/tensorflow-sample-code.git \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 10000 --data_dir=code/tensorflow-sample-code/data"
 configmap/tf-git-tfjob created
 configmap/tf-git-tfjob labeled
