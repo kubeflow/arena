@@ -82,7 +82,7 @@ func NewLogsCommand() *cobra.Command {
 			}
 			code, err := logPrinter.Print()
 			if err != nil {
-				log.Errorf("%s, %s", err.Error(), "please use \"arena get\" to get more information.")
+				log.Errorf("%s, %s", err.Error(), "please use \"runai get\" to get more information.")
 				os.Exit(1)
 			} else if code != 0 {
 				os.Exit(code)
