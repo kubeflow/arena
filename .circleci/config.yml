@@ -13,7 +13,7 @@ jobs:
     - checkout
     - run:
         name: install dependencies
-        command: dep ensure
+        command: go mod vendor
     - run:
         name: run test
         command: |
@@ -28,7 +28,7 @@ jobs:
         command: rm .env
     - run:
         name: install dependencies
-        command: dep ensure
+        command: go mod vendor
     - run:
         name: build-mac
         command: |

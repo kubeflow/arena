@@ -15,15 +15,16 @@
 package commands
 
 import (
+	"os"
+
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/spf13/cobra"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/clientcmd"
-	"os"
 )
 
 var (
@@ -89,12 +90,12 @@ func createNamespace(client *kubernetes.Clientset, namespace string) error {
 			Name: namespace,
 		},
 	}
-	_, err := client.Core().Namespaces().Create(ns)
+	_, err := client.CoreV1().Namespaces().Create(ns)
 	return err
 }
 
 func getNamespace(client *kubernetes.Clientset, namespace string) (*v1.Namespace, error) {
-	return client.Core().Namespaces().Get(namespace, metav1.GetOptions{})
+	return client.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
 }
 
 func ensureNamespace(client *kubernetes.Clientset, namespace string) error {

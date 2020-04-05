@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"strings"
+
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -9,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"strings"
 )
 
 type RunaiTrainer struct {
@@ -27,7 +28,7 @@ func fieldSelectorByName(name string) string {
 }
 
 func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
-	runaiJobList, err := rt.client.Batch().Jobs(ns).List(metav1.ListOptions{
+	runaiJobList, err := rt.client.BatchV1().Jobs(ns).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -43,7 +44,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		}
 	}
 
-	runaiStatefulSetsList, err := rt.client.Apps().StatefulSets(ns).List(metav1.ListOptions{
+	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(ns).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -59,7 +60,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 		}
 	}
 
-	runaiReplicaSetsList, err := rt.client.Apps().ReplicaSets(ns).List(metav1.ListOptions{
+	runaiReplicaSetsList, err := rt.client.AppsV1().ReplicaSets(ns).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -80,7 +81,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
 
-	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{
+	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -100,7 +101,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 	}
 
-	runaiStatufulsetList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{
+	runaiStatufulsetList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -120,7 +121,7 @@ func (rt *RunaiTrainer) GetTrainingJob(name, namespace string) (TrainingJob, err
 		}
 	}
 
-	runaiReplicaSetsList, err := rt.client.Apps().ReplicaSets(namespace).List(metav1.ListOptions{
+	runaiReplicaSetsList, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{
 		FieldSelector: fieldSelectorByName(name),
 	})
 
@@ -279,21 +280,21 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 	// Get all different job stypes to one general job type with pod spec
 	jobsForListCommand := []*cmdTypes.PodTemplateJob{}
-	runaiJobList, err := rt.client.Batch().Jobs(namespace).List(metav1.ListOptions{})
+	runaiJobList, err := rt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{})
 
 	for _, job := range runaiJobList.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromJob(job)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	runaiStatefulSetsList, err := rt.client.Apps().StatefulSets(namespace).List(metav1.ListOptions{})
+	runaiStatefulSetsList, err := rt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{})
 
 	for _, statefulSet := range runaiStatefulSetsList.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromStatefulSet(statefulSet)
 		jobsForListCommand = append(jobsForListCommand, podTemplateJob)
 	}
 
-	replicasetJobs, err := rt.client.Apps().ReplicaSets(namespace).List(metav1.ListOptions{})
+	replicasetJobs, err := rt.client.AppsV1().ReplicaSets(namespace).List(metav1.ListOptions{})
 
 	for _, replicaSet := range replicasetJobs.Items {
 		podTemplateJob := cmdTypes.PodTemplateJobFromReplicaSet(replicaSet)
@@ -348,7 +349,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 }
 
 func (rt *RunaiTrainer) getNodeIp() (string, error) {
-	nodesList, err := rt.client.Core().Nodes().List(metav1.ListOptions{})
+	nodesList, err := rt.client.CoreV1().Nodes().List(metav1.ListOptions{})
 
 	if err != nil {
 		return "", err
@@ -520,7 +521,7 @@ func getIngressPathOfService(ingresses []extensionsv1.Ingress, service v1.Servic
 }
 
 func (rt *RunaiTrainer) getIngressService() (*v1.Service, error) {
-	servicesList, err := rt.client.Core().Services("").List(metav1.ListOptions{
+	servicesList, err := rt.client.CoreV1().Services("").List(metav1.ListOptions{
 		LabelSelector: "app=nginx-ingress",
 	})
 

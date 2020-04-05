@@ -157,10 +157,6 @@ type WalkFunc func(f File) error
 // ErrStopWalk signals Walk to break without error.
 var ErrStopWalk = fmt.Errorf("walk stopped")
 
-// ErrFormatNotRecognized is an error that will be
-// returned if the file is not a valid archive format.
-var ErrFormatNotRecognized = fmt.Errorf("format not recognized")
-
 // Compressor compresses to out what it reads from in.
 // It also ensures a compatible or matching file extension.
 type Compressor interface {
@@ -253,8 +249,8 @@ func CompressFile(source, destination string) error {
 	return FileCompressor{Compressor: c}.CompressFile(source, destination)
 }
 
-// DecompressFile is a convenience function to simply decompress a file.
-// The decompression algorithm is selected implicitly based on the
+// DecompressFile is a convenience function to simply compress a file.
+// The compression algorithm is selected implicitly based on the
 // source's extension.
 func DecompressFile(source, destination string) error {
 	cIface, err := ByExtension(source)
@@ -273,8 +269,8 @@ func fileExists(name string) bool {
 	return !os.IsNotExist(err)
 }
 
-func mkdir(dirPath string, dirMode os.FileMode) error {
-	err := os.MkdirAll(dirPath, dirMode)
+func mkdir(dirPath string) error {
+	err := os.MkdirAll(dirPath, 0755)
 	if err != nil {
 		return fmt.Errorf("%s: making directory: %v", dirPath, err)
 	}
@@ -311,18 +307,11 @@ func writeNewSymbolicLink(fpath string, target string) error {
 		return fmt.Errorf("%s: making directory for file: %v", fpath, err)
 	}
 
-	_, err = os.Lstat(fpath)
-	if err == nil {
-		err = os.Remove(fpath)
-		if err != nil {
-			return fmt.Errorf("%s: failed to unlink: %+v", fpath, err)
-		}
-	}
-
 	err = os.Symlink(target, fpath)
 	if err != nil {
 		return fmt.Errorf("%s: making symbolic link for: %v", fpath, err)
 	}
+
 	return nil
 }
 
@@ -332,23 +321,12 @@ func writeNewHardLink(fpath string, target string) error {
 		return fmt.Errorf("%s: making directory for file: %v", fpath, err)
 	}
 
-	_, err = os.Lstat(fpath)
-	if err == nil {
-		err = os.Remove(fpath)
-		if err != nil {
-			return fmt.Errorf("%s: failed to unlink: %+v", fpath, err)
-		}
-	}
-
 	err = os.Link(target, fpath)
 	if err != nil {
 		return fmt.Errorf("%s: making hard link for: %v", fpath, err)
 	}
-	return nil
-}
 
-func isSymlink(fi os.FileInfo) bool {
-	return fi.Mode()&os.ModeSymlink != 0
+	return nil
 }
 
 // within returns true if sub is within or equal to parent.
@@ -443,8 +421,6 @@ func ByExtension(filename string) (interface{}, error) {
 		return NewRar(), nil
 	case *Tar:
 		return NewTar(), nil
-	case *TarBrotli:
-		return NewTarBrotli(), nil
 	case *TarBz2:
 		return NewTarBz2(), nil
 	case *TarGz:
@@ -455,8 +431,6 @@ func ByExtension(filename string) (interface{}, error) {
 		return NewTarSz(), nil
 	case *TarXz:
 		return NewTarXz(), nil
-	case *TarZstd:
-		return NewTarZstd(), nil
 	case *Zip:
 		return NewZip(), nil
 	case *Gz:
@@ -464,21 +438,17 @@ func ByExtension(filename string) (interface{}, error) {
 	case *Bz2:
 		return NewBz2(), nil
 	case *Lz4:
-		return NewLz4(), nil
+		return NewBz2(), nil
 	case *Snappy:
 		return NewSnappy(), nil
 	case *Xz:
 		return NewXz(), nil
-	case *Zstd:
-		return NewZstd(), nil
 	}
 	return nil, fmt.Errorf("format unrecognized by filename: %s", filename)
 }
 
 // ByHeader returns the unarchiver value that matches the input's
 // file header. It does not affect the current read position.
-// If the file's header is not a recognized archive format, then
-// ErrFormatNotRecognized will be returned.
 func ByHeader(input io.ReadSeeker) (Unarchiver, error) {
 	var matcher Matcher
 	for _, m := range matchers {
@@ -499,30 +469,26 @@ func ByHeader(input io.ReadSeeker) (Unarchiver, error) {
 	case *Rar:
 		return NewRar(), nil
 	}
-	return nil, ErrFormatNotRecognized
+	return nil, fmt.Errorf("format unrecognized")
 }
 
 // extCheckers is a list of the format implementations
 // that can check extensions. Only to be used for
 // checking extensions - not any archival operations.
 var extCheckers = []ExtensionChecker{
-	&TarBrotli{},
 	&TarBz2{},
 	&TarGz{},
 	&TarLz4{},
 	&TarSz{},
 	&TarXz{},
-	&TarZstd{},
 	&Rar{},
 	&Tar{},
 	&Zip{},
-	&Brotli{},
 	&Gz{},
 	&Bz2{},
 	&Lz4{},
 	&Snappy{},
 	&Xz{},
-	&Zstd{},
 }
 
 var matchers = []Matcher{
