@@ -3,6 +3,7 @@ package project
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"text/tabwriter"
 
@@ -91,12 +92,28 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	printProjects(projects)
+	// Sort the projects, so they will always appear in the same order
+	projectsArray := getSortedProjects(projects)
+
+	printProjects(projectsArray)
 
 	return nil
 }
 
-func printProjects(infos map[string]*ProjectInfo) {
+func getSortedProjects(projects map[string]*ProjectInfo) []*ProjectInfo {
+	projectsArray := []*ProjectInfo{}
+	for _, project := range projects {
+		projectsArray = append(projectsArray, project)
+	}
+
+	sort.Slice(projectsArray, func(i, j int) bool {
+		return projectsArray[i].name < projectsArray[j].name
+	})
+
+	return projectsArray
+}
+
+func printProjects(infos []*ProjectInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	util.PrintLine(w, "NAME", "DESERVED GPUs")
