@@ -94,6 +94,6 @@ func NewLogsCommand() *cobra.Command {
 	command.Flags().BoolVar(&outerArgs.Timestamps, "timestamps", false, "Include timestamps on each line in the log output")
 
 	// command.Flags().StringVar(&printer.pod, "instance", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
-	command.Flags().StringVarP(&outerArgs.PodName, "pod", "p", "", "Specify the pod to get log")
+	command.Flags().StringVar(&outerArgs.PodName, "pod", "", "Specify the pod to get log")
 	return command
 }
