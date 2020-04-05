@@ -1,6 +1,11 @@
 package project
 
 import (
+	"fmt"
+	"os"
+	"strconv"
+	"text/tabwriter"
+
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/command"
@@ -9,9 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"os"
-	"strconv"
-	"text/tabwriter"
 )
 
 var (
@@ -23,8 +25,9 @@ var (
 )
 
 type ProjectInfo struct {
-	name         string
-	deservedGPUs string
+	name           string
+	deservedGPUs   string
+	defaultProject bool
 }
 
 type Queue struct {
@@ -61,7 +64,8 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 
 		if runaiQueue != "" {
 			projects[runaiQueue] = &ProjectInfo{
-				name: namespace.Name,
+				name:           namespace.Name,
+				defaultProject: kubeClient.GetDefaultNamespace() == namespace.Name,
 			}
 		}
 	}
@@ -104,7 +108,14 @@ func printProjects(infos map[string]*ProjectInfo) {
 			deservedInfo = info.deservedGPUs
 		}
 
-		util.PrintLine(w, info.name, deservedInfo)
+		var name string
+		if info.defaultProject {
+			name = fmt.Sprintf("%s (default)", info.name)
+		} else {
+			name = info.name
+		}
+
+		util.PrintLine(w, name, deservedInfo)
 	}
 
 	_ = w.Flush()
