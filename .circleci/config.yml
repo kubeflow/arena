@@ -12,7 +12,6 @@ jobs:
     steps:
     - checkout
     - run:
-      - run:
         name: run test
         command: |
           ./test.sh
@@ -25,7 +24,6 @@ jobs:
         name: general-prep
         command: rm .env
     - run:
-      - run:
         name: build-mac
         command: |
           make cli-darwin-amd64
