@@ -12,9 +12,7 @@ jobs:
     steps:
     - checkout
     - run:
-        name: install dependencies
-        command: go mod vendor
-    - run:
+      - run:
         name: run test
         command: |
           ./test.sh
@@ -27,9 +25,7 @@ jobs:
         name: general-prep
         command: rm .env
     - run:
-        name: install dependencies
-        command: go mod vendor
-    - run:
+      - run:
         name: build-mac
         command: |
           make cli-darwin-amd64
