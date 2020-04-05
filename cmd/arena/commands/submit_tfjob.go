@@ -403,7 +403,7 @@ func submitTFJob(args []string, submitArgs *submitTFJobArgs) (err error) {
 	}
 
 	if job != nil {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
 	}
 
 	// the master is also considered as a worker
@@ -430,7 +430,7 @@ func submitTFJobWithHelm(args []string, submitArgs *submitTFJobArgs) (err error)
 		return err
 	}
 	if exist {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
 	}
 
 	// the master is also considered as a worker

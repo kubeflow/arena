@@ -63,6 +63,8 @@ ifdef IMAGE_NAMESPACE
 IMAGE_PREFIX=${IMAGE_NAMESPACE}/
 endif
 
+GENERAL_BUILD_OPTIONS=CGO_ENABLED=0 GO111MODULE=on
+
 # Build the project
 .PHONY: default
 default:
@@ -84,18 +86,18 @@ endif
 .PHONY: cli-linux-amd64
 cli-linux-amd64:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} cmd/job-monitor/*.go
+	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
+	${GENERAL_BUILD_OPTIONS} GOOS=linux GOARCH=amd64 go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} cmd/job-monitor/*.go
 
 .PHONY: cli-darwin-amd64
 cli-darwin-amd64:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
+	${GENERAL_BUILD_OPTIONS} GOOS=darwin go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
 
 .PHONY: cli-windows
 cli-windows:
 	mkdir -p bin
-	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
+	${GENERAL_BUILD_OPTIONS} GOARCH=amd64 GOOS=windows go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
 
 
 .PHONY: install-image

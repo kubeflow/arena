@@ -136,7 +136,7 @@ func serveTensorRT(serveTensorRTArgs *ServeTensorRTArgs) (err error) {
 		return err
 	}
 	if exist {
-		return fmt.Errorf("the job %s is already exist, please delete it firstly. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it firstly. use 'arena delete %s'", name, name)
 	}
 
 	name = serveTensorRTArgs.ServingName

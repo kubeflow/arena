@@ -2,6 +2,15 @@ package commands
 
 import (
 	"fmt"
+	"math"
+	"os"
+	"os/user"
+	"path"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/clusterConfig"
@@ -14,14 +23,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"math"
-	"os"
-	"os/user"
-	"path"
-	"regexp"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (
@@ -377,7 +378,7 @@ func submitRunaiJob(args []string, namespace string, submitArgs *submitRunaiJobA
 	}
 
 	submitArgs.Name = name
-	err = handleSharedGPUsIfNeeded(clientset, name, namespace, submitArgs)
+	err = handleRequestedGPUs(submitArgs)
 	if err != nil {
 		return err
 	}

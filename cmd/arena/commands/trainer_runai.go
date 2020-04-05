@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"strings"
+
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -9,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"strings"
 )
 
 type RunaiTrainer struct {
@@ -327,6 +328,10 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 		if job.Labels["app"] == "runaijob" {
 			jobInfo.createdByCLI = true
+		}
+
+		if job.Type == cmdTypes.ResourceTypeStatefulSet || job.Type == cmdTypes.ResourceTypeReplicaset {
+			jobInfo.interactive = true
 		}
 	}
 

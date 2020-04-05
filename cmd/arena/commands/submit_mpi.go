@@ -175,7 +175,7 @@ func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
 	}
 
 	if job != nil {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
 	}
 
 	// the master is also considered as a worker
@@ -203,7 +203,7 @@ func submitMPIJobWithHelm(args []string, submitArgs *submitMPIJobArgs) (err erro
 		return err
 	}
 	if exist {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
 	}
 
 	return helm.InstallRelease(name, namespace, submitArgs, mpijob_chart)

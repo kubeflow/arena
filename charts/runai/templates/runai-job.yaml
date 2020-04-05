@@ -124,23 +124,6 @@ spec:
               {{- end}}
             {{- end}}
           env:
-            {{- if .Values.gpuFraction }}
-            - name: RUNAI_GPU_FRACTION
-              value: "{{ .Values.gpuFractionFixed }}"
-            {{- end }}
-            {{- if .Values.gpuFraction }}
-            - name: NVIDIA_VISIBLE_DEVICES
-              valueFrom:
-                configMapKeyRef:
-                  name: "{{  .Release.Name }}-runai-fraction-gpu"
-                  key: RUNAI-VISIBLE-DEVICES
-            {{- end}}
-            - name: podUUID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.uid
-            - name: reporterGatewayURL
-              value: 'runai-prometheus-pushgateway.runai.svc.cluster.local:9091'
             # Not using concat to support previous version of helm
             {{- range $index, $env := .Values.environmentDefault }}
             {{ $parts := split "=" $env }}
