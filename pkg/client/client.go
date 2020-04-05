@@ -4,6 +4,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
@@ -59,4 +60,19 @@ func (c *Client) GetRestConfig() *restclient.Config {
 
 func (c *Client) GetDefaultNamespace() string {
 	return c.namespace
+}
+
+func (c *Client) SetDefaultNamespace(namespace string) error {
+	configAccess := clientcmd.DefaultClientConfig.ConfigAccess()
+	config, err := configAccess.GetStartingConfig()
+
+	if err != nil {
+		return err
+	}
+
+	context := config.Contexts[config.CurrentContext]
+	context.Namespace = namespace
+
+	err = clientcmd.ModifyConfig(configAccess, *config, true)
+	return err
 }

@@ -16,5 +16,6 @@ func NewProjectCommand() *cobra.Command {
 	}
 
 	command.AddCommand(newListProjectsCommand())
+	command.AddCommand(newSetProjectCommand())
 	return command
 }
