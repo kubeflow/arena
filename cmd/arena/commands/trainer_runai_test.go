@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"testing"
+
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
 	appsv1 "k8s.io/api/apps/v1"
 	batch "k8s.io/api/batch/v1"
@@ -9,7 +11,6 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
-	"testing"
 )
 
 var (
@@ -243,6 +244,36 @@ func TestDontGetNotRunaiJob(t *testing.T) {
 
 	if trainJob != nil {
 		t.Errorf("Expected nil as return, but got a job")
+	}
+}
+
+func TestStatefulsetJobIsInteractive(t *testing.T) {
+	job := getRunaiStatefulSet()
+
+	objects := []runtime.Object{job}
+	client := fake.NewSimpleClientset(objects...)
+
+	trainer := NewRunaiTrainer(client)
+	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
+
+	interactive := jobs[0].Interactive()
+	if interactive != "true" {
+		t.Errorf("Expected job to be interactive, got %s", interactive)
+	}
+}
+
+func TestJobIsNotInteractive(t *testing.T) {
+	job := getRunaiJob()
+
+	objects := []runtime.Object{job}
+	client := fake.NewSimpleClientset(objects...)
+
+	trainer := NewRunaiTrainer(client)
+	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
+
+	interactive := jobs[0].Interactive()
+	if interactive != "false" {
+		t.Errorf("Expected job to be interactive, got %s", interactive)
 	}
 }
 

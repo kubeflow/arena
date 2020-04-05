@@ -329,6 +329,10 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 		if job.Labels["app"] == "runaijob" {
 			jobInfo.createdByCLI = true
 		}
+
+		if job.Type == cmdTypes.ResourceTypeStatefulSet || job.Type == cmdTypes.ResourceTypeReplicaset {
+			jobInfo.interactive = true
+		}
 	}
 
 	for _, jobInfo := range jobPodMap {
