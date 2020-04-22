@@ -20,6 +20,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 
 	"strconv"
 	"text/tabwriter"
@@ -27,7 +28,6 @@ import (
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
-	"k8s.io/api/core/v1"
 )
 
 func NewTopJobCommand() *cobra.Command {
@@ -43,7 +43,7 @@ func NewTopJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			client := kubeClient.GetClientset()
-			namespace := flags.GetProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
+			namespace, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
 
 			if err != nil {
 				log.Debugf("Failed due to %v", err)

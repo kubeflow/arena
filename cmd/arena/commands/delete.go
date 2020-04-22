@@ -45,7 +45,7 @@ func NewDeleteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			clientset := kubeClient.GetClientset()
-			namespace := flags.GetProjectFlag(cmd, kubeClient)
+			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
 			if err != nil {
 				log.Debugf("Failed due to %v", err)

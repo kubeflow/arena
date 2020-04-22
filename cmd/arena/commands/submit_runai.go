@@ -68,7 +68,12 @@ func NewRunaiJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			clientset = kubeClient.GetClientset()
-			namespace := flags.GetProjectFlag(cmd, kubeClient)
+			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
+
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 
 			if err != nil {
 				fmt.Println(err)

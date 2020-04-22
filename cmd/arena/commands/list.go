@@ -22,12 +22,13 @@ import (
 
 	"io"
 
+	"strconv"
+
 	"github.com/kubeflow/arena/cmd/arena/commands/flags"
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"strconv"
 )
 
 func NewListCommand() *cobra.Command {
@@ -48,7 +49,12 @@ func NewListCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			namespace := flags.GetProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
+			namespace, err := flags.GetNamespaceToUseFromProjectFlagIncludingAll(cmd, kubeClient, allNamespaces)
+
+			if err != nil {
+				log.Error(err)
+				os.Exit(1)
+			}
 
 			jobs := []TrainingJob{}
 			trainers := NewTrainers(client)
