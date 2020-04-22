@@ -65,7 +65,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 
 		if runaiQueue != "" {
 			projects[runaiQueue] = &ProjectInfo{
-				name:           namespace.Name,
+				name:           runaiQueue,
 				defaultProject: kubeClient.GetDefaultNamespace() == namespace.Name,
 			}
 		}
