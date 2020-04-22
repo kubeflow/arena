@@ -61,7 +61,7 @@ func runListCommand(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		runaiQueue := namespace.Labels["runai/queue"]
+		runaiQueue := namespace.Labels[RUNAI_QUEUE_LABEL]
 
 		if runaiQueue != "" {
 			projects[runaiQueue] = &ProjectInfo{

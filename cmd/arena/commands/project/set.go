@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/client"
+	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util/command"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func runSetCommand(cmd *cobra.Command, args []string) error {
@@ -23,13 +25,24 @@ func runSetCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = kubeClient.SetDefaultNamespace(project)
+	namespaceList, err := kubeClient.GetClientset().CoreV1().Namespaces().List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", RUNAI_QUEUE_LABEL, project),
+	})
 
 	if err != nil {
 		return err
+	}
+
+	if namespaceList != nil && len(namespaceList.Items) != 0 {
+		err = kubeClient.SetDefaultNamespace(namespaceList.Items[0].Name)
+		if err != nil {
+			return err
+		} else {
+			fmt.Printf("Project %s has been set as default project\n", project)
+			return nil
+		}
 	} else {
-		fmt.Printf("Project %s has been set as default project\n", project)
-		return nil
+		return fmt.Errorf("project %s was not found. Please run '%s project list' to view all avaliable projects", project, config.CLIName)
 	}
 }
 
