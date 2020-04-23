@@ -21,13 +21,14 @@ type RunaiJob struct {
 	deleted           bool
 	podSpec           v1.PodSpec
 	podMetadata       metav1.ObjectMeta
+	jobMetadata       metav1.ObjectMeta
 	namespace         string
 	pods              []v1.Pod
 }
 
 const PodGroupNamePrefix = "pg-"
 
-func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, interactive bool, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource) *RunaiJob {
+func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1.Time, trainingType string, jobName string, createdByCLI bool, serviceUrls []string, deleted bool, podSpec v1.PodSpec, podMetadata metav1.ObjectMeta, jobMetadata metav1.ObjectMeta, namespace string, ownerResource cmdTypes.Resource) *RunaiJob {
 	resources := append(cmdTypes.PodResources(pods), ownerResource)
 	return &RunaiJob{
 		pods:              pods,
@@ -35,12 +36,12 @@ func NewRunaiJob(pods []v1.Pod, lastCreatedPod *v1.Pod, creationTimestamp metav1
 		chiefPod:          lastCreatedPod,
 		creationTimestamp: creationTimestamp,
 		trainerType:       trainingType,
-		interactive:       interactive,
 		createdByCLI:      createdByCLI,
 		serviceUrls:       serviceUrls,
 		deleted:           deleted,
 		podSpec:           podSpec,
 		podMetadata:       podMetadata,
+		jobMetadata:       jobMetadata,
 		namespace:         namespace,
 	}
 }
@@ -76,6 +77,12 @@ func (rj *RunaiJob) getStatus() v1.PodPhase {
 
 // Get the Status of the Job: RUNNING, PENDING,
 func (rj *RunaiJob) GetStatus() string {
+	if value, exists := rj.jobMetadata.Annotations["unschedulable"]; exists {
+		if value == "true" {
+			return "Unschedulable"
+		}
+	}
+
 	if rj.chiefPod == nil {
 		return "Pending"
 	}
@@ -220,10 +227,6 @@ func (rj *RunaiJob) Image() string {
 	return rj.podSpec.Containers[0].Image
 }
 
-func (rj *RunaiJob) Interactive() string {
-	return strconv.FormatBool(rj.interactive)
-}
-
 func (rj *RunaiJob) Project() string {
 	return rj.podMetadata.Labels["project"]
 }
@@ -241,7 +244,8 @@ func (rj *RunaiJob) ServiceURLs() []string {
 func (rj *RunaiJob) GetPodGroupName() string {
 	pod := rj.chiefPod
 	if pod == nil || pod.Spec.SchedulerName != SchedulerName {
-		return ""
+		// This line is different in arena, it was added in order to get the podgroup of statefulsets with 0 replicas
+		return PodGroupNamePrefix + rj.Name()
 	}
 
 	if jobName, found := pod.Labels["job-name"]; found && len(jobName) != 0 {

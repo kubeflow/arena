@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+type testArgs struct {
+	interactive *bool
+	elastic     *bool
+	gpu         *float64
+}
+
 func TestGPUSharingManager(t *testing.T) {
 	interactiveTrue := true
 	interactiveFalse := false
@@ -13,57 +19,46 @@ func TestGPUSharingManager(t *testing.T) {
 	fractionalGPU := 0.2
 	wholeGPU := float64(1)
 
-	type args struct {
-		submitArgs submitRunaiJobArgs
-	}
 	tests := []struct {
 		name                      string
-		args                      args
 		wantErr                   bool
 		shouldRunFractionalGPUJob bool
+		args                      *testArgs
 	}{
 		{
 			name: "Valid fractional GPU job",
-			args: args{
-				submitArgs: submitRunaiJobArgs{
-					Interactive: &interactiveTrue,
-					GPU:         &fractionalGPU,
-					Elastic:     &elasticJobFalse,
-				},
+			args: &testArgs{
+				interactive: &interactiveTrue,
+				gpu:         &fractionalGPU,
+				elastic:     &elasticJobFalse,
 			},
 			wantErr:                   false,
 			shouldRunFractionalGPUJob: true,
 		},
 		{
 			name: "Valid whole GPU job",
-			args: args{
-				submitArgs: submitRunaiJobArgs{
-					Interactive: &interactiveTrue,
-					GPU:         &wholeGPU,
-					Elastic:     &elasticJobFalse,
-				},
+			args: &testArgs{
+				interactive: &interactiveTrue,
+				gpu:         &wholeGPU,
+				elastic:     &elasticJobFalse,
 			},
 			wantErr: false,
 		},
 		{
 			name: "Non interactive fractional GPU job",
-			args: args{
-				submitArgs: submitRunaiJobArgs{
-					Interactive: &interactiveFalse,
-					GPU:         &fractionalGPU,
-					Elastic:     &elasticJobFalse,
-				},
+			args: &testArgs{
+				interactive: &interactiveFalse,
+				gpu:         &fractionalGPU,
+				elastic:     &elasticJobFalse,
 			},
 			wantErr: true,
 		},
 		{
 			name: "Elastic fractional GPU job",
-			args: args{
-				submitArgs: submitRunaiJobArgs{
-					Interactive: &interactiveTrue,
-					GPU:         &fractionalGPU,
-					Elastic:     &elasticJobTrue,
-				},
+			args: &testArgs{
+				interactive: &interactiveTrue,
+				gpu:         &fractionalGPU,
+				elastic:     &elasticJobTrue,
 			},
 			wantErr: true,
 		},
@@ -71,7 +66,8 @@ func TestGPUSharingManager(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testSubmitArgs := tt.args.submitArgs
+			submitArgs := setSubmitArgs(tt.args)
+			testSubmitArgs := *submitArgs
 			if err := handleRequestedGPUs(&testSubmitArgs); (err != nil) != tt.wantErr {
 				t.Errorf("Miss match between error and expected error, error: %v, wantErr: %v", err, tt.wantErr)
 			}
@@ -80,14 +76,22 @@ func TestGPUSharingManager(t *testing.T) {
 			if err != nil {
 				if tt.shouldRunFractionalGPUJob {
 					t.Errorf("handleSharedGPUsIfNeeded() failed to parse gpuFraction %v, while expecting it to manage", err)
-				} else if !tt.wantErr && float64(*testSubmitArgs.GPUInt) != *tt.args.submitArgs.GPU {
-					t.Errorf("GPUInt: %v, tt.args.submitArgs.GPU: %v", *testSubmitArgs.GPUInt, *tt.args.submitArgs.GPU)
+				} else if !tt.wantErr && float64(*testSubmitArgs.GPUInt) != *submitArgs.GPU {
+					t.Errorf("GPUInt: %v, submitArgs.gpu: %v", *testSubmitArgs.GPUInt, *submitArgs.GPU)
 				}
 			}
 
-			if gpuFraction != *tt.args.submitArgs.GPU && tt.shouldRunFractionalGPUJob {
-				t.Errorf("gpuFraction: %v, *testSubmitArgs.GPU: %v, miss match", gpuFraction, *testSubmitArgs.GPU)
+			if gpuFraction != *submitArgs.GPU && tt.shouldRunFractionalGPUJob {
+				t.Errorf("gpuFraction: %v, *testSubmitArgs.gpu: %v, miss match", gpuFraction, *testSubmitArgs.GPU)
 			}
 		})
 	}
+}
+
+func setSubmitArgs(args *testArgs) *submitRunaiJobArgs {
+	submitArgs := submitRunaiJobArgs{}
+	submitArgs.GPU = args.gpu
+	submitArgs.Interactive = args.interactive
+	submitArgs.Elastic = args.elastic
+	return &submitArgs
 }

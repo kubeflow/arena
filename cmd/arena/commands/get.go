@@ -43,6 +43,7 @@ import (
 type eventAndName struct {
 	event v1.Event
 	name  string
+	index int
 }
 
 var output string
@@ -76,13 +77,13 @@ func NewGetCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			job, err := searchTrainingJob(clientset, name, "", namespace)
+			job, err := searchTrainingJob(kubeClient, name, "", namespace)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			printTrainingJob(job, printArgs)
+			printTrainingJob(clientset, job, printArgs)
 		},
 	}
 
@@ -101,10 +102,10 @@ type PrintArgs struct {
 /*
 * search the training job with name and training type
  */
-func searchTrainingJob(clientset *kubernetes.Clientset, jobName, trainingType, namespace string) (job TrainingJob, err error) {
+func searchTrainingJob(kubeClient *client.Client, jobName, trainingType, namespace string) (job TrainingJob, err error) {
 	if len(trainingType) > 0 {
 		if isKnownTrainingType(trainingType) {
-			job, err = getTrainingJobByType(clientset, jobName, namespace, trainingType)
+			job, err = getTrainingJobByType(kubeClient, jobName, namespace, trainingType)
 			if err != nil {
 				if isTrainingConfigExist(jobName, trainingType, namespace) {
 					log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s --type %s'.",
@@ -121,7 +122,7 @@ func searchTrainingJob(clientset *kubernetes.Clientset, jobName, trainingType, n
 				knownTrainingTypes)
 		}
 	} else {
-		jobs, err := getTrainingJobsByName(clientset, jobName, namespace)
+		jobs, err := getTrainingJobsByName(kubeClient, jobName, namespace)
 		if err != nil {
 			if len(getTrainingTypes(jobName, namespace)) > 0 {
 				log.Warningf("Failed to get the training job %s, but the trainer config is found, please clean it by using '%s delete %s'.",
@@ -145,10 +146,10 @@ func searchTrainingJob(clientset *kubernetes.Clientset, jobName, trainingType, n
 	return job, nil
 }
 
-func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job TrainingJob, err error) {
+func getTrainingJob(kubeClient *client.Client, name, namespace string) (job TrainingJob, err error) {
 	// trainers := NewTrainers(client, )
 
-	trainers := NewTrainers(client)
+	trainers := NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.IsSupported(name, namespace) {
 			return trainer.GetTrainingJob(name, namespace)
@@ -160,10 +161,10 @@ func getTrainingJob(client *kubernetes.Clientset, name, namespace string) (job T
 	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
 }
 
-func getTrainingJobByType(client *kubernetes.Clientset, name, namespace, trainingType string) (job TrainingJob, err error) {
+func getTrainingJobByType(kubeClient *client.Client, name, namespace, trainingType string) (job TrainingJob, err error) {
 	// trainers := NewTrainers(client, )
 
-	trainers := NewTrainers(client)
+	trainers := NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.Type() == trainingType {
 			return trainer.GetTrainingJob(name, namespace)
@@ -179,9 +180,9 @@ func getTrainingJobByType(client *kubernetes.Clientset, name, namespace, trainin
 	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
 }
 
-func getTrainingJobsByName(client *kubernetes.Clientset, name, namespace string) (jobs []TrainingJob, err error) {
+func getTrainingJobsByName(kubeClient *client.Client, name, namespace string) (jobs []TrainingJob, err error) {
 	jobs = []TrainingJob{}
-	trainers := NewTrainers(client)
+	trainers := NewTrainers(kubeClient)
 	for _, trainer := range trainers {
 		if trainer.IsSupported(name, namespace) {
 			job, err := trainer.GetTrainingJob(name, namespace)
@@ -202,33 +203,33 @@ func getTrainingJobsByName(client *kubernetes.Clientset, name, namespace string)
 	return jobs, nil
 }
 
-func printTrainingJob(job TrainingJob, printArgs PrintArgs) {
+func printTrainingJob(client *kubernetes.Clientset, job TrainingJob, printArgs PrintArgs) {
 	switch printArgs.Output {
 	case "name":
 		fmt.Println(job.Name())
 		// for future CRD support
 	case "json":
-		outBytes, err := json.MarshalIndent(BuildJobInfo(job), "", "    ")
+		outBytes, err := json.MarshalIndent(BuildJobInfo(job, client), "", "    ")
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Println(string(outBytes))
 		}
 	case "yaml":
-		outBytes, err := yaml.Marshal(BuildJobInfo(job))
+		outBytes, err := yaml.Marshal(BuildJobInfo(job, client))
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Println(string(outBytes))
 		}
 	case "wide", "":
-		printSingleJobHelper(job, printArgs)
+		printSingleJobHelper(client, job, printArgs)
 	default:
 		log.Fatalf("Unknown output format: %s", printArgs.Output)
 	}
 }
 
-func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
+func printSingleJobHelper(client *kubernetes.Clientset, job TrainingJob, printArgs PrintArgs) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	printJobSummary(w, job)
 
@@ -261,7 +262,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 	}
 
 	if printArgs.ShowEvents {
-		printEvents(w, job.Namespace(), job)
+		printEvents(client, w, job.Namespace(), job)
 	}
 
 	_ = w.Flush()
@@ -270,6 +271,7 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 
 func printJobSummary(w io.Writer, job TrainingJob) {
 	fmt.Fprintf(w, "NAME: %s\n", job.Name())
+	fmt.Fprintf(w, "TYPE: %s\n", job.Trainer())
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
 	fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))
@@ -278,7 +280,7 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 
 }
 
-func printEvents(w io.Writer, namespace string, job TrainingJob) {
+func printEvents(clientset *kubernetes.Clientset, w io.Writer, namespace string, job TrainingJob) {
 	fmt.Fprintf(w, "\nEvents: \n")
 	eventsMap, err := getResourcesEvents(clientset, namespace, job)
 	if err != nil {
@@ -342,17 +344,20 @@ func getResourcesEvents(client *kubernetes.Clientset, namespace string, job Trai
 
 func getSortedEvents(items []v1.Event, resources []cmdTypes.Resource, podGroupName string) []eventAndName {
 	eventAndNames := []eventAndName{}
+	index := 0
 	for _, event := range items {
 		for _, resource := range resources {
 			if event.InvolvedObject.Kind == string(resource.ResourceType) && string(event.InvolvedObject.UID) == resource.Uid {
-				eventAndNames = append(eventAndNames, eventAndName{event, resource.Name})
+				eventAndNames = append(eventAndNames, eventAndName{event, resource.Name, index})
+				index++
 				break
 			}
 		}
 
 		// TODO: We should add pogGroup as a resource of a job and remove this part.
 		if len(podGroupName) > 0 && event.InvolvedObject.Name == podGroupName {
-			eventAndNames = append(eventAndNames, eventAndName{event, podGroupName})
+			eventAndNames = append(eventAndNames, eventAndName{event, podGroupName, index})
+			index++
 		}
 
 	}
@@ -360,7 +365,16 @@ func getSortedEvents(items []v1.Event, resources []cmdTypes.Resource, podGroupNa
 	sort.Slice(eventAndNames, func(i, j int) bool {
 		lv := eventAndNames[i]
 		rv := eventAndNames[j]
-		return lv.event.CreationTimestamp.Time.Before(rv.event.CreationTimestamp.Time)
+		if lv.event.CreationTimestamp.Time.Before(rv.event.CreationTimestamp.Time) {
+			return true
+		}
+
+		if lv.event.CreationTimestamp.Time.After(rv.event.CreationTimestamp.Time) {
+			return false
+
+		}
+
+		return lv.index < rv.index
 	})
 
 	return eventAndNames

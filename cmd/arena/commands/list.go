@@ -42,7 +42,6 @@ func NewListCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			client := kubeClient.GetClientset()
 
 			if err != nil {
 				log.Errorf("Failed due to %v", err)
@@ -57,14 +56,16 @@ func NewListCommand() *cobra.Command {
 			}
 
 			jobs := []TrainingJob{}
-			trainers := NewTrainers(client)
+			trainers := NewTrainers(kubeClient)
 			for _, trainer := range trainers {
-				trainingJobs, err := trainer.ListTrainingJobs(namespace)
-				if err != nil {
-					log.Errorf("Failed due to %v", err)
-					os.Exit(1)
+				if trainer.IsEnabled() {
+					trainingJobs, err := trainer.ListTrainingJobs(namespace)
+					if err != nil {
+						log.Errorf("Failed due to %v", err)
+						os.Exit(1)
+					}
+					jobs = append(jobs, trainingJobs...)
 				}
-				jobs = append(jobs, trainingJobs...)
 			}
 
 			jobs = makeTrainingJobOrderdByAge(jobs)
@@ -80,7 +81,7 @@ func NewListCommand() *cobra.Command {
 
 func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "INTERACTIVE", "PROJECT", "USER", "CREATED BY CLI", "SERVICE URL(S)"}
+	labelField := []string{"NAME", "STATUS", "AGE", "NODE", "IMAGE", "TYPE", "PROJECT", "USER", "CREATED BY CLI", "SERVICE URL(S)"}
 
 	PrintLine(w, labelField...)
 
@@ -90,7 +91,7 @@ func displayTrainingJobList(jobInfoList []TrainingJob, displayGPU bool) {
 		PrintLine(w, jobInfo.Name(),
 			status,
 			util.ShortHumanDuration(jobInfo.Age()),
-			hostIP, jobInfo.Image(), jobInfo.Interactive(), jobInfo.Project(), jobInfo.User(), strconv.FormatBool(jobInfo.CreatedByCLI()), strings.Join(jobInfo.ServiceURLs(), ", "))
+			hostIP, jobInfo.Image(), jobInfo.Trainer(), jobInfo.Project(), jobInfo.User(), strconv.FormatBool(jobInfo.CreatedByCLI()), strings.Join(jobInfo.ServiceURLs(), ", "))
 	}
 	_ = w.Flush()
 }

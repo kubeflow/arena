@@ -22,6 +22,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/kubernetes"
 )
 
 /*
@@ -65,9 +66,9 @@ func isTrainingConfigExist(name, trainingType, namespace string) bool {
 /**
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
-func BuildJobInfo(job TrainingJob) *types.JobInfo {
+func BuildJobInfo(job TrainingJob, clientset *kubernetes.Clientset) *types.JobInfo {
 
-	tensorboard, err := tensorboardURL(job.Name(), job.ChiefPod().Namespace)
+	tensorboard, err := tensorboardURL(job.Name(), job.ChiefPod().Namespace, clientset)
 	if tensorboard == "" || err != nil {
 		log.Debugf("Tensorboard dones't show up because of %v, or tensorboard url %s", err, tensorboard)
 	}

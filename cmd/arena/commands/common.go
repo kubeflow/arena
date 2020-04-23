@@ -15,9 +15,9 @@
 package commands
 
 import (
+	"github.com/kubeflow/arena/pkg/client"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/api/core/v1"
 )
 
 // Global variables
@@ -30,8 +30,8 @@ var (
 	arenaNamespace string // the system namespace of arena
 )
 
-func getAllTrainingTypes(clientset *kubernetes.Clientset) []string {
-	trainers := NewTrainers(clientset)
+func getAllTrainingTypes(kubeClient *client.Client) []string {
+	trainers := NewTrainers(kubeClient)
 	trainerNames := []string{}
 	for _, trainer := range trainers {
 		trainerNames = append(trainerNames, trainer.Type())

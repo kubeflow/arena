@@ -67,7 +67,7 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	clientset = kubeClient.GetClientset()
+
 	namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
 	if err != nil {
@@ -75,7 +75,7 @@ func execute(cmd *cobra.Command, name string, command string, commandArgs []stri
 		os.Exit(1)
 	}
 
-	job, err := searchTrainingJob(clientset, name, "", namespace)
+	job, err := searchTrainingJob(kubeClient, name, "", namespace)
 	if err != nil {
 		log.Errorln(err)
 		os.Exit(1)

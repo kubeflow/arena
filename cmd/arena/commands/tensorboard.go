@@ -21,8 +21,9 @@ import (
 
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 type submitTensorboardArgs struct {
@@ -63,7 +64,7 @@ func (submitArgs *submitTensorboardArgs) isLoggingInPVC(dataMap map[string]strin
 	return inPVC
 }
 
-func tensorboardURL(name, namespace string) (url string, err error) {
+func tensorboardURL(name, namespace string, clientset *kubernetes.Clientset) (url string, err error) {
 
 	var (
 		port int32

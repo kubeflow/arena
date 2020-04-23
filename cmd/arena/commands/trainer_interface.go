@@ -18,7 +18,7 @@ import (
 	"time"
 
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -74,8 +74,6 @@ type TrainingJob interface {
 
 	User() string
 
-	Interactive() string
-
 	Image() string
 
 	CreatedByCLI() bool
@@ -94,4 +92,6 @@ type Trainer interface {
 	Type() string
 
 	ListTrainingJobs(namespace string) ([]TrainingJob, error)
+
+	IsEnabled() bool
 }

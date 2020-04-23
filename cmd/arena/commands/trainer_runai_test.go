@@ -256,9 +256,9 @@ func TestStatefulsetJobIsInteractive(t *testing.T) {
 	trainer := NewRunaiTrainer(client)
 	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
 
-	interactive := jobs[0].Interactive()
-	if interactive != "true" {
-		t.Errorf("Expected job to be interactive, got %s", interactive)
+	jobType := jobs[0].Trainer()
+	if jobType != "Interactive" {
+		t.Errorf("Expected job to be interactive, got %s", jobType)
 	}
 }
 
@@ -271,9 +271,9 @@ func TestJobIsNotInteractive(t *testing.T) {
 	trainer := NewRunaiTrainer(client)
 	jobs, _ := trainer.ListTrainingJobs(NAMESPACE)
 
-	interactive := jobs[0].Interactive()
-	if interactive != "false" {
-		t.Errorf("Expected job to be interactive, got %s", interactive)
+	jobType := jobs[0].Trainer()
+	if jobType != "Train" {
+		t.Errorf("Expected job to be interactive, got %s", jobType)
 	}
 }
 

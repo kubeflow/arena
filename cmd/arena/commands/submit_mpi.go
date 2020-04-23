@@ -12,27 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build ignore
-
 package commands
 
 import (
 	"fmt"
 	"os"
-	"strings"
+	"path"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/util"
-	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var (
-	mpijob_chart = util.GetChartsFolder() + "/mpijob"
+const (
+	SubmitMpiCommand = "submitmpi"
 )
 
-func NewSubmitMPIJobCommand() *cobra.Command {
+var (
+	mpijob_chart = path.Join(util.GetChartsFolder(), "mpijob")
+)
+
+func NewRunaiSubmitMPIJobCommand() *cobra.Command {
 	var (
 		submitArgs submitMPIJobArgs
 	)
@@ -40,29 +42,21 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 	submitArgs.Mode = "mpijob"
 
 	var command = &cobra.Command{
-		Use:     "mpijob",
-		Short:   "Submit MPIjob as training job.",
+		Use:     SubmitMpiCommand + " [NAME]",
+		Short:   "Submit a Runai MPI job.",
 		Aliases: []string{"mpi", "mj"},
+		Hidden:  true,
+		Args:    cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				cmd.HelpFunc()(cmd, args)
-				os.Exit(1)
-			}
-
-			util.SetLogLevel(logLevel)
-			_, err := initKubeClient()
+			kubeClient, err := client.GetClient()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			if err != nil {
-				log.Debugf("Failed due to %v", err)
-				fmt.Println(err)
-				os.Exit(1)
-			}
+			submitArgs.setCommonRun(cmd, args, kubeClient)
 
-			err = submitMPIJob(args, &submitArgs)
+			err = submitMPIJob(args, &submitArgs, kubeClient)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -70,68 +64,44 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&submitArgs.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
-	command.Flags().StringVar(&submitArgs.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	// Tensorboard
-	command.Flags().BoolVar(&submitArgs.UseTensorboard, "tensorboard", false, "enable tensorboard")
+	// command.Flags().BoolVar(&submitArgs.UseTensorboard, "tensorboard", false, "enable tensorboard")
 
-	msg := "the docker image for tensorboard"
-	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboardImage", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
-	command.Flags().MarkDeprecated("tensorboardImage", "please use --tensorboard-image instead")
-	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
+	// msg := "the docker image for tensorboard"
+	// command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboardImage", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
+	// command.Flags().MarkDeprecated("tensorboardImage", "please use --tensorboard-image instead")
+	// command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
 
-	command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
+	// command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
+	// command.Flags().StringVar(&(submitArgs.NodeName), "nodename", "", "Enforce node affinity by setting a nodeName label")
+	command.Flags().StringVar(&submitArgs.Command, "command", "", "Run this command on container start. Use together with --args.")
+	command.Flags().IntVar(&submitArgs.NumberProcesses, "num-processes", 1, "the number of processes to run the distributed training.")
 
 	submitArgs.addCommonFlags(command)
 	submitArgs.addSyncFlags(command)
 
 	return command
+
 }
 
 type submitMPIJobArgs struct {
-	Cpu    string `yaml:"cpu"`    // --cpu
-	Memory string `yaml:"memory"` // --memory
 	// for common args
 	submitArgs `yaml:",inline"`
 
 	// for tensorboard
 	submitTensorboardArgs `yaml:",inline"`
-
+	Command               string `yaml:"command"`
+	NodeName              string `yaml:"nodeName,omitempty"`
+	NumberProcesses       int    `yaml:"numProcesses"` // --workers
 	// for sync up source code
 	submitSyncCodeArgs `yaml:",inline"`
 }
 
 func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
-	submitArgs.Command = strings.Join(args, " ")
-
 	err = submitArgs.check()
 	if err != nil {
 		return err
 	}
-
-	commonArgs := &submitArgs.submitArgs
-	err = commonArgs.transform()
-	if err != nil {
-		return nil
-	}
-
-	err = submitArgs.HandleSyncCode()
-	if err != nil {
-		return err
-	}
-
-	// process tensorboard
-	submitArgs.processTensorboard(submitArgs.DataSet)
-
-	if len(envs) > 0 {
-		submitArgs.Envs = transformSliceToMap(envs, "=")
-	}
-	// add node labels,if given
-	submitArgs.addMPINodeSelectors()
-	// add tolerations, if given
-	submitArgs.addMPITolerations()
-	submitArgs.addMPIInfoToEnv()
-
 	return nil
 }
 
@@ -142,7 +112,11 @@ func (submitArgs submitMPIJobArgs) check() error {
 	}
 
 	if submitArgs.Image == "" {
-		return fmt.Errorf("--image must be set ")
+		return fmt.Errorf("--image must be set")
+	}
+
+	if float64(int(*submitArgs.GPU)) != *submitArgs.GPU {
+		return fmt.Errorf("--gpu must be an integer")
 	}
 
 	return nil
@@ -157,54 +131,33 @@ func (submitArgs *submitMPIJobArgs) addMPINodeSelectors() {
 func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 	submitArgs.addTolerations()
 }
-func (submitArgs *submitMPIJobArgs) addMPIInfoToEnv() {
-	submitArgs.addJobInfoToEnv()
-}
 
 // Submit MPIJob
-func submitMPIJob(args []string, submitArgs *submitMPIJobArgs) (err error) {
+func submitMPIJob(args []string, submitArgs *submitMPIJobArgs, client *client.Client) (err error) {
 	err = submitArgs.prepare(args)
 	if err != nil {
 		return err
 	}
 
-	trainer := NewMPIJobTrainer(clientset)
-	job, err := trainer.GetTrainingJob(name, namespace)
+	trainer := NewMPIJobTrainer(*client)
+	job, err := trainer.GetTrainingJob(name, submitArgs.Namespace)
 	if err != nil {
 		log.Debugf("Check %s exist due to error %v", name, err)
 	}
 
 	if job != nil {
-		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job %s already exists, please delete it first. use 'runai delete %s'", name, name)
 	}
 
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
-	err = workflow.SubmitJob(name, submitArgs.Mode, namespace, submitArgs, "", mpijob_chart, clientset)
+	err = workflow.SubmitJob(name, submitArgs.Mode, submitArgs.Namespace, submitArgs, "", mpijob_chart, client.GetClientset(), dryRun)
 	if err != nil {
 		return err
 	}
 
 	log.Infof("The Job %s has been submitted successfully", name)
-	log.Infof("You can run `arena get %s --type %s` to check the job status", name, submitArgs.Mode)
+	log.Infof("You can run `runai get %s --type %s` to check the job status", name, submitArgs.Mode)
 	return nil
-}
-
-// Submit MPIJob with helm
-func submitMPIJobWithHelm(args []string, submitArgs *submitMPIJobArgs) (err error) {
-	err = submitArgs.prepare(args)
-	if err != nil {
-		return err
-	}
-
-	exist, err := helm.CheckRelease(name)
-	if err != nil {
-		return err
-	}
-	if exist {
-		return fmt.Errorf("the job %s already exists, please delete it first. use 'arena delete %s'", name, name)
-	}
-
-	return helm.InstallRelease(name, namespace, submitArgs, mpijob_chart)
 }

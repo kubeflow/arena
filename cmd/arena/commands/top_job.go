@@ -67,7 +67,7 @@ func NewTopJobCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			trainers := NewTrainers(client)
+			trainers := NewTrainers(kubeClient)
 			for _, trainer := range trainers {
 				trainingJobs, err := trainer.ListTrainingJobs(namespace)
 				if err != nil {
@@ -100,7 +100,7 @@ func topTrainingJob(jobInfoList []TrainingJob) {
 		totalRequestedGPUs float64
 	)
 
-	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TRAINER", "AGE", "NODE"}
+	labelField := []string{"NAME", "GPU(Requests)", "GPU(Allocated)", "STATUS", "TYPE", "AGE", "NODE"}
 
 	PrintLine(w, labelField...)
 

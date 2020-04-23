@@ -2,6 +2,7 @@ package client
 
 import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -13,9 +14,10 @@ var (
 )
 
 type Client struct {
-	clientset  *kubernetes.Clientset
-	restConfig *restclient.Config
-	namespace  string
+	clientset     *kubernetes.Clientset
+	restConfig    *restclient.Config
+	dynamicClient dynamic.Interface
+	namespace     string
 }
 
 func GetClient() (*Client, error) {
@@ -43,11 +45,21 @@ func GetClient() (*Client, error) {
 		return nil, err
 	}
 
+	dynamicClient, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Client{
-		namespace:  namespace,
-		restConfig: restConfig,
-		clientset:  clientset,
+		namespace:     namespace,
+		restConfig:    restConfig,
+		clientset:     clientset,
+		dynamicClient: dynamicClient,
 	}, nil
+}
+
+func (c *Client) GetDynamicClient() dynamic.Interface {
+	return c.dynamicClient
 }
 
 func (c *Client) GetClientset() *kubernetes.Clientset {
@@ -60,6 +72,10 @@ func (c *Client) GetRestConfig() *restclient.Config {
 
 func (c *Client) GetDefaultNamespace() string {
 	return c.namespace
+}
+
+func (c *Client) SetCurrentNamespace(namespace string) {
+
 }
 
 func (c *Client) SetDefaultNamespace(namespace string) error {

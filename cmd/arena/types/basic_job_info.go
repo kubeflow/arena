@@ -54,10 +54,6 @@ func (j *BasicJobInfo) User() string {
 	return ""
 }
 
-func (j *BasicJobInfo) Interactive() string {
-	return ""
-}
-
 func (j *BasicJobInfo) Image() string {
 	return ""
 }

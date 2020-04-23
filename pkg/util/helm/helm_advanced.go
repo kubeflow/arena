@@ -112,6 +112,7 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, d
 
 	// 3. check if the chart file exists
 	// if strings.HasPrefix(chartName, "/") {
+
 	if _, err = os.Stat(chartName); err != nil {
 		return templateFileName, err
 	}

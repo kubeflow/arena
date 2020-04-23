@@ -57,7 +57,9 @@ func NewCommand() *cobra.Command {
 	// enable logging
 	command.PersistentFlags().StringVar(&logLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
 
+	// command.AddCommand(NewSubmitCommand())
 	command.AddCommand(NewRunaiJobCommand())
+	command.AddCommand(NewRunaiSubmitMPIJobCommand()) // hidden command
 	// command.AddCommand(NewServeCommand())
 	command.AddCommand(NewListCommand())
 	// command.AddCommand(NewPruneCommand())

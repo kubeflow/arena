@@ -58,6 +58,9 @@ spec:
         {{- if .Values.user }}
         user: {{ .Values.user }}
         {{- end }}
+        {{- if and .Values.interactive .Values.isPreemptible }}
+        priorityClassName: "interactive-preemptible"
+        {{- end}}
     spec:
       {{- if .Values.node_type }}
       nodeSelector:
@@ -69,6 +72,13 @@ spec:
       {{- end}}
       hostIPC: {{ .Values.hostIPC }}
       hostNetwork: {{ .Values.hostNetwork }}
+      securityContext:
+        {{- if .Values.runAsUser }}
+        runAsUser: {{ .Values.runAsUser }}
+        {{- end}}
+        {{- if .Values.runAsGroup }}
+        runAsGroup: {{ .Values.runAsGroup }}
+        {{- end }}
       containers:
         - name: {{ .Release.Name }}
           command:

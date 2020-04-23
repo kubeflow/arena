@@ -1,96 +1,99 @@
-{{- if .Values.useTensorboard }}
----
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: {{ .Release.Name }}-tensorboard
-  labels:
-    app: {{ template "mpijob.name" . }}
-    chart: {{ template "mpijob.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-    createdBy: "MPIJob"
-    role: tensorboard
-spec:
-  template:
-    metadata:
-      labels:
-        app: {{ template "mpijob.name" . }}
-        chart: {{ template "mpijob.chart" . }}
-        release: {{ .Release.Name }}
-        role: tensorboard
-    spec:
-      {{- if .Values.priorityClassName }}
-      priorityClassName: {{ .Values.priorityClassName }}
-      {{- end }}
-      {{- if .Values.launcherOnMaster }}
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
-      {{- end }}
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: mpi_job_name
-                operator: In
-                values: 
-                  - {{ .Release.Name }}
-              - key: statefulset.kubernetes.io/pod-name
-                operator: In
-                values: 
-                  - {{ .Release.Name }}-worker-0
-            topologyKey: kubernetes.io/hostname
-      {{- if .Values.enablePodSecurityContext }}
-      {{- if .Values.isNonRoot}}
-      securityContext:
-        runAsUser: {{ .Values.podSecurityContext.runAsUser }}
-        runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
-        runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
-        supplementalGroups:
-          {{- range $group := .Values.podSecurityContext.supplementalGroups }}
-          - {{ $group -}}
-          {{ end }}
-      {{- end }}
-      {{- end }}
-      volumes:
-        {{- if .Values.isLocalLogging }}
-        - hostPath:
-            path: "{{ .Values.hostLogPath }}"
-          name: training-logs-volume
-        {{- else }}
-        {{- if .Values.dataset }}   
-        {{- range $pvcName, $destPath := .Values.dataset }}
-        - name: "{{ $pvcName }}"
-          persistentVolumeClaim:
-            claimName: "{{ $pvcName }}"
-        {{- end }}
-        {{- end }}
-        {{- end }}
-      containers:
-      - name: tensorboard   
-        {{- if .Values.isLocalLogging }}
-        command: ["tensorboard", "--logdir", "/output/training_logs",  "--host",  "0.0.0.0"]
-        {{- else}}
-        command: ["tensorboard", "--logdir", "{{ .Values.trainingLogdir }}",  "--host",  "0.0.0.0"]
-        {{- end }}
-        image: "{{ .Values.tensorboardImage }}"
-        imagePullPolicy: {{ .Values.tensorboardImagePullpolicy }}
-        resources:
-{{ toYaml .Values.tensorboardResources | indent 10 }}
-        ports:
-        - containerPort: 6006
-        volumeMounts:
-        {{- if .Values.isLocalLogging }}
-        - mountPath: /output/training_logs
-          name: training-logs-volume
-        {{- else }}
-        {{- if .Values.dataset }}   
-        {{- range $pvcName, $destPath := .Values.dataset }}
-        - name: "{{ $pvcName }}"
-          mountPath: "{{ $destPath }}"
-        {{- end }}
-        {{- end }}
-        {{- end }}
-{{- end }}
+{{/*{{- if .Values.useTensorboard }}*/}}
+{{/*---*/}}
+{{/*apiVersion: apps/v1*/}}
+{{/*kind: Deployment*/}}
+{{/*metadata:*/}}
+{{/*  name: {{ .Release.Name }}-tensorboard*/}}
+{{/*  labels:*/}}
+{{/*    app: {{ template "mpijob.name" . }}*/}}
+{{/*    chart: {{ template "mpijob.chart" . }}*/}}
+{{/*    release: {{ .Release.Name }}*/}}
+{{/*    heritage: {{ .Release.Service }}*/}}
+{{/*    createdBy: "MPIJob"*/}}
+{{/*    role: tensorboard*/}}
+{{/*spec:*/}}
+{{/*  selector:*/}}
+{{/*    matchLabels:*/}}
+{{/*      app: nginx*/}}
+{{/*  template:*/}}
+{{/*    metadata:*/}}
+{{/*      labels:*/}}
+{{/*        app: {{ template "mpijob.name" . }}*/}}
+{{/*        chart: {{ template "mpijob.chart" . }}*/}}
+{{/*        release: {{ .Release.Name }}*/}}
+{{/*        role: tensorboard*/}}
+{{/*    spec:*/}}
+{{/*      {{- if .Values.priorityClassName }}*/}}
+{{/*      priorityClassName: {{ .Values.priorityClassName }}*/}}
+{{/*      {{- end }}*/}}
+{{/*      {{- if .Values.launcherOnMaster }}*/}}
+{{/*      tolerations:*/}}
+{{/*      - effect: NoSchedule*/}}
+{{/*        key: node-role.kubernetes.io/master*/}}
+{{/*      {{- end }}*/}}
+{{/*      affinity:*/}}
+{{/*        podAffinity:*/}}
+{{/*          requiredDuringSchedulingIgnoredDuringExecution:*/}}
+{{/*          - labelSelector:*/}}
+{{/*              matchExpressions:*/}}
+{{/*              - key: mpi_job_name*/}}
+{{/*                operator: In*/}}
+{{/*                values: */}}
+{{/*                  - {{ .Release.Name }}*/}}
+{{/*              - key: statefulset.kubernetes.io/pod-name*/}}
+{{/*                operator: In*/}}
+{{/*                values: */}}
+{{/*                  - {{ .Release.Name }}-worker-0*/}}
+{{/*            topologyKey: kubernetes.io/hostname*/}}
+{{/*      {{- if .Values.enablePodSecurityContext }}*/}}
+{{/*      {{- if .Values.isNonRoot}}*/}}
+{{/*      securityContext:*/}}
+{{/*        runAsUser: {{ .Values.podSecurityContext.runAsUser }}*/}}
+{{/*        runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}*/}}
+{{/*        runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}*/}}
+{{/*        supplementalGroups:*/}}
+{{/*          {{- range $group := .Values.podSecurityContext.supplementalGroups }}*/}}
+{{/*          - {{ $group -}}*/}}
+{{/*          {{ end }}*/}}
+{{/*      {{- end }}*/}}
+{{/*      {{- end }}*/}}
+{{/*      volumes:*/}}
+{{/*        {{- if .Values.isLocalLogging }}*/}}
+{{/*        - hostPath:*/}}
+{{/*            path: "{{ .Values.hostLogPath }}"*/}}
+{{/*          name: training-logs-volume*/}}
+{{/*        {{- else }}*/}}
+{{/*        {{- if .Values.dataset }}   */}}
+{{/*        {{- range $pvcName, $destPath := .Values.dataset }}*/}}
+{{/*        - name: "{{ $pvcName }}"*/}}
+{{/*          persistentVolumeClaim:*/}}
+{{/*            claimName: "{{ $pvcName }}"*/}}
+{{/*        {{- end }}*/}}
+{{/*        {{- end }}*/}}
+{{/*        {{- end }}*/}}
+{{/*      containers:*/}}
+{{/*      - name: tensorboard   */}}
+{{/*        {{- if .Values.isLocalLogging }}*/}}
+{{/*        command: ["tensorboard", "--logdir", "/output/training_logs",  "--host",  "0.0.0.0"]*/}}
+{{/*        {{- else}}*/}}
+{{/*        command: ["tensorboard", "--logdir", "{{ .Values.trainingLogdir }}",  "--host",  "0.0.0.0"]*/}}
+{{/*        {{- end }}*/}}
+{{/*        image: "{{ .Values.tensorboardImage }}"*/}}
+{{/*        imagePullPolicy: {{ .Values.tensorboardImagePullpolicy }}*/}}
+{{/*        resources:*/}}
+{{/*{{ toYaml .Values.tensorboardResources | indent 10 }}*/}}
+{{/*        ports:*/}}
+{{/*        - containerPort: 6006*/}}
+{{/*        volumeMounts:*/}}
+{{/*        {{- if .Values.isLocalLogging }}*/}}
+{{/*        - mountPath: /output/training_logs*/}}
+{{/*          name: training-logs-volume*/}}
+{{/*        {{- else }}*/}}
+{{/*        {{- if .Values.dataset }}   */}}
+{{/*        {{- range $pvcName, $destPath := .Values.dataset }}*/}}
+{{/*        - name: "{{ $pvcName }}"*/}}
+{{/*          mountPath: "{{ $destPath }}"*/}}
+{{/*        {{- end }}*/}}
+{{/*        {{- end }}*/}}
+{{/*        {{- end }}*/}}
+{{/*{{- end }}*/}}

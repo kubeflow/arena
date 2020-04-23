@@ -25,7 +25,6 @@ import (
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes"
 )
 
 // NewDeleteCommand
@@ -44,7 +43,7 @@ func NewDeleteCommand() *cobra.Command {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			clientset := kubeClient.GetClientset()
+
 			namespace, err := flags.GetNamespaceToUseFromProjectFlag(cmd, kubeClient)
 
 			if err != nil {
@@ -54,7 +53,7 @@ func NewDeleteCommand() *cobra.Command {
 			}
 
 			for _, jobName := range args {
-				err = deleteTrainingJob(clientset, jobName, namespace, "")
+				err = deleteTrainingJob(kubeClient, jobName, namespace, "")
 				if err != nil {
 					log.Errorf("Failed to delete %s, the reason is that %v\n", jobName, err)
 				}
@@ -65,7 +64,7 @@ func NewDeleteCommand() *cobra.Command {
 	return command
 }
 
-func deleteTrainingJob(clientset *kubernetes.Clientset, jobName, namespace string, trainingType string) error {
+func deleteTrainingJob(kubeClient *client.Client, jobName, namespace string, trainingType string) error {
 	var trainingTypes []string
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)
@@ -80,7 +79,7 @@ func deleteTrainingJob(clientset *kubernetes.Clientset, jobName, namespace strin
 	if trainingType == "" {
 		trainingTypes = getTrainingTypes(jobName, namespace)
 		if len(trainingTypes) == 0 {
-			runaiTrainer := NewRunaiTrainer(clientset)
+			runaiTrainer := NewRunaiTrainer(*kubeClient)
 			job, err := runaiTrainer.GetTrainingJob(jobName, namespace)
 			if err == nil && !job.CreatedByCLI() {
 				return fmt.Errorf("the job exists but was not created by the runai cli")
@@ -102,7 +101,7 @@ func deleteTrainingJob(clientset *kubernetes.Clientset, jobName, namespace strin
 		trainingTypes = []string{trainingType}
 	}
 
-	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0], clientset)
+	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0], kubeClient.GetClientset())
 	if err != nil {
 		return err
 	}

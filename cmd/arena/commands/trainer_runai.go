@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	cmdTypes "github.com/kubeflow/arena/cmd/arena/types"
+	"github.com/kubeflow/arena/pkg/client"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	extensionsv1 "k8s.io/api/extensions/v1beta1"
@@ -13,13 +14,19 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	runaiTrainType                  = "Train"
+	runaiInteractiveType            = "Interactive"
+	runaiPreemptibleInteractiveType = "Interactive-Preemptible"
+)
+
 type RunaiTrainer struct {
 	client kubernetes.Interface
 }
 
-func NewRunaiTrainer(client kubernetes.Interface) Trainer {
+func NewRunaiTrainer(client client.Client) Trainer {
 	return &RunaiTrainer{
-		client: client,
+		client: client.GetClientset(),
 	}
 }
 
@@ -54,9 +61,7 @@ func (rt *RunaiTrainer) IsSupported(name, ns string) bool {
 
 	if len(runaiStatefulSetsList.Items) > 0 {
 		for _, item := range runaiStatefulSetsList.Items {
-			if item.Spec.Template.Spec.SchedulerName == SchedulerName {
-				return true
-			}
+			return rt.isRunaiPodObject(item.ObjectMeta, item.Spec.Template)
 		}
 	}
 
@@ -183,7 +188,21 @@ func (rt *RunaiTrainer) getRunaiTrainingJob(podSpecJob cmdTypes.PodTemplateJob, 
 		ResourceType: podSpecJob.Type,
 		Name:         podSpecJob.Name,
 	}
-	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, rt.Type(), podSpecJob.Name, false, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, namespace, ownerResource), nil
+
+	jobType := rt.getJobType(&podSpecJob)
+	return NewRunaiJob(filteredPods, lastCreatedPod, podSpecJob.CreationTimestamp, jobType, podSpecJob.Name, podSpecJob.Labels["app"] == "runai", []string{}, false, podSpecJob.Template.Spec, podSpecJob.Template.ObjectMeta, podSpecJob.ObjectMeta, namespace, ownerResource), nil
+}
+
+func (rt *RunaiTrainer) isRunaiPodObject(metadata metav1.ObjectMeta, template v1.PodTemplateSpec) bool {
+	if template.Spec.SchedulerName != SchedulerName {
+		return false
+	}
+
+	if _, ok := metadata.Labels["mpi_job_name"]; ok {
+		return false
+	}
+
+	return true
 }
 
 type PodTemplateJob struct {
@@ -195,13 +214,14 @@ type PodTemplateJob struct {
 
 type RunaiJobInfo struct {
 	name              string
+	jobType           string
 	creationTimestamp metav1.Time
 	pods              []v1.Pod
 	createdByCLI      bool
-	interactive       bool
 	deleted           bool
 	podSpec           v1.PodSpec
 	podMetadata       metav1.ObjectMeta
+	ObjectMeta        metav1.ObjectMeta
 	owner             cmdTypes.Resource
 }
 
@@ -209,6 +229,10 @@ type RunaiOwnerInfo struct {
 	Name string
 	Type string
 	Uid  string
+}
+
+func (rt *RunaiTrainer) IsEnabled() bool {
+	return true
 }
 
 func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error) {
@@ -250,6 +274,9 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 
 	// Group the pods by their controller
 	for _, pod := range runaiPods.Items {
+		if IsMPIPod(pod) {
+			continue
+		}
 		controller := ""
 		var uid types.UID = ""
 
@@ -302,7 +329,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 	}
 
 	for _, job := range jobsForListCommand {
-		if job.Template.Spec.SchedulerName != SchedulerName {
+		if !rt.isRunaiPodObject(job.ObjectMeta, job.Template) {
 			continue
 		}
 
@@ -318,6 +345,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 			jobInfo.podMetadata = job.Template.ObjectMeta
 		}
 
+		jobInfo.ObjectMeta = job.ObjectMeta
 		jobInfo.creationTimestamp = job.CreationTimestamp
 		jobInfo.deleted = false
 		jobInfo.owner = cmdTypes.Resource{
@@ -330,9 +358,7 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 			jobInfo.createdByCLI = true
 		}
 
-		if job.Type == cmdTypes.ResourceTypeStatefulSet || job.Type == cmdTypes.ResourceTypeReplicaset {
-			jobInfo.interactive = true
-		}
+		jobInfo.jobType = rt.getJobType(job)
 	}
 
 	for _, jobInfo := range jobPodMap {
@@ -346,10 +372,20 @@ func (rt *RunaiTrainer) ListTrainingJobs(namespace string) ([]TrainingJob, error
 			}
 		}
 
-		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, "runai", jobInfo.name, jobInfo.interactive, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, namespace, jobInfo.owner))
+		runaiJobs = append(runaiJobs, NewRunaiJob(jobInfo.pods, lastCreatedPod, jobInfo.creationTimestamp, jobInfo.jobType, jobInfo.name, jobInfo.createdByCLI, serviceUrls, jobInfo.deleted, jobInfo.podSpec, jobInfo.podMetadata, jobInfo.ObjectMeta, namespace, jobInfo.owner))
 	}
 
 	return runaiJobs, nil
+}
+
+func (rt *RunaiTrainer) getJobType(job *cmdTypes.PodTemplateJob) string {
+	if job.Type == cmdTypes.ResourceTypeStatefulSet || job.Type == cmdTypes.ResourceTypeReplicaset {
+		if job.Template.ObjectMeta.Labels["priorityClassName"] == "interactive-preemptible" {
+			return runaiPreemptibleInteractiveType
+		}
+		return runaiInteractiveType
+	}
+	return runaiTrainType
 }
 
 func (rt *RunaiTrainer) getNodeIp() (string, error) {

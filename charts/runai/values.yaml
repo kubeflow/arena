@@ -47,6 +47,9 @@ hostNetwork: false
 # node_type: ""
 user: ""
 
+# runAsUser: 5000
+# runAsGroup: 6000
+
 # will be overriden by cli argument
 # volume:
 #   - /path/on/host1:/dest/container/path1

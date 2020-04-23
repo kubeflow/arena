@@ -1,0 +1,110 @@
+apiVersion: kubeflow.org/v1alpha2
+kind: MPIJob
+metadata:
+  name: {{ .Release.Name }}
+  annotations:
+    image: "{{ .Values.image }}"
+  labels:
+    app: {{ template "mpijob.name" . }}
+    chart: {{ template "mpijob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "MPIJob"
+    project: {{ .Values.project }}
+    {{- if .Values.user }}
+    user: {{ .Values.user }}
+    {{- end }}
+spec:
+  slotsPerWorker: 1
+  cleanPodPolicy: Running
+  mpiReplicaSpecs:
+    Launcher:
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            project: {{ .Values.project }}
+            {{- if .Values.user }}
+            user: {{ .Values.user }}
+            {{- end }}
+        spec:
+          {{- if .Values.node_type }}
+          nodeSelector:
+            run.ai/type: {{ .Values.node_type }}
+          {{- end}}
+          {{- if .Values.nodeName}}
+          nodeName: {{ .Values.nodeName }}
+          {{- end }}
+          schedulerName: runai-scheduler
+          containers:
+            - image: "{{ .Values.image }}"
+              name: mpi
+              imagePullPolicy: {{ .Values.imagePullPolicy }}
+              command:
+                - "sh"
+                - "-c"
+                - "{{ .Values.command }}"
+              args:
+              {{ range $index, $arg := .Values.args }}
+              - {{ quote $arg }}
+              {{- end}}
+              resources:
+                requests:
+                  {{- if .Values.cpu}}
+                  cpu: {{ .Values.cpu }}
+                  {{- end}}
+                  {{- if .Values.memory}}
+                  memory: {{ .Values.memory }}
+                  {{- end }}
+              env:
+                # Not using concat to support previous version of helm
+                {{- range $index, $env := .Values.environmentDefault }}
+                {{ $parts := split "=" $env }}
+                - name: {{ quote $parts._0 }}
+                  value: {{ quote $parts._1}}
+                {{- end }}
+                {{- range $index, $env := .Values.environment }}
+                {{ $parts := split "=" $env }}
+                - name: {{ quote $parts._0 }}
+                  value: {{ quote $parts._1}}
+                {{- end }}
+    Worker:
+      replicas: {{ .Values.numProcesses }}
+      template:
+        metadata:
+          labels:
+            project: {{ .Values.project }}
+            {{- if .Values.user }}
+            user: {{ .Values.user }}
+            {{- end }}
+        spec:
+          {{- if .Values.nodeName}}
+          nodeName: {{ .Values.nodeName }}
+          {{- end }}
+          schedulerName: runai-scheduler
+          containers:
+            - image: "{{ .Values.image }}"
+              name: mpi
+              imagePullPolicy: {{ .Values.imagePullPolicy }}
+              resources:
+                limits:
+                  nvidia.com/gpu: {{ .Values.gpu}}
+                requests:
+                  {{- if .Values.cpu}}
+                  cpu: {{ .Values.cpu }}
+                  {{- end}}
+                  {{- if .Values.memory}}
+                  memory: {{ .Values.memory }}
+                  {{- end }}
+              env:
+                # Not using concat to support previous version of helm
+                {{- range $index, $env := .Values.environmentDefault }}
+                {{ $parts := split "=" $env }}
+                - name: {{ quote $parts._0 }}
+                  value: {{ quote $parts._1}}
+                {{- end }}
+                {{- range $index, $env := .Values.environment }}
+                {{ $parts := split "=" $env }}
+                - name: {{ quote $parts._0 }}
+                  value: {{ quote $parts._1}}
+                {{- end }}
