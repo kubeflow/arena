@@ -606,11 +606,11 @@ func hasCondition(status common.JobStatus, condType common.JobConditionType) boo
 }
 
 func (mj *MPIJob) Project() string {
-	return mj.mpijob.ObjectMeta.Labels["project"]
+	return mj.chiefPod.ObjectMeta.Labels["project"]
 }
 
 func (mj *MPIJob) User() string {
-	return mj.mpijob.ObjectMeta.Labels["user"]
+	return mj.chiefPod.ObjectMeta.Labels["user"]
 }
 
 // Get all the pods of the Training Job
