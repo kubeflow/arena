@@ -273,7 +273,7 @@ func (tt *MPIJobTrainer) IsSupported(name, ns string) bool {
 		LabelSelector: fmt.Sprintf("release=%s", name),
 	})
 
-	if err != nil && len(mpiJobs) > 0 {
+	if err == nil && len(mpiJobs) > 0 {
 		return true
 	}
 
