@@ -2,6 +2,7 @@ package clusterConfig
 
 import (
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -15,7 +16,7 @@ type ClusterConfig struct {
 }
 
 type ClusterConfigs struct {
-	clientset *kubernetes.Clientset
+	clientset kubernetes.Interface
 }
 
 var (
@@ -25,7 +26,7 @@ var (
 	runaiDefaultAnnotation = "runai/default"
 )
 
-func NewClusterConfigs(clientset *kubernetes.Clientset) ClusterConfigs {
+func NewClusterConfigs(clientset kubernetes.Interface) ClusterConfigs {
 	return ClusterConfigs{
 		clientset: clientset,
 	}

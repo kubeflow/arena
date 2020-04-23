@@ -156,7 +156,7 @@ func printJobInfoIfNeeded(submitArgs *submitRunaiJobArgs) {
 	}
 }
 
-func getJobIndex(clientset *kubernetes.Clientset) (string, error) {
+func getJobIndex(clientset kubernetes.Interface) (string, error) {
 	for true {
 		index, shouldTryAgain, err := tryGetJobIndexOnce(clientset)
 
@@ -168,7 +168,7 @@ func getJobIndex(clientset *kubernetes.Clientset) (string, error) {
 	return "", nil
 }
 
-func tryGetJobIndexOnce(clientset *kubernetes.Clientset) (string, bool, error) {
+func tryGetJobIndexOnce(clientset kubernetes.Interface) (string, bool, error) {
 	var (
 		indexKey      = "index"
 		configMapName = "runai-cli-index"
@@ -321,7 +321,7 @@ func (sa *submitRunaiJobArgs) addFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("volumes", "please use 'volume' flag instead.")
 }
 
-func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset *kubernetes.Clientset) error {
+func submitRunaiJob(args []string, submitArgs *submitRunaiJobArgs, clientset kubernetes.Interface) error {
 	configs := clusterConfig.NewClusterConfigs(clientset)
 
 	var configToUse *clusterConfig.ClusterConfig

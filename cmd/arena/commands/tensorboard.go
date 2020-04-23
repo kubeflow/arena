@@ -64,7 +64,7 @@ func (submitArgs *submitTensorboardArgs) isLoggingInPVC(dataMap map[string]strin
 	return inPVC
 }
 
-func tensorboardURL(name, namespace string, clientset *kubernetes.Clientset) (url string, err error) {
+func tensorboardURL(name, namespace string, clientset kubernetes.Interface) (url string, err error) {
 
 	var (
 		port int32

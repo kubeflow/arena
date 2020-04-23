@@ -25,7 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
@@ -73,11 +73,11 @@ func NewTopNodeCommand() *cobra.Command {
 }
 
 type NodeDescriber struct {
-	client  *kubernetes.Clientset
+	client  kubernetes.Interface
 	allPods []v1.Pod
 }
 
-func newNodeDescriber(client *kubernetes.Clientset, pods []v1.Pod) *NodeDescriber {
+func newNodeDescriber(client kubernetes.Interface, pods []v1.Pod) *NodeDescriber {
 	return &NodeDescriber{
 		client:  client,
 		allPods: pods,

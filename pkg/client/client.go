@@ -14,7 +14,7 @@ var (
 )
 
 type Client struct {
-	clientset     *kubernetes.Clientset
+	clientset     kubernetes.Interface
 	restConfig    *restclient.Config
 	dynamicClient dynamic.Interface
 	namespace     string
@@ -62,7 +62,7 @@ func (c *Client) GetDynamicClient() dynamic.Interface {
 	return c.dynamicClient
 }
 
-func (c *Client) GetClientset() *kubernetes.Clientset {
+func (c *Client) GetClientset() kubernetes.Interface {
 	return c.clientset
 }
 

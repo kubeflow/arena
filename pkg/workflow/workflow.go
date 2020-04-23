@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"io/ioutil"
+
 	"github.com/kubeflow/arena/pkg/config"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -17,7 +18,7 @@ import (
 *	delete training job with the job name
 **/
 
-func DeleteJob(name, namespace, trainingType string, clientset *kubernetes.Clientset) error {
+func DeleteJob(name, namespace, trainingType string, clientset kubernetes.Interface) error {
 	jobName := fmt.Sprintf("%s-%s", name, trainingType)
 
 	appInfoFileName, err := kubectl.SaveAppConfigMapToFile(jobName, "app", namespace)
@@ -70,7 +71,7 @@ func GetDefaultValuesFile(environmentValues string) (string, error) {
 	return valueFile.Name(), nil
 }
 
-func UpdateConfigmapWithOwnerReference(name string, trainingType string, namespace string, clientset *kubernetes.Clientset) error {
+func UpdateConfigmapWithOwnerReference(name string, trainingType string, namespace string, clientset kubernetes.Interface) error {
 	job, err := clientset.BatchV1().Jobs(namespace).Get(name, metav1.GetOptions{})
 
 	// If job not found than do nothing
@@ -108,7 +109,7 @@ func UpdateConfigmapWithOwnerReference(name string, trainingType string, namespa
 	return nil
 }
 
-func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset *kubernetes.Clientset, dryRun bool) error {
+func SubmitJob(name string, trainingType string, namespace string, values interface{}, environmentValues string, chart string, clientset kubernetes.Interface, dryRun bool) error {
 	if !dryRun {
 		found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 		if found {

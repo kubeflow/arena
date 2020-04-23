@@ -17,7 +17,7 @@
 package fake
 
 import (
-	kubeflowv1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/client/clientset/versioned/typed/kubeflow/v1"
+	kubeflowv1 "github.com/kubeflow/arena/cmd/arena/commands/mpi/api/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

@@ -203,7 +203,7 @@ func getTrainingJobsByName(kubeClient *client.Client, name, namespace string) (j
 	return jobs, nil
 }
 
-func printTrainingJob(client *kubernetes.Clientset, job TrainingJob, printArgs PrintArgs) {
+func printTrainingJob(client kubernetes.Interface, job TrainingJob, printArgs PrintArgs) {
 	switch printArgs.Output {
 	case "name":
 		fmt.Println(job.Name())
@@ -229,7 +229,7 @@ func printTrainingJob(client *kubernetes.Clientset, job TrainingJob, printArgs P
 	}
 }
 
-func printSingleJobHelper(client *kubernetes.Clientset, job TrainingJob, printArgs PrintArgs) {
+func printSingleJobHelper(client kubernetes.Interface, job TrainingJob, printArgs PrintArgs) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	printJobSummary(w, job)
 
@@ -280,7 +280,7 @@ func printJobSummary(w io.Writer, job TrainingJob) {
 
 }
 
-func printEvents(clientset *kubernetes.Clientset, w io.Writer, namespace string, job TrainingJob) {
+func printEvents(clientset kubernetes.Interface, w io.Writer, namespace string, job TrainingJob) {
 	fmt.Fprintf(w, "\nEvents: \n")
 	eventsMap, err := getResourcesEvents(clientset, namespace, job)
 	if err != nil {
@@ -328,7 +328,7 @@ func GetJobRealStatus(job TrainingJob) string {
 }
 
 // Get Event of the Job
-func getResourcesEvents(client *kubernetes.Clientset, namespace string, job TrainingJob) ([]eventAndName, error) {
+func getResourcesEvents(client kubernetes.Interface, namespace string, job TrainingJob) ([]eventAndName, error) {
 	events, err := client.CoreV1().Events(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return []eventAndName{}, err

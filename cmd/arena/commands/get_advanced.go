@@ -66,7 +66,7 @@ func isTrainingConfigExist(name, trainingType, namespace string) bool {
 /**
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
-func BuildJobInfo(job TrainingJob, clientset *kubernetes.Clientset) *types.JobInfo {
+func BuildJobInfo(job TrainingJob, clientset kubernetes.Interface) *types.JobInfo {
 
 	tensorboard, err := tensorboardURL(job.Name(), job.ChiefPod().Namespace, clientset)
 	if tensorboard == "" || err != nil {
