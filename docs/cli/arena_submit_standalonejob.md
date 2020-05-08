@@ -1,4 +1,6 @@
-## arena submit standalonejob
+## arena submit standalonejob(deprecated)
+
+**Warning: standalonejob has been deprecated,please use [tfjob](../userguide/1-tfjob-standalone.md) instead.**
 
 Submit StandaloneJob as training job. And it will be deprecated soon, please use tfjob instead.
 
