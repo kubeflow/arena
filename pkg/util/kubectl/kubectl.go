@@ -25,7 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var kubectlCmd = []string{"kubectl"}
+var kubectlCmd = []string{"arena-kubectl"}
 
 /**
 * dry-run creating kubernetes App Info for delete in future
