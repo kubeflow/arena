@@ -115,6 +115,8 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	command.Flags().MarkDeprecated("psCpu", "please use --ps-cpu instead")
 	command.Flags().StringVar(&submitArgs.PSCpu, "ps-cpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
 
+	command.Flags().IntVar(&submitArgs.PSGpu, "ps-gpus", 0, "the gpu resource to use for the parameter servers, like 1 for 1 gpu.")
+
 	command.Flags().StringVar(&submitArgs.PSMemory, "psMemory", "", "the memory resource to use for the parameter servers, like 1Gi.")
 	command.Flags().MarkDeprecated("psMemory", "please use --ps-memory instead")
 	command.Flags().StringVar(&submitArgs.PSMemory, "ps-memory", "", "the memory resource to use for the parameter servers, like 1Gi.")
@@ -175,6 +177,7 @@ type submitTFJobArgs struct {
 	//WorkerNodeSelectors map[string]string `yaml:"workerNodeSelectors"` // --worker-selector
 	WorkerMemory   string `yaml:"workerMemory"`   // --workerMemory
 	PSCpu          string `yaml:"psCPU"`          // --psCpu
+	PSGpu          int    `yaml:"psGPU"`          // --ps-gpus
 	PSMemory       string `yaml:"psMemory"`       // --psMemory
 	CleanPodPolicy string `yaml:"cleanPodPolicy"` // --cleanTaskPolicy
 	// For esitmator, it reuses workerImage
