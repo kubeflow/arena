@@ -120,3 +120,7 @@
 ### 0.28.0
 
 * PS annotations should be a attribute of metadata yaml node.
+
+### 0.29.0
+
+* support assgining gpu resources for ps role pods when submitting tfjobs
