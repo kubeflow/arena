@@ -228,6 +228,9 @@ spec:
               {{- end }}
               resources:             
                 requests:
+                  {{- if .Values.psGPU }}
+                  nvidia.com/gpu: {{ .Values.psGPU | quote }}
+                  {{- end }}
                   {{- if .Values.psCPU }}
                   cpu: {{ .Values.psCPU | quote }}
                   {{- end}}
@@ -238,6 +241,9 @@ spec:
                   rdma/hca: "1"
                   {{- end}}
                 limits:
+                  {{- if .Values.psGPU }}
+                  nvidia.com/gpu: {{ .Values.psGPU | quote }}
+                  {{- end }}
                   {{- if .Values.psCPU }}
                   cpu: {{ .Values.psCPU | quote }}
                   {{- end}}
