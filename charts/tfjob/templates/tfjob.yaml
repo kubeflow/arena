@@ -1,4 +1,5 @@
 {{- $gpuCount := .Values.gpuCount -}}
+{{- $psGpuCount := .Values.psGPU -}}
 {{- $syncMode := .Values.syncMode -}}
 {{- $cleanPodPolicy := .Values.cleanPodPolicy -}}
 {{- $dataDirs := .Values.dataDirs -}}
@@ -228,7 +229,7 @@ spec:
               {{- end }}
               resources:             
                 requests:
-                  {{- if .Values.psGPU }}
+                  {{- if gt (int $psGpuCount) 0}}
                   nvidia.com/gpu: {{ .Values.psGPU | quote }}
                   {{- end }}
                   {{- if .Values.psCPU }}
@@ -241,7 +242,7 @@ spec:
                   rdma/hca: "1"
                   {{- end}}
                 limits:
-                  {{- if .Values.psGPU }}
+                  {{- if gt (int $psGpuCount) 0}}
                   nvidia.com/gpu: {{ .Values.psGPU | quote }}
                   {{- end }}
                   {{- if .Values.psCPU }}
