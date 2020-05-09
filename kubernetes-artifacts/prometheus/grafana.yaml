@@ -4,6 +4,10 @@ metadata:
   name: monitoring-grafana
   namespace: arena-system
 spec:
+  selector:
+    matchLabels:
+      task: monitoring
+      k8s-app: grafana
   replicas: 1
   template:
     metadata:
