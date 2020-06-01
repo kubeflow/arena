@@ -29,7 +29,7 @@ Allocated/Total GPUs In Cluster:
              --image=tensorflow/tensorflow:1.5.0-devel-gpu \
              --env=TEST_TMPDIR=code/tensorflow-sample-code/ \
              --sync-mode=git \
-             --sync-source=https://github.com/cheyang/tensorflow-sample-code.git \
+             --sync-source=https://code.aliyun.com/xiaozhou/tensorflow-sample-code.git \
              --tensorboard \
              --logdir=/training_logs \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000"

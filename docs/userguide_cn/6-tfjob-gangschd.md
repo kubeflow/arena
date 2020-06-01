@@ -30,7 +30,7 @@ arena submit tf --name=tf-dist-git \
               --workers=2 \
               --work-image=tensorflow/tensorflow:1.5.0-devel-gpu \
               --sync-mode=git \
-              --sync-source=https://github.com/cheyang/tensorflow-sample-code.git \
+              --sync-source= \
               --ps=1 \
               --ps-image=tensorflow/tensorflow:1.5.0-devel \
               "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir /training_logs"

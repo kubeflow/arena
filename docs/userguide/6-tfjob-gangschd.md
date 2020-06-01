@@ -30,7 +30,7 @@ The following command is an example. In this example, it defines 2 workers and 1
               --workers=2              \
               --workerImage=tensorflow/tensorflow:1.5.0-devel-gpu  \
               --syncMode=git \
-              --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
+              --syncSource=https://code.aliyun.com/xiaozhou/tensorflow-sample-code.git \
               --ps=1              \
               --psImage=tensorflow/tensorflow:1.5.0-devel   \
               "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir /training_logs"

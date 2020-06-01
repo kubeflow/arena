@@ -22,7 +22,7 @@ The following command is an example. In this example, it defines 2 workers and 1
     --workers=2 \
     --worker-image=tensorflow/tensorflow:1.5.0-devel-gpu \
     --sync-mode=git \
-    --sync-source=https://github.com/cheyang/tensorflow-sample-code.git \
+    --sync-source=https://code.aliyun.com/xiaozhou/tensorflow-sample-code.git \
     --ps=1 \
     --ps-image=tensorflow/tensorflow:1.5.0-devel \
     --tensorboard \
