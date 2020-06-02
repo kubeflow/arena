@@ -29,7 +29,7 @@ There are 3 available nodes with GPU for running training jobs.
              --image=tensorflow/tensorflow:1.5.0-devel-gpu \
              --env=TEST_TMPDIR=code/tensorflow-sample-code/ \
              --syncMode=git \
-             --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
+             --syncSource=https://code.aliyun.com/xiaozhou/tensorflow-sample-code.git \
              --tensorboard \
              --logdir=/training_logs \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000"
