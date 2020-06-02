@@ -28,7 +28,7 @@ Allocated/Total GPUs In Cluster:
              --gpus=1 \
              --image=tensorflow/tensorflow:1.5.0-devel-gpu \
              --sync-mode=git \
-             --sync-source=https://github.com/cheyang/tensorflow-sample-code.git \
+             --sync-source=https://code.aliyun.com/xiaozhou/tensorflow-sample-code.git \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 10000 --data_dir=code/tensorflow-sample-code/data"
 configmap/tf-git-tfjob created
 configmap/tf-git-tfjob labeled
@@ -47,7 +47,7 @@ INFO[0000] You can run `arena get tf-git --type tfjob` to check the job status
              --gpus=1 \
              --image=tensorflow/tensorflow:1.5.0-devel-gpu \
              --sync-mode=git \
-             --sync-source=https://github.com/cheyang/tensorflow-sample-code.git \
+             --sync-source=https://code.aliyun.com/xiaozhou/tensorflow-sample-code.git \
              --env=GIT_SYNC_USERNAME=yourname \
              --env=GIT_SYNC_PASSWORD=yourpwd \
              "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py"

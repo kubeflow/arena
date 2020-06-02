@@ -81,7 +81,7 @@ tfdata  ReadWriteMany  this is for mnist demo  myteam  43d
               --workers=2              \
               --workerImage=tensorflow/tensorflow:1.5.0-devel-gpu  \
               --syncMode=git \
-              --syncSource=https://github.com/cheyang/tensorflow-sample-code.git \
+              --syncSource=https://code.aliyun.com/xiaozhou/tensorflow-sample-code.git \
               --ps=1              \
               --psImage=tensorflow/tensorflow:1.5.0-devel   \
               --tensorboard \
