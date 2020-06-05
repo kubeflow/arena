@@ -63,14 +63,19 @@ if ! arena-kubectl get serviceaccount --all-namespaces | grep jobmon; then
     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/jobmon/jobmon-role.yaml
 fi
 
-if ! arena-kubectl get serviceaccount --all-namespaces | grep tf-job-operator; then
-    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/tf-operator/tf-crd.yaml
-    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/tf-operator/tf-operator.yaml
+# if KubeDL has installed, will skip install some CRDs of framework operator
+if arena-kubectl get serviceaccount --all-namespaces | grep kubedl; then
+    log "KubeDL has been detected, will skip install tf-operator"
 else
-    if arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2'; then
-        arena-kubectl delete -f $SCRIPT_DIR/kubernetes-artifacts/tf-operator/tf-operator-v1alpha2.yaml
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/tf-operator/tf-crd.yaml
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/tf-operator/tf-operator.yaml
+    if ! arena-kubectl get serviceaccount --all-namespaces | grep tf-job-operator; then
+        arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-crd.yaml
+        arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-operator.yaml
+    else
+        if arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2'; then
+            arena-kubectl delete -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-operator-v1alpha2.yaml
+            arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-crd.yaml
+            arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-operator.yaml
+        fi
     fi
 fi
 if ! arena-kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
