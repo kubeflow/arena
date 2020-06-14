@@ -1,0 +1,154 @@
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: pytorchjobs.kubeflow.org
+spec:
+  additionalPrinterColumns:
+    - JSONPath: .status.conditions[-1:].type
+      name: State
+      type: string
+    - JSONPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+  group: kubeflow.org
+  names:
+    kind: PyTorchJob
+    plural: pytorchjobs
+    singular: pytorchjob
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            pytorchReplicaSpecs:
+              properties:
+                Master:
+                  properties:
+                    replicas:
+                      maximum: 1
+                      minimum: 1
+                      type: integer
+                Worker:
+                  properties:
+                    replicas:
+                      minimum: 1
+                      type: integer
+  versions:
+    - name: v1
+      served: true
+      storage: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: pytorch-operator
+  name: pytorch-operator
+  namespace: arena-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  labels:
+    app: pytorch-operator
+  name: pytorch-operator
+rules:
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - pytorchjobs
+      - pytorchjobs/status
+    verbs:
+      - '*'
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - endpoints
+      - events
+    verbs:
+      - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: pytorch-operator
+  name: pytorch-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pytorch-operator
+subjects:
+  - kind: ServiceAccount
+    name: pytorch-operator
+    namespace: arena-system
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pytorch-operator
+  namespace: arena-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: pytorch-operator
+  template:
+    metadata:
+      labels:
+        name: pytorch-operator
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - command:
+            - /pytorch-operator.v1
+            - --alsologtostderr
+            - -v=1
+            - --monitoring-port=8443
+          env:
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          # image: gcr.io/kubeflow-images-public/pytorch-operator:v0.6.0-18-g5e36a57
+          image: registry.cn-hangzhou.aliyuncs.com/kubeflow-images-public/pytorch-operator:v1.0.0-g047cf0f
+          name: pytorch-operator
+      serviceAccountName: pytorch-operator
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8443"
+    prometheus.io/scrape: "true"
+  labels:
+    app: pytorch-operator
+  name: pytorch-operator
+  namespace: arena-system
+spec:
+  ports:
+    - name: monitoring-port
+      port: 8443
+      targetPort: 8443
+  selector:
+    name: pytorch-operator
+  type: ClusterIP
