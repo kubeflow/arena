@@ -1,0 +1,22 @@
+{{- if .Values.ingress -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-pytorchjob
+  annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+  labels:
+    app: {{ template "pytorchjob.name" . }}
+    chart: {{ template "pytorchjob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "pytorchjob"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /{{ .Release.Name }}-pytorchjob
+            backend:
+              serviceName: {{ .Release.Name }}-tensorboard
+              servicePort: 6006
+{{- end }}
