@@ -152,3 +152,4 @@ spec:
   selector:
     name: pytorch-operator
   type: ClusterIP
+
