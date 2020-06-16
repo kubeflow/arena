@@ -4,12 +4,12 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-tensorboard
   labels:
-    app: {{ template "mpijob.name" . }}
-    chart: {{ template "mpijob.chart" . }}
+    app: {{ template "pytorchjob.name" . }}
+    chart: {{ template "pytorchjob.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: tensorboard
-    createdBy: "MPIJob"
+    createdBy: "PyTorchJob"
 spec:
   type: {{ .Values.tensorboardServiceType }}
   ports:
@@ -18,8 +18,8 @@ spec:
       protocol: TCP
       name: tensorboard
   selector:
-    app: {{ template "mpijob.name" . }}
-    chart: {{ template "mpijob.chart" . }}
+    app: {{ template "pytorchjob.name" . }}
+    chart: {{ template "pytorchjob.chart" . }}
     release: {{ .Release.Name }}
     role: tensorboard
 {{- end }}
