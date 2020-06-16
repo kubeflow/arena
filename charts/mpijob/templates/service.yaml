@@ -9,7 +9,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: tensorboard
-    createdBy: "mpijob"
+    createdBy: "MPIJob"
 spec:
   type: {{ .Values.tensorboardServiceType }}
   ports:
