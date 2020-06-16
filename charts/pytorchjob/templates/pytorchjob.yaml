@@ -1,0 +1,566 @@
+{{- $gpuCount := .Values.gpuCount -}}
+{{- $syncMode := .Values.syncMode -}}
+{{- $cleanPodPolicy := .Values.cleanPodPolicy -}}
+{{- $dataDirs := .Values.dataDirs -}}
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ template "pytorchjob.name" . }}
+    chart: {{ template "pytorchjob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "PyTorchJob"
+spec:
+  backoffLimit: {{ .Values.retry }}
+{{- if .Values.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+{{- end }}
+{{- if .Values.cleanPodPolicy }}
+  cleanPodPolicy: None
+{{- end }}
+{{- if .Values.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ .Values.activeDeadlineSeconds }}
+{{- end }}
+  pytorchReplicaSpecs:
+  {{- if .Values.master }}
+    Master:
+      replicas: {{ .Values.master }}
+      restartPolicy: Never
+      template:
+        metadata:
+          name: {{ .Release.Name }}
+          labels:
+            app: {{ template "pytorchjob.name" . }}
+            chart: {{ template "pytorchjob.chart" . }}
+            release: {{ .Release.Name }}
+            heritage: {{ .Release.Service }}
+            createdBy: "PyTorchJob"
+          annotations:
+            {{- range $key, $value := .Values.annotations }}
+              {{ $key }}: {{ $value | quote }}
+            {{- end }}
+        spec:
+          {{- if ne (len .Values.nodeSelectors) 0 }}
+          nodeSelector:
+          {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+            {{ $nodeKey }}: "{{ $nodeVal }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.tolerations) 0 }}
+          tolerations:
+          {{- range $tolerationKey := .Values.tolerations }}
+            {{- if eq $tolerationKey "all" }}
+            - operator: "Exists"
+            {{- else }}
+            - key: "{{ $tolerationKey }}"
+              operator: "Exists"
+            {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.priorityClassName }}
+          priorityClassName: {{ .Values.priorityClassName }}
+          {{- end }}
+          {{- if .Values.useHostNetwork }}
+          {{- if not .Values.useENI }}
+          hostNetwork: {{ .Values.useHostNetwork }}
+          dnsPolicy: ClusterFirstWithHostNet
+          {{- end }}
+          {{- end }}
+          {{- if .Values.useHostPID }}
+          hostPID: {{ .Values.useHostPID }}
+          {{- end }}
+          {{- if .Values.useHostIPC }}
+          hostIPC: {{ .Values.useHostIPC }}
+          {{- end }}
+          {{- if .Values.enablePodSecurityContext }}
+          {{- if .Values.isNonRoot}}
+          securityContext:
+          runAsUser: {{ .Values.podSecurityContext.runAsUser }}
+          runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
+          runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
+          supplementalGroups:
+            {{- range $group := .Values.podSecurityContext.supplementalGroups }}
+            - {{ $group -}}
+            {{ end }}
+          {{- end }}
+          {{- end }}
+          volumes:
+          {{- if ne (len .Values.configFiles) 0 }}
+          {{- $releaseName := .Release.Name }}
+          {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+          - name: {{ $containerPathKey }}
+            configMap:
+              name: {{ $releaseName }}-{{ $containerPathKey }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.useTensorboard }}
+          {{- if .Values.isLocalLogging }}
+          - hostPath:
+              path: "{{ .Values.hostLogPath }}"
+            name: training-logs-volume
+          {{- end }}
+          {{- end }}
+          {{- if .Values.syncMode }}
+          - name: code-sync
+            emptyDir: {}
+          {{- end }}
+          {{- if .Values.nvidiaPath }}
+          - hostPath:
+              path: "{{ .Values.nvidiaPath }}"
+            name: nvidia
+          {{- end }}
+          {{- if .Values.dataset }}
+          {{- range $pvcName, $destPath := .Values.dataset }}
+          - name: "{{ $pvcName }}"
+            persistentVolumeClaim:
+              claimName: "{{ $pvcName }}"
+          {{- end }}
+          {{- end }}
+          {{- if $dataDirs }}
+          {{- range $dataDirs }}
+          - hostPath:
+              path: {{ .hostPath }}
+            name: {{ .name }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.shmSize }}
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: {{ .Values.shmSize }}
+          {{- end }}
+          {{- if .Values.syncMode }}
+          initContainers:
+          - name: init-code
+            {{- if .Values.syncImage }}
+            image: "{{ .Values.syncImage }}"
+            {{- else }}
+            {{- if eq .Values.syncMode "rsync" }}
+            image: "{{ .Values.rsyncImage }}"
+            {{- end }}
+            {{- if eq .Values.syncMode "git" }}
+            image: "{{ .Values.gitImage }}"
+            {{- end }}
+            {{- end }}
+            imagePullPolicy: {{ .Values.imagePullPolicy }}
+            {{- if eq "rsync" $syncMode }}
+            command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
+            {{- end }}
+            resources:
+              requests:
+                {{- if .Values.cpu }}
+                cpu: {{ .Values.cpu | quote }}
+                {{- end }}
+                {{- if .Values.memory }}
+                memory: {{ .Values.memory | quote }}
+                {{- end }}
+              limits:
+                {{- if .Values.cpu }}
+                cpu: {{ .Values.cpu | quote }}
+                {{- end }}
+                {{- if .Values.memory }}
+                memory: {{ .Values.memory | quote }}
+                {{- end }}
+            env:
+            {{- range $key, $value := .Values.envs }}
+              - name: "{{ $key }}"
+                value: "{{ $value }}"
+            {{- end }}
+            {{- if eq "git" $syncMode }}
+              - name: GIT_SYNC_REPO
+                value: {{ .Values.syncSource}}
+              - name: GIT_SYNC_DEST
+                value: {{ .Values.syncGitProjectName}}
+              - name: GIT_SYNC_ROOT
+                value: /code
+              - name: GIT_SYNC_ONE_TIME
+                value: "true"
+            {{- end }}
+            volumeMounts:
+              - name: code-sync
+                mountPath: /code
+          {{- end }}
+          containers:
+          - image: "{{ .Values.image }}"
+            name: pytorch
+            imagePullPolicy: {{ .Values.imagePullPolicy }}
+            {{- if .Values.workingDir }}
+            workingDir: {{ .Values.workingDir }}
+            {{- end }}
+            command:
+            - "sh"
+            - "-c"
+            - "{{ .Values.command }}"
+            resources:
+              requests:
+                {{- if gt (int $gpuCount) 0}}
+                {{- if .Values.nvidiaPath }}
+                alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+                {{- else}}
+                nvidia.com/gpu: {{ $gpuCount | quote }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.cpu }}
+                cpu: {{ .Values.cpu | quote }}
+                {{- end }}
+                {{- if .Values.memory }}
+                memory: {{ .Values.memory | quote }}
+                {{- end }}
+                {{- if .Values.enableRDMA }}
+                rdma/hca: "1"
+                {{- end}}
+              limits:
+                {{- if gt (int $gpuCount) 0}}
+                {{- if .Values.nvidiaPath }}
+                alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+                {{- else}}
+                nvidia.com/gpu: {{ $gpuCount | quote }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.cpu }}
+                cpu: {{ .Values.cpu | quote }}
+                {{- end }}
+                {{- if .Values.memory }}
+                memory: {{ .Values.memory | quote }}
+                {{- end }}
+                {{- if .Values.enableRDMA }}
+                rdma/hca: "1"
+                {{- end}}
+            env:
+            {{- if .Values.envs }}
+            {{- range $key, $value := .Values.envs }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+            {{- end }}
+            {{- end }}
+            {{- if .Values.privileged }}
+            securityContext:
+              privileged: true
+            {{- else if .Values.enableRDMA }}
+            securityContext:
+              capabilities:
+                add:
+                - IPC_LOCK
+            {{- end }}
+            volumeMounts:
+            {{- if ne (len .Values.configFiles) 0 }}
+            {{- $releaseName := .Release.Name }}
+            {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+            {{- $visit := "false" }}
+            {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+            {{- if eq  "false" $visit }}
+            - mountPath: {{ $configFileInfo.containerFilePath }}
+              name: {{ $containerPathKey }}
+            {{- $visit = "true" }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.useTensorboard }}
+            {{- if .Values.isLocalLogging }}
+            - mountPath: {{ .Values.trainingLogdir }}
+              name: training-logs-volume
+            {{- end }}
+            {{- end }}
+            {{- if .Values.syncMode }}
+            {{- if .Values.workingDir }}
+            - name: code-sync
+              mountPath: {{ .Values.workingDir }}/code
+            {{- else }}
+            - name: code-sync
+              mountPath: /code
+            {{- end }}
+            {{- end }}
+            {{- if .Values.nvidiaPath }}
+            - mountPath: /usr/local/nvidia
+              name: nvidia
+            {{- end }}
+            {{- if .Values.dataset }}
+            {{- range $pvcName, $destPath := .Values.dataset }}
+            - name: "{{ $pvcName }}"
+              mountPath: "{{ $destPath }}"
+            {{- end }}
+            {{- end }}
+            {{- if .Values.shmSize }}
+            - mountPath: /dev/shm
+              name: dshm
+            {{- end }}
+            {{- if $dataDirs }}
+            {{- range $dataDirs }}
+            - mountPath: {{ .containerPath }}
+              name: {{ .name }}
+            {{- end }}
+            {{- end }}
+    {{- end }}
+  {{- if .Values.workers }}
+    Worker:
+      replicas: {{ .Values.workers }}
+      restartPolicy: Never
+      template:
+        metadata:
+          name: {{ .Release.Name }}
+          labels:
+            app: {{ template "pytorchjob.name" . }}
+            chart: {{ template "pytorchjob.chart" . }}
+            release: {{ .Release.Name }}
+            heritage: {{ .Release.Service }}
+            createdBy: "PyTorchJob"
+          annotations:
+            {{- range $key, $value := .Values.annotations }}
+              {{ $key }}: {{ $value | quote }}
+            {{- end }}
+        spec:
+          {{- if ne (len .Values.nodeSelectors) 0 }}
+          nodeSelector:
+          {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+          {{ $nodeKey }}: "{{ $nodeVal }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.tolerations) 0 }}
+          tolerations:
+          {{- range $tolerationKey := .Values.tolerations }}
+          {{- if eq $tolerationKey "all" }}
+          - operator: "Exists"
+          {{- else }}
+          - key: "{{ $tolerationKey }}"
+            operator: "Exists"
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.priorityClassName }}
+          priorityClassName: {{ .Values.priorityClassName }}
+          {{- end }}
+          {{- if .Values.useHostNetwork }}
+          {{- if not .Values.useENI }}
+          hostNetwork: {{ .Values.useHostNetwork }}
+          dnsPolicy: ClusterFirstWithHostNet
+          {{- end }}
+          {{- end }}
+          {{- if .Values.useHostPID }}
+          hostPID: {{ .Values.useHostPID }}
+          {{- end }}
+          {{- if .Values.useHostIPC }}
+          hostIPC: {{ .Values.useHostIPC }}
+          {{- end }}
+          {{- if .Values.enablePodSecurityContext }}
+          {{- if .Values.isNonRoot}}
+          securityContext:
+          runAsUser: {{ .Values.podSecurityContext.runAsUser }}
+          runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
+          runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
+          supplementalGroups:
+            {{- range $group := .Values.podSecurityContext.supplementalGroups }}
+            - {{ $group -}}
+            {{ end }}
+          {{- end }}
+          {{- end }}
+          volumes:
+          {{- if ne (len .Values.configFiles) 0 }}
+          {{- $releaseName := .Release.Name }}
+          {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+          - name: {{ $containerPathKey }}
+            configMap:
+              name: {{ $releaseName }}-{{ $containerPathKey }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.useTensorboard }}
+          {{- if .Values.isLocalLogging }}
+          - hostPath:
+              path: "{{ .Values.hostLogPath }}"
+            name: training-logs-volume
+          {{- end }}
+          {{- end }}
+          {{- if .Values.syncMode }}
+          - name: code-sync
+            emptyDir: {}
+          {{- end }}
+          {{- if .Values.nvidiaPath }}
+          - hostPath:
+              path: "{{ .Values.nvidiaPath }}"
+            name: nvidia
+          {{- end }}
+          {{- if .Values.dataset }}
+          {{- range $pvcName, $destPath := .Values.dataset }}
+          - name: "{{ $pvcName }}"
+            persistentVolumeClaim:
+              claimName: "{{ $pvcName }}"
+          {{- end }}
+          {{- end }}
+          {{- if $dataDirs }}
+          {{- range $dataDirs }}
+          - hostPath:
+              path: {{ .hostPath }}
+            name: {{ .name }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.shmSize }}
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: {{ .Values.shmSize }}
+          {{- end }}
+          {{- if .Values.syncMode }}
+          initContainers:
+            - name: init-code
+              {{- if .Values.syncImage }}
+              image: "{{ .Values.syncImage }}"
+              {{- else }}
+              {{- if eq .Values.syncMode "rsync" }}
+              image: "{{ .Values.rsyncImage }}"
+              {{- end }}
+              {{- if eq .Values.syncMode "git" }}
+              image: "{{ .Values.gitImage }}"
+              {{- end }}
+              {{- end }}
+              imagePullPolicy: {{ .Values.imagePullPolicy }}
+              {{- if eq "rsync" $syncMode }}
+              command: ["rsync", "-avP", "{{ .Values.syncSource}}", "/code"]
+              {{- end }}
+              resources:
+                requests:
+                  {{- if .Values.cpu }}
+                  cpu: {{ .Values.cpu | quote }}
+                  {{- end }}
+                  {{- if .Values.memory }}
+                  memory: {{ .Values.memory | quote }}
+                  {{- end }}
+                limits:
+                  {{- if .Values.cpu }}
+                  cpu: {{ .Values.cpu | quote }}
+                  {{- end }}
+                  {{- if .Values.memory }}
+                  memory: {{ .Values.memory | quote }}
+                  {{- end }}
+              env:
+              {{- range $key, $value := .Values.envs }}
+              - name: "{{ $key }}"
+                value: "{{ $value }}"
+              {{- end }}
+              {{- if eq "git" $syncMode }}
+              - name: GIT_SYNC_REPO
+                value: {{ .Values.syncSource}}
+              - name: GIT_SYNC_DEST
+                value: {{ .Values.syncGitProjectName}}
+              - name: GIT_SYNC_ROOT
+                value: /code
+              - name: GIT_SYNC_ONE_TIME
+                value: "true"
+              {{- end }}
+              volumeMounts:
+                - name: code-sync
+                  mountPath: /code
+          {{- end }}
+          containers:
+            - image: "{{ .Values.image }}"
+              name: pytorch
+              imagePullPolicy: {{ .Values.imagePullPolicy }}
+              {{- if .Values.workingDir }}
+              workingDir: {{ .Values.workingDir }}
+              {{- end }}
+              command:
+                - "sh"
+                - "-c"
+                - "{{ .Values.command }}"
+              resources:
+                requests:
+                  {{- if gt (int $gpuCount) 0}}
+                    {{- if .Values.nvidiaPath }}
+                    alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+                    {{- else}}
+                    nvidia.com/gpu: {{ $gpuCount | quote }}
+                    {{- end }}
+                    {{- end }}
+                    {{- if .Values.cpu }}
+                    cpu: {{ .Values.cpu | quote }}
+                    {{- end }}
+                    {{- if .Values.memory }}
+                    memory: {{ .Values.memory | quote }}
+                    {{- end }}
+                    {{- if .Values.enableRDMA }}
+                    rdma/hca: "1"
+                    {{- end}}
+                limits:
+                  {{- if gt (int $gpuCount) 0}}
+                    {{- if .Values.nvidiaPath }}
+                    alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
+                    {{- else}}
+                    nvidia.com/gpu: {{ $gpuCount | quote }}
+                    {{- end }}
+                    {{- end }}
+                    {{- if .Values.cpu }}
+                    cpu: {{ .Values.cpu | quote }}
+                    {{- end }}
+                    {{- if .Values.memory }}
+                    memory: {{ .Values.memory | quote }}
+                    {{- end }}
+                    {{- if .Values.enableRDMA }}
+                    rdma/hca: "1"
+                    {{- end}}
+              env:
+              {{- if .Values.envs }}
+              {{- range $key, $value := .Values.envs }}
+              - name: "{{ $key }}"
+                value: "{{ $value }}"
+              {{- end }}
+              {{- end }}
+              {{- if .Values.privileged }}
+              securityContext:
+                privileged: true
+              {{- else if .Values.enableRDMA }}
+              securityContext:
+                capabilities:
+                  add:
+                    - IPC_LOCK
+              {{- end }}
+              volumeMounts:
+              {{- if ne (len .Values.configFiles) 0 }}
+              {{- $releaseName := .Release.Name }}
+              {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+              {{- $visit := "false" }}
+              {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+              {{- if eq  "false" $visit }}
+              - mountPath: {{ $configFileInfo.containerFilePath }}
+                name: {{ $containerPathKey }}
+              {{- $visit = "true" }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if .Values.useTensorboard }}
+              {{- if .Values.isLocalLogging }}
+              - mountPath: {{ .Values.trainingLogdir }}
+                name: training-logs-volume
+              {{- end }}
+              {{- end }}
+              {{- if .Values.syncMode }}
+              {{- if .Values.workingDir }}
+              - name: code-sync
+                mountPath: {{ .Values.workingDir }}/code
+              {{- else }}
+              - name: code-sync
+              mountPath: /code
+              {{- end }}
+              {{- end }}
+              {{- if .Values.nvidiaPath }}
+              - mountPath: /usr/local/nvidia
+                name: nvidia
+              {{- end }}
+              {{- if .Values.dataset }}
+              {{- range $pvcName, $destPath := .Values.dataset }}
+              - name: "{{ $pvcName }}"
+                mountPath: "{{ $destPath }}"
+              {{- end }}
+              {{- end }}
+              {{- if .Values.shmSize }}
+              - mountPath: /dev/shm
+                name: dshm
+              {{- end }}
+              {{- if $dataDirs }}
+              {{- range $dataDirs }}
+              - mountPath: {{ .containerPath }}
+                name: {{ .name }}
+              {{- end }}
+              {{- end }}
+  {{- end }}
