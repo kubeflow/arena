@@ -22,7 +22,6 @@ import (
 	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
-	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -150,10 +149,8 @@ func (pj *PyTorchJob) Duration() time.Duration {
 		return pytorchjob.Status.CompletionTime.Time.Sub(pytorchjob.Status.StartTime.Time)
 	}
 
-	// TODO: why
 	if pj.GetStatus() == "FAILED" {
 		cond := getPodLatestCondition(pj.chiefPod)
-		// TODO: what's means of LastTransitionTime
 		if !cond.LastTransitionTime.IsZero() {
 			return cond.LastTransitionTime.Time.Sub(pytorchjob.CreationTimestamp.Time)
 		} else {
@@ -434,66 +431,7 @@ func (tt *PyTorchJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJ
 	}, nil
 }
 
-func (tt *PyTorchJobTrainer) getChiefJob(name string, namespace string) (job batchv1.Job) {
-	// try to search batch job of the pytorchjob, it may be name or name-pytorchjob
-	jobList, err := tt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("pytorch_job_name=%s", name),
-	})
 
-	if len(jobList.Items) > 0 {
-		job = jobList.Items[0]
-		return job
-	}
-
-	if err != nil {
-		log.Debugf("pytorchjob list failed due to %v with pytorch_job_name=%s", err, name)
-	}
-
-	jobList, err = tt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("pytorch_job_name=%s-pytorchjob", name),
-	})
-
-	if len(jobList.Items) > 0 {
-		job = jobList.Items[0]
-		return job
-	}
-
-	if err != nil {
-		log.Debugf("pytorchjob list failed due to %v with pytorch_job_name=%s", err, name)
-	}
-
-	if len(jobList.Items) > 0 {
-		job = jobList.Items[0]
-	}
-
-	return job
-}
-
-func (tt *PyTorchJobTrainer) isChiefJob(job batchv1.Job, name string, namespace string) bool {
-	if job.Namespace != namespace {
-		log.Debugf("The job %s in namespace %s not the same namespace as the pytorchjob %s in the namespace %s",
-			job.Name,
-			job.Namespace,
-			name,
-			namespace)
-		return false
-	}
-
-	if job.Name == fmt.Sprintf("%s-launcher", name) || job.Name == fmt.Sprintf("%s-pytorchjob-launcher", name) {
-		log.Debugf("The job %s is the master job of %s", job.Name, name)
-		return true
-	} else {
-		log.Debugf("The job %s is not the master job of %s", job.Name, name)
-	}
-
-	return false
-}
 
 func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob pytorchv1.PyTorchJob, item v1.Pod) bool {
 

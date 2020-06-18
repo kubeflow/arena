@@ -209,18 +209,17 @@ func submitPyTorchJob(args []string, submitArgs *submitPyTorchJobArgs) (err erro
 		return err
 	}
 
-	// TODO: to be continued, we can ignore these
-	//trainer := NewPyTorchJobTrainer(clientset)
-	//
-	//// check pytorch job has exist
-	//job, err := trainer.GetTrainingJob(name, namespace)
-	//if err != nil {
-	//	log.Debugf("Check %s exist due to error %v", name, err)
-	//}
-	//
-	//if job != nil {
-	//	return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
-	//}
+	trainer := NewPyTorchJobTrainer(clientset)
+
+	// check pytorch job has exist
+	job, err := trainer.GetTrainingJob(name, namespace)
+	if err != nil {
+		log.Debugf("Check %s exist due to error %v", name, err)
+	}
+
+	if job != nil {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+	}
 
 	// the master is also considered as a worker
 	submitArgs.WorkerCount = submitArgs.WorkerCount - 1
