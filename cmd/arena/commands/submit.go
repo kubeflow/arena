@@ -119,6 +119,7 @@ func (s submitArgs) check() error {
 }
 
 // transform common parts of submitArgs
+// e.g. --data-dir、--data、--annotation、PodSecurityContext
 func (s *submitArgs) transform() (err error) {
 	// 1. handle data dirs
 	log.Debugf("dataDir: %v", dataDirs)
@@ -354,12 +355,15 @@ func NewSubmitCommand() *cobra.Command {
 
 	command.AddCommand(NewSubmitTFJobCommand())
 	command.AddCommand(NewSubmitMPIJobCommand())
+	// support pytorchjob
+	command.AddCommand(NewSubmitPyTorchJobCommand())
 	command.AddCommand(NewSubmitHorovodJobCommand())
 	// This will be deprecated soon.
 	command.AddCommand(NewSubmitStandaloneJobCommand())
 	command.AddCommand(NewSparkApplicationCommand())
 
 	command.AddCommand(NewVolcanoJobCommand())
+
 
 	return command
 }
