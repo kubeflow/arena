@@ -94,7 +94,6 @@ func NewSubmitPyTorchJobCommand() *cobra.Command {
 	submitArgs.addSyncFlags(command)
 	log.Debugf("pytorchjob command: %v", command)
 
-
 	return command
 }
 

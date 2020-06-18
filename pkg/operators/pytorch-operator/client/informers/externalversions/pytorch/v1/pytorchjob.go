@@ -18,7 +18,7 @@ package v1
 
 import (
 	time "time"
-	
+
 	pytorchv1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
 	versioned "github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
 	internalinterfaces "github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/informers/externalversions/internalinterfaces"

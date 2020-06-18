@@ -33,11 +33,11 @@ import (
 
 const (
 	// pytorch-operator added labels for pods and servers.
-	pytorchReplicaTypeLabel     = "pytorch-replica-type"
-	pytorchReplicaIndexLabel    = "pytorch-replica-index"
-	labelPyTorchGroupName         = "group-name"
-	labelPyTorchJobName         = "pytorch-job-name"
-	labelPyTorchJobRole         = "job-role"
+	pytorchReplicaTypeLabel  = "pytorch-replica-type"
+	pytorchReplicaIndexLabel = "pytorch-replica-index"
+	labelPyTorchGroupName    = "group-name"
+	labelPyTorchJobName      = "pytorch-job-name"
+	labelPyTorchJobRole      = "job-role"
 )
 
 var (
@@ -61,7 +61,7 @@ func initPyTorchJobClient() (pytorchjobClientset *versioned.Clientset, err error
 // PyTorch Job Information
 type PyTorchJob struct {
 	*BasicJobInfo
-	pytorchjob       pytorchv1.PyTorchJob
+	pytorchjob   pytorchv1.PyTorchJob
 	pods         []v1.Pod // all the pods including statefulset and job
 	chiefPod     v1.Pod   // the master pod
 	requestedGPU int64
@@ -243,9 +243,9 @@ func (pj *PyTorchJob) Namespace() string {
 
 // PyTorch Job trainer
 type PyTorchJobTrainer struct {
-	client       *kubernetes.Clientset
+	client           *kubernetes.Clientset
 	pytorchjobClient *versioned.Clientset
-	trainerType  string
+	trainerType      string
 	// check if it's enabled
 	enabled bool
 }
@@ -278,7 +278,6 @@ func NewPyTorchJobTrainer(client *kubernetes.Clientset) Trainer {
 			}
 		}
 
-
 		for _, pytorchjob := range pytorchjobList.Items {
 			allPyTorchJobs = append(allPyTorchJobs, pytorchjob)
 		}
@@ -288,9 +287,9 @@ func NewPyTorchJobTrainer(client *kubernetes.Clientset) Trainer {
 
 	return &PyTorchJobTrainer{
 		pytorchjobClient: pytorchjobClient,
-		client:       client,
-		trainerType:  "pytorchjob",
-		enabled:      true,
+		client:           client,
+		trainerType:      "pytorchjob",
+		enabled:          true,
 	}
 }
 
@@ -388,7 +387,7 @@ func (tt *PyTorchJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 			resources: resources,
 			name:      name,
 		},
-		pytorchjob:      pytorchjob,
+		pytorchjob:  pytorchjob,
 		chiefPod:    chiefPod,
 		pods:        pods,
 		trainerType: tt.Type(),
@@ -424,14 +423,12 @@ func (tt *PyTorchJobTrainer) getTrainingJobFromCache(name, ns string) (TrainingJ
 			resources: podResources(pods),
 			name:      name,
 		},
-		pytorchjob:      pytorchjob,
+		pytorchjob:  pytorchjob,
 		chiefPod:    chiefPod,
 		pods:        pods,
 		trainerType: tt.Type(),
 	}, nil
 }
-
-
 
 func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob pytorchv1.PyTorchJob, item v1.Pod) bool {
 

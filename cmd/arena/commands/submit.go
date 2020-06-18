@@ -262,7 +262,8 @@ func (submitArgs *submitArgs) addJobConfigFiles() error {
 	}
 	return nil
 }
-// add --set-file flag to 'helm template' 
+
+// add --set-file flag to 'helm template'
 func (submitArgs *submitArgs) addHelmOptions() []string {
 	options := []string{}
 	for containerPathkey, val := range submitArgs.ConfigFiles {
@@ -359,7 +360,6 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewSparkApplicationCommand())
 
 	command.AddCommand(NewVolcanoJobCommand())
-
 
 	return command
 }
