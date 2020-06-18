@@ -19,6 +19,7 @@ package v1
 import (
 	v1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
 	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned/scheme"
+	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -64,11 +65,12 @@ func New(c rest.Interface) *KubeflowV1Client {
 	return &KubeflowV1Client{c}
 }
 
+// This funtion (from tensorflow_client.go)  does not depend on k8s.io/apimachinery v0.15.9
 func setConfigDefaults(config *rest.Config) error {
 	gv := v1.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()
@@ -76,6 +78,20 @@ func setConfigDefaults(config *rest.Config) error {
 
 	return nil
 }
+
+// TODO: we update k8s.io/* package, this function depends on k8s.io/apimachinery v0.15.9
+//func setConfigDefaults(config *rest.Config) error {
+//	gv := v1.SchemeGroupVersion
+//	config.GroupVersion = &gv
+//	config.APIPath = "/apis"
+//	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+//
+//	if config.UserAgent == "" {
+//		config.UserAgent = rest.DefaultKubernetesUserAgent()
+//	}
+//
+//	return nil
+//}
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.

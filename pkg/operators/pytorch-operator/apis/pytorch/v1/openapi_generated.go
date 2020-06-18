@@ -27,7 +27,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/kubeflow/common/job_controller/api/v1.JobCondition": {
+		"github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.JobCondition": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Description: "JobCondition describes the state of the job at a certain point.",
@@ -79,7 +79,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 			Dependencies: []string{
 				"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 		},
-		"github.com/kubeflow/common/job_controller/api/v1.JobStatus": {
+		"github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.JobStatus": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Description: "JobStatus represents the current observed state of the training Job.",
@@ -91,7 +91,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Items: &spec.SchemaOrArray{
 									Schema: &spec.Schema{
 										SchemaProps: spec.SchemaProps{
-											Ref: ref("github.com/kubeflow/common/job_controller/api/v1.JobCondition"),
+											Ref: ref("github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.JobCondition"),
 										},
 									},
 								},
@@ -104,7 +104,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								AdditionalProperties: &spec.SchemaOrBool{
 									Schema: &spec.Schema{
 										SchemaProps: spec.SchemaProps{
-											Ref: ref("github.com/kubeflow/common/job_controller/api/v1.ReplicaStatus"),
+											Ref: ref("github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.ReplicaStatus"),
 										},
 									},
 								},
@@ -133,9 +133,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 				},
 			},
 			Dependencies: []string{
-				"github.com/kubeflow/common/job_controller/api/v1.JobCondition", "github.com/kubeflow/common/job_controller/api/v1.ReplicaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+				"github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.JobCondition", "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.ReplicaStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 		},
-		"github.com/kubeflow/common/job_controller/api/v1.ReplicaSpec": {
+		"github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.ReplicaSpec": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Description: "ReplicaSpec is a description of the replica",
@@ -166,7 +166,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 			Dependencies: []string{
 				"k8s.io/api/core/v1.PodTemplateSpec"},
 		},
-		"github.com/kubeflow/common/job_controller/api/v1.ReplicaStatus": {
+		"github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.ReplicaStatus": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Description: "ReplicaStatus represents the current observed state of the replica.",
@@ -231,14 +231,14 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 						"status": {
 							SchemaProps: spec.SchemaProps{
 								Description: "Most recently observed status of the PyTorchJob. Read-only (modified by the system).",
-								Ref:         ref("github.com/kubeflow/common/job_controller/api/v1.JobStatus"),
+								Ref:         ref("github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.JobStatus"),
 							},
 						},
 					},
 				},
 			},
 			Dependencies: []string{
-				"github.com/kubeflow/common/job_controller/api/v1.JobStatus", "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1.PyTorchJobSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+				"github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.JobStatus", "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1.PyTorchJobSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 		},
 		"github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1.PyTorchJobList": {
 			Schema: spec.Schema{
@@ -325,7 +325,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								AdditionalProperties: &spec.SchemaOrBool{
 									Schema: &spec.Schema{
 										SchemaProps: spec.SchemaProps{
-											Ref: ref("github.com/kubeflow/common/job_controller/api/v1.ReplicaSpec"),
+											Ref: ref("github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.ReplicaSpec"),
 										},
 									},
 								},
@@ -336,7 +336,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 				},
 			},
 			Dependencies: []string{
-				"github.com/kubeflow/common/job_controller/api/v1.ReplicaSpec"},
+				"github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1.ReplicaSpec"},
 		},
 	}
 }
