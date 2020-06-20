@@ -18,7 +18,7 @@ package v1
 
 import (
 	"time"
-	
+
 	v1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
 	scheme "github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
