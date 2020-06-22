@@ -540,14 +540,8 @@ func (tt *PyTorchJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) 
 	for _, pytorchjob := range allPyTorchJobs {
 		jobInfo := types.TrainingJobInfo{}
 		log.Debugf("find pytorchjob %s in %s", pytorchjob.Name, pytorchjob.Namespace)
-		// TODO: why? seems like never step here
-		if val, ok := pytorchjob.Labels["release"]; ok && (pytorchjob.Name == fmt.Sprintf("%s-%s", val, tt.Type())) {
-			log.Debugf("the pytorchjob %s with labels %s found in List", pytorchjob.Name, val)
-			jobInfo.Name = val
-		} else {
-			jobInfo.Name = pytorchjob.Name
-		}
 
+		jobInfo.Name = pytorchjob.Name
 		jobInfo.Namespace = pytorchjob.Namespace
 		jobInfos = append(jobInfos, jobInfo)
 

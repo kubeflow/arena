@@ -308,7 +308,7 @@ spec:
           {{- if ne (len .Values.nodeSelectors) 0 }}
           nodeSelector:
           {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
-          {{ $nodeKey }}: "{{ $nodeVal }}"
+            {{ $nodeKey }}: "{{ $nodeVal }}"
           {{- end }}
           {{- end }}
           {{- if ne (len .Values.tolerations) 0 }}
