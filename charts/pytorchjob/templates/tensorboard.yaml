@@ -29,10 +29,16 @@ spec:
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
-      {{- if .Values.launcherOnMaster }}
+      {{- if ne (len .Values.tolerations) 0 }}
       tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
+        {{- range $tolerationKey := .Values.tolerations }}
+        {{- if eq $tolerationKey "all" }}
+        - operator: "Exists"
+        {{- else }}
+        - key: "{{ $tolerationKey }}"
+          operator: "Exists"
+      {{- end }}
+      {{- end }}
       {{- end }}
       affinity:
         podAffinity:
