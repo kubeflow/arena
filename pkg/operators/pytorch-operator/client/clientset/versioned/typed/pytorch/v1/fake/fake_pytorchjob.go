@@ -129,7 +129,8 @@ func (c *FakePyTorchJobs) DeleteCollection(options *v1.DeleteOptions, listOption
 // Patch applies the patch and returns the patched pyTorchJob.
 func (c *FakePyTorchJobs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *pytorchv1.PyTorchJob, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(pytorchjobsResource, c.ns, name, pt, data, subresources...), &pytorchv1.PyTorchJob{})
+		// delete param pt beacause this function of current k8s.io/client-go/testing doesn't have this param, same as tf
+		Invokes(testing.NewPatchSubresourceAction(pytorchjobsResource, c.ns, name, data, subresources...), &pytorchv1.PyTorchJob{})
 
 	if obj == nil {
 		return nil, err
