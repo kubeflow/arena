@@ -142,7 +142,7 @@ func (submitArgs *submitPyTorchJobArgs) prepare(args []string) (err error) {
 	// e.g. process --data-dir、--data、--annotation、PodSecurityContext
 	err = commonArgs.transform()
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = submitArgs.HandleSyncCode()
