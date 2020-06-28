@@ -28,6 +28,7 @@ const restrictedNameChars = `[a-zA-Z0-9][a-zA-Z0-9_.-]`
 var restrictedNamePattern = regexp.MustCompile(`^` + restrictedNameChars + `+$`)
 
 func ValidateDatasets(dataset []string) (err error) {
+	tempPVCList := make(map[string]string)
 	for _, dataset := range dataset {
 		parts := strings.Split(dataset, ":")
 		if len(parts) != 2 {
@@ -37,6 +38,12 @@ func ValidateDatasets(dataset []string) (err error) {
 		if err != nil {
 			return err
 		}
+		if _, ok := tempPVCList[parts[0]]; ok {
+			return fmt.Errorf("Your PVC name: %s is repeated, please check it.", parts[0])
+		} else {
+			tempPVCList[parts[0]] = ""
+		}
+
 		// validate mount destination
 		err = validateMountDestination(parts[1])
 		if err != nil {
