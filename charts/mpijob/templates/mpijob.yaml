@@ -29,6 +29,10 @@ spec:
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
         createdBy: "MPIJob"
+        {{- if .Values.podGroupName }}
+        pod-group.scheduling.sigs.k8s.io/name: {{ .Values.podGroupName }}
+        pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
+        {{- end }}
       annotations:
           {{- range $key, $value := .Values.annotations }}
             {{ $key }}: {{ $value | quote }}

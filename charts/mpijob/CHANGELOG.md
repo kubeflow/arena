@@ -84,3 +84,8 @@
 ### 0.20.0
 
 * Support assigning configuration files when submitting jobs
+
+
+### 0.21.0
+
+* Support Coscheduling label when submitting jobs
