@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/util"
@@ -81,6 +82,7 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
 
 	command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
+	command.Flags().BoolVar(&submitArgs.Conscheduling, "gang", false, "enable gang scheduling")
 
 	submitArgs.addCommonFlags(command)
 	submitArgs.addSyncFlags(command)
@@ -133,6 +135,9 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	// add tolerations, if given
 	submitArgs.addMPITolerations()
 	submitArgs.addMPIInfoToEnv()
+	if submitArgs.Conscheduling {
+		submitArgs.addPodGroupLabel()
+	}
 
 	return nil
 }
@@ -165,6 +170,11 @@ func (submitArgs *submitMPIJobArgs) addMPIInfoToEnv() {
 
 func (submitArgs *submitMPIJobArgs) addConfigFiles() error {
 	return submitArgs.addJobConfigFiles()
+}
+
+func (submitArgs *submitMPIJobArgs) addPodGroupLabel() {
+	submitArgs.PodGroupName = name
+	submitArgs.PodGroupMinAvailable = strconv.Itoa(submitArgs.WorkerCount)
 }
 
 // Submit MPIJob

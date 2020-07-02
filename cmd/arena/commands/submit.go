@@ -67,6 +67,10 @@ type submitArgs struct {
 	PodSecurityContext limitedPodSecurityContext `yaml:"podSecurityContext"`
 
 	PriorityClassName string `yaml:"priorityClassName"`
+
+	Conscheduling bool
+	PodGroupName string `yaml:"podGroupName"`
+	PodGroupMinAvailable string `yaml:"podGroupMinAvailable"`
 }
 
 type dataDirVolume struct {
