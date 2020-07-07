@@ -40,6 +40,8 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [15. Submit jobs with tolerating taints](docs/userguide/14-submit-with-node-toleration.md)
 - [16. Run a custom serving job](docs/userguide/15-custom-serving-sample.md)
 - [17. Run a training Job with configuration files](docs/userguide/16-assign-config-file.md)
+- [18. Run a standalone Pytorch Job](docs/userguide/17-pytorchjob-standalone.md)
+- [19. Run a distributed Pytorch Job](docs/userguide/18-pytorchjob-distributed.md)
 
 ## Demo
 

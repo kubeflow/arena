@@ -119,6 +119,7 @@ func (s submitArgs) check() error {
 }
 
 // transform common parts of submitArgs
+// e.g. --data-dir、--data、--annotation、PodSecurityContext
 func (s *submitArgs) transform() (err error) {
 	// 1. handle data dirs
 	log.Debugf("dataDir: %v", dataDirs)
@@ -265,7 +266,8 @@ func (submitArgs *submitArgs) addJobConfigFiles() error {
 	}
 	return nil
 }
-// add --set-file flag to 'helm template' 
+
+// add --set-file flag to 'helm template'
 func (submitArgs *submitArgs) addHelmOptions() []string {
 	options := []string{}
 	for containerPathkey, val := range submitArgs.ConfigFiles {
@@ -336,6 +338,7 @@ Available Commands:
   tfjob,tf             Submit a TFJob.
   horovod,hj           Submit a Horovod Job.
   mpijob,mpi           Submit a MPIJob.
+  pytorchjob,pytorch   Submit a PyTorchJob.
   standalonejob,sj     Submit a standalone Job.
   tfserving,tfserving  Submit a Serving Job.
   volcanojob,vj        Submit a VolcanoJob.
@@ -354,6 +357,8 @@ func NewSubmitCommand() *cobra.Command {
 
 	command.AddCommand(NewSubmitTFJobCommand())
 	command.AddCommand(NewSubmitMPIJobCommand())
+	// support pytorchjob
+	command.AddCommand(NewSubmitPyTorchJobCommand())
 	command.AddCommand(NewSubmitHorovodJobCommand())
 	// This will be deprecated soon.
 	command.AddCommand(NewSubmitStandaloneJobCommand())

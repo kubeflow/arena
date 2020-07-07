@@ -77,6 +77,9 @@ else
             arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-operator.yaml
         fi
     fi
+    if ! arena-kubectl get serviceaccount --all-namespaces | grep pytorch-operator; then
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/pytorch-operator/pytorch-operator.yaml
+    fi
 fi
 if ! arena-kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
