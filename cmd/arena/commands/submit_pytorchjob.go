@@ -74,7 +74,6 @@ func NewSubmitPyTorchJobCommand() *cobra.Command {
 	// Tensorboard
 	command.Flags().BoolVar(&submitArgs.UseTensorboard, "tensorboard", false, "enable tensorboard")
 
-	// TODO jiaqianjing: we need to test which tensorboard Image can work with pytorch.
 	msg := "the docker image for tensorboard"
 	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboardImage", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
 	command.Flags().MarkDeprecated("tensorboardImage", "please use --tensorboard-image instead")
@@ -88,7 +87,7 @@ func NewSubmitPyTorchJobCommand() *cobra.Command {
 	//	"alpine:3.10",
 	//	"the docker image for workers init container image wait for master ready, default 'alpine:3.10'")
 
-	command.Flags().StringVar(&submitArgs.CleanPodPolicy, "clean-task-policy", "None", "How to clean tasks after Training is done, only support None, All.")
+	command.Flags().StringVar(&submitArgs.CleanPodPolicy, "clean-task-policy", "None", "How to clean tasks after Training is done, support None, Running, All.")
 
 	submitArgs.addCommonFlags(command)
 	submitArgs.addSyncFlags(command)
@@ -114,8 +113,6 @@ type submitPyTorchJobArgs struct {
 	// WorkerInitPytorchImage string `yaml: workerInitPytorchImage`
 
 	// clean-task-policy
-	// TODO jiaqianjing: support "Running", but now pytorch operator only support "None" or "All"
-	// https://github.com/kubeflow/pytorch-operator/pull/194
 	CleanPodPolicy string `yaml:"cleanPodPolicy"`
 }
 
@@ -129,9 +126,8 @@ func (submitArgs *submitPyTorchJobArgs) prepare(args []string) (err error) {
 	}
 
 	// check clean-task-policy
-	// TODO jiaqianjing: support Running (should modify pytorch operator)
 	switch submitArgs.CleanPodPolicy {
-	case "None", "All":
+	case "None", "Running", "All":
 		log.Debugf("Supported cleanTaskPolicy: %s", submitArgs.CleanPodPolicy)
 	default:
 		return fmt.Errorf("Unsupported cleanTaskPolicy %s", submitArgs.CleanPodPolicy)
