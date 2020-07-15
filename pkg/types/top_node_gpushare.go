@@ -80,8 +80,8 @@ func DisplayGPUShareDetails(nodeInfos []*GPUShareNodeInfo) {
 			fmt.Fprintf(w, "\n")
 		}
 
-		fmt.Fprintf(w, "Allocated :\t%d (%d%%)\t\n", usedGPUMemInNode, int64(gpuUsageInNode))
-		fmt.Fprintf(w, "Total :\t%d \t\n", nodeInfo.gpuTotalMemory)
+		fmt.Fprintf(w, "Allocated(%s) :\t%d (%d%%)\t\n", memoryUnit, usedGPUMemInNode, int64(gpuUsageInNode))
+		fmt.Fprintf(w, "Total(%s) :\t%d \t\n", memoryUnit, nodeInfo.gpuTotalMemory)
 		// fmt.Fprintf(w, "-----------------------------------------------------------------------------------------\n")
 		var prtLine bytes.Buffer
 		for i := 0; i < prtLineLen; i++ {
@@ -126,7 +126,7 @@ func DisplayGPUShareSummary(nodeInfos []*GPUShareNodeInfo) {
 	var buffer bytes.Buffer
 	buffer.WriteString("NAME\tIPADDRESS\t")
 	for i := 0; i < maxGPUCount; i++ {
-		buffer.WriteString(fmt.Sprintf("GPU%d(Allocated/Total)\t", i))
+		buffer.WriteString(fmt.Sprintf("GPU%d(Allocated/Total)(%s)\t", i, memoryUnit))
 	}
 
 	buffer.WriteString(fmt.Sprintf("\n"))
