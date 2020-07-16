@@ -55,50 +55,74 @@ Using arena top node -s to see the GPUMemory resource of your GPUShare nodes.
  
 ```
 # arena top node -s
-NAME                                IPADDRESS     GPU0(Allocated/Total)  
-cn-shanghai.i-uf61h64dz1tmlob9hmtb  192.168.0.71  0/15                   
---------------------------------------------------------------------------
+NAME                      IPADDRESS  GPU0(Allocated/Total)(GiB)
+cn-zhangjiakou.10.0.0.86  10.0.0.86  0/15
+cn-zhangjiakou.10.0.0.87  10.0.0.87  0/15
+cn-zhangjiakou.10.0.0.88  10.0.0.88  0/15
+-------------------------------------------------------------
 Allocated/Total GPU Memory In GPUShare Node:
-0/15 (GiB) (0%)  
+0/45 (GiB) (0%)
 ```
 
 If your cluster have enough gpu memory resource ,you can submit a task as below.
 ```
-arena serve tensorflow --name=mymnist2 --model-name=mnist2 --gpumemory=3 --image=tensorflow/serving:latest-gpu   --data=tfmodel:/tfmodel --model-path=/tfmodel/mnist --versionPolicy=specific:2  
+# arena serve tensorflow --name=mymnist2 --model-name=mnist2 --gpumemory=3 --image=tensorflow/serving:latest-gpu   --data=tfmodel:/tfmodel --model-path=/tfmodel/mnist --versionPolicy=specific:2
+configmap/mymnist2-202007161051-tf-serving created
+configmap/mymnist2-202007161051-tf-serving labeled
+configmap/mymnist2-202007161051-tensorflow-serving-cm created
+service/mymnist2-202007161051-tensorflow-serving created
+deployment.apps/mymnist2-202007161051-tensorflow-serving created
  ```  
 Once this command is triggered, one Kubernetes service will be created to expose gRPC and RESTful APIs of mnist model.The task will assume the same gpu memory as it request.     
 
 ```
 # arena top node -s
-NAME                                IPADDRESS     GPU0(Allocated/Total)  
-cn-shanghai.i-uf61h64dz1tmlob9hmtb  192.168.0.71  3/15                   
---------------------------------------------------------------------------
+NAME                      IPADDRESS  GPU0(Allocated/Total)(GiB)
+cn-zhangjiakou.10.0.0.86  10.0.0.86  3/15
+cn-zhangjiakou.10.0.0.87  10.0.0.87  0/15
+cn-zhangjiakou.10.0.0.88  10.0.0.88  0/15
+-------------------------------------------------------------
 Allocated/Total GPU Memory In GPUShare Node:
-3/15 (GiB) (20%)  
-
+3/45 (GiB) (6%)
 ```  
 If you want to see the details of pod ,you can use arena top node -s -d.  
 ```
-#arena top node -s -d
+# arena top node -s -d
 
-NAME:       cn-shanghai.i-uf61h64dz1tmlob9hmtb
-IPADDRESS:  192.168.0.71
+NAME:       cn-zhangjiakou.10.0.0.88
+IPADDRESS:  10.0.0.88
 
-NAME                                          NAMESPACE  GPU0(Allocated)  
-mymnist2-tensorflow-serving-7446c98547-qmtrn  default    3                
-Allocated :                                   3 (20%)    
-Total :                                       15         
-------------------------------------------------------------------
+NAME              NAMESPACE  GPU0(Allocated)
+Allocated(GiB) :  0 (0%)
+Total(GiB) :      15
+----------
+
+NAME:       cn-zhangjiakou.10.0.0.86
+IPADDRESS:  10.0.0.86
+
+NAME                                                       NAMESPACE  GPU0(Allocated)
+mymnist2-202007161051-tensorflow-serving-86446d46d8-dbsfw  default    3
+Allocated(GiB) :                                           3 (20%)
+Total(GiB) :                                               15
+----------
+
+NAME:       cn-zhangjiakou.10.0.0.87
+IPADDRESS:  10.0.0.87
+
+NAME              NAMESPACE  GPU0(Allocated)
+Allocated(GiB) :  0 (0%)
+Total(GiB) :      15
+----------
 
 
 Allocated/Total GPU Memory In GPUShare Node:
-3/15 (GiB) (20%)  
+3/45 (GiB) (6%)
 ```
 3\. List all the serving jobs
 ```
-#arena serve list
-NAME      TYPE        VERSION  DESIRED  AVAILABLE  ENDPOINT_ADDRESS  PORTS
-mymnist2  TENSORFLOW           1        1          172.19.0.222      serving:8500,http-serving:8501
+# arena serve list
+NAME      TYPE        VERSION       DESIRED  AVAILABLE  ENDPOINT_ADDRESS  PORTS
+mymnist2  TENSORFLOW  202007161051  1        0          192.168.75.28     serving:8500,http-serving:8501
 ```  
 
 4\. Test RESTful APIs of serving models 
@@ -112,6 +136,9 @@ kind: Deployment
 metadata:
   name: sleep
 spec:
+  selector:
+    matchLabels:
+      app: sleep
   replicas: 1
   template:
     metadata:
@@ -124,6 +151,7 @@ spec:
         command: ["/bin/sleep","infinity"]
         imagePullPolicy: IfNotPresent
 EOF
+deployment.apps/sleep created
 ```
 
 
@@ -131,7 +159,7 @@ EOF
 Find the name of  `sleep` pod and enter into this pod, for example:
 
 ```
-# kubectl exec -it sleep-5dd9955c58-km59h -c sleep bash
+# kubectl exec -it sleep-bb596f69d-bcmtp -c sleep bash
 ```
 
 In this pod, use `curl` to call the exposed Tensorflow serving RESTful API:
