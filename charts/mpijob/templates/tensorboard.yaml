@@ -74,6 +74,12 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
+      {{- if ne (len .Values.imagepullsecrets) 0 }}
+      imagePullSecrets:
+      {{- range $imagePullSecrets := .Values.imagepullsecrets }}
+        - name: "{{ $imagePullSecrets }}"
+      {{- end }}
+      {{- end }}
       containers:
       - name: tensorboard   
         {{- if .Values.isLocalLogging }}
