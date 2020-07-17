@@ -68,9 +68,11 @@ type submitArgs struct {
 
 	PriorityClassName string `yaml:"priorityClassName"`
 
-	Conscheduling bool
-	PodGroupName string `yaml:"podGroupName"`
+	Conscheduling        bool
+	PodGroupName         string `yaml:"podGroupName"`
 	PodGroupMinAvailable string `yaml:"podGroupMinAvailable"`
+
+	ImagePullSecrets []string `yaml: "imagePullSecrets"` //// --image-pull-secrets
 }
 
 type dataDirVolume struct {
@@ -174,6 +176,12 @@ func (s *submitArgs) transform() (err error) {
 		}
 		log.Debugf("PodSecurityContext %v ", s.PodSecurityContext)
 	}
+
+	// 5. handle imagePullSecrets, TODO: add validation to check name of imagePullSecrets exists
+	if len(s.ImagePullSecrets) > 0 {
+		log.Debugf("imagePullSecrets: %v", s.ImagePullSecrets)
+	}
+
 	return nil
 }
 
@@ -323,6 +331,9 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 	command.Flags().StringArrayVarP(&configFiles, "config-file", "", []string{}, `giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"`)
+
+	// Using a Private Registry
+	command.Flags().StringArrayVarP(&submitArgs.ImagePullSecrets, "image-pull-secrets", "", []string{}, `giving names of imagePullSecrets when you want to use a private registry, usage:"--image-pull-secrets <name1>"`)
 }
 
 func init() {

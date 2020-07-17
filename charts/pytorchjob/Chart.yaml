@@ -2,4 +2,4 @@ apiVersion: v1
 appVersion: "1.0"
 description: A Helm chart for PyTorchJob
 name: pytorchjob
-version: 0.0.1
+version: 0.0.2
