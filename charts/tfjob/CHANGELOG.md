@@ -124,3 +124,7 @@
 ### 0.29.0
 
 * support assgining gpu resources for PS when submitting tfjobs
+
+### 0.30.0
+
+* Support imagePullSecrets

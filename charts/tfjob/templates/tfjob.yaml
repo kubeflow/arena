@@ -211,6 +211,12 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
+          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          imagePullSecrets:
+          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
+            - name: "{{ $imagePullSecrets }}"
+          {{- end }}
+          {{- end }}
           containers:
             - name: tensorflow
               image: {{ .Values.psImage }}
@@ -508,6 +514,12 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
+          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          imagePullSecrets:
+          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
+            - name: "{{ $imagePullSecrets }}"
+          {{- end }}
+          {{- end }}
           containers:
             - name: tensorflow
               image: {{ .Values.workerImage }}
@@ -824,6 +836,12 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
+          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          imagePullSecrets:
+          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
+            - name: "{{ $imagePullSecrets }}"
+          {{- end }}
+          {{- end }}
           containers:
             - name: tensorflow
               image: {{ .Values.workerImage }}
@@ -1099,6 +1117,12 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
+          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          imagePullSecrets:
+          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
+            - name: "{{ $imagePullSecrets }}"
+          {{- end }}
+          {{- end }}
           containers:
             - name: tensorflow
               image: {{ .Values.workerImage }}
