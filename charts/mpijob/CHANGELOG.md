@@ -89,3 +89,7 @@
 ### 0.21.0
 
 * Support Coscheduling label when submitting jobs
+
+### 0.22.0
+
+* Support imagePullSecrets
