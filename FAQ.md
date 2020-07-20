@@ -12,4 +12,4 @@ kubectl create -f kubernetes-artifacts/tf-operator/tf-operator.yaml
 ## Common questions:
 
 ### Does arena support pytorch
-Not yet, although support for using kfserving is planned for 2019. More updates will be available here.
+Yes, we support it. See https://github.com/kubeflow/arena/releases/tag/v0.5.0 for details.
