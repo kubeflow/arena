@@ -175,6 +175,12 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end }}
+          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          imagePullSecrets:
+          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
+            - name: "{{ $imagePullSecrets }}"
+          {{- end }}
+          {{- end }}
           containers:
           - image: "{{ .Values.image }}"
             name: pytorch
@@ -444,6 +450,12 @@ spec:
               volumeMounts:
                 - name: code-sync
                   mountPath: /code
+          {{- end }}
+          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          imagePullSecrets:
+          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
+            - name: "{{ $imagePullSecrets }}"
+          {{- end }}
           {{- end }}
           containers:
             - image: "{{ .Values.image }}"
