@@ -263,6 +263,8 @@ func (submitArgs *submitTFJobArgs) prepare(args []string) (err error) {
 	submitArgs.addTFNodeSelectors()
 	// add tolerations, if given`
 	submitArgs.addTFTolerations()
+	// add imagePullSecrets, if given
+	submitArgs.addTFImagePullSecrets()
 	return nil
 }
 
@@ -394,6 +396,11 @@ func (submitArgs *submitTFJobArgs) transformSelectorArrayToMap(selectorArray []s
 func (submitArgs *submitTFJobArgs) addTFTolerations() {
 	submitArgs.addTolerations()
 }
+
+func (submitArgs *submitTFJobArgs) addTFImagePullSecrets() {
+	submitArgs.addImagePullSecrets()
+}
+
 func (submitArgs *submitTFJobArgs) addTFJobInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
 }

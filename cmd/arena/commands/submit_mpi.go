@@ -134,6 +134,8 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	submitArgs.addMPINodeSelectors()
 	// add tolerations, if given
 	submitArgs.addMPITolerations()
+	// add imagePullSecrets, if given
+	submitArgs.addMPIImagePullSecrets()
 	submitArgs.addMPIInfoToEnv()
 	if submitArgs.Conscheduling {
 		submitArgs.addPodGroupLabel()
@@ -164,6 +166,11 @@ func (submitArgs *submitMPIJobArgs) addMPINodeSelectors() {
 func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 	submitArgs.addTolerations()
 }
+
+func (submitArgs *submitMPIJobArgs) addMPIImagePullSecrets() {
+	submitArgs.addImagePullSecrets()
+}
+
 func (submitArgs *submitMPIJobArgs) addMPIInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
 }
