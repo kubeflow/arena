@@ -28,13 +28,14 @@ import (
 )
 
 var (
-	envs        []string
-	selectors   []string
-	configFiles []string
-	tolerations []string
-	dataset     []string
-	dataDirs    []string
-	annotations []string
+	envs             []string
+	selectors        []string
+	configFiles      []string
+	tolerations      []string
+	dataset          []string
+	dataDirs         []string
+	annotations      []string
+	imagePullSecrets []string
 )
 
 // The common parts of the submitAthd
@@ -212,6 +213,22 @@ func (submitArgs *submitArgs) addTolerations() {
 	}
 }
 
+// get imagePullSecrets
+func (submitArgs *submitArgs) addImagePullSecrets() {
+	submitArgs.ImagePullSecrets = []string{}
+	if len(imagePullSecrets) == 0 {
+		if temp, found := arenaConfigs["imagePullSecrets"]; found {
+			log.Debugf("imagePullSecrets load from arenaConfigs: %v", temp)
+			submitArgs.ImagePullSecrets = strings.Split(temp, ",")
+		}
+	} else {
+		submitArgs.ImagePullSecrets = imagePullSecrets
+	}
+	log.Debugf("imagePullSecrets: %v", submitArgs.ImagePullSecrets)
+
+	return
+}
+
 // this function is used to create config file information
 // if the contianer path of file is the same,they will be merged to a configmap
 func (submitArgs *submitArgs) addJobConfigFiles() error {
@@ -295,6 +312,11 @@ func (submitArgs *submitArgs) addJobInfoToEnv() {
 	submitArgs.Envs["gpus"] = strconv.Itoa(submitArgs.GPUCount)
 }
 
+// process general parameters for submiting job, like: --image-pull-secrets
+func (submitArgs *submitArgs) processCommonFlags() {
+	submitArgs.addImagePullSecrets()
+}
+
 func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 
 	// create subcommands
@@ -333,7 +355,7 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&configFiles, "config-file", "", []string{}, `giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"`)
 
 	// Using a Private Registry
-	command.Flags().StringArrayVarP(&submitArgs.ImagePullSecrets, "image-pull-secrets", "", []string{}, `giving names of imagePullSecrets when you want to use a private registry, usage:"--image-pull-secrets <name1>"`)
+	command.Flags().StringArrayVarP(&imagePullSecrets, "image-pull-secrets", "", []string{}, `giving names of imagePullSecrets when you want to use a private registry, usage:"--image-pull-secrets <name1>"`)
 }
 
 func init() {

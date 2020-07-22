@@ -158,6 +158,8 @@ func (submitArgs *submitPyTorchJobArgs) prepare(args []string) (err error) {
 	submitArgs.addPyTorchNodeSelectors()
 	// add tolerations, if given
 	submitArgs.addPyTorchTolerations()
+
+	submitArgs.processCommonFlags()
 	// add env, if given (--env)
 	submitArgs.addPyTorchInfoToEnv()
 
@@ -188,6 +190,7 @@ func (submitArgs *submitPyTorchJobArgs) addPyTorchNodeSelectors() {
 func (submitArgs *submitPyTorchJobArgs) addPyTorchTolerations() {
 	submitArgs.addTolerations()
 }
+
 func (submitArgs *submitPyTorchJobArgs) addPyTorchInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
 }

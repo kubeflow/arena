@@ -263,6 +263,7 @@ func (submitArgs *submitTFJobArgs) prepare(args []string) (err error) {
 	submitArgs.addTFNodeSelectors()
 	// add tolerations, if given`
 	submitArgs.addTFTolerations()
+	submitArgs.processCommonFlags()
 	return nil
 }
 
@@ -394,6 +395,7 @@ func (submitArgs *submitTFJobArgs) transformSelectorArrayToMap(selectorArray []s
 func (submitArgs *submitTFJobArgs) addTFTolerations() {
 	submitArgs.addTolerations()
 }
+
 func (submitArgs *submitTFJobArgs) addTFJobInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
 }
