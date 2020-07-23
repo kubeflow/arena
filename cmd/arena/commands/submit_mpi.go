@@ -130,12 +130,9 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	if len(envs) > 0 {
 		submitArgs.Envs = transformSliceToMap(envs, "=")
 	}
-	// add node labels,if given
-	submitArgs.addMPINodeSelectors()
-	// add tolerations, if given
-	submitArgs.addMPITolerations()
+
 	submitArgs.processCommonFlags()
-	submitArgs.addMPIInfoToEnv()
+
 	if submitArgs.Conscheduling {
 		submitArgs.addPodGroupLabel()
 	}
@@ -154,20 +151,6 @@ func (submitArgs submitMPIJobArgs) check() error {
 	}
 
 	return nil
-}
-
-// add k8s nodes labels
-func (submitArgs *submitMPIJobArgs) addMPINodeSelectors() {
-	submitArgs.addNodeSelectors()
-}
-
-// add k8s tolerations for taints
-func (submitArgs *submitMPIJobArgs) addMPITolerations() {
-	submitArgs.addTolerations()
-}
-
-func (submitArgs *submitMPIJobArgs) addMPIInfoToEnv() {
-	submitArgs.addJobInfoToEnv()
 }
 
 func (submitArgs *submitMPIJobArgs) addConfigFiles() error {
