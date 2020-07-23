@@ -134,6 +134,7 @@ func (submitArgs *submitMPIJobArgs) prepare(args []string) (err error) {
 	submitArgs.addMPINodeSelectors()
 	// add tolerations, if given
 	submitArgs.addMPITolerations()
+	submitArgs.processCommonFlags()
 	submitArgs.addMPIInfoToEnv()
 	if submitArgs.Conscheduling {
 		submitArgs.addPodGroupLabel()
@@ -164,6 +165,7 @@ func (submitArgs *submitMPIJobArgs) addMPINodeSelectors() {
 func (submitArgs *submitMPIJobArgs) addMPITolerations() {
 	submitArgs.addTolerations()
 }
+
 func (submitArgs *submitMPIJobArgs) addMPIInfoToEnv() {
 	submitArgs.addJobInfoToEnv()
 }
