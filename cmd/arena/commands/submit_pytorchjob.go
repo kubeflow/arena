@@ -154,14 +154,8 @@ func (submitArgs *submitPyTorchJobArgs) prepare(args []string) (err error) {
 	if len(envs) > 0 {
 		submitArgs.Envs = transformSliceToMap(envs, "=")
 	}
-	// add node labels,if given
-	submitArgs.addPyTorchNodeSelectors()
-	// add tolerations, if given
-	submitArgs.addPyTorchTolerations()
 
 	submitArgs.processCommonFlags()
-	// add env, if given (--env)
-	submitArgs.addPyTorchInfoToEnv()
 
 	return nil
 }
@@ -179,20 +173,6 @@ func (submitArgs submitPyTorchJobArgs) check() error {
 	}
 
 	return nil
-}
-
-// add k8s nodes labels
-func (submitArgs *submitPyTorchJobArgs) addPyTorchNodeSelectors() {
-	submitArgs.addNodeSelectors()
-}
-
-// add k8s tolerations for taints
-func (submitArgs *submitPyTorchJobArgs) addPyTorchTolerations() {
-	submitArgs.addTolerations()
-}
-
-func (submitArgs *submitPyTorchJobArgs) addPyTorchInfoToEnv() {
-	submitArgs.addJobInfoToEnv()
 }
 
 func (submitArgs *submitPyTorchJobArgs) addConfigFiles() error {

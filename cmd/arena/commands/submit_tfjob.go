@@ -256,14 +256,11 @@ func (submitArgs *submitTFJobArgs) prepare(args []string) (err error) {
 	if len(envs) > 0 {
 		submitArgs.Envs = transformSliceToMap(envs, "=")
 	}
-	// pass the workers, gpu to environment variables
-	// addTFJobInfoToEnv(submitArgs)
-	submitArgs.addTFJobInfoToEnv()
-	// add node selectors, if given
-	submitArgs.addTFNodeSelectors()
-	// add tolerations, if given`
-	submitArgs.addTFTolerations()
+
 	submitArgs.processCommonFlags()
+
+	submitArgs.addTFNodeSelectors()
+
 	return nil
 }
 
@@ -353,7 +350,6 @@ func (submitArgs *submitTFJobArgs) transform() error {
 
 // add node selectors
 func (submitArgs *submitTFJobArgs) addTFNodeSelectors() {
-	submitArgs.addNodeSelectors()
 	submitArgs.TFNodeSelectors = make(map[string]map[string]string)
 	for _, role := range []string{"PS", "Worker", "Evaluator", "Chief"} {
 		switch role {
@@ -391,14 +387,6 @@ func (submitArgs *submitTFJobArgs) transformSelectorArrayToMap(selectorArray []s
 
 }
 
-// add tolerations
-func (submitArgs *submitTFJobArgs) addTFTolerations() {
-	submitArgs.addTolerations()
-}
-
-func (submitArgs *submitTFJobArgs) addTFJobInfoToEnv() {
-	submitArgs.addJobInfoToEnv()
-}
 func (submitArgs *submitTFJobArgs) addConfigFiles() error {
 	return submitArgs.addJobConfigFiles()
 }

@@ -314,7 +314,15 @@ func (submitArgs *submitArgs) addJobInfoToEnv() {
 
 // process general parameters for submiting job, like: --image-pull-secrets
 func (submitArgs *submitArgs) processCommonFlags() {
+	// add tolerations, if given
+	submitArgs.addTolerations()
+	// add jobinfo to env
+	submitArgs.addJobInfoToEnv()
+	// add imagePullSecrets ,if given
 	submitArgs.addImagePullSecrets()
+	// add node selectors, if given
+	submitArgs.addNodeSelectors()
+
 }
 
 func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
