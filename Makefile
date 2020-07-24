@@ -4,8 +4,9 @@ DIST_DIR=${CURRENT_DIR}/bin
 ARENA_CLI_NAME=arena
 JOB_MONITOR=jobmon
 OS_ARCH?=linux-amd64
-
-VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
+# execute `make VERSION_FILE=VERSION_RESERVE build-pkg` if you want build binary package with other version
+VERSION_FILE?=VERSION
+VERSION=$(shell cat ${CURRENT_DIR}/${VERSION_FILE})
 BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GIT_COMMIT=$(shell git rev-parse HEAD)
 GIT_SHORT_COMMIT=$(shell git rev-parse --short HEAD)
