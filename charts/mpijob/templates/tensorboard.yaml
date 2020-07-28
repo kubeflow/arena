@@ -74,10 +74,10 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
-      {{- if ne (len .Values.imagepullsecrets) 0 }}
+      {{- if ne (len .Values.imagePullSecrets) 0 }}
       imagePullSecrets:
-      {{- range $imagePullSecrets := .Values.imagepullsecrets }}
-        - name: "{{ $imagePullSecrets }}"
+      {{- range $imagePullSecret := .Values.imagePullSecrets }}
+        - name: "{{ $imagePullSecret }}"
       {{- end }}
       {{- end }}
       containers:
@@ -98,7 +98,7 @@ spec:
         - mountPath: /output/training_logs
           name: training-logs-volume
         {{- else }}
-        {{- if .Values.dataset }}   
+        {{- if .Values.dataset }}
         {{- range $pvcName, $destPath := .Values.dataset }}
         - name: "{{ $pvcName }}"
           mountPath: "{{ $destPath }}"

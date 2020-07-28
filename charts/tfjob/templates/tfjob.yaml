@@ -211,10 +211,10 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
-          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          {{- if ne (len .Values.imagePullSecrets) 0 }}
           imagePullSecrets:
-          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
-            - name: "{{ $imagePullSecrets }}"
+          {{- range $imagePullSecret := .Values.imagePullSecrets }}
+            - name: "{{ $imagePullSecret }}"
           {{- end }}
           {{- end }}
           containers:
@@ -514,10 +514,10 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
-          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          {{- if ne (len .Values.imagePullSecrets) 0 }}
           imagePullSecrets:
-          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
-            - name: "{{ $imagePullSecrets }}"
+          {{- range $imagePullSecret := .Values.imagePullSecrets }}
+            - name: "{{ $imagePullSecret }}"
           {{- end }}
           {{- end }}
           containers:
@@ -836,10 +836,10 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
-          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          {{- if ne (len .Values.imagePullSecrets) 0 }}
           imagePullSecrets:
-          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
-            - name: "{{ $imagePullSecrets }}"
+          {{- range $imagePullSecret := .Values.imagePullSecrets }}
+            - name: "{{ $imagePullSecret }}"
           {{- end }}
           {{- end }}
           containers:
@@ -1117,10 +1117,10 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
-          {{- if ne (len .Values.imagepullsecrets) 0 }}
+          {{- if ne (len .Values.imagePullSecrets) 0 }}
           imagePullSecrets:
-          {{- range $imagePullSecrets := .Values.imagepullsecrets }}
-            - name: "{{ $imagePullSecrets }}"
+          {{- range $imagePullSecret := .Values.imagePullSecrets }}
+            - name: "{{ $imagePullSecret }}"
           {{- end }}
           {{- end }}
           containers:
