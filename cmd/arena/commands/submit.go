@@ -73,7 +73,7 @@ type submitArgs struct {
 	PodGroupName         string `yaml:"podGroupName"`
 	PodGroupMinAvailable string `yaml:"podGroupMinAvailable"`
 
-	ImagePullSecrets []string `yaml:"imagePullSecrets"` // --image-pull-secrets
+	ImagePullSecrets []string `yaml:"imagepullsecrets"` // --image-pull-secrets
 }
 
 type dataDirVolume struct {
