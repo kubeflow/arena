@@ -93,3 +93,7 @@
 ### 0.22.0
 
 * Support imagePullSecrets
+
+### 0.23.0
+
+* launcher not to mount pvc 

@@ -161,7 +161,7 @@ spec:
       serviceAccountName: mpi-operator
       containers:
       - name: mpi-operator
-        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/mpi-operator:v20190529
+        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/mpi-operator:v20200814-c1c986e
         args: [
           "--gpus-per-node", "8",
           "--kubectl-delivery-image",
@@ -171,3 +171,4 @@ spec:
         ]
         imagePullPolicy: Always
 ---
+
