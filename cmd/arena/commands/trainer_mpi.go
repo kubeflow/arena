@@ -87,6 +87,10 @@ func (mj *MPIJob) AllPods() []v1.Pod {
 	return mj.pods
 }
 
+func (mj *MPIJob) GetTrainJob() interface{} {
+	return mj.mpijob
+}
+
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (mj *MPIJob) GetStatus() (status string) {
 	status = "UNKNOWN"

@@ -101,6 +101,10 @@ if ! arena-kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
 fi
 
+if ! arena-kubectl get serviceaccount --all-namespaces | grep edl-operator; then
+    arena-kubectl create -f $SCRIPT_DIR/kubernetes-artifacts/edl-operator/edl-operator.yaml
+fi
+
 if [ "$USE_PROMETHEUS" == "true" ]; then
     if [ "$PLATFORM" == "ack" ]; then
         sed -i 's|accelerator/nvidia_gpu|aliyun.accelerator/nvidia_count|g' $SCRIPT_DIR/kubernetes-artifacts/prometheus/gpu-exporter.yaml

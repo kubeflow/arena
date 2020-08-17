@@ -98,6 +98,10 @@ func (tj *TensorFlowJob) AllPods() []v1.Pod {
 	return tj.pods
 }
 
+func (tj *TensorFlowJob) GetTrainJob() interface{} {
+	return tj.tfjob
+}
+
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (tj *TensorFlowJob) GetStatus() (status string) {
 	status = "PENDING"

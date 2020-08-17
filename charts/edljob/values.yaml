@@ -1,0 +1,51 @@
+# Default values for mpijob.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+useHostNetwork: false
+useHostPID: true
+useHostIPC: true
+gpuCount: 0 # user define
+
+# rsync image
+rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
+# git sync image
+gitImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/git-sync:v3.1.1
+
+shmSize: 2Gi
+privileged: false
+
+useTensorboard: false
+tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel
+tensorboardImagePullpolicy: Always
+tensorboardServiceType: NodePort
+
+retry: 0
+
+
+tensorboardResources: {}
+
+
+annotations: {}
+# annotations:
+
+# enable RDMA support
+enableRDMA: false
+
+ingress: false
+
+# enable PodSecurityContext
+# In the future, this flag should be protected separately, in case of arena admin and users are not the same people
+enablePodSecurityContext: false
+
+# enable priorityClassName
+priorityClassName: ""
+podGroupName: ""
+podGroupMinAvailable: "1"
+
+# Defines the policy for cleaning up pods after the EDLJob completes.
+cleanPodPolicy: "Running"
+
+workers: 1
+
+imagePullPolicy: Always

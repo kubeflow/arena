@@ -1,0 +1,110 @@
+{{- if .Values.useTensorboard }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-tensorboard
+  labels:
+    app: {{ template "edljob.name" . }}
+    chart: {{ template "edljob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "EDLJob"
+    role: tensorboard
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "edljob.name" . }}
+      chart: {{ template "edljob.chart" . }}
+      release: {{ .Release.Name }}
+      role: tensorboard
+  template:
+    metadata:
+      labels:
+        app: {{ template "edljob.name" . }}
+        chart: {{ template "edljob.chart" . }}
+        release: {{ .Release.Name }}
+        role: tensorboard
+    spec:
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      {{- if ne (len .Values.tolerations) 0 }}
+      tolerations:
+        {{- range $tolerationKey := .Values.tolerations }}
+        {{- if eq $tolerationKey "all" }}
+        - operator: "Exists"
+        {{- else }}
+        - key: "{{ $tolerationKey }}"
+          operator: "Exists"
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: master-pod-name
+                operator: In
+                values:
+                  - {{ .Release.Name }}-launcher
+            topologyKey: kubernetes.io/hostname
+      {{- if .Values.enablePodSecurityContext }}
+      {{- if .Values.isNonRoot}}
+      securityContext:
+        runAsUser: {{ .Values.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
+        runAsNonRoot: {{ .Values.podSecurityContext.runAsNonRoot }}
+        supplementalGroups:
+          {{- range $group := .Values.podSecurityContext.supplementalGroups }}
+          - {{ $group -}}
+          {{ end }}
+      {{- end }}
+      {{- end }}
+      volumes:
+        {{- if .Values.isLocalLogging }}
+        - hostPath:
+            path: "{{ .Values.hostLogPath }}"
+          name: training-logs-volume
+        {{- else }}
+        {{- if .Values.dataset }}
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          persistentVolumeClaim:
+            claimName: "{{ $pvcName }}"
+        {{- end }}
+        {{- end }}
+        {{- end }}
+      {{- if ne (len .Values.imagePullSecrets) 0 }}
+      imagePullSecrets:
+      {{- range $imagePullSecret := .Values.imagePullSecrets }}
+        - name: "{{ $imagePullSecret }}"
+      {{- end }}
+      {{- end }}
+      containers:
+      - name: tensorboard
+        {{- if .Values.isLocalLogging }}
+        command: ["tensorboard", "--logdir", "/output/training_logs",  "--host",  "0.0.0.0"]
+        {{- else}}
+        command: ["tensorboard", "--logdir", "{{ .Values.trainingLogdir }}",  "--host",  "0.0.0.0"]
+        {{- end }}
+        image: "{{ .Values.tensorboardImage }}"
+        imagePullPolicy: {{ .Values.tensorboardImagePullpolicy }}
+        resources:
+{{ toYaml .Values.tensorboardResources | indent 10 }}
+        ports:
+        - containerPort: 6006
+        volumeMounts:
+        {{- if .Values.isLocalLogging }}
+        - mountPath: /output/training_logs
+          name: training-logs-volume
+        {{- else }}
+        {{- if .Values.dataset }}
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          mountPath: "{{ $destPath }}"
+        {{- end }}
+        {{- end }}
+        {{- end }}
+{{- end }}
