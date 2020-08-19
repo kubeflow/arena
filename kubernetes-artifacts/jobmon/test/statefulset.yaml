@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/nginx-slim:0.8
+        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/nginx-slim:0.8
         ports:
         - containerPort: 80
           name: web

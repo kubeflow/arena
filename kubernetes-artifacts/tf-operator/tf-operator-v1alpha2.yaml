@@ -193,7 +193,7 @@ spec:
       containers:
       - command:
         - /opt/tensorflow_k8s/dashboard/backend
-        image: registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v20180901-454c5c1a
+        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/tf_operator:v20180901-454c5c1a
         name: tf-job-dashboard
         ports:
         - containerPort: 8080
@@ -228,7 +228,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v20180621-38b886a0
+        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/tf_operator:v20180621-38b886a0
         name: tf-job-operator
         volumeMounts:
         - mountPath: /etc/config

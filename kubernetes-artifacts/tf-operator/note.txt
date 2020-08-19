@@ -1,3 +1,3 @@
 https://gcr.io/v2/kubeflow-images-public/tf_operator/tags/list
 
-docker tag gcr.io/kubeflow-images-public/tf_operator:v20180621-38b886a0 registry.cn-zhangjiakou.aliyuncs.com/kubeflow-images-public/tf_operator:v20180621-38b886a0
+docker tag gcr.io/kubeflow-images-public/tf_operator:v20180621-38b886a0 registry.cn-zhangjiakou.aliyuncs.com/kube-ai/tf_operator:v20180621-38b886a0

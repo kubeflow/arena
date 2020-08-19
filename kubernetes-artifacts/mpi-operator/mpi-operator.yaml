@@ -161,11 +161,11 @@ spec:
       serviceAccountName: mpi-operator
       containers:
       - name: mpi-operator
-        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/mpi-operator:v20200814-c1c986e
+        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/mpi-operator:v20200814-c1c986e
         args: [
           "--gpus-per-node", "8",
           "--kubectl-delivery-image",
-          "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/kubectl-delivery:latest",
+          "registry.cn-zhangjiakou.aliyuncs.com/kube-ai/kubectl-delivery:latest",
           "--alsologtostderr",
           "-v=5"
         ]

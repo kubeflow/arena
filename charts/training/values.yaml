@@ -22,13 +22,13 @@ workingDir: /root
 # syncMode: rsync
 # syncSource: 10.77.29.68::backup/data/logoRecoTrain.zip
 
-syncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
+syncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
 # imagePullPolicy: Always
 
 
 tensorboard:
   enable: false
-  image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorboard:1.1.0
+  image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/tensorboard:1.1.0
   imagePullPolicy: Always
 
 nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81

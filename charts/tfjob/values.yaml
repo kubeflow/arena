@@ -33,14 +33,14 @@ evaluatorImage: kubeflow/tf-dist-mnist-test:1.0
 evaluatorAnnotations: {}
 
 # rsync image
-rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
+rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
 # git sync image
-gitImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/git-sync:v3.1.1
+gitImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/git-sync:v3.1.1
 
 imagePullPolicy: Always
 
 useTensorboard: false
-tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel
+tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/tensorflow:1.5.0-devel
 tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
 tensorboardResources: {}
