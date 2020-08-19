@@ -181,7 +181,7 @@ spec:
         - /bin/sh
         - -c
         - touch /tmp/healthy; /opt/kube-batchd --logtostderr --v 5 --scheduler-name kube-batchd; rm -f /tmp/healthy
-        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/kube-batchd:v0.1
+        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/kube-batchd:v0.1
         livenessProbe:
           exec:
             command:

@@ -17,7 +17,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: test-jobmon
-        image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/jobmon:latest
+        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/jobmon:latest
         imagePullPolicy: Always
         env:
          - name: NAMESPACE

@@ -22,6 +22,17 @@ function log() {
     echo $(date +"[%Y%m%d %H:%M:%S]: ") $1
 }
 
+function support_image_regionalization(){
+	for file in $(ls $1);do
+		local path=$1"/"$file
+		if [ -d $path ];then
+			support_image_regionalization $path
+		else
+			sed -i  "s@registry\..*aliyuncs.com@registry-vpc.${REGION}.aliyuncs.com@g" $path
+		fi
+	done
+}
+
 sudo_prefix=""
 if [ `id -u` -ne 0 ]; then
     sudo_prefix="sudo"
@@ -36,6 +47,11 @@ if ! arena-kubectl cluster-info >/dev/null 2>&1; then
 fi
 
 # set +e
+
+if [[ $REGION != "" ]];then
+	support_image_regionalization $SCRIPT_DIR/charts
+	support_image_regionalization $SCRIPT_DIR/kubernetes-artifacts
+fi
 
 if [[ ! -z "${DOCKER_REGISTRY}" ]]; then
     find $SCRIPT_DIR/charts/ -name *.yaml | xargs sed -i "s/registry.cn-zhangjiakou.aliyuncs.com/${DOCKER_REGISTRY}/g"

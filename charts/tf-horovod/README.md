@@ -49,7 +49,7 @@ mpiWorker:
   number: 5
   podManagementPolicy: Parallel
   image:
-    repository: registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/ali-horovod
+    repository: registry.cn-hangzhou.aliyuncs.com/kube-ai/ali-horovod
     tag: gpu-tf-1.6.0
     pullPolicy: Always
   sshPort: 22
@@ -60,7 +60,7 @@ mpiWorker:
       nvidia.com/gpu: 1
 mpiMaster:
   image:
-    repository: registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/ali-horovod
+    repository: registry.cn-hangzhou.aliyuncs.com/kube-ai/ali-horovod
     tag: gpu-tf-1.6.0
     pullPolicy: Always
   args:
@@ -74,7 +74,7 @@ tensorboard:
   serviceType: NodePort
   logDir: /output/training_logs
   image:
-    repository: registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/tensorboard
+    repository: registry.cn-hangzhou.aliyuncs.com/kube-ai/tensorboard
     tag: 1.1.0
     pullPolicy: Always
 
@@ -137,18 +137,18 @@ chart and their default values.
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `mpiWorker.image.repository` | horovod image | `registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/tf-horovod-k8s` |
+| `mpiWorker.image.repository` | horovod image | `registry.cn-hangzhou.aliyuncs.com/kube-ai/tf-horovod-k8s` |
 | `mpiWorker.number`|  The mpi worker's number | `5` |
 | `mpiWorker.image.pullPolicy` | `pullPolicy` for the service mpi worker | `IfNotPresent` |
 | `mpiWorker.image.tag` | `tag` for the service mpi worker | `IfNotPresent` |
 | `mpiWorker.sshPort` | mpiWorker's sshPort | `22` |
 | `mpiWorker.env` | mpiWorker's environment variables | `{}` |
-| `mpiMaster.image.repository` | horovod image | `registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/tf-horovod-k8s` |
+| `mpiMaster.image.repository` | horovod image | `registry.cn-hangzhou.aliyuncs.com/kube-ai/tf-horovod-k8s` |
 | `mpiMaster.image.pullPolicy` | `pullPolicy` for the service mpi master | `IfNotPresent` |
 | `mpiMaster.args` | mpiMaster's args | `{}` |
 | `mpiMaster.env` | mpiMaster's environment variables | `{}` |
 | `tensorboard.enabled` | if the tensorboard is enabled | `true` |
-| `tensorboard.image.repository` | `repository` for tensorboard | `registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/tensorboard` |
+| `tensorboard.image.repository` | `repository` for tensorboard | `registry.cn-hangzhou.aliyuncs.com/kube-ai/tensorboard` |
 | `tensorboard.image.pullPolicy` | `pullPolicy` for tensorboard | `IfNotPresent` |
 | `tensorboard.serviceType` | `service type` for tensorboard | `LoadBalancer` |
 | `volumes`| volume configuration | `{}` |

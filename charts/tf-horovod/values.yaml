@@ -11,7 +11,7 @@ sshPort: 33 # user define
 # dataDir: /data0 #user define
 workers: 2
 podManagementPolicy: Parallel
-image: registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/ali-horovod:gpu-tf-1.6.0
+image: registry.cn-hangzhou.aliyuncs.com/kube-ai/ali-horovod:gpu-tf-1.6.0
 imagePullPolicy: Always
 
 # nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81
@@ -32,17 +32,17 @@ tensorboard:
   serviceType: NodePort
   logDir: /output/training_logs
   image:
-    repository: registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/tensorboard
+    repository: registry.cn-hangzhou.aliyuncs.com/kube-ai/tensorboard
     tag: 1.1.0
     pullPolicy: Always
 
 jobmon:
-  image: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/jobmon:latest
+  image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/jobmon:latest
   pullPolicy: Always
 
 ingress: false
 
-syncImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/rsync
+syncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
 # imagePullPolicy: Always
 
 # enable RDMA support

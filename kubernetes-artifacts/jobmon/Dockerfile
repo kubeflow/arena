@@ -1,4 +1,4 @@
-# docker build  --no-cache -t registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/jobmon -f Dockerfile .
+# docker build  --no-cache -t registry.cn-zhangjiakou.aliyuncs.com/kube-ai/jobmon -f Dockerfile .
 FROM alpine
 
 ENV KUBE_LATEST_VERSION="v1.9.3"
