@@ -11,14 +11,14 @@ configmap/max-object-detector-202008221942-kfserving created
 configmap/max-object-detector-202008221942-kfserving labeled
 inferenceservice.serving.kubeflow.org/max-object-detector-202008221942 created
 ```
-3.list the job you just serving
+3. list the job you just serving
 ```shell script
 arena serve list 
 NAME                 TYPE       VERSION       DESIRED  AVAILABLE  ENDPOINT_ADDRESS  PORTS
 max-object-detector  KFSERVING  202008221942  1        1          10.97.52.65       http:80
 ```
-4.test the model service
-### Determine the ingress IP and ports
+4. test the model service
+##### Determine the ingress IP and ports
 The first step is to [determine the ingress IP](https://github.com/kubeflow/kfserving/blob/master/README.md#determine-the-ingress-ip-and-ports) and ports and set INGRESS_HOST and INGRESS_PORT
 
 This example uses the [codait/max-object-detector](https://github.com/IBM/MAX-Object-Detector) image. The Max Object Detector api server expects a POST request to the /model/predict endpoint that includes an image multipart/form-data and an optional threshold query string.
@@ -53,7 +53,7 @@ curl -v -F "image=@27-kfserving-custom.jpg" http://${INGRESS_HOST}:${INGRESS_POR
 * Connection #0 to host localhost left intact
 * Closing connection 0
 ```
-5.delete them
+5. delete them
 ```shell script
 arena serve delete max-object-detector --version=202008221942                                                                                                   2 err 
 inferenceservice.serving.kubeflow.org "max-object-detector-202008221942" deleted

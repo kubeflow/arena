@@ -42,7 +42,7 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [17. Run a training Job with configuration files](docs/userguide/16-assign-config-file.md)
 - [18. Run a standalone Pytorch Job](docs/userguide/17-pytorchjob-standalone.md)
 - [19. Run a distributed Pytorch Job](docs/userguide/18-pytorchjob-distributed.md)
-- [19. Run a KFServing Job](docs/userguide/27-kfserving-custom.md)
+- [20. Run a KFServing Job](docs/userguide/27-kfserving-custom.md)
 ## Demo
 
 [![](demo.jpg)](http://cloud.video.taobao.com/play/u/2987821887/p/1/e/6/t/1/50210690772.mp4)
