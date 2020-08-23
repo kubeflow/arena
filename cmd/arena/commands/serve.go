@@ -180,7 +180,8 @@ var (
 
 Available Commands:
   tensorflow,tf  Submit a TensorFlow Serving Job.
-  tensorrt,trt   Submit a TensorRT Job  `
+  tensorrt,trt   Submit a TensorRT Job  
+  kfserving,kfs  Submit a kfserving Job  `
 )
 
 func NewServeCommand() *cobra.Command {
@@ -201,6 +202,6 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewTrafficRouterSplitCommand())
 	command.AddCommand(NewServingGetCommand())
 	command.AddCommand(NewServingLogCommand())
-
+	command.AddCommand(NewKFServingCommand())
 	return command
 }

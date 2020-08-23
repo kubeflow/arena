@@ -166,6 +166,8 @@ func KeyMapServingType(servingKey string) types.ServingType {
 		return types.ServingTRT
 	case "custom", "custom-serving":
 		return types.ServingCustom
+	case "kfs", "kfserving", "kf-serving":
+		return types.KFServing
 	default:
 		return types.ServingType("")
 	}

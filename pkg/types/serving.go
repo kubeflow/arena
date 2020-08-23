@@ -16,6 +16,8 @@ const (
 	ServingTRT ServingType = "TENSORRT"
 	// custom
 	ServingCustom ServingType = "CUSTOM"
+	//kfserving
+	KFServing ServingType = "KFSERVING"
 )
 
 var (

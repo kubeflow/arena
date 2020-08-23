@@ -1,0 +1,46 @@
+{{- $gpuCount := .Values.gpuCount -}}
+apiVersion: serving.kubeflow.org/v1alpha2
+kind: InferenceService
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+    servingName: "{{ .Values.servingName }}"
+    servingType: "kfserving"
+    serviceName: "{{ .Values.servingName }}"
+    servingVersion: "{{ .Values.servingVersion }}"
+  name: {{ .Release.Name }}
+spec:
+  default:
+    predictor:
+      {{ .Values.modelType }}:
+        storageUri: {{ .Values.storageUri }}
+        container:
+          name: {{ .Release.Name }}
+          image: "{{ .Values.image }}"
+          imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+          {{- if .Values.command }}
+          command: { .Values.command }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.port }}
+          resources:
+            limits:
+              {{- if .Values.cpu }}
+              cpu: {{ .Values.cpu }}
+              {{- end }}
+              {{- if .Values.memory }}
+              memory: {{ .Values.memory }}
+              {{- end }}
+              {{- if gt (int $gpuCount) 0}}
+              nvidia.com/gpu: {{ .Values.gpuCount }}
+              {{- end }}
+            requests:
+              {{- if .Values.cpu }}
+              cpu: {{ .Values.cpu }}
+              {{- end }}
+              {{- if .Values.memory }}
+              memory: {{ .Values.memory }}
+              {{- end }}
+              {{- if gt (int $gpuCount) 0}}
+              nvidia.com/gpu: {{ .Values.gpuCount }}
+              {{- end }}
