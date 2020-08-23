@@ -39,5 +39,5 @@ const (
 
 var (
 	knownTrainingTypes = []string{"tfjob", "mpijob", "pytorchjob", "standalonejob", "horovodjob", "sparkjob", "volcanojob"}
-	knownServingTypes  = []string{"tf-serving", "trt-serving", "custom-serving"}
+	knownServingTypes  = []string{"kfserving", "tf-serving", "trt-serving", "custom-serving"}
 )
