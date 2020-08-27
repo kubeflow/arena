@@ -61,7 +61,7 @@ func NewServingGetCommand() *cobra.Command {
 	//command.Flags().BoolVar(&allNamespaces, "all-namespaces", false, "all namespace")
 	command.Flags().StringVar(&servingVersion, "version", "", "assign the serving job version")
 	command.Flags().StringVar(&printFormat, "format", "wide", `set the print format,format can be "yaml" or "json"`)
-	command.Flags().StringVar(&stype, "type", "", `assign the serving job type,type can be "tf"("tensorflow"),"trt"("tensorrt"),"custom"`)
+	command.Flags().StringVar(&stype, "type", "", `assign the serving job type,type can be "kfs"("kfserving"),"tf"("tensorflow"),"trt"("tensorrt"),"custom"`)
 	for name, completion := range bashCompletionFlags {
 		if command.Flag(name) != nil {
 			if command.Flag(name).Annotations == nil {
