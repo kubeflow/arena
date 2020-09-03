@@ -26,26 +26,26 @@ import (
 )
 
 var (
-	scalein_edl_chart = util.GetChartsFolder() + "/scalein"
-	scaleinEnvs       []string
-	scaleinDuration   time.Duration
+	scalein_et_chart = util.GetChartsFolder() + "/scalein"
+	scaleinEnvs      []string
+	scaleinDuration  time.Duration
 )
 
 const (
 	scaleInScript = "/usr/local/bin/scaler.sh --delete"
 )
 
-func NewScaleInEDLJobCommand() *cobra.Command {
+func NewScaleInETJobCommand() *cobra.Command {
 	var (
-		submitArgs ScaleInEDLJobArgs
+		submitArgs ScaleInETJobArgs
 	)
 
 	submitArgs.Mode = "scalein"
 
 	var command = &cobra.Command{
-		Use:     "edljob",
-		Short:   "scalein a edljob",
-		Aliases: []string{"edl"},
+		Use:     "etjob",
+		Short:   "scalein a etjob",
+		Aliases: []string{"et"},
 		Run: func(cmd *cobra.Command, args []string) {
 			//fmt.Println("args:", args)
 			//if len(args) == 0 {
@@ -68,7 +68,7 @@ func NewScaleInEDLJobCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = submitScaleInEDLJob(args, &submitArgs)
+			err = submitScaleInETJob(args, &submitArgs)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -77,7 +77,7 @@ func NewScaleInEDLJobCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&submitArgs.Name, "name", "", "required, edl job name")
+	command.Flags().StringVar(&submitArgs.Name, "name", "", "required, et job name")
 	command.MarkFlagRequired("name")
 	command.Flags().DurationVarP(&scaleinDuration, "timeout", "t", 60*time.Second, "timeout of callback scaler script, like 5s, 2m, or 3h.")
 	command.Flags().IntVar(&submitArgs.Retry, "retry", 0, "retry times.")
@@ -87,8 +87,8 @@ func NewScaleInEDLJobCommand() *cobra.Command {
 	return command
 }
 
-type ScaleInEDLJobArgs struct {
-	ScaleEDLJobArgs `yaml:",inline"`
+type ScaleInETJobArgs struct {
+	ScaleETJobArgs `yaml:",inline"`
 }
 
 func ParseSinceSeconds(since string) (*int64, error) {
@@ -100,44 +100,44 @@ func ParseSinceSeconds(since string) (*int64, error) {
 	return &parsedSince, nil
 }
 
-func (submitArgs *ScaleInEDLJobArgs) prepare() (err error) {
+func (submitArgs *ScaleInETJobArgs) prepare() (err error) {
 	log.Debugf("scaleinEnvs: %v", scaleinEnvs)
 	if len(scaleinEnvs) > 0 {
 		submitArgs.Envs = transformSliceToMap(scaleinEnvs, "=")
 	}
 	submitArgs.Timeout = int(scaleinDuration.Seconds())
 
-	edljobName := submitArgs.Name
-	trainer := NewEDLJobTrainer(clientset)
-	job, err := trainer.GetTrainingJob(edljobName, namespace)
+	etjobName := submitArgs.Name
+	trainer := NewETJobTrainer(clientset)
+	job, err := trainer.GetTrainingJob(etjobName, namespace)
 	if err != nil {
-		return fmt.Errorf("Check %s exist due to error %v", edljobName, err)
+		return fmt.Errorf("Check %s exist due to error %v", etjobName, err)
 	}
 
 	if job == nil {
-		return fmt.Errorf("the job %s is not found, please check it firstly.", edljobName)
+		return fmt.Errorf("the job %s is not found, please check it firstly.", etjobName)
 	}
 	if "RUNNING" == job.GetStatus() || "SCALING" == job.GetStatus() {
-		currentWorkers := getEDLJobCurrentReplicas(job)
-		minWorkers := getEDLJobMinReplicas(job)
+		currentWorkers := getETJobCurrentReplicas(job)
+		minWorkers := getETJobMinReplicas(job)
 		log.Debugf("currentWorkers: %v, minWorkers: %v", currentWorkers, minWorkers)
 		if currentWorkers-submitArgs.Count < minWorkers {
 			return fmt.Errorf("the number of current workers minus the number of scaling in is less than the min-workers. please try again later.")
 		}
 		return nil
 	} else {
-		return fmt.Errorf("the job: %s status: %s , is not RUNNING or SCALING, please try again later.", edljobName, job.GetStatus())
+		return fmt.Errorf("the job: %s status: %s , is not RUNNING or SCALING, please try again later.", etjobName, job.GetStatus())
 	}
 }
 
-func submitScaleInEDLJob(args []string, submitArgs *ScaleInEDLJobArgs) (err error) {
+func submitScaleInETJob(args []string, submitArgs *ScaleInETJobArgs) (err error) {
 	err = submitArgs.prepare()
 	if err != nil {
 		return err
 	}
 	scaleName := fmt.Sprintf("%s-%d", submitArgs.Name, time.Now().Unix())
 	log.Debugf("submitArgs: %v", submitArgs)
-	err = workflow.SubmitJob(scaleName, submitArgs.Mode, namespace, submitArgs, scalein_edl_chart)
+	err = workflow.SubmitJob(scaleName, submitArgs.Mode, namespace, submitArgs, scalein_et_chart)
 	if err != nil {
 		return err
 	}

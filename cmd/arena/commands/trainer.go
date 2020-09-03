@@ -32,7 +32,7 @@ func NewTrainers(client *kubernetes.Clientset) []Trainer {
 		NewPyTorchJobTrainer,
 		NewSparkJobTrainer,
 		NewVolcanoJobTrainer,
-		NewEDLJobTrainer,
+		NewETJobTrainer,
 	}
 
 	for _, init := range trainerInits {

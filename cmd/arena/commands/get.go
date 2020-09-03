@@ -78,7 +78,7 @@ func NewGetCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&trainingType, "type", "", "The training type to get, the possible option is tfjob, mpijob, pytorchjob, edljob, sparkjob, volcanojob, horovodjob or standalonejob. (optional)")
+	command.Flags().StringVar(&trainingType, "type", "", "The training type to get, the possible option is tfjob, mpijob, pytorchjob, etjob, sparkjob, volcanojob, horovodjob or standalonejob. (optional)")
 	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Specify if show pending pod's events.")
 	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
 	return command

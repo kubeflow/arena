@@ -65,7 +65,7 @@ func NewDeleteCommand() *cobra.Command {
 			os.Exit(exitCode)
 		},
 	}
-	command.Flags().StringVar(&trainingType, "type", "", "The training type to delete, the possible option is tfjob, mpijob, pytorchjob, edljob, sparkjob, volcanojob, horovodjob or standalonejob. (optional)")
+	command.Flags().StringVar(&trainingType, "type", "", "The training type to delete, the possible option is tfjob, mpijob, pytorchjob, etjob, sparkjob, volcanojob, horovodjob or standalonejob. (optional)")
 
 	return command
 }

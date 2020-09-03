@@ -383,7 +383,7 @@ Available Commands:
   standalonejob,sj     Submit a standalone Job.
   tfserving,tfserving  Submit a Serving Job.
   volcanojob,vj        Submit a VolcanoJob.
-  edljob,edl           Submit a EDLJob.
+  etjob,et           Submit a ETJob.
     `
 )
 
@@ -407,7 +407,7 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewSparkApplicationCommand())
 
 	command.AddCommand(NewVolcanoJobCommand())
-	command.AddCommand(NewSubmitEDLJobCommand())
+	command.AddCommand(NewSubmitETJobCommand())
 
 	return command
 }

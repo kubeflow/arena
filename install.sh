@@ -101,8 +101,8 @@ if ! arena-kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
 fi
 
-if ! arena-kubectl get serviceaccount --all-namespaces | grep edl-operator; then
-    arena-kubectl create -f $SCRIPT_DIR/kubernetes-artifacts/edl-operator/edl-operator.yaml
+if ! arena-kubectl get serviceaccount --all-namespaces | grep et-operator; then
+    arena-kubectl create -f $SCRIPT_DIR/kubernetes-artifacts/et-operator/et-operator.yaml
 fi
 
 if [ "$USE_PROMETHEUS" == "true" ]; then

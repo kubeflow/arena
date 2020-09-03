@@ -20,7 +20,7 @@ var (
 	scaleoutLong = `scaleout a job.
 
 Available Commands:
-  edljob,edl           scaleout a EDLJob.
+  etjob,et           scaleout a ETJob.
     `
 )
 
@@ -34,7 +34,7 @@ func NewScaleOutCommand() *cobra.Command {
 		},
 	}
 
-	command.AddCommand(NewScaleOutEDLJobCommand())
+	command.AddCommand(NewScaleOutETJobCommand())
 
 	return command
 }

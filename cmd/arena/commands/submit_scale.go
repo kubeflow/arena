@@ -85,7 +85,7 @@ func NewScaleJobCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&submitArgs.Name, "name", "", "required, edl job name")
+	command.Flags().StringVar(&submitArgs.Name, "name", "", "required, et job name")
 	command.MarkFlagRequired("name")
 	command.Flags().BoolVar(&submitArgs.Add, "add", false, "scale out")
 	command.Flags().BoolVar(&submitArgs.Delete, "delete", false, "scale in")
@@ -99,8 +99,8 @@ func NewScaleJobCommand() *cobra.Command {
 
 type submitScaleJobArgs struct {
 	Mode string `yaml:"mode"` // --mode
-	//--name string     required, edl job name
-	Name string `yaml:"edlName"`
+	//--name string     required, et job name
+	Name string `yaml:"etName"`
 	//--add  bool       scale out
 	Add bool `yaml:"add"`
 	//--delete bool     scale in

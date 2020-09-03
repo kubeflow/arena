@@ -20,7 +20,7 @@ var (
 	scaleinLong = `scalein a job.
 
 Available Commands:
-  edljob,edl           scalein a EDLJob.
+  etjob,et           scalein a ETJob.
     `
 )
 
@@ -34,7 +34,7 @@ func NewScaleInCommand() *cobra.Command {
 		},
 	}
 
-	command.AddCommand(NewScaleInEDLJobCommand())
+	command.AddCommand(NewScaleInETJobCommand())
 
 	return command
 }

@@ -4,7 +4,7 @@ metadata:
   name: {{ .Release.Name }}
 spec:
   selector:
-    name: {{ .Values.edlName }}
+    name: {{ .Values.etName }}
   {{- if ne (len .Values.envs) 0 }}
   env:
   {{- range $key, $value := .Values.envs }}
