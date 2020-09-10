@@ -50,6 +50,10 @@ func (sj *SparkJob) AllPods() []v1.Pod {
 	return sj.pods
 }
 
+func (sj *SparkJob) GetTrainJob() interface{} {
+	return sj.sparkjob
+}
+
 /*
 				spark job driver state
 	-------------------------------------------------------

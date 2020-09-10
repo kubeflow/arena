@@ -91,6 +91,10 @@ func (pj *PyTorchJob) AllPods() []v1.Pod {
 	return pj.pods
 }
 
+func (pj *PyTorchJob) GetTrainJob() interface{} {
+	return pj.pytorchjob
+}
+
 func checkPyTorchStatus(status commonv1.JobStatus) commonv1.JobConditionType {
 	t := commonv1.JobConditionType("Pending")
 	for _, condition := range status.Conditions {
@@ -562,6 +566,7 @@ func (tt *PyTorchJobTrainer) ListTrainingJobs() (jobs []TrainingJob, err error) 
 // Get PriorityClass
 func (p *PyTorchJob) GetPriorityClass() string {
 	pc := ""
+	log.Debugf("pytorchjob: %v", p.pytorchjob)
 	specs := p.pytorchjob.Spec.PyTorchReplicaSpecs
 	log.Debugf("specs %v", specs)
 	for _, spec := range specs {

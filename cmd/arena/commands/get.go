@@ -78,7 +78,7 @@ func NewGetCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&trainingType, "type", "", "The training type to get, the possible option is tfjob, mpijob, pytorchjob, sparkjob, volcanojob, horovodjob or standalonejob. (optional)")
+	command.Flags().StringVar(&trainingType, "type", "", "The training type to get, the possible option is tfjob, mpijob, pytorchjob, etjob, sparkjob, volcanojob, horovodjob or standalonejob. (optional)")
 	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Specify if show pending pod's events.")
 	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
 	return command
@@ -262,6 +262,11 @@ func printSingleJobHelper(job TrainingJob, printArgs PrintArgs) {
 }
 
 func printJobSummary(w io.Writer, job TrainingJob) {
+	log.Debugf("--->STATUS: %s", GetJobRealStatus(job))
+	log.Debugf("--->NAMESPACE: %s", job.Namespace())
+	log.Debugf("--->PRIORITY: %s", getPriorityClass(job))
+	log.Debugf("--->TRAINING DURATION: %s", util.ShortHumanDuration(job.Duration()))
+
 	fmt.Fprintf(w, "STATUS: %s\n", GetJobRealStatus(job))
 	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace())
 	fmt.Fprintf(w, "PRIORITY: %s\n", getPriorityClass(job))

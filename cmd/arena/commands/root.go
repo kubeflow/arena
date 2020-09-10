@@ -63,6 +63,9 @@ func NewCommand() *cobra.Command {
 	command.PersistentFlags().StringVar(&arenaNamespace, "arena-namespace", "arena-system", "The namespace of arena system service, like tf-operator")
 
 	command.AddCommand(NewSubmitCommand())
+	//command.AddCommand(NewScaleJobCommand())
+	command.AddCommand(NewScaleOutCommand())
+	command.AddCommand(NewScaleInCommand())
 	command.AddCommand(NewServeCommand())
 	command.AddCommand(NewListCommand())
 	command.AddCommand(NewPruneCommand())

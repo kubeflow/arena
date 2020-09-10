@@ -1,0 +1,25 @@
+apiVersion: kai.alibabacloud.com/v1alpha1
+kind: ScaleOut
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  selector:
+    name: {{ .Values.etName }}
+  {{- if ne (len .Values.envs) 0 }}
+  env:
+  {{- range $key, $value := .Values.envs }}
+  - name: "{{ $key }}"
+    value: "{{ $value }}"
+  {{- end }}
+  {{- end }}
+  script: "{{ .Values.script }}"
+  {{- if .Values.retry }}
+  backoffLimit: {{ .Values.retry }}
+  {{- end }}
+  {{- if .Values.timeout }}
+  timeout: {{ .Values.timeout }}
+  {{- end }}
+  toAdd:
+    {{- if .Values.count }}
+    count: {{ .Values.count }}
+    {{- end }}

@@ -77,6 +77,10 @@ func (sj *StandaloneJob) GetPriorityClass() string {
 	return sj.JobInfo.job.Spec.Template.Spec.PriorityClassName
 }
 
+func (sj *StandaloneJob) GetTrainJob() interface{} {
+	return sj.job
+}
+
 // Standalone Job trainer
 type StandaloneJobTrainer struct {
 	client      *kubernetes.Clientset

@@ -67,6 +67,10 @@ func (vj *VolcanoJob) AllPods() []v1.Pod {
 	return vj.pods
 }
 
+func (vj *VolcanoJob) GetTrainJob() interface{} {
+	return vj.volcanoJob
+}
+
 func (vj *VolcanoJob) GetStatus() (status string) {
 
 	defer func() {

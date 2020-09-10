@@ -91,7 +91,7 @@ func NewLogsCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVar(&trainingType, "type", "", "The training type to show logging, the possible option is tfjob, mpijob, horovodjob or standalonejob. (optional)")
+	command.Flags().StringVar(&trainingType, "type", "", "The training type to show logging, the possible option is tfjob, mpijob, pytorchjob, etjob, horovodjob or standalonejob. (optional)")
 
 	command.Flags().BoolVarP(&outerArgs.Follow, "follow", "f", false, "Specify if the logs should be streamed.")
 	command.Flags().StringVar(&outerArgs.SinceSeconds, "since", "", "Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.")

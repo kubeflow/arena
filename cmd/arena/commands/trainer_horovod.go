@@ -45,6 +45,10 @@ func (hj *HorovodJob) AllPods() []v1.Pod {
 	return hj.pods
 }
 
+func (hj *HorovodJob) GetTrainJob() interface{} {
+	return hj.job
+}
+
 // Get Dashboard url of the job
 func (hj *HorovodJob) GetJobDashboards(client *kubernetes.Clientset) ([]string, error) {
 	urls := []string{}

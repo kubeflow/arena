@@ -68,6 +68,8 @@ type TrainingJob interface {
 
 	// The priority class name of the training job
 	GetPriorityClass() string
+
+	GetTrainJob() interface{}
 }
 
 type Trainer interface {
