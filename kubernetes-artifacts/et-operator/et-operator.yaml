@@ -13872,7 +13872,7 @@ spec:
             - --enable-leader-election
           command:
             - /manager
-          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/et-controller:37ecd09
+          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/et-controller:d29a902
           imagePullPolicy: Always
           name: manager
           resources:
