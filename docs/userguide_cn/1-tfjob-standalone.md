@@ -37,7 +37,7 @@ INFO[0000] The Job tf-git has been submitted successfully
 INFO[0000] You can run `arena get tf-git --type tfjob` to check the job status
 ```
 
-> 这会下载源代码，并将其解压缩到工作目录的 `code/` 目录。默认的工作目录是 `/root`，您也可以使用 `--workingDir` 加以指定。
+> 这会下载源代码，并将其解压缩到工作目录的 `code/` 目录。默认的工作目录是 `/root`，您也可以使用 `--workingDir` 加以指定。同时你也可以通过在提交的命令中通过增加 `--env GIT_SYNC_BRANCH=main` 的方式来声明想要拉取的分支。`注意Github现在新建的repo都会以main作为主分支而不是Mater。` 
 
 > 如果您正在使用非公开 git 代码库，则可以使用以下命令：
 
