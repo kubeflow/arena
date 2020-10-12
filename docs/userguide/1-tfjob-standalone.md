@@ -37,8 +37,7 @@ INFO[0000] The Job tf-git has been submitted successfully
 INFO[0000] You can run `arena get tf-git --type tfjob` to check the job status
 ```
 
-> the source code will be downloaded and extracted to the directory `code/` of the working directory. The default working directory is `/root`, you can also specify by using `--workingDir`.
-
+> the source code will be downloaded and extracted to the directory `code/` of the working directory. The default working directory is `/root`, you can also specify by using `--workingDir`. Also, you may specify the branch you are pulling code from by addding `--env GIT_SYNC_BRANCH=main` to the paramasters while submitting the job.
 > If you are using the private git repo, you can use the following command:
 
 ```
