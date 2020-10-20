@@ -185,8 +185,10 @@ func (submitArgs *submitPyTorchJobArgs) addConfigFiles() error {
 }
 
 func (submitArgs *submitPyTorchJobArgs) addPodGroupLabel() {
-	submitArgs.PodGroupName = name
-	submitArgs.PodGroupMinAvailable = strconv.Itoa(submitArgs.WorkerCount)
+	//submitArgs.PodGroupName = name
+	//submitArgs.PodGroupMinAvailable = strconv.Itoa(submitArgs.WorkerCount)
+	submitArgs.PodGroupName = yinlei-test
+	submitArgs.PodGroupMinAvailable = 10
 }
 
 // Submit PyTorchJob
