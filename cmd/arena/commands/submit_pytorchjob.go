@@ -17,7 +17,7 @@ package commands
 import (
 	"fmt"
 	"strings"
-	_"strconv"
+	"strconv"
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
@@ -158,9 +158,9 @@ func (submitArgs *submitPyTorchJobArgs) prepare(args []string) (err error) {
 
 	submitArgs.processCommonFlags()
 
-	//if submitArgs.Conscheduling {
-	submitArgs.addPodGroupLabel()
-	//}
+	if submitArgs.Conscheduling {
+		submitArgs.addPodGroupLabel()
+	}
 
 	return nil
 }
@@ -185,10 +185,8 @@ func (submitArgs *submitPyTorchJobArgs) addConfigFiles() error {
 }
 
 func (submitArgs *submitPyTorchJobArgs) addPodGroupLabel() {
-	//submitArgs.PodGroupName = name
-	//submitArgs.PodGroupMinAvailable = strconv.Itoa(submitArgs.WorkerCount)
-	submitArgs.PodGroupName = "yinlei-test"
-	submitArgs.PodGroupMinAvailable = "10"
+	submitArgs.PodGroupName = name
+	submitArgs.PodGroupMinAvailable = strconv.Itoa(submitArgs.WorkerCount)
 }
 
 // Submit PyTorchJob
