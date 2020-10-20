@@ -29,10 +29,8 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "PyTorchJob"
-            { { - if .Values.podGroupName } }
             pod-group.scheduling.sigs.k8s.io/name: { { .Values.podGroupName } }
             pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
-            { { - end } }
             master-pod-name: {{ .Release.Name }}-master-0
           annotations:
             {{- range $key, $value := .Values.annotations }}
@@ -310,10 +308,8 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "PyTorchJob"
-            { { - if .Values.podGroupName } }
             pod-group.scheduling.sigs.k8s.io/name: { { .Values.podGroupName } }
             pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
-            { { - end } }
           annotations:
             {{- range $key, $value := .Values.annotations }}
               {{ $key }}: {{ $value | quote }}
