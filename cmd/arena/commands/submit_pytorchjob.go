@@ -158,9 +158,9 @@ func (submitArgs *submitPyTorchJobArgs) prepare(args []string) (err error) {
 
 	submitArgs.processCommonFlags()
 
-	if submitArgs.Conscheduling {
-		submitArgs.addPodGroupLabel()
-	}
+	//if submitArgs.Conscheduling {
+	submitArgs.addPodGroupLabel()
+	//}
 
 	return nil
 }
