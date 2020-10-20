@@ -56,3 +56,7 @@ workers: 0
 # workerInitPytorchImage: alpine:3.10
 
 imagePullPolicy: Always
+
+# add pod group
+podGroupName: ""
+podGroupMinAvailable: "1"

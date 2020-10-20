@@ -80,7 +80,7 @@ func NewSubmitPyTorchJobCommand() *cobra.Command {
 	command.Flags().StringVar(&submitArgs.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", msg)
 
 	command.Flags().StringVar(&submitArgs.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
-
+	command.Flags().BoolVar(&submitArgs.Conscheduling, "gang", false, "enable gang scheduling")
 	// TODO jiaqianjing: user can replace "alpine:3.10" with custom image addr
 	//command.Flags().StringVar(&submitArgs.WorkerInitPytorchImage,
 	//	"worker-init-pytorch-image",
@@ -157,6 +157,10 @@ func (submitArgs *submitPyTorchJobArgs) prepare(args []string) (err error) {
 
 	submitArgs.processCommonFlags()
 
+	if submitArgs.Conscheduling {
+		submitArgs.addPodGroupLabel()
+	}
+
 	return nil
 }
 
@@ -177,6 +181,11 @@ func (submitArgs submitPyTorchJobArgs) check() error {
 
 func (submitArgs *submitPyTorchJobArgs) addConfigFiles() error {
 	return submitArgs.addJobConfigFiles()
+}
+
+func (submitArgs *submitPyTorchJobArgs) addPodGroupLabel() {
+	submitArgs.PodGroupName = name
+	submitArgs.PodGroupMinAvailable = strconv.Itoa(submitArgs.WorkerCount)
 }
 
 // Submit PyTorchJob
