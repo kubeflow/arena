@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"strconv"
+	_"strconv"
 
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
