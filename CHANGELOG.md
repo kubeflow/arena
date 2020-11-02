@@ -9,6 +9,7 @@
 - Add train init framework
 - Add GPU support for PS
 - Support GangScheduling Native in MPIJob
+- Support GangScheduling Native in PytorchJob
 
 ### Fixed
 
