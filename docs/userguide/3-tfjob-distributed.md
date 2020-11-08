@@ -26,7 +26,7 @@ The following command is an example. In this example, it defines 2 workers and 1
     --ps=1 \
     --ps-image=tensorflow/tensorflow:1.5.0-devel \
     --tensorboard \
-    "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir --log_dir=/training_logs --data_dir=code/tensorflow-sample-code/data"
+    "python code/tensorflow-sample-code/tfjob/docker/v1alpha2/distributed-mnist/main.py --log_dir=/training_logs --data_dir=code/tensorflow-sample-code/data"
 
 configmap/tf-dist-git-tfjob created
 configmap/tf-dist-git-tfjob labeled
