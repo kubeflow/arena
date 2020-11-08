@@ -25,6 +25,7 @@ ENV VERSION $VERSION
 ENV OS_ARCH $OS_ARCH
 ENV COMMIT $COMMIT
 ENV TARGET $TARGET
+ENV GO111MODULE off
 
 RUN mkdir -p /go/src/github.com/kubeflow/arena
 
