@@ -67,6 +67,9 @@ func (slp *PodLogPrinter) CheckPodIsInJob() error {
 	}
 }
 func (slp *PodLogPrinter) Print() (int, error) {
+	return slp.AcceptLogs(os.Stdout)
+}
+func (slp *PodLogPrinter) AcceptLogs(writeCloser io.WriteCloser) (int, error) {
 	defer slp.Pipe.Reader.Close()
 	if err := slp.CheckPodIsInJob(); err != nil {
 		if err == ErrTooManyPodsFound {
@@ -82,9 +85,10 @@ func (slp *PodLogPrinter) Print() (int, error) {
 	}); err != nil {
 		return 1, err
 	}
-	io.Copy(os.Stdout, slp.Pipe.Reader)
+	io.Copy(writeCloser, slp.Pipe.Reader)
 	return 0, nil
 }
+
 func (slp *PodLogPrinter) PrintMultiPodsHelp() {
 	header := "There is more than one instance in the job:"
 	footer := "please use --instance or -i to filter"
