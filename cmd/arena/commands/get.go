@@ -30,7 +30,7 @@ import (
 	"io"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -87,6 +87,13 @@ func NewGetCommand() *cobra.Command {
 type PrintArgs struct {
 	ShowEvents bool
 	Output     string
+}
+
+func SearchTrainingJob(kubeconfig, logLevel, ns, jobName, jobType string) (TrainingJob, error) {
+	if err := InitCommonConfig(kubeconfig, logLevel, ns); err != nil {
+		return nil, err
+	}
+	return searchTrainingJob(jobName, jobType, ns)
 }
 
 /*

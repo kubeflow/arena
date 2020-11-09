@@ -16,7 +16,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/util"
@@ -50,34 +49,32 @@ func NewSubmitTFJobCommand() *cobra.Command {
 		Use:     "tfjob",
 		Short:   "Submit TFJob as training job.",
 		Aliases: []string{"tf"},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
-				os.Exit(1)
+				return fmt.Errorf("")
 			}
 
 			util.SetLogLevel(logLevel)
 			setupKubeconfig()
 			_, err := initKubeClient()
 			if err != nil {
-				log.Debugf("Failed due to %v", err)
-				fmt.Println(err)
-				os.Exit(1)
+				log.Errorf("Failed due to %v", err)
+				return err
 			}
 
 			err = updateNamespace(cmd)
 			if err != nil {
-				log.Debugf("Failed due to %v", err)
-				fmt.Println(err)
-				os.Exit(1)
+				log.Errorf("Failed due to %v", err)
+				return err
 			}
 
 			err = submitTFJob(args, &submitArgs)
 			if err != nil {
-				log.Debugf("Failed due to %v", err)
-				fmt.Println(err)
-				os.Exit(1)
+				log.Errorf("Failed due to %v", err)
+				return err
 			}
+			return nil
 		},
 	}
 

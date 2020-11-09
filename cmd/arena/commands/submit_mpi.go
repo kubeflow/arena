@@ -16,7 +16,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -42,10 +41,10 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 		Use:     "mpijob",
 		Short:   "Submit MPIjob as training job.",
 		Aliases: []string{"mpi", "mj"},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
-				os.Exit(1)
+				return fmt.Errorf("")
 			}
 
 			util.SetLogLevel(logLevel)
@@ -53,21 +52,22 @@ func NewSubmitMPIJobCommand() *cobra.Command {
 			_, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)
-				os.Exit(1)
+				return err 
 			}
 
 			err = updateNamespace(cmd)
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
-				os.Exit(1)
+				return err 
 			}
 
 			err = submitMPIJob(args, &submitArgs)
 			if err != nil {
 				fmt.Println(err)
-				os.Exit(1)
+				return err 
 			}
+			return nil
 		},
 	}
 

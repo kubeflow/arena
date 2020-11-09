@@ -18,11 +18,12 @@ import (
 	"os"
 
 	"github.com/kubeflow/arena/pkg/types"
+	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -99,6 +100,30 @@ func updateNamespace(cmd *cobra.Command) (err error) {
 		}
 	} else {
 		log.Debugf("force to use namespace %s", namespace)
+	}
+	return nil
+}
+
+func InitCommonConfig(kubeconfig, logLevel, ns string) error {
+	if logLevel == "" {
+		logLevel = "info"
+	}
+	util.SetLogLevel(logLevel)
+	loadingRules = clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
+	overrides := clientcmd.ConfigOverrides{}
+	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
+	setupKubeconfig()
+	_, err := initKubeClient()
+	if err != nil {
+		return err
+	}
+	namespace = ns
+	if namespace == "" {
+		namespace, _, err = clientConfig.Namespace()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
