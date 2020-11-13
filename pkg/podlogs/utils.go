@@ -1,11 +1,17 @@
 package podlogs
 
 import (
+	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+)
+
+var (
+	errInvalidSinceSecond = errors.New("failed to parse since seconds,invalid format,should like: ['1h','1m','1s','1h1m1s'...]")
 )
 
 type OuterRequestArgs struct {
@@ -35,10 +41,40 @@ func ParseSinceTime(sinceTime string) (*metav1.Time, error) {
 }
 
 func ParseSinceSeconds(since string) (*int64, error) {
-	invalidReturn := int64(0)
-	parsedSince, err := strconv.ParseInt(since, 10, 64)
-	if err != nil {
-		return &invalidReturn, err
+	if since == "" {
+		return nil, nil
 	}
-	return &parsedSince, nil
+	totalSeconds := int64(0)
+	items := []string{}
+	for i := 0; i < len(since); i++ {
+		switch string(since[i]) {
+		case "h":
+			hour, err := strconv.ParseInt(strings.Join(items, ""), 10, 64)
+			if err != nil {
+				return nil, errInvalidSinceSecond
+			}
+			totalSeconds = totalSeconds + hour*3600
+			items = []string{}
+		case "m":
+			min, err := strconv.ParseInt(strings.Join(items, ""), 10, 64)
+			if err != nil {
+				return nil, errInvalidSinceSecond
+			}
+			totalSeconds = totalSeconds + min*60
+			items = []string{}
+		case "s":
+			second, err := strconv.ParseInt(strings.Join(items, ""), 10, 64)
+			if err != nil {
+				return nil, errInvalidSinceSecond
+			}
+			totalSeconds = totalSeconds + second
+			items = []string{}
+		default:
+			items = append(items, string(since[i]))
+		}
+	}
+	if len(items) != 0 {
+		return nil, errInvalidSinceSecond
+	}
+	return &totalSeconds, nil
 }

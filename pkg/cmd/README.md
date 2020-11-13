@@ -1,1 +1,0 @@
-TODO: this directory is to store command source file. a sub command owns a directory.
