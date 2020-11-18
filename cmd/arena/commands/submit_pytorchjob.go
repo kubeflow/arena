@@ -16,7 +16,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"strconv"
 
@@ -41,10 +40,10 @@ func NewSubmitPyTorchJobCommand() *cobra.Command {
 		Use:     "pytorchjob",
 		Short:   "Submit PyTorchJob as training job.",
 		Aliases: []string{"pytorch"},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
-				os.Exit(1)
+				return fmt.Errorf("not found command args")
 			}
 
 			util.SetLogLevel(logLevel)
@@ -52,21 +51,22 @@ func NewSubmitPyTorchJobCommand() *cobra.Command {
 			_, err := initKubeClient()
 			if err != nil {
 				fmt.Println(err)
-				os.Exit(1)
+				return err 
 			}
 
 			err = updateNamespace(cmd)
 			if err != nil {
 				log.Debugf("Failed due to %v", err)
 				fmt.Println(err)
-				os.Exit(1)
+				return err 
 			}
 
 			err = submitPyTorchJob(args, &submitArgs)
 			if err != nil {
 				fmt.Println(err)
-				os.Exit(1)
+				return err 
 			}
+			return nil  
 		},
 	}
 
