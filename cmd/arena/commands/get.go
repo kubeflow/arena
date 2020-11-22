@@ -21,16 +21,20 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/kubeflow/arena/pkg/apis/arenaclient"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"io"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -45,11 +49,35 @@ func NewGetCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "get training job",
 		Short: "display details of a training job",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			viper.BindPFlags(cmd.Flags())
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
+			}
+			switch utils.TransferTrainingJobType(trainingType) {
+			case types.TFTrainingJob:
+				name := args[0]
+				client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
+					Kubeconfig:     viper.GetString("config"),
+					LogLevel:       viper.GetString("loglevel"),
+					Namespace:      viper.GetString("namespace"),
+					ArenaNamespace: viper.GetString("arena-namespace"),
+					IsDaemonMode:   false,
+				})
+				if err != nil {
+					log.Errorf("failed to create arena client: %v", err)
+					os.Exit(1)
+				}
+				err = client.Training().GetAndPrint(name, utils.TransferTrainingJobType(trainingType), printArgs.Output, printArgs.ShowEvents)
+				if err != nil {
+					log.Errorf("failed to get job details: %v", err)
+					os.Exit(1)
+				}
+				return
 			}
 			name = args[0]
 
@@ -80,7 +108,7 @@ func NewGetCommand() *cobra.Command {
 
 	command.Flags().StringVar(&trainingType, "type", "", "The training type to get, the possible option is tfjob, mpijob, pytorchjob, etjob, sparkjob, volcanojob, horovodjob or standalonejob. (optional)")
 	command.Flags().BoolVarP(&printArgs.ShowEvents, "events", "e", false, "Specify if show pending pod's events.")
-	command.Flags().StringVarP(&printArgs.Output, "output", "o", "", "Output format. One of: json|yaml|wide")
+	command.Flags().StringVarP(&printArgs.Output, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	return command
 }
 
