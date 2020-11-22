@@ -18,11 +18,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kubeflow/arena/pkg/apis/arenaclient"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -34,12 +38,34 @@ func NewDeleteCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "delete a training job",
 		Short: "delete a training job and its associated pods",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			viper.BindPFlags(cmd.Flags())
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				cmd.HelpFunc()(cmd, args)
 				os.Exit(1)
 			}
-
+			switch utils.TransferTrainingJobType(trainingType) {
+			case types.TFTrainingJob:
+				client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
+					Kubeconfig:     viper.GetString("config"),
+					LogLevel:       viper.GetString("loglevel"),
+					Namespace:      viper.GetString("namespace"),
+					ArenaNamespace: viper.GetString("arena-namespace"),
+					IsDaemonMode:   false,
+				})
+				if err != nil {
+					log.Errorf("failed to build arena client,reason: %v", err)
+					os.Exit(1)
+				}
+				err = client.Training().Delete(utils.TransferTrainingJobType(trainingType), args...)
+				if err != nil {
+					log.Errorf("failed to delete tfjobs,reason: %v", err)
+					os.Exit(1)
+				}
+				return
+			}
 			util.SetLogLevel(logLevel)
 			setupKubeconfig()
 			_, err := initKubeClient()

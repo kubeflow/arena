@@ -37,9 +37,8 @@ func ReadConfigFile(filename string) (configs map[string]string) {
 			if len(splitString) != 2 {
 				continue
 			}
-			key = splitString[0]
-			value = splitString[1]
-
+			key = strings.Trim(splitString[0], " ")
+			value = strings.Trim(splitString[1], " ")
 			configs[key] = value
 		}
 	}

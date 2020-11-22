@@ -25,6 +25,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -33,6 +34,9 @@ func NewLogsCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "logs training job",
 		Short: "print the logs for a task of the training job",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			viper.BindPFlags(cmd.Flags())
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			util.SetLogLevel(logLevel)
 			if len(args) == 0 {

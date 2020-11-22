@@ -21,12 +21,16 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func NewLogViewerCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "logviewer job",
 		Short: "display Log Viewer URL of a training job",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			viper.BindPFlags(cmd.Flags())
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			util.SetLogLevel(logLevel)
 			if len(args) == 0 {

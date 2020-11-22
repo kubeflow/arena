@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kubeflow/arena/pkg/commands/training"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -37,7 +38,6 @@ var (
 	annotations      []string
 	imagePullSecrets []string
 )
-
 
 // The common parts of the submitAthd
 type submitArgs struct {
@@ -398,7 +398,7 @@ func NewSubmitCommand() *cobra.Command {
 		},
 	}
 
-	command.AddCommand(NewSubmitTFJobCommand())
+	command.AddCommand(training.NewSubmitTFJobCommand())
 	command.AddCommand(NewSubmitMPIJobCommand())
 	// support pytorchjob
 	command.AddCommand(NewSubmitPyTorchJobCommand())
