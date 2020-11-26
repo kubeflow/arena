@@ -9,12 +9,11 @@ import (
 
 const (
 	// tf-operator added labels for pods and servers.
-	tfReplicaTypeLabel     = "tf-replica-type"
-	tfReplicaIndexLabel    = "tf-replica-index"
 	labelGroupName         = "group-name"
 	labelGroupNameV1alpha2 = "group_name"
-	labelTFJobName         = "tf-job-name"
-	labelTFJobRole         = "tf-job-role"
+
+	// pytorchjob
+	labelPyTorchGroupName = "group-name"
 )
 
 // GetTrainingJobTypes returns the supported training job types
@@ -22,6 +21,7 @@ func GetTrainingJobTypes() []types.TrainingJobType {
 	return []types.TrainingJobType{
 		types.MPITrainingJob,
 		types.TFTrainingJob,
+		types.PytorchTrainingJob,
 	}
 }
 
@@ -33,6 +33,8 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 	switch jobType {
 	case "tfjob", "tf":
 		return types.TFTrainingJob
+	case "pytorchjob", "pytorch":
+		return types.PytorchTrainingJob
 	}
 	return types.UnknownTrainingJob
 }
@@ -166,4 +168,23 @@ func IsTensorFlowPod(name, ns string, pod *v1.Pod) bool {
 		return true
 	}
 	return false
+}
+func IsPyTorchPod(name, ns string, pod *v1.Pod) bool {
+	// check the release name is matched pytorchjob name
+	if pod.Labels["release"] != name {
+		return false
+	}
+	// check the job type is pytorchjob
+	if pod.Labels["app"] != "pytorchjob" {
+		return false
+	}
+	// check the namespace
+	if pod.Namespace != ns {
+		return false
+	}
+	// check the group name
+	if pod.Labels[labelPyTorchGroupName] != "kubeflow.org" {
+		return false
+	}
+	return true
 }

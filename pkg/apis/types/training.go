@@ -22,6 +22,8 @@ const (
 	TFTrainingJob TrainingJobType = "tfjob"
 	// MPITrainingJob defines the mpijob
 	MPITrainingJob TrainingJobType = "mpijob"
+	// PytorchTrainingJob defines the pytorchjob
+	PytorchTrainingJob TrainingJobType = "pytorchjob"
 	// AllTrainingJob represents all job types
 	AllTrainingJob TrainingJobType = ""
 	// UnknownTrainingJob defines the unknown training

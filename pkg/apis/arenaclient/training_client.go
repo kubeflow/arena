@@ -43,6 +43,9 @@ func (t *TrainingJobClient) Submit(job apistraining.Job) error {
 	case types.TFTrainingJob:
 		args := job.Args().(*types.SubmitTFJobArgs)
 		return training.SubmitTFJob(t.namespace, args)
+	case types.PytorchTrainingJob:
+		args := job.Args().(*types.SubmitPyTorchJobArgs)
+		return training.SubmitPytorchJob(t.namespace, args)
 	}
 	return nil
 }

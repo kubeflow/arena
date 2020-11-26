@@ -16,6 +16,9 @@ package training
 
 import (
 	"sort"
+
+	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 )
 
 // construct the trainer list
@@ -23,6 +26,7 @@ func NewSupportedTrainers() []Trainer {
 	trainers := []Trainer{}
 	trainerInits := []func() Trainer{
 		NewTensorFlowJobTrainer,
+		NewPyTorchJobTrainer,
 	}
 	for _, init := range trainerInits {
 		trainers = append(trainers, init())
@@ -80,4 +84,47 @@ func makeTrainingJobOrderdByGPUCount(jobList []TrainingJob) []TrainingJob {
 	}
 	sort.Sort(newJoblist)
 	return []TrainingJob(newJoblist)
+}
+
+func getPodsOfTrainingJob(name, namespace string, podList []*v1.Pod, isTrainingJobPod func(name, namespace string, pod *v1.Pod) bool, isChiefPod func(pod *v1.Pod) bool) ([]*v1.Pod, *v1.Pod) {
+	pods := []*v1.Pod{}
+	var (
+		pendingChiefPod     *v1.Pod
+		nonePendingChiefPod *v1.Pod
+	)
+	for _, item := range podList {
+		log.Debugf("found pod: %v", item.Name)
+		if !isTrainingJobPod(name, namespace, item) {
+			continue
+		}
+		pods = append(pods, item)
+		if !isChiefPod(item) {
+			log.Debugf("the pod %v is not chief pod", item.Name)
+			continue
+		}
+		if item.Status.Phase == v1.PodPending {
+			if pendingChiefPod == nil {
+				pendingChiefPod = item
+			}
+			if item.CreationTimestamp.After(pendingChiefPod.CreationTimestamp.Time) {
+				pendingChiefPod = item
+			}
+			continue
+		}
+		// set the chief pod
+		if nonePendingChiefPod == nil {
+			nonePendingChiefPod = item
+		}
+		// If there are some failed chiefPod, and the new chiefPod haven't started, set the latest failed pod as chief pod
+		if item.CreationTimestamp.After(nonePendingChiefPod.CreationTimestamp.Time) {
+			nonePendingChiefPod = item
+		}
+	}
+	if nonePendingChiefPod != nil {
+		return pods, nonePendingChiefPod
+	}
+	if pendingChiefPod == nil {
+		return pods, &v1.Pod{}
+	}
+	return pods, pendingChiefPod
 }

@@ -16,7 +16,6 @@ package training
 
 import (
 	"fmt"
-	"strings"
 
 	apistypes "github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
@@ -69,10 +68,10 @@ func BuildJobInfo(job TrainingJob) *apistypes.TrainingJobInfo {
 		if pod.Name == chiefPodName {
 			isChief = true
 		}
-
+		status, _, _, _ := utils.DefinePodPhaseStatus(*pod)
 		instances = append(instances, apistypes.TrainingJobInstance{
 			Name:    pod.Name,
-			Status:  strings.ToUpper(string(pod.Status.Phase)),
+			Status:  status,
 			Age:     util.ShortHumanDuration(job.Age()),
 			Node:    pod.Status.HostIP,
 			IsChief: isChief,
