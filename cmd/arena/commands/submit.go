@@ -401,7 +401,7 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(training.NewSubmitTFJobCommand())
 	command.AddCommand(NewSubmitMPIJobCommand())
 	// support pytorchjob
-	command.AddCommand(NewSubmitPyTorchJobCommand())
+	command.AddCommand(training.NewSubmitPytorchJobCommand())
 	command.AddCommand(NewSubmitHorovodJobCommand())
 	// This will be deprecated soon.
 	command.AddCommand(NewSubmitStandaloneJobCommand())

@@ -319,7 +319,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 	if err != nil {
 		return nil, err
 	}
-	pods, chiefPod := getPodsOfTFJob(name, namespace, tt, tfjob, allPods)
+	pods, chiefPod := getPodsOfTFJob(tt, tfjob, allPods)
 
 	return &TensorFlowJob{
 		BasicJobInfo: &BasicJobInfo{
@@ -341,7 +341,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, namespace string) 
 		return nil, errTFJobNotFound
 	}
 	tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
-	filterPods, chiefPod := getPodsOfTFJob(name, namespace, tt, tfjob, pods)
+	filterPods, chiefPod := getPodsOfTFJob(tt, tfjob, pods)
 	return &TensorFlowJob{
 		BasicJobInfo: &BasicJobInfo{
 			resources: podResources(filterPods),
@@ -446,7 +446,7 @@ func (tt *TensorFlowJobTrainer) listFromAPIServer(namespace string, allNamespace
 			pods = append(pods, pod.DeepCopy())
 		}
 		tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
-		filterPods, chiefPod := getPodsOfTFJob(tfjob.Name, tfjob.Namespace, tt, tfjob, pods)
+		filterPods, chiefPod := getPodsOfTFJob(tt, tfjob, pods)
 		trainingJobs = append(trainingJobs, &TensorFlowJob{
 			BasicJobInfo: &BasicJobInfo{
 				resources: podResources(filterPods),
@@ -470,7 +470,7 @@ func (tt *TensorFlowJobTrainer) listFromCache(namespace string, allNamespace boo
 	jobs, pods := arenacache.GetArenaCache().FilterTFJobs(filter)
 	for jobKey, tfjob := range jobs {
 		tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
-		filterPods, chiefPod := getPodsOfTFJob(tfjob.Name, tfjob.Namespace, tt, tfjob, pods[jobKey])
+		filterPods, chiefPod := getPodsOfTFJob(tt, tfjob, pods[jobKey])
 		trainingJobs = append(trainingJobs, &TensorFlowJob{
 			BasicJobInfo: &BasicJobInfo{
 				resources: podResources(filterPods),
@@ -534,42 +534,8 @@ func checkStatus(status commonv1.JobStatus) commonv1.JobConditionType {
 	return t
 }
 
-func getPodsOfTFJob(name, namespace string, tt *TensorFlowJobTrainer, tfjob *tfv1.TFJob, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
-	pods := []*v1.Pod{}
-	var (
-		pendingChiefPod     *v1.Pod
-		nonePendingChiefPod *v1.Pod
-	)
-	for _, item := range podList {
-		log.Debugf("found pod: %v", item.Name)
-		if !tt.isTensorFlowPod(name, namespace, item) {
-			continue
-		}
-		pods = append(pods, item)
-		if !tt.isChiefPod(tfjob, item) {
-			log.Debugf("the pod %v is not chief pod", item.Name)
-			continue
-		}
-		if item.Status.Phase == v1.PodPending {
-			if pendingChiefPod == nil {
-				pendingChiefPod = item
-			}
-			if item.CreationTimestamp.After(pendingChiefPod.CreationTimestamp.Time) {
-				pendingChiefPod = item
-			}
-			continue
-		}
-		// set the chief pod
-		if nonePendingChiefPod == nil {
-			nonePendingChiefPod = item
-		}
-		// If there are some failed chiefPod, and the new chiefPod haven't started, set the latest failed pod as chief pod
-		if item.CreationTimestamp.After(nonePendingChiefPod.CreationTimestamp.Time) {
-			nonePendingChiefPod = item
-		}
-	}
-	if nonePendingChiefPod != nil {
-		return pods, nonePendingChiefPod
-	}
-	return pods, pendingChiefPod
+func getPodsOfTFJob(tt *TensorFlowJobTrainer, tfjob *tfv1.TFJob, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
+	return getPodsOfTrainingJob(tfjob.Name, tfjob.Namespace, podList, tt.isTensorFlowPod, func(pod *v1.Pod) bool {
+		return tt.isChiefPod(tfjob, pod)
+	})
 }

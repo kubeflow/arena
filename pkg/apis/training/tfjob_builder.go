@@ -16,14 +16,9 @@ type TFJobBuilder struct {
 
 func NewTFJobBuilder() *TFJobBuilder {
 	args := &types.SubmitTFJobArgs{
-		CleanPodPolicy: "Running",
-		CommonSubmitArgs: types.CommonSubmitArgs{
-			WorkingDir: "/root",
-		},
-		SubmitTensorboardArgs: types.SubmitTensorboardArgs{
-			TensorboardImage: "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel",
-			TrainingLogdir:   "/training_logs",
-		},
+		CleanPodPolicy:        "Running",
+		CommonSubmitArgs:      defaultCommonSubmitArgs,
+		SubmitTensorboardArgs: defaultSubmitTensorboardArgs,
 	}
 	return &TFJobBuilder{
 		args:        args,
@@ -348,6 +343,13 @@ func (b *TFJobBuilder) WorkerCount(count int) *TFJobBuilder {
 func (b *TFJobBuilder) ImagePullSecrets(secrets []string) *TFJobBuilder {
 	if secrets != nil {
 		b.argValues["image-pull-secret"] = secrets
+	}
+	return b
+}
+
+func (b *TFJobBuilder) CleanPodPolicy(policy string) *TFJobBuilder {
+	if policy != "" {
+		b.args.CleanPodPolicy = policy
 	}
 	return b
 }
