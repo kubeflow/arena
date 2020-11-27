@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
-	apitypes "github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/arenacache"
 	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
@@ -57,7 +57,7 @@ type PyTorchJob struct {
 	chiefPod     *v1.Pod   // the master pod
 	requestedGPU int64
 	allocatedGPU int64
-	trainerType  string // return trainer type: pytorchjob
+	trainerType  types.TrainingJobType // return trainer type: pytorchjob
 }
 
 func (pj *PyTorchJob) Name() string {
@@ -73,7 +73,7 @@ func (pj *PyTorchJob) ChiefPod() *v1.Pod {
 	return pj.chiefPod
 }
 
-func (pj *PyTorchJob) Trainer() string {
+func (pj *PyTorchJob) Trainer() types.TrainingJobType {
 	return pj.trainerType
 }
 
@@ -240,7 +240,7 @@ func (pj *PyTorchJob) Namespace() string {
 type PyTorchJobTrainer struct {
 	client           *kubernetes.Clientset
 	pytorchjobClient *versioned.Clientset
-	trainerType      string
+	trainerType      types.TrainingJobType
 	// check if it's enabled
 	enabled bool
 }
@@ -253,13 +253,13 @@ func NewPyTorchJobTrainer() Trainer {
 	return &PyTorchJobTrainer{
 		pytorchjobClient: pytorchjobClient,
 		client:           config.GetArenaConfiger().GetClientSet(),
-		trainerType:      string(apitypes.PytorchTrainingJob),
+		trainerType:      types.PytorchTrainingJob,
 		enabled:          true,
 	}
 }
 
 // Get the type
-func (tt *PyTorchJobTrainer) Type() string {
+func (tt *PyTorchJobTrainer) Type() types.TrainingJobType {
 	return tt.trainerType
 }
 
@@ -307,7 +307,7 @@ func (tt *PyTorchJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
 			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,app=%v", name, apitypes.PytorchTrainingJob),
+		}, LabelSelector: fmt.Sprintf("release=%s,app=%v", name, tt.trainerType),
 	})
 	if err != nil {
 		return nil, err
@@ -373,7 +373,7 @@ func (tt *PyTorchJobTrainer) isPyTorchJob(name, ns string, item *pytorchv1.PyTor
 	if item.Labels["release"] != name {
 		return false
 	}
-	if item.Labels["app"] != string(apitypes.PytorchTrainingJob) {
+	if item.Labels["app"] != string(tt.trainerType) {
 		return false
 	}
 	return true
@@ -431,7 +431,7 @@ func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1
 * List Training jobs
  */
 func (tt *PyTorchJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (jobs []TrainingJob, err error) {
-	// if arena is configured as daemon,getting all tfjobs from cache is corrent
+	// if arena is configured as daemon,getting all pytorch jobs from cache is corrent
 	if config.GetArenaConfiger().IsDaemonMode() {
 		return tt.listFromCache(namespace, allNamespace)
 	}
@@ -456,10 +456,10 @@ func (tt *PyTorchJobTrainer) listFromAPIServer(namespace string, allNamespace bo
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", pyjob.Name, apitypes.TFTrainingJob),
+			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", pyjob.Name, tt.trainerType),
 		})
 		if err != nil {
-			log.Errorf("failed to get pods of job %v", pyjob.Name)
+			log.Errorf("failed to get pods of job %v,reason: %v", pyjob.Name, err)
 			continue
 		}
 		pods := []*v1.Pod{}

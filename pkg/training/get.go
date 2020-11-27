@@ -81,7 +81,7 @@ func SearchTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 func getTrainingJobByType(name, namespace, trainingType string) (job TrainingJob, err error) {
 	trainers := NewSupportedTrainers()
 	for _, trainer := range trainers {
-		if trainer.Type() == trainingType {
+		if string(trainer.Type()) == trainingType {
 			return trainer.GetTrainingJob(name, namespace)
 		}
 		log.Debugf("the job %s with type %s in namespace %s is not expected type %v",

@@ -34,6 +34,7 @@ type SubmitTFJobArgsBuilder struct {
 }
 
 func NewSubmitTFJobArgsBuilder(args *types.SubmitTFJobArgs) ArgsBuilder {
+	args.TrainingType = types.TFTrainingJob
 	s := &SubmitTFJobArgsBuilder{
 		args:        args,
 		argValues:   map[string]interface{}{},

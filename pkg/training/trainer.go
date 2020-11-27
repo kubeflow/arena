@@ -27,6 +27,7 @@ func NewSupportedTrainers() []Trainer {
 	trainerInits := []func() Trainer{
 		NewTensorFlowJobTrainer,
 		NewPyTorchJobTrainer,
+		NewMPIJobTrainer,
 	}
 	for _, init := range trainerInits {
 		trainers = append(trainers, init())

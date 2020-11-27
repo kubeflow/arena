@@ -399,7 +399,7 @@ func NewSubmitCommand() *cobra.Command {
 	}
 
 	command.AddCommand(training.NewSubmitTFJobCommand())
-	command.AddCommand(NewSubmitMPIJobCommand())
+	command.AddCommand(training.NewSubmitMPIJobCommand())
 	// support pytorchjob
 	command.AddCommand(training.NewSubmitPytorchJobCommand())
 	command.AddCommand(NewSubmitHorovodJobCommand())

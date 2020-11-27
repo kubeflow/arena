@@ -46,6 +46,9 @@ func (t *TrainingJobClient) Submit(job apistraining.Job) error {
 	case types.PytorchTrainingJob:
 		args := job.Args().(*types.SubmitPyTorchJobArgs)
 		return training.SubmitPytorchJob(t.namespace, args)
+	case types.MPITrainingJob:
+		args := job.Args().(*types.SubmitMPIJobArgs)
+		return training.SubmitMPIJob(t.namespace, args)
 	}
 	return nil
 }
@@ -86,6 +89,7 @@ func (t *TrainingJobClient) List(allNamespaces bool) ([]*types.TrainingJobInfo, 
 	return jobInfos, nil
 }
 
+// ListAndPrint lists and prints the job informations
 func (t *TrainingJobClient) ListAndPrint(allNamespaces bool, format string) error {
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
 		return fmt.Errorf("Unknown output format,only support:[wide,json,yaml]")
