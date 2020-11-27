@@ -1,3 +1,7 @@
+### 0.18.0
+
+* fix bug: jobmon in namespace arena-system
+
 ### 0.17.0
 
 * Support Tensorboard for Ingress 

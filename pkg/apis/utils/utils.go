@@ -22,6 +22,7 @@ func GetTrainingJobTypes() []types.TrainingJobType {
 		types.MPITrainingJob,
 		types.TFTrainingJob,
 		types.PytorchTrainingJob,
+		types.HorovodTrainingJob,
 	}
 }
 
@@ -37,6 +38,8 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 		return types.PytorchTrainingJob
 	case "mpijob", "mpi":
 		return types.MPITrainingJob
+	case "horovod", "horovodjob", "hj":
+		return types.HorovodTrainingJob
 	}
 	return types.UnknownTrainingJob
 }
@@ -202,6 +205,19 @@ func IsMPIPod(name, ns string, pod *v1.Pod) bool {
 	}
 
 	if pod.Labels["group_name"] != "kubeflow.org" {
+		return false
+	}
+	if pod.Namespace != ns {
+		return false
+	}
+	return true
+}
+
+func IsHorovodPod(name, ns string, pod *v1.Pod) bool {
+	if pod.Labels["release"] != name {
+		return false
+	}
+	if pod.Labels["app"] != "tf-horovod" {
 		return false
 	}
 	if pod.Namespace != ns {
