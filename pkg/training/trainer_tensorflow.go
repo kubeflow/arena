@@ -32,7 +32,7 @@ import (
 	tfv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
-	apitypes "github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/arenacache"
 )
@@ -60,7 +60,7 @@ type TensorFlowJob struct {
 	chiefPod     *v1.Pod   // the chief pod
 	requestedGPU int64
 	allocatedGPU int64
-	trainerType  string // return trainer type: TENSORFLOW
+	trainerType  types.TrainingJobType // return trainer type
 }
 
 // Name returns the TensorflowJob name
@@ -79,7 +79,7 @@ func (tj *TensorFlowJob) ChiefPod() *v1.Pod {
 }
 
 // Trainer returns the trainer
-func (tj *TensorFlowJob) Trainer() string {
+func (tj *TensorFlowJob) Trainer() types.TrainingJobType {
 	return tj.trainerType
 }
 
@@ -244,7 +244,7 @@ type TensorFlowJobTrainer struct {
 	// tfjob client
 	tfjobClient *versioned.Clientset
 	// trainer type
-	trainerType string
+	trainerType types.TrainingJobType
 	// stores the jobs
 	// check if it's enabled
 	enabled bool
@@ -257,12 +257,12 @@ func NewTensorFlowJobTrainer() Trainer {
 	return &TensorFlowJobTrainer{
 		tfjobClient: tfjobClient,
 		client:      arenaConfiger.GetClientSet(),
-		trainerType: string(apitypes.TFTrainingJob),
+		trainerType: types.TFTrainingJob,
 		enabled:     true,
 	}
 }
 
-func (tt *TensorFlowJobTrainer) Type() string {
+func (tt *TensorFlowJobTrainer) Type() types.TrainingJobType {
 	return tt.trainerType
 }
 
@@ -309,7 +309,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
 			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,app=%v", name, apitypes.TFTrainingJob),
+		}, LabelSelector: fmt.Sprintf("release=%s,app=%v", name, tt.trainerType),
 	})
 	for _, pod := range podList.Items {
 		allPods = append(allPods, pod.DeepCopy())
@@ -435,10 +435,10 @@ func (tt *TensorFlowJobTrainer) listFromAPIServer(namespace string, allNamespace
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", tfjob.Name, apitypes.TFTrainingJob),
+			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", tfjob.Name, tt.trainerType),
 		})
 		if err != nil {
-			log.Errorf("failed to get pods of job %v", tfjob.Name)
+			log.Errorf("failed to get pods of job %v,reason: %v", tfjob.Name, err)
 			continue
 		}
 		pods := []*v1.Pod{}

@@ -17,6 +17,7 @@ package training
 import (
 	"time"
 
+	"github.com/kubeflow/arena/pkg/apis/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -42,8 +43,8 @@ type TrainingJob interface {
 	// Get the Status of the Job: RUNNING, PENDING,
 	GetStatus() string
 
-	// Return trainer Type, support MPI, standalone, tensorflow
-	Trainer() string
+	// Return trainer Type, match the training job type
+	Trainer() types.TrainingJobType
 
 	// Get the Job Age
 	Age() time.Duration
@@ -80,7 +81,7 @@ type Trainer interface {
 	GetTrainingJob(name, namespace string) (TrainingJob, error)
 
 	// Get the type of trainer
-	Type() string
+	Type() types.TrainingJobType
 
 	// List all tf training jobs
 	ListTrainingJobs(namespace string, allNamespace bool) ([]TrainingJob, error)

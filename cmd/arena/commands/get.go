@@ -59,7 +59,7 @@ func NewGetCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			switch utils.TransferTrainingJobType(trainingType) {
-			case types.TFTrainingJob, types.PytorchTrainingJob:
+			case types.TFTrainingJob, types.PytorchTrainingJob, types.MPITrainingJob:
 				name := args[0]
 				client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 					Kubeconfig:     viper.GetString("config"),

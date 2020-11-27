@@ -19,19 +19,18 @@ import (
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-type SubmitPytorchJobArgsBuilder struct {
-	args        *types.SubmitPyTorchJobArgs
+type SubmitMPIJobArgsBuilder struct {
+	args        *types.SubmitMPIJobArgs
 	argValues   map[string]interface{}
 	subBuilders map[string]ArgsBuilder
 }
 
-func NewSubmitPytorchJobArgsBuilder(args *types.SubmitPyTorchJobArgs) ArgsBuilder {
-	args.TrainingType = types.PytorchTrainingJob
-	s := &SubmitPytorchJobArgsBuilder{
+func NewSubmitMPIJobArgsBuilder(args *types.SubmitMPIJobArgs) ArgsBuilder {
+	args.TrainingType = types.MPITrainingJob
+	s := &SubmitMPIJobArgsBuilder{
 		args:        args,
 		argValues:   map[string]interface{}{},
 		subBuilders: map[string]ArgsBuilder{},
@@ -44,19 +43,19 @@ func NewSubmitPytorchJobArgsBuilder(args *types.SubmitPyTorchJobArgs) ArgsBuilde
 	return s
 }
 
-func (s *SubmitPytorchJobArgsBuilder) GetName() string {
+func (s *SubmitMPIJobArgsBuilder) GetName() string {
 	items := strings.Split(fmt.Sprintf("%v", reflect.TypeOf(*s)), ".")
 	return items[len(items)-1]
 }
 
-func (s *SubmitPytorchJobArgsBuilder) AddSubBuilder(builders ...ArgsBuilder) ArgsBuilder {
+func (s *SubmitMPIJobArgsBuilder) AddSubBuilder(builders ...ArgsBuilder) ArgsBuilder {
 	for _, b := range builders {
 		s.subBuilders[b.GetName()] = b
 	}
 	return s
 }
 
-func (s *SubmitPytorchJobArgsBuilder) AddArgValue(key string, value interface{}) ArgsBuilder {
+func (s *SubmitMPIJobArgsBuilder) AddArgValue(key string, value interface{}) ArgsBuilder {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddArgValue(key, value)
 	}
@@ -64,14 +63,15 @@ func (s *SubmitPytorchJobArgsBuilder) AddArgValue(key string, value interface{})
 	return s
 }
 
-func (s *SubmitPytorchJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
+func (s *SubmitMPIJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
-	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "None", "How to clean tasks after Training is done, support None, Running, All.")
+	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
+	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 }
 
-func (s *SubmitPytorchJobArgsBuilder) PreBuild() error {
+func (s *SubmitMPIJobArgsBuilder) PreBuild() error {
 	for name := range s.subBuilders {
 		if err := s.subBuilders[name].PreBuild(); err != nil {
 			return err
@@ -81,7 +81,7 @@ func (s *SubmitPytorchJobArgsBuilder) PreBuild() error {
 	return nil
 }
 
-func (s *SubmitPytorchJobArgsBuilder) Build() error {
+func (s *SubmitMPIJobArgsBuilder) Build() error {
 	for name := range s.subBuilders {
 		if err := s.subBuilders[name].Build(); err != nil {
 			return err
@@ -93,16 +93,9 @@ func (s *SubmitPytorchJobArgsBuilder) Build() error {
 	return nil
 }
 
-func (s *SubmitPytorchJobArgsBuilder) check() error {
+func (s *SubmitMPIJobArgsBuilder) check() error {
 	if s.args.Image == "" {
 		return fmt.Errorf("--image must be set ")
-	}
-	// check clean-task-policy
-	switch s.args.CleanPodPolicy {
-	case "None", "Running", "All":
-		log.Debugf("Supported cleanTaskPolicy: %s", s.args.CleanPodPolicy)
-	default:
-		return fmt.Errorf("Unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
 	}
 	return nil
 }

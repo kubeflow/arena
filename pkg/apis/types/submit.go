@@ -15,11 +15,15 @@ package types
 
 // CommonSubmitArgs defines the common parts of the submitAthd
 type CommonSubmitArgs struct {
+
 	// Name stores the job name,match option --name
 	Name string `yaml:"-"`
 
 	// Namespace  stores the namespace of job,match option --namespace
 	Namespace string `yaml:"-"`
+
+	// TrainingType stores the trainingType
+	TrainingType TrainingJobType `yaml:"-"`
 
 	// NodeSelectors defines the node selectors,match option --selector
 	NodeSelectors map[string]string `yaml:"nodeSelectors"`

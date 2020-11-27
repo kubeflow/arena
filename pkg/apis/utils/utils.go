@@ -33,8 +33,10 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 	switch jobType {
 	case "tfjob", "tf":
 		return types.TFTrainingJob
-	case "pytorchjob", "pytorch":
+	case "pytorchjob", "pytorch", "py":
 		return types.PytorchTrainingJob
+	case "mpijob", "mpi":
+		return types.MPITrainingJob
 	}
 	return types.UnknownTrainingJob
 }
@@ -153,7 +155,7 @@ func IsTensorFlowPod(name, ns string, pod *v1.Pod) bool {
 		return false
 	}
 	// check the job type is tfjob
-	if pod.Labels["app"] != "tfjob" {
+	if pod.Labels["app"] != string(types.TFTrainingJob) {
 		return false
 	}
 	// check the namespace
@@ -175,7 +177,7 @@ func IsPyTorchPod(name, ns string, pod *v1.Pod) bool {
 		return false
 	}
 	// check the job type is pytorchjob
-	if pod.Labels["app"] != "pytorchjob" {
+	if pod.Labels["app"] != string(types.PytorchTrainingJob) {
 		return false
 	}
 	// check the namespace
@@ -184,6 +186,25 @@ func IsPyTorchPod(name, ns string, pod *v1.Pod) bool {
 	}
 	// check the group name
 	if pod.Labels[labelPyTorchGroupName] != "kubeflow.org" {
+		return false
+	}
+	return true
+}
+
+func IsMPIPod(name, ns string, pod *v1.Pod) bool {
+	// check the release name is matched mpijob name
+	if pod.Labels["release"] != name {
+		return false
+	}
+	// check the job type is mpijob
+	if pod.Labels["app"] != string(types.MPITrainingJob) {
+		return false
+	}
+
+	if pod.Labels["group_name"] != "kubeflow.org" {
+		return false
+	}
+	if pod.Namespace != ns {
 		return false
 	}
 	return true

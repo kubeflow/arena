@@ -98,6 +98,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// add option --working-dir
 	command.Flags().StringVar(&s.args.WorkingDir, "workingDir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
 	command.Flags().MarkDeprecated("workingDir", "please use --working-dir instead")
+	command.Flags().StringVar(&s.args.WorkingDir, "working-dir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
 
 	// command.MarkFlagRequired("workingDir")
 	// add option --env,its' value will be get from viper
@@ -113,7 +114,8 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// enable RDMA or not, support hostnetwork for now
 	// add option --rdma
 	command.Flags().BoolVar(&s.args.EnableRDMA, "rdma", false, "enable RDMA")
-
+	// enable Conscheduling
+	command.Flags().BoolVar(&s.args.Conscheduling, "gang", false, "enable gang scheduling")
 	// use priority
 	command.Flags().StringVarP(&s.args.PriorityClassName, "priority", "p", "", "priority class name")
 	// add option --toleration,its' value will be get from viper
@@ -192,6 +194,9 @@ func (s *SubmitArgsBuilder) Build() error {
 	}
 	// set toleration
 	if err := s.setTolerations(); err != nil {
+		return err
+	}
+	if err := s.addPodGroupLabel(); err != nil {
 		return err
 	}
 	return nil
@@ -476,5 +481,13 @@ func (s *SubmitArgsBuilder) setJobInfoToEnv() error {
 	}
 	s.args.Envs["workers"] = strconv.Itoa(s.args.WorkerCount)
 	s.args.Envs["gpus"] = strconv.Itoa(s.args.GPUCount)
+	return nil
+}
+
+func (s *SubmitArgsBuilder) addPodGroupLabel() error {
+	if s.args.Conscheduling {
+		s.args.PodGroupName = fmt.Sprintf("%v_%v", s.args.TrainingType, s.args.Name)
+		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount)
+	}
 	return nil
 }

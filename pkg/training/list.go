@@ -41,7 +41,7 @@ func DisplayTrainingJobList(jobInfoList []TrainingJob, format string) {
 		jobSimpleInfos = append(jobSimpleInfos, SimpleJobInfo{
 			Name:    jobInfo.Name(),
 			Status:  GetJobRealStatus(jobInfo),
-			Trainer: strings.ToUpper(jobInfo.Trainer()),
+			Trainer: strings.ToUpper(string(jobInfo.Trainer())),
 			Age:     util.ShortHumanDuration(jobInfo.Age()),
 			Node:    jobInfo.HostIPOfChief(),
 		})
