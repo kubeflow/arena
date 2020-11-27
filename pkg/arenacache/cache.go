@@ -215,7 +215,7 @@ func (a *ArenaCache) FilterMPIJobs(filter func(pyjob *v1alpha1.MPIJob) bool) (ma
 }
 
 // FilterK8SJobs returns all mpijobs and their pods
-func (a *ArenaCache) FilterK8sJobs(jobFilter func(job *batchv1.Job) bool, podFileter func(pod *v1.Pod) bool) (map[string]*batchv1.Job, map[string][]*v1.Pod) {
+func (a *ArenaCache) FilterK8sJobs(jobFilter func(job *batchv1.Job) bool, podFileter func(job *batchv1.Job, pod *v1.Pod) bool) (map[string]*batchv1.Job, map[string][]*v1.Pod) {
 	a.locker.RLock()
 	defer a.locker.RUnlock()
 	jobs := map[string]*batchv1.Job{}
@@ -227,7 +227,7 @@ func (a *ArenaCache) FilterK8sJobs(jobFilter func(job *batchv1.Job) bool, podFil
 		jobs[jobKey] = job.DeepCopy()
 		pods[jobKey] = []*v1.Pod{}
 		for _, pod := range a.pods {
-			if !podFileter(pod) {
+			if !podFileter(job, pod) {
 				continue
 			}
 			pods[jobKey] = append(pods[jobKey], pod.DeepCopy())

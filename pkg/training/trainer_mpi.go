@@ -336,7 +336,7 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, namespace string) (Traini
 	// 2.find the k8s job from the cache
 	jobs, _ := arenacache.GetArenaCache().FilterK8sJobs(func(job *batchv1.Job) bool {
 		return tt.isChiefJob(job, name, namespace)
-	}, func(pod *v1.Pod) bool {
+	}, func(job *batchv1.Job, pod *v1.Pod) bool {
 		return false
 	})
 	job := &batchv1.Job{}
@@ -565,7 +565,7 @@ func (tt *MPIJobTrainer) listFromCache(namespace string, allNamespace bool) ([]T
 	// 4.filter all k8s jobs
 	jobs, _ := arenacache.GetArenaCache().FilterK8sJobs(func(job *batchv1.Job) bool {
 		return true
-	}, func(pod *v1.Pod) bool {
+	}, func(job *batchv1.Job, pod *v1.Pod) bool {
 		return false
 	})
 	for jobKey, mpijob := range mpijobs {

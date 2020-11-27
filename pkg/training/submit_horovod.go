@@ -23,21 +23,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func SubmitMPIJob(namespace string, submitArgs *types.SubmitMPIJobArgs) (err error) {
+func SubmitHorovodJob(namespace string, submitArgs *types.SubmitHorovodJobArgs) (err error) {
 	submitArgs.Namespace = namespace
-	trainer := NewMPIJobTrainer()
+	trainer := NewHorovodJobTrainer()
 	job, err := trainer.GetTrainingJob(submitArgs.Name, namespace)
 	// if job has been existed,skip to create it and return an error
 	if err == nil && job != nil {
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 	// if error is unknown,return an error
-	if err != errMPIJobNotFound {
+	if err != errHorovodJobNotFound {
 		return err
 	}
 	// the master is also considered as a worker
-	mpijobChart := util.GetChartsFolder() + "/mpijob"
-	err = workflow.SubmitJob(submitArgs.Name, string(types.MPITrainingJob), namespace, submitArgs, mpijobChart, submitArgs.HelmOptions...)
+	horovodTrainingChart := util.GetChartsFolder() + "/tf-horovod"
+	err = workflow.SubmitJob(submitArgs.Name, string(types.HorovodTrainingJob), namespace, submitArgs, horovodTrainingChart, submitArgs.HelmOptions...)
 	if err != nil {
 		return err
 	}

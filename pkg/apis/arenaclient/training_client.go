@@ -49,6 +49,9 @@ func (t *TrainingJobClient) Submit(job apistraining.Job) error {
 	case types.MPITrainingJob:
 		args := job.Args().(*types.SubmitMPIJobArgs)
 		return training.SubmitMPIJob(t.namespace, args)
+	case types.HorovodTrainingJob:
+		args := job.Args().(*types.SubmitHorovodJobArgs)
+		return training.SubmitHorovodJob(t.namespace, args)
 	}
 	return nil
 }
