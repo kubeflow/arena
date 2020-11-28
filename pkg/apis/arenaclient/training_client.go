@@ -52,6 +52,9 @@ func (t *TrainingJobClient) Submit(job apistraining.Job) error {
 	case types.HorovodTrainingJob:
 		args := job.Args().(*types.SubmitHorovodJobArgs)
 		return training.SubmitHorovodJob(t.namespace, args)
+	case types.VolcanoTrainingJob:
+		args := job.Args().(*types.SubmitVolcanoJobArgs)
+		return training.SubmitVolcanoJob(t.namespace, args)
 	}
 	return nil
 }

@@ -26,6 +26,8 @@ const (
 	PytorchTrainingJob TrainingJobType = "pytorchjob"
 	// HorovodTrainingJob defines the horovod job
 	HorovodTrainingJob TrainingJobType = "horovodjob"
+	// VolcanoTrainingJob defines the volcano job
+	VolcanoTrainingJob TrainingJobType = "volcanojob"
 	// AllTrainingJob represents all job types
 	AllTrainingJob TrainingJobType = ""
 	// UnknownTrainingJob defines the unknown training

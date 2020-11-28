@@ -25,6 +25,9 @@ func ListTrainingJobs(namespace string, allNamespaces bool) ([]TrainingJob, erro
 	jobs := []TrainingJob{}
 	trainers := NewSupportedTrainers()
 	for _, trainer := range trainers {
+		if !trainer.IsEnabled() {
+			continue
+		}
 		trainingJobs, err := trainer.ListTrainingJobs(namespace, allNamespaces)
 		if err != nil {
 			return nil, err

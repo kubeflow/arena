@@ -249,13 +249,25 @@ type PyTorchJobTrainer struct {
 func NewPyTorchJobTrainer() Trainer {
 	log.Debugf("Init PyTorch job trainer")
 	// get pytorch operator client call pytorch operator api
+	enable := true
 	pytorchjobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
+	// this step is used to check operator is installed or not
+	_, err := pytorchjobClient.KubeflowV1().PyTorchJobs("default").Get("test-operator", metav1.GetOptions{})
+	if strings.Contains(err.Error(), errNotFoundOperator.Error()) {
+		log.Debugf("not found pytorchjob operator,pytorchjob trainer is disabled")
+		enable = false
+	}
 	return &PyTorchJobTrainer{
 		pytorchjobClient: pytorchjobClient,
 		client:           config.GetArenaConfiger().GetClientSet(),
 		trainerType:      types.PytorchTrainingJob,
-		enabled:          true,
+		enabled:          enable,
 	}
+}
+
+// IsEnabled is used to get the trainer is enable or not
+func (tt *PyTorchJobTrainer) IsEnabled() bool {
+	return tt.enabled
 }
 
 // Get the type

@@ -407,7 +407,7 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewSubmitStandaloneJobCommand())
 	command.AddCommand(NewSparkApplicationCommand())
 
-	command.AddCommand(NewVolcanoJobCommand())
+	command.AddCommand(training.NewVolcanoJobCommand())
 	command.AddCommand(NewSubmitETJobCommand())
 
 	return command

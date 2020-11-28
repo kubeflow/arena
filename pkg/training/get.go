@@ -81,6 +81,10 @@ func SearchTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 func getTrainingJobByType(name, namespace, trainingType string) (job TrainingJob, err error) {
 	trainers := NewSupportedTrainers()
 	for _, trainer := range trainers {
+		if !trainer.IsEnabled() {
+			log.Debugf("the trainer %v is disabled,skip to use this trainer to get the training job", trainer.Type())
+			continue
+		}
 		if string(trainer.Type()) == trainingType {
 			return trainer.GetTrainingJob(name, namespace)
 		}
@@ -98,6 +102,10 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 	jobs = []TrainingJob{}
 	trainers := NewSupportedTrainers()
 	for _, trainer := range trainers {
+		if !trainer.IsEnabled() {
+			log.Debugf("the trainer %v is disabled,skip to use this trainer to get the training job", trainer.Type())
+			continue
+		}
 		if !trainer.IsSupported(name, namespace) {
 			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
 			continue
