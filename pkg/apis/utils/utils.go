@@ -23,6 +23,7 @@ func GetTrainingJobTypes() []types.TrainingJobType {
 		types.TFTrainingJob,
 		types.PytorchTrainingJob,
 		types.HorovodTrainingJob,
+		types.VolcanoTrainingJob,
 	}
 }
 
@@ -40,6 +41,8 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 		return types.MPITrainingJob
 	case "horovod", "horovodjob", "hj":
 		return types.HorovodTrainingJob
+	case "vol", "volcano", "volcanojob":
+		return types.VolcanoTrainingJob
 	}
 	return types.UnknownTrainingJob
 }
@@ -218,6 +221,19 @@ func IsHorovodPod(name, ns string, pod *v1.Pod) bool {
 		return false
 	}
 	if pod.Labels["app"] != "tf-horovod" {
+		return false
+	}
+	if pod.Namespace != ns {
+		return false
+	}
+	return true
+}
+
+func IsVolcanoPod(name, ns string, pod *v1.Pod) bool {
+	if pod.Labels["release"] != name {
+		return false
+	}
+	if pod.Labels["app"] != string(types.VolcanoTrainingJob) {
 		return false
 	}
 	if pod.Namespace != ns {

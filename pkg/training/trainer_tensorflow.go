@@ -254,12 +254,24 @@ func NewTensorFlowJobTrainer() Trainer {
 	log.Debugf("Init TensorFlow job trainer")
 	arenaConfiger := config.GetArenaConfiger()
 	tfjobClient := versioned.NewForConfigOrDie(arenaConfiger.GetRestConfig())
+	enable := true
+	// this step is used to check operator is installed or not
+	_, err := tfjobClient.KubeflowV1().TFJobs("default").Get("test-operator", metav1.GetOptions{})
+	if strings.Contains(err.Error(), errNotFoundOperator.Error()) {
+		log.Debugf("not found tfjob operator,tensorflow trainer is disabled")
+		enable = false
+	}
 	return &TensorFlowJobTrainer{
 		tfjobClient: tfjobClient,
 		client:      arenaConfiger.GetClientSet(),
 		trainerType: types.TFTrainingJob,
-		enabled:     true,
+		enabled:     enable,
 	}
+}
+
+// IsEnabled is used to get the trainer is enable or not
+func (tt *TensorFlowJobTrainer) IsEnabled() bool {
+	return tt.enabled
 }
 
 func (tt *TensorFlowJobTrainer) Type() types.TrainingJobType {

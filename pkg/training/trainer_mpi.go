@@ -235,12 +235,24 @@ type MPIJobTrainer struct {
 func NewMPIJobTrainer() Trainer {
 	log.Debugf("Init MPI job trainer")
 	mpijobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
+	enable := true
+	// this step is used to check operator is installed or not
+	_, err := mpijobClient.KubeflowV1alpha1().MPIJobs("default").Get("test-operator", metav1.GetOptions{})
+	if strings.Contains(err.Error(), errNotFoundOperator.Error()) {
+		log.Debugf("not found mpijob operator,mpijob trainer is disabled")
+		enable = false
+	}
 	return &MPIJobTrainer{
 		mpijobClient: mpijobClient,
 		client:       config.GetArenaConfiger().GetClientSet(),
 		trainerType:  types.MPITrainingJob,
-		enabled:      true,
+		enabled:      enable,
 	}
+}
+
+// IsEnabled is used to get the trainer is enable or not
+func (tt *MPIJobTrainer) IsEnabled() bool {
+	return tt.enabled
 }
 
 // Get the type

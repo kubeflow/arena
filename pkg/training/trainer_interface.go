@@ -74,6 +74,8 @@ type TrainingJob interface {
 }
 
 type Trainer interface {
+	// IsEnabled is used to check the trainer is enabled or not
+	IsEnabled() bool
 	// Check if the training job is supported
 	IsSupported(name, ns string) bool
 

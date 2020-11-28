@@ -230,6 +230,11 @@ func NewHorovodJobTrainer() Trainer {
 	}
 }
 
+// IsEnabled is used to get the trainer is enable or not
+func (h *HorovodJobTrainer) IsEnabled() bool {
+	return h.enabled
+}
+
 // check if it's Horovod job
 func (h *HorovodJobTrainer) IsSupported(name, ns string) bool {
 	if !h.enabled {

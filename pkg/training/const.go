@@ -14,6 +14,8 @@
 
 package training
 
+import "errors"
+
 const (
 	CHART_PKG_LOC = "CHARTREPO"
 	// GPUResourceName is the extended name of the GPU resource since v1.8
@@ -38,10 +40,5 @@ const (
 )
 
 var (
-/*
-	knownTrainingTypes = []string{
-		string(types.TFTrainingJob),
-		string(types.MPITrainingJob),
-	}
-*/
+	errNotFoundOperator = errors.New("the server could not find the requested resource")
 )
