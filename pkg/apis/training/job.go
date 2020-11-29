@@ -4,35 +4,43 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
-type Job interface {
-	Name() string
-	Type() types.TrainingJobType
-	Args() interface{}
-}
-
-type job struct {
+type baseJob struct {
 	name    string
-	jobType types.TrainingJobType
+	jobType string
 	args    interface{}
 }
 
-func NewJob(name string, jobType types.TrainingJobType, args interface{}) Job {
-	return &job{
+func newBaseJob(name string, jobType string, args interface{}) baseJob {
+	return baseJob{
 		name:    name,
 		jobType: jobType,
 		args:    args,
 	}
-
 }
 
-func (j *job) Name() string {
-	return j.name
+func (b *baseJob) Name() string {
+	return b.name
 }
 
-func (j *job) Type() types.TrainingJobType {
-	return j.jobType
+func (b *baseJob) Type() string {
+	return b.jobType
 }
 
-func (j *job) Args() interface{} {
-	return j.args
+func (b *baseJob) Args() interface{} {
+	return b.args
+}
+
+// Job defines the base job
+type Job struct {
+	baseJob
+}
+
+func NewJob(name string, jobType types.TrainingJobType, args interface{}) *Job {
+	return &Job{
+		baseJob: newBaseJob(name, string(jobType), args),
+	}
+}
+
+func (j *Job) Type() types.TrainingJobType {
+	return types.TrainingJobType(j.baseJob.Type())
 }

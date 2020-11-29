@@ -354,7 +354,7 @@ func (b *TFJobBuilder) CleanPodPolicy(policy string) *TFJobBuilder {
 	return b
 }
 
-func (b *TFJobBuilder) Build() (Job, error) {
+func (b *TFJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
 		b.AddArgValue(key, value)
 	}

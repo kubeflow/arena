@@ -258,7 +258,7 @@ func NewVolcanoJobTrainer() Trainer {
 	enable := true
 	// this step is used to check operator is installed or not
 	_, err := volcanoClient.BatchV1alpha1().Jobs("default").Get("test-operator", metav1.GetOptions{})
-	if strings.Contains(err.Error(), errNotFoundOperator.Error()) {
+	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
 		log.Debugf("not found volcano operator,volcano trainer is disabled")
 		enable = false
 	}
@@ -326,7 +326,6 @@ func (st *VolcanoJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 	// get the job from the api server
 	job, err := st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		log.Errorf("failed to get job: %v", err)
 		if strings.Contains(err.Error(), fmt.Sprintf(`jobs.batch.volcano.sh "%v" not found`, name)) {
 			return nil, errVolcanoJobNotFound
 		}

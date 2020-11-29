@@ -244,7 +244,7 @@ func (b *HorovodJobBuilder) SSHPort(port int) *HorovodJobBuilder {
 }
 
 // Build is used to build the job
-func (b *HorovodJobBuilder) Build() (Job, error) {
+func (b *HorovodJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
 		b.AddArgValue(key, value)
 	}

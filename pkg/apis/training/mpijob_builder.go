@@ -236,7 +236,7 @@ func (b *MPIJobBuilder) Memory(memory string) *MPIJobBuilder {
 }
 
 // Build is used to build the job
-func (b *MPIJobBuilder) Build() (Job, error) {
+func (b *MPIJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
 		b.AddArgValue(key, value)
 	}

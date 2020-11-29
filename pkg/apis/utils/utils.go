@@ -14,6 +14,9 @@ const (
 
 	// pytorchjob
 	labelPyTorchGroupName = "group-name"
+
+	// etjob
+	etLabelGroupName = "group-name"
 )
 
 // GetTrainingJobTypes returns the supported training job types
@@ -24,6 +27,7 @@ func GetTrainingJobTypes() []types.TrainingJobType {
 		types.PytorchTrainingJob,
 		types.HorovodTrainingJob,
 		types.VolcanoTrainingJob,
+		types.ETTrainingJob,
 	}
 }
 
@@ -43,6 +47,8 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 		return types.HorovodTrainingJob
 	case "vol", "volcano", "volcanojob":
 		return types.VolcanoTrainingJob
+	case "etjob", "et":
+		return types.ETTrainingJob
 	}
 	return types.UnknownTrainingJob
 }
@@ -234,6 +240,22 @@ func IsVolcanoPod(name, ns string, pod *v1.Pod) bool {
 		return false
 	}
 	if pod.Labels["app"] != string(types.VolcanoTrainingJob) {
+		return false
+	}
+	if pod.Namespace != ns {
+		return false
+	}
+	return true
+}
+
+func IsETPod(name, ns string, pod *v1.Pod) bool {
+	if pod.Labels["release"] != name {
+		return false
+	}
+	if pod.Labels["app"] != string(types.ETTrainingJob) {
+		return false
+	}
+	if pod.Labels[etLabelGroupName] != "kai.alibabacloud.com" {
 		return false
 	}
 	if pod.Namespace != ns {

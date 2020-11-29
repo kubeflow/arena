@@ -30,6 +30,7 @@ func NewSupportedTrainers() []Trainer {
 		NewMPIJobTrainer,
 		NewHorovodJobTrainer,
 		NewVolcanoJobTrainer,
+		NewETJobTrainer,
 	}
 	for _, init := range trainerInits {
 		trainers = append(trainers, init())
