@@ -229,7 +229,7 @@ func (b *PytorchJobBuilder) WorkerCount(count int) *PytorchJobBuilder {
 }
 
 // Build is used to build the job
-func (b *PytorchJobBuilder) Build() (Job, error) {
+func (b *PytorchJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
 		b.AddArgValue(key, value)
 	}

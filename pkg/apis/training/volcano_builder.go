@@ -110,7 +110,7 @@ func (b *VolcanoJobBuilder) TaskPort(port int) *VolcanoJobBuilder {
 }
 
 // Build is used to build the job
-func (b *VolcanoJobBuilder) Build() (Job, error) {
+func (b *VolcanoJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
 		b.AddArgValue(key, value)
 	}

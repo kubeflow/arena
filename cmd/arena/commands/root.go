@@ -17,7 +17,7 @@ package commands
 import (
 	"os"
 
-	//"github.com/kubeflow/arena/pkg/commands/training"
+	"github.com/kubeflow/arena/pkg/commands/training"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -65,20 +65,20 @@ func NewCommand() *cobra.Command {
 
 	command.AddCommand(NewSubmitCommand())
 	//command.AddCommand(NewScaleJobCommand())
-	command.AddCommand(NewScaleOutCommand())
-	command.AddCommand(NewScaleInCommand())
+	command.AddCommand(training.NewScaleOutCommand())
+	command.AddCommand(training.NewScaleInCommand())
 	command.AddCommand(NewServeCommand())
-	//command.AddCommand(training.NewListCommand())
-	command.AddCommand(NewListCommand())
-	command.AddCommand(NewPruneCommand())
-	command.AddCommand(NewGetCommand())
-	//command.AddCommand(training.NewGetCommand())
-	command.AddCommand(NewLogViewerCommand())
-	//command.AddCommand(training.NewLogViewerCommand())
-	command.AddCommand(NewLogsCommand())
-	//command.AddCommand(training.NewLogsCommand())
-	command.AddCommand(NewDeleteCommand())
-	//command.AddCommand(training.NewDeleteCommand())
+	command.AddCommand(training.NewListCommand())
+	//command.AddCommand(NewListCommand())
+	command.AddCommand(training.NewPruneCommand())
+	//command.AddCommand(NewGetCommand())
+	command.AddCommand(training.NewGetCommand())
+	//command.AddCommand(NewLogViewerCommand())
+	command.AddCommand(training.NewLogViewerCommand())
+	//command.AddCommand(NewLogsCommand())
+	command.AddCommand(training.NewLogsCommand())
+	//command.AddCommand(NewDeleteCommand())
+	command.AddCommand(training.NewDeleteCommand())
 	command.AddCommand(NewTopCommand())
 	command.AddCommand(NewVersionCmd(CLIName))
 	command.AddCommand(NewDataCommand())

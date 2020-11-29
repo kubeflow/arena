@@ -2,6 +2,7 @@ package arenaclient
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	apistraining "github.com/kubeflow/arena/pkg/apis/training"
@@ -38,7 +39,7 @@ func (t *TrainingJobClient) Namespace(namespace string) *TrainingJobClient {
 }
 
 // Submit submits a training job
-func (t *TrainingJobClient) Submit(job apistraining.Job) error {
+func (t *TrainingJobClient) Submit(job *apistraining.Job) error {
 	switch job.Type() {
 	case types.TFTrainingJob:
 		args := job.Args().(*types.SubmitTFJobArgs)
@@ -55,6 +56,29 @@ func (t *TrainingJobClient) Submit(job apistraining.Job) error {
 	case types.VolcanoTrainingJob:
 		args := job.Args().(*types.SubmitVolcanoJobArgs)
 		return training.SubmitVolcanoJob(t.namespace, args)
+	case types.ETTrainingJob:
+		args := job.Args().(*types.SubmitETJobArgs)
+		return training.SubmitETJob(t.namespace, args)
+	}
+	return nil
+}
+
+// ScaleIn scales in job
+func (t *TrainingJobClient) ScaleIn(job *apistraining.Job) error {
+	switch job.Type() {
+	case types.ETTrainingJob:
+		args := job.Args().(*types.ScaleInETJobArgs)
+		return training.SubmitScaleInETJob(t.namespace, args)
+	}
+	return nil
+}
+
+// ScaleOut scales out job
+func (t *TrainingJobClient) ScaleOut(job *apistraining.Job) error {
+	switch job.Type() {
+	case types.ETTrainingJob:
+		args := job.Args().(*types.ScaleOutETJobArgs)
+		return training.SubmitScaleOutETJob(t.namespace, args)
 	}
 	return nil
 }
@@ -134,4 +158,9 @@ func (t *TrainingJobClient) LogViewer(jobName string, jobType types.TrainingJobT
 		return nil, err
 	}
 	return job.GetJobDashboards(t.configer.GetClientSet(), t.namespace, t.arenaSystemNamespace)
+}
+
+// Prune cleans the not running training jobs
+func (t *TrainingJobClient) Prune(allNamespaces bool, since time.Duration) error {
+	return training.PruneTrainingJobs(t.namespace, allNamespaces, since)
 }

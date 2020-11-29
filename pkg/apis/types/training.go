@@ -28,6 +28,8 @@ const (
 	HorovodTrainingJob TrainingJobType = "horovodjob"
 	// VolcanoTrainingJob defines the volcano job
 	VolcanoTrainingJob TrainingJobType = "volcanojob"
+	// ETTrainingJob defines the etjob
+	ETTrainingJob TrainingJobType = "etjob"
 	// AllTrainingJob represents all job types
 	AllTrainingJob TrainingJobType = ""
 	// UnknownTrainingJob defines the unknown training

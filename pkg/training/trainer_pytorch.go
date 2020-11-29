@@ -253,7 +253,7 @@ func NewPyTorchJobTrainer() Trainer {
 	pytorchjobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	// this step is used to check operator is installed or not
 	_, err := pytorchjobClient.KubeflowV1().PyTorchJobs("default").Get("test-operator", metav1.GetOptions{})
-	if strings.Contains(err.Error(), errNotFoundOperator.Error()) {
+	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
 		log.Debugf("not found pytorchjob operator,pytorchjob trainer is disabled")
 		enable = false
 	}

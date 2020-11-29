@@ -257,7 +257,7 @@ func NewTensorFlowJobTrainer() Trainer {
 	enable := true
 	// this step is used to check operator is installed or not
 	_, err := tfjobClient.KubeflowV1().TFJobs("default").Get("test-operator", metav1.GetOptions{})
-	if strings.Contains(err.Error(), errNotFoundOperator.Error()) {
+	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
 		log.Debugf("not found tfjob operator,tensorflow trainer is disabled")
 		enable = false
 	}

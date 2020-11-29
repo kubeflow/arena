@@ -7,6 +7,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	etv1alpha1 "github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
 	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
 	pytorchv1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
 	tfv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1"
@@ -30,6 +31,7 @@ func GetArenaCache() *ArenaCache {
 			mpijobs:     map[string]*v1alpha1.MPIJob{},
 			k8sjobs:     map[string]*batchv1.Job{},
 			volcanojobs: map[string]*volv1alpha1.Job{},
+			etjobs:      map[string]*etv1alpha1.TrainingJob{},
 			genKey:      func(namespace, name string) string { return fmt.Sprintf("%v/%v", namespace, name) },
 		}
 	})
@@ -44,6 +46,7 @@ type ArenaCache struct {
 	mpijobs     map[string]*v1alpha1.MPIJob
 	k8sjobs     map[string]*batchv1.Job
 	volcanojobs map[string]*volv1alpha1.Job
+	etjobs      map[string]*etv1alpha1.TrainingJob
 	genKey      func(namespace, name string) string
 	locker      *sync.RWMutex
 }
@@ -113,6 +116,8 @@ func (a *ArenaCache) AddOrUpdateJob(job interface{}) {
 		a.k8sjobs[a.genKey(v.Namespace, v.Name)] = v
 	case *volv1alpha1.Job:
 		a.volcanojobs[a.genKey(v.Namespace, v.Name)] = v
+	case *etv1alpha1.TrainingJob:
+		a.etjobs[a.genKey(v.Namespace, v.Name)] = v
 	}
 }
 
@@ -133,6 +138,9 @@ func (a *ArenaCache) DeleteTrainingJob(namespace, name string, jobType types.Tra
 	case types.VolcanoTrainingJob:
 		isMatched = utils.IsVolcanoPod
 		delete(a.volcanojobs, a.genKey(namespace, name))
+	case types.ETTrainingJob:
+		isMatched = utils.IsETPod
+		delete(a.etjobs, a.genKey(namespace, name))
 	default:
 		return
 	}
@@ -223,7 +231,7 @@ func (a *ArenaCache) FilterMPIJobs(filter func(pyjob *v1alpha1.MPIJob) bool) (ma
 }
 
 // FilterVolcanoJobs returns all volcanojobs and their pods
-func (a *ArenaCache) FilterVolcanoJobs(filter func(pyjob *volv1alpha1.Job) bool) (map[string]*volv1alpha1.Job, map[string][]*v1.Pod) {
+func (a *ArenaCache) FilterVolcanoJobs(filter func(job *volv1alpha1.Job) bool) (map[string]*volv1alpha1.Job, map[string][]*v1.Pod) {
 	a.locker.RLock()
 	defer a.locker.RUnlock()
 	jobs := map[string]*volv1alpha1.Job{}
@@ -236,6 +244,28 @@ func (a *ArenaCache) FilterVolcanoJobs(filter func(pyjob *volv1alpha1.Job) bool)
 		pods[jobKey] = []*v1.Pod{}
 		for _, pod := range a.pods {
 			if !utils.IsVolcanoPod(job.Name, job.Namespace, pod) {
+				continue
+			}
+			pods[jobKey] = append(pods[jobKey], pod.DeepCopy())
+		}
+	}
+	return jobs, pods
+}
+
+// FilterETJobs returns all etjobs and their pods
+func (a *ArenaCache) FilterETJobs(filter func(pyjob *etv1alpha1.TrainingJob) bool) (map[string]*etv1alpha1.TrainingJob, map[string][]*v1.Pod) {
+	a.locker.RLock()
+	defer a.locker.RUnlock()
+	jobs := map[string]*etv1alpha1.TrainingJob{}
+	pods := map[string][]*v1.Pod{}
+	for jobKey, job := range a.etjobs {
+		if !filter(job) {
+			continue
+		}
+		jobs[jobKey] = job.DeepCopy()
+		pods[jobKey] = []*v1.Pod{}
+		for _, pod := range a.pods {
+			if !utils.IsETPod(job.Name, job.Namespace, pod) {
 				continue
 			}
 			pods[jobKey] = append(pods[jobKey], pod.DeepCopy())
@@ -331,6 +361,24 @@ func (a *ArenaCache) GetVolcanoJob(namespace, name string) (*volv1alpha1.Job, []
 	}
 	for _, pod := range a.pods {
 		if !utils.IsVolcanoPod(job.Name, job.Namespace, pod) {
+			continue
+		}
+		pods = append(pods, pod.DeepCopy())
+	}
+	return job.DeepCopy(), pods
+}
+
+// get the et job
+func (a *ArenaCache) GetETJob(namespace, name string) (*etv1alpha1.TrainingJob, []*v1.Pod) {
+	a.locker.RLock()
+	defer a.locker.RUnlock()
+	pods := []*v1.Pod{}
+	job := a.etjobs[a.genKey(namespace, name)]
+	if job == nil {
+		return job, pods
+	}
+	for _, pod := range a.pods {
+		if !utils.IsETPod(job.Name, job.Namespace, pod) {
 			continue
 		}
 		pods = append(pods, pod.DeepCopy())

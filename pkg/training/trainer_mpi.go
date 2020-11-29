@@ -238,7 +238,7 @@ func NewMPIJobTrainer() Trainer {
 	enable := true
 	// this step is used to check operator is installed or not
 	_, err := mpijobClient.KubeflowV1alpha1().MPIJobs("default").Get("test-operator", metav1.GetOptions{})
-	if strings.Contains(err.Error(), errNotFoundOperator.Error()) {
+	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
 		log.Debugf("not found mpijob operator,mpijob trainer is disabled")
 		enable = false
 	}
