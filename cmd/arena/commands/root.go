@@ -63,7 +63,7 @@ func NewCommand() *cobra.Command {
 	command.PersistentFlags().MarkDeprecated("arenaNamespace", "please use --arena-namespace")
 	command.PersistentFlags().StringVar(&arenaNamespace, "arena-namespace", "arena-system", "The namespace of arena system service, like tf-operator")
 
-	command.AddCommand(NewSubmitCommand())
+	command.AddCommand(training.NewSubmitCommand())
 	//command.AddCommand(NewScaleJobCommand())
 	command.AddCommand(training.NewScaleOutCommand())
 	command.AddCommand(training.NewScaleInCommand())

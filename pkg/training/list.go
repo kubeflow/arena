@@ -10,20 +10,22 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util"
 )
 
 type SimpleJobInfo struct {
-	Name    string `json:"name" yaml:"name"`
-	Status  string `json:"status" yaml:"status"`
-	Trainer string `json:"trainer" yaml:"trainer"`
-	Age     string `json:"age" yaml:"age"`
-	Node    string `json:"node" yaml:"node"`
+	Name      string `json:"name" yaml:"name"`
+	Status    string `json:"status" yaml:"status"`
+	Trainer   string `json:"trainer" yaml:"trainer"`
+	Age       string `json:"age" yaml:"age"`
+	Node      string `json:"node" yaml:"node"`
+	Namespace string `json:"namespace" yaml:"namespace"`
 }
 
 func ListTrainingJobs(namespace string, allNamespaces bool) ([]TrainingJob, error) {
 	jobs := []TrainingJob{}
-	trainers := NewSupportedTrainers()
+	trainers := GetAllTrainers()
 	for _, trainer := range trainers {
 		if !trainer.IsEnabled() {
 			continue
@@ -38,38 +40,48 @@ func ListTrainingJobs(namespace string, allNamespaces bool) ([]TrainingJob, erro
 	return jobs, nil
 }
 
-func DisplayTrainingJobList(jobInfoList []TrainingJob, format string) {
+func DisplayTrainingJobList(jobInfoList []TrainingJob, format string, allNamespaces bool) {
 	jobSimpleInfos := []SimpleJobInfo{}
+	jobInfos := []*types.TrainingJobInfo{}
 	for _, jobInfo := range jobInfoList {
 		jobSimpleInfos = append(jobSimpleInfos, SimpleJobInfo{
-			Name:    jobInfo.Name(),
-			Status:  GetJobRealStatus(jobInfo),
-			Trainer: strings.ToUpper(string(jobInfo.Trainer())),
-			Age:     util.ShortHumanDuration(jobInfo.Age()),
-			Node:    jobInfo.HostIPOfChief(),
+			Name:      jobInfo.Name(),
+			Status:    GetJobRealStatus(jobInfo),
+			Trainer:   strings.ToUpper(string(jobInfo.Trainer())),
+			Age:       util.ShortHumanDuration(jobInfo.Age()),
+			Node:      jobInfo.HostIPOfChief(),
+			Namespace: jobInfo.Namespace(),
 		})
+		jobInfos = append(jobInfos, BuildJobInfo(jobInfo))
 	}
 	switch format {
 	case "json":
-		data, _ := json.MarshalIndent(jobSimpleInfos, "", "    ")
+		data, _ := json.MarshalIndent(jobInfos, "", "    ")
 		fmt.Printf("%v", string(data))
 		return
 	case "yaml":
-		data, _ := yaml.Marshal(jobSimpleInfos)
+		data, _ := yaml.Marshal(jobInfos)
 		fmt.Printf("%v", string(data))
 		return
 	case "", "wide":
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		labelField := []string{"NAME", "STATUS", "TRAINER", "AGE", "NODE"}
+		if allNamespaces {
+			labelField = append(labelField, "NAMESPACE")
+		}
 		PrintLine(w, labelField...)
 		for _, jobSimpleInfo := range jobSimpleInfos {
-			PrintLine(w,
+			items := []string{
 				jobSimpleInfo.Name,
 				jobSimpleInfo.Status,
 				jobSimpleInfo.Trainer,
 				jobSimpleInfo.Age,
 				jobSimpleInfo.Node,
-			)
+			}
+			if allNamespaces {
+				items = append(items, jobSimpleInfo.Namespace)
+			}
+			PrintLine(w, items...)
 		}
 		_ = w.Flush()
 		return

@@ -297,3 +297,29 @@ func kubectl(args []string) ([]byte, error) {
 	cmd.Env = env
 	return cmd.CombinedOutput()
 }
+
+func GetCrdNames() ([]string, error) {
+	crdNames := []string{}
+	args := []string{"get", "crds"}
+	out, err := kubectl(args)
+	if err != nil {
+		if strings.Contains(err.Error(), "No resources found.") {
+			return crdNames, nil
+		}
+		return nil, err
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		item := strings.Trim(line, " ")
+		if item == "" {
+			continue
+		}
+		if strings.Contains(item, "No resources found.") {
+			continue
+		}
+		if strings.Contains(item, "CREATED AT") {
+			continue
+		}
+		crdNames = append(crdNames, strings.Trim(strings.Split(item, " ")[0], " "))
+	}
+	return crdNames, nil
+}

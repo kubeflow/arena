@@ -28,6 +28,7 @@ func GetTrainingJobTypes() []types.TrainingJobType {
 		types.HorovodTrainingJob,
 		types.VolcanoTrainingJob,
 		types.ETTrainingJob,
+		types.SparkTrainingJob,
 	}
 }
 
@@ -49,6 +50,8 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 		return types.VolcanoTrainingJob
 	case "etjob", "et":
 		return types.ETTrainingJob
+	case "sparkjob", "spark":
+		return types.SparkTrainingJob
 	}
 	return types.UnknownTrainingJob
 }
@@ -259,6 +262,19 @@ func IsETPod(name, ns string, pod *v1.Pod) bool {
 		return false
 	}
 	if pod.Namespace != ns {
+		return false
+	}
+	return true
+}
+
+func IsSparkPod(name, ns string, item *v1.Pod) bool {
+	if item.Labels["release"] != name {
+		return false
+	}
+	if item.Labels["app"] != "sparkjob" {
+		return false
+	}
+	if item.Namespace != ns {
 		return false
 	}
 	return true

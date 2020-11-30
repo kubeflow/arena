@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	sparkv1beta1 "github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
@@ -32,6 +33,7 @@ func GetArenaCache() *ArenaCache {
 			k8sjobs:     map[string]*batchv1.Job{},
 			volcanojobs: map[string]*volv1alpha1.Job{},
 			etjobs:      map[string]*etv1alpha1.TrainingJob{},
+			sparkjobs:   map[string]*sparkv1beta1.SparkApplication{},
 			genKey:      func(namespace, name string) string { return fmt.Sprintf("%v/%v", namespace, name) },
 		}
 	})
@@ -47,6 +49,7 @@ type ArenaCache struct {
 	k8sjobs     map[string]*batchv1.Job
 	volcanojobs map[string]*volv1alpha1.Job
 	etjobs      map[string]*etv1alpha1.TrainingJob
+	sparkjobs   map[string]*sparkv1beta1.SparkApplication
 	genKey      func(namespace, name string) string
 	locker      *sync.RWMutex
 }
@@ -118,6 +121,8 @@ func (a *ArenaCache) AddOrUpdateJob(job interface{}) {
 		a.volcanojobs[a.genKey(v.Namespace, v.Name)] = v
 	case *etv1alpha1.TrainingJob:
 		a.etjobs[a.genKey(v.Namespace, v.Name)] = v
+	case *sparkv1beta1.SparkApplication:
+		a.sparkjobs[a.genKey(v.Namespace, v.Name)] = v
 	}
 }
 
@@ -141,6 +146,9 @@ func (a *ArenaCache) DeleteTrainingJob(namespace, name string, jobType types.Tra
 	case types.ETTrainingJob:
 		isMatched = utils.IsETPod
 		delete(a.etjobs, a.genKey(namespace, name))
+	case types.SparkTrainingJob:
+		isMatched = utils.IsSparkPod
+		delete(a.sparkjobs, a.genKey(namespace, name))
 	default:
 		return
 	}
@@ -274,6 +282,27 @@ func (a *ArenaCache) FilterETJobs(filter func(pyjob *etv1alpha1.TrainingJob) boo
 	return jobs, pods
 }
 
+func (a *ArenaCache) FilterSparkJobs(filter func(job *sparkv1beta1.SparkApplication) bool) (map[string]*sparkv1beta1.SparkApplication, map[string][]*v1.Pod) {
+	a.locker.RLock()
+	defer a.locker.RUnlock()
+	jobs := map[string]*sparkv1beta1.SparkApplication{}
+	pods := map[string][]*v1.Pod{}
+	for jobKey, job := range a.sparkjobs {
+		if !filter(job) {
+			continue
+		}
+		jobs[jobKey] = job.DeepCopy()
+		pods[jobKey] = []*v1.Pod{}
+		for _, pod := range a.pods {
+			if !utils.IsSparkPod(job.Name, job.Namespace, pod) {
+				continue
+			}
+			pods[jobKey] = append(pods[jobKey], pod.DeepCopy())
+		}
+	}
+	return jobs, pods
+}
+
 // FilterK8SJobs returns all mpijobs and their pods
 func (a *ArenaCache) FilterK8sJobs(jobFilter func(job *batchv1.Job) bool, podFileter func(job *batchv1.Job, pod *v1.Pod) bool) (map[string]*batchv1.Job, map[string][]*v1.Pod) {
 	a.locker.RLock()
@@ -379,6 +408,23 @@ func (a *ArenaCache) GetETJob(namespace, name string) (*etv1alpha1.TrainingJob, 
 	}
 	for _, pod := range a.pods {
 		if !utils.IsETPod(job.Name, job.Namespace, pod) {
+			continue
+		}
+		pods = append(pods, pod.DeepCopy())
+	}
+	return job.DeepCopy(), pods
+}
+
+func (a *ArenaCache) GetSparkJob(namespace, name string) (*sparkv1beta1.SparkApplication, []*v1.Pod) {
+	a.locker.RLock()
+	defer a.locker.RUnlock()
+	pods := []*v1.Pod{}
+	job := a.sparkjobs[a.genKey(namespace, name)]
+	if job == nil {
+		return job, pods
+	}
+	for _, pod := range a.pods {
+		if !utils.IsSparkPod(job.Name, job.Namespace, pod) {
 			continue
 		}
 		pods = append(pods, pod.DeepCopy())

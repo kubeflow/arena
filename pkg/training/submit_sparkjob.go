@@ -23,7 +23,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func SubmitMPIJob(namespace string, submitArgs *types.SubmitMPIJobArgs) (err error) {
+func SubmitSparkJob(namespace string, submitArgs *types.SubmitSparkJobArgs) (err error) {
 	submitArgs.Namespace = namespace
 	trainers := GetAllTrainers()
 	trainer, ok := trainers[submitArgs.TrainingType]
@@ -36,12 +36,11 @@ func SubmitMPIJob(namespace string, submitArgs *types.SubmitMPIJobArgs) (err err
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 	// if error is unknown,return an error
-	if err != errMPIJobNotFound {
+	if err != errSparkJobNotFound {
 		return err
 	}
-	// the master is also considered as a worker
-	mpijobChart := util.GetChartsFolder() + "/mpijob"
-	err = workflow.SubmitJob(submitArgs.Name, string(types.MPITrainingJob), namespace, submitArgs, mpijobChart, submitArgs.HelmOptions...)
+	sparkChart := util.GetChartsFolder() + "/sparkjob"
+	err = workflow.SubmitJob(submitArgs.Name, string(types.PytorchTrainingJob), namespace, submitArgs, sparkChart)
 	if err != nil {
 		return err
 	}

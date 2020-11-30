@@ -14,7 +14,7 @@ type PruneArgs struct {
 
 func PruneTrainingJobs(namespace string, allNamespaces bool, since time.Duration) error {
 	jobs := []TrainingJob{}
-	trainers := NewSupportedTrainers()
+	trainers := GetAllTrainers()
 	for _, trainer := range trainers {
 		if !trainer.IsEnabled() {
 			continue

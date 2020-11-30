@@ -59,6 +59,9 @@ func (t *TrainingJobClient) Submit(job *apistraining.Job) error {
 	case types.ETTrainingJob:
 		args := job.Args().(*types.SubmitETJobArgs)
 		return training.SubmitETJob(t.namespace, args)
+	case types.SparkTrainingJob:
+		args := job.Args().(*types.SubmitSparkJobArgs)
+		return training.SubmitSparkJob(t.namespace, args)
 	}
 	return nil
 }
@@ -128,7 +131,7 @@ func (t *TrainingJobClient) ListAndPrint(allNamespaces bool, format string) erro
 	if err != nil {
 		return err
 	}
-	training.DisplayTrainingJobList(jobs, format)
+	training.DisplayTrainingJobList(jobs, format, allNamespaces)
 	return nil
 }
 
@@ -136,7 +139,6 @@ func (t *TrainingJobClient) ListAndPrint(allNamespaces bool, format string) erro
 func (t *TrainingJobClient) Logs(jobName string, jobType types.TrainingJobType, args *types.LogArgs) error {
 	args.Namespace = t.namespace
 	args.JobName = jobName
-	fmt.Println(args)
 	return training.AcceptJobLog(jobName, jobType, args)
 }
 
