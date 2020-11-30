@@ -32,7 +32,11 @@ const (
 
 func SubmitETJob(namespace string, submitArgs *types.SubmitETJobArgs) (err error) {
 	submitArgs.Namespace = namespace
-	trainer := NewETJobTrainer()
+	trainers := GetAllTrainers()
+	trainer, ok := trainers[submitArgs.TrainingType]
+	if !ok {
+		return fmt.Errorf("not found trainer whose type is %v", submitArgs.TrainingType)
+	}
 	job, err := trainer.GetTrainingJob(submitArgs.Name, namespace)
 	// if job has been existed,skip to create it and return an error
 	if err == nil && job != nil {
@@ -55,7 +59,11 @@ func SubmitETJob(namespace string, submitArgs *types.SubmitETJobArgs) (err error
 
 func SubmitScaleInETJob(namespace string, submitArgs *types.ScaleInETJobArgs) error {
 	etjobName := submitArgs.Name
-	trainer := NewETJobTrainer()
+	trainers := GetAllTrainers()
+	trainer, ok := trainers[submitArgs.JobType]
+	if !ok {
+		return fmt.Errorf("not found trainer whose type is %v", submitArgs.JobType)
+	}
 	job, err := trainer.GetTrainingJob(etjobName, namespace)
 	if err != nil {
 		if err != errETJobNotFound {
@@ -85,7 +93,11 @@ func SubmitScaleInETJob(namespace string, submitArgs *types.ScaleInETJobArgs) er
 
 func SubmitScaleOutETJob(namespace string, submitArgs *types.ScaleOutETJobArgs) error {
 	etjobName := submitArgs.Name
-	trainer := NewETJobTrainer()
+	trainers := GetAllTrainers()
+	trainer, ok := trainers[submitArgs.JobType]
+	if !ok {
+		return fmt.Errorf("not found trainer whose type is %v", submitArgs.JobType)
+	}
 	job, err := trainer.GetTrainingJob(etjobName, namespace)
 	if err != nil {
 		if err != errETJobNotFound {

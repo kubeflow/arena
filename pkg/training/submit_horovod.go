@@ -25,7 +25,11 @@ import (
 
 func SubmitHorovodJob(namespace string, submitArgs *types.SubmitHorovodJobArgs) (err error) {
 	submitArgs.Namespace = namespace
-	trainer := NewHorovodJobTrainer()
+	trainers := GetAllTrainers()
+	trainer, ok := trainers[submitArgs.TrainingType]
+	if !ok {
+		return fmt.Errorf("not found trainer whose type is %v", submitArgs.TrainingType)
+	}
 	job, err := trainer.GetTrainingJob(submitArgs.Name, namespace)
 	// if job has been existed,skip to create it and return an error
 	if err == nil && job != nil {

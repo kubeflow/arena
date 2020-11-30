@@ -16,25 +16,35 @@ package training
 
 import (
 	"sort"
+	"sync"
 
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 )
 
-// construct the trainer list
-func NewSupportedTrainers() []Trainer {
-	trainers := []Trainer{}
-	trainerInits := []func() Trainer{
-		NewTensorFlowJobTrainer,
-		NewPyTorchJobTrainer,
-		NewMPIJobTrainer,
-		NewHorovodJobTrainer,
-		NewVolcanoJobTrainer,
-		NewETJobTrainer,
-	}
-	for _, init := range trainerInits {
-		trainers = append(trainers, init())
-	}
+var trainers map[types.TrainingJobType]Trainer
+
+var once sync.Once
+
+func GetAllTrainers() map[types.TrainingJobType]Trainer {
+	once.Do(func() {
+		trainers = map[types.TrainingJobType]Trainer{}
+		trainerInits := []func() Trainer{
+			NewTensorFlowJobTrainer,
+			NewPyTorchJobTrainer,
+			NewMPIJobTrainer,
+			NewHorovodJobTrainer,
+			NewVolcanoJobTrainer,
+			NewETJobTrainer,
+			NewSparkJobTrainer,
+		}
+		for _, initFunc := range trainerInits {
+			trainer := initFunc()
+			trainers[trainer.Type()] = trainer
+		}
+	})
 	return trainers
 }
 
@@ -131,4 +141,19 @@ func getPodsOfTrainingJob(name, namespace string, podList []*v1.Pod, isTrainingJ
 		return pods, &v1.Pod{}
 	}
 	return pods, pendingChiefPod
+}
+
+func CheckOperatorIsInstalled(crdName string) bool {
+	crdNames, err := kubectl.GetCrdNames()
+	log.Debugf("get all crd names: %v", crdNames)
+	if err != nil {
+		log.Debugf("failed to get crd names,reason: %v", err)
+		return false
+	}
+	for _, name := range crdNames {
+		if name == crdName {
+			return true
+		}
+	}
+	return false
 }

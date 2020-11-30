@@ -11,7 +11,11 @@ import (
 
 func SubmitVolcanoJob(namespace string, submitArgs *types.SubmitVolcanoJobArgs) error {
 	submitArgs.Namespace = namespace
-	trainer := NewVolcanoJobTrainer()
+	trainers := GetAllTrainers()
+	trainer, ok := trainers[submitArgs.TrainingType]
+	if !ok {
+		return fmt.Errorf("not found trainer whose type is %v", submitArgs.TrainingType)
+	}
 	job, err := trainer.GetTrainingJob(submitArgs.Name, namespace)
 	// if job has been existed,skip to create it and return an error
 	if err == nil && job != nil {
