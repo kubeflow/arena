@@ -58,3 +58,8 @@ func NewArenaClient(args types.ArenaClientArgs) (*ArenaClient, error) {
 func (a *ArenaClient) Training() *TrainingJobClient {
 	return NewTrainingJobClient(a.namespace, a.arenaSystemNamespace, a.arenaConfiger)
 }
+
+// Serving returns the Serving job client
+func (a *ArenaClient) Serving() *ServingJobClient {
+	return NewServingJobClient(a.namespace, a.arenaConfiger)
+}

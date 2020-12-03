@@ -2,8 +2,12 @@ package utils
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"text/tabwriter"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -21,15 +25,20 @@ const (
 
 // GetTrainingJobTypes returns the supported training job types
 func GetTrainingJobTypes() []types.TrainingJobType {
-	return []types.TrainingJobType{
-		types.MPITrainingJob,
-		types.TFTrainingJob,
-		types.PytorchTrainingJob,
-		types.HorovodTrainingJob,
-		types.VolcanoTrainingJob,
-		types.ETTrainingJob,
-		types.SparkTrainingJob,
+	trainingTypes := []types.TrainingJobType{}
+	for trainingType, _ := range types.TrainingTypeMap {
+		trainingTypes = append(trainingTypes, trainingType)
 	}
+	return trainingTypes
+}
+
+func GetSupportTrainingJobTypesInfo() string {
+	trainingTypes := []string{}
+	for trainingType, alias := range types.TrainingTypeMap {
+		item := fmt.Sprintf("%v(%v)", alias[0], trainingType)
+		trainingTypes = append(trainingTypes, item)
+	}
+	return strings.Join(trainingTypes, ",")
 }
 
 // TransferTrainingJobType returns the training job type
@@ -37,23 +46,48 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 	if jobType == "" {
 		return types.AllTrainingJob
 	}
-	switch jobType {
-	case "tfjob", "tf":
-		return types.TFTrainingJob
-	case "pytorchjob", "pytorch", "py":
-		return types.PytorchTrainingJob
-	case "mpijob", "mpi":
-		return types.MPITrainingJob
-	case "horovod", "horovodjob", "hj":
-		return types.HorovodTrainingJob
-	case "vol", "volcano", "volcanojob":
-		return types.VolcanoTrainingJob
-	case "etjob", "et":
-		return types.ETTrainingJob
-	case "sparkjob", "spark":
-		return types.SparkTrainingJob
+	for trainingType, alias := range types.TrainingTypeMap {
+		for _, alia := range alias {
+			if jobType != alia {
+				continue
+			}
+			return trainingType
+		}
 	}
 	return types.UnknownTrainingJob
+}
+
+func GetServingJobTypes() []types.ServingJobType {
+	return []types.ServingJobType{
+		types.CustomServingJob,
+		types.KFServingJob,
+		types.TFServingJob,
+		types.TRTServingJob,
+	}
+}
+
+func GetSupportServingJobTypesInfo() string {
+	servingTypes := []string{}
+	for servingType, alias := range types.ServingTypeMap {
+		item := fmt.Sprintf("%v(%v)", alias[0], servingType)
+		servingTypes = append(servingTypes, item)
+	}
+	return strings.Join(servingTypes, ",")
+}
+
+func TransferServingJobType(jobType string) types.ServingJobType {
+	if jobType == "" {
+		return types.AllServingJob
+	}
+	for servingType, alias := range types.ServingTypeMap {
+		for _, alia := range alias {
+			if jobType != alia {
+				continue
+			}
+			return servingType
+		}
+	}
+	return types.UnknownServingJob
 }
 
 func GetLogLevel() []types.LogLevel {
@@ -278,4 +312,21 @@ func IsSparkPod(name, ns string, item *v1.Pod) bool {
 		return false
 	}
 	return true
+}
+
+// print the help infomation
+func PrintErrorMessage(message string) {
+	if strings.Contains(message, "please use '--type' or '--version' to filter.") {
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintf(w, message)
+		w.Flush()
+		return
+	}
+	if strings.Contains(message, "please use '-i' or '--instance' to filter.") {
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintf(w, message)
+		w.Flush()
+		return
+	}
+	log.Errorf("%v", message)
 }

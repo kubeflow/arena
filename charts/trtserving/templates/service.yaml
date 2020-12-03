@@ -13,7 +13,7 @@ metadata:
 spec:
   type: {{ .Values.serviceType }}
   ports:
-    - name: http-serving
+    - name: restful-serving
       port: {{ .Values.httpPort }}
       targetPort: {{ .Values.httpPort }}
     - name: grpc-serving

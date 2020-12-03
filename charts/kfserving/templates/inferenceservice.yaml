@@ -4,9 +4,9 @@ kind: InferenceService
 metadata:
   labels:
     controller-tools.k8s.io: "1.0"
-    servingName: "{{ .Values.servingName }}"
-    servingType: "kfserving"
     serviceName: "{{ .Values.servingName }}"
+    servingType: "kf-serving"
+    servingName: "{{ .Values.servingName }}"
     servingVersion: "{{ .Values.servingVersion }}"
   name: {{ .Release.Name }}
 spec:

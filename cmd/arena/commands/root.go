@@ -17,6 +17,7 @@ package commands
 import (
 	"os"
 
+	"github.com/kubeflow/arena/pkg/commands/serving"
 	"github.com/kubeflow/arena/pkg/commands/training"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -42,8 +43,10 @@ var (
 // NewCommand returns a new instance of an Arena command
 func NewCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   CLIName,
-		Short: "arena is the command line interface to Arena",
+		Use:           CLIName,
+		Short:         "arena is the command line interface to Arena",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},
@@ -67,7 +70,7 @@ func NewCommand() *cobra.Command {
 	//command.AddCommand(NewScaleJobCommand())
 	command.AddCommand(training.NewScaleOutCommand())
 	command.AddCommand(training.NewScaleInCommand())
-	command.AddCommand(NewServeCommand())
+	command.AddCommand(serving.NewServeCommand())
 	command.AddCommand(training.NewListCommand())
 	//command.AddCommand(NewListCommand())
 	command.AddCommand(training.NewPruneCommand())

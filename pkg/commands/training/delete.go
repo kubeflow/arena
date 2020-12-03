@@ -56,7 +56,7 @@ func NewDeleteCommand() *cobra.Command {
 			return client.Training().Delete(utils.TransferTrainingJobType(trainingType), names...)
 		},
 	}
-	command.Flags().StringVar(&trainingType, "type", "", fmt.Sprintf("The training type to delete, the possible option is %v. (optional)", utils.GetTrainingJobTypes()))
+	command.Flags().StringVarP(&trainingType, "type", "T", "", fmt.Sprintf("The training type to delete, the possible option is %v. (optional)", utils.GetSupportTrainingJobTypesInfo()))
 
 	return command
 }

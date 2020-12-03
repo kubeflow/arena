@@ -16,9 +16,9 @@ package training
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/util/helm"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
@@ -27,7 +27,7 @@ import (
 func DeleteTrainingJob(jobName, namespace string, jobType types.TrainingJobType) error {
 	var trainingTypes []string
 	if jobType == types.UnknownTrainingJob {
-		return fmt.Errorf("Unsupport job type,arena only supports: [%v]", strings.Join(getTrainingJobTypes(), ","))
+		return fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
 	}
 	// 1. Handle legacy training job
 	err := helm.DeleteRelease(jobName)

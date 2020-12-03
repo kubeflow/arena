@@ -58,7 +58,7 @@ func NewGetCommand() *cobra.Command {
 			return client.Training().GetAndPrint(name, utils.TransferTrainingJobType(jobType), output, showEvents)
 		},
 	}
-	command.Flags().StringVar(&jobType, "type", "", fmt.Sprintf("The training type to get, the possible option is %v. (optional)", utils.GetTrainingJobTypes()))
+	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The training type to get, the possible option is %v. (optional)", utils.GetSupportTrainingJobTypesInfo()))
 	command.Flags().BoolVarP(&showEvents, "events", "e", false, "Specify if show pending pod's events.")
 	command.Flags().StringVarP(&output, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	return command

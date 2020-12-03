@@ -14,14 +14,14 @@ metadata:
     app: {{ template "tensorflow-serving.name" . }}
     servingName: {{ .Values.servingName }}
     servingVersion: "{{ .Values.servingVersion }}"
-    servingType: "tensorflow-serving"
+    servingType: "tf-serving"
 spec:
   type: {{ .Values.serviceType }}
   ports:
-    - name: serving
+    - name: grpc-serving
       port: {{ .Values.port }}
       targetPort: {{ .Values.port }}
-    - name: http-serving
+    - name: restful-serving
       port: {{ .Values.restApiPort }}
       targetPort: {{ .Values.restApiPort }}
   selector:

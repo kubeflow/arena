@@ -38,6 +38,39 @@ const (
 	UnknownTrainingJob TrainingJobType = "unknown"
 )
 
+// ServingTypeMap collects serving job type and their alias
+var TrainingTypeMap = map[TrainingJobType][]string{
+	TFTrainingJob: {
+		"tf",
+		"tfjob",
+	},
+	MPITrainingJob: {
+		"mpi",
+		"mpijob",
+	},
+	PytorchTrainingJob: {
+		"py",
+		"pytorch",
+		"pytorchjob",
+	},
+	HorovodTrainingJob: {
+		"horovod",
+		"horovodjob",
+	},
+	VolcanoTrainingJob: {
+		"volcano",
+		"volcanojob",
+	},
+	ETTrainingJob: {
+		"et",
+		"etjob",
+	},
+	SparkTrainingJob: {
+		"spark",
+		"sparkjob",
+	},
+}
+
 // TrainingJobInfo stores training job information
 type TrainingJobInfo struct {
 	// The name of the training job
