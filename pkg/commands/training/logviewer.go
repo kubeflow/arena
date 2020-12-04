@@ -18,8 +18,8 @@ import (
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
-	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -63,6 +63,6 @@ func NewLogViewerCommand() *cobra.Command {
 			return nil
 		},
 	}
-	command.Flags().StringVar(&jobType, "type", "", fmt.Sprintf("The training type to get, the possible option is %v. (optional)", utils.GetTrainingJobTypes()))
+	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The training type to get, the possible option is %v. (optional)", utils.GetSupportTrainingJobTypesInfo()))
 	return command
 }

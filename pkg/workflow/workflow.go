@@ -45,7 +45,7 @@ func DeleteJob(name, namespace, trainingType string) error {
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string, options ...string) error {
 	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 	if found {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", name, name)
+		return fmt.Errorf("the job configmap %v-%v is already exist, please delete it first.", name, trainingType)
 	}
 
 	// 1. Generate value file

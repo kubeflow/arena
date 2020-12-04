@@ -15,7 +15,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"runtime/pprof"
@@ -23,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/kubeflow/arena/cmd/arena/commands"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	if err := commands.NewCommand().Execute(); err != nil {
-		fmt.Println(err)
+		utils.PrintErrorMessage(err.Error())
 		os.Exit(1)
 	}
 }

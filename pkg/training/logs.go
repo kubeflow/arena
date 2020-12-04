@@ -16,7 +16,6 @@ package training
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
@@ -28,7 +27,7 @@ func AcceptJobLog(jobName string, trainingType types.TrainingJobType, args *type
 	namespace := args.Namespace
 	// 1.transfer the training job type
 	if trainingType == types.UnknownTrainingJob {
-		return fmt.Errorf("Unsupport job type,arena only supports: [%v]", strings.Join(getTrainingJobTypes(), ","))
+		return fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
 	}
 	// 2.search the training job
 	job, err := SearchTrainingJob(jobName, namespace, trainingType)

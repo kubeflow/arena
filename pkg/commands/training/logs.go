@@ -19,8 +19,8 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/logger"
-	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -58,6 +58,6 @@ func NewLogsCommand() *cobra.Command {
 		},
 	}
 	loggerBuilder.AddCommandFlags(command)
-	command.Flags().StringVarP(&jobType, "type", "", "", fmt.Sprintf("The training type to show logging, the possible option is %v. (optional)", utils.GetTrainingJobTypes()))
+	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The training type to show logging, the possible option is %v. (optional)", utils.GetSupportTrainingJobTypesInfo()))
 	return command
 }

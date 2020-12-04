@@ -26,6 +26,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 
 	"github.com/kubeflow/arena/pkg/util"
 	yaml "gopkg.in/yaml.v2"
@@ -48,7 +49,7 @@ var (
 func SearchTrainingJob(jobName, namespace string, jobType types.TrainingJobType) (TrainingJob, error) {
 	// 1.if job type is unknown,return error
 	if jobType == types.UnknownTrainingJob {
-		return nil, fmt.Errorf("Unsupport job type,arena only supports: [%v]", strings.Join(getTrainingJobTypes(), ","))
+		return nil, fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
 	}
 	// 2.if job type is given,search the job
 	if jobType != types.AllTrainingJob {

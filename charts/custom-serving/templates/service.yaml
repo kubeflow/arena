@@ -44,12 +44,12 @@ spec:
   type: {{ .Values.serviceType }}
   ports:
     {{- if ne (int .Values.port) 0 }}
-    - name: grpc
+    - name: grpc-serving
       port: {{ .Values.port }}
       targetPort: {{ .Values.port }}
     {{- end }}
     {{- if ne (int .Values.restApiPort) 0 }}
-    - name: restful
+    - name: restful-serving
       port: {{ .Values.restApiPort }}
       targetPort: {{ .Values.restApiPort }}
     {{- end }}

@@ -8,3 +8,7 @@
 * support NodePort and LoadBalancer
 * support labels, tolerance
 * support annotations
+
+### 0.3.0
+
+* add serving type to pod label

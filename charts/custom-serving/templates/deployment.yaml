@@ -38,7 +38,9 @@ spec:
         chart: {{ template "custom-serving.chart" . }}
         app: {{ template "custom-serving.name" . }}
         serviceName: "{{ .Values.servingName }}"
+        servingName: "{{ .Values.servingName }}"
         servingVersion: "{{ .Values.servingVersion }}"
+        servingType: "custom-serving"
     spec:
       {{- if ne (len .Values.nodeSelectors) 0 }}
       nodeSelector:
