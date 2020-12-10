@@ -5,6 +5,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -12,6 +13,7 @@ import (
 func NewListCommand() *cobra.Command {
 	var allNamespaces bool
 	var format string
+	var jobType string
 	var command = &cobra.Command{
 		Use:   "list",
 		Short: "list all the training jobs",
@@ -29,9 +31,10 @@ func NewListCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			return client.Training().ListAndPrint(allNamespaces, format)
+			return client.Training().ListAndPrint(allNamespaces, format, utils.TransferTrainingJobType(jobType))
 		},
 	}
+	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The training type to list, the possible option is %v. (optional)", utils.GetSupportTrainingJobTypesInfo()))
 	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
 	command.Flags().MarkDeprecated("allNamespaces", "please use --all-namespaces instead")
 	command.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "show all the namespaces")

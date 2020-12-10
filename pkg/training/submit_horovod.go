@@ -36,7 +36,7 @@ func SubmitHorovodJob(namespace string, submitArgs *types.SubmitHorovodJobArgs) 
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 	// if error is unknown,return an error
-	if err != errHorovodJobNotFound {
+	if err != types.ErrTrainingJobNotFound {
 		return err
 	}
 	// the master is also considered as a worker

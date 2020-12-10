@@ -36,7 +36,7 @@ func SubmitTFJob(namespace string, submitArgs *types.SubmitTFJobArgs) (err error
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 	// if error is unknown,return an error
-	if err != errTFJobNotFound {
+	if err != types.ErrTrainingJobNotFound {
 		return err
 	}
 	tfjob_chart := util.GetChartsFolder() + "/tfjob"

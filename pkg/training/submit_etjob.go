@@ -43,7 +43,7 @@ func SubmitETJob(namespace string, submitArgs *types.SubmitETJobArgs) (err error
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 	// if error is unknown,return an error
-	if err != errETJobNotFound {
+	if err != types.ErrTrainingJobNotFound {
 		return err
 	}
 	// the master is also considered as a worker
@@ -66,8 +66,8 @@ func SubmitScaleInETJob(namespace string, submitArgs *types.ScaleInETJobArgs) er
 	}
 	job, err := trainer.GetTrainingJob(etjobName, namespace)
 	if err != nil {
-		if err != errETJobNotFound {
-			return fmt.Errorf("the job %s is not found, please check it firstly.", etjobName)
+		if err == types.ErrTrainingJobNotFound {
+			return err
 		}
 		return fmt.Errorf("Check %s exist due to error %v", etjobName, err)
 	}
@@ -100,8 +100,8 @@ func SubmitScaleOutETJob(namespace string, submitArgs *types.ScaleOutETJobArgs) 
 	}
 	job, err := trainer.GetTrainingJob(etjobName, namespace)
 	if err != nil {
-		if err != errETJobNotFound {
-			return fmt.Errorf("the job %s is not found, please check it firstly.", etjobName)
+		if err == types.ErrTrainingJobNotFound {
+			return err
 		}
 		return fmt.Errorf("Check %s exist due to error %v", etjobName, err)
 	}

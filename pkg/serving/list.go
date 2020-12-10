@@ -61,7 +61,7 @@ func DisplayAllServingJobs(jobs []ServingJob, allNamespace bool, format types.Fo
 	if allNamespace {
 		header = append(header, "NAMESPACE")
 	}
-	fields := []string{"NAME", "TYPE", "VERSION", "DESIRED", "AVAILABLE", "ENDPOINT_ADDRESS", "PORTS"}
+	fields := []string{"NAME", "TYPE", "VERSION", "DESIRED", "AVAILABLE", "ADDRESS", "PORTS"}
 	header = append(header, fields...)
 	PrintLine(w, header...)
 	for _, jobInfo := range jobInfos {

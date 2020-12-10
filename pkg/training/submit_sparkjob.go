@@ -36,7 +36,7 @@ func SubmitSparkJob(namespace string, submitArgs *types.SubmitSparkJobArgs) (err
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 	// if error is unknown,return an error
-	if err != errSparkJobNotFound {
+	if err != types.ErrTrainingJobNotFound {
 		return err
 	}
 	sparkChart := util.GetChartsFolder() + "/sparkjob"

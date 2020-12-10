@@ -15,7 +15,6 @@
 package training
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -31,10 +30,6 @@ import (
 
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
-)
-
-var (
-	errVolcanoJobNotFound = errors.New("volcanojob not found")
 )
 
 // volcano Job wrapper
@@ -307,7 +302,7 @@ func (st *VolcanoJobTrainer) GetTrainingJob(name, namespace string) (job Trainin
 func (st *VolcanoJobTrainer) getTrainingJobFromCache(name, namespace string) (TrainingJob, error) {
 	job, pods := arenacache.GetArenaCache().GetVolcanoJob(namespace, name)
 	if job == nil {
-		return nil, errVolcanoJobNotFound
+		return nil, types.ErrTrainingJobNotFound
 	}
 	filterPods, chiefPod := getPodsOfVolcanoJob(job, st, pods)
 	return &VolcanoJob{
@@ -327,7 +322,7 @@ func (st *VolcanoJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 	job, err := st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf(`jobs.batch.volcano.sh "%v" not found`, name)) {
-			return nil, errVolcanoJobNotFound
+			return nil, types.ErrTrainingJobNotFound
 		}
 		return nil, err
 	}

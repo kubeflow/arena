@@ -6,8 +6,8 @@ import (
 
 	"os"
 
-	config "github.com/kubeflow/arena/pkg/util/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	config "github.com/kubeflow/arena/pkg/util/config"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 

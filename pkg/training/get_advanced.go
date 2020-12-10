@@ -17,12 +17,15 @@ package training
 import (
 	"fmt"
 
-	apistypes "github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/prometheus"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 /*
@@ -51,7 +54,7 @@ func isTrainingConfigExist(name, trainingType, namespace string) bool {
 /**
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
-func BuildJobInfo(job TrainingJob) *apistypes.TrainingJobInfo {
+func BuildJobInfo(job TrainingJob) *types.TrainingJobInfo {
 	chiefPodName := ""
 	namespace := ""
 	if job.ChiefPod() != nil {
@@ -62,32 +65,62 @@ func BuildJobInfo(job TrainingJob) *apistypes.TrainingJobInfo {
 	if err != nil {
 		log.Debugf("Tensorboard dones't show up because of %v, or tensorboard url %s", err, tensorboard)
 	}
-	instances := []apistypes.TrainingJobInstance{}
+	jobGPUMetric := prometheus.JobGpuMetric{}
+	instances := []types.TrainingJobInstance{}
+	if prometheus.GpuMonitoringInstalled(config.GetArenaConfiger().GetClientSet()) {
+		jobGPUMetric, err = GetJobGpuMetric(config.GetArenaConfiger().GetClientSet(), job)
+	}
 	for _, pod := range job.AllPods() {
 		isChief := false
 		if pod.Name == chiefPodName {
 			isChief = true
 		}
+		gpuMetrics := map[string]types.GpuMetric{}
+		metrics, ok := jobGPUMetric[pod.Name]
+		if ok {
+			for gpuid, m := range metrics {
+				log.Debugf("gpuid: %v,metric: %v", gpuid, *m)
+				metric := *m
+				gpuMetrics[gpuid] = types.GpuMetric{
+					GpuDutyCycle:   metric.GpuDutyCycle,
+					GpuMemoryTotal: metric.GpuMemoryTotal,
+					GpuMemoryUsed:  metric.GpuMemoryUsed,
+				}
+			}
+		}
 		status, _, _, _ := utils.DefinePodPhaseStatus(*pod)
-		instances = append(instances, apistypes.TrainingJobInstance{
-			Name:    pod.Name,
-			Status:  status,
-			Age:     util.ShortHumanDuration(job.Age()),
-			Node:    pod.Status.HostIP,
-			IsChief: isChief,
+		nodeName := "N/A"
+		nodeIP := "N/A"
+		if pod.Status.Phase != v1.PodPending {
+			nodeIP = pod.Status.HostIP
+			nodeName = pod.Spec.NodeName
+		}
+		count := utils.GPUCountInPod(pod)
+		count += utils.AliyunGPUCountInPod(pod)
+		instances = append(instances, types.TrainingJobInstance{
+			Name:        pod.Name,
+			Status:      status,
+			Age:         util.ShortHumanDuration(job.Age()),
+			Node:        nodeName,
+			NodeIP:      nodeIP,
+			IsChief:     isChief,
+			RequestGPUs: count,
+			GPUMetrics:  gpuMetrics,
 		})
 	}
 
-	return &apistypes.TrainingJobInfo{
-		Name:        job.Name(),
-		Namespace:   job.Namespace(),
-		Status:      apistypes.TrainingJobStatus(GetJobRealStatus(job)),
-		Duration:    util.ShortHumanDuration(job.Duration()),
-		Trainer:     apistypes.TrainingJobType(job.Trainer()),
-		Priority:    getPriorityClass(job),
-		Tensorboard: tensorboard,
-		ChiefName:   chiefPodName,
-		Instances:   instances,
+	return &types.TrainingJobInfo{
+		Name:         job.Name(),
+		Namespace:    job.Namespace(),
+		Status:       types.TrainingJobStatus(GetJobRealStatus(job)),
+		Duration:     util.ShortHumanDuration(job.Duration()),
+		Trainer:      types.TrainingJobType(job.Trainer()),
+		Priority:     getPriorityClass(job),
+		Tensorboard:  tensorboard,
+		ChiefName:    chiefPodName,
+		Instances:    instances,
+		RequestGPU:   job.RequestedGPU(),
+		AllocatedGPU: job.AllocatedGPU(),
 	}
 }
 
@@ -122,4 +155,28 @@ func GetJobRealStatus(job TrainingJob) string {
 		}
 	}
 	return jobStatus
+}
+
+func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric prometheus.JobGpuMetric, err error) {
+	runningPods := []string{}
+	jobStatus := job.GetStatus()
+	jobGPUMetrics := prometheus.JobGpuMetric{}
+	if jobStatus != "RUNNING" {
+		return jobGPUMetrics, nil
+	}
+	pods := job.AllPods()
+	for _, pod := range pods {
+		if pod.Status.Phase == v1.PodRunning {
+			runningPods = append(runningPods, pod.Name)
+		}
+	}
+	if len(runningPods) == 0 {
+		return jobGPUMetrics, nil
+	}
+	server := prometheus.GetPrometheusServer(client)
+	if server == nil {
+		return
+	}
+	podsMetrics, err := prometheus.GetPodsGpuInfo(client, server, runningPods)
+	return podsMetrics, err
 }

@@ -17,13 +17,14 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/kubeflow/arena/pkg/operators/et-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"time"
 
 	"github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
 )
@@ -559,7 +560,7 @@ func parseAnnotations(trainingjob v1alpha1.TrainingJob) (launcherSpec map[string
 	if temp, ok := raw[etJobMetaDataAnnotationsKey]; ok {
 		err := json.Unmarshal([]byte(temp), &annotations)
 		if err != nil {
-			log.Warnf("json Unmarshal error: ", err.Error())
+			log.Warnf("json Unmarshal error: %v", err.Error())
 			return
 		}
 		if _, ok := annotations["spec"]; ok {
@@ -600,7 +601,7 @@ func (ej *ETJob) GetPriorityClass() string {
 			podTemplate := launcher["template"].(map[string]interface{})
 			if _, ok := podTemplate["spec"]; ok {
 				podSpec := podTemplate["spec"].(map[string]interface{})
-				log.Debugf("podSpec: ", podSpec)
+				log.Debugf("podSpec: %v", podSpec)
 				if pc, ok := podSpec["priorityClassName"]; ok && pc != "" {
 					return pc.(string)
 				}
@@ -613,7 +614,7 @@ func (ej *ETJob) GetPriorityClass() string {
 			podTemplate := worker["template"].(map[string]interface{})
 			if _, ok := podTemplate["spec"]; ok {
 				podSpec := podTemplate["spec"].(map[string]interface{})
-				log.Debugf("podSpec: ", podSpec)
+				log.Debugf("podSpec: %v", podSpec)
 				if pc, ok := podSpec["priorityClassName"]; ok && pc != "" {
 					return pc.(string)
 				}

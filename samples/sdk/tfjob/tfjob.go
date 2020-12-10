@@ -54,7 +54,7 @@ func main() {
 		return
 	}
 	// list all jobs
-	jobInfos, err := client.Training().List(true)
+	jobInfos, err := client.Training().List(true, types.AllTrainingJob)
 	if err != nil {
 		fmt.Printf("failed to list all jobs in namespace,reason: %v\n", err)
 		return

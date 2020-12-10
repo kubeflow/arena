@@ -14,6 +14,8 @@
 
 package types
 
+import "errors"
+
 // TrainingJobType defines the supporting training job type
 type TrainingJobType string
 
@@ -38,63 +40,83 @@ const (
 	UnknownTrainingJob TrainingJobType = "unknown"
 )
 
+type TrainingJobTypeInfo struct {
+	Name      TrainingJobType
+	Alias     string
+	Shorthand string
+}
+
+var ErrTrainingJobNotFound = errors.New("training job not found,please use 'arena list' to make sure job is existed.")
+
 // ServingTypeMap collects serving job type and their alias
-var TrainingTypeMap = map[TrainingJobType][]string{
+var TrainingTypeMap = map[TrainingJobType]TrainingJobTypeInfo{
 	TFTrainingJob: {
-		"tf",
-		"tfjob",
+		Name:      TFTrainingJob,
+		Alias:     "Tensorflow",
+		Shorthand: "tf",
 	},
 	MPITrainingJob: {
-		"mpi",
-		"mpijob",
+		Name:      MPITrainingJob,
+		Alias:     "MPI",
+		Shorthand: "mpi",
 	},
 	PytorchTrainingJob: {
-		"py",
-		"pytorch",
-		"pytorchjob",
+		Name:      PytorchTrainingJob,
+		Alias:     "Pytorch",
+		Shorthand: "py",
 	},
 	HorovodTrainingJob: {
-		"horovod",
-		"horovodjob",
+		Name:      HorovodTrainingJob,
+		Alias:     "Horovod",
+		Shorthand: "horovod",
 	},
 	VolcanoTrainingJob: {
-		"volcano",
-		"volcanojob",
+		Name:      VolcanoTrainingJob,
+		Alias:     "Volcano",
+		Shorthand: "volcano",
 	},
 	ETTrainingJob: {
-		"et",
-		"etjob",
+		Name:      ETTrainingJob,
+		Alias:     "ElasticTraining",
+		Shorthand: "et",
 	},
 	SparkTrainingJob: {
-		"spark",
-		"sparkjob",
+		Name:      SparkTrainingJob,
+		Alias:     "Spark",
+		Shorthand: "spark",
 	},
 }
 
 // TrainingJobInfo stores training job information
 type TrainingJobInfo struct {
 	// The name of the training job
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 	// The namespace of the training job
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace" yaml:"namespace"`
 	// The time of the training job
-	Duration string `json:"duration"`
+	Duration string `json:"duration" yaml:"duration"`
 	// The status of the training Job
-	Status TrainingJobStatus `json:"status"`
+	Status TrainingJobStatus `json:"status" yaml:"status"`
 
 	// The training type of the training job
-	Trainer TrainingJobType `json:"trainer"`
+	Trainer TrainingJobType `json:"trainer" yaml:"trainer"`
 	// The tensorboard of the training job
-	Tensorboard string `json:"tensorboard,omitempty"`
+	Tensorboard string `json:"tensorboard" yaml:"tensorboard"`
 
 	// The name of the chief Instance
 	ChiefName string `json:"chiefName" yaml:"chiefName"`
 
 	// The instances under the training job
-	Instances []TrainingJobInstance `json:"instances"`
+	Instances []TrainingJobInstance `json:"instances" yaml:"instances"`
 
 	// The priority of the training job
-	Priority string `json:"priority"`
+	Priority string `json:"priority" yaml:"priority"`
+
+	// RequestGPU stores the request gpus
+	RequestGPU int64 `json:"requestGPUs" yaml:"requestGPUs"`
+
+	// AllocatedGPU stores the allocated gpus
+	AllocatedGPU int64 `json:"allocatedGPUs" yaml:"allocatedGPUs"`
 }
 
 // TrainingJobStatus defines all the kinds of JobStatus
@@ -121,6 +143,12 @@ type TrainingJobInstance struct {
 	Age string `json:"age"`
 	// the node instance runs on
 	Node string `json:"node"`
+	// NodeIP is store the node ip
+	NodeIP string `json:"nodeIP" yaml:"nodeIP"`
 	// the instance is chief or not
 	IsChief bool `json:"chief" yaml:"chief"`
+	// RequestGPUs is used to store request gpu count
+	RequestGPUs int `json:"requestGPUs" yaml:"requestGPUs"`
+	// GpuDutyCycle stores the gpu metrics
+	GPUMetrics map[string]GpuMetric `json:"gpuMetrics" yaml:"gpuMetrics"`
 }

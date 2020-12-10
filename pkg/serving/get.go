@@ -18,6 +18,19 @@ var (
 	errNotFoundServingJobMessage = "Not found serving job %v, please check it with `arena serve list | grep %v`"
 )
 
+var getJobTemplate = `
+Name:           %v
+Namespace:      %v
+Type:           %v
+Version:        %v
+Desired:        %v
+Available:      %v
+Age:            %v
+Address:        %v
+Port:           %v
+%v
+`
+
 func SearchServingJob(namespace, name, version string, servingType types.ServingJobType) (ServingJob, error) {
 	if servingType == types.UnknownServingJob {
 		return nil, fmt.Errorf("Unknown serving job type,arena only supports: [%s]", utils.GetSupportServingJobTypesInfo())
@@ -44,7 +57,7 @@ func SearchServingJob(namespace, name, version string, servingType types.Serving
 	for _, p := range processers {
 		servingJobs, err := p.GetServingJobs(namespace, name, version)
 		if err != nil {
-			log.Debugf("processer %v does not support the serving job %v", name)
+			log.Debugf("processer %v does not support the serving job %v", p.Type(), name)
 			continue
 		}
 		jobs = append(jobs, servingJobs...)
@@ -69,23 +82,7 @@ func PrintServingJob(job ServingJob, format types.FormatStyle) {
 		fmt.Printf("%v", string(data))
 		return
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	jobInfo := job.Convert2JobInfo()
-	fields := []string{
-		fmt.Sprintf(`NAME:             %v`, jobInfo.Name),
-		fmt.Sprintf(`NAMESPACE:        %v`, jobInfo.Namespace),
-		fmt.Sprintf(`VERSION:          %v`, jobInfo.Version),
-		fmt.Sprintf(`SERVING TYPE:     %v`, jobInfo.Type),
-		fmt.Sprintf(`DESIRED:          %v`, jobInfo.Desired),
-		fmt.Sprintf(`AVAILABLE:        %v`, jobInfo.Available),
-		fmt.Sprintf(`AGE:              %v`, jobInfo.Age),
-	}
-	if jobInfo.RequestGPU != 0 {
-		fields = append(fields, fmt.Sprintf("GPUS:             %v", jobInfo.RequestGPU))
-	}
-	if jobInfo.RequestGPUMemory != 0 {
-		fields = append(fields, fmt.Sprintf("GPU MEMORY:       %v", jobInfo.RequestGPUMemory))
-	}
 	endpointAddress := jobInfo.IPAddress
 	ports := []string{}
 	for _, e := range jobInfo.Endpoints {
@@ -97,22 +94,48 @@ func PrintServingJob(job ServingJob, format types.FormatStyle) {
 		}
 		ports = append(ports, port)
 	}
-	fields = append(fields, fmt.Sprintf(`ENDPOINT ADDRESS: %v`, endpointAddress))
-	fields = append(fields, fmt.Sprintf(`ENDPOINT PORT:    %v`, strings.Join(ports, ",")))
-	fields = append(fields, "")
-	fields = append(fields, "INSTANCE\tSTATUS\tAGE\tREADY\tRESTARTS\tNODE")
+	isGPUShare := false
+	title := "GPUs"
+	step := "----"
+	gpuAllocation := fmt.Sprintf("GPUs:           %v", jobInfo.RequestGPU)
+	if jobInfo.RequestGPUMemory != 0 {
+		isGPUShare = true
+		title = "GPU(Memory/GiB)"
+		step = "---------------"
+		gpuAllocation = fmt.Sprintf("GPUMemory(GiB): %v", jobInfo.RequestGPUMemory)
+	}
+	lines := []string{gpuAllocation, "", "Instances:", fmt.Sprintf("  NAME\tSTATUS\tAGE\tREADY\tRESTARTS\t%v\tNODE", title)}
+	lines = append(lines, fmt.Sprintf("  ----\t------\t---\t-----\t--------\t%v\t----", step))
 	for _, i := range jobInfo.Instances {
+		value := i.RequestGPU
+		if isGPUShare {
+			value = i.RequestGPUMemory
+		}
 		items := []string{
-			fmt.Sprintf("%v", i.Name),
+			fmt.Sprintf("  %v", i.Name),
 			fmt.Sprintf("%v", i.Status),
 			fmt.Sprintf("%v", i.Age),
 			fmt.Sprintf("%v/%v", i.ReadyContainer, i.TotalContainer),
 			fmt.Sprintf("%v", i.RestartCount),
+			fmt.Sprintf("%v", value),
 			fmt.Sprintf("%v", i.NodeName),
 		}
-		fields = append(fields, strings.Join(items, "\t"))
+		lines = append(lines, strings.Join(items, "\t"))
 	}
-	fmt.Fprintf(w, strings.Join(fields, "\n"))
+	lines = append(lines, "")
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	output := fmt.Sprintf(strings.Trim(getJobTemplate, "\n"),
+		jobInfo.Name,
+		jobInfo.Namespace,
+		jobInfo.Type,
+		jobInfo.Version,
+		jobInfo.Desired,
+		jobInfo.Available,
+		jobInfo.Age,
+		endpointAddress,
+		strings.Join(ports, ","),
+		strings.Join(lines, "\n"),
+	)
+	fmt.Fprintf(w, output)
 	w.Flush()
-	fmt.Println()
 }

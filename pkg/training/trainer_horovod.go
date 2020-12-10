@@ -15,7 +15,6 @@
 package training
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
@@ -29,10 +28,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"time"
-)
-
-var (
-	errHorovodJobNotFound = errors.New("horovod job not found")
 )
 
 // Horovod Job Information
@@ -280,7 +275,7 @@ func (h *HorovodJobTrainer) getTrainingJob(name, namespace string) (TrainingJob,
 		return nil, err
 	}
 	if len(jobList.Items) == 0 {
-		return nil, errHorovodJobNotFound
+		return nil, types.ErrTrainingJobNotFound
 	}
 	job := jobList.Items[0]
 	// 2. Find the pod list, and determine the pod of the job
@@ -322,7 +317,7 @@ func (h *HorovodJobTrainer) getTrainingJobFromCache(name, namespace string) (Tra
 		return h.isHorovodPod(job.Name, job.Namespace, pod)
 	})
 	if len(jobs) == 0 {
-		return nil, errHorovodJobNotFound
+		return nil, types.ErrTrainingJobNotFound
 	}
 	job := &batchv1.Job{}
 	pods := []*v1.Pod{}

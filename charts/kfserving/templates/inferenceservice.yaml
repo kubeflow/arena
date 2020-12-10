@@ -23,6 +23,7 @@ spec:
           {{- end }}
           ports:
             - containerPort: {{ .Values.port }}
+              protocol: "TCP"
           resources:
             limits:
               {{- if .Values.cpu }}

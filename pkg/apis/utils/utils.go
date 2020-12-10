@@ -34,8 +34,8 @@ func GetTrainingJobTypes() []types.TrainingJobType {
 
 func GetSupportTrainingJobTypesInfo() string {
 	trainingTypes := []string{}
-	for trainingType, alias := range types.TrainingTypeMap {
-		item := fmt.Sprintf("%v(%v)", alias[0], trainingType)
+	for _, typeInfo := range types.TrainingTypeMap {
+		item := fmt.Sprintf("%v(%v)", typeInfo.Shorthand, typeInfo.Alias)
 		trainingTypes = append(trainingTypes, item)
 	}
 	return strings.Join(trainingTypes, ",")
@@ -46,30 +46,58 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 	if jobType == "" {
 		return types.AllTrainingJob
 	}
-	for trainingType, alias := range types.TrainingTypeMap {
-		for _, alia := range alias {
-			if jobType != alia {
-				continue
-			}
+	for trainingType, typeInfo := range types.TrainingTypeMap {
+		if string(typeInfo.Name) == jobType {
+			return trainingType
+		}
+		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
+			return trainingType
+		}
+		if typeInfo.Shorthand == jobType {
 			return trainingType
 		}
 	}
 	return types.UnknownTrainingJob
 }
 
-func GetServingJobTypes() []types.ServingJobType {
-	return []types.ServingJobType{
-		types.CustomServingJob,
-		types.KFServingJob,
-		types.TFServingJob,
-		types.TRTServingJob,
+func GetSupportedNodeTypes() []string {
+	items := []string{}
+	for _, typeInfo := range types.NodeTypeSlice {
+		items = append(items, fmt.Sprintf("%v(%v)", typeInfo.Shorthand, typeInfo.Alias))
 	}
+	return items
+}
+
+func TransferNodeType(nodeType string) types.NodeType {
+	if nodeType == "" {
+		return types.AllKnownNode
+	}
+	for _, typeInfo := range types.NodeTypeSlice {
+		if strings.ToLower(typeInfo.Alias) == strings.ToLower(nodeType) {
+			return typeInfo.Name
+		}
+		if string(typeInfo.Name) == nodeType {
+			return typeInfo.Name
+		}
+		if typeInfo.Shorthand == nodeType {
+			return typeInfo.Name
+		}
+	}
+	return types.UnknownNode
+}
+
+func GetServingJobTypes() []types.ServingJobType {
+	servingTypes := []types.ServingJobType{}
+	for servingType := range types.ServingTypeMap {
+		servingTypes = append(servingTypes, servingType)
+	}
+	return servingTypes
 }
 
 func GetSupportServingJobTypesInfo() string {
 	servingTypes := []string{}
-	for servingType, alias := range types.ServingTypeMap {
-		item := fmt.Sprintf("%v(%v)", alias[0], servingType)
+	for _, typeInfo := range types.ServingTypeMap {
+		item := fmt.Sprintf("%v(%v)", typeInfo.Shorthand, typeInfo.Alias)
 		servingTypes = append(servingTypes, item)
 	}
 	return strings.Join(servingTypes, ",")
@@ -79,11 +107,14 @@ func TransferServingJobType(jobType string) types.ServingJobType {
 	if jobType == "" {
 		return types.AllServingJob
 	}
-	for servingType, alias := range types.ServingTypeMap {
-		for _, alia := range alias {
-			if jobType != alia {
-				continue
-			}
+	for servingType, typeInfo := range types.ServingTypeMap {
+		if string(typeInfo.Name) == jobType {
+			return servingType
+		}
+		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
+			return servingType
+		}
+		if typeInfo.Shorthand == jobType {
 			return servingType
 		}
 	}
@@ -123,197 +154,6 @@ func TransferPrintFormat(format string) types.FormatStyle {
 	return types.UnknownFormat
 }
 
-// DefinePodPhaseStatus returns the pod status display in kubectl
-func DefinePodPhaseStatus(pod v1.Pod) (string, int, int, int) {
-	restarts := 0
-	totalContainers := len(pod.Spec.Containers)
-	readyContainers := 0
-
-	reason := string(pod.Status.Phase)
-	if pod.Status.Reason != "" {
-		reason = pod.Status.Reason
-	}
-	initializing := false
-	for i := range pod.Status.InitContainerStatuses {
-		container := pod.Status.InitContainerStatuses[i]
-		restarts += int(container.RestartCount)
-		switch {
-		case container.State.Terminated != nil && container.State.Terminated.ExitCode == 0:
-			continue
-		case container.State.Terminated != nil:
-			// initialization is failed
-			if len(container.State.Terminated.Reason) == 0 {
-				if container.State.Terminated.Signal != 0 {
-					reason = fmt.Sprintf("Init:Signal:%d", container.State.Terminated.Signal)
-				} else {
-					reason = fmt.Sprintf("Init:ExitCode:%d", container.State.Terminated.ExitCode)
-				}
-			} else {
-				reason = "Init:" + container.State.Terminated.Reason
-			}
-			initializing = true
-		case container.State.Waiting != nil && len(container.State.Waiting.Reason) > 0 && container.State.Waiting.Reason != "PodInitializing":
-			reason = "Init:" + container.State.Waiting.Reason
-			initializing = true
-		default:
-			reason = fmt.Sprintf("Init:%d/%d", i, len(pod.Spec.InitContainers))
-			initializing = true
-		}
-		break
-	}
-	if !initializing {
-		restarts = 0
-		hasRunning := false
-		for i := len(pod.Status.ContainerStatuses) - 1; i >= 0; i-- {
-			container := pod.Status.ContainerStatuses[i]
-
-			restarts += int(container.RestartCount)
-			if container.State.Waiting != nil && container.State.Waiting.Reason != "" {
-				reason = container.State.Waiting.Reason
-			} else if container.State.Terminated != nil && container.State.Terminated.Reason != "" {
-				reason = container.State.Terminated.Reason
-			} else if container.State.Terminated != nil && container.State.Terminated.Reason == "" {
-				if container.State.Terminated.Signal != 0 {
-					reason = fmt.Sprintf("Signal:%d", container.State.Terminated.Signal)
-				} else {
-					reason = fmt.Sprintf("ExitCode:%d", container.State.Terminated.ExitCode)
-				}
-			} else if container.Ready && container.State.Running != nil {
-				hasRunning = true
-				readyContainers++
-			}
-		}
-
-		// change pod status back to "Running" if there is at least one container still reporting as "Running" status
-		if reason == "Completed" && hasRunning {
-			reason = "Running"
-		}
-	}
-
-	if pod.DeletionTimestamp != nil && pod.Status.Reason == "NodeLost" {
-		reason = "Unknown"
-	} else if pod.DeletionTimestamp != nil {
-		reason = "Terminating"
-	}
-	return reason, totalContainers, restarts, readyContainers
-}
-
-func IsTensorFlowPod(name, ns string, pod *v1.Pod) bool {
-	// check the release name is matched tfjob name
-	if pod.Labels["release"] != name {
-		return false
-	}
-	// check the job type is tfjob
-	if pod.Labels["app"] != string(types.TFTrainingJob) {
-		return false
-	}
-	// check the namespace
-	if pod.Namespace != ns {
-		return false
-	}
-	// check the group name
-	switch {
-	case pod.Labels[labelGroupName] == "kubeflow.org":
-		return true
-	case pod.Labels[labelGroupNameV1alpha2] == "kubeflow.org":
-		return true
-	}
-	return false
-}
-func IsPyTorchPod(name, ns string, pod *v1.Pod) bool {
-	// check the release name is matched pytorchjob name
-	if pod.Labels["release"] != name {
-		return false
-	}
-	// check the job type is pytorchjob
-	if pod.Labels["app"] != string(types.PytorchTrainingJob) {
-		return false
-	}
-	// check the namespace
-	if pod.Namespace != ns {
-		return false
-	}
-	// check the group name
-	if pod.Labels[labelPyTorchGroupName] != "kubeflow.org" {
-		return false
-	}
-	return true
-}
-
-func IsMPIPod(name, ns string, pod *v1.Pod) bool {
-	// check the release name is matched mpijob name
-	if pod.Labels["release"] != name {
-		return false
-	}
-	// check the job type is mpijob
-	if pod.Labels["app"] != string(types.MPITrainingJob) {
-		return false
-	}
-
-	if pod.Labels["group_name"] != "kubeflow.org" {
-		return false
-	}
-	if pod.Namespace != ns {
-		return false
-	}
-	return true
-}
-
-func IsHorovodPod(name, ns string, pod *v1.Pod) bool {
-	if pod.Labels["release"] != name {
-		return false
-	}
-	if pod.Labels["app"] != "tf-horovod" {
-		return false
-	}
-	if pod.Namespace != ns {
-		return false
-	}
-	return true
-}
-
-func IsVolcanoPod(name, ns string, pod *v1.Pod) bool {
-	if pod.Labels["release"] != name {
-		return false
-	}
-	if pod.Labels["app"] != string(types.VolcanoTrainingJob) {
-		return false
-	}
-	if pod.Namespace != ns {
-		return false
-	}
-	return true
-}
-
-func IsETPod(name, ns string, pod *v1.Pod) bool {
-	if pod.Labels["release"] != name {
-		return false
-	}
-	if pod.Labels["app"] != string(types.ETTrainingJob) {
-		return false
-	}
-	if pod.Labels[etLabelGroupName] != "kai.alibabacloud.com" {
-		return false
-	}
-	if pod.Namespace != ns {
-		return false
-	}
-	return true
-}
-
-func IsSparkPod(name, ns string, item *v1.Pod) bool {
-	if item.Labels["release"] != name {
-		return false
-	}
-	if item.Labels["app"] != "sparkjob" {
-		return false
-	}
-	if item.Namespace != ns {
-		return false
-	}
-	return true
-}
-
 // print the help infomation
 func PrintErrorMessage(message string) {
 	if strings.Contains(message, "please use '--type' or '--version' to filter.") {
@@ -329,4 +169,30 @@ func PrintErrorMessage(message string) {
 		return
 	}
 	log.Errorf("%v", message)
+}
+
+func DefineNodeStatus(node *v1.Node) string {
+	conditionMap := make(map[v1.NodeConditionType]*v1.NodeCondition)
+	NodeAllConditions := []v1.NodeConditionType{v1.NodeReady}
+	for i := range node.Status.Conditions {
+		cond := node.Status.Conditions[i]
+		conditionMap[cond.Type] = &cond
+	}
+	var status []string
+	for _, validCondition := range NodeAllConditions {
+		if condition, ok := conditionMap[validCondition]; ok {
+			if condition.Status == v1.ConditionTrue {
+				status = append(status, string(condition.Type))
+			} else {
+				status = append(status, "Not"+string(condition.Type))
+			}
+		}
+	}
+	if len(status) == 0 {
+		status = append(status, "Unknown")
+	}
+	if node.Spec.Unschedulable {
+		status = append(status, "SchedulingDisabled")
+	}
+	return strings.Join(status, ",")
 }

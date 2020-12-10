@@ -31,7 +31,6 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	yaml "gopkg.in/yaml.v2"
 
-	"io"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -40,8 +39,18 @@ import (
 )
 
 var (
-	errGetMsg = "Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s %v'."
+	errJobNotFoundMessage = "Not found training job %s in namespace %s,please use 'arena submit' to create it."
+	errGetMsg             = "Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s %v'."
 )
+var getJobTemplate = `
+Name:      %v
+Status:    %v
+Namespace: %v
+Priority:  %v
+Trainer:   %v
+Duration:  %v
+%v
+`
 
 /*
 * search the training job with name and training type
@@ -96,7 +105,7 @@ func getTrainingJobByType(name, namespace, trainingType string) (job TrainingJob
 			trainingType,
 		)
 	}
-	return nil, fmt.Errorf("Failed to find the training job %s in namespace %s", name, namespace)
+	return nil, types.ErrTrainingJobNotFound
 }
 
 func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err error) {
@@ -113,13 +122,16 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 		}
 		job, err := trainer.GetTrainingJob(name, namespace)
 		if err != nil {
+			if err == types.ErrTrainingJobNotFound {
+				continue
+			}
 			return nil, err
 		}
 		jobs = append(jobs, job)
 	}
 	if len(jobs) == 0 {
 		log.Debugf("Failed to find the training job %s in namespace %s", name, namespace)
-		return nil, fmt.Errorf("The job '%s' in namespace %s doesn't exist, please use 'arena submit' to create it first.\n", name, namespace)
+		return nil, types.ErrTrainingJobNotFound
 	}
 	return jobs, nil
 }
@@ -153,89 +165,83 @@ func PrintTrainingJob(job TrainingJob, format string, showEvents bool) {
 
 func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEvents bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	printJobSummary(w, job)
-
-	// apply a dummy FgDefault format to align tabwriter with the rest of the columns
-
-	fmt.Fprintf(w, "NAME\tSTATUS\tTRAINER\tAGE\tINSTANCE\tNODE\n")
-
+	lines := []string{"", "Instances:", "  NAME\tSTATUS\tAGE\tGPU(Requested)\tNODE"}
+	lines = append(lines, "  ----\t-----\t---\t--------------\t----")
+	totalRequestGPUs := 0
+	totalAllocatedGPUs := 0
 	for _, instance := range job.Instances {
-		// hostIP := "N/A"
-
-		// if pod.Status.Phase == v1.PodRunning {
+		totalRequestGPUs += instance.RequestGPUs
+		if instance.Status == "Running" {
+			totalAllocatedGPUs += instance.RequestGPUs
+		}
 		hostIP := instance.Node
-		// }
-
 		if len(hostIP) == 0 {
 			hostIP = "N/A"
 		}
-
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", job.Name,
-			instance.Status,
-			strings.ToUpper(string(job.Trainer)),
-			instance.Age,
+		lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v",
 			instance.Name,
-			hostIP)
+			instance.Status,
+			instance.Age,
+			instance.RequestGPUs,
+			hostIP,
+		))
 	}
-
+	if job.Status == "RUNNING" {
+		lines = append(lines, "", "GPUs:")
+		lines = append(lines, fmt.Sprintf("  Allocated/Requested GPUs of Job: %v/%v", totalAllocatedGPUs, totalRequestGPUs))
+	}
 	if job.Tensorboard != "" {
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "Your tensorboard will be available on:")
-		fmt.Fprintf(w, "%s \t\n", job.Tensorboard)
+		lines = append(lines, "", "Tensorboard:")
+		lines = append(lines, "  Your tensorboard will be available on: ")
+		lines = append(lines, fmt.Sprintf("  %v", job.Tensorboard))
 	}
 	chiefPodNamespace := ""
 	if job.ChiefName != "" {
 		chiefPodNamespace = job.Namespace
 	}
 	if showEvents {
-		printEvents(w, chiefPodNamespace, resouce)
+		lines = printEvents(lines, chiefPodNamespace, resouce)
 	}
-
+	PrintLine(w, fmt.Sprintf(strings.Trim(getJobTemplate, "\n"),
+		job.Name,
+		job.Status,
+		job.Namespace,
+		job.Priority,
+		strings.ToUpper(string(job.Trainer)),
+		job.Duration,
+		strings.Join(lines, "\n"),
+	))
 	_ = w.Flush()
 
 }
 
-func printJobSummary(w io.Writer, job *types.TrainingJobInfo) {
-	log.Debugf("--->STATUS: %s", job.Status)
-	log.Debugf("--->NAMESPACE: %s", job.Namespace)
-	log.Debugf("--->PRIORITY: %s", job.Priority)
-	log.Debugf("--->TRAINING DURATION: %s", job.Duration)
-
-	fmt.Fprintf(w, "STATUS: %s\n", job.Status)
-	fmt.Fprintf(w, "NAMESPACE: %s\n", job.Namespace)
-	fmt.Fprintf(w, "PRIORITY: %s\n", job.Priority)
-	fmt.Fprintf(w, "TRAINING DURATION: %s\n", job.Duration)
-	fmt.Fprintln(w, "")
-
-}
-
-func printEvents(w io.Writer, namespace string, resouces []Resource) {
-	fmt.Fprintf(w, "\nEvents: \n")
+func printEvents(lines []string, namespace string, resouces []Resource) []string {
+	lines = append(lines, "", "Events:")
 	clientset := config.GetArenaConfiger().GetClientSet()
 	eventsMap, err := GetResourcesEvents(clientset, namespace, resouces)
 	if err != nil {
-		fmt.Fprintf(w, "Get job events failed, due to: %v", err)
-		return
+		lines = append(lines, fmt.Sprintf("  Get job events failed, due to: %v", err))
+		return lines
 	}
 	if len(eventsMap) == 0 {
-		fmt.Fprintln(w, "No events for resources")
-		return
+		lines = append(lines, "  No events for resources")
+		return lines
 	}
-	fmt.Fprintf(w, "SOURCE\tTYPE\tAGE\tMESSAGE\n")
-	fmt.Fprintf(w, "--------\t----\t---\t-------\n")
-
+	lines = append(lines, "  SOURCE\tTYPE\tAGE\tMESSAGE")
+	lines = append(lines, "  ------\t----\t---\t-------")
 	for resourceName, events := range eventsMap {
 		for _, event := range events {
 			instanceName := fmt.Sprintf("%s/%s", strings.ToLower(event.InvolvedObject.Kind), resourceName)
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t\n",
+			lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v",
 				instanceName,
 				event.Type,
 				util.ShortHumanDuration(time.Now().Sub(event.CreationTimestamp.Time)),
-				fmt.Sprintf("[%s] %s", event.Reason, event.Message))
+				fmt.Sprintf("[%s] %s", event.Reason, event.Message),
+			))
 		}
-		// empty line for per pod
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", "", "", "", "", "", "")
+		lines = append(lines, "")
 	}
+	return lines
 }
 
 // Get Event of the Job
