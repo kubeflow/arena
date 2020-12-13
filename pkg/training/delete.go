@@ -38,12 +38,17 @@ func DeleteTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 	log.Debugf("%s wasn't deleted by helm due to %v", jobName, err)
 	// if the jobType is sure,delete the job
 	if jobType != types.AllTrainingJob {
+		if !isTrainingConfigExist(jobName, string(jobType), namespace) {
+			log.Infof("The training job '%v' does not exist,skip to delete it", jobName)
+			return types.ErrTrainingJobNotFound
+		}
 		return workflow.DeleteJob(jobName, namespace, string(jobType))
 	}
 	// 2. Handle training jobs created by arena
 	trainingTypes = getTrainingTypes(jobName, namespace)
 	if len(trainingTypes) == 0 {
-		return fmt.Errorf("There is no training job found with the name %s, please check it with `arena list | grep %s`", jobName, jobName)
+		log.Infof("The training job '%v' does not exist,skip to delete it", jobName)
+		return types.ErrTrainingJobNotFound
 	}
 	if len(trainingTypes) > 1 {
 		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one.",
@@ -55,7 +60,7 @@ func DeleteTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 	if err != nil {
 		return err
 	}
-	log.Infof("The Job %s has been deleted successfully", jobName)
+	log.Infof("The training job %s has been deleted successfully", jobName)
 	// (TODO: cheyang)3. Handle training jobs created by others, to implement
 	return nil
 }

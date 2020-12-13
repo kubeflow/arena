@@ -63,3 +63,11 @@ func (a *ArenaClient) Training() *TrainingJobClient {
 func (a *ArenaClient) Serving() *ServingJobClient {
 	return NewServingJobClient(a.namespace, a.arenaConfiger)
 }
+
+func (a *ArenaClient) Node() *NodeClient {
+	return NewNodeClient(a.namespace, a.arenaConfiger)
+}
+
+func (a *ArenaClient) Data() *DataClient {
+	return NewDataClient(a.namespace, a.arenaConfiger)
+}

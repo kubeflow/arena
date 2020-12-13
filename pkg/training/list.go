@@ -11,23 +11,20 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 )
 
-type SimpleJobInfo struct {
-	Name      string `json:"name" yaml:"name"`
-	Status    string `json:"status" yaml:"status"`
-	Trainer   string `json:"trainer" yaml:"trainer"`
-	Age       string `json:"age" yaml:"age"`
-	Node      string `json:"node" yaml:"node"`
-	Namespace string `json:"namespace" yaml:"namespace"`
-}
-
-func ListTrainingJobs(namespace string, allNamespaces bool) ([]TrainingJob, error) {
+func ListTrainingJobs(namespace string, allNamespaces bool, jobType types.TrainingJobType) ([]TrainingJob, error) {
 	jobs := []TrainingJob{}
 	trainers := GetAllTrainers()
-	for _, trainer := range trainers {
+	if jobType == types.UnknownTrainingJob {
+		return nil, fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
+	}
+	for trainerType, trainer := range trainers {
 		if !trainer.IsEnabled() {
+			continue
+		}
+		if !isNeededTrainingType(trainerType, jobType) {
 			continue
 		}
 		trainingJobs, err := trainer.ListTrainingJobs(namespace, allNamespaces)
@@ -41,17 +38,8 @@ func ListTrainingJobs(namespace string, allNamespaces bool) ([]TrainingJob, erro
 }
 
 func DisplayTrainingJobList(jobInfoList []TrainingJob, format string, allNamespaces bool) {
-	jobSimpleInfos := []SimpleJobInfo{}
 	jobInfos := []*types.TrainingJobInfo{}
 	for _, jobInfo := range jobInfoList {
-		jobSimpleInfos = append(jobSimpleInfos, SimpleJobInfo{
-			Name:      jobInfo.Name(),
-			Status:    GetJobRealStatus(jobInfo),
-			Trainer:   strings.ToUpper(string(jobInfo.Trainer())),
-			Age:       util.ShortHumanDuration(jobInfo.Age()),
-			Node:      jobInfo.HostIPOfChief(),
-			Namespace: jobInfo.Namespace(),
-		})
 		jobInfos = append(jobInfos, BuildJobInfo(jobInfo))
 	}
 	switch format {
@@ -65,22 +53,32 @@ func DisplayTrainingJobList(jobInfoList []TrainingJob, format string, allNamespa
 		return
 	case "", "wide":
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		labelField := []string{"NAME", "STATUS", "TRAINER", "AGE", "NODE"}
+		header := []string{}
 		if allNamespaces {
-			labelField = append(labelField, "NAMESPACE")
+			header = append(header, "NAMESPACE")
 		}
-		PrintLine(w, labelField...)
-		for _, jobSimpleInfo := range jobSimpleInfos {
-			items := []string{
-				jobSimpleInfo.Name,
-				jobSimpleInfo.Status,
-				jobSimpleInfo.Trainer,
-				jobSimpleInfo.Age,
-				jobSimpleInfo.Node,
+		header = append(header, []string{"NAME", "STATUS", "TRAINER", "AGE", "GPU(Requested)", "GPU(Allocated)", "NODE"}...)
+		PrintLine(w, header...)
+		for _, jobInfo := range jobInfos {
+			hostIP := "N/A"
+			for _, i := range jobInfo.Instances {
+				if i.IsChief {
+					hostIP = i.NodeIP
+				}
 			}
+			items := []string{}
 			if allNamespaces {
-				items = append(items, jobSimpleInfo.Namespace)
+				items = append(items, jobInfo.Namespace)
 			}
+			items = append(items, []string{
+				jobInfo.Name,
+				fmt.Sprintf("%v", jobInfo.Status),
+				strings.ToUpper(string(jobInfo.Trainer)),
+				fmt.Sprintf("%v", jobInfo.Duration),
+				fmt.Sprintf("%v", jobInfo.RequestGPU),
+				fmt.Sprintf("%v", jobInfo.AllocatedGPU),
+				hostIP,
+			}...)
 			PrintLine(w, items...)
 		}
 		_ = w.Flush()
@@ -101,4 +99,11 @@ func CheckPrintFormat(format string) error {
 		return nil
 	}
 	return fmt.Errorf("Unknown format,only suppot: [yaml,json,wide]")
+}
+
+func isNeededTrainingType(jobType types.TrainingJobType, targetJobType types.TrainingJobType) bool {
+	if targetJobType == types.AllTrainingJob {
+		return true
+	}
+	return jobType == targetJobType
 }

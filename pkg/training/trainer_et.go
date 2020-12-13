@@ -16,7 +16,6 @@ package training
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -42,10 +41,6 @@ const (
 	etLabelTrainingJobRole = "training-job-role"
 
 	etJobMetaDataAnnotationsKey = "kubectl.kubernetes.io/last-applied-configuration"
-)
-
-var (
-	errETJobNotFound = errors.New("etjob not found")
 )
 
 // ET Job Information
@@ -297,7 +292,7 @@ func (ejt *ETJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 	if err != nil {
 		log.Debugf("failed to get job,reason: %v", err)
 		if strings.Contains(err.Error(), fmt.Sprintf(`trainingjobs.kai.alibabacloud.com "%v" not found`, name)) {
-			return nil, errETJobNotFound
+			return nil, types.ErrTrainingJobNotFound
 		}
 		return nil, err
 	}
@@ -340,7 +335,7 @@ func (ejt *ETJobTrainer) getTrainingJobFromCache(name, namespace string) (Traini
 	// 1.find the mpijob from the cache
 	etjob, pods := arenacache.GetArenaCache().GetETJob(namespace, name)
 	if etjob == nil {
-		return nil, errETJobNotFound
+		return nil, types.ErrTrainingJobNotFound
 	}
 	// 2. Find the pods, and determine the pod of the job
 	filterPods, chiefPod := getPodsOfETJob(etjob, ejt, pods)
@@ -569,7 +564,7 @@ func (ej *ETJob) GetPriorityClass() string {
 			podTemplate := launcher["template"].(map[string]interface{})
 			if _, ok := podTemplate["spec"]; ok {
 				podSpec := podTemplate["spec"].(map[string]interface{})
-				log.Debugf("podSpec: ", podSpec)
+				log.Debugf("podSpec: %v", podSpec)
 				if pc, ok := podSpec["priorityClassName"]; ok && pc != "" {
 					return pc.(string)
 				}
@@ -582,7 +577,7 @@ func (ej *ETJob) GetPriorityClass() string {
 			podTemplate := worker["template"].(map[string]interface{})
 			if _, ok := podTemplate["spec"]; ok {
 				podSpec := podTemplate["spec"].(map[string]interface{})
-				log.Debugf("podSpec: ", podSpec)
+				log.Debugf("podSpec: %v", podSpec)
 				if pc, ok := podSpec["priorityClassName"]; ok && pc != "" {
 					return pc.(string)
 				}

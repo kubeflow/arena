@@ -21,7 +21,7 @@ import (
 	"runtime/trace"
 	"strconv"
 
-	"github.com/kubeflow/arena/cmd/arena/commands"
+	"github.com/kubeflow/arena/pkg/commands"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	log "github.com/sirupsen/logrus"
 )

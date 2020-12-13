@@ -229,6 +229,9 @@ func CheckAppConfigMap(name, namespace string) (found bool) {
 	out, err := kubectl(args)
 
 	if err != nil {
+		if strings.Contains(err.Error(), fmt.Sprintf(`Error from server (NotFound): configmaps "%v" not found`, name)) {
+			found = false
+		}
 		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 		log.Debugf("%s", string(out))
 	} else {

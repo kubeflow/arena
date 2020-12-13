@@ -17,7 +17,9 @@ package commands
 import (
 	"os"
 
+	datacommand "github.com/kubeflow/arena/pkg/commands/data"
 	"github.com/kubeflow/arena/pkg/commands/serving"
+	topcommand "github.com/kubeflow/arena/pkg/commands/top"
 	"github.com/kubeflow/arena/pkg/commands/training"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -82,9 +84,9 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(training.NewLogsCommand())
 	//command.AddCommand(NewDeleteCommand())
 	command.AddCommand(training.NewDeleteCommand())
-	command.AddCommand(NewTopCommand())
+	command.AddCommand(topcommand.NewTopCommand())
 	command.AddCommand(NewVersionCmd(CLIName))
-	command.AddCommand(NewDataCommand())
+	command.AddCommand(datacommand.NewDataCommand())
 	command.AddCommand(NewCompletionCommand())
 	// command.AddCommand(NewWaitCommand())
 	// command.AddCommand(cmd.NewVersionCmd(CLIName))

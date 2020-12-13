@@ -15,7 +15,6 @@
 package training
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -33,10 +32,6 @@ import (
 	"time"
 
 	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
-)
-
-var (
-	errMPIJobNotFound = errors.New("mpijob not found")
 )
 
 // MPI Job Information
@@ -295,7 +290,7 @@ func (tt *MPIJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, er
 	mpijob, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf(`mpijobs.kubeflow.org "%v" not found`, name)) {
-			return nil, errMPIJobNotFound
+			return nil, types.ErrTrainingJobNotFound
 		}
 		return nil, fmt.Errorf("failed to find job %v,reason: %v", name, err)
 	}
@@ -343,7 +338,7 @@ func (tt *MPIJobTrainer) getTrainingJobFromCache(name, namespace string) (Traini
 	// 1.find the mpijob from the cache
 	mpijob, pods := arenacache.GetArenaCache().GetMPIJob(namespace, name)
 	if mpijob == nil {
-		return nil, errMPIJobNotFound
+		return nil, types.ErrTrainingJobNotFound
 	}
 	// 2.find the k8s job from the cache
 	jobs, _ := arenacache.GetArenaCache().FilterK8sJobs(func(job *batchv1.Job) bool {

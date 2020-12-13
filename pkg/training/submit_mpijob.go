@@ -36,7 +36,7 @@ func SubmitMPIJob(namespace string, submitArgs *types.SubmitMPIJobArgs) (err err
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 	// if error is unknown,return an error
-	if err != errMPIJobNotFound {
+	if err != types.ErrTrainingJobNotFound {
 		return err
 	}
 	// the master is also considered as a worker

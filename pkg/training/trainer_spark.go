@@ -1,7 +1,6 @@
 package training
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -19,8 +18,7 @@ import (
 )
 
 var (
-	errSparkJobNotFound = errors.New("sparkjob not found")
-	SparkCRD            = "sparkapplications.sparkoperator.k8s.io"
+	SparkCRD = "sparkapplications.sparkoperator.k8s.io"
 )
 
 // spark application wrapper
@@ -309,7 +307,7 @@ func (st *SparkJobTrainer) getTrainingJobFromCache(name, namespace string) (Trai
 	// 1.find the mpijob from the cache
 	sparkjob, pods := arenacache.GetArenaCache().GetSparkJob(namespace, name)
 	if sparkjob == nil {
-		return nil, errSparkJobNotFound
+		return nil, types.ErrTrainingJobNotFound
 	}
 	// 2. Find the pods, and determine the pod of the job
 	filterPods, chiefPod := getPodsOfSparkJob(sparkjob, st, pods)
@@ -330,7 +328,7 @@ func (st *SparkJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, 
 	if err != nil {
 		log.Debugf("failed to get job,reason: %v", err)
 		if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, SparkCRD, name)) {
-			return nil, errSparkJobNotFound
+			return nil, types.ErrTrainingJobNotFound
 		}
 		return nil, err
 	}

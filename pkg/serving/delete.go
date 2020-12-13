@@ -2,6 +2,7 @@ package serving
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/workflow"
@@ -11,6 +12,10 @@ import (
 func DeleteServingJob(namespace, name, version string, jobType types.ServingJobType) error {
 	job, err := SearchServingJob(namespace, name, version, jobType)
 	if err != nil {
+		if strings.Contains(err.Error(), "Not found serving job") {
+			log.Infof("The serving job '%v' doest not exist,skip to delete it.", name)
+			return nil
+		}
 		return err
 	}
 	nameWithVersion := fmt.Sprintf("%v-%v", job.Name(), job.Version())
@@ -19,6 +24,6 @@ func DeleteServingJob(namespace, name, version string, jobType types.ServingJobT
 	if err != nil {
 		return err
 	}
-	log.Infof("The Serving job %s with version %s has been deleted successfully", job.Name(), job.Version())
+	log.Infof("The serving job %s with version %s has been deleted successfully", job.Name(), job.Version())
 	return nil
 }

@@ -191,32 +191,20 @@ func (s *servingJob) Endpoints() []types.Endpoint {
 }
 
 func (s *servingJob) RequestGPUs() int {
-	request := uint(0)
+	gpus := 0
 	for _, pod := range s.pods {
-		containers := pod.Spec.Containers
-		for _, container := range containers {
-			if val, ok := container.Resources.Limits[v1.ResourceName(GPU_RESOURCE_NAME)]; ok {
-				request += uint(val.Value())
-			}
-			if val, ok := container.Resources.Limits[v1.ResourceName(ALIYUN_GPU_RESOURCE_NAME)]; ok {
-				request += uint(val.Value())
-			}
-		}
+		gpus += utils.GPUCountInPod(pod)
+		gpus += utils.AliyunGPUCountInPod(pod)
 	}
-	return int(request)
+	return gpus
 }
 
 func (s *servingJob) RequestGPUMemory() int {
-	request := uint(0)
+	gpuMem := 0
 	for _, pod := range s.pods {
-		containers := pod.Spec.Containers
-		for _, container := range containers {
-			if val, ok := container.Resources.Limits[v1.ResourceName(GPU_MEM_RESOURCE_NAME)]; ok {
-				request += uint(val.Value())
-			}
-		}
+		gpuMem += utils.GPUMemoryCountInPod(pod)
 	}
-	return int(request)
+	return gpuMem
 }
 
 func (s *servingJob) AvailableInstances() int {
@@ -232,27 +220,32 @@ func (s *servingJob) Instances() []types.ServingInstance {
 	for _, pod := range s.pods {
 		status, totalContainers, restart, readyContainer := utils.DefinePodPhaseStatus(*pod)
 		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
+		gpus := utils.GPUCountInPod(pod) + utils.AliyunGPUCountInPod(pod)
+		gpuMemory := utils.GPUMemoryCountInPod(pod)
 		instances = append(instances, types.ServingInstance{
-			Name:           pod.Name,
-			Status:         status,
-			Age:            age,
-			NodeIP:         pod.Status.HostIP,
-			NodeName:       pod.Spec.NodeName,
-			IP:             pod.Status.PodIP,
-			ReadyContainer: readyContainer,
-			TotalContainer: totalContainers,
-			RestartCount:   restart,
+			Name:             pod.Name,
+			Status:           status,
+			Age:              age,
+			NodeIP:           pod.Status.HostIP,
+			NodeName:         pod.Spec.NodeName,
+			IP:               pod.Status.PodIP,
+			ReadyContainer:   readyContainer,
+			TotalContainer:   totalContainers,
+			RestartCount:     restart,
+			RequestGPU:       gpus,
+			RequestGPUMemory: gpuMemory,
 		})
 	}
 	return instances
 }
 
 func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
+	servingType := types.ServingTypeMap[s.servingType].Alias
 	servingJobInfo := types.ServingJobInfo{
 		Name:             s.name,
 		Namespace:        s.namespace,
 		Version:          s.version,
-		Type:             s.servingType,
+		Type:             servingType,
 		Age:              util.ShortHumanDuration(s.Age()),
 		Desired:          s.DesiredInstances(),
 		IPAddress:        s.IPAddress(),

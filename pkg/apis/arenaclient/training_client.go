@@ -11,6 +11,10 @@ import (
 	"github.com/kubeflow/arena/pkg/training"
 )
 
+var (
+	errJobNotFoundMessage = "Not found training job %s in namespace %s,please use 'arena submit' to create it."
+)
+
 // TrainingJobClient provides some operators for managing training jobs.
 type TrainingJobClient struct {
 	// namespace store the namespace
@@ -103,6 +107,9 @@ func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJo
 	}
 	job, err := training.SearchTrainingJob(jobName, t.namespace, jobType)
 	if err != nil {
+		if err == types.ErrTrainingJobNotFound {
+			return fmt.Errorf(errJobNotFoundMessage, jobName, t.namespace)
+		}
 		return err
 	}
 	training.PrintTrainingJob(job, format, showEvent)
@@ -110,8 +117,8 @@ func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJo
 }
 
 // List returns all training jobs
-func (t *TrainingJobClient) List(allNamespaces bool) ([]*types.TrainingJobInfo, error) {
-	jobs, err := training.ListTrainingJobs(t.namespace, allNamespaces)
+func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.TrainingJobType) ([]*types.TrainingJobInfo, error) {
+	jobs, err := training.ListTrainingJobs(t.namespace, allNamespaces, trainingType)
 	if err != nil {
 		return nil, err
 	}
@@ -123,11 +130,11 @@ func (t *TrainingJobClient) List(allNamespaces bool) ([]*types.TrainingJobInfo, 
 }
 
 // ListAndPrint lists and prints the job informations
-func (t *TrainingJobClient) ListAndPrint(allNamespaces bool, format string) error {
+func (t *TrainingJobClient) ListAndPrint(allNamespaces bool, format string, trainingType types.TrainingJobType) error {
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
 		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
 	}
-	jobs, err := training.ListTrainingJobs(t.namespace, allNamespaces)
+	jobs, err := training.ListTrainingJobs(t.namespace, allNamespaces, trainingType)
 	if err != nil {
 		return err
 	}
@@ -147,6 +154,9 @@ func (t *TrainingJobClient) Delete(jobType types.TrainingJobType, jobNames ...st
 	for _, jobName := range jobNames {
 		err := training.DeleteTrainingJob(jobName, t.namespace, jobType)
 		if err != nil {
+			if err == types.ErrTrainingJobNotFound {
+				return nil
+			}
 			return err
 		}
 	}
@@ -165,4 +175,8 @@ func (t *TrainingJobClient) LogViewer(jobName string, jobType types.TrainingJobT
 // Prune cleans the not running training jobs
 func (t *TrainingJobClient) Prune(allNamespaces bool, since time.Duration) error {
 	return training.PruneTrainingJobs(t.namespace, allNamespaces, since)
+}
+
+func (t *TrainingJobClient) Top(args []string, namespace string, allNamespaces bool, jobType types.TrainingJobType, instanceName string, notStop bool, format types.FormatStyle) error {
+	return training.TopTrainingJobs(args, namespace, allNamespaces, jobType, instanceName, notStop, format)
 }

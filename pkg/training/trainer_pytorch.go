@@ -15,7 +15,6 @@
 package training
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -43,10 +42,6 @@ const (
 	labelPyTorchGroupName    = "group-name"
 	labelPyTorchJobName      = "pytorch-job-name"
 	labelPyTorchJobRole      = "job-role"
-)
-
-var (
-	errPytorchJobNotFound = errors.New("pytorchjob not found")
 )
 
 // PyTorch Job Information
@@ -310,7 +305,7 @@ func (tt *PyTorchJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 	pytorchjob, err := tt.pytorchjobClient.KubeflowV1().PyTorchJobs(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf(`pytorchjobs.kubeflow.org "%v" not found`, name)) {
-			return nil, errPytorchJobNotFound
+			return nil, types.ErrTrainingJobNotFound
 		}
 		return nil, fmt.Errorf("failed to find job %v,reason: %v", name, err)
 	}
@@ -353,7 +348,7 @@ func (tt *PyTorchJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 func (tt *PyTorchJobTrainer) getTrainingJobFromCache(name, namespace string) (TrainingJob, error) {
 	pyjob, pods := arenacache.GetArenaCache().GetPytorchJob(namespace, name)
 	if pyjob == nil {
-		return nil, errPytorchJobNotFound
+		return nil, types.ErrTrainingJobNotFound
 	}
 	pyjob.Status.Conditions = makeJobStatusSortedByTime(pyjob.Status.Conditions)
 	filterPods, chiefPod := getPodsOfPyTorchJob(tt, pyjob, pods)

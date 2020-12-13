@@ -1,5 +1,7 @@
 package types
 
+// ServingJobType defines the serving job type
+// name must like shorthand + "-serving"
 type ServingJobType string
 
 const (
@@ -17,28 +19,33 @@ const (
 	UnknownServingJob ServingJobType = "unknown"
 )
 
+type ServingTypeInfo struct {
+	Name      ServingJobType
+	Alias     string
+	Shorthand string
+}
+
 // ServingTypeMap collects serving job type and their alias
-var ServingTypeMap = map[ServingJobType][]string{
+var ServingTypeMap = map[ServingJobType]ServingTypeInfo{
 	CustomServingJob: {
-		"custom",
-		"custom-serving",
+		Name:      CustomServingJob,
+		Alias:     "Custom",
+		Shorthand: "custom",
 	},
 	KFServingJob: {
-		"kf",
-		"kfserving",
-		"kf-serving",
+		Name:      KFServingJob,
+		Alias:     "KFServing",
+		Shorthand: "kf",
 	},
 	TFServingJob: {
-		"tf",
-		"tfserving",
-		"tf-serving",
-		"tensorflow-serving",
+		Name:      TFServingJob,
+		Alias:     "Tensorflow",
+		Shorthand: "tf",
 	},
 	TRTServingJob: {
-		"trt",
-		"trt-serving",
-		"trtserving",
-		"tensorrt-serving",
+		Name:      TRTServingJob,
+		Alias:     "Tensorrt",
+		Shorthand: "trt",
 	},
 }
 
@@ -49,25 +56,25 @@ type ServingJobInfo struct {
 	// Namespace specifies serving job namespace
 	Namespace string `json:"namespace" yaml:"namespace"`
 	// Type specifies serving job type
-	Type ServingJobType `json:"type" yaml:"type"`
+	Type string `json:"type" yaml:"type"`
 	// Version specifies serving job version
 	Version string `json:"version" yaml:"version"`
 	// Age specifies the serving job age
 	Age string `json:"age" yaml:"age"`
 	// Desired specifies the desired instances
-	Desired int `json:"desired" yaml:"desired"`
+	Desired int `json:"desiredInstances" yaml:"desiredInstances"`
 	// Available specifies the available instances
-	Available int `json:"available" yaml:"available"`
+	Available int `json:"availableInstances" yaml:"availableInstances"`
 	// Endpoints specifies the endpoints
 	Endpoints []Endpoint `json:"endpoints" yaml:"endpoints"`
 	// IPAddress specifies the ip address
-	IPAddress string `json:"ip_address" yaml:"ip_address"`
+	IPAddress string `json:"ip" yaml:"ip"`
 	// Instances gives the instance informations
 	Instances []ServingInstance `json:"instances" yaml:"instances"`
 	// RequestGPU specifies the request gpus
-	RequestGPU int `json:"request_gpu" yaml:"request_gpu"`
+	RequestGPU int `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory specifies the request gpu memory,only for gpushare
-	RequestGPUMemory int `json:"request_gpu_mem" yaml:"request_gpu_mem"`
+	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
 }
 
 type Endpoint struct {
@@ -76,7 +83,7 @@ type Endpoint struct {
 	// Port specifies endpoint port
 	Port int `json:"port" yaml:"port"`
 	// NodePort specifies the node port
-	NodePort int `json:"node_port" yaml:"node_port"`
+	NodePort int `json:"nodePort" yaml:"nodePort"`
 }
 
 type ServingInstance struct {
@@ -87,17 +94,21 @@ type ServingInstance struct {
 	// Age gives the instance ge
 	Age string `json:"age" yaml:"age"`
 	// ReadyContainer represents the count of ready containers
-	ReadyContainer int `json:"ready" yaml:"ready"`
+	ReadyContainer int `json:"readyContainers" yaml:"readyContainers"`
 	// TotalContainer represents the count of  total containers
-	TotalContainer int `json:"total" yaml:"total"`
+	TotalContainer int `json:"totalContainers" yaml:"totalContainers"`
 	// RestartCount represents the count of instance restarts
-	RestartCount int `json:"restart" yaml:"restart"`
+	RestartCount int `json:"restartCount" yaml:"restartCount"`
 	// HostIP specifies host ip of instance
-	NodeIP string `json:"node_ip" yaml:"node_ip"`
+	NodeIP string `json:"nodeIP" yaml:"nodeIP"`
 	// NodeName returns the node name
-	NodeName string `json:"node_name" yaml:"node_name"`
+	NodeName string `json:"nodeName" yaml:"nodeName"`
 	// IP returns the instance ip
 	IP string `json:"ip" yaml:"ip"`
+	// RequestGPU returns the request gpus
+	RequestGPU int `json:"requestGPUs" yaml:"requestGPUs"`
+	// RequestGPUMemory returns the request gpu memory
+	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
 }
 
 type CommonServingArgs struct {

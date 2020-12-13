@@ -36,7 +36,7 @@ func SubmitPytorchJob(namespace string, submitArgs *types.SubmitPyTorchJobArgs) 
 		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena delete %s'", submitArgs.Name, submitArgs.Name)
 	}
 	// if error is unknown,return an error
-	if err != errPytorchJobNotFound {
+	if err != types.ErrTrainingJobNotFound {
 		return err
 	}
 	// the master is also considered as a worker

@@ -15,7 +15,6 @@
 package training
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -45,10 +44,6 @@ const (
 	labelGroupNameV1alpha2 = "group_name"
 	labelTFJobName         = "tf-job-name"
 	labelTFJobRole         = "tf-job-role"
-)
-
-var (
-	errTFJobNotFound = errors.New("tfjob not found")
 )
 
 // TensorflowJob implements the TrainingJob
@@ -311,7 +306,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 	tfjob, err := tt.tfjobClient.KubeflowV1().TFJobs(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		if strings.Contains(err.Error(), fmt.Sprintf(`tfjobs.kubeflow.org "%v" not found`, name)) {
-			return nil, errTFJobNotFound
+			return nil, types.ErrTrainingJobNotFound
 		}
 		return nil, fmt.Errorf("failed to find job %v,reason: %v", name, err)
 	}
@@ -350,7 +345,7 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, namespace string) (TrainingJob, error) {
 	tfjob, pods := arenacache.GetArenaCache().GetTFJob(namespace, name)
 	if tfjob == nil {
-		return nil, errTFJobNotFound
+		return nil, types.ErrTrainingJobNotFound
 	}
 	tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
 	filterPods, chiefPod := getPodsOfTFJob(tt, tfjob, pods)
