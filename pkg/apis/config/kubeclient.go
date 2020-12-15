@@ -15,6 +15,10 @@ package config
 
 import (
 	"os"
+	"os/user"
+	"path"
+	"path/filepath"
+	"strings"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -48,15 +52,30 @@ func initKubeClient(kubeconfig string) (clientcmd.ClientConfig, *rest.Config, *k
 func setupKubeconfig(kubeconfig string) (string, error) {
 	// if kubeconfig is null and env "KUBECONFIG" is not null
 	// read kubeconfig from env
-	if kubeconfig == "" && os.Getenv("KUBECONFIG") != "" {
+	currentUser, err := user.Current()
+	if err != nil {
+		return kubeconfig, err
+	}
+	switch {
+	case kubeconfig != "":
+		break
+	case os.Getenv("KUBECONFIG") != "":
 		kubeconfig = os.Getenv("KUBECONFIG")
+	default:
+		// if default kubeconfig is invalid,set kubeconfig null value and return it
+		defaultKubeconfig := path.Join(currentUser.HomeDir, ".kube", "config")
+		_, err = os.Stat(defaultKubeconfig)
+		if err != nil {
+			return kubeconfig, nil
+		}
+		kubeconfig = defaultKubeconfig
 	}
-	// if kubeconfig is null,return
-	if kubeconfig == "" {
-		return kubeconfig, nil
-	}
-	// set env
+	// normalize path
+	kubeconfig = filepath.Clean(kubeconfig)
+	// change ~ to user home dir
+	kubeconfig = strings.Replace(kubeconfig, "~", currentUser.HomeDir, -1)
 	os.Setenv("KUBECONFIG", kubeconfig)
-	_, err := os.Stat(kubeconfig)
+	// set env
+	_, err = os.Stat(kubeconfig)
 	return kubeconfig, err
 }

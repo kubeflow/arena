@@ -196,3 +196,12 @@ func DefineNodeStatus(node *v1.Node) string {
 	}
 	return strings.Join(status, ",")
 }
+
+func CheckFileExist(filename string) bool {
+	var exist = true
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		exist = false
+	}
+	return exist
+}
