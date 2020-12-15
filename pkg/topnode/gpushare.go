@@ -162,9 +162,9 @@ func (g *gpushare) WideFormat() string {
 			if !ok {
 				continue
 			}
-			items = append(items, fmt.Sprintf("GPU%v->%v", gpuId, count))
+			items = append(items, fmt.Sprintf("%v(%vGiB)", gpuId, count))
 		}
-		lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v", podInfo.Namespace, podInfo.Name, podInfo.RequestMemory, strings.Join(items, ",")))
+		lines = append(lines, fmt.Sprintf("  %v\t%v\t%vGiB\t%v", podInfo.Namespace, podInfo.Name, podInfo.RequestMemory, strings.Join(items, ",")))
 	}
 	if len(lines) == 4 {
 		lines = []string{}
@@ -177,13 +177,13 @@ func (g *gpushare) WideFormat() string {
 		devInfo, ok := deviceInfos[gpuId]
 		if !ok {
 			gpuMem := g.singleGPUMemory()
-			lines = append(lines, fmt.Sprintf("  GPU%v\t%v/%v\t%.0f%%", gpuId, 0, gpuMem, percent))
+			lines = append(lines, fmt.Sprintf("  %v\t%v/%v(GiB)\t%.0f%%", gpuId, 0, gpuMem, percent))
 			continue
 		}
 		if devInfo.TotalGPUMem != 0 {
 			percent = float32(devInfo.UsedGPUMem) / float32(devInfo.TotalGPUMem) * 100
 		}
-		lines = append(lines, fmt.Sprintf("  GPU%v\t%v/%v(GiB)\t%.1f%%", devInfo.ID, devInfo.UsedGPUMem, devInfo.TotalGPUMem, percent))
+		lines = append(lines, fmt.Sprintf("  %v\t%v/%v(GiB)\t%.1f%%", devInfo.ID, devInfo.UsedGPUMem, devInfo.TotalGPUMem, percent))
 	}
 	unhealthyGPUMems := fmt.Sprintf("%v/%v", 0, g.CapacityResourceCount())
 	if g.CapacityResourceCount()-g.AllocatableResourceCount() != 0 {
