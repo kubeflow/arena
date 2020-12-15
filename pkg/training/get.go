@@ -165,8 +165,8 @@ func PrintTrainingJob(job TrainingJob, format string, showEvents bool) {
 
 func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEvents bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	lines := []string{"", "Instances:", "  NAME\tSTATUS\tAGE\tGPU(Requested)\tNODE"}
-	lines = append(lines, "  ----\t-----\t---\t--------------\t----")
+	lines := []string{"", "Instances:", "  NAME\tSTATUS\tAGE\tIS_CHIEF\tGPU(Requested)\tNODE"}
+	lines = append(lines, "  ----\t-----\t---\t--------\t--------------\t----")
 	totalRequestGPUs := 0
 	totalAllocatedGPUs := 0
 	for _, instance := range job.Instances {
@@ -178,17 +178,17 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 		if len(hostIP) == 0 {
 			hostIP = "N/A"
 		}
-		lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v",
+		lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v\t%v",
 			instance.Name,
 			instance.Status,
 			instance.Age,
+			instance.IsChief,
 			instance.RequestGPUs,
 			hostIP,
 		))
 	}
-	if job.Status == "RUNNING" {
-		lines = append(lines, "", "GPUs:")
-		lines = append(lines, fmt.Sprintf("  Allocated/Requested GPUs of Job: %v/%v", totalAllocatedGPUs, totalRequestGPUs))
+	if job.Status != types.TrainingJobSucceeded {
+		lines = displayGPUUsage(lines, totalAllocatedGPUs, totalRequestGPUs, job.Instances)
 	}
 	if job.Tensorboard != "" {
 		lines = append(lines, "", "Tensorboard:")
@@ -260,4 +260,56 @@ func GetResourcesEvents(client *kubernetes.Clientset, namespace string, resource
 		}
 	}
 	return eventMap, nil
+}
+
+func displayGPUUsage(lines []string, totalAllocatedGPUs, totalRequestGPUs int, instances []types.TrainingJobInstance) []string {
+	count := 0
+	if totalRequestGPUs > 0 {
+		lines = append(lines, "", "GPUs:")
+	}
+	for _, i := range instances {
+		if i.Status == "Running" && len(i.GPUMetrics) != 0 {
+			count++
+		}
+	}
+	if count == 0 {
+		lines = append(lines, fmt.Sprintf("  Allocated/Requested GPUs of Job: %v/%v", totalAllocatedGPUs, totalRequestGPUs))
+		return lines
+	}
+	lines = append(lines, "  INSTANCE\tNODE(IP)\tGPU(Requested)\tGPU(IndexId)\tGPU(DutyCycle)\tGPU Memory(Used/Total)")
+	lines = append(lines, "  --------\t--------\t--------------\t------------\t--------------\t----------------------")
+	for _, instance := range instances {
+		if len(instance.GPUMetrics) == 0 {
+			lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v\t%v",
+				instance.Name,
+				instance.NodeIP,
+				instance.RequestGPUs,
+				"N/A", "N/A", "N/A",
+			))
+			continue
+		}
+		for index, gpuID := range SortMapKeys(instance.GPUMetrics) {
+			name := instance.Name
+			requestGPUs := fmt.Sprintf("%v", instance.RequestGPUs)
+			hostIP := instance.NodeIP
+			if index != 0 {
+				name = ""
+				requestGPUs = ""
+				hostIP = ""
+			}
+			gpuMetric := instance.GPUMetrics[gpuID]
+			lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%.1f%%\t%.1f/%.1f(MiB)",
+				name,
+				hostIP,
+				requestGPUs,
+				gpuID,
+				gpuMetric.GpuDutyCycle,
+				fromByteToMiB(gpuMetric.GpuMemoryUsed),
+				fromByteToMiB(gpuMetric.GpuMemoryTotal),
+			))
+		}
+	}
+	lines = append(lines, "")
+	lines = append(lines, fmt.Sprintf("  Allocated/Requested GPUs of Job: %v/%v", totalAllocatedGPUs, totalRequestGPUs))
+	return lines
 }
