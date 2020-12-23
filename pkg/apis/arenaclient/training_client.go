@@ -96,12 +96,12 @@ func (t *TrainingJobClient) Get(jobName string, jobType types.TrainingJobType) (
 	if err != nil {
 		return nil, err
 	}
-	jobInfo := training.BuildJobInfo(job)
+	jobInfo := training.BuildJobInfo(job, true)
 	return jobInfo, nil
 }
 
 // GetAndPrint print training job information
-func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJobType, format string, showEvent bool) error {
+func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJobType, format string, showEvent bool, showGPU bool) error {
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
 		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
 	}
@@ -112,7 +112,7 @@ func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJo
 		}
 		return err
 	}
-	training.PrintTrainingJob(job, format, showEvent)
+	training.PrintTrainingJob(job, format, showEvent, showGPU)
 	return nil
 }
 
@@ -124,7 +124,7 @@ func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.Training
 	}
 	jobInfos := []*types.TrainingJobInfo{}
 	for _, job := range jobs {
-		jobInfos = append(jobInfos, training.BuildJobInfo(job))
+		jobInfos = append(jobInfos, training.BuildJobInfo(job, true))
 	}
 	return jobInfos, nil
 }

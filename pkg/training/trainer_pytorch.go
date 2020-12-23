@@ -200,6 +200,10 @@ func (pj *PyTorchJob) RequestedGPU() int64 {
 	if pj.requestedGPU > 0 {
 		return pj.requestedGPU
 	}
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(pj.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
+	}
 	for _, pod := range pj.pods {
 		pj.requestedGPU += gpuInPod(*pod)
 	}

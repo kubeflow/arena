@@ -186,6 +186,10 @@ func (mj *MPIJob) RequestedGPU() int64 {
 	if mj.requestedGPU > 0 {
 		return mj.requestedGPU
 	}
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(mj.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
+	}
 	for _, pod := range mj.pods {
 		mj.requestedGPU += gpuInPod(*pod)
 	}

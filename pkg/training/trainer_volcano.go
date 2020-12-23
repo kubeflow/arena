@@ -203,6 +203,12 @@ func (vj *VolcanoJob) RequestedGPU() int64 {
 	if vj.requestedGPU > 0 {
 		return vj.requestedGPU
 	}
+
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(vj.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
+	}
+
 	for _, pod := range vj.pods {
 		vj.requestedGPU += gpuInPod(*pod)
 	}

@@ -10,29 +10,35 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+var GPUExclusiveNodeDescription = `
+  1.This node is enabled gpu exclusive mode.
+  2.Pods can request resource 'nvidia.com/gpu' to use gpu exclusive feature on this node
+`
+
 var gpuExclusiveTemplate = `
 Name:          %v
 Status:        %v
 Role:          %v
 Type:          %v
 Address:       %v
-TotalGPUs:     %v
-UsedGPUs:      %v 
-UnhealthyGPUs: %v
+Description:
+%v
 %v
 -----------------------------------------------------------------------------------------
 `
 
 type gpuexclusive struct {
-	node *v1.Node
-	pods []*v1.Pod
+	node       *v1.Node
+	pods       []*v1.Pod
+	gpuMetrics types.NodeGpuMetric
 	baseNode
 }
 
-func NewGPUExclusiveNode(node *v1.Node, pods []*v1.Pod, index int, args ...interface{}) (Node, error) {
+func NewGPUExclusiveNode(node *v1.Node, pods []*v1.Pod, index int, args buildNodeArgs) (Node, error) {
 	return &gpuexclusive{
-		node: node,
-		pods: pods,
+		node:       node,
+		pods:       pods,
+		gpuMetrics: getGPUMetricsByNodeName(node.Name, args.nodeGPUMetrics),
 		baseNode: baseNode{
 			index:    index,
 			node:     node,
@@ -42,7 +48,14 @@ func NewGPUExclusiveNode(node *v1.Node, pods []*v1.Pod, index int, args ...inter
 	}, nil
 }
 
-func (g *gpuexclusive) CapacityResourceCount() int {
+func (g *gpuexclusive) gpuMetricsIsEnabled() bool {
+	return len(g.gpuMetrics) != 0
+}
+
+func (g *gpuexclusive) getTotalGPUs() int {
+	if len(g.gpuMetrics) != 0 {
+		return len(g.gpuMetrics)
+	}
 	val, ok := g.node.Status.Capacity[v1.ResourceName(types.NvidiaGPUResourceName)]
 	if !ok {
 		return 0
@@ -50,41 +63,113 @@ func (g *gpuexclusive) CapacityResourceCount() int {
 	return int(val.Value())
 }
 
-func (g *gpuexclusive) AllocatableResourceCount() int {
-	val, ok := g.node.Status.Allocatable[v1.ResourceName(types.NvidiaGPUResourceName)]
-	if !ok {
-		return 0
-	}
-	return int(val.Value())
-}
-
-func (g *gpuexclusive) UsedResourceCount() int {
-	usedGPUMemory := 0
+func (g *gpuexclusive) getAllocatedGPUs() int {
+	allocatedGPUs := 0
 	for _, pod := range g.pods {
 		if utils.IsCompletedPod(pod) {
 			continue
 		}
-		usedGPUMemory += utils.GPUCountInPod(pod)
+		allocation := utils.GPUCountInPod(pod)
+		allocatedGPUs += allocation
+	}
+	return allocatedGPUs
+}
+
+func (g *gpuexclusive) getTotalGPUMemory() float64 {
+	totalGPUMemory := float64(0)
+	for _, metric := range g.gpuMetrics {
+		totalGPUMemory += metric.GpuMemoryTotal
+	}
+	// if gpu metric is enable,return the value given by prometheus
+	if totalGPUMemory != 0 {
+		return totalGPUMemory
+	}
+	return float64(0)
+}
+
+func (g *gpuexclusive) getAllocatedGPUMemory() float64 {
+	if !g.gpuMetricsIsEnabled() {
+		return float64(0)
+	}
+	allocatedGPUMemory := float64(0)
+	allocatedGPUs := 0
+	for _, pod := range g.pods {
+		if utils.IsCompletedPod(pod) {
+			continue
+		}
+		allocation := utils.GPUCountInPod(pod)
+		allocatedGPUs += allocation
+	}
+	for _, metric := range g.gpuMetrics {
+		allocatedGPUMemory = float64(allocatedGPUs) * metric.GpuMemoryTotal
+	}
+	return utils.DataUnitTransfer("GiB", "bytes", allocatedGPUMemory)
+}
+
+func (g *gpuexclusive) getUsedGPUMemory() float64 {
+	// can not to detect gpu memory if no gpu metrics data
+	if !g.gpuMetricsIsEnabled() {
+		return float64(0)
+	}
+	usedGPUMemory := float64(0)
+	for _, gpuMetric := range g.gpuMetrics {
+		usedGPUMemory += gpuMetric.GpuMemoryUsed
 	}
 	return usedGPUMemory
 }
 
-func (g *gpuexclusive) IsHealthy() bool {
-	return g.AllocatableResourceCount() == g.CapacityResourceCount()
+func (g *gpuexclusive) getDutyCycle() float64 {
+	if !g.gpuMetricsIsEnabled() {
+		return float64(0)
+	}
+	dutyCycle := float64(0)
+	totalGPUs := float64(0)
+	for _, gpuMetric := range g.gpuMetrics {
+		totalGPUs += float64(1)
+		dutyCycle += gpuMetric.GpuDutyCycle
+	}
+	return dutyCycle / totalGPUs
+}
+
+func (g *gpuexclusive) getUnhealthyGPUs() int {
+	totalGPUs := g.getTotalGPUs()
+	allocatableGPUs, ok := g.node.Status.Allocatable[v1.ResourceName(types.NvidiaGPUResourceName)]
+	if !ok {
+		return 0
+	}
+	if totalGPUs <= 0 {
+		return 0
+	}
+	return totalGPUs - int(allocatableGPUs.Value())
+}
+
+func (g *gpuexclusive) getTotalGPUMemoryOfDevice(id string) float64 {
+	if metric, ok := g.gpuMetrics[id]; ok {
+		return metric.GpuMemoryTotal
+	}
+	return 0
 }
 
 func (g *gpuexclusive) convert2NodeInfo() types.GPUExclusiveNodeInfo {
 	podInfos := []types.GPUExclusivePodInfo{}
+	metrics := []*types.AdvancedGpuMetric{}
+	for _, metric := range g.gpuMetrics {
+		metrics = append(metrics, metric)
+	}
 	gpuExclusiveInfo := types.GPUExclusiveNodeInfo{
 		CommonNodeInfo: types.CommonNodeInfo{
-			Name:   g.Name(),
-			IP:     g.IP(),
-			Status: g.Status(),
-			Type:   types.GPUExclusiveNode,
+			Name:        g.Name(),
+			IP:          g.IP(),
+			Status:      g.Status(),
+			Type:        types.GPUExclusiveNode,
+			Description: GPUExclusiveNodeDescription,
 		},
-		UnHealthyGPUs: g.CapacityResourceCount() - g.AllocatableResourceCount(),
-		TotalGPUs:     g.CapacityResourceCount(),
-		UsedGPUs:      g.UsedResourceCount(),
+		CommonGPUNodeInfo: types.CommonGPUNodeInfo{
+			TotalGPUs:     g.getTotalGPUs(),
+			AllocatedGPUs: g.getAllocatedGPUs(),
+			UnhealthyGPUs: g.getUnhealthyGPUs(),
+			GPUMetrics:    metrics,
+		},
 	}
 	for _, pod := range g.pods {
 		if utils.IsCompletedPod(pod) {
@@ -101,7 +186,12 @@ func (g *gpuexclusive) convert2NodeInfo() types.GPUExclusiveNodeInfo {
 		})
 	}
 	gpuExclusiveInfo.PodInfos = podInfos
+	gpuExclusiveInfo.GPUMetrics = metrics
 	return gpuExclusiveInfo
+}
+
+func (g *gpuexclusive) AllDevicesAreHealthy() bool {
+	return g.getUnhealthyGPUs() == 0
 }
 
 func (g *gpuexclusive) Convert2NodeInfo() interface{} {
@@ -114,47 +204,76 @@ func (g *gpuexclusive) WideFormat() string {
 		role = "<none>"
 	}
 	nodeInfo := g.convert2NodeInfo()
-	lines := []string{"", "Instances:", "  NAMESPACE\tNAME\tGPU(Requested)"}
-	lines = append(lines, "  ---------\t----\t--------------")
-	for _, podInfo := range nodeInfo.PodInfos {
-		lines = append(lines, fmt.Sprintf("  %v\t%v\t%v", podInfo.Namespace, podInfo.Name, podInfo.RequestGPU))
-	}
-	if len(lines) == 4 {
-		lines = []string{}
-	}
-	unhealthyGPUs := fmt.Sprintf("%v/%v", 0, g.CapacityResourceCount())
-	if g.CapacityResourceCount()-g.AllocatableResourceCount() != 0 {
-		percent := float32(0)
-		gpus := g.CapacityResourceCount() - g.AllocatableResourceCount()
-		if g.CapacityResourceCount() != 0 {
-			percent = float32(gpus) / float32(g.CapacityResourceCount()) * 100
-		}
-		unhealthyGPUs = fmt.Sprintf("%v/%v", gpus, g.CapacityResourceCount())
-		if percent != float32(0) {
-			unhealthyGPUs = fmt.Sprintf("%v/%v(%.1f%%)", gpus, g.CapacityResourceCount(), percent)
-		}
-	}
-	usedGPUs := fmt.Sprintf("%v/%v", nodeInfo.UsedGPUs, nodeInfo.TotalGPUs)
-	if nodeInfo.UsedGPUs != 0 {
-		percent := float32(0)
-		if g.CapacityResourceCount() != 0 {
-			percent = float32(nodeInfo.UsedGPUs) / float32(nodeInfo.TotalGPUs) * 100
-		}
-		if percent != float32(0) {
-			usedGPUs = fmt.Sprintf("%v/%v(%.1f%%)", nodeInfo.UsedGPUs, nodeInfo.TotalGPUs, percent)
-		}
-	}
+	lines := []string{}
+	lines = g.displayPodInfos(lines, nodeInfo)
+	lines = g.displayDeviceInfoUnderMetrics(lines, nodeInfo)
 	return fmt.Sprintf(strings.TrimRight(gpuExclusiveTemplate, "\n"),
 		nodeInfo.Name,
 		nodeInfo.Status,
 		role,
 		nodeInfo.Type,
 		nodeInfo.IP,
-		nodeInfo.TotalGPUs,
-		usedGPUs,
-		unhealthyGPUs,
+		strings.Trim(nodeInfo.Description, "\n"),
 		strings.Join(lines, "\n"),
 	)
+}
+
+func (g *gpuexclusive) displayPodInfos(lines []string, nodeInfo types.GPUExclusiveNodeInfo) []string {
+	podLines := []string{"", "Instances:", "  NAMESPACE\tNAME\tGPU(Requested)"}
+	podLines = append(podLines, "  ---------\t----\t--------------")
+	for _, podInfo := range nodeInfo.PodInfos {
+		podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%v", podInfo.Namespace, podInfo.Name, podInfo.RequestGPU))
+	}
+	if len(podLines) == 4 {
+		podLines = []string{}
+	}
+	lines = append(lines, podLines...)
+	return lines
+}
+
+func (g *gpuexclusive) displayDeviceInfoUnderMetrics(lines []string, nodeInfo types.GPUExclusiveNodeInfo) []string {
+	deviceLines := []string{"", "GPUs:", "  INDEX\tMEMORY(Total)\tMEMORY(Allocated)\tMEMORY(Used)\tDUTY_CYCLE"}
+	deviceLines = append(deviceLines, "  -----\t-------------\t-----------------\t------------\t----------")
+	deviceMap := map[string]*types.AdvancedGpuMetric{}
+	for _, dev := range g.gpuMetrics {
+		deviceMap[dev.Id] = dev
+	}
+	totalGPUMemory := float64(0)
+	totalAllocatedGPUMemory := float64(0)
+	for i := 0; i < nodeInfo.TotalGPUs; i++ {
+		gpuId := fmt.Sprintf("%v", i)
+		devInfo, ok := deviceMap[gpuId]
+		if !ok {
+			continue
+		}
+		totalGPUMemory += devInfo.GpuMemoryTotal
+		allocatedGPUMemory := float64(0)
+		if devInfo.Status == "using" {
+			allocatedGPUMemory = devInfo.GpuMemoryTotal
+			totalAllocatedGPUMemory += allocatedGPUMemory
+		}
+		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%.1fGiB\t%.1fGiB\t%.1fGiB\t%.1f%%",
+			devInfo.Id,
+			utils.DataUnitTransfer("bytes", "GiB", devInfo.GpuMemoryTotal),
+			utils.DataUnitTransfer("bytes", "GiB", allocatedGPUMemory),
+			utils.DataUnitTransfer("bytes", "GiB", devInfo.GpuMemoryUsed),
+			devInfo.GpuDutyCycle),
+		)
+	}
+	if len(deviceLines) == 4 {
+		deviceLines = []string{"", "GPUs:"}
+	} else {
+		deviceLines = append(deviceLines, "")
+	}
+	lines = append(lines, deviceLines...)
+	lines = append(lines, fmt.Sprintf("  TotalGPUs: %v, TotalMemory(GiB): %.1f, AllocatedGPUs: %v, AllocatedMemory(GiB): %.1f, UnhealthyGPUs: %v",
+		nodeInfo.TotalGPUs,
+		utils.DataUnitTransfer("bytes", "GiB", totalGPUMemory),
+		nodeInfo.AllocatedGPUs,
+		utils.DataUnitTransfer("bytes", "GiB", totalAllocatedGPUMemory),
+		g.getUnhealthyGPUs(),
+	))
+	return lines
 }
 
 func IsGPUExclusiveNode(node *v1.Node) bool {
@@ -192,36 +311,41 @@ func displayGPUExclusiveNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	PrintLine(w, "===================================== GPUExclusiveNode ==================================")
+	PrintLine(w, "===================================== GPU MODE: Exclusive ==================================")
 	totalGPUs := 0
-	unhealthyGPUs := 0
-	usedGPUs := 0
-	unhealthyPercent := float32(0)
-	usedPercent := float32(0)
+	totalUnhealthyGPUs := 0
+	totalAllocatedGPUs := 0
+	unhealthyPercent := float64(0)
+	allocatedPercent := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUExclusiveNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
-		usedGPUs += nodeInfo.UsedGPUs
-		nodeUnhealthy := node.CapacityResourceCount() - node.AllocatableResourceCount()
-		unhealthyGPUs += nodeUnhealthy
+		totalAllocatedGPUs += nodeInfo.AllocatedGPUs
+		totalUnhealthyGPUs += nodeInfo.UnhealthyGPUs
 		PrintLine(w, node.WideFormat())
 	}
 	if totalGPUs != 0 {
-		usedPercent = float32(usedGPUs) / float32(totalGPUs) * 100
+		allocatedPercent = float64(totalAllocatedGPUs) / float64(totalGPUs) * 100
 	}
-	PrintLine(w, fmt.Sprintf("Allocated/Total GPUs In Cluster: %v/%v(%.1f%%)", usedGPUs, totalGPUs, usedPercent))
-	if unhealthyGPUs != 0 {
+	PrintLine(w, fmt.Sprintf("Allocated/Total GPUs of nodes with gpu exclusive mode In Cluster: %v/%v(%.1f%%)", totalAllocatedGPUs, totalGPUs, allocatedPercent))
+	if totalUnhealthyGPUs != 0 {
 		if totalGPUs != 0 {
-			unhealthyPercent = float32(unhealthyGPUs) / float32(totalGPUs) * 100
+			unhealthyPercent = float64(totalUnhealthyGPUs) / float64(totalGPUs) * 100
 		}
-		PrintLine(w, fmt.Sprintf("Unhealthy/Total GPUs In Cluster: %v/%v(%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
+		PrintLine(w, fmt.Sprintf("Unhealthy/Total GPUs of nodes with gpu exclusive mode In Cluster: %v/%v(%.1f%%)", totalUnhealthyGPUs, totalGPUs, unhealthyPercent))
 	}
 	PrintLine(w, "")
 }
 
-func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) {
+func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int) {
+	totalGPUs := 0
+	allocatedGPUs := 0
+	unhealthyGPUs := 0
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUExclusiveNodeInfo)
+		totalGPUs += nodeInfo.TotalGPUs
+		allocatedGPUs += nodeInfo.AllocatedGPUs
+		unhealthyGPUs += nodeInfo.UnhealthyGPUs
 		items := []string{}
 		items = append(items, node.Name())
 		items = append(items, node.IP())
@@ -232,7 +356,7 @@ func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealt
 		items = append(items, role)
 		items = append(items, node.Status())
 		items = append(items, fmt.Sprintf("%v", nodeInfo.TotalGPUs))
-		items = append(items, fmt.Sprintf("%v", nodeInfo.UsedGPUs))
+		items = append(items, fmt.Sprintf("%v", nodeInfo.AllocatedGPUs))
 		if showNodeType {
 			for _, typeInfo := range types.NodeTypeSlice {
 				if typeInfo.Name == types.GPUExclusiveNode {
@@ -241,10 +365,11 @@ func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealt
 			}
 		}
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("%v", nodeInfo.UnHealthyGPUs))
+			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
 		}
 		PrintLine(w, items...)
 	}
+	return totalGPUs, allocatedGPUs, unhealthyGPUs
 }
 
 func NewGPUExclusiveNodeProcesser() NodeProcesser {

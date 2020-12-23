@@ -135,6 +135,8 @@ const (
 
 // TrainingJobInstance defines the instance of training job
 type TrainingJobInstance struct {
+	// IP defines the instance ip
+	IP string `json:"ip" yaml:"ip"`
 	// the status of of instance
 	Status string `json:"status"`
 	// the name of instance
@@ -152,3 +154,7 @@ type TrainingJobInstance struct {
 	// GpuDutyCycle stores the gpu metrics
 	GPUMetrics map[string]GpuMetric `json:"gpuMetrics" yaml:"gpuMetrics"`
 }
+
+const (
+	RequestGPUsOfJobAnnoKey = "requestGPUsOfJobOwner"
+)

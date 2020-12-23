@@ -190,6 +190,10 @@ func (tj *TensorFlowJob) RequestedGPU() int64 {
 	if tj.requestedGPU > 0 {
 		return tj.requestedGPU
 	}
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(tj.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
+	}
 	for _, pod := range tj.pods {
 		tj.requestedGPU += gpuInPod(*pod)
 	}

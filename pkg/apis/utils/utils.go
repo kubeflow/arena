@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -204,4 +205,22 @@ func CheckFileExist(filename string) bool {
 		exist = false
 	}
 	return exist
+}
+
+func DataUnitTransfer(from string, to string, value float64) float64 {
+	knownUnits := []string{"bytes", "KiB", "MiB", "GiB", "TiB"}
+	fromPosition := -1
+	toPosition := -1
+	for index, unit := range knownUnits {
+		if unit == from {
+			fromPosition = index
+		}
+		if unit == to {
+			toPosition = index
+		}
+	}
+	if fromPosition == -1 || toPosition == -1 {
+		return value
+	}
+	return value * math.Pow(1024, float64(fromPosition-toPosition))
 }

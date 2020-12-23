@@ -23,6 +23,9 @@ cn-shanghai.192.168.7.186  192.168.7.186  <none>  Ready   4           0         
 cn-shanghai.192.168.7.183  192.168.7.183  <none>  Ready   4           2.1             share
 */
 func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, format types.FormatStyle) error {
+	totalGPUs := 0
+	allocatedGPUs := 0
+	unhealthyGPUs := 0
 	nodes, err := BuildNodes(nodeNames, targetNodeType)
 	if err != nil {
 		return err
@@ -45,8 +48,10 @@ func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, forma
 	var isUnhealthy bool
 	nodeTypes := map[types.NodeType]bool{}
 	for _, node := range nodes {
-		nodeTypes[node.Type()] = true
-		if !node.IsHealthy() {
+		if node.Type() != types.NormalNode {
+			nodeTypes[node.Type()] = true
+		}
+		if !node.AllDevicesAreHealthy() {
 			isUnhealthy = true
 		}
 	}
@@ -56,7 +61,7 @@ func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, forma
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	header := []string{"NAME", "IPADDRESS", "ROLE", "STATUS", "GPU(Total)", "GPU(Allocated)"}
 	if showNodeType {
-		header = append(header, "GPU_MODE")
+		header = append(header, "GPU(Mode)")
 	}
 	if isUnhealthy {
 		header = append(header, "UNHEALTHY")
@@ -65,7 +70,25 @@ func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, forma
 	processers := GetSupportedNodePorcessers()
 	for i := len(processers) - 1; i >= 0; i-- {
 		processer := processers[i]
-		processer.DisplayNodesSummary(w, nodes, showNodeType, isUnhealthy)
+		t, a, u := processer.DisplayNodesSummary(w, nodes, showNodeType, isUnhealthy)
+		totalGPUs += t
+		allocatedGPUs += a
+		unhealthyGPUs += u
+	}
+	PrintLine(w, "---------------------------------------------------------------------------------------------------")
+	PrintLine(w, "Allocated/Total GPUs In Cluster:")
+	allocatedPercent := float64(0)
+	if totalGPUs != 0 {
+		allocatedPercent = float64(allocatedGPUs) / float64(totalGPUs) * 100
+	}
+	unhealthyPercent := float64(0)
+	if totalGPUs != 0 {
+		unhealthyPercent = float64(unhealthyGPUs) / float64(totalGPUs) * 100
+	}
+	PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
+	if unhealthyGPUs != 0 {
+		PrintLine(w, "Unhealthy/Total GPUs In Cluster:")
+		PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
 	}
 	_ = w.Flush()
 	return nil

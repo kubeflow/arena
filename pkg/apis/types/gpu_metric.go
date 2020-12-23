@@ -9,6 +9,7 @@ const KUBE_SYSTEM_NAMESPACE = "kube-system"
 const PROMETHEUS_SCHEME = "http"
 const PROMETHEUS_SVC_LABEL = "kubernetes.io/name=Prometheus"
 const POD_METRIC_TMP = `{__name__=~"%s", pod_name=~"%s"}`
+const NODE_METRIC_TMP = `{__name__=~"%s", node_name=~"%s"}`
 const KUBEFLOW_NAMESPACE = "kubeflow"
 
 var GPU_METRIC_LIST = []string{"nvidia_gpu_duty_cycle", "nvidia_gpu_memory_used_bytes", "nvidia_gpu_memory_total_bytes"}
@@ -98,7 +99,19 @@ type JobGpuMetric map[string]PodGpuMetric
 
 type PodGpuMetric map[string]*GpuMetric
 
+// key of map is device id
+type NodeGpuMetric map[string]*AdvancedGpuMetric
+
 type GpuMetric struct {
+	GpuDutyCycle   float64 `json:"gpuDutyCycle" yaml:"gpuDutyCycle"`
+	GpuMemoryUsed  float64 `json:"usedGPUMemory" yaml:"usedGPUMemory"`
+	GpuMemoryTotal float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+}
+
+type AdvancedGpuMetric struct {
+	Id             string  `json:"id" yaml:"id"`
+	UUID           string  `json:"uuid" yaml:"uuid"`
+	Status         string  `json:"status" yaml:"status"`
 	GpuDutyCycle   float64 `json:"gpuDutyCycle" yaml:"gpuDutyCycle"`
 	GpuMemoryUsed  float64 `json:"usedGPUMemory" yaml:"usedGPUMemory"`
 	GpuMemoryTotal float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`

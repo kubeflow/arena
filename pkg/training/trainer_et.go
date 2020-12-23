@@ -144,6 +144,10 @@ func (ej *ETJob) RequestedGPU() int64 {
 	if ej.requestedGPU > 0 {
 		return ej.requestedGPU
 	}
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(ej.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
+	}
 	for _, pod := range ej.pods {
 		ej.requestedGPU += gpuInPod(*pod)
 	}
