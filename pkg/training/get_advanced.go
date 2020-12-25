@@ -21,7 +21,6 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/prometheus"
-	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -54,7 +53,7 @@ func isTrainingConfigExist(name, trainingType, namespace string) bool {
 /**
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
-func BuildJobInfo(job TrainingJob) *types.TrainingJobInfo {
+func BuildJobInfo(job TrainingJob, showGPUs bool) *types.TrainingJobInfo {
 	chiefPodName := ""
 	namespace := ""
 	if job.ChiefPod() != nil {
@@ -67,7 +66,7 @@ func BuildJobInfo(job TrainingJob) *types.TrainingJobInfo {
 	}
 	jobGPUMetric := prometheus.JobGpuMetric{}
 	instances := []types.TrainingJobInstance{}
-	if prometheus.GpuMonitoringInstalled(config.GetArenaConfiger().GetClientSet()) {
+	if showGPUs && prometheus.GpuMonitoringInstalled(config.GetArenaConfiger().GetClientSet()) {
 		jobGPUMetric, err = GetJobGpuMetric(config.GetArenaConfiger().GetClientSet(), job)
 	}
 	for _, pod := range job.AllPods() {
@@ -99,8 +98,9 @@ func BuildJobInfo(job TrainingJob) *types.TrainingJobInfo {
 		count += utils.AliyunGPUCountInPod(pod)
 		instances = append(instances, types.TrainingJobInstance{
 			Name:        pod.Name,
+			IP:          pod.Status.PodIP,
 			Status:      status,
-			Age:         util.ShortHumanDuration(job.Age()),
+			Age:         fmt.Sprintf("%vs", int(utils.GetDurationOfPod(pod).Seconds())),
 			Node:        nodeName,
 			NodeIP:      nodeIP,
 			IsChief:     isChief,
@@ -110,10 +110,11 @@ func BuildJobInfo(job TrainingJob) *types.TrainingJobInfo {
 	}
 
 	return &types.TrainingJobInfo{
-		Name:         job.Name(),
-		Namespace:    job.Namespace(),
-		Status:       types.TrainingJobStatus(GetJobRealStatus(job)),
-		Duration:     util.ShortHumanDuration(job.Duration()),
+		Name:      job.Name(),
+		Namespace: job.Namespace(),
+		Status:    types.TrainingJobStatus(GetJobRealStatus(job)),
+		//Duration:     util.ShortHumanDuration(job.Duration()),
+		Duration:     fmt.Sprintf("%vs", int(job.Duration().Seconds())),
 		Trainer:      types.TrainingJobType(job.Trainer()),
 		Priority:     getPriorityClass(job),
 		Tensorboard:  tensorboard,

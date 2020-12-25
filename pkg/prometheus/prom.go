@@ -161,3 +161,48 @@ func getPrometheusService(client *kubernetes.Clientset, label string) *v1.Servic
 	}
 	return serviceList.Items[0].DeepCopy()
 }
+
+// {__name__=~"nvidia_gpu_duty_cycle|nvidia_gpu_memory_used_bytes|nvidia_gpu_memory_total_bytes", pod_name=~"tf-distributed-test-ps-0|tf-distributed-test-worker-0"}
+
+func GetNodeGPUMetrics(client *kubernetes.Clientset, server *types.PrometheusServer, nodeNames []string) (map[string]types.NodeGpuMetric, error) {
+
+	gpuMetrics, err := QueryMetricByPrometheus(client, server, fmt.Sprintf(types.NODE_METRIC_TMP, strings.Join(types.GPU_METRIC_LIST, "|"), strings.Join(nodeNames, "|")))
+	if err != nil {
+		return nil, err
+	}
+	return generateNodeGPUMetrics(gpuMetrics), nil
+}
+
+func generateNodeGPUMetrics(metrics []types.GpuMetricInfo) map[string]types.NodeGpuMetric {
+	nodeMetrics := map[string]types.NodeGpuMetric{}
+	for _, metric := range metrics {
+		v, err := strconv.ParseFloat(metric.Value, 64)
+		if err != nil {
+			log.Debugf("failed to parse gpu duty cycle,reason: %v", err)
+			continue
+		}
+		if nodeMetrics[metric.NodeName] == nil {
+			nodeMetrics[metric.NodeName] = types.NodeGpuMetric{}
+		}
+
+		if nodeMetrics[metric.NodeName][metric.Id] == nil {
+			nodeMetrics[metric.NodeName][metric.Id] = &types.AdvancedGpuMetric{
+				Id:     metric.Id,
+				UUID:   metric.GPUUID,
+				Status: "idle",
+			}
+		}
+		switch metric.MetricName {
+		case "nvidia_gpu_duty_cycle":
+			nodeMetrics[metric.NodeName][metric.Id].GpuDutyCycle = v
+		case "nvidia_gpu_memory_used_bytes":
+			nodeMetrics[metric.NodeName][metric.Id].GpuMemoryUsed = v
+		case "nvidia_gpu_memory_total_bytes":
+			nodeMetrics[metric.NodeName][metric.Id].GpuMemoryTotal = v
+		}
+		if metric.PodName != "" {
+			nodeMetrics[metric.NodeName][metric.Id].Status = "using"
+		}
+	}
+	return nodeMetrics
+}

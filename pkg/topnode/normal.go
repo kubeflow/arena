@@ -9,12 +9,18 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+var NormalNodeDescription = `
+  1.This node has none gpu devices
+`
+
 var normalNodeTemplate = `
 Name:    %v
 Status:  %v
 Role:    %v
 Type:    %v
 Address: %v
+Description:
+%v
 -----------------------------------------------------------------------------------------
 `
 
@@ -24,7 +30,7 @@ type normalNode struct {
 	baseNode
 }
 
-func NewNormalNode(node *v1.Node, pods []*v1.Pod, index int, args ...interface{}) (Node, error) {
+func NewNormalNode(node *v1.Node, pods []*v1.Pod, index int, args buildNodeArgs) (Node, error) {
 	return &normalNode{
 		node: node,
 		pods: pods,
@@ -37,19 +43,7 @@ func NewNormalNode(node *v1.Node, pods []*v1.Pod, index int, args ...interface{}
 	}, nil
 }
 
-func (n *normalNode) CapacityResourceCount() int {
-	return 0
-}
-
-func (n *normalNode) AllocatableResourceCount() int {
-	return 0
-}
-
-func (n *normalNode) UsedResourceCount() int {
-	return 0
-}
-
-func (n *normalNode) IsHealthy() bool {
+func (n *normalNode) AllDevicesAreHealthy() bool {
 	return true
 }
 
@@ -57,11 +51,12 @@ func (n *normalNode) convert2NodeInfo() types.NormalNodeInfo {
 	role := strings.Join(n.Role(), ",")
 	return types.NormalNodeInfo{
 		CommonNodeInfo: types.CommonNodeInfo{
-			Name:   n.Name(),
-			IP:     n.IP(),
-			Status: n.Status(),
-			Role:   role,
-			Type:   types.NormalNode,
+			Name:        n.Name(),
+			IP:          n.IP(),
+			Status:      n.Status(),
+			Role:        role,
+			Type:        types.NormalNode,
+			Description: NormalNodeDescription,
 		},
 	}
 }
@@ -75,12 +70,14 @@ func (n *normalNode) WideFormat() string {
 	if role == "" {
 		role = "<none>"
 	}
+	nodeInfo := n.convert2NodeInfo()
 	return fmt.Sprintf(strings.TrimRight(normalNodeTemplate, "\n"),
 		n.Name(),
 		n.Status(),
 		role,
 		n.Type(),
 		n.IP(),
+		strings.Trim(nodeInfo.Description, "\n"),
 	)
 }
 
@@ -102,14 +99,14 @@ func displayNormalNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	PrintLine(w, "===================================== NormalNode ========================================")
+	PrintLine(w, "===================================== GPU MODE: None =======================================")
 	for _, node := range nodes {
 		PrintLine(w, node.WideFormat())
 	}
 	PrintLine(w, "")
 }
 
-func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showMode bool) {
+func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showMode bool) (int, int, int) {
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.NormalNodeInfo)
 		items := []string{}
@@ -135,6 +132,7 @@ func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, sh
 		}
 		PrintLine(w, items...)
 	}
+	return 0, 0, 0
 }
 
 func NewNormalNodeProcesser() NodeProcesser {

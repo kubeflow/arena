@@ -15,6 +15,10 @@
 package training
 
 import (
+	"strconv"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -68,6 +72,23 @@ func gpuInPod(pod v1.Pod) (gpuCount int64) {
 	}
 
 	return gpuCount
+}
+
+func getRequestGPUsOfJobFromPodAnnotation(pods []*v1.Pod) int64 {
+	for _, pod := range pods {
+		val := pod.Annotations[types.RequestGPUsOfJobAnnoKey]
+		if val == "" {
+			continue
+		}
+		gpuCount, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			log.Debugf("failed to get requests gpus of job from pod annotations,%v", err)
+			continue
+		}
+		return gpuCount
+
+	}
+	return 0
 }
 
 // Get gpu number from the active pod

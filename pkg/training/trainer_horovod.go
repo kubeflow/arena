@@ -69,6 +69,10 @@ func (h *HorovodJob) RequestedGPU() int64 {
 	if h.requestedGPU > 0 {
 		return h.requestedGPU
 	}
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(h.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
+	}
 	for _, pod := range h.pods {
 		h.requestedGPU += gpuInPod(*pod)
 	}

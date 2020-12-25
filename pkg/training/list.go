@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/util"
+	log "github.com/sirupsen/logrus"
 )
 
 func ListTrainingJobs(namespace string, allNamespaces bool, jobType types.TrainingJobType) ([]TrainingJob, error) {
@@ -39,25 +43,31 @@ func ListTrainingJobs(namespace string, allNamespaces bool, jobType types.Traini
 
 func DisplayTrainingJobList(jobInfoList []TrainingJob, format string, allNamespaces bool) {
 	jobInfos := []*types.TrainingJobInfo{}
-	for _, jobInfo := range jobInfoList {
-		jobInfos = append(jobInfos, BuildJobInfo(jobInfo))
-	}
 	switch format {
 	case "json":
+		for _, jobInfo := range jobInfoList {
+			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, true))
+		}
 		data, _ := json.MarshalIndent(jobInfos, "", "    ")
 		fmt.Printf("%v", string(data))
 		return
 	case "yaml":
+		for _, jobInfo := range jobInfoList {
+			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, true))
+		}
 		data, _ := yaml.Marshal(jobInfos)
 		fmt.Printf("%v", string(data))
 		return
 	case "", "wide":
+		for _, jobInfo := range jobInfoList {
+			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, false))
+		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		header := []string{}
 		if allNamespaces {
 			header = append(header, "NAMESPACE")
 		}
-		header = append(header, []string{"NAME", "STATUS", "TRAINER", "AGE", "GPU(Requested)", "GPU(Allocated)", "NODE"}...)
+		header = append(header, []string{"NAME", "STATUS", "TRAINER", "DURATION", "GPU(Requested)", "GPU(Allocated)", "NODE"}...)
 		PrintLine(w, header...)
 		for _, jobInfo := range jobInfos {
 			hostIP := "N/A"
@@ -70,13 +80,23 @@ func DisplayTrainingJobList(jobInfoList []TrainingJob, format string, allNamespa
 			if allNamespaces {
 				items = append(items, jobInfo.Namespace)
 			}
+			jobInfo.Duration = strings.Replace(jobInfo.Duration, "s", "", -1)
+			duration, err := strconv.ParseInt(jobInfo.Duration, 10, 64)
+			if err != nil {
+				log.Debugf("failed to parse duration: %v", err)
+
+			}
+			allocatedGPUs := "N/A"
+			if jobInfo.Status == types.TrainingJobPending || jobInfo.Status == types.TrainingJobRunning {
+				allocatedGPUs = fmt.Sprintf("%v", jobInfo.AllocatedGPU)
+			}
 			items = append(items, []string{
 				jobInfo.Name,
 				fmt.Sprintf("%v", jobInfo.Status),
 				strings.ToUpper(string(jobInfo.Trainer)),
-				fmt.Sprintf("%v", jobInfo.Duration),
+				util.ShortHumanDuration(time.Duration(duration) * time.Second),
 				fmt.Sprintf("%v", jobInfo.RequestGPU),
-				fmt.Sprintf("%v", jobInfo.AllocatedGPU),
+				allocatedGPUs,
 				hostIP,
 			}...)
 			PrintLine(w, items...)

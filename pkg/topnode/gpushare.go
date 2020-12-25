@@ -10,26 +10,35 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+var GPUShareNodeDescription = `
+  1.This node is enabled gpu sharing mode.
+  2.Pods can request resource 'aliyun.com/gpu-mem' to use gpu sharing feature on this node 
+`
+
 var gpushareTemplate = `
 Name:     %v
 Status:   %v
 Role:     %v
 Type:     %v
 Address:  %v
+Description:
+%v
 %v
 -----------------------------------------------------------------------------------------
 `
 
 type gpushare struct {
-	node *v1.Node
-	pods []*v1.Pod
+	node       *v1.Node
+	pods       []*v1.Pod
+	gpuMetrics types.NodeGpuMetric
 	baseNode
 }
 
-func NewGPUShareNode(node *v1.Node, pods []*v1.Pod, index int, args ...interface{}) (Node, error) {
+func NewGPUShareNode(node *v1.Node, pods []*v1.Pod, index int, args buildNodeArgs) (Node, error) {
 	return &gpushare{
-		node: node,
-		pods: pods,
+		node:       node,
+		pods:       pods,
+		gpuMetrics: getGPUMetricsByNodeName(node.Name, args.nodeGPUMetrics),
 		baseNode: baseNode{
 			index:    index,
 			node:     node,
@@ -39,34 +48,14 @@ func NewGPUShareNode(node *v1.Node, pods []*v1.Pod, index int, args ...interface
 	}, nil
 }
 
-func (g *gpushare) CapacityResourceCount() int {
-	val, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareResourceName)]
-	if !ok {
-		return 0
-	}
-	return int(val.Value())
+func (g *gpushare) gpuMetricsIsEnabled() bool {
+	return len(g.gpuMetrics) != 0
 }
 
-func (g *gpushare) AllocatableResourceCount() int {
-	val, ok := g.node.Status.Allocatable[v1.ResourceName(types.GPUShareResourceName)]
-	if !ok {
-		return 0
+func (g *gpushare) getTotalGPUs() int {
+	if len(g.gpuMetrics) != 0 {
+		return len(g.gpuMetrics)
 	}
-	return int(val.Value())
-}
-
-func (g *gpushare) UsedResourceCount() int {
-	usedGPUMemory := 0
-	for _, pod := range g.pods {
-		if utils.IsCompletedPod(pod) {
-			continue
-		}
-		usedGPUMemory += utils.GPUMemoryCountInPod(pod)
-	}
-	return usedGPUMemory
-}
-
-func (g *gpushare) gpuCount() int {
 	val, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareCountName)]
 	if !ok {
 		return 0
@@ -74,33 +63,139 @@ func (g *gpushare) gpuCount() int {
 	return int(val.Value())
 }
 
-func (g *gpushare) singleGPUMemory() int {
-	singleGPUMemory := 0
-	if g.gpuCount() != 0 {
-		singleGPUMemory = g.CapacityResourceCount() / g.gpuCount()
+func (g *gpushare) getAllocatedGPUs() int {
+	allocatedGPUs := map[string]bool{}
+	for _, pod := range g.pods {
+		if utils.IsCompletedPod(pod) {
+			continue
+		}
+		allocation := utils.GetPodAllocation(pod)
+		for key := range allocation {
+			allocatedGPUs[key] = true
+		}
 	}
-	return singleGPUMemory
+	return len(allocatedGPUs)
 }
 
-func (g *gpushare) IsHealthy() bool {
-	return g.AllocatableResourceCount() == g.CapacityResourceCount()
+func (g *gpushare) getTotalGPUMemory() float64 {
+	totalGPUMemory := float64(0)
+	for _, metric := range g.gpuMetrics {
+		totalGPUMemory += metric.GpuMemoryTotal
+	}
+	// if gpu metric is enable,return the value given by prometheus
+	if totalGPUMemory != 0 {
+		return totalGPUMemory
+	}
+	val, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareResourceName)]
+	if !ok {
+		return float64(0)
+	}
+	return utils.DataUnitTransfer("GiB", "bytes", float64(val.Value()))
+}
+
+func (g *gpushare) getAllocatedGPUMemory() float64 {
+	allocatedGPUMemory := float64(0)
+	for _, pod := range g.pods {
+		if utils.IsCompletedPod(pod) {
+			continue
+		}
+		allocation := utils.GetPodAllocation(pod)
+		for _, gpuMem := range allocation {
+			allocatedGPUMemory += float64(gpuMem)
+		}
+	}
+	return utils.DataUnitTransfer("GiB", "bytes", allocatedGPUMemory)
+}
+
+func (g *gpushare) getUsedGPUMemory() float64 {
+	if !g.gpuMetricsIsEnabled() {
+		return float64(0)
+	}
+	usedGPUMemory := float64(0)
+	for _, gpuMetric := range g.gpuMetrics {
+		usedGPUMemory += gpuMetric.GpuMemoryUsed
+	}
+	return usedGPUMemory
+}
+
+func (g *gpushare) getDutyCycle() float64 {
+	if !g.gpuMetricsIsEnabled() {
+		return float64(0)
+	}
+	dutyCycle := float64(0)
+	totalGPUs := float64(0)
+	for _, gpuMetric := range g.gpuMetrics {
+		totalGPUs += float64(1)
+		dutyCycle += gpuMetric.GpuDutyCycle
+	}
+
+	return dutyCycle / totalGPUs
+}
+
+func (g *gpushare) getUnhealthyGPUs() int {
+	totalGPUs := g.getTotalGPUs()
+	totalGPUMemory, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareResourceName)]
+	if !ok {
+		return 0
+	}
+	allocatableGPUMemory, ok := g.node.Status.Allocatable[v1.ResourceName(types.GPUShareResourceName)]
+	if !ok {
+		return 0
+	}
+	if totalGPUs <= 0 {
+		return 0
+	}
+	unhealthyGPUMemory := totalGPUMemory.Value() - allocatableGPUMemory.Value()
+	return int(int64(totalGPUs) * unhealthyGPUMemory / totalGPUMemory.Value())
+}
+
+func (g *gpushare) getTotalGPUMemoryOfDevice(id string) float64 {
+	if metric, ok := g.gpuMetrics[id]; ok {
+		return metric.GpuMemoryTotal
+	}
+	totalGPUs := g.getTotalGPUs()
+	totalGPUMemory := g.getTotalGPUMemory()
+	if totalGPUs > 0 {
+		return totalGPUMemory / float64(totalGPUs)
+	}
+	return 0
+}
+
+func (g *gpushare) GPUMetricsIsEnabled() bool {
+	return len(g.gpuMetrics) != 0
 }
 
 func (g *gpushare) convert2NodeInfo() types.GPUShareNodeInfo {
-	singleGPUMemory := g.singleGPUMemory()
-	deviceMap := map[string]types.GPUShareDeviceInfo{}
 	podInfos := []types.GPUSharePodInfo{}
+	metrics := []*types.AdvancedGpuMetric{}
+	for _, metric := range g.gpuMetrics {
+		metrics = append(metrics, metric)
+	}
 	gpushareInfo := types.GPUShareNodeInfo{
 		CommonNodeInfo: types.CommonNodeInfo{
-			Name:   g.Name(),
-			IP:     g.IP(),
-			Status: g.Status(),
-			Type:   types.GPUShareNode,
+			Name:        g.Name(),
+			Description: GPUShareNodeDescription,
+			IP:          g.IP(),
+			Status:      g.Status(),
+			Type:        types.GPUShareNode,
 		},
-		GPUCount:        g.gpuCount(),
-		UnHealthyGPUMem: g.CapacityResourceCount() - g.AllocatableResourceCount(),
-		TotalGPUMem:     g.CapacityResourceCount(),
-		UsedGPUMem:      g.UsedResourceCount(),
+		TotalGPUMemory:     g.getTotalGPUMemory(),
+		AllocatedGPUMemory: g.getAllocatedGPUMemory(),
+		CommonGPUNodeInfo: types.CommonGPUNodeInfo{
+			TotalGPUs:     g.getTotalGPUs(),
+			AllocatedGPUs: g.getAllocatedGPUs(),
+			UnhealthyGPUs: g.getUnhealthyGPUs(),
+			GPUMetrics:    metrics,
+		},
+	}
+	// build devices
+	deviceMap := map[string]types.GPUShareNodeDevice{}
+	for i := 0; i < g.getTotalGPUs(); i++ {
+		gpuId := fmt.Sprintf("%v", i)
+		deviceMap[gpuId] = types.GPUShareNodeDevice{
+			Id:             gpuId,
+			TotalGPUMemory: g.getTotalGPUMemoryOfDevice(gpuId),
+		}
 	}
 	for _, pod := range g.pods {
 		if utils.IsCompletedPod(pod) {
@@ -110,16 +205,16 @@ func (g *gpushare) convert2NodeInfo() types.GPUShareNodeInfo {
 		if len(allocation) == 0 {
 			continue
 		}
-		for gpuId, count := range allocation {
+		for gpuId, gpuMem := range allocation {
 			_, ok := deviceMap[gpuId]
 			if !ok {
-				deviceMap[gpuId] = types.GPUShareDeviceInfo{
-					ID:          gpuId,
-					TotalGPUMem: singleGPUMemory,
+				deviceMap[gpuId] = types.GPUShareNodeDevice{
+					Id:             gpuId,
+					TotalGPUMemory: g.getTotalGPUMemoryOfDevice(gpuId),
 				}
 			}
 			deviceInfo := deviceMap[gpuId]
-			deviceInfo.UsedGPUMem = deviceInfo.UsedGPUMem + count
+			deviceInfo.AllocatedGPUMemory += utils.DataUnitTransfer("GiB", "bytes", float64(gpuMem))
 			deviceMap[gpuId] = deviceInfo
 		}
 		podInfos = append(podInfos, types.GPUSharePodInfo{
@@ -129,17 +224,22 @@ func (g *gpushare) convert2NodeInfo() types.GPUShareNodeInfo {
 			Allocation:    allocation,
 		})
 	}
-	devices := []types.GPUShareDeviceInfo{}
+	devices := []types.GPUShareNodeDevice{}
 	for _, dev := range deviceMap {
 		devices = append(devices, dev)
 	}
 	gpushareInfo.Devices = devices
-	gpushareInfo.Pods = podInfos
+	gpushareInfo.PodInfos = podInfos
+	gpushareInfo.GPUMetrics = metrics
 	return gpushareInfo
 }
 
 func (g *gpushare) Convert2NodeInfo() interface{} {
 	return g.convert2NodeInfo()
+}
+
+func (g *gpushare) AllDevicesAreHealthy() bool {
+	return g.getUnhealthyGPUs() == 0
 }
 
 func (g *gpushare) WideFormat() string {
@@ -148,71 +248,9 @@ func (g *gpushare) WideFormat() string {
 		role = "<none>"
 	}
 	nodeInfo := g.convert2NodeInfo()
-	deviceInfos := map[string]types.GPUShareDeviceInfo{}
-	lines := []string{"", "Instances:", "  NAMESPACE\tNAME\tGPU_MEM(Requested)\tGPU_MEM(Allocated)"}
-	lines = append(lines, "  ---------\t----\t------------------\t------------------")
-	for _, dev := range nodeInfo.Devices {
-		deviceInfos[dev.ID] = dev
-	}
-	for _, podInfo := range nodeInfo.Pods {
-		items := []string{}
-		for i := 0; i < g.gpuCount(); i++ {
-			gpuId := fmt.Sprintf("%v", i)
-			count, ok := podInfo.Allocation[gpuId]
-			if !ok {
-				continue
-			}
-			items = append(items, fmt.Sprintf("%v(%vGiB)", gpuId, count))
-		}
-		lines = append(lines, fmt.Sprintf("  %v\t%v\t%vGiB\t%v", podInfo.Namespace, podInfo.Name, podInfo.RequestMemory, strings.Join(items, ",")))
-	}
-	if len(lines) == 4 {
-		lines = []string{}
-	}
-	lines = append(lines, []string{"", "GPUs:", "  INDEX\tMEMORY(Used/Total)\tPERCENT"}...)
-	lines = append(lines, "  -----\t------------------\t-------")
-	for i := 0; i < g.gpuCount(); i++ {
-		percent := float32(0)
-		gpuId := fmt.Sprintf("%v", i)
-		devInfo, ok := deviceInfos[gpuId]
-		if !ok {
-			gpuMem := g.singleGPUMemory()
-			lines = append(lines, fmt.Sprintf("  %v\t%v/%v(GiB)\t%.0f%%", gpuId, 0, gpuMem, percent))
-			continue
-		}
-		if devInfo.TotalGPUMem != 0 {
-			percent = float32(devInfo.UsedGPUMem) / float32(devInfo.TotalGPUMem) * 100
-		}
-		lines = append(lines, fmt.Sprintf("  %v\t%v/%v(GiB)\t%.1f%%", devInfo.ID, devInfo.UsedGPUMem, devInfo.TotalGPUMem, percent))
-	}
-	unhealthyGPUMems := fmt.Sprintf("%v/%v", 0, g.CapacityResourceCount())
-	if g.CapacityResourceCount()-g.AllocatableResourceCount() != 0 {
-		percent := float32(0)
-		gpuMems := g.CapacityResourceCount() - g.AllocatableResourceCount()
-		if g.CapacityResourceCount() != 0 {
-			percent = float32(gpuMems) / float32(g.CapacityResourceCount()) * 100
-		}
-		unhealthyGPUMems = fmt.Sprintf("%v/%v", gpuMems, g.CapacityResourceCount())
-		if percent != float32(0) {
-			unhealthyGPUMems = fmt.Sprintf("%v/%v(%.1f%%)", gpuMems, g.CapacityResourceCount(), percent)
-		}
-	}
-	usedGPUMem := fmt.Sprintf("%v/%v", nodeInfo.UsedGPUMem, nodeInfo.TotalGPUMem)
-	if nodeInfo.UsedGPUMem != 0 {
-		percent := float32(0)
-		if g.CapacityResourceCount() != 0 {
-			percent = float32(nodeInfo.UsedGPUMem) / float32(nodeInfo.TotalGPUMem) * 100
-		}
-		if percent != float32(0) {
-			usedGPUMem = fmt.Sprintf("%v/%v(%.1f%%)", nodeInfo.UsedGPUMem, nodeInfo.TotalGPUMem, percent)
-		}
-	}
-	lines = append(lines, "")
-	lines = append(lines, fmt.Sprintf("  Total(Memory/GiB): %v,Allocated(Memory/GiB): %v,Unhealthy(Memory/GiB): %v",
-		nodeInfo.TotalGPUMem,
-		usedGPUMem,
-		unhealthyGPUMems,
-	))
+	lines := []string{}
+	lines = g.displayPodInfos(lines, nodeInfo)
+	lines = g.displayDeviceInfos(lines, nodeInfo)
 	lines = append(lines, "")
 	return fmt.Sprintf(strings.TrimRight(gpushareTemplate, "\n"),
 		nodeInfo.Name,
@@ -220,8 +258,121 @@ func (g *gpushare) WideFormat() string {
 		role,
 		nodeInfo.Type,
 		nodeInfo.IP,
+		strings.Trim(nodeInfo.Description, "\n"),
 		strings.Join(lines, "\n"),
 	)
+}
+
+func (g *gpushare) displayPodInfos(lines []string, nodeInfo types.GPUShareNodeInfo) []string {
+	podLines := []string{"", "Instances:", "  NAMESPACE\tNAME\tGPU_MEM(Requested)\tGPU_MEM(Allocated)"}
+	podLines = append(podLines, "  ---------\t----\t------------------\t------------------")
+	deviceMap := map[string]types.GPUShareNodeDevice{}
+	for _, dev := range nodeInfo.Devices {
+		deviceMap[dev.Id] = dev
+	}
+	for _, podInfo := range nodeInfo.PodInfos {
+		items := []string{}
+		for i := 0; i < nodeInfo.TotalGPUs; i++ {
+			gpuId := fmt.Sprintf("%v", i)
+			count, ok := podInfo.Allocation[gpuId]
+			if !ok {
+				continue
+			}
+			items = append(items, fmt.Sprintf("%v(%vGiB)", gpuId, count))
+		}
+		podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%vGiB\t%v", podInfo.Namespace, podInfo.Name, podInfo.RequestMemory, strings.Join(items, ",")))
+	}
+	if len(podLines) == 4 {
+		podLines = []string{}
+	}
+	lines = append(lines, podLines...)
+	return lines
+}
+
+func (g *gpushare) displayDeviceInfos(lines []string, nodeInfo types.GPUShareNodeInfo) []string {
+	if !g.GPUMetricsIsEnabled() {
+		return g.displayDeviceUnderNoGPUMetric(lines, nodeInfo)
+	}
+	return g.displayDeviceUnderGPUMetric(lines, nodeInfo)
+}
+
+func (g *gpushare) displayDeviceUnderNoGPUMetric(lines []string, nodeInfo types.GPUShareNodeInfo) []string {
+	deviceLines := []string{"", "GPUs:", "  INDEX\tMEMORY(Total)\tMEMORY(Allocated)\tPERCENT"}
+	deviceLines = append(deviceLines, "  -----\t-------------\t-----------------\t-------")
+	deviceMap := map[string]types.GPUShareNodeDevice{}
+	for _, dev := range nodeInfo.Devices {
+		deviceMap[dev.Id] = dev
+	}
+	for i := 0; i < nodeInfo.TotalGPUs; i++ {
+		percent := float64(0)
+		gpuId := fmt.Sprintf("%v", i)
+		devInfo, ok := deviceMap[gpuId]
+		if !ok {
+			continue
+		}
+		if devInfo.TotalGPUMemory != 0 {
+			percent = float64(devInfo.AllocatedGPUMemory) / float64(devInfo.TotalGPUMemory) * 100
+		}
+		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%vGiB\t%vGiB\t%.1f%%",
+			devInfo.Id,
+			utils.DataUnitTransfer("bytes", "GiB", devInfo.TotalGPUMemory),
+			utils.DataUnitTransfer("bytes", "GiB", devInfo.AllocatedGPUMemory),
+			percent,
+		))
+	}
+	if len(deviceLines) == 4 {
+		deviceLines = []string{}
+	}
+	deviceLines = append(deviceLines, "")
+	lines = append(lines, deviceLines...)
+	lines = append(lines, fmt.Sprintf("  TotalGPUs: %v, TotalMemory(GiB): %v, AllocatedGPUs: %v, AllocatedMemory(GiB): %v",
+		nodeInfo.TotalGPUs,
+		utils.DataUnitTransfer("bytes", "GiB", nodeInfo.TotalGPUMemory),
+		nodeInfo.AllocatedGPUs,
+		utils.DataUnitTransfer("bytes", "GiB", nodeInfo.AllocatedGPUMemory),
+	))
+	return lines
+}
+
+func (g *gpushare) displayDeviceUnderGPUMetric(lines []string, nodeInfo types.GPUShareNodeInfo) []string {
+	deviceLines := []string{"", "GPUs:", "  INDEX\tMEMORY(Total)\tMEMORY(Allocated)\tMEMORY(Used)\tDUTY_CYCLE"}
+	deviceLines = append(deviceLines, "  -----\t-------------\t-----------------\t------------\t----------")
+	deviceMap := map[string]*types.AdvancedGpuMetric{}
+	for _, dev := range g.gpuMetrics {
+		deviceMap[dev.Id] = dev
+	}
+	for i := 0; i < nodeInfo.TotalGPUs; i++ {
+		gpuId := fmt.Sprintf("%v", i)
+		devInfo, ok := deviceMap[gpuId]
+		if !ok {
+			continue
+		}
+		allocatedGPUMemory := float64(0)
+		for _, dev := range nodeInfo.Devices {
+			if dev.Id == gpuId {
+				allocatedGPUMemory = dev.AllocatedGPUMemory
+			}
+		}
+		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%.1fGiB\t%.1fGiB\t%.1fGiB\t%.1f%%",
+			devInfo.Id,
+			utils.DataUnitTransfer("bytes", "GiB", devInfo.GpuMemoryTotal),
+			utils.DataUnitTransfer("bytes", "GiB", allocatedGPUMemory),
+			utils.DataUnitTransfer("bytes", "GiB", devInfo.GpuMemoryUsed),
+			devInfo.GpuDutyCycle),
+		)
+	}
+	if len(deviceLines) == 4 {
+		deviceLines = []string{}
+	}
+	deviceLines = append(deviceLines, "")
+	lines = append(lines, deviceLines...)
+	lines = append(lines, fmt.Sprintf("  TotalGPUs: %v, TotalMemory(GiB): %.1f, AllocatedGPUs: %v, AllocatedMemory(GiB): %.1f",
+		nodeInfo.TotalGPUs,
+		utils.DataUnitTransfer("bytes", "GiB", nodeInfo.TotalGPUMemory),
+		nodeInfo.AllocatedGPUs,
+		utils.DataUnitTransfer("bytes", "GiB", nodeInfo.AllocatedGPUMemory),
+	))
+	return lines
 }
 
 /*
@@ -262,36 +413,58 @@ func displayGPUShareNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	PrintLine(w, "===================================== GPUShareNode ======================================")
-	totalGPUMem := 0
-	unhealthyGPUMem := 0
-	usedGPUMem := 0
-	unhealthyPercent := float32(0)
-	usedPercent := float32(0)
+	PrintLine(w, "===================================== GPU MODE: Share ======================================")
+	totalGPUMemory := float64(0)
+	totalGPUs := int(0)
+	allocatedGPUs := int(0)
+	allocatedGPUMemory := float64(0)
+	unhealthyGPUs := int(0)
+	allocatedGPUMemoryPercent := float64(0)
+	allocatedGPUsPercent := float64(0)
+	unhealthyGPUsPercent := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUShareNodeInfo)
-		totalGPUMem += nodeInfo.TotalGPUMem
-		usedGPUMem += nodeInfo.UsedGPUMem
-		nodeUnhealthy := node.CapacityResourceCount() - node.AllocatableResourceCount()
-		unhealthyGPUMem += nodeUnhealthy
+		totalGPUs += nodeInfo.TotalGPUs
+		totalGPUMemory += nodeInfo.TotalGPUMemory
+		allocatedGPUs += nodeInfo.AllocatedGPUs
+		allocatedGPUMemory += nodeInfo.AllocatedGPUMemory
+		unhealthyGPUs += nodeInfo.UnhealthyGPUs
 		PrintLine(w, node.WideFormat())
 	}
-	if totalGPUMem != 0 {
-		usedPercent = float32(usedGPUMem) / float32(totalGPUMem) * 100
+	if totalGPUMemory != 0 {
+		allocatedGPUMemoryPercent = allocatedGPUMemory / totalGPUMemory * 100
 	}
-	PrintLine(w, fmt.Sprintf("Allocated/Total GPU Memory In Cluster: %v/%v(%.1f%%)", usedGPUMem, totalGPUMem, usedPercent))
-	if unhealthyGPUMem != 0 {
-		if totalGPUMem != 0 {
-			unhealthyPercent = float32(unhealthyGPUMem) / float32(totalGPUMem) * 100
+	if totalGPUs != 0 {
+		allocatedGPUsPercent = float64(allocatedGPUs) / float64(totalGPUs) * 100
+	}
+	PrintLine(w, fmt.Sprintf("Allocated/Total GPU Memory of nodes with gpu sharing mode In Cluster: %.1f/%.1f(%.1f%%)",
+		utils.DataUnitTransfer("bytes", "GiB", allocatedGPUMemory),
+		utils.DataUnitTransfer("bytes", "GiB", totalGPUMemory),
+		allocatedGPUMemoryPercent),
+	)
+	PrintLine(w, fmt.Sprintf("Allocated/Total GPUs of nodes with gpu sharing mode In Cluster: %v/%v(%.1f%%)",
+		allocatedGPUs,
+		totalGPUs,
+		allocatedGPUsPercent),
+	)
+	if unhealthyGPUs != 0 {
+		if totalGPUs != 0 {
+			unhealthyGPUsPercent = float64(unhealthyGPUs) / float64(totalGPUs) * 100
 		}
-		PrintLine(w, fmt.Sprintf("Unhealthy/Total GPU Memory In Cluster: %v/%v(%.1f%%)", unhealthyGPUMem, totalGPUMem, unhealthyPercent))
+		PrintLine(w, fmt.Sprintf("Unhealthy/Total GPUs of nodes with gpu sharing mode In Cluster: %v/%v(%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyGPUsPercent))
 	}
 	PrintLine(w, "")
 }
 
-func displayGPUShareNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) {
+func displayGPUShareNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int) {
+	totalGPUs := 0
+	allocatedGPUs := 0
+	unhealthyGPUs := 0
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUShareNodeInfo)
+		totalGPUs += nodeInfo.TotalGPUs
+		allocatedGPUs += nodeInfo.AllocatedGPUs
+		unhealthyGPUs += nodeInfo.UnhealthyGPUs
 		items := []string{}
 		items = append(items, node.Name())
 		items = append(items, node.IP())
@@ -301,14 +474,8 @@ func displayGPUShareNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, 
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, fmt.Sprintf("%v", nodeInfo.GPUCount))
-		used := float32(0)
-		totalGPUMem := nodeInfo.TotalGPUMem
-		usedGPUMem := nodeInfo.UsedGPUMem
-		if totalGPUMem != 0 && nodeInfo.GPUCount != 0 {
-			used = float32(nodeInfo.GPUCount*usedGPUMem) / float32(totalGPUMem)
-		}
-		items = append(items, fmt.Sprintf("%.1f", used))
+		items = append(items, fmt.Sprintf("%v", nodeInfo.TotalGPUs))
+		items = append(items, fmt.Sprintf("%v", nodeInfo.AllocatedGPUs))
 		if showNodeType {
 			for _, typeInfo := range types.NodeTypeSlice {
 				if typeInfo.Name == types.GPUShareNode {
@@ -316,12 +483,12 @@ func displayGPUShareNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, 
 				}
 			}
 		}
-		if isUnhealthy && totalGPUMem != 0 {
-			unhealthy := nodeInfo.GPUCount * nodeInfo.UnHealthyGPUMem / nodeInfo.TotalGPUMem
-			items = append(items, fmt.Sprintf("%v", unhealthy))
+		if isUnhealthy && nodeInfo.TotalGPUs != 0 {
+			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
 		}
 		PrintLine(w, items...)
 	}
+	return totalGPUs, allocatedGPUs, unhealthyGPUs
 }
 
 func IsGPUShareNode(node *v1.Node) bool {

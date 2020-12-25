@@ -199,6 +199,9 @@ func (s *SubmitArgsBuilder) Build() error {
 	if err := s.addPodGroupLabel(); err != nil {
 		return err
 	}
+	if err := s.addRequestGPUsToAnnotation(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -489,5 +492,10 @@ func (s *SubmitArgsBuilder) addPodGroupLabel() error {
 		s.args.PodGroupName = fmt.Sprintf("%v_%v", s.args.TrainingType, s.args.Name)
 		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount)
 	}
+	return nil
+}
+
+func (s *SubmitArgsBuilder) addRequestGPUsToAnnotation() error {
+	s.args.Annotations[types.RequestGPUsOfJobAnnoKey] = fmt.Sprintf("%v", s.args.WorkerCount*s.args.GPUCount)
 	return nil
 }

@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"encoding/json"
 
@@ -205,4 +206,64 @@ func GetPodGPUTopologyAllocation(pod *v1.Pod) []string {
 func GetPodGPUTopologyVisibleGPUs(pod *v1.Pod) []string {
 	visibleGPUs := getPodAnnotation(pod, types.GPUTopologyVisibleGPULabel)
 	return strings.Split(visibleGPUs, ",")
+}
+
+func GetPendingTimeOfPod(pod *v1.Pod) time.Duration {
+	if pod.Status.Phase == v1.PodPending {
+		if pod.CreationTimestamp.IsZero() {
+			return time.Duration(0)
+		}
+		return metav1.Now().Sub(pod.CreationTimestamp.Time)
+	}
+	if pod.Status.StartTime == nil {
+		return metav1.Now().Sub(pod.CreationTimestamp.Time)
+	}
+	return pod.Status.StartTime.Sub(pod.CreationTimestamp.Time)
+}
+
+func GetRunningTimeOfPod(pod *v1.Pod) time.Duration {
+	if pod.Status.Phase == v1.PodPending || pod.Status.Phase == v1.PodUnknown {
+		return time.Duration(0)
+	}
+	var startTime *metav1.Time
+	var endTime *metav1.Time
+	// get pod start time
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		if containerStatus.State.Running != nil {
+			if startTime == nil {
+				startTime = &containerStatus.State.Running.StartedAt
+			}
+			if startTime.After(containerStatus.State.Running.StartedAt.Time) {
+				startTime = &containerStatus.State.Running.StartedAt
+			}
+		}
+		if containerStatus.State.Terminated != nil {
+			if startTime == nil {
+				startTime = &containerStatus.State.Terminated.StartedAt
+			}
+			if startTime.After(containerStatus.State.Terminated.StartedAt.Time) {
+				startTime = &containerStatus.State.Terminated.StartedAt
+			}
+			if endTime == nil {
+				endTime = &containerStatus.State.Terminated.FinishedAt
+			}
+			if endTime.Before(&containerStatus.State.Terminated.FinishedAt) {
+				endTime = &containerStatus.State.Terminated.FinishedAt
+			}
+		}
+	}
+	if startTime == nil {
+		startTime = pod.Status.StartTime
+	}
+	if pod.Status.Phase == v1.PodRunning {
+		return metav1.Now().Sub(startTime.Time)
+	}
+	return endTime.Sub(startTime.Time)
+}
+
+func GetDurationOfPod(pod *v1.Pod) time.Duration {
+	if pod.Status.Phase == v1.PodPending {
+		return GetPendingTimeOfPod(pod)
+	}
+	return GetRunningTimeOfPod(pod)
 }

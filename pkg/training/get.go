@@ -16,6 +16,7 @@ package training
 
 import (
 	"fmt"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -43,12 +44,12 @@ var (
 	errGetMsg             = "Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s %v'."
 )
 var getJobTemplate = `
-Name:      %v
-Status:    %v
-Namespace: %v
-Priority:  %v
-Trainer:   %v
-Duration:  %v
+Name:        %v
+Status:      %v
+Namespace:   %v
+Priority:    %v
+Trainer:     %v
+Duration:    %v
 %v
 `
 
@@ -136,37 +137,37 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 	return jobs, nil
 }
 
-func PrintTrainingJob(job TrainingJob, format string, showEvents bool) {
+func PrintTrainingJob(job TrainingJob, format string, showEvents bool, showGPUs bool) {
 	switch format {
 	case "name":
 		fmt.Println(job.Name())
 		// for future CRD support
 	case "json":
-		outBytes, err := json.MarshalIndent(BuildJobInfo(job), "", "    ")
+		outBytes, err := json.MarshalIndent(BuildJobInfo(job, showGPUs), "", "    ")
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Printf(string(outBytes))
 		}
 	case "yaml":
-		outBytes, err := yaml.Marshal(BuildJobInfo(job))
+		outBytes, err := yaml.Marshal(BuildJobInfo(job, showGPUs))
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Printf(string(outBytes))
 		}
 	case "wide", "":
-		printSingleJobHelper(BuildJobInfo(job), job.Resources(), showEvents)
+		printSingleJobHelper(BuildJobInfo(job, showGPUs), job.Resources(), showEvents, showGPUs)
 		job.Resources()
 	default:
 		log.Fatalf("Unknown output format: %s", format)
 	}
 }
 
-func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEvents bool) {
+func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEvents bool, showGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	lines := []string{"", "Instances:", "  NAME\tSTATUS\tAGE\tIS_CHIEF\tGPU(Requested)\tNODE"}
-	lines = append(lines, "  ----\t-----\t---\t--------\t--------------\t----")
+	lines = append(lines, "  ----\t------\t---\t--------\t--------------\t----")
 	totalRequestGPUs := 0
 	totalAllocatedGPUs := 0
 	for _, instance := range job.Instances {
@@ -178,17 +179,25 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 		if len(hostIP) == 0 {
 			hostIP = "N/A"
 		}
+		var duration int64
+		var err error
+		job.Duration = strings.Replace(job.Duration, "s", "", -1)
+		duration, err = strconv.ParseInt(job.Duration, 10, 64)
+		if err != nil {
+			log.Debugf("failed to parse duration: %v", err)
+
+		}
 		lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v\t%v",
 			instance.Name,
 			instance.Status,
-			instance.Age,
+			util.ShortHumanDuration(time.Duration(duration)*time.Second),
 			instance.IsChief,
 			instance.RequestGPUs,
 			hostIP,
 		))
 	}
 	if job.Status != types.TrainingJobSucceeded {
-		lines = displayGPUUsage(lines, totalAllocatedGPUs, totalRequestGPUs, job.Instances)
+		lines = displayGPUUsage(lines, job.Status, totalAllocatedGPUs, totalRequestGPUs, job.Instances, showGPU)
 	}
 	if job.Tensorboard != "" {
 		lines = append(lines, "", "Tensorboard:")
@@ -202,13 +211,21 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 	if showEvents {
 		lines = printEvents(lines, chiefPodNamespace, resouce)
 	}
+	var duration int64
+	var err error
+	job.Duration = strings.Replace(job.Duration, "s", "", -1)
+	duration, err = strconv.ParseInt(job.Duration, 10, 64)
+	if err != nil {
+		log.Debugf("failed to parse duration: %v", err)
+
+	}
 	PrintLine(w, fmt.Sprintf(strings.Trim(getJobTemplate, "\n"),
 		job.Name,
 		job.Status,
 		job.Namespace,
 		job.Priority,
 		strings.ToUpper(string(job.Trainer)),
-		job.Duration,
+		util.ShortHumanDuration(time.Duration(duration)*time.Second),
 		strings.Join(lines, "\n"),
 	))
 	_ = w.Flush()
@@ -262,20 +279,11 @@ func GetResourcesEvents(client *kubernetes.Clientset, namespace string, resource
 	return eventMap, nil
 }
 
-func displayGPUUsage(lines []string, totalAllocatedGPUs, totalRequestGPUs int, instances []types.TrainingJobInstance) []string {
-	count := 0
-	if totalRequestGPUs > 0 {
-		lines = append(lines, "", "GPUs:")
-	}
-	for _, i := range instances {
-		if i.Status == "Running" && len(i.GPUMetrics) != 0 {
-			count++
-		}
-	}
-	if count == 0 {
-		lines = append(lines, fmt.Sprintf("  Allocated/Requested GPUs of Job: %v/%v", totalAllocatedGPUs, totalRequestGPUs))
+func displayGPUUsage(lines []string, status types.TrainingJobStatus, totalAllocatedGPUs, totalRequestGPUs int, instances []types.TrainingJobInstance, showGPU bool) []string {
+	if !showGPU || totalRequestGPUs == 0 {
 		return lines
 	}
+	lines = append(lines, "", "GPUs:")
 	lines = append(lines, "  INSTANCE\tNODE(IP)\tGPU(Requested)\tGPU(IndexId)\tGPU(DutyCycle)\tGPU Memory(Used/Total)")
 	lines = append(lines, "  --------\t--------\t--------------\t------------\t--------------\t----------------------")
 	for _, instance := range instances {
