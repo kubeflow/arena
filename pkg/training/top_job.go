@@ -176,7 +176,7 @@ func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notSto
 			jobInfo.Status,
 			jobInfo.Namespace,
 			jobInfo.Priority,
-			jobInfo.Trainer,
+			strings.ToUpper(fmt.Sprintf("%v", jobInfo.Trainer)),
 			util.ShortHumanDuration(time.Duration(duration)*time.Second),
 			strings.Join(lines, "\n"),
 		))
@@ -221,7 +221,7 @@ func displayWithNoMetric(jobs []types.TrainingJobInfo, notStop bool, format type
 			namespace,
 			jobInfo.Name,
 			jobInfo.Status,
-			jobInfo.Trainer,
+			strings.ToUpper(fmt.Sprintf("%v", jobInfo.Trainer)),
 			util.ShortHumanDuration(time.Duration(duration)*time.Second),
 			jobInfo.RequestGPU,
 			jobInfo.AllocatedGPU,

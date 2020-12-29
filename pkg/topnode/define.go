@@ -1,6 +1,7 @@
 package topnode
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -24,7 +25,7 @@ type buildNodeArgs struct {
 // NodeProcesser process the node
 type NodeProcesser interface {
 	// BuildNode builds the nodes and return the skip nodes
-	BuildNode(v1nodes *v1.Node, pods []*v1.Pod, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool)
+	BuildNode(client *kubernetes.Clientset, v1nodes *v1.Node, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool)
 	// Convert2NodeInfos filters nodes
 	Convert2NodeInfos(nodes []Node, allNodes types.AllNodeInfo) types.AllNodeInfo
 	// DisplayNodesDetails display nodes which the processer knowns
@@ -138,18 +139,18 @@ func GetSupportedNodePorcessers() []NodeProcesser {
 type nodeProcesser struct {
 	key                 string
 	nodeType            types.NodeType
-	builder             func(node *v1.Node, pods []*v1.Pod, index int, args buildNodeArgs) (Node, error)
+	builder             func(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error)
 	canBuildNode        func(node *v1.Node) bool
 	displayNodesDetails func(w *tabwriter.Writer, nodes []Node)
 	displayNodesSummary func(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int)
 }
 
-func (n *nodeProcesser) BuildNode(v1node *v1.Node, pods []*v1.Pod, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool) {
+func (n *nodeProcesser) BuildNode(client *kubernetes.Clientset, v1node *v1.Node, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool) {
 	skip := true
 	if !isNeededNodeType(n.nodeType, targetNodeType) || !n.canBuildNode(v1node) {
 		return nodes, skip
 	}
-	myNode, err := n.builder(v1node, pods, index, args)
+	myNode, err := n.builder(client, v1node, index, args)
 	if err != nil {
 		log.Debugf("failed to build node: %v", err)
 		return nodes, skip
@@ -262,13 +263,16 @@ func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, erro
 		}
 		for _, processer := range GetSupportedNodePorcessers() {
 			var skip bool
-			nodes, skip = processer.BuildNode(node, pods, nodes, targetNodeType, index, args)
+			nodes, skip = processer.BuildNode(client, node, nodes, targetNodeType, index, args)
 			if !skip {
 				log.Debugf("the processer %v process the node %v", processer.SupportedNodeType(), node.Name)
 				break
 			}
 			log.Debugf("the processer %v skips to process the node %v", processer.SupportedNodeType(), node.Name)
 		}
+	}
+	if len(nodes) == 0 {
+		return nil, fmt.Errorf("failed to display nodes's informations: not found nodes")
 	}
 	return nodes, nil
 }

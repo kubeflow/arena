@@ -7,10 +7,11 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 var NormalNodeDescription = `
-  1.This node has none gpu devices
+  This node has none gpu devices
 `
 
 var normalNodeTemplate = `
@@ -21,6 +22,7 @@ Type:    %v
 Address: %v
 Description:
 %v
+
 -----------------------------------------------------------------------------------------
 `
 
@@ -30,14 +32,14 @@ type normalNode struct {
 	baseNode
 }
 
-func NewNormalNode(node *v1.Node, pods []*v1.Pod, index int, args buildNodeArgs) (Node, error) {
+func NewNormalNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
 	return &normalNode{
 		node: node,
-		pods: pods,
+		pods: []*v1.Pod{},
 		baseNode: baseNode{
 			index:    index,
 			node:     node,
-			pods:     pods,
+			pods:     []*v1.Pod{},
 			nodeType: types.NormalNode,
 		},
 	}, nil
@@ -99,7 +101,7 @@ func displayNormalNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	PrintLine(w, "===================================== GPU MODE: None =======================================")
+	PrintLine(w, "===================================== GPU MODE: None ====================================")
 	for _, node := range nodes {
 		PrintLine(w, node.WideFormat())
 	}

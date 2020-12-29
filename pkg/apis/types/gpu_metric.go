@@ -28,21 +28,8 @@ type PrometheusServer struct {
 var SUPPORT_PROMETHEUS_SERVERS = []*PrometheusServer{
 	// aliyun prometheus
 	{
-		Name:          "arms-prometheus-server",
-		ServiceLabels: "kubernetes.io/name=prometheus-server",
-		Protocol:      "http",
-		Port:          "9090",
-		Path:          "api/v1/query",
-		MetricList: []string{
-			"nvidia_gpu_duty_cycle",
-			"nvidia_gpu_memory_used_bytes",
-			"nvidia_gpu_memory_total_bytes",
-		},
-	},
-	// aliyun prometheus
-	{
 		Name:          "arms-prometheus-admin",
-		ServiceLabels: "kubernetes.io/name=prometheus-admin",
+		ServiceLabels: "kubernetes.io/service-name=prometheus-admin",
 		Protocol:      "http",
 		Port:          "9335",
 		Path:          "api/v1/query",
@@ -54,7 +41,20 @@ var SUPPORT_PROMETHEUS_SERVERS = []*PrometheusServer{
 	},
 	{
 		Name:          "default",
-		ServiceLabels: "kubernetes.io/name=prometheus",
+		ServiceLabels: "kubernetes.io/service-name=prometheus-server",
+		Protocol:      "http",
+		Port:          "9090",
+		Path:          "api/v1/query",
+		MetricList: []string{
+			"nvidia_gpu_duty_cycle",
+			"nvidia_gpu_memory_used_bytes",
+			"nvidia_gpu_memory_total_bytes",
+		},
+	},
+	// is compatible with old label
+	{
+		Name:          "default-old",
+		ServiceLabels: "kubernetes.io/name=Prometheus",
 		Protocol:      "http",
 		Port:          "9090",
 		Path:          "api/v1/query",
@@ -111,8 +111,9 @@ type GpuMetric struct {
 type AdvancedGpuMetric struct {
 	Id             string  `json:"id" yaml:"id"`
 	UUID           string  `json:"uuid" yaml:"uuid"`
-	Status         string  `json:"status" yaml:"status"`
 	GpuDutyCycle   float64 `json:"gpuDutyCycle" yaml:"gpuDutyCycle"`
 	GpuMemoryUsed  float64 `json:"usedGPUMemory" yaml:"usedGPUMemory"`
 	GpuMemoryTotal float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+	// PodName is combined with namespace and  pod name,like 'namespace/pod_name'
+	PodNames []string `json:"podNames" yaml:"podNames"`
 }

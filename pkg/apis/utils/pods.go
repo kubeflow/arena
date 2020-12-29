@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -198,6 +199,25 @@ func AcquireAllActivePods(client *kubernetes.Clientset) ([]*v1.Pod, error) {
 	return allPods, nil
 }
 
+func AcquireAllActivePodsOfNode(client *kubernetes.Clientset, nodeName string) ([]*v1.Pod, error) {
+	allPods := []*v1.Pod{}
+	selector := fmt.Sprintf("spec.nodeName=%v,status.phase!=%v,status.phase!=%v", nodeName, string(v1.PodSucceeded), string(v1.PodFailed))
+
+	fieldSelector, err := fields.ParseSelector(selector)
+	if err != nil {
+		return allPods, err
+	}
+	nodeNonTerminatedPodsList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{FieldSelector: fieldSelector.String()})
+	if err != nil {
+		return allPods, err
+	}
+
+	for _, pod := range nodeNonTerminatedPodsList.Items {
+		allPods = append(allPods, pod.DeepCopy())
+	}
+	return allPods, nil
+}
+
 func GetPodGPUTopologyAllocation(pod *v1.Pod) []string {
 	topoAllocation := getPodAnnotation(pod, types.GPUTopologyAllocationLabel)
 	return strings.Split(topoAllocation, ",")
@@ -228,37 +248,50 @@ func GetRunningTimeOfPod(pod *v1.Pod) time.Duration {
 	var startTime *metav1.Time
 	var endTime *metav1.Time
 	// get pod start time
-	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if containerStatus.State.Running != nil {
-			if startTime == nil {
-				startTime = &containerStatus.State.Running.StartedAt
-			}
-			if startTime.After(containerStatus.State.Running.StartedAt.Time) {
-				startTime = &containerStatus.State.Running.StartedAt
-			}
-		}
-		if containerStatus.State.Terminated != nil {
-			if startTime == nil {
-				startTime = &containerStatus.State.Terminated.StartedAt
-			}
-			if startTime.After(containerStatus.State.Terminated.StartedAt.Time) {
-				startTime = &containerStatus.State.Terminated.StartedAt
-			}
-			if endTime == nil {
-				endTime = &containerStatus.State.Terminated.FinishedAt
-			}
-			if endTime.Before(&containerStatus.State.Terminated.FinishedAt) {
-				endTime = &containerStatus.State.Terminated.FinishedAt
-			}
-		}
+	allContainerStatuses := []v1.ContainerStatus{}
+	for _, s := range pod.Status.InitContainerStatuses {
+		allContainerStatuses = append(allContainerStatuses, s)
 	}
+	for _, s := range pod.Status.ContainerStatuses {
+		allContainerStatuses = append(allContainerStatuses, s)
+	}
+	startTime, endTime = getStartTimeAndEndTime(allContainerStatuses)
 	if startTime == nil {
 		startTime = pod.Status.StartTime
 	}
-	if pod.Status.Phase == v1.PodRunning {
+	if pod.Status.Phase == v1.PodRunning || endTime == nil {
 		return metav1.Now().Sub(startTime.Time)
 	}
 	return endTime.Sub(startTime.Time)
+}
+
+func getStartTimeAndEndTime(containerStatuses []v1.ContainerStatus) (*metav1.Time, *metav1.Time) {
+	startTimes := []*metav1.Time{}
+	endTimes := []*metav1.Time{}
+	for _, containerStatus := range containerStatuses {
+		switch {
+		case containerStatus.State.Running != nil:
+			startTimes = append(startTimes, &containerStatus.State.Running.DeepCopy().StartedAt)
+		case containerStatus.State.Terminated != nil:
+			startTimes = append(startTimes, &containerStatus.State.Terminated.DeepCopy().StartedAt)
+			endTimes = append(endTimes, &containerStatus.State.Terminated.DeepCopy().FinishedAt)
+		}
+	}
+	sort.Slice(startTimes, func(i, j int) bool {
+		return startTimes[j].After(startTimes[i].Time)
+	})
+	sort.Slice(endTimes, func(i, j int) bool {
+		return endTimes[i].After(endTimes[j].Time)
+	})
+	var startTime *metav1.Time
+	var endTime *metav1.Time
+	if len(startTimes) != 0 {
+		startTime = startTimes[0]
+	}
+	if len(endTimes) != 0 {
+		endTime = endTimes[0]
+	}
+	return startTime, endTime
 }
 
 func GetDurationOfPod(pod *v1.Pod) time.Duration {
