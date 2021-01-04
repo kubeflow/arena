@@ -55,7 +55,7 @@ func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, forma
 			isUnhealthy = true
 		}
 	}
-	if len(nodeTypes) != 1 {
+	if len(nodeTypes) > 1 {
 		showNodeType = true
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
@@ -74,6 +74,10 @@ func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, forma
 		totalGPUs += t
 		allocatedGPUs += a
 		unhealthyGPUs += u
+	}
+	if len(nodeNames) != 0 {
+		_ = w.Flush()
+		return nil
 	}
 	PrintLine(w, "---------------------------------------------------------------------------------------------------")
 	PrintLine(w, "Allocated/Total GPUs In Cluster:")

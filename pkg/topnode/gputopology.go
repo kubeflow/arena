@@ -9,6 +9,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 var GPUTopologyNodeDescription = `
@@ -25,7 +26,17 @@ Address:       %v
 Description:
 %v
 %v
+
 -----------------------------------------------------------------------------------------
+`
+var gpuTopologySummary = `
+GPU Summary:
+  Total GPUs:           %v
+  Allocated GPUs:       %v
+  Unhealthy GPUs:       %v
+  Total GPU Memory:     %.1f GiB
+  Allocated GPU Memory: %.1f GiB
+  Used GPU Memory:      %.1f GiB
 `
 
 type gputopo struct {
@@ -36,7 +47,11 @@ type gputopo struct {
 	baseNode
 }
 
-func NewGPUTopologyNode(node *v1.Node, pods []*v1.Pod, index int, args buildNodeArgs) (Node, error) {
+func NewGPUTopologyNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
+	pods, err := utils.AcquireAllActivePodsOfNode(client, node.Name)
+	if err != nil {
+		return nil, err
+	}
 	var configmap *v1.ConfigMap
 	for _, c := range args.configmaps {
 		if val, ok := c.Labels["nodename"]; ok && val == node.Name {
@@ -344,7 +359,6 @@ func (g *gputopo) displayDeviceInfoUnderNoMetrics(lines []string, nodeInfo types
 	deviceLines = append(deviceLines, "  ----\t------\t-------")
 	unhealthyGPUs := 0
 	allocatedGPUs := 0
-	totalGPUs := len(nodeInfo.Devices)
 	for _, dev := range nodeInfo.Devices {
 		if !dev.Healthy {
 			unhealthyGPUs++
@@ -358,10 +372,12 @@ func (g *gputopo) displayDeviceInfoUnderNoMetrics(lines []string, nodeInfo types
 		deviceLines = []string{}
 	}
 	deviceLines = append(deviceLines, "")
-	deviceLines = append(deviceLines, fmt.Sprintf("  TotalGPUs: %v, AllocatedGPUs: %v, UnhealthyGPUs: %v",
-		totalGPUs,
-		allocatedGPUs,
-		unhealthyGPUs,
+	deviceLines = append(deviceLines, "GPU Summary:", "  GPU(Total)\tGPU(Allocated)\tGPU(Unhealthy)")
+	deviceLines = append(deviceLines, "  ----------\t--------------\t--------------")
+	deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%v\t%v",
+		nodeInfo.TotalGPUs,
+		nodeInfo.AllocatedGPUs,
+		g.getUnhealthyGPUs(),
 	))
 	lines = append(lines, deviceLines...)
 	return lines
@@ -376,6 +392,7 @@ func (g *gputopo) displayDeviceInfoUnderMetrics(lines []string, nodeInfo types.G
 	}
 	totalGPUMemory := float64(0)
 	totalAllocatedGPUMemory := float64(0)
+	totalUsedGPUMemory := float64(0)
 	for i := 0; i < nodeInfo.TotalGPUs; i++ {
 		gpuId := fmt.Sprintf("%v", i)
 		devInfo, ok := deviceMap[gpuId]
@@ -390,7 +407,8 @@ func (g *gputopo) displayDeviceInfoUnderMetrics(lines []string, nodeInfo types.G
 				totalAllocatedGPUMemory += allocatedGPUMemory
 			}
 		}
-		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%.1fGiB\t%.1fGiB\t%.1fGiB\t%.1f%%",
+		totalUsedGPUMemory += devInfo.GpuMemoryUsed
+		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%.1f GiB\t%.1f GiB\t%.1f GiB\t%.1f%%",
 			devInfo.Id,
 			utils.DataUnitTransfer("bytes", "GiB", devInfo.GpuMemoryTotal),
 			utils.DataUnitTransfer("bytes", "GiB", allocatedGPUMemory),
@@ -402,14 +420,15 @@ func (g *gputopo) displayDeviceInfoUnderMetrics(lines []string, nodeInfo types.G
 		deviceLines = []string{}
 	}
 	deviceLines = append(deviceLines, "")
-	lines = append(lines, deviceLines...)
-	lines = append(lines, fmt.Sprintf("  TotalGPUs: %v, TotalMemory(GiB): %.1f, AllocatedGPUs: %v, AllocatedMemory(GiB): %.1f, UnhealthyGPUs: %v",
-		nodeInfo.TotalGPUs,
-		utils.DataUnitTransfer("bytes", "GiB", totalGPUMemory),
-		nodeInfo.AllocatedGPUs,
-		utils.DataUnitTransfer("bytes", "GiB", totalAllocatedGPUMemory),
-		g.getUnhealthyGPUs(),
-	))
+	deviceLines = append(deviceLines,
+		fmt.Sprintf(strings.Trim(gpuTopologySummary, "\n"),
+			nodeInfo.TotalGPUs,
+			nodeInfo.AllocatedGPUs,
+			g.getUnhealthyGPUs(),
+			utils.DataUnitTransfer("bytes", "GiB", totalGPUMemory),
+			utils.DataUnitTransfer("bytes", "GiB", totalAllocatedGPUMemory),
+			utils.DataUnitTransfer("bytes", "GiB", totalUsedGPUMemory),
+		))
 	return lines
 }
 
@@ -477,12 +496,12 @@ func displayGPUTopologyNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	PrintLine(w, "===================================== GPU MODE: Topology ===================================")
+	PrintLine(w, "===================================== GPU MODE: Topology ================================")
 	totalGPUs := 0
 	totalUnhealthyGPUs := 0
 	totalAllocatedGPUs := 0
-	unhealthyPercent := float64(0)
-	allocatedPercent := float64(0)
+	//unhealthyPercent := float64(0)
+	//allocatedPercent := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUTopologyNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
@@ -490,16 +509,18 @@ func displayGPUTopologyNodeDetails(w *tabwriter.Writer, nodes []Node) {
 		totalUnhealthyGPUs += nodeInfo.UnhealthyGPUs
 		PrintLine(w, node.WideFormat())
 	}
-	if totalGPUs != 0 {
-		allocatedPercent = float64(totalAllocatedGPUs) / float64(totalGPUs) * 100
-	}
-	PrintLine(w, fmt.Sprintf("Allocated/Total GPUs of nodes with gpu topology mode In Cluster: %v/%v(%.1f%%)", totalAllocatedGPUs, totalGPUs, allocatedPercent))
-	if totalUnhealthyGPUs != 0 {
+	/*
 		if totalGPUs != 0 {
-			unhealthyPercent = float64(totalUnhealthyGPUs) / float64(totalGPUs) * 100
+			allocatedPercent = float64(totalAllocatedGPUs) / float64(totalGPUs) * 100
 		}
-		PrintLine(w, fmt.Sprintf("Unhealthy/Total GPUs of nodes with gpu topology mode In Cluster: %v/%v(%.1f%%)", totalUnhealthyGPUs, totalGPUs, unhealthyPercent))
-	}
+		PrintLine(w, fmt.Sprintf("Allocated/Total GPUs of nodes with gpu topology mode In Cluster: %v/%v(%.1f%%)", totalAllocatedGPUs, totalGPUs, allocatedPercent))
+		if totalUnhealthyGPUs != 0 {
+			if totalGPUs != 0 {
+				unhealthyPercent = float64(totalUnhealthyGPUs) / float64(totalGPUs) * 100
+			}
+			PrintLine(w, fmt.Sprintf("Unhealthy/Total GPUs of nodes with gpu topology mode In Cluster: %v/%v(%.1f%%)", totalUnhealthyGPUs, totalGPUs, unhealthyPercent))
+		}
+	*/
 	PrintLine(w, "")
 }
 

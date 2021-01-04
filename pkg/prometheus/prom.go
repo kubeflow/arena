@@ -187,9 +187,9 @@ func generateNodeGPUMetrics(metrics []types.GpuMetricInfo) map[string]types.Node
 
 		if nodeMetrics[metric.NodeName][metric.Id] == nil {
 			nodeMetrics[metric.NodeName][metric.Id] = &types.AdvancedGpuMetric{
-				Id:     metric.Id,
-				UUID:   metric.GPUUID,
-				Status: "idle",
+				Id:       metric.Id,
+				UUID:     metric.GPUUID,
+				PodNames: []string{},
 			}
 		}
 		switch metric.MetricName {
@@ -201,7 +201,8 @@ func generateNodeGPUMetrics(metrics []types.GpuMetricInfo) map[string]types.Node
 			nodeMetrics[metric.NodeName][metric.Id].GpuMemoryTotal = v
 		}
 		if metric.PodName != "" {
-			nodeMetrics[metric.NodeName][metric.Id].Status = "using"
+			podName := fmt.Sprintf("%v/%v", metric.PodNamespace, metric.PodName)
+			nodeMetrics[metric.NodeName][metric.Id].PodNames = append(nodeMetrics[metric.NodeName][metric.Id].PodNames, podName)
 		}
 	}
 	return nodeMetrics

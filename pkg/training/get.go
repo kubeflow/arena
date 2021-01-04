@@ -228,6 +228,7 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 		util.ShortHumanDuration(time.Duration(duration)*time.Second),
 		strings.Join(lines, "\n"),
 	))
+	PrintLine(w, "")
 	_ = w.Flush()
 
 }
