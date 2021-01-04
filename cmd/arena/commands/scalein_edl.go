@@ -31,10 +31,6 @@ var (
 	scaleinDuration  time.Duration
 )
 
-const (
-	scaleInScript = "/usr/local/bin/scaler.sh --delete"
-)
-
 func NewScaleInETJobCommand() *cobra.Command {
 	var (
 		submitArgs ScaleInETJobArgs
@@ -82,7 +78,7 @@ func NewScaleInETJobCommand() *cobra.Command {
 	command.Flags().DurationVarP(&scaleinDuration, "timeout", "t", 60*time.Second, "timeout of callback scaler script, like 5s, 2m, or 3h.")
 	command.Flags().IntVar(&submitArgs.Retry, "retry", 0, "retry times.")
 	command.Flags().IntVar(&submitArgs.Count, "count", 1, "the nums of you want to add or delete worker.")
-	command.Flags().StringVar(&submitArgs.Script, "script", scaleInScript, "script of scaling.")
+	command.Flags().StringVar(&submitArgs.Script, "script", "", "script of scaling.")
 	command.Flags().StringArrayVarP(&scaleinEnvs, "env", "e", []string{}, "the environment variables.")
 	return command
 }
