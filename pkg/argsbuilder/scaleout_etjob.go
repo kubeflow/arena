@@ -22,10 +22,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	ScaleOutETJobScript = "/usr/local/bin/scaler.sh --add"
-)
-
 type ScaleOutETJobArgsBuilder struct {
 	args        *types.ScaleOutETJobArgs
 	argValues   map[string]interface{}
@@ -42,7 +38,7 @@ func NewScaleOutETJobArgsBuilder(args *types.ScaleOutETJobArgs) ArgsBuilder {
 	s.AddSubBuilder(
 		NewScaleETJobArgsBuilder(&args.ScaleETJobArgs),
 	)
-	s.AddArgValue("script", ScaleOutETJobScript)
+	//s.AddArgValue("script", ScaleOutETJobScript)
 	return s
 }
 

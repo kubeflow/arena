@@ -75,7 +75,7 @@ func NewScaleInETJobCommand() *cobra.Command {
 
 	command.Flags().StringVar(&submitArgs.Name, "name", "", "required, et job name")
 	command.MarkFlagRequired("name")
-	command.Flags().DurationVarP(&scaleinDuration, "timeout", "t", 60*time.Second, "timeout of callback scaler script, like 5s, 2m, or 3h.")
+	command.Flags().DurationVarP(&scaleinDuration, "timeout", "t", 5*time.Minute, "timeout of callback scaler script, like 5s, 2m, or 3h.")
 	command.Flags().IntVar(&submitArgs.Retry, "retry", 0, "retry times.")
 	command.Flags().IntVar(&submitArgs.Count, "count", 1, "the nums of you want to add or delete worker.")
 	command.Flags().StringVar(&submitArgs.Script, "script", "", "script of scaling.")
