@@ -297,7 +297,7 @@ func GetNodeGpuMetrics(client *kubernetes.Clientset) (map[string]types.NodeGpuMe
 	if server == nil {
 		return nodeGPUMetrics, nil
 	}
-	return prometheus.GetNodeGPUMetrics(client, server, []string{})
+	return prometheus.GetNodeGPUMetrics(client, server, []string{".*"})
 }
 
 func getGPUMetricsByNodeName(nodeName string, metrics map[string]types.NodeGpuMetric) types.NodeGpuMetric {

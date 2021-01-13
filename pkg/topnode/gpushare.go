@@ -160,6 +160,9 @@ func (g *gpushare) getUnhealthyGPUs() int {
 	if totalGPUs <= 0 {
 		return 0
 	}
+	if totalGPUMemory.Value() <= 0 {
+		return totalGPUs
+	}
 	unhealthyGPUMemory := totalGPUMemory.Value() - allocatableGPUMemory.Value()
 	return int(int64(totalGPUs) * unhealthyGPUMemory / totalGPUMemory.Value())
 }
