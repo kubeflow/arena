@@ -310,17 +310,10 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "PyTorchJob"
-<<<<<<< HEAD
             {{- if .Values.podGroupName }}
             pod-group.scheduling.sigs.k8s.io/name: {{ .Values.podGroupName }}
             pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
             {{- end }}
-=======
-            { { - if .Values.podGroupName } }
-            pod-group.scheduling.sigs.k8s.io/name: { { .Values.podGroupName } }
-            pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
-            { { - end } }
->>>>>>> 1696428... Test passed
           annotations:
             {{- range $key, $value := .Values.annotations }}
               {{ $key }}: {{ $value | quote }}

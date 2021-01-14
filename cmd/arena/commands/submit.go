@@ -348,9 +348,9 @@ func (submitArgs *submitArgs) addCommonFlags(command *cobra.Command) {
 	// command.MarkFlagRequired("workingDir")
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
-	// command.Flags().StringArrayVar(&dataDirs, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
-	// command.Flags().MarkDeprecated("dataDir", "please use --data-dir instead")
-	// command.Flags().StringArrayVar(&dataDirs, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
+	command.Flags().StringArrayVar(&dataDirs, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
+	command.Flags().MarkDeprecated("dataDir", "please use --data-dir instead")
+	command.Flags().StringArrayVar(&dataDirs, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
 
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
 	// enable RDMA or not, support hostnetwork for now

@@ -32,8 +32,8 @@ const dns1123LabelErrMsg string = "a DNS-1123 label must consist of lower case a
 const DNS1123LabelMaxLength int = 63
 
 // Job Max lenth should be 49
-// Modify Max lenth of job to 50
-const JobMaxLength int = 50
+// Modify Max lenth of job to 49
+const JobMaxLength int = 49
 
 var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
 
