@@ -32,8 +32,34 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
-	k8s.io/api v0.0.0-20180712090710-2d6f90ab1293
-	k8s.io/apimachinery v0.0.0-20180621070125-103fd098999d
-	k8s.io/client-go v0.0.0-20180806134042-1f13a808da65
-	k8s.io/kube-openapi v0.0.0-20180509051205-7ee50c0aa805
+	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
+	k8s.io/kubernetes v1.16.9 // indirect
+	sigs.k8s.io/controller-runtime v0.1.9
+)
+
+replace (
+	k8s.io/api => k8s.io/api v0.16.9
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.16.9
+	k8s.io/apimachinery => k8s.io/apimachinery v0.16.10-beta.0
+	k8s.io/apiserver => k8s.io/apiserver v0.16.9
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.16.9
+	k8s.io/client-go => k8s.io/client-go v0.16.9
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.16.9
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.16.9
+	k8s.io/code-generator => k8s.io/code-generator v0.16.10-beta.0
+	k8s.io/component-base => k8s.io/component-base v0.16.9
+	k8s.io/cri-api => k8s.io/cri-api v0.16.10-beta.0
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.16.9
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.16.9
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.16.9
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.16.9
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.16.9
+	k8s.io/kubectl => k8s.io/kubectl v0.16.9
+	k8s.io/kubelet => k8s.io/kubelet v0.16.9
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.16.9
+	k8s.io/metrics => k8s.io/metrics v0.16.9
+	k8s.io/node-api => k8s.io/node-api v0.16.9
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.16.9
+	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.16.9
+	k8s.io/sample-controller => k8s.io/sample-controller v0.16.9
 )
