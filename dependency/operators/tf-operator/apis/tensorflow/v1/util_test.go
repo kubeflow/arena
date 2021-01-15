@@ -14,15 +14,11 @@
 
 package v1
 
-import (
-	"testing"
-
-	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
-)
+import "testing"
 
 func TestIsChieforMaster(t *testing.T) {
 	tc := []struct {
-		Type     commonv1.ReplicaType
+		Type     TFReplicaType
 		Expected bool
 	}{
 		{

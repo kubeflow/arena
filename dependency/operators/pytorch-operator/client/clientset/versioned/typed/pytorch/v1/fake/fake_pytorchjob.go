@@ -1,4 +1,4 @@
-// Copyright 2020 The Kubeflow Authors
+// Copyright 2019 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ func (c *FakePyTorchJobs) DeleteCollection(options *v1.DeleteOptions, listOption
 // Patch applies the patch and returns the patched pyTorchJob.
 func (c *FakePyTorchJobs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *pytorchv1.PyTorchJob, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(pytorchjobsResource, c.ns, name, pt, data, subresources...), &pytorchv1.PyTorchJob{})
+		Invokes(testing.NewPatchSubresourceAction(pytorchjobsResource, c.ns, name, data, subresources...), &pytorchv1.PyTorchJob{})
 
 	if obj == nil {
 		return nil, err

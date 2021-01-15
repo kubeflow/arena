@@ -1,4 +1,4 @@
-// Copyright 2021 The Kubeflow Authors
+// Copyright 2019 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import (
 	clientset "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned"
 	kubeflowv1 "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1"
 	fakekubeflowv1 "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1/fake"
+	kubeflowv1beta2 "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1beta2"
+	fakekubeflowv1beta2 "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1beta2/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -39,7 +41,7 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 		}
 	}
 
-	cs := &Clientset{tracker: o}
+	cs := &Clientset{}
 	cs.discovery = &fakediscovery.FakeDiscovery{Fake: &cs.Fake}
 	cs.AddReactor("*", "*", testing.ObjectReaction(o))
 	cs.AddWatchReactor("*", func(action testing.Action) (handled bool, ret watch.Interface, err error) {
@@ -61,20 +63,25 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 type Clientset struct {
 	testing.Fake
 	discovery *fakediscovery.FakeDiscovery
-	tracker   testing.ObjectTracker
 }
 
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 	return c.discovery
 }
 
-func (c *Clientset) Tracker() testing.ObjectTracker {
-	return c.tracker
-}
-
 var _ clientset.Interface = &Clientset{}
+
+// KubeflowV1beta2 retrieves the KubeflowV1beta2Client
+func (c *Clientset) KubeflowV1beta2() kubeflowv1beta2.KubeflowV1beta2Interface {
+	return &fakekubeflowv1beta2.FakeKubeflowV1beta2{Fake: &c.Fake}
+}
 
 // KubeflowV1 retrieves the KubeflowV1Client
 func (c *Clientset) KubeflowV1() kubeflowv1.KubeflowV1Interface {
+	return &fakekubeflowv1.FakeKubeflowV1{Fake: &c.Fake}
+}
+
+// Kubeflow retrieves the KubeflowV1Client
+func (c *Clientset) Kubeflow() kubeflowv1.KubeflowV1Interface {
 	return &fakekubeflowv1.FakeKubeflowV1{Fake: &c.Fake}
 }

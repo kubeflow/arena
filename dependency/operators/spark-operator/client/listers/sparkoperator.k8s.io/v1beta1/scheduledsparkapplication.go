@@ -28,10 +28,8 @@ import (
 )
 
 // ScheduledSparkApplicationLister helps list ScheduledSparkApplications.
-// All objects returned here must be treated as read-only.
 type ScheduledSparkApplicationLister interface {
 	// List lists all ScheduledSparkApplications in the indexer.
-	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.ScheduledSparkApplication, err error)
 	// ScheduledSparkApplications returns an object that can list and get ScheduledSparkApplications.
 	ScheduledSparkApplications(namespace string) ScheduledSparkApplicationNamespaceLister
@@ -62,13 +60,10 @@ func (s *scheduledSparkApplicationLister) ScheduledSparkApplications(namespace s
 }
 
 // ScheduledSparkApplicationNamespaceLister helps list and get ScheduledSparkApplications.
-// All objects returned here must be treated as read-only.
 type ScheduledSparkApplicationNamespaceLister interface {
 	// List lists all ScheduledSparkApplications in the indexer for a given namespace.
-	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1beta1.ScheduledSparkApplication, err error)
 	// Get retrieves the ScheduledSparkApplication from the indexer for a given namespace and name.
-	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1beta1.ScheduledSparkApplication, error)
 	ScheduledSparkApplicationNamespaceListerExpansion
 }

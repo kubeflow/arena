@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/GoogleCloudPlatform/spark-on-k8s-operator v0.0.0-20210114163153-6bbb2a0dce04
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/go-openapi/spec v0.19.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
@@ -16,19 +15,16 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect
-	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.4.0
-	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
 	k8s.io/api v0.19.6
 	k8s.io/apimachinery v0.19.6
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20200805222855-6aeccd4b50c6
-	sigs.k8s.io/controller-runtime v0.1.9 // indirect
 )
 
 replace (
@@ -57,5 +53,3 @@ replace (
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.16.9
 	k8s.io/sample-controller => k8s.io/sample-controller v0.16.9
 )
-
-replace github.com/kubeflow/arena/dependency/operators => ./dependency/operators

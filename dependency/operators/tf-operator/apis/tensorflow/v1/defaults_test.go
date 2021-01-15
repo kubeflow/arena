@@ -18,17 +18,17 @@ import (
 	"reflect"
 	"testing"
 
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 
-	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
-	"github.com/kubeflow/common/pkg/util"
+	common "github.com/kubeflow/tf-operator/pkg/apis/common/v1"
+	"github.com/kubeflow/tf-operator/pkg/util"
 )
 
 const (
 	testImage = "test-image:latest"
 )
 
-func expectedTFJob(cleanPodPolicy commonv1.CleanPodPolicy, restartPolicy commonv1.RestartPolicy, portName string, port int32) *TFJob {
+func expectedTFJob(cleanPodPolicy common.CleanPodPolicy, restartPolicy common.RestartPolicy, portName string, port int32) *TFJob {
 	ports := []v1.ContainerPort{}
 
 	// port not set
@@ -51,16 +51,11 @@ func expectedTFJob(cleanPodPolicy commonv1.CleanPodPolicy, restartPolicy commonv
 		)
 	}
 
-	defaultSuccessPolicy := SuccessPolicyDefault
-
 	return &TFJob{
 		Spec: TFJobSpec{
-			SuccessPolicy: &defaultSuccessPolicy,
-			RunPolicy: commonv1.RunPolicy{
-				CleanPodPolicy: &cleanPodPolicy,
-			},
-			TFReplicaSpecs: map[commonv1.ReplicaType]*commonv1.ReplicaSpec{
-				TFReplicaTypeWorker: &commonv1.ReplicaSpec{
+			CleanPodPolicy: &cleanPodPolicy,
+			TFReplicaSpecs: map[TFReplicaType]*common.ReplicaSpec{
+				TFReplicaTypeWorker: &common.ReplicaSpec{
 					Replicas:      Int32(1),
 					RestartPolicy: restartPolicy,
 					Template: v1.PodTemplateSpec{
@@ -81,8 +76,8 @@ func expectedTFJob(cleanPodPolicy commonv1.CleanPodPolicy, restartPolicy commonv
 }
 
 func TestSetTypeNames(t *testing.T) {
-	spec := &commonv1.ReplicaSpec{
-		RestartPolicy: commonv1.RestartPolicyAlways,
+	spec := &common.ReplicaSpec{
+		RestartPolicy: common.RestartPolicyAlways,
 		Template: v1.PodTemplateSpec{
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
@@ -101,10 +96,10 @@ func TestSetTypeNames(t *testing.T) {
 		},
 	}
 
-	workerUpperCase := commonv1.ReplicaType("WORKER")
+	workerUpperCase := TFReplicaType("WORKER")
 	original := &TFJob{
 		Spec: TFJobSpec{
-			TFReplicaSpecs: map[commonv1.ReplicaType]*commonv1.ReplicaSpec{
+			TFReplicaSpecs: map[TFReplicaType]*common.ReplicaSpec{
 				workerUpperCase: spec,
 			},
 		},
@@ -122,7 +117,7 @@ func TestSetTypeNames(t *testing.T) {
 func TestSetDefaultTFJob(t *testing.T) {
 	customPortName := "customPort"
 	var customPort int32 = 1234
-	customRestartPolicy := commonv1.RestartPolicyAlways
+	customRestartPolicy := common.RestartPolicyAlways
 
 	testCases := map[string]struct {
 		original *TFJob
@@ -131,8 +126,8 @@ func TestSetDefaultTFJob(t *testing.T) {
 		"set replicas": {
 			original: &TFJob{
 				Spec: TFJobSpec{
-					TFReplicaSpecs: map[commonv1.ReplicaType]*commonv1.ReplicaSpec{
-						TFReplicaTypeWorker: &commonv1.ReplicaSpec{
+					TFReplicaSpecs: map[TFReplicaType]*common.ReplicaSpec{
+						TFReplicaTypeWorker: &common.ReplicaSpec{
 							RestartPolicy: customRestartPolicy,
 							Template: v1.PodTemplateSpec{
 								Spec: v1.PodSpec{
@@ -154,13 +149,13 @@ func TestSetDefaultTFJob(t *testing.T) {
 					},
 				},
 			},
-			expected: expectedTFJob(commonv1.CleanPodPolicyRunning, customRestartPolicy, DefaultPortName, DefaultPort),
+			expected: expectedTFJob(common.CleanPodPolicyRunning, customRestartPolicy, DefaultPortName, DefaultPort),
 		},
 		"set replicas with default restartpolicy": {
 			original: &TFJob{
 				Spec: TFJobSpec{
-					TFReplicaSpecs: map[commonv1.ReplicaType]*commonv1.ReplicaSpec{
-						TFReplicaTypeWorker: &commonv1.ReplicaSpec{
+					TFReplicaSpecs: map[TFReplicaType]*common.ReplicaSpec{
+						TFReplicaTypeWorker: &common.ReplicaSpec{
 							Template: v1.PodTemplateSpec{
 								Spec: v1.PodSpec{
 									Containers: []v1.Container{
@@ -181,13 +176,13 @@ func TestSetDefaultTFJob(t *testing.T) {
 					},
 				},
 			},
-			expected: expectedTFJob(commonv1.CleanPodPolicyRunning, DefaultRestartPolicy, DefaultPortName, DefaultPort),
+			expected: expectedTFJob(common.CleanPodPolicyRunning, DefaultRestartPolicy, DefaultPortName, DefaultPort),
 		},
 		"set replicas with default port": {
 			original: &TFJob{
 				Spec: TFJobSpec{
-					TFReplicaSpecs: map[commonv1.ReplicaType]*commonv1.ReplicaSpec{
-						TFReplicaTypeWorker: &commonv1.ReplicaSpec{
+					TFReplicaSpecs: map[TFReplicaType]*common.ReplicaSpec{
+						TFReplicaTypeWorker: &common.ReplicaSpec{
 							Replicas:      Int32(1),
 							RestartPolicy: customRestartPolicy,
 							Template: v1.PodTemplateSpec{
@@ -204,13 +199,13 @@ func TestSetDefaultTFJob(t *testing.T) {
 					},
 				},
 			},
-			expected: expectedTFJob(commonv1.CleanPodPolicyRunning, customRestartPolicy, "", 0),
+			expected: expectedTFJob(common.CleanPodPolicyRunning, customRestartPolicy, "", 0),
 		},
 		"set replicas adding default port": {
 			original: &TFJob{
 				Spec: TFJobSpec{
-					TFReplicaSpecs: map[commonv1.ReplicaType]*commonv1.ReplicaSpec{
-						TFReplicaTypeWorker: &commonv1.ReplicaSpec{
+					TFReplicaSpecs: map[TFReplicaType]*common.ReplicaSpec{
+						TFReplicaTypeWorker: &common.ReplicaSpec{
 							Replicas:      Int32(1),
 							RestartPolicy: customRestartPolicy,
 							Template: v1.PodTemplateSpec{
@@ -233,16 +228,14 @@ func TestSetDefaultTFJob(t *testing.T) {
 					},
 				},
 			},
-			expected: expectedTFJob(commonv1.CleanPodPolicyRunning, customRestartPolicy, customPortName, customPort),
+			expected: expectedTFJob(common.CleanPodPolicyRunning, customRestartPolicy, customPortName, customPort),
 		},
 		"set custom cleanpod policy": {
 			original: &TFJob{
 				Spec: TFJobSpec{
-					RunPolicy: commonv1.RunPolicy{
-						CleanPodPolicy: cleanPodPolicyPointer(commonv1.CleanPodPolicyAll),
-					},
-					TFReplicaSpecs: map[commonv1.ReplicaType]*commonv1.ReplicaSpec{
-						TFReplicaTypeWorker: &commonv1.ReplicaSpec{
+					CleanPodPolicy: cleanPodPolicyPointer(common.CleanPodPolicyAll),
+					TFReplicaSpecs: map[TFReplicaType]*common.ReplicaSpec{
+						TFReplicaTypeWorker: &common.ReplicaSpec{
 							Replicas:      Int32(1),
 							RestartPolicy: customRestartPolicy,
 							Template: v1.PodTemplateSpec{
@@ -265,7 +258,7 @@ func TestSetDefaultTFJob(t *testing.T) {
 					},
 				},
 			},
-			expected: expectedTFJob(commonv1.CleanPodPolicyAll, customRestartPolicy, customPortName, customPort),
+			expected: expectedTFJob(common.CleanPodPolicyAll, customRestartPolicy, customPortName, customPort),
 		},
 	}
 
@@ -277,7 +270,7 @@ func TestSetDefaultTFJob(t *testing.T) {
 	}
 }
 
-func cleanPodPolicyPointer(cleanPodPolicy commonv1.CleanPodPolicy) *commonv1.CleanPodPolicy {
+func cleanPodPolicyPointer(cleanPodPolicy common.CleanPodPolicy) *common.CleanPodPolicy {
 	c := cleanPodPolicy
 	return &c
 }

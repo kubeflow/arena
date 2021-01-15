@@ -72,11 +72,6 @@ type MPIJobSpec struct {
 	// active. The policies specified in `RunPolicy` take precedence over
 	// the following fields: `BackoffLimit` and `ActiveDeadlineSeconds`.
 	RunPolicy *common.RunPolicy `json:"runPolicy,omitempty"`
-
-	// MPIDistribution specifies name of the MPI framwork which is used
-	// Defaults to "OpenMPI"
-	// Options includes "OpenMPI", "IntelMPI" and "MPICH"
-	MPIDistribution *MPIDistributionType `json:"mpiDistribution,omitempty"`
 }
 
 // MPIReplicaType is the type for MPIReplica.
@@ -88,18 +83,4 @@ const (
 
 	// MPIReplicaTypeWorker is the type for worker replicas.
 	MPIReplicaTypeWorker MPIReplicaType = "Worker"
-)
-
-// MPIDistributionType is the type for MPIDistribution.
-type MPIDistributionType string
-
-const (
-	// MPIDistributionTypeOpenMPI is the type for Open MPI.
-	MPIDistributionTypeOpenMPI MPIDistributionType = "OpenMPI"
-
-	// MPIDistributionTypeIntelMPI is the type for Intel MPI.
-	MPIDistributionTypeIntelMPI MPIDistributionType = "IntelMPI"
-
-	// MPIDistributionTypeMPICH is the type for MPICh.
-	MPIDistributionTypeMPICH MPIDistributionType = "MPICH"
 )

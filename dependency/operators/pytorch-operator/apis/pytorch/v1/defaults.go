@@ -17,8 +17,8 @@ package v1
 import (
 	"strings"
 
-	common "github.com/kubeflow/common/job_controller/api/v1"
-	v1 "k8s.io/api/core/v1"
+	common "github.com/kubeflow/tf-operator/pkg/apis/common/v1"
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -86,7 +86,7 @@ func setTypeNameToCamelCase(job *PyTorchJob, typ PyTorchReplicaType) {
 
 // SetDefaults_PyTorchJob sets any unspecified values to defaults.
 func SetDefaults_PyTorchJob(job *PyTorchJob) {
-	// Set default cleanpod policy to None.
+	// Set default cleanpod policy to Running.
 	if job.Spec.CleanPodPolicy == nil {
 		policy := common.CleanPodPolicyNone
 		job.Spec.CleanPodPolicy = &policy
@@ -95,12 +95,10 @@ func SetDefaults_PyTorchJob(job *PyTorchJob) {
 	// Update the key of PyTorchReplicaSpecs to camel case.
 	setTypeNamesToCamelCase(job)
 
-	for rType, spec := range job.Spec.PyTorchReplicaSpecs {
+	for _, spec := range job.Spec.PyTorchReplicaSpecs {
 		// Set default replicas to 1.
 		setDefaultReplicas(spec)
-		if rType == PyTorchReplicaTypeMaster {
-			// Set default port to pytorch container of Master.
-			setDefaultPort(&spec.Template.Spec)
-		}
+		// Set default port to pytorch container.
+		setDefaultPort(&spec.Template.Spec)
 	}
 }
