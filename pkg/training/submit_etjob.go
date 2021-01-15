@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
+	"github.com/kubeflow/arena/dependency/operators/et-operator/api/v1alpha1"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"

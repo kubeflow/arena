@@ -22,7 +22,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/arenacache"
-	"github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
+	"github.com/kubeflow/arena/dependency/operators/mpi-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -31,7 +31,7 @@ import (
 
 	"time"
 
-	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
+	v1alpha1 "github.com/kubeflow/arena/dependency/operators/mpi-operator/apis/kubeflow/v1alpha1"
 )
 
 // MPI Job Information

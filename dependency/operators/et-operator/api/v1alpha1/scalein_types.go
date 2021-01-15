@@ -16,7 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/kubeflow/arena/pkg/operators/et-operator/api/common"
+	"github.com/kubeflow/arena/dependency/operators/et-operator/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

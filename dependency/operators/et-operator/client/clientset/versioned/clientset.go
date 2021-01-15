@@ -19,7 +19,7 @@ package versioned
 import (
 	"fmt"
 
-	etv1alpha1 "github.com/kubeflow/arena/pkg/operators/et-operator/client/clientset/versioned/typed/et/v1alpha1"
+	etv1alpha1 "github.com/kubeflow/arena/dependency/operators/et-operator/client/clientset/versioned/typed/et/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

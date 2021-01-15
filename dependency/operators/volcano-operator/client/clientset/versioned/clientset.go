@@ -18,7 +18,7 @@ package versioned
 
 import (
 	glog "github.com/golang/glog"
-	batchv1alpha1 "github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned/typed/batch/v1alpha1"
+	batchv1alpha1 "github.com/kubeflow/arena/dependency/operators/volcano-operator/client/clientset/versioned/typed/batch/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
