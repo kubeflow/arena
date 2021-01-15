@@ -60,3 +60,4 @@ replace (
 	k8s.io/sample-controller => k8s.io/sample-controller v0.16.9
 )
 
+replace github.com/kubeflow/arena/pkg/operators => ./dependency/operators
