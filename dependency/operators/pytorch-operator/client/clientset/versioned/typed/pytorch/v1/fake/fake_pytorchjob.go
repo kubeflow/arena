@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2020 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package fake
 
 import (
-	pytorchv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
+	pytorchv1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -129,6 +129,7 @@ func (c *FakePyTorchJobs) DeleteCollection(options *v1.DeleteOptions, listOption
 // Patch applies the patch and returns the patched pyTorchJob.
 func (c *FakePyTorchJobs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *pytorchv1.PyTorchJob, err error) {
 	obj, err := c.Fake.
+		// delete param pt beacause this function of current k8s.io/client-go/testing doesn't have this param, same as tf
 		Invokes(testing.NewPatchSubresourceAction(pytorchjobsResource, c.ns, name, data, subresources...), &pytorchv1.PyTorchJob{})
 
 	if obj == nil {

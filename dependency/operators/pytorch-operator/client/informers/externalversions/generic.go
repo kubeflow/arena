@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2020 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
-	v1beta2 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1beta2"
+	v1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -54,10 +53,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=kubeflow.org, Version=v1
 	case v1.SchemeGroupVersion.WithResource("pytorchjobs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Kubeflow().V1().PyTorchJobs().Informer()}, nil
-
-		// Group=kubeflow.org, Version=v1beta2
-	case v1beta2.SchemeGroupVersion.WithResource("pytorchjobs"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Kubeflow().V1beta2().PyTorchJobs().Informer()}, nil
 
 	}
 

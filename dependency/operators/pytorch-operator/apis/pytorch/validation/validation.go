@@ -17,65 +17,8 @@ package validation
 import (
 	"fmt"
 
-	torchv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
-	torchv1beta2 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1beta2"
+	torchv1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
 )
-
-func ValidateBetaTwoPyTorchJobSpec(c *torchv1beta2.PyTorchJobSpec) error {
-	if c.PyTorchReplicaSpecs == nil {
-		return fmt.Errorf("PyTorchJobSpec is not valid")
-	}
-	masterExists := false
-	for rType, value := range c.PyTorchReplicaSpecs {
-		if value == nil || len(value.Template.Spec.Containers) == 0 {
-			return fmt.Errorf("PyTorchJobSpec is not valid: containers definition expected in %v", rType)
-		}
-		// Make sure the replica type is valid.
-		validReplicaTypes := []torchv1beta2.PyTorchReplicaType{torchv1beta2.PyTorchReplicaTypeMaster, torchv1beta2.PyTorchReplicaTypeWorker}
-
-		isValidReplicaType := false
-		for _, t := range validReplicaTypes {
-			if t == rType {
-				isValidReplicaType = true
-				break
-			}
-		}
-
-		if !isValidReplicaType {
-			return fmt.Errorf("PyTorchReplicaType is %v but must be one of %v", rType, validReplicaTypes)
-		}
-
-		//Make sure the image is defined in the container
-		defaultContainerPresent := false
-		for _, container := range value.Template.Spec.Containers {
-			if container.Image == "" {
-				msg := fmt.Sprintf("PyTorchJobSpec is not valid: Image is undefined in the container of %v", rType)
-				return fmt.Errorf(msg)
-			}
-			if container.Name == torchv1beta2.DefaultContainerName {
-				defaultContainerPresent = true
-			}
-		}
-		//Make sure there has at least one container named "pytorch"
-		if !defaultContainerPresent {
-			msg := fmt.Sprintf("PyTorchJobSpec is not valid: There is no container named %s in %v", torchv1beta2.DefaultContainerName, rType)
-			return fmt.Errorf(msg)
-		}
-		if rType == torchv1beta2.PyTorchReplicaTypeMaster {
-			masterExists = true
-			if value.Replicas != nil && int(*value.Replicas) != 1 {
-				return fmt.Errorf("PyTorchJobSpec is not valid: There must be only 1 master replica")
-			}
-		}
-
-	}
-
-	if !masterExists {
-		return fmt.Errorf("PyTorchJobSpec is not valid: Master ReplicaSpec must be present")
-	}
-	return nil
-
-}
 
 func ValidateV1PyTorchJobSpec(c *torchv1.PyTorchJobSpec) error {
 	if c.PyTorchReplicaSpecs == nil {
@@ -114,7 +57,7 @@ func ValidateV1PyTorchJobSpec(c *torchv1.PyTorchJobSpec) error {
 		}
 		//Make sure there has at least one container named "pytorch"
 		if !defaultContainerPresent {
-			msg := fmt.Sprintf("PyTorchJobSpec is not valid: There is no container named %s in %v", torchv1beta2.DefaultContainerName, rType)
+			msg := fmt.Sprintf("PyTorchJobSpec is not valid: There is no container named %s in %v", torchv1.DefaultContainerName, rType)
 			return fmt.Errorf(msg)
 		}
 		if rType == torchv1.PyTorchReplicaTypeMaster {

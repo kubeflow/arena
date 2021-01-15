@@ -17,8 +17,8 @@
 package v1beta2
 
 import (
-	v1beta2 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1beta2"
-	"github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/scheme"
+	v1beta2 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/tensorflow/v1beta2"
+	"github.com/kubeflow/arena/dependency/operators/tf-operator/client/clientset/versioned/scheme"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	rest "k8s.io/client-go/rest"
 )

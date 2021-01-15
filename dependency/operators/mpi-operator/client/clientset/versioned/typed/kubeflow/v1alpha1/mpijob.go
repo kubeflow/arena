@@ -1,4 +1,4 @@
-// Copyright 2020 The Kubeflow Authors.
+// Copyright 2018 The Kubeflow Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
 package v1alpha1
 
 import (
-	"time"
-
-	v1alpha1 "github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha1"
-	scheme "github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/scheme"
+	v1alpha1 "github.com/kubeflow/arena/dependency/operators/mpi-operator/apis/kubeflow/v1alpha1"
+	scheme "github.com/kubeflow/arena/dependency/operators/mpi-operator/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -76,16 +74,11 @@ func (c *mPIJobs) Get(name string, options v1.GetOptions) (result *v1alpha1.MPIJ
 
 // List takes label and field selectors, and returns the list of MPIJobs that match those selectors.
 func (c *mPIJobs) List(opts v1.ListOptions) (result *v1alpha1.MPIJobList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
 	result = &v1alpha1.MPIJobList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("mpijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
 		Do().
 		Into(result)
 	return
@@ -93,16 +86,11 @@ func (c *mPIJobs) List(opts v1.ListOptions) (result *v1alpha1.MPIJobList, err er
 
 // Watch returns a watch.Interface that watches the requested mPIJobs.
 func (c *mPIJobs) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("mpijobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
 		Watch()
 }
 
@@ -160,15 +148,10 @@ func (c *mPIJobs) Delete(name string, options *v1.DeleteOptions) error {
 
 // DeleteCollection deletes a collection of objects.
 func (c *mPIJobs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
-	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("mpijobs").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
-		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()

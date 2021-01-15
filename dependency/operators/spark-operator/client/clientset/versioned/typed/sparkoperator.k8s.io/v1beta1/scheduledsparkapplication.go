@@ -21,10 +21,8 @@ limitations under the License.
 package v1beta1
 
 import (
-	"time"
-
-	v1beta1 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta1"
-	scheme "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/scheme"
+	v1beta1 "github.com/kubeflow/arena/dependency/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
+	scheme "github.com/kubeflow/arena/dependency/operators/spark-operator/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -79,16 +77,11 @@ func (c *scheduledSparkApplications) Get(name string, options v1.GetOptions) (re
 
 // List takes label and field selectors, and returns the list of ScheduledSparkApplications that match those selectors.
 func (c *scheduledSparkApplications) List(opts v1.ListOptions) (result *v1beta1.ScheduledSparkApplicationList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
 	result = &v1beta1.ScheduledSparkApplicationList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("scheduledsparkapplications").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
 		Do().
 		Into(result)
 	return
@@ -96,16 +89,11 @@ func (c *scheduledSparkApplications) List(opts v1.ListOptions) (result *v1beta1.
 
 // Watch returns a watch.Interface that watches the requested scheduledSparkApplications.
 func (c *scheduledSparkApplications) Watch(opts v1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("scheduledsparkapplications").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
 		Watch()
 }
 
@@ -147,15 +135,10 @@ func (c *scheduledSparkApplications) Delete(name string, options *v1.DeleteOptio
 
 // DeleteCollection deletes a collection of objects.
 func (c *scheduledSparkApplications) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
-	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("scheduledsparkapplications").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
-		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()

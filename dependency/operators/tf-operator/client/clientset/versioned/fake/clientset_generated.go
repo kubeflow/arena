@@ -17,11 +17,11 @@
 package fake
 
 import (
-	clientset "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned"
-	kubeflowv1 "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1"
-	fakekubeflowv1 "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1/fake"
-	kubeflowv1beta2 "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1beta2"
-	fakekubeflowv1beta2 "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1beta2/fake"
+	clientset "github.com/kubeflow/arena/dependency/operators/tf-operator/client/clientset/versioned"
+	kubeflowv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/client/clientset/versioned/typed/tensorflow/v1"
+	fakekubeflowv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/client/clientset/versioned/typed/tensorflow/v1/fake"
+	kubeflowv1beta2 "github.com/kubeflow/arena/dependency/operators/tf-operator/client/clientset/versioned/typed/tensorflow/v1beta2"
+	fakekubeflowv1beta2 "github.com/kubeflow/arena/dependency/operators/tf-operator/client/clientset/versioned/typed/tensorflow/v1beta2/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

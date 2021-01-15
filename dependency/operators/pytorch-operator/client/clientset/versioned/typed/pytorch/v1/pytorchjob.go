@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2020 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@
 package v1
 
 import (
-	v1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
-	scheme "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/scheme"
+	"time"
+
+	v1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
+	scheme "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -74,11 +76,16 @@ func (c *pyTorchJobs) Get(name string, options metav1.GetOptions) (result *v1.Py
 
 // List takes label and field selectors, and returns the list of PyTorchJobs that match those selectors.
 func (c *pyTorchJobs) List(opts metav1.ListOptions) (result *v1.PyTorchJobList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1.PyTorchJobList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("pytorchjobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Do().
 		Into(result)
 	return
@@ -86,11 +93,16 @@ func (c *pyTorchJobs) List(opts metav1.ListOptions) (result *v1.PyTorchJobList, 
 
 // Watch returns a watch.Interface that watches the requested pyTorchJobs.
 func (c *pyTorchJobs) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("pytorchjobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Watch()
 }
 
@@ -148,10 +160,15 @@ func (c *pyTorchJobs) Delete(name string, options *metav1.DeleteOptions) error {
 
 // DeleteCollection deletes a collection of objects.
 func (c *pyTorchJobs) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("pytorchjobs").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()

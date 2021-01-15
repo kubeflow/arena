@@ -1,4 +1,4 @@
-// Copyright 2020 The Kubeflow Authors.
+// Copyright 2018 The Kubeflow Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package fake
 
 import (
-	v1alpha1 "github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha1"
+	v1alpha1 "github.com/kubeflow/arena/dependency/operators/mpi-operator/apis/kubeflow/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -60,7 +60,7 @@ func (c *FakeMPIJobs) List(opts v1.ListOptions) (result *v1alpha1.MPIJobList, er
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.MPIJobList{ListMeta: obj.(*v1alpha1.MPIJobList).ListMeta}
+	list := &v1alpha1.MPIJobList{}
 	for _, item := range obj.(*v1alpha1.MPIJobList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
@@ -129,7 +129,7 @@ func (c *FakeMPIJobs) DeleteCollection(options *v1.DeleteOptions, listOptions v1
 // Patch applies the patch and returns the patched mPIJob.
 func (c *FakeMPIJobs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.MPIJob, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(mpijobsResource, c.ns, name, pt, data, subresources...), &v1alpha1.MPIJob{})
+		Invokes(testing.NewPatchSubresourceAction(mpijobsResource, c.ns, name, data, subresources...), &v1alpha1.MPIJob{})
 
 	if obj == nil {
 		return nil, err

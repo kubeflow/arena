@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2020 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/internalinterfaces"
-	pytorch "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/pytorch"
+	versioned "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/clientset/versioned"
+	internalinterfaces "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/informers/externalversions/internalinterfaces"
+	pytorch "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/informers/externalversions/pytorch"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

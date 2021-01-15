@@ -40,56 +40,22 @@ type MPIJobList struct {
 type MPIJobSpec struct {
 	// Specifies the desired number of GPUs the MPIJob should run on.
 	// Mutually exclusive with the `Replicas` field.
-	// Note that this is deprecated in favor of `ProcessingUnits` field.
 	// +optional
 	GPUs *int32 `json:"gpus,omitempty"`
 
-	// The maximum number of GPUs available per node.
-	// Note that this will be ignored if the GPU resources are explicitly
-	// specified in the MPIJob pod spec.
-	// This is deprecated in favor of `ProcessingUnitsPerNode` field.
-	GPUsPerNode *int32 `json:"gpusPerNode,omitempty"`
-
-	// Specifies the desired number of processing units the MPIJob should run on.
-	// Mutually exclusive with the `Replicas` field.
-	// +optional
-	ProcessingUnits *int32 `json:"processingUnits,omitempty"`
-
-	// The maximum number of processing units available per node.
-	// Note that this will be ignored if the processing resources are explicitly
-	// specified in the MPIJob pod spec.
-	// +optional
-	ProcessingUnitsPerNode *int32 `json:"processingUnitsPerNode,omitempty"`
-
-	// The processing resource type, e.g. 'nvidia.com/gpu' or 'cpu'.
-	// Defaults to 'nvidia.com/gpu'
-	// +optional
-	ProcessingResourceType string `json:"processingResourceType,omitempty"`
-
-	// Specifies the number of slots per worker used in hostfile.
-	// Defaults to the number of processing units per worker.
-	// +optional
-	SlotsPerWorker *int32 `json:"slotsPerWorker,omitempty"`
-
 	// Run the launcher on the master.
-	// Defaults to false.
+	// Optional: Default to false
 	// +optional
 	LauncherOnMaster bool `json:"launcherOnMaster,omitempty"`
 
-	// Specifies the number of retries before marking this job failed.
-	// Defaults to 6.
+	// Optional number of retries before marking this job failed.
+	// Defaults to 6
 	// +optional
 	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
 
-	// Specifies the duration in seconds relative to the start time that
-	// the job may be active before the system tries to terminate it.
-	// Note that this takes precedence over `BackoffLimit` field.
-	// +optional
-	ActiveDeadlineSeconds *int64 `json:"activeDeadlineSeconds,omitempty"`
-
 	// Specifies the desired number of replicas the MPIJob should run on.
-	// The `PodSpec` should specify the number of processing units.
-	// Mutually exclusive with the `GPUs` or `ProcessingUnits` fields.
+	// The `PodSpec` should specify the number of GPUs.
+	// Mutually exclusive with the `GPUs` field.
 	// +optional
 	Replicas *int32 `json:"replicas,omitempty"`
 
@@ -117,14 +83,4 @@ type MPIJobStatus struct {
 	// The number of available worker replicas.
 	// +optional
 	WorkerReplicas int32 `json:"workerReplicas,omitempty"`
-
-	// Represents time when the job was acknowledged by the job controller.
-	// It is not guaranteed to be set in happens-before order across separate operations.
-	// It is represented in RFC3339 form and is in UTC.
-	StartTime *metav1.Time `json:"startTime,omitempty"`
-
-	// Represents time when the job was completed. It is not guaranteed to
-	// be set in happens-before order across separate operations.
-	// It is represented in RFC3339 form and is in UTC.
-	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 }

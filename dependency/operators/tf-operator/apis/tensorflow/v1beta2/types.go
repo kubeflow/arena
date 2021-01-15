@@ -15,7 +15,7 @@
 package v1beta2
 
 import (
-	common "github.com/kubeflow/tf-operator/pkg/apis/common/v1beta2"
+	common "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/common/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

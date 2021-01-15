@@ -21,21 +21,20 @@ limitations under the License.
 package scheme
 
 import (
-	sparkoperatorv1beta1 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta1"
-	sparkoperatorv1beta2 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta2"
+	sparkoperatorv1alpha1 "github.com/kubeflow/arena/dependency/operators/spark-operator/apis/sparkoperator.k8s.io/v1alpha1"
+	sparkoperatorv1beta1 "github.com/kubeflow/arena/dependency/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
-	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
 var Scheme = runtime.NewScheme()
 var Codecs = serializer.NewCodecFactory(Scheme)
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
+	sparkoperatorv1alpha1.AddToScheme,
 	sparkoperatorv1beta1.AddToScheme,
-	sparkoperatorv1beta2.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition
@@ -56,5 +55,5 @@ var AddToScheme = localSchemeBuilder.AddToScheme
 
 func init() {
 	v1.AddToGroupVersion(Scheme, schema.GroupVersion{Version: "v1"})
-	utilruntime.Must(AddToScheme(Scheme))
+	AddToScheme(Scheme)
 }

@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2020 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package v1
 
 import (
-	v1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
+	v1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"

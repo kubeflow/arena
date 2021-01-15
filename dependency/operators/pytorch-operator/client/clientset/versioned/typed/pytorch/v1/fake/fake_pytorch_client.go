@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2020 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package fake
 
 import (
-	v1 "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/typed/pytorch/v1"
+	v1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/clientset/versioned/typed/pytorch/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

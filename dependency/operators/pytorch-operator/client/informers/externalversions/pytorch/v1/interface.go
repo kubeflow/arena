@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2020 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package v1
 
 import (
-	internalinterfaces "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

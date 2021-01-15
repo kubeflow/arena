@@ -17,8 +17,8 @@
 package scheme
 
 import (
-	kubeflowv1 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1"
-	kubeflowv1beta2 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1beta2"
+	kubeflowv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/tensorflow/v1"
+	kubeflowv1beta2 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/tensorflow/v1beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

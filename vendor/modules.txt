@@ -1,21 +1,5 @@
 # cloud.google.com/go v0.51.0
 cloud.google.com/go/compute/metadata
-# github.com/GoogleCloudPlatform/spark-on-k8s-operator v0.0.0-20210114163153-6bbb2a0dce04
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta1
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta2
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/scheme
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/typed/sparkoperator.k8s.io/v1beta1
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/typed/sparkoperator.k8s.io/v1beta1/fake
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/typed/sparkoperator.k8s.io/v1beta2
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/typed/sparkoperator.k8s.io/v1beta2/fake
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/informers/externalversions/internalinterfaces
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/informers/externalversions/sparkoperator.k8s.io
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/informers/externalversions/sparkoperator.k8s.io/v1beta1
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/informers/externalversions/sparkoperator.k8s.io/v1beta2
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/listers/sparkoperator.k8s.io/v1beta1
-github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/listers/sparkoperator.k8s.io/v1beta2
 # github.com/PuerkitoBio/purell v1.1.1
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
@@ -90,61 +74,6 @@ github.com/inconshreveable/mousetrap
 github.com/json-iterator/go
 # github.com/konsorten/go-windows-terminal-sequences v1.0.3
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/kubeflow/common v0.3.1
-github.com/kubeflow/common/pkg/apis/common/v1
-# github.com/kubeflow/mpi-operator v0.2.3
-github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1
-github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha1
-github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha2
-github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned
-github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/scheme
-github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1
-github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1/fake
-github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1alpha1
-github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1alpha1/fake
-github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1alpha2
-github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1alpha2/fake
-github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/internalinterfaces
-github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/kubeflow
-github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/kubeflow/v1
-github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/kubeflow/v1alpha1
-github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/kubeflow/v1alpha2
-github.com/kubeflow/mpi-operator/pkg/client/listers/kubeflow/v1
-github.com/kubeflow/mpi-operator/pkg/client/listers/kubeflow/v1alpha1
-github.com/kubeflow/mpi-operator/pkg/client/listers/kubeflow/v1alpha2
-# github.com/kubeflow/pytorch-operator v0.6.0
-github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1
-github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1beta2
-github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned
-github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/scheme
-github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/typed/pytorch/v1
-github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/typed/pytorch/v1/fake
-github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/typed/pytorch/v1beta2
-github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/typed/pytorch/v1beta2/fake
-github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/internalinterfaces
-github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/pytorch
-github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/pytorch/v1
-github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/pytorch/v1beta2
-github.com/kubeflow/pytorch-operator/pkg/client/listers/pytorch/v1
-github.com/kubeflow/pytorch-operator/pkg/client/listers/pytorch/v1beta2
-# github.com/kubeflow/tf-operator v0.5.3
-github.com/kubeflow/tf-operator/pkg/apis/common/v1
-github.com/kubeflow/tf-operator/pkg/apis/common/v1beta2
-github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1
-github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1beta2
-github.com/kubeflow/tf-operator/pkg/client/clientset/versioned
-github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/scheme
-github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1
-github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1/fake
-github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1beta2
-github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/typed/tensorflow/v1beta2/fake
-github.com/kubeflow/tf-operator/pkg/client/informers/externalversions/internalinterfaces
-github.com/kubeflow/tf-operator/pkg/client/informers/externalversions/tensorflow
-github.com/kubeflow/tf-operator/pkg/client/informers/externalversions/tensorflow/v1
-github.com/kubeflow/tf-operator/pkg/client/informers/externalversions/tensorflow/v1beta2
-github.com/kubeflow/tf-operator/pkg/client/listers/tensorflow/v1
-github.com/kubeflow/tf-operator/pkg/client/listers/tensorflow/v1beta2
-github.com/kubeflow/tf-operator/pkg/util
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
 # github.com/mailru/easyjson v0.7.0
