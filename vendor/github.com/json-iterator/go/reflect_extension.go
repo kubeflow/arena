@@ -341,10 +341,10 @@ func describeStruct(ctx *ctx, typ reflect2.Type) *StructDescriptor {
 		if ctx.onlyTaggedField && !hastag && !field.Anonymous() {
 			continue
 		}
-		if tag == "-" || field.Name() == "_" {
+		tagParts := strings.Split(tag, ",")
+		if tag == "-" {
 			continue
 		}
-		tagParts := strings.Split(tag, ",")
 		if field.Anonymous() && (tag == "" || tagParts[0] == "") {
 			if field.Type().Kind() == reflect.Struct {
 				structDescriptor := describeStruct(ctx, field.Type())
@@ -475,7 +475,7 @@ func calcFieldNames(originalFieldName string, tagProvidedFieldName string, whole
 		fieldNames = []string{tagProvidedFieldName}
 	}
 	// private?
-	isNotExported := unicode.IsLower(rune(originalFieldName[0])) || originalFieldName[0] == '_'
+	isNotExported := unicode.IsLower(rune(originalFieldName[0]))
 	if isNotExported {
 		fieldNames = []string{}
 	}

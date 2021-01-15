@@ -4,4 +4,4 @@ bin/
 .idea
 .kube
 Library
-vendor
+vendor/

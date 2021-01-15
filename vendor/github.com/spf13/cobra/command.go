@@ -17,7 +17,6 @@ package cobra
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -57,10 +56,6 @@ type Command struct {
 
 	// ValidArgs is list of all valid non-flag arguments that are accepted in bash completions
 	ValidArgs []string
-	// ValidArgsFunction is an optional function that provides valid non-flag arguments for bash completion.
-	// It is a dynamic version of using ValidArgs.
-	// Only one of ValidArgs and ValidArgsFunction can be used for a command.
-	ValidArgsFunction func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective)
 
 	// Expected arguments
 	Args PositionalArgs
@@ -85,8 +80,7 @@ type Command struct {
 
 	// Version defines the version for this command. If this value is non-empty and the command does not
 	// define a "version" flag, a "version" boolean flag will be added to the command and, if specified,
-	// will print content of the "Version" variable. A shorthand "v" flag will also be added if the
-	// command does not define one.
+	// will print content of the "Version" variable.
 	Version string
 
 	// The *Run functions are executed in the following order:
@@ -146,10 +140,8 @@ type Command struct {
 	// TraverseChildren parses flags on all parents before executing child command.
 	TraverseChildren bool
 
-	// FParseErrWhitelist flag parse errors to be ignored
+	//FParseErrWhitelist flag parse errors to be ignored
 	FParseErrWhitelist FParseErrWhitelist
-
-	ctx context.Context
 
 	// commands is the list of commands supported by this program.
 	commands []*Command
@@ -185,6 +177,8 @@ type Command struct {
 	// that we can use on every pflag set and children commands
 	globNormFunc func(f *flag.FlagSet, name string) flag.NormalizedName
 
+	// output is an output writer defined by user.
+	output io.Writer
 	// usageFunc is usage func defined by user.
 	usageFunc func(*Command) error
 	// usageTemplate is usage template defined by user.
@@ -201,19 +195,6 @@ type Command struct {
 	helpCommand *Command
 	// versionTemplate is the version template defined by user.
 	versionTemplate string
-
-	// inReader is a reader defined by the user that replaces stdin
-	inReader io.Reader
-	// outWriter is a writer defined by the user that replaces stdout
-	outWriter io.Writer
-	// errWriter is a writer defined by the user that replaces stderr
-	errWriter io.Writer
-}
-
-// Context returns underlying command context. If command wasn't
-// executed with ExecuteContext Context returns Background context.
-func (c *Command) Context() context.Context {
-	return c.ctx
 }
 
 // SetArgs sets arguments for the command. It is set to os.Args[1:] by default, if desired, can be overridden
@@ -224,28 +205,8 @@ func (c *Command) SetArgs(a []string) {
 
 // SetOutput sets the destination for usage and error messages.
 // If output is nil, os.Stderr is used.
-// Deprecated: Use SetOut and/or SetErr instead
 func (c *Command) SetOutput(output io.Writer) {
-	c.outWriter = output
-	c.errWriter = output
-}
-
-// SetOut sets the destination for usage messages.
-// If newOut is nil, os.Stdout is used.
-func (c *Command) SetOut(newOut io.Writer) {
-	c.outWriter = newOut
-}
-
-// SetErr sets the destination for error messages.
-// If newErr is nil, os.Stderr is used.
-func (c *Command) SetErr(newErr io.Writer) {
-	c.errWriter = newErr
-}
-
-// SetIn sets the source for input data
-// If newIn is nil, os.Stdin is used.
-func (c *Command) SetIn(newIn io.Reader) {
-	c.inReader = newIn
+	c.output = output
 }
 
 // SetUsageFunc sets usage function. Usage can be defined by application.
@@ -306,42 +267,12 @@ func (c *Command) OutOrStderr() io.Writer {
 	return c.getOut(os.Stderr)
 }
 
-// ErrOrStderr returns output to stderr
-func (c *Command) ErrOrStderr() io.Writer {
-	return c.getErr(os.Stderr)
-}
-
-// InOrStdin returns input to stdin
-func (c *Command) InOrStdin() io.Reader {
-	return c.getIn(os.Stdin)
-}
-
 func (c *Command) getOut(def io.Writer) io.Writer {
-	if c.outWriter != nil {
-		return c.outWriter
+	if c.output != nil {
+		return c.output
 	}
 	if c.HasParent() {
 		return c.parent.getOut(def)
-	}
-	return def
-}
-
-func (c *Command) getErr(def io.Writer) io.Writer {
-	if c.errWriter != nil {
-		return c.errWriter
-	}
-	if c.HasParent() {
-		return c.parent.getErr(def)
-	}
-	return def
-}
-
-func (c *Command) getIn(def io.Reader) io.Reader {
-	if c.inReader != nil {
-		return c.inReader
-	}
-	if c.HasParent() {
-		return c.parent.getIn(def)
 	}
 	return def
 }
@@ -383,8 +314,6 @@ func (c *Command) HelpFunc() func(*Command, []string) {
 	}
 	return func(c *Command, a []string) {
 		c.mergePersistentFlags()
-		// The help should be sent to stdout
-		// See https://github.com/spf13/cobra/issues/1002
 		err := tmpl(c.OutOrStdout(), c.HelpTemplate(), c)
 		if err != nil {
 			c.Println(err)
@@ -400,22 +329,13 @@ func (c *Command) Help() error {
 	return nil
 }
 
-// UsageString returns usage string.
+// UsageString return usage string.
 func (c *Command) UsageString() string {
-	// Storing normal writers
-	tmpOutput := c.outWriter
-	tmpErr := c.errWriter
-
+	tmpOutput := c.output
 	bb := new(bytes.Buffer)
-	c.outWriter = bb
-	c.errWriter = bb
-
+	c.SetOutput(bb)
 	c.Usage()
-
-	// Setting things back to normal
-	c.outWriter = tmpOutput
-	c.errWriter = tmpErr
-
+	c.output = tmpOutput
 	return bb.String()
 }
 
@@ -873,13 +793,6 @@ func (c *Command) preRun() {
 	}
 }
 
-// ExecuteContext is the same as Execute(), but sets the ctx on the command.
-// Retrieve ctx by calling cmd.Context() inside your *Run lifecycle functions.
-func (c *Command) ExecuteContext(ctx context.Context) error {
-	c.ctx = ctx
-	return c.Execute()
-}
-
 // Execute uses the args (os.Args[1:] by default)
 // and run through the command tree finding appropriate matches
 // for commands and then corresponding flags.
@@ -890,10 +803,6 @@ func (c *Command) Execute() error {
 
 // ExecuteC executes the command.
 func (c *Command) ExecuteC() (cmd *Command, err error) {
-	if c.ctx == nil {
-		c.ctx = context.Background()
-	}
-
 	// Regardless of what command execute is called on, run on Root only
 	if c.HasParent() {
 		return c.Root().ExecuteC()
@@ -908,15 +817,14 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 	// overriding
 	c.InitDefaultHelpCmd()
 
-	args := c.args
+	var args []string
 
 	// Workaround FAIL with "go test -v" or "cobra.test -test.v", see #155
 	if c.args == nil && filepath.Base(os.Args[0]) != "cobra.test" {
 		args = os.Args[1:]
+	} else {
+		args = c.args
 	}
-
-	// initialize the hidden command to be used for bash completion
-	c.initCompleteCmd(args)
 
 	var flags []string
 	if c.TraverseChildren {
@@ -939,12 +847,6 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 	cmd.commandCalledAs.called = true
 	if cmd.commandCalledAs.name == "" {
 		cmd.commandCalledAs.name = cmd.Name()
-	}
-
-	// We have to pass global context to children command
-	// if context is present on the parent command.
-	if cmd.ctx == nil {
-		cmd.ctx = c.ctx
 	}
 
 	err = cmd.execute(flags)
@@ -1030,11 +932,7 @@ func (c *Command) InitDefaultVersionFlag() {
 		} else {
 			usage += c.Name()
 		}
-		if c.Flags().ShorthandLookup("v") == nil {
-			c.Flags().BoolP("version", "v", false, usage)
-		} else {
-			c.Flags().Bool("version", false, usage)
-		}
+		c.Flags().Bool("version", false, usage)
 	}
 }
 
@@ -1169,21 +1067,6 @@ func (c *Command) Println(i ...interface{}) {
 
 // Printf is a convenience method to Printf to the defined output, fallback to Stderr if not set.
 func (c *Command) Printf(format string, i ...interface{}) {
-	c.Print(fmt.Sprintf(format, i...))
-}
-
-// PrintErr is a convenience method to Print to the defined Err output, fallback to Stderr if not set.
-func (c *Command) PrintErr(i ...interface{}) {
-	fmt.Fprint(c.ErrOrStderr(), i...)
-}
-
-// PrintErrln is a convenience method to Println to the defined Err output, fallback to Stderr if not set.
-func (c *Command) PrintErrln(i ...interface{}) {
-	c.Print(fmt.Sprintln(i...))
-}
-
-// PrintErrf is a convenience method to Printf to the defined Err output, fallback to Stderr if not set.
-func (c *Command) PrintErrf(format string, i ...interface{}) {
 	c.Print(fmt.Sprintf(format, i...))
 }
 
@@ -1452,7 +1335,7 @@ func (c *Command) LocalFlags() *flag.FlagSet {
 	return c.lflags
 }
 
-// InheritedFlags returns all flags which were inherited from parent commands.
+// InheritedFlags returns all flags which were inherited from parents commands.
 func (c *Command) InheritedFlags() *flag.FlagSet {
 	c.mergePersistentFlags()
 
@@ -1587,7 +1470,7 @@ func (c *Command) ParseFlags(args []string) error {
 	beforeErrorBufLen := c.flagErrorBuf.Len()
 	c.mergePersistentFlags()
 
-	// do it here after merging all flags and just before parse
+	//do it here after merging all flags and just before parse
 	c.Flags().ParseErrorsWhitelist = flag.ParseErrorsWhitelist(c.FParseErrWhitelist)
 
 	err := c.Flags().Parse(args)

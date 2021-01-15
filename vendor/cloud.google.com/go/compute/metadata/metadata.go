@@ -304,10 +304,7 @@ func (c *Client) getETag(suffix string) (value, etag string, err error) {
 		host = metadataIP
 	}
 	u := "http://" + host + "/computeMetadata/v1/" + suffix
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		return "", "", err
-	}
+	req, _ := http.NewRequest("GET", u, nil)
 	req.Header.Set("Metadata-Flavor", "Google")
 	req.Header.Set("User-Agent", userAgent)
 	res, err := c.hc.Do(req)
@@ -410,7 +407,11 @@ func (c *Client) InstanceTags() ([]string, error) {
 
 // InstanceName returns the current VM's instance ID string.
 func (c *Client) InstanceName() (string, error) {
-	return c.getTrimmed("instance/name")
+	host, err := c.Hostname()
+	if err != nil {
+		return "", err
+	}
+	return strings.Split(host, ".")[0], nil
 }
 
 // Zone returns the current VM's zone, such as "us-central1-b".
