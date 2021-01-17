@@ -17,8 +17,8 @@
 package kubeflow
 
 import (
-	internalinterfaces "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/informers/externalversions/pytorch/v1"
+	internalinterfaces "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/internalinterfaces"
+	v1 "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/pytorch/v1"
 )
 
 // Interface provides access to each of this group's versions.

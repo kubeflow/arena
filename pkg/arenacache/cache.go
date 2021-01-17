@@ -9,7 +9,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	etv1alpha1 "github.com/kubeflow/arena/dependency/operators/et-operator/api/v1alpha1"
 	v1alpha1 "github.com/kubeflow/arena/dependency/operators/mpi-operator/apis/kubeflow/v1alpha1"
-	pytorchv1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
+	pytorchv1 "github.com/kubeflow/pytorch-operator/apis/pytorch/v1"
 	sparkv1beta1 "github.com/kubeflow/arena/dependency/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
 	tfv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/tensorflow/v1"
 	volv1alpha1 "github.com/kubeflow/arena/dependency/operators/volcano-operator/apis/batch/v1alpha1"

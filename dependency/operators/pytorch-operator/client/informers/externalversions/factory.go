@@ -21,9 +21,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/clientset/versioned"
-	internalinterfaces "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/informers/externalversions/internalinterfaces"
-	pytorch "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/informers/externalversions/pytorch"
+	versioned "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/internalinterfaces"
+	pytorch "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/pytorch"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

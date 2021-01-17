@@ -3,27 +3,26 @@ module github.com/kubeflow/arena
 go 1.12
 
 require (
-	github.com/cpuguy83/go-md2man v1.0.8 // indirect
-	github.com/emicklei/go-restful v2.8.0+incompatible // indirect
-	github.com/go-openapi/spec v0.19.3
+	github.com/go-openapi/spec v0.20.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.4.2
-	github.com/inconshreveable/mousetrap v0.0.0-20141017200713-76626ae9c91c // indirect
+	github.com/kubeflow/common v0.3.1 // indirect
+	github.com/kubeflow/pytorch-operator v0.0.0-00010101000000-000000000000
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect
-	github.com/russross/blackfriday v1.5.1 // indirect
-	github.com/sirupsen/logrus v1.2.0
-	github.com/spf13/cobra v0.0.3
+	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.3.0
-	gopkg.in/yaml.v2 v2.3.0
+	github.com/stretchr/testify v1.6.1
+	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
 	k8s.io/api v0.16.9
 	k8s.io/apimachinery v0.16.9
-	k8s.io/client-go v0.0.0-00010101000000-000000000000
-	k8s.io/kube-openapi v0.0.0-20210113233702-8566a335510f
+	k8s.io/client-go v0.16.9
+	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
+	k8s.io/kubernetes v1.16.9 // indirect
 )
 
 replace (

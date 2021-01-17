@@ -19,7 +19,7 @@
 package v1
 
 import (
-	apiv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/common/v1"
+	apiv1 "github.com/kubeflow/common/pkg/apis/common/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

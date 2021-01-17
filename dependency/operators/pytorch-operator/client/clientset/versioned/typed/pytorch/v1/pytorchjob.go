@@ -19,8 +19,8 @@ package v1
 import (
 	"time"
 
-	v1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
-	scheme "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/clientset/versioned/scheme"
+	v1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
+	scheme "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

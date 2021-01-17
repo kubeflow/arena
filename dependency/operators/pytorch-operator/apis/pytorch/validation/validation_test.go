@@ -17,8 +17,8 @@ package validation
 import (
 	"testing"
 
-	torchv1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
-	commonv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/common/v1"
+	torchv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
+	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
 
 	"k8s.io/api/core/v1"
 )

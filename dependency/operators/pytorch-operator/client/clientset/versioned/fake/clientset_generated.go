@@ -17,9 +17,9 @@
 package fake
 
 import (
-	clientset "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/clientset/versioned"
-	kubeflowv1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/clientset/versioned/typed/pytorch/v1"
-	fakekubeflowv1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/client/clientset/versioned/typed/pytorch/v1/fake"
+	clientset "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned"
+	kubeflowv1 "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/typed/pytorch/v1"
+	fakekubeflowv1 "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/typed/pytorch/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

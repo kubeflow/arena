@@ -17,7 +17,7 @@ package validation
 import (
 	"fmt"
 
-	torchv1 "github.com/kubeflow/arena/dependency/operators/pytorch-operator/apis/pytorch/v1"
+	torchv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
 )
 
 func ValidateV1PyTorchJobSpec(c *torchv1.PyTorchJobSpec) error {
