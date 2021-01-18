@@ -31,7 +31,7 @@ import (
 	"github.com/kubeflow/arena/pkg/arenacache"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/dependency/operators/et-operator/api/v1alpha1"
+	"github.com/AliyunContainerService/et-operator/api/v1alpha1"
 )
 
 const (

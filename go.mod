@@ -3,32 +3,38 @@ module github.com/kubeflow/arena
 go 1.12
 
 require (
+	github.com/AliyunContainerService/et-operator/api v0.0.0-00010101000000-000000000000
 	github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg v0.0.0-00010101000000-000000000000
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-openapi/spec v0.20.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+	github.com/golang/protobuf v1.4.2 // indirect
+	github.com/kubeflow/arena/dependency/operators/et-operator/client v0.0.0-00010101000000-000000000000
 	github.com/kubeflow/common v0.3.1
 	github.com/kubeflow/mpi-operator/pkg v0.0.0-00010101000000-000000000000
 	github.com/kubeflow/pytorch-operator/pkg v0.0.0-00010101000000-000000000000
 	github.com/kubeflow/tf-operator/pkg v0.0.0-00010101000000-000000000000
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/onsi/ginkgo v1.14.2 // indirect
-	github.com/onsi/gomega v1.10.3 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
+	github.com/volcano.sh/volcano/pkg v0.0.0-00010101000000-000000000000
 	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
-	k8s.io/api v0.16.9
-	k8s.io/apimachinery v0.16.9
-	k8s.io/client-go v0.16.9
+	k8s.io/api v0.20.2
+	k8s.io/apimachinery v0.20.2
+	k8s.io/client-go v11.0.0+incompatible
 )
 
 replace (
+	github.com/AliyunContainerService/et-operator/api => ./dependency/operators/et-operator/api
 	github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg => ./dependency/operators/spark-operator
+	github.com/kubeflow/arena/dependency/operators/et-operator/client => ./dependency/operators/et-operator/client
 	github.com/kubeflow/mpi-operator/pkg => ./dependency/operators/mpi-operator
 	github.com/kubeflow/pytorch-operator/pkg => ./dependency/operators/pytorch-operator
 	github.com/kubeflow/tf-operator/pkg => ./dependency/operators/tf-operator
+	github.com/volcano.sh/volcano/pkg => ./dependency/operators/volcano-operator
 	k8s.io/api => k8s.io/api v0.16.9
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.16.9
 	k8s.io/apimachinery => k8s.io/apimachinery v0.16.10-beta.0

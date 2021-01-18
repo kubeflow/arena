@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kubeflow/arena/dependency/operators/et-operator/api/v1alpha1"
+	"github.com/AliyunContainerService/et-operator/api/v1alpha1"
 )
 
 const (
