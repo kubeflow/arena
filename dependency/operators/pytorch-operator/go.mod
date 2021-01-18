@@ -1,0 +1,1 @@
+module github.com/kubeflow/pytorch-operator

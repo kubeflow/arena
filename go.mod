@@ -8,7 +8,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/kubeflow/common v0.3.1 // indirect
-	github.com/kubeflow/pytorch-operator v0.0.0-00010101000000-000000000000
+	github.com/kubeflow/pytorch-operator/pkg v0.0.0-00010101000000-000000000000
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect
@@ -22,10 +22,10 @@ require (
 	k8s.io/apimachinery v0.16.9
 	k8s.io/client-go v0.16.9
 	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
-	k8s.io/kubernetes v1.16.9 // indirect
 )
 
 replace (
+	github.com/kubeflow/pytorch-operator/pkg => ./dependency/operators/pytorch-operator
 	k8s.io/api => k8s.io/api v0.16.9
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.16.9
 	k8s.io/apimachinery => k8s.io/apimachinery v0.16.10-beta.0
