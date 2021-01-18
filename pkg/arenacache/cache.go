@@ -10,7 +10,7 @@ import (
 	etv1alpha1 "github.com/kubeflow/arena/dependency/operators/et-operator/api/v1alpha1"
 	v1alpha1 "github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha1"
 	pytorchv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
-	sparkv1beta1 "github.com/kubeflow/arena/dependency/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
+	sparkv1beta1 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta1"
 	tfv1 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1"
 	volv1alpha1 "github.com/kubeflow/arena/dependency/operators/volcano-operator/apis/batch/v1alpha1"
 	appv1 "k8s.io/api/apps/v1"

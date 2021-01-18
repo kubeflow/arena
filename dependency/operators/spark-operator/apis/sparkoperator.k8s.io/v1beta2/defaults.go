@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1beta2
 
 // SetSparkApplicationDefaults sets default values for certain fields of a SparkApplication.
 func SetSparkApplicationDefaults(app *SparkApplication) {
@@ -43,31 +43,32 @@ func SetSparkApplicationDefaults(app *SparkApplication) {
 		}
 	}
 
-	setDriverSpecDefaults(app.Spec.Driver)
-	setExecutorSpecDefaults(app.Spec.Executor)
+	setDriverSpecDefaults(&app.Spec.Driver, app.Spec.SparkConf)
+	setExecutorSpecDefaults(&app.Spec.Executor, app.Spec.SparkConf)
 }
 
-func setDriverSpecDefaults(spec DriverSpec) {
-	if spec.Cores == nil {
-		spec.Cores = new(float32)
+func setDriverSpecDefaults(spec *DriverSpec, sparkConf map[string]string) {
+
+	if _, exists := sparkConf["spark.driver.cores"]; !exists && spec.Cores == nil {
+		spec.Cores = new(int32)
 		*spec.Cores = 1
 	}
-	if spec.Memory == nil {
+	if _, exists := sparkConf["spark.driver.memory"]; !exists && spec.Memory == nil {
 		spec.Memory = new(string)
 		*spec.Memory = "1g"
 	}
 }
 
-func setExecutorSpecDefaults(spec ExecutorSpec) {
-	if spec.Cores == nil {
-		spec.Cores = new(float32)
+func setExecutorSpecDefaults(spec *ExecutorSpec, sparkConf map[string]string) {
+	if _, exists := sparkConf["spark.executor.cores"]; !exists && spec.Cores == nil {
+		spec.Cores = new(int32)
 		*spec.Cores = 1
 	}
-	if spec.Memory == nil {
+	if _, exists := sparkConf["spark.executor.memory"]; !exists && spec.Memory == nil {
 		spec.Memory = new(string)
 		*spec.Memory = "1g"
 	}
-	if spec.Instances == nil {
+	if _, exists := sparkConf["spark.executor.instances"]; !exists && spec.Instances == nil {
 		spec.Instances = new(int32)
 		*spec.Instances = 1
 	}

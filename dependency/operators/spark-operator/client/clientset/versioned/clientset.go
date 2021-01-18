@@ -21,32 +21,27 @@ limitations under the License.
 package versioned
 
 import (
-	sparkoperatorv1alpha1 "github.com/kubeflow/arena/dependency/operators/spark-operator/client/clientset/versioned/typed/sparkoperator.k8s.io/v1alpha1"
-	sparkoperatorv1beta1 "github.com/kubeflow/arena/dependency/operators/spark-operator/client/clientset/versioned/typed/sparkoperator.k8s.io/v1beta1"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/flowcontrol"
+	"fmt"
+
+	sparkoperatorv1beta1 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/typed/sparkoperator.k8s.io/v1beta1"
+	sparkoperatorv1beta2 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/typed/sparkoperator.k8s.io/v1beta2"
+	discovery "k8s.io/client-go/discovery"
+	rest "k8s.io/client-go/rest"
+	flowcontrol "k8s.io/client-go/util/flowcontrol"
 )
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	SparkoperatorV1alpha1() sparkoperatorv1alpha1.SparkoperatorV1alpha1Interface
 	SparkoperatorV1beta1() sparkoperatorv1beta1.SparkoperatorV1beta1Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Sparkoperator() sparkoperatorv1beta1.SparkoperatorV1beta1Interface
+	SparkoperatorV1beta2() sparkoperatorv1beta2.SparkoperatorV1beta2Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	sparkoperatorV1alpha1 *sparkoperatorv1alpha1.SparkoperatorV1alpha1Client
-	sparkoperatorV1beta1  *sparkoperatorv1beta1.SparkoperatorV1beta1Client
-}
-
-// SparkoperatorV1alpha1 retrieves the SparkoperatorV1alpha1Client
-func (c *Clientset) SparkoperatorV1alpha1() sparkoperatorv1alpha1.SparkoperatorV1alpha1Interface {
-	return c.sparkoperatorV1alpha1
+	sparkoperatorV1beta1 *sparkoperatorv1beta1.SparkoperatorV1beta1Client
+	sparkoperatorV1beta2 *sparkoperatorv1beta2.SparkoperatorV1beta2Client
 }
 
 // SparkoperatorV1beta1 retrieves the SparkoperatorV1beta1Client
@@ -54,10 +49,9 @@ func (c *Clientset) SparkoperatorV1beta1() sparkoperatorv1beta1.SparkoperatorV1b
 	return c.sparkoperatorV1beta1
 }
 
-// Deprecated: Sparkoperator retrieves the default version of SparkoperatorClient.
-// Please explicitly pick a version.
-func (c *Clientset) Sparkoperator() sparkoperatorv1beta1.SparkoperatorV1beta1Interface {
-	return c.sparkoperatorV1beta1
+// SparkoperatorV1beta2 retrieves the SparkoperatorV1beta2Client
+func (c *Clientset) SparkoperatorV1beta2() sparkoperatorv1beta2.SparkoperatorV1beta2Interface {
+	return c.sparkoperatorV1beta2
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -69,18 +63,23 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 }
 
 // NewForConfig creates a new Clientset for the given config.
+// If config's RateLimiter is not set and QPS and Burst are acceptable,
+// NewForConfig will generate a rate-limiter in configShallowCopy.
 func NewForConfig(c *rest.Config) (*Clientset, error) {
 	configShallowCopy := *c
 	if configShallowCopy.RateLimiter == nil && configShallowCopy.QPS > 0 {
+		if configShallowCopy.Burst <= 0 {
+			return nil, fmt.Errorf("Burst is required to be greater than 0 when RateLimiter is not set and QPS is set to greater than 0")
+		}
 		configShallowCopy.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(configShallowCopy.QPS, configShallowCopy.Burst)
 	}
 	var cs Clientset
 	var err error
-	cs.sparkoperatorV1alpha1, err = sparkoperatorv1alpha1.NewForConfig(&configShallowCopy)
+	cs.sparkoperatorV1beta1, err = sparkoperatorv1beta1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
-	cs.sparkoperatorV1beta1, err = sparkoperatorv1beta1.NewForConfig(&configShallowCopy)
+	cs.sparkoperatorV1beta2, err = sparkoperatorv1beta2.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -96,8 +95,8 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.sparkoperatorV1alpha1 = sparkoperatorv1alpha1.NewForConfigOrDie(c)
 	cs.sparkoperatorV1beta1 = sparkoperatorv1beta1.NewForConfigOrDie(c)
+	cs.sparkoperatorV1beta2 = sparkoperatorv1beta2.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -106,8 +105,8 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.sparkoperatorV1alpha1 = sparkoperatorv1alpha1.New(c)
 	cs.sparkoperatorV1beta1 = sparkoperatorv1beta1.New(c)
+	cs.sparkoperatorV1beta2 = sparkoperatorv1beta2.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

@@ -3,9 +3,9 @@ module github.com/kubeflow/arena
 go 1.12
 
 require (
+	github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg v0.0.0-00010101000000-000000000000
 	github.com/go-openapi/spec v0.20.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/kubeflow/common v0.3.1
 	github.com/kubeflow/mpi-operator/pkg v0.0.0-00010101000000-000000000000
 	github.com/kubeflow/pytorch-operator/pkg v0.0.0-00010101000000-000000000000
@@ -22,9 +22,11 @@ require (
 	k8s.io/api v0.16.9
 	k8s.io/apimachinery v0.16.9
 	k8s.io/client-go v0.16.9
+	k8s.io/kubernetes v1.16.9
 )
 
 replace (
+	github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg => ./dependency/operators/spark-operator
 	github.com/kubeflow/mpi-operator/pkg => ./dependency/operators/mpi-operator
 	github.com/kubeflow/pytorch-operator/pkg => ./dependency/operators/pytorch-operator
 	github.com/kubeflow/tf-operator/pkg => ./dependency/operators/tf-operator

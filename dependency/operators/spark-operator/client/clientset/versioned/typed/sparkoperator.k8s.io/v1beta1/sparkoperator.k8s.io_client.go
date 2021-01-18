@@ -21,8 +21,8 @@ limitations under the License.
 package v1beta1
 
 import (
-	v1beta1 "github.com/kubeflow/arena/dependency/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
-	"github.com/kubeflow/arena/dependency/operators/spark-operator/client/clientset/versioned/scheme"
+	v1beta1 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta1"
+	"github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -32,7 +32,7 @@ type SparkoperatorV1beta1Interface interface {
 	SparkApplicationsGetter
 }
 
-// SparkoperatorV1beta1Client is used to interact with features provided by the sparkoperator group.
+// SparkoperatorV1beta1Client is used to interact with features provided by the sparkoperator.k8s.io group.
 type SparkoperatorV1beta1Client struct {
 	restClient rest.Interface
 }
