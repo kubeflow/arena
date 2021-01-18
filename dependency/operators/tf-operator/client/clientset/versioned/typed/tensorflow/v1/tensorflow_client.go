@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2021 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package v1
 
 import (
-	v1 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/tensorflow/v1"
-	"github.com/kubeflow/arena/dependency/operators/tf-operator/client/clientset/versioned/scheme"
+	v1 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1"
+	"github.com/kubeflow/tf-operator/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

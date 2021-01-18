@@ -23,9 +23,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/kubeflow/arena/dependency/operators/mpi-operator/client/clientset/versioned"
-	internalinterfaces "github.com/kubeflow/arena/dependency/operators/mpi-operator/client/informers/externalversions/internalinterfaces"
-	kubeflow "github.com/kubeflow/arena/dependency/operators/mpi-operator/client/informers/externalversions/kubeflow"
+	versioned "github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/internalinterfaces"
+	kubeflow "github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/kubeflow"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"

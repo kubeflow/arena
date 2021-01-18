@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	commonv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/common/v1"
+	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
 
 	"time"
 

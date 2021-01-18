@@ -16,7 +16,7 @@ package commands
 
 import (
 	"fmt"
-	commonv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/common/v1"
+	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
 	"strings"
 
 	"github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned"

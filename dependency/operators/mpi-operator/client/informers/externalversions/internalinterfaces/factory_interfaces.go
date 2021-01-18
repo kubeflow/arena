@@ -21,7 +21,7 @@ package internalinterfaces
 import (
 	time "time"
 
-	versioned "github.com/kubeflow/arena/dependency/operators/mpi-operator/client/clientset/versioned"
+	versioned "github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	cache "k8s.io/client-go/tools/cache"
 )

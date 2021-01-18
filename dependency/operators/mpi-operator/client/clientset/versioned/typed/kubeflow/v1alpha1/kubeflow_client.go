@@ -17,8 +17,8 @@
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/kubeflow/arena/dependency/operators/mpi-operator/apis/kubeflow/v1alpha1"
-	"github.com/kubeflow/arena/dependency/operators/mpi-operator/client/clientset/versioned/scheme"
+	v1alpha1 "github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha1"
+	"github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

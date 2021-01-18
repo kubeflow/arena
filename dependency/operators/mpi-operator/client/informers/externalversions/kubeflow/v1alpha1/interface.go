@@ -19,7 +19,7 @@
 package v1alpha1
 
 import (
-	internalinterfaces "github.com/kubeflow/arena/dependency/operators/mpi-operator/client/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

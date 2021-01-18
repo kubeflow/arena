@@ -1,4 +1,4 @@
-// Copyright 2019 The Kubeflow Authors
+// Copyright 2021 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package fake
 
 import (
-	tensorflowv1 "github.com/kubeflow/arena/dependency/operators/tf-operator/apis/tensorflow/v1"
+	tensorflowv1 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -129,7 +129,7 @@ func (c *FakeTFJobs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.
 // Patch applies the patch and returns the patched tFJob.
 func (c *FakeTFJobs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *tensorflowv1.TFJob, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(tfjobsResource, c.ns, name, data, subresources...), &tensorflowv1.TFJob{})
+		Invokes(testing.NewPatchSubresourceAction(tfjobsResource, c.ns, name, pt, data, subresources...), &tensorflowv1.TFJob{})
 
 	if obj == nil {
 		return nil, err

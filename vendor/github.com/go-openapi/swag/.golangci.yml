@@ -10,10 +10,29 @@ linters-settings:
   dupl:
     threshold: 100
   goconst:
-    min-len: 2
+    min-len: 3
     min-occurrences: 2
 
 linters:
   enable-all: true
   disable:
     - maligned
+    - lll
+    - gochecknoinits
+    - gochecknoglobals
+    - nlreturn
+    - testpackage
+    - wrapcheck
+    - gomnd
+    - exhaustive
+    - exhaustivestruct
+    - goerr113
+    - wsl
+    - whitespace
+    - gofumpt
+    - godot
+    - nestif
+    - godox
+    - funlen
+    - gci
+    - gocognit

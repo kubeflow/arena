@@ -19,8 +19,8 @@
 package kubeflow
 
 import (
-	internalinterfaces "github.com/kubeflow/arena/dependency/operators/mpi-operator/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kubeflow/arena/dependency/operators/mpi-operator/client/informers/externalversions/kubeflow/v1alpha1"
+	internalinterfaces "github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/kubeflow/mpi-operator/pkg/client/informers/externalversions/kubeflow/v1alpha1"
 )
 
 // Interface provides access to each of this group's versions.
