@@ -22,7 +22,6 @@ require (
 	k8s.io/api v0.16.9
 	k8s.io/apimachinery v0.16.9
 	k8s.io/client-go v0.16.9
-	k8s.io/kubernetes v1.16.9
 )
 
 replace (
