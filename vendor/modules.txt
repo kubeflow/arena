@@ -80,10 +80,14 @@ github.com/kubeflow/arena/dependency/operators/et-operator/client/clientset/vers
 # github.com/kubeflow/common v0.3.1
 github.com/kubeflow/common/pkg/apis/common/v1
 # github.com/kubeflow/mpi-operator/pkg v0.0.0-00010101000000-000000000000 => ./dependency/operators/mpi-operator
+github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1
 github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha1
+github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha2
 github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned
 github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/scheme
+github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1
 github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1alpha1
+github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned/typed/kubeflow/v1alpha2
 # github.com/kubeflow/pytorch-operator/pkg v0.0.0-00010101000000-000000000000 => ./dependency/operators/pytorch-operator
 github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1
 github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned
@@ -218,7 +222,7 @@ gopkg.in/yaml.v2
 gopkg.in/yaml.v3
 # istio.io/api v0.0.0-20180824201241-76349c53b87f
 istio.io/api/networking/v1alpha3
-# k8s.io/api v0.20.2 => k8s.io/api v0.16.9
+# k8s.io/api v0.16.9 => k8s.io/api v0.16.9
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
@@ -257,7 +261,7 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.20.2 => k8s.io/apimachinery v0.16.10-beta.0
+# k8s.io/apimachinery v0.16.9 => k8s.io/apimachinery v0.16.10-beta.0
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource
@@ -292,7 +296,7 @@ k8s.io/apimachinery/pkg/util/yaml
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/client-go v11.0.0+incompatible => k8s.io/client-go v0.16.9
+# k8s.io/client-go v0.16.9 => k8s.io/client-go v0.16.9
 k8s.io/client-go/discovery
 k8s.io/client-go/kubernetes
 k8s.io/client-go/kubernetes/scheme
