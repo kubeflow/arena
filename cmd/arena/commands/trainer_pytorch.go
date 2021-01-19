@@ -16,10 +16,10 @@ package commands
 
 import (
 	"fmt"
-	commonv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
+	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
+	"github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -28,7 +28,7 @@ import (
 
 	"time"
 
-	pytorchv1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
+	pytorchv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
 )
 
 const (
@@ -274,6 +274,7 @@ func NewPyTorchJobTrainer(client *kubernetes.Clientset) Trainer {
 		}
 
 		pytorchjobList, err := pytorchjobClient.KubeflowV1().PyTorchJobs(ns).List(metav1.ListOptions{})
+		pytorchjobClient.KubeflowV1()
 		if err != nil {
 			log.Debugf("unsupported pytorchjob due to %v", err)
 			return &PyTorchJobTrainer{
@@ -281,7 +282,6 @@ func NewPyTorchJobTrainer(client *kubernetes.Clientset) Trainer {
 				enabled:     false,
 			}
 		}
-
 		for _, pytorchjob := range pytorchjobList.Items {
 			allPyTorchJobs = append(allPyTorchJobs, pytorchjob)
 		}

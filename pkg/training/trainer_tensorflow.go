@@ -19,7 +19,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/operators/tf-operator/client/clientset/versioned"
+	"github.com/kubeflow/tf-operator/pkg/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,8 +27,8 @@ import (
 
 	"time"
 
-	commonv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
-	tfv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1"
+	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
+	tfv1 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"

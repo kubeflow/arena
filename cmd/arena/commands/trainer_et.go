@@ -19,14 +19,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/operators/et-operator/client/clientset/versioned"
+	"github.com/AliyunContainerService/et-operator/pkg/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
+	"github.com/AliyunContainerService/et-operator/pkg/api/v1alpha1"
 )
 
 const (

@@ -28,8 +28,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
-	"github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
+	"github.com/volcano.sh/volcano/pkg/apis/batch/v1alpha1"
+	"github.com/volcano.sh/volcano/pkg/client/clientset/versioned"
 )
 
 // volcano Job wrapper

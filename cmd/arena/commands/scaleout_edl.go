@@ -16,7 +16,7 @@ package commands
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
+	"github.com/AliyunContainerService/et-operator/pkg/api/v1alpha1"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"

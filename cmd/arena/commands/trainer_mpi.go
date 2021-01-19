@@ -17,7 +17,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
+	"github.com/kubeflow/mpi-operator/pkg/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -27,7 +27,7 @@ import (
 
 	"time"
 
-	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
+	v1alpha1 "github.com/kubeflow/mpi-operator/pkg/apis/kubeflow/v1alpha1"
 )
 
 var (
