@@ -129,7 +129,7 @@ func (c *FakeMPIJobs) DeleteCollection(options *v1.DeleteOptions, listOptions v1
 // Patch applies the patch and returns the patched mPIJob.
 func (c *FakeMPIJobs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.MPIJob, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(mpijobsResource, c.ns, name, data, subresources...), &v1alpha1.MPIJob{})
+		Invokes(testing.NewPatchSubresourceAction(mpijobsResource, c.ns, name, pt, data, subresources...), &v1alpha1.MPIJob{})
 
 	if obj == nil {
 		return nil, err
