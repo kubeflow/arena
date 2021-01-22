@@ -361,10 +361,6 @@ func (st *VolcanoJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 }
 
 func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (jobs []TrainingJob, err error) {
-	// if arena is configured as daemon,getting all tfjobs from cache is corrent
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return st.listFromCache(namespace, allNamespace)
-	}
 	return st.listFromAPIServer(namespace, allNamespace)
 }
 
@@ -372,9 +368,7 @@ func (st *VolcanoJobTrainer) listFromAPIServer(namespace string, allNamespace bo
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
-	jobList, err := st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release"),
-	})
+	jobList, err := st.listJobs(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -382,12 +376,7 @@ func (st *VolcanoJobTrainer) listFromAPIServer(namespace string, allNamespace bo
 	for _, item := range jobList.Items {
 		job := item.DeepCopy()
 		// get the pods from the api server
-		podList, err := st.client.CoreV1().Pods(job.Namespace).List(metav1.ListOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ListOptions",
-				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", job.Name, st.trainerType),
-		})
+		podList, err := listJobPods(st.client, job.Namespace, job.Name, st.trainerType)
 		if err != nil {
 			return nil, err
 		}
@@ -411,27 +400,14 @@ func (st *VolcanoJobTrainer) listFromAPIServer(namespace string, allNamespace bo
 	return trainingJobs, nil
 }
 
-func (st *VolcanoJobTrainer) listFromCache(namespace string, allNamespace bool) ([]TrainingJob, error) {
-	filter := func(job *v1alpha1.Job) bool { return job.Namespace == namespace }
-	trainingJobs := []TrainingJob{}
-	if allNamespace {
-		filter = func(job *v1alpha1.Job) bool { return true }
+func (st *VolcanoJobTrainer) listJobs(namespace string) (*v1alpha1.JobList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		list := &v1alpha1.JobList{}
+		return list, arenacache.GetCacheClient().ListTrainingJobs(list, namespace)
 	}
-	jobs, pods := arenacache.GetArenaCache().FilterVolcanoJobs(filter)
-	for key, job := range jobs {
-		filterPods, chiefPod := getPodsOfVolcanoJob(job, st, pods[key])
-		trainingJobs = append(trainingJobs, &VolcanoJob{
-			BasicJobInfo: &BasicJobInfo{
-				resources: podResources(filterPods),
-				name:      job.Name,
-			},
-			volcanoJob:  job,
-			chiefPod:    chiefPod,
-			pods:        filterPods,
-			trainerType: st.Type(),
-		})
-	}
-	return trainingJobs, nil
+	return st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("release"),
+	})
 }
 
 func (st *VolcanoJobTrainer) isVolcanoJob(name, ns string, job *v1alpha1.Job) bool {

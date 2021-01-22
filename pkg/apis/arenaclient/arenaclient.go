@@ -2,10 +2,10 @@ package arenaclient
 
 import (
 	"fmt"
-
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/arenacache"
 	"github.com/kubeflow/arena/pkg/util"
 )
 
@@ -49,6 +49,11 @@ func NewArenaClient(args types.ArenaClientArgs) (*ArenaClient, error) {
 	configer, err := config.InitArenaConfiger(args)
 	if err != nil {
 		return nil, err
+	}
+	if configer.IsDaemonMode() {
+		if err := arenacache.InitCacheClient(configer.GetRestConfig());err != nil {
+			return client, err
+		}
 	}
 	client.arenaConfiger = configer
 	return client, err

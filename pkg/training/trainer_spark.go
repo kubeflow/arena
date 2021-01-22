@@ -360,10 +360,6 @@ func (st *SparkJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, 
 }
 
 func (st *SparkJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (jobs []TrainingJob, err error) {
-	// if arena is configured as daemon,getting all mpijobs from cache is corrent
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return st.listFromCache(namespace, allNamespace)
-	}
 	return st.listFromAPIServer(namespace, allNamespace)
 }
 
@@ -373,20 +369,13 @@ func (st *SparkJobTrainer) listFromAPIServer(namespace string, allNamespace bool
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
-	sparkJobList, err := st.sparkjobClient.SparkoperatorV1beta1().SparkApplications(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release"),
-	})
+	sparkJobList, err := st.listJobs(namespace)
 	if err != nil {
 		return nil, err
 	}
 	for _, item := range sparkJobList.Items {
 		sparkjob := item.DeepCopy()
-		podList, err := st.client.CoreV1().Pods(sparkjob.Namespace).List(metav1.ListOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ListOptions",
-				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", sparkjob.Name, st.trainerType),
-		})
+		podList, err := listJobPods(st.client, sparkjob.Namespace, sparkjob.Name, st.trainerType)
 		if err != nil {
 			return nil, err
 		}
@@ -409,30 +398,14 @@ func (st *SparkJobTrainer) listFromAPIServer(namespace string, allNamespace bool
 	return trainingJobs, nil
 }
 
-// listFromCache lists sparkjobs from arena cache
-func (st *SparkJobTrainer) listFromCache(namespace string, allNamespace bool) ([]TrainingJob, error) {
-	// 1.define filter function
-	filter := func(job *v1beta1.SparkApplication) bool { return job.Namespace == namespace }
-	trainingJobs := []TrainingJob{}
-	// 2.if all namespaces is true,get all mpijobs
-	if allNamespace {
-		filter = func(job *v1beta1.SparkApplication) bool { return true }
+func (st *SparkJobTrainer) listJobs(namespace string) (*v1beta1.SparkApplicationList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		list := &v1beta1.SparkApplicationList{}
+		return list, arenacache.GetCacheClient().ListTrainingJobs(list, namespace)
 	}
-	jobs, pods := arenacache.GetArenaCache().FilterSparkJobs(filter)
-	for key, job := range jobs {
-		filterPods, chiefPod := getPodsOfSparkJob(job, st, pods[key])
-		trainingJobs = append(trainingJobs, &SparkJob{
-			BasicJobInfo: &BasicJobInfo{
-				resources: podResources(filterPods),
-				name:      job.Name,
-			},
-			sparkjob:    job,
-			chiefPod:    chiefPod,
-			pods:        filterPods,
-			trainerType: st.Type(),
-		})
-	}
-	return trainingJobs, nil
+	return st.sparkjobClient.SparkoperatorV1beta1().SparkApplications(namespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("release"),
+	})
 }
 
 func (st *SparkJobTrainer) isSparkPod(name, ns string, item *v1.Pod) bool {

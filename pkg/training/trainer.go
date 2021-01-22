@@ -15,6 +15,13 @@
 package training
 
 import (
+	"fmt"
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/arenacache"
+	app_v1 "k8s.io/api/apps/v1"
+	batch_v1 "k8s.io/api/batch/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sort"
 	"sync"
 
@@ -156,4 +163,46 @@ func CheckOperatorIsInstalled(crdName string) bool {
 		}
 	}
 	return false
+}
+
+func listJobPods(client *kubernetes.Clientset, namespace, name string, trainerType types.TrainingJobType) (*v1.PodList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		cacheClient := arenacache.GetCacheClient()
+		list := &v1.PodList{}
+		return list, cacheClient.ListTrainingJobResources(list, namespace, name, string(trainerType))
+	}
+	return client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release=%s,app=%v", name, trainerType),
+	})
+}
+
+func listJobSts(client *kubernetes.Clientset, namespace, name string, trainerType types.TrainingJobType) (*app_v1.StatefulSetList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		cacheClient := arenacache.GetCacheClient()
+		list := &app_v1.StatefulSetList{}
+		return list, cacheClient.ListTrainingJobResources(list, namespace, name, string(trainerType))
+	}
+	return client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("%s=%s", etLabelTrainingJobName, name),
+	})
+}
+
+func listJobBatchJobs(client *kubernetes.Clientset, namespace, name string, trainerType types.TrainingJobType) (*batch_v1.JobList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		cacheClient := arenacache.GetCacheClient()
+		list := &batch_v1.JobList{}
+		return list, cacheClient.ListTrainingJobResources(list, namespace, name, string(trainerType))
+	}
+	return client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("%s=%s", etLabelTrainingJobName, name),
+	})
 }

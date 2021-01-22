@@ -2,10 +2,9 @@ package commands
 
 import (
 	"fmt"
+	"github.com/kubeflow/arena/pkg/util"
 	"strings"
 	"testing"
-
-	"github.com/kubeflow/arena/pkg/util"
 )
 
 func TestQueryMetricByPrometheus(t *testing.T) {

@@ -16,7 +16,6 @@ package training
 
 import (
 	"fmt"
-
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
@@ -349,10 +348,6 @@ func (h *HorovodJobTrainer) getTrainingJobFromCache(name, namespace string) (Tra
 * List Training jobs
  */
 func (h *HorovodJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (jobs []TrainingJob, err error) {
-	// if arena is configured as daemon,getting all mpijobs from cache is corrent
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return h.listFromCache(namespace, allNamespace)
-	}
 	return h.listFromAPIServer(namespace, allNamespace)
 }
 
@@ -405,33 +400,16 @@ func (h *HorovodJobTrainer) listFromAPIServer(namespace string, allNamespace boo
 	return trainingJobs, nil
 }
 
-// listFromCache lists mpijobs from arena cache
-func (h *HorovodJobTrainer) listFromCache(namespace string, allNamespace bool) ([]TrainingJob, error) {
-	// 1.define filter function
-	filter := func(job *batchv1.Job) bool { return job.Namespace == namespace }
-	// 2.if all namespaces is true,get all mpijobs
-	if allNamespace {
-		filter = func(job *batchv1.Job) bool { return true }
+func (h *HorovodJobTrainer) listJobs(namespace string) (*batchv1.JobList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		return arenacache.GetCacheClient().ListHorovodJobs(namespace)
 	}
-	jobs, allPods := arenacache.GetArenaCache().FilterK8sJobs(filter, func(job *batchv1.Job, pod *v1.Pod) bool {
-		return h.isHorovodPod(job.Name, job.Namespace, pod)
+	return h.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: fmt.Sprintf("release,app=tf-horovod"),
 	})
-	trainingJobs := []TrainingJob{}
-	for key, job := range jobs {
-		// find the pods, and determine the pod of the job
-		filterPods, chiefPod := getPodsOfHorovodJob(h, job, allPods[key])
-		trainingJobs = append(trainingJobs, &HorovodJob{
-			BasicJobInfo: &BasicJobInfo{
-				name:      job.Name,
-				resources: podResources(filterPods),
-			},
-			job:         job,
-			chiefPod:    chiefPod,
-			pods:        filterPods,
-			trainerType: h.Type(),
-		})
-	}
-	return trainingJobs, nil
 }
 
 func (h *HorovodJobTrainer) isHorovodJob(name, ns string, job *batchv1.Job) bool {
