@@ -2,6 +2,7 @@ package topnode
 
 import (
 	"fmt"
+	"github.com/kubeflow/arena/pkg/arenacache"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -212,20 +213,11 @@ func (n *nodeProcesser) SupportedNodeType() types.NodeType {
 
 func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, error) {
 	client := config.GetArenaConfiger().GetClientSet()
-	allPods, err := utils.AcquireAllActivePods(client)
+	nodeList, err := listNodes(client)
 	if err != nil {
 		return nil, err
 	}
-	nodeList, err := client.CoreV1().Nodes().List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	configMapList, err := client.CoreV1().ConfigMaps("kube-system").List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: types.GPUTopologyNodeLabels,
-	})
+	configMapList, err := listGPUTopoNodeConfigMapList(client)
 	if err != nil {
 		return nil, err
 	}
@@ -251,15 +243,8 @@ func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, erro
 	}
 	for index, n := range nodeList.Items {
 		node := n.DeepCopy()
-		pods := []*v1.Pod{}
 		if !filterNode(names, node.Name) {
 			continue
-		}
-		for _, pod := range allPods {
-			if pod.Spec.NodeName != node.Name {
-				continue
-			}
-			pods = append(pods, pod)
 		}
 		for _, processer := range GetSupportedNodePorcessers() {
 			var skip bool
@@ -277,6 +262,37 @@ func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, erro
 	return nodes, nil
 }
 
+func listNodePods(client *kubernetes.Clientset, nodeName string) ([]*v1.Pod, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		return arenacache.GetCacheClient().ListNodeRunningPods(nodeName)
+	}
+	return utils.AcquireAllActivePodsOfNode(client, nodeName)
+}
+
+func listGPUTopoNodeConfigMapList(client *kubernetes.Clientset) (*v1.ConfigMapList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		cmList := &v1.ConfigMapList{}
+		return cmList, arenacache.GetCacheClient().ListResources(cmList, "kube-system", metav1.ListOptions{
+			LabelSelector: types.GPUTopologyNodeLabels,
+		})
+	}
+
+	return client.CoreV1().ConfigMaps("kube-system").List(metav1.ListOptions{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ListOptions",
+			APIVersion: "v1",
+		}, LabelSelector: types.GPUTopologyNodeLabels,
+	})
+}
+
+func listNodes(client *kubernetes.Clientset) (*v1.NodeList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		nodeList := &v1.NodeList{}
+		return nodeList, arenacache.GetCacheClient().ListResources(nodeList, "", metav1.ListOptions{})
+	}
+	return client.CoreV1().Nodes().List(metav1.ListOptions{})
+}
+
 func filterNode(names map[string]bool, nodeName string) bool {
 	if len(names) == 0 {
 		return true
@@ -289,12 +305,9 @@ func filterNode(names map[string]bool, nodeName string) bool {
 
 func GetNodeGpuMetrics(client *kubernetes.Clientset) (map[string]types.NodeGpuMetric, error) {
 	nodeGPUMetrics := map[string]types.NodeGpuMetric{}
-	if !prometheus.GpuMonitoringInstalled(client) {
-		log.Debugf("prometheus not installed,skip to get gpu metrics")
-		return nodeGPUMetrics, nil
-	}
 	server := prometheus.GetPrometheusServer(client)
 	if server == nil {
+		log.Debugf("prometheus not installed,skip to get gpu metrics")
 		return nodeGPUMetrics, nil
 	}
 	return prometheus.GetNodeGPUMetrics(client, server, []string{".*"})

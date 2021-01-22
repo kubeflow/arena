@@ -3,6 +3,8 @@ package prometheus
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/arenacache"
 	"strconv"
 	"strings"
 	"time"
@@ -148,9 +150,7 @@ func GetPrometheusServer(client *kubernetes.Clientset) *types.PrometheusServer {
 
 func getPrometheusService(client *kubernetes.Clientset, label string) *v1.Service {
 	// find the prometheus server from all namespaces
-	serviceList, err := client.CoreV1().Services(metav1.NamespaceAll).List(metav1.ListOptions{
-		LabelSelector: label,
-	})
+	serviceList, err := listSvc(client, label)
 	if err != nil {
 		log.Debugf("Failed to get PrometheusServiceName: %v", err)
 		return nil
@@ -160,6 +160,19 @@ func getPrometheusService(client *kubernetes.Clientset, label string) *v1.Servic
 		return nil
 	}
 	return serviceList.Items[0].DeepCopy()
+}
+
+func listSvc(client *kubernetes.Clientset, label string) (*v1.ServiceList, error) {
+	if config.GetArenaConfiger().IsDaemonMode() {
+		svcList := &v1.ServiceList{}
+		return svcList, arenacache.GetCacheClient().ListResources(svcList, metav1.NamespaceAll, metav1.ListOptions{
+			LabelSelector: label,
+		})
+	}
+
+	return client.CoreV1().Services(metav1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: label,
+	})
 }
 
 // {__name__=~"nvidia_gpu_duty_cycle|nvidia_gpu_memory_used_bytes|nvidia_gpu_memory_total_bytes", pod_name=~"tf-distributed-test-ps-0|tf-distributed-test-worker-0"}

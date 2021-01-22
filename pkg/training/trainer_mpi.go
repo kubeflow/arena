@@ -509,10 +509,6 @@ func (tt *MPIJobTrainer) resources(name string, namespace string, pods []*v1.Pod
 * List Training jobs
  */
 func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (jobs []TrainingJob, err error) {
-	// if arena is configured as daemon,getting all mpijobs from cache is corrent
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return tt.listFromCache(namespace, allNamespace)
-	}
 	return tt.listFromAPIServer(namespace, allNamespace)
 }
 
@@ -522,20 +518,13 @@ func (tt *MPIJobTrainer) listFromAPIServer(namespace string, allNamespace bool) 
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
-	mpijobList, err := tt.mpijobClient.KubeflowV1alpha1().MPIJobs(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release"),
-	})
+	mpijobList, err := tt.listJobs(namespace)
 	if err != nil {
 		return trainingJobs, err
 	}
 	for _, item := range mpijobList.Items {
 		mpijob := item.DeepCopy()
-		podList, err := tt.client.CoreV1().Pods(mpijob.Namespace).List(metav1.ListOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ListOptions",
-				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", mpijob.Name, tt.trainerType),
-		})
+		podList, err := listJobPods(tt.client, mpijob.Namespace, mpijob.Name, tt.trainerType)
 		if err != nil {
 			log.Errorf("failed to get pods of job %v,reason: %v", mpijob.Name, err)
 			continue
@@ -562,48 +551,14 @@ func (tt *MPIJobTrainer) listFromAPIServer(namespace string, allNamespace bool) 
 	return trainingJobs, nil
 }
 
-// listFromCache lists mpijobs from arena cache
-func (tt *MPIJobTrainer) listFromCache(namespace string, allNamespace bool) ([]TrainingJob, error) {
-	// 1.define filter function
-	filter := func(job *v1alpha1.MPIJob) bool { return job.Namespace == namespace }
-	trainingJobs := []TrainingJob{}
-	// 2.if all namespaces is true,get all mpijobs
-	if allNamespace {
-		filter = func(job *v1alpha1.MPIJob) bool { return true }
+func (tt *MPIJobTrainer) listJobs(namespace string) (*v1alpha1.MPIJobList, error){
+	if config.GetArenaConfiger().IsDaemonMode() {
+		list := &v1alpha1.MPIJobList{}
+		return list, arenacache.GetCacheClient().ListTrainingJobs(list, namespace)
 	}
-	// 3.filter mpijobs
-	mpijobs, pods := arenacache.GetArenaCache().FilterMPIJobs(filter)
-	// 4.filter all k8s jobs
-	jobs, _ := arenacache.GetArenaCache().FilterK8sJobs(func(job *batchv1.Job) bool {
-		return true
-	}, func(job *batchv1.Job, pod *v1.Pod) bool {
-		return false
+	return tt.mpijobClient.KubeflowV1alpha1().MPIJobs(namespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("release"),
 	})
-	for jobKey, mpijob := range mpijobs {
-		// find the chief job
-		job := &batchv1.Job{}
-		for _, j := range jobs {
-			if !tt.isChiefJob(j, mpijob.Name, mpijob.Namespace) {
-				continue
-			}
-			job = j.DeepCopy()
-			break
-		}
-		// get pods of current mpijob
-		filterPods, chiefPod := getPodsOfMPIJob(tt, mpijob, pods[jobKey])
-		trainingJobs = append(trainingJobs, &MPIJob{
-			BasicJobInfo: &BasicJobInfo{
-				resources: podResources(filterPods),
-				name:      mpijob.Name,
-			},
-			mpijob:      mpijob,
-			chiefPod:    chiefPod,
-			pods:        filterPods,
-			chiefjob:    job,
-			trainerType: tt.Type(),
-		})
-	}
-	return trainingJobs, nil
 }
 
 func (mj *MPIJob) isSucceeded() bool {
