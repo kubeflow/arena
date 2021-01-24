@@ -62,14 +62,18 @@ func (p *PodLogger) getLogs(accept func(io.ReadCloser)) error {
 	if err != nil {
 		return err
 	}
-	readCloser, err := p.clientset.CoreV1().Pods(p.Namespace).GetLogs(p.InstanceName, &v1.PodLogOptions{
+	podLogOption := &v1.PodLogOptions{
 		// Container:    p.container,
 		Follow:       p.Follow,
 		Timestamps:   p.Timestamps,
 		SinceSeconds: p.SinceSeconds,
 		SinceTime:    p.SinceTime,
 		TailLines:    p.Tail,
-	}).Stream()
+	}
+	if p.ContainerName != "" {
+		podLogOption.Container = p.ContainerName
+	}
+	readCloser, err := p.clientset.CoreV1().Pods(p.Namespace).GetLogs(p.InstanceName, podLogOption).Stream()
 
 	if err != nil {
 		return err

@@ -2,10 +2,11 @@ package topnode
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/arenacache"
 	"sort"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/kubeflow/arena/pkg/arenacache"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -33,6 +34,8 @@ type NodeProcesser interface {
 	DisplayNodesDetails(w *tabwriter.Writer, nodes []Node)
 	// DisplayNodesSummary display nodes summary
 	DisplayNodesSummary(w *tabwriter.Writer, nodes []Node, showNodeType, isUnhealthy bool) (int, int, int)
+	// DisplayNodesCustomSummary display custom format of target type nodes
+	DisplayNodesCustomSummary(w *tabwriter.Writer, nodes []Node)
 	// SupportedNodeType Type returns the supported node type
 	SupportedNodeType() types.NodeType
 }
@@ -138,12 +141,13 @@ func GetSupportedNodePorcessers() []NodeProcesser {
 }
 
 type nodeProcesser struct {
-	key                 string
-	nodeType            types.NodeType
-	builder             func(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error)
-	canBuildNode        func(node *v1.Node) bool
-	displayNodesDetails func(w *tabwriter.Writer, nodes []Node)
-	displayNodesSummary func(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int)
+	key                       string
+	nodeType                  types.NodeType
+	builder                   func(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error)
+	canBuildNode              func(node *v1.Node) bool
+	displayNodesDetails       func(w *tabwriter.Writer, nodes []Node)
+	displayNodesSummary       func(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int)
+	displayNodesCustomSummary func(w *tabwriter.Writer, nodes []Node)
 }
 
 func (n *nodeProcesser) BuildNode(client *kubernetes.Clientset, v1node *v1.Node, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool) {
@@ -207,6 +211,20 @@ func (n *nodeProcesser) DisplayNodesSummary(w *tabwriter.Writer, nodes []Node, s
 	return totalGPUs, allocatedGPUs, unhealthyGPUs
 }
 
+func (n *nodeProcesser) DisplayNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
+	myNodes := []Node{}
+	for _, node := range nodes {
+		if node.Type() != n.nodeType {
+			continue
+		}
+		myNodes = append(myNodes, node)
+	}
+	sort.Slice(myNodes, func(i, j int) bool {
+		return myNodes[i].Index() < myNodes[j].Index()
+	})
+	n.displayNodesCustomSummary(w, myNodes)
+}
+
 func (n *nodeProcesser) SupportedNodeType() types.NodeType {
 	return n.nodeType
 }
@@ -262,14 +280,14 @@ func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, erro
 	return nodes, nil
 }
 
-func listNodePods(client *kubernetes.Clientset, nodeName string) ([]*v1.Pod, error){
+func listNodePods(client *kubernetes.Clientset, nodeName string) ([]*v1.Pod, error) {
 	if config.GetArenaConfiger().IsDaemonMode() {
 		return arenacache.GetCacheClient().ListNodeRunningPods(nodeName)
 	}
 	return utils.AcquireAllActivePodsOfNode(client, nodeName)
 }
 
-func listGPUTopoNodeConfigMapList(client *kubernetes.Clientset) (*v1.ConfigMapList, error){
+func listGPUTopoNodeConfigMapList(client *kubernetes.Clientset) (*v1.ConfigMapList, error) {
 	if config.GetArenaConfiger().IsDaemonMode() {
 		cmList := &v1.ConfigMapList{}
 		return cmList, arenacache.GetCacheClient().ListResources(cmList, "kube-system", metav1.ListOptions{
@@ -285,7 +303,7 @@ func listGPUTopoNodeConfigMapList(client *kubernetes.Clientset) (*v1.ConfigMapLi
 	})
 }
 
-func listNodes(client *kubernetes.Clientset) (*v1.NodeList, error){
+func listNodes(client *kubernetes.Clientset) (*v1.NodeList, error) {
 	if config.GetArenaConfiger().IsDaemonMode() {
 		nodeList := &v1.NodeList{}
 		return nodeList, arenacache.GetCacheClient().ListResources(nodeList, "", metav1.ListOptions{})
@@ -304,13 +322,7 @@ func filterNode(names map[string]bool, nodeName string) bool {
 }
 
 func GetNodeGpuMetrics(client *kubernetes.Clientset) (map[string]types.NodeGpuMetric, error) {
-	nodeGPUMetrics := map[string]types.NodeGpuMetric{}
-	server := prometheus.GetPrometheusServer(client)
-	if server == nil {
-		log.Debugf("prometheus not installed,skip to get gpu metrics")
-		return nodeGPUMetrics, nil
-	}
-	return prometheus.GetNodeGPUMetrics(client, server, []string{".*"})
+	return prometheus.GetNodeGPUMetrics(client, []string{".*"})
 }
 
 func getGPUMetricsByNodeName(nodeName string, metrics map[string]types.NodeGpuMetric) types.NodeGpuMetric {

@@ -48,13 +48,24 @@ func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, forma
 	var isUnhealthy bool
 	nodeTypes := map[types.NodeType]bool{}
 	for _, node := range nodes {
-		if node.Type() != types.NormalNode {
-			nodeTypes[node.Type()] = true
-		}
+		nodeTypes[node.Type()] = true
 		if !node.AllDevicesAreHealthy() {
 			isUnhealthy = true
 		}
 	}
+	if len(nodeTypes) == 1 {
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		processers := GetSupportedNodePorcessers()
+		for i := len(processers) - 1; i >= 0; i-- {
+			processer := processers[i]
+			processer.DisplayNodesCustomSummary(w, nodes)
+		}
+		_ = w.Flush()
+		return nil
+	}
+
+	delete(nodeTypes, types.NormalNode)
+
 	if len(nodeTypes) > 1 {
 		showNodeType = true
 	}

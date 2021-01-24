@@ -18,15 +18,16 @@ const (
 )
 
 type LogArgs struct {
-	Namespace    string
-	JobName      string
-	InstanceName string
-	Follow       bool
-	SinceSeconds *int64
-	SinceTime    *metav1.Time
-	Tail         *int64
-	Timestamps   bool
-	RetryCnt     int
-	RetryTimeout time.Duration
-	WriterCloser io.WriteCloser
+	Namespace     string
+	JobName       string
+	InstanceName  string
+	ContainerName string
+	Follow        bool
+	SinceSeconds  *int64
+	SinceTime     *metav1.Time
+	Tail          *int64
+	Timestamps    bool
+	RetryCnt      int
+	RetryTimeout  time.Duration
+	WriterCloser  io.WriteCloser
 }

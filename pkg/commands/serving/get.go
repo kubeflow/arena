@@ -36,8 +36,8 @@ func NewGetCommand() *cobra.Command {
 		"type":    "__arena_serve_all_type",
 	}
 	var command = &cobra.Command{
-		Use:   "get serving job",
-		Short: "display details of a serving job",
+		Use:   "get JOB [-T JOB_TYPE] [-v JOB_VERSION]",
+		Short: "Display a serving job details",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

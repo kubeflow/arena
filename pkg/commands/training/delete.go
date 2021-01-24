@@ -32,8 +32,9 @@ var (
 func NewDeleteCommand() *cobra.Command {
 	var trainingType string
 	var command = &cobra.Command{
-		Use:   "delete a training job",
-		Short: "delete a training job and its associated pods",
+		Use:     "delete JOB1 JOB2 ...JOBn [-T JOB_TYPE]",
+		Short:   "Delete a training job and its associated instances",
+		Aliases: []string{"del"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

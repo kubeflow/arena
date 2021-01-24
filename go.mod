@@ -3,13 +3,13 @@ module github.com/kubeflow/arena
 go 1.12
 
 require (
+	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
 	github.com/go-openapi/spec v0.19.2
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/onsi/ginkgo v1.14.2 // indirect
-	github.com/onsi/gomega v1.10.3 // indirect
+	github.com/prometheus/client_golang v1.0.0
+	github.com/prometheus/common v0.4.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
@@ -18,12 +18,15 @@ require (
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
 	k8s.io/api v0.17.2
 	k8s.io/apimachinery v0.17.2
+	k8s.io/cli-runtime v0.16.9
 	k8s.io/client-go v0.17.2
 	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
+	k8s.io/kubectl v0.0.0-00010101000000-000000000000
 	sigs.k8s.io/controller-runtime v0.5.4
 )
 
 replace (
+	golang.org/x/sys => golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
 	k8s.io/api => k8s.io/api v0.16.9
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.16.9
 	k8s.io/apimachinery => k8s.io/apimachinery v0.16.10-beta.0

@@ -28,7 +28,11 @@ function support_image_regionalization(){
 		if [ -d $path ];then
 			support_image_regionalization $path
 		else
-			sed -i  "s@registry\..*aliyuncs.com@registry-vpc.${REGION}.aliyuncs.com@g" $path
+        	if [[ $PULL_IMAGE_BY_VPC_NETWORK == "true" ]];then
+				sed -i  "s@registry\..*aliyuncs.com@registry-vpc.${REGION}.aliyuncs.com@g" $path
+			else
+				sed -i  "s@registry\..*aliyuncs.com@registry.${REGION}.aliyuncs.com@g" $path
+			fi
 		fi
 	done
 }

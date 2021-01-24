@@ -19,15 +19,15 @@ var (
 )
 
 var getJobTemplate = `
-Name:           %v
-Namespace:      %v
-Type:           %v
-Version:        %v
-Desired:        %v
-Available:      %v
-Age:            %v
-Address:        %v
-Port:           %v
+Name:       %v
+Namespace:  %v
+Type:       %v
+Version:    %v
+Desired:    %v
+Available:  %v
+Age:        %v
+Address:    %v
+Port:       %v
 %v
 `
 
@@ -97,19 +97,19 @@ func PrintServingJob(job ServingJob, format types.FormatStyle) {
 	isGPUShare := false
 	title := "GPUs"
 	step := "----"
-	gpuAllocation := fmt.Sprintf("GPUs:           %v", jobInfo.RequestGPU)
+	gpuAllocation := fmt.Sprintf("GPUs:       %v", jobInfo.RequestGPU)
 	if jobInfo.RequestGPUMemory != 0 {
 		isGPUShare = true
-		title = "GPU(Memory/GiB)"
-		step = "---------------"
-		gpuAllocation = fmt.Sprintf("GPUMemory(GiB): %v", jobInfo.RequestGPUMemory)
+		title = "GPU_MEMORY"
+		step = "----------"
+		gpuAllocation = fmt.Sprintf("GPU Memory: %vGiB", jobInfo.RequestGPUMemory)
 	}
 	lines := []string{gpuAllocation, "", "Instances:", fmt.Sprintf("  NAME\tSTATUS\tAGE\tREADY\tRESTARTS\t%v\tNODE", title)}
 	lines = append(lines, fmt.Sprintf("  ----\t------\t---\t-----\t--------\t%v\t----", step))
 	for _, i := range jobInfo.Instances {
-		value := i.RequestGPU
+		value := fmt.Sprintf("%v", i.RequestGPU)
 		if isGPUShare {
-			value = i.RequestGPUMemory
+			value = fmt.Sprintf("%vGiB", i.RequestGPUMemory)
 		}
 		items := []string{
 			fmt.Sprintf("  %v", i.Name),

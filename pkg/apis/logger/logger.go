@@ -46,6 +46,11 @@ func (l *LoggerBuilder) Instance(name string) *LoggerBuilder {
 	return l
 }
 
+func (l *LoggerBuilder) Container(name string) *LoggerBuilder {
+	l.args.ContainerName = name
+	return l
+}
+
 func (l *LoggerBuilder) Follow() *LoggerBuilder {
 	l.args.Follow = true
 	return l

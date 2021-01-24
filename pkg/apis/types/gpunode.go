@@ -91,6 +91,7 @@ type GPUShareNodeInfo struct {
 type GPUSharePodInfo struct {
 	Name          string         `json:"name" yaml:"name"`
 	Namespace     string         `json:"namespace" yaml:"namespace"`
+	Status        string         `json:"status" yaml:"status"`
 	RequestMemory int            `json:"requestGPUMemory" yaml:"requestGPUMemory"`
 	Allocation    map[string]int `json:"allocation" yaml:"allocation"`
 }
@@ -110,6 +111,7 @@ type GPUExclusiveNodeInfo struct {
 type GPUExclusivePodInfo struct {
 	Name       string `json:"name" yaml:"name"`
 	Namespace  string `json:"namespace" yaml:"namespace"`
+	Status     string `json:"status" yaml:"status"`
 	RequestGPU int    `json:"requestGPUs" yaml:"requestGPUs"`
 }
 
@@ -135,6 +137,7 @@ type GPUTopology struct {
 type GPUTopologyPodInfo struct {
 	Name        string   `json:"name" yaml:"name"`
 	Namespace   string   `json:"namespace" yaml:"namespace"`
+	Status      string   `json:"status" yaml:"status"`
 	RequestGPU  int      `json:"requestGPUs" yaml:"requestGPUs"`
 	Allocation  []string `json:"allocation" yaml:"allocation"`
 	VisibleGPUs []string `json:"visibleGPUs" yaml:"visibleGPUs"`

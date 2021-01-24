@@ -1,9 +1,11 @@
 package training
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/arenacache"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,19 +18,12 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 	)
 	clientset := config.GetArenaConfiger().GetClientSet()
 	// 1. Get port
-	serviceList, err := clientset.CoreV1().Services(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,role=tensorboard", name),
-	})
+	labels := map[string]string{
+		"release": name,
+		"role":    "tensorboard",
+	}
+	serviceList, err := listServices(clientset, namespace, labels)
 	if err != nil {
-		// if errors.IsNotFound(err) {
-		// 	log.Debugf("The tensorboard service doesn't exist")
-		// 	return "", nil
-		// }else{
-		// 	return "", err
-		// }
 		return "", err
 	}
 
@@ -57,11 +52,12 @@ func tensorboardURL(name, namespace string) (url string, err error) {
 	port = portList[0].NodePort
 
 	// 2. Get address
-	nodeList, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
-	if err != nil {
-		return "", err
+	nodeList := &v1.NodeList{}
+	if config.GetArenaConfiger().IsDaemonMode() {
+		err = arenacache.GetCacheClient().List(context.Background(), nodeList)
+	} else {
+		nodeList, err = clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	}
-
 	node := v1.Node{}
 	findReadyNode := false
 

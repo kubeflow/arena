@@ -273,9 +273,15 @@ func (s *SubmitTFJobArgsBuilder) transform() error {
 func (s *SubmitTFJobArgsBuilder) checkGangCapablitiesInCluster() error {
 	s.args.HasGangScheduler = false
 	arenaConfiger := config.GetArenaConfiger()
-	_, err := arenaConfiger.GetClientSet().AppsV1beta1().Deployments(metav1.NamespaceSystem).Get(gangSchdName, metav1.GetOptions{})
+	podList, err := arenaConfiger.GetClientSet().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=%v", gangSchdName),
+	})
 	if err != nil {
 		log.Debugf("Failed to find %s due to %v", gangSchdName, err)
+		return nil
+	}
+	if len(podList.Items) == 0 {
+		log.Debugf("not found %v scheduler,it represents that you don't deploy it", gangSchdName)
 		return nil
 	}
 	log.Debugf("Found %s successfully, the gang scheduler is enabled in the cluster.", gangSchdName)

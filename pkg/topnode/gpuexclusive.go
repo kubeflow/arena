@@ -17,17 +17,16 @@ var GPUExclusiveNodeDescription = `
 `
 
 var gpuExclusiveTemplate = `
-Name:          %v
-Status:        %v
-Role:          %v
-Type:          %v
-Address:       %v
+Name:    %v
+Status:  %v
+Role:    %v
+Type:    %v
+Address: %v
 Description:
 %v
 %v
-
------------------------------------------------------------------------------------------
 `
+
 var gpuExclusiveSummary = `
 GPU Summary:
   Total GPUs:           %v
@@ -118,7 +117,7 @@ func (g *gpuexclusive) getAllocatedGPUMemory() float64 {
 	for _, metric := range g.gpuMetrics {
 		allocatedGPUMemory = float64(allocatedGPUs) * metric.GpuMemoryTotal
 	}
-	return utils.DataUnitTransfer("GiB", "bytes", allocatedGPUMemory)
+	return allocatedGPUMemory
 }
 
 func (g *gpuexclusive) getUsedGPUMemory() float64 {
@@ -142,6 +141,9 @@ func (g *gpuexclusive) getDutyCycle() float64 {
 	for _, gpuMetric := range g.gpuMetrics {
 		totalGPUs += float64(1)
 		dutyCycle += gpuMetric.GpuDutyCycle
+	}
+	if totalGPUs == 0 {
+		return float64(0)
 	}
 	return dutyCycle / totalGPUs
 }
@@ -194,9 +196,11 @@ func (g *gpuexclusive) convert2NodeInfo() types.GPUExclusiveNodeInfo {
 		if gpuCount == 0 {
 			continue
 		}
+		status, _, _, _ := utils.DefinePodPhaseStatus(*pod)
 		podInfos = append(podInfos, types.GPUExclusivePodInfo{
 			Name:       pod.Name,
 			Namespace:  pod.Namespace,
+			Status:     status,
 			RequestGPU: gpuCount,
 		})
 	}
@@ -222,7 +226,7 @@ func (g *gpuexclusive) WideFormat() string {
 	lines := []string{}
 	lines = g.displayPodInfos(lines, nodeInfo)
 	lines = g.displayDeviceInfos(lines, nodeInfo)
-	return fmt.Sprintf(strings.TrimRight(gpuExclusiveTemplate, "\n"),
+	return fmt.Sprintf(gpuExclusiveTemplate,
 		nodeInfo.Name,
 		nodeInfo.Status,
 		role,
@@ -234,17 +238,41 @@ func (g *gpuexclusive) WideFormat() string {
 }
 
 func (g *gpuexclusive) displayPodInfos(lines []string, nodeInfo types.GPUExclusiveNodeInfo) []string {
-	podLines := []string{"", "Instances:", "  NAMESPACE\tNAME\tGPU(Requested)"}
-	podLines = append(podLines, "  ---------\t----\t--------------")
-	for _, podInfo := range nodeInfo.PodInfos {
-		podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%v", podInfo.Namespace, podInfo.Name, podInfo.RequestGPU))
+	title := []string{"  NAMESPACE", "NAME", "STATUS", "GPU(Requested)"}
+	splitLine := []string{"  ---------", "----", "------", "--------------"}
+	if g.gpuMetricsIsEnabled() {
+		title = append(title, "GPU(Allocated)")
+		splitLine = append(splitLine, "--------------")
 	}
-	if len(podLines) == 4 {
+	podLines := []string{"Instances:", strings.Join(title, "\t")}
+	podLines = append(podLines, strings.Join(splitLine, "\t"))
+	for _, podInfo := range nodeInfo.PodInfos {
+		if g.gpuMetricsIsEnabled() {
+			gpus := []string{}
+			for _, dev := range g.gpuMetrics {
+				for _, podName := range dev.PodNames {
+					if podName == fmt.Sprintf("%v/%v", podInfo.Namespace, podInfo.Name) {
+						gpus = append(gpus, fmt.Sprintf("gpu%v", dev.Id))
+						break
+					}
+				}
+			}
+			allocatedGPUs := strings.Join(gpus, ",")
+			if allocatedGPUs == "" {
+				allocatedGPUs = "N/A"
+			}
+			podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v", podInfo.Namespace, podInfo.Name, podInfo.Status, podInfo.RequestGPU, allocatedGPUs))
+			continue
+		}
+		podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%v\t%v", podInfo.Namespace, podInfo.Name, podInfo.Status, podInfo.RequestGPU))
+	}
+	if len(podLines) == 3 {
 		podLines = []string{}
 	}
 	lines = append(lines, podLines...)
 	return lines
 }
+
 func (g *gpuexclusive) displayDeviceInfos(lines []string, nodeInfo types.GPUExclusiveNodeInfo) []string {
 	if !g.gpuMetricsIsEnabled() {
 		return g.displayDeviceUnderNoGPUMetric(lines, nodeInfo)
@@ -253,26 +281,34 @@ func (g *gpuexclusive) displayDeviceInfos(lines []string, nodeInfo types.GPUExcl
 }
 
 func (g *gpuexclusive) displayDeviceUnderNoGPUMetric(lines []string, nodeInfo types.GPUExclusiveNodeInfo) []string {
+	deviceLines := []string{"GPU Summary:"}
+	deviceLines = append(deviceLines, fmt.Sprintf("  Total GPUs:     %v", nodeInfo.TotalGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Allocated GPUs: %v", nodeInfo.AllocatedGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Unhealthy GPUs: %v", nodeInfo.UnhealthyGPUs))
+	lines = append(lines, deviceLines...)
 	return lines
 }
 
 func (g *gpuexclusive) displayDeviceInfoUnderMetrics(lines []string, nodeInfo types.GPUExclusiveNodeInfo) []string {
-	deviceLines := []string{"", "GPUs:", "  INDEX\tMEMORY(Total)\tMEMORY(Allocated)\tMEMORY(Used)\tDUTY_CYCLE"}
+	deviceLines := []string{"GPUs:", "  INDEX\tMEMORY(Total)\tMEMORY(Allocated)\tMEMORY(Used)\tDUTY_CYCLE"}
 	deviceLines = append(deviceLines, "  -----\t-------------\t-----------------\t------------\t----------")
 	deviceMap := map[string]*types.AdvancedGpuMetric{}
 	for _, dev := range g.gpuMetrics {
 		deviceMap[dev.Id] = dev
 	}
-	totalGPUMemory := float64(0)
-	totalAllocatedGPUMemory := float64(0)
-	totalUsedGPUMemory := float64(0)
 	podMap := map[string]bool{}
 	for _, pod := range g.pods {
-		if utils.GPUCountInPod(pod) == 0 {
+		if pod.Status.Phase != v1.PodRunning {
+			continue
+		}
+		if utils.GPUCountInPod(pod) <= 0 {
 			continue
 		}
 		podMap[fmt.Sprintf("%v/%v", pod.Namespace, pod.Name)] = true
 	}
+	totalGPUMemory := float64(0)
+	totalAllocatedGPUMemory := g.getAllocatedGPUMemory()
+	totalUsedGPUMemory := float64(0)
 	for i := 0; i < nodeInfo.TotalGPUs; i++ {
 		gpuId := fmt.Sprintf("%v", i)
 		devInfo, ok := deviceMap[gpuId]
@@ -281,30 +317,33 @@ func (g *gpuexclusive) displayDeviceInfoUnderMetrics(lines []string, nodeInfo ty
 		}
 		totalGPUMemory += devInfo.GpuMemoryTotal
 		allocatedGPUMemory := float64(0)
-		idle := true
-		for _, podName := range devInfo.PodNames {
-			if podMap[podName] == true {
-				idle = false
-				break
+		names := []string{}
+		for _, name := range deviceMap[gpuId].PodNames {
+			if _, ok := podMap[name]; ok {
+				names = append(names, name)
 			}
 		}
-		if idle == false {
+		if len(names) != 0 {
 			allocatedGPUMemory = devInfo.GpuMemoryTotal
-			totalAllocatedGPUMemory += allocatedGPUMemory
 		}
-		totalUsedGPUMemory += devInfo.GpuMemoryUsed
+		usedGPUMemory := float64(0)
+		gpuDutyCycle := float64(0)
+		// we do not display the use gpu memory and gpu dutycycle when allocated gpu memory is 0
+		if allocatedGPUMemory != 0 {
+			totalUsedGPUMemory += devInfo.GpuMemoryUsed
+			usedGPUMemory = devInfo.GpuMemoryUsed
+			gpuDutyCycle = devInfo.GpuDutyCycle
+		}
 		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%.1f GiB\t%.1f GiB\t%.1f GiB\t%.1f%%",
 			devInfo.Id,
 			utils.DataUnitTransfer("bytes", "GiB", devInfo.GpuMemoryTotal),
 			utils.DataUnitTransfer("bytes", "GiB", allocatedGPUMemory),
-			utils.DataUnitTransfer("bytes", "GiB", devInfo.GpuMemoryUsed),
-			devInfo.GpuDutyCycle),
+			utils.DataUnitTransfer("bytes", "GiB", usedGPUMemory),
+			gpuDutyCycle),
 		)
 	}
-	if len(deviceLines) == 4 {
-		deviceLines = []string{"", "GPUs:"}
-	} else {
-		deviceLines = append(deviceLines, "")
+	if len(deviceLines) == 3 {
+		deviceLines = []string{"GPUs:"}
 	}
 	deviceLines = append(deviceLines,
 		fmt.Sprintf(strings.Trim(gpuExclusiveSummary, "\n"),
@@ -315,17 +354,6 @@ func (g *gpuexclusive) displayDeviceInfoUnderMetrics(lines []string, nodeInfo ty
 			utils.DataUnitTransfer("bytes", "GiB", totalAllocatedGPUMemory),
 			utils.DataUnitTransfer("bytes", "GiB", totalUsedGPUMemory),
 		))
-	/*
-		deviceLines = append(deviceLines, "GPU Summary:", "  GPU(Total)\tGPU MEMORY(Total)\tGPU(Allocated)\tGPU MEMORY(Allocated)\tGPU(Unhealthy)")
-		deviceLines = append(deviceLines, "  ----------\t-----------------\t--------------\t---------------------\t--------------")
-		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%.1fGiB\t%v\t%.1fGiB\t%v",
-			nodeInfo.TotalGPUs,
-			utils.DataUnitTransfer("bytes", "GiB", totalGPUMemory),
-			nodeInfo.AllocatedGPUs,
-			utils.DataUnitTransfer("bytes", "GiB", totalAllocatedGPUMemory),
-			g.getUnhealthyGPUs(),
-		))
-	*/
 	lines = append(lines, deviceLines...)
 	return lines
 }
@@ -365,12 +393,9 @@ func displayGPUExclusiveNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	PrintLine(w, "===================================== GPU MODE: Exclusive ===============================")
 	totalGPUs := 0
 	totalUnhealthyGPUs := 0
 	totalAllocatedGPUs := 0
-	//unhealthyPercent := float64(0)
-	//allocatedPercent := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUExclusiveNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
@@ -378,19 +403,6 @@ func displayGPUExclusiveNodeDetails(w *tabwriter.Writer, nodes []Node) {
 		totalUnhealthyGPUs += nodeInfo.UnhealthyGPUs
 		PrintLine(w, node.WideFormat())
 	}
-	/*
-		if totalGPUs != 0 {
-			allocatedPercent = float64(totalAllocatedGPUs) / float64(totalGPUs) * 100
-		}
-			PrintLine(w, fmt.Sprintf("Allocated/Total GPUs of nodes with gpu exclusive mode In Cluster: %v/%v(%.1f%%)", totalAllocatedGPUs, totalGPUs, allocatedPercent))
-			if totalUnhealthyGPUs != 0 {
-				if totalGPUs != 0 {
-					unhealthyPercent = float64(totalUnhealthyGPUs) / float64(totalGPUs) * 100
-				}
-				PrintLine(w, fmt.Sprintf("Unhealthy/Total GPUs of nodes with gpu exclusive mode In Cluster: %v/%v(%.1f%%)", totalUnhealthyGPUs, totalGPUs, unhealthyPercent))
-			}
-	*/
-	PrintLine(w, "")
 }
 
 func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int) {
@@ -428,13 +440,70 @@ func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealt
 	return totalGPUs, allocatedGPUs, unhealthyGPUs
 }
 
+func displayGPUExclusiveNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
+	if len(nodes) == 0 {
+		return
+	}
+	header := []string{"NAME", "IPADDRESS", "ROLE", "STATUS", "GPU(Total)", "GPU(Allocated)"}
+	isUnhealthy := false
+	for _, node := range nodes {
+		if !node.AllDevicesAreHealthy() {
+			isUnhealthy = true
+		}
+	}
+	if isUnhealthy {
+		header = append(header, "UNHEALTHY")
+	}
+	PrintLine(w, header...)
+	totalGPUs := 0
+	allocatedGPUs := 0
+	unhealthyGPUs := 0
+	for _, node := range nodes {
+		nodeInfo := node.Convert2NodeInfo().(types.GPUExclusiveNodeInfo)
+		totalGPUs += nodeInfo.TotalGPUs
+		allocatedGPUs += nodeInfo.AllocatedGPUs
+		unhealthyGPUs += nodeInfo.UnhealthyGPUs
+		items := []string{}
+		items = append(items, node.Name())
+		items = append(items, node.IP())
+		role := nodeInfo.Role
+		if role == "" {
+			role = "<none>"
+		}
+		items = append(items, role)
+		items = append(items, node.Status())
+		items = append(items, fmt.Sprintf("%v", nodeInfo.TotalGPUs))
+		items = append(items, fmt.Sprintf("%v", nodeInfo.AllocatedGPUs))
+		if isUnhealthy {
+			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
+		}
+		PrintLine(w, items...)
+	}
+	PrintLine(w, "---------------------------------------------------------------------------------------------------")
+	PrintLine(w, "Allocated/Total GPUs of nodes which own resource nvidia.com/gpu In Cluster:")
+	allocatedPercent := float64(0)
+	if totalGPUs != 0 {
+		allocatedPercent = float64(allocatedGPUs) / float64(totalGPUs) * 100
+	}
+	unhealthyPercent := float64(0)
+	if totalGPUs != 0 {
+		unhealthyPercent = float64(unhealthyGPUs) / float64(totalGPUs) * 100
+	}
+	PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
+	if unhealthyGPUs != 0 {
+		PrintLine(w, "Unhealthy/Total GPUs of nodes which own resource nvidia.com/gpu In Cluster:")
+		PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
+	}
+}
+
 func NewGPUExclusiveNodeProcesser() NodeProcesser {
 	return &nodeProcesser{
-		nodeType:            types.GPUExclusiveNode,
-		key:                 "gpuExclusiveNodes",
-		builder:             NewGPUExclusiveNode,
-		canBuildNode:        IsGPUExclusiveNode,
-		displayNodesDetails: displayGPUExclusiveNodeDetails,
-		displayNodesSummary: displayGPUExclusiveNodeSummary,
+		nodeType:                  types.GPUExclusiveNode,
+		key:                       "gpuExclusiveNodes",
+		builder:                   NewGPUExclusiveNode,
+		canBuildNode:              IsGPUExclusiveNode,
+		displayNodesDetails:       displayGPUExclusiveNodeDetails,
+		displayNodesSummary:       displayGPUExclusiveNodeSummary,
+		displayNodesCustomSummary: displayGPUExclusiveNodesCustomSummary,
 	}
 }

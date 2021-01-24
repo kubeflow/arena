@@ -66,7 +66,7 @@ func BuildJobInfo(job TrainingJob, showGPUs bool) *types.TrainingJobInfo {
 	}
 	jobGPUMetric := prometheus.JobGpuMetric{}
 	instances := []types.TrainingJobInstance{}
-	if showGPUs && prometheus.GpuMonitoringInstalled(config.GetArenaConfiger().GetClientSet()) {
+	if showGPUs {
 		jobGPUMetric, err = GetJobGpuMetric(config.GetArenaConfiger().GetClientSet(), job)
 	}
 	for _, pod := range job.AllPods() {
@@ -174,10 +174,6 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric p
 	if len(runningPods) == 0 {
 		return jobGPUMetrics, nil
 	}
-	server := prometheus.GetPrometheusServer(client)
-	if server == nil {
-		return
-	}
-	podsMetrics, err := prometheus.GetPodsGpuInfo(client, server, runningPods)
+	podsMetrics, err := prometheus.GetPodsGpuInfo(client, runningPods)
 	return podsMetrics, err
 }
