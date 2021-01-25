@@ -5,7 +5,7 @@ version: 2
 jobs:
   build:
     docker:
-    - image: circleci/golang:1.10
+    - image: circleci/golang:1.14.10
     working_directory: /go/src/github.com/kubeflow/arena
     steps:
     - checkout
