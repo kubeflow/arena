@@ -119,3 +119,7 @@ build-pkg:
 	docker run -itd --name=arena-pkg arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} /bin/bash
 	docker cp arena-pkg:/arena-installer-${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH}.tar.gz .
 	docker rm -f arena-pkg
+
+
+build-dependabot:
+	python3 hack/create_dependabot.py

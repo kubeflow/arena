@@ -1,0 +1,337 @@
+updates:
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: .
+  open-pull-requests-limit: 10
+  package-ecosystem: docker
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: samples/docker/serve-custom-sample
+  open-pull-requests-limit: 10
+  package-ecosystem: docker
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/golang.org/x/net/http2
+  open-pull-requests-limit: 10
+  package-ecosystem: docker
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: kubernetes-artifacts/tf-operator
+  open-pull-requests-limit: 10
+  package-ecosystem: docker
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: kubernetes-artifacts/jobmon
+  open-pull-requests-limit: 10
+  package-ecosystem: docker
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: .
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - dims
+  - thockin
+  - justinsb
+  - tallclair
+  - piosz
+  - brancz
+  - DirectXMan12
+  - lavalamp
+  directory: vendor/k8s.io/klog
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - jayunit100
+  - hoegaarden
+  - andyxning
+  - neolit123
+  - pohly
+  - yagonobre
+  - vincepri
+  - detiber
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/google.golang.org/appengine
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/json-iterator/go
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/hashicorp/golang-lru
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/hashicorp/hcl
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/mitchellh/go-homedir
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/mitchellh/mapstructure
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/fsnotify/fsnotify
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/spf13/pflag
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/spf13/viper
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/spf13/afero
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/spf13/cast
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/spf13/jwalterweatherman
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/magiconair/properties
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/google/gofuzz
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/konsorten/go-windows-terminal-sequences
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/github.com/sirupsen/logrus
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/golang.org/x/oauth2
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+- assignees:
+  - cheyang
+  - wsxiaozhang
+  - denverdino
+  directory: vendor/gopkg.in/yaml.v2
+  open-pull-requests-limit: 10
+  package-ecosystem: gomod
+  reviewers:
+  - GarnettWang
+  - xiaozhouX
+  - osswangxining
+  schedule:
+    interval: daily
+version: 2
