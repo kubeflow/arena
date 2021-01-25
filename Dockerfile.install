@@ -17,7 +17,7 @@ ENV K8S_VERSION v1.11.2
 RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x /usr/local/bin/kubectl
 
 
-FROM centos:7
+FROM centos:8
 
 COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena /usr/local/bin/arena
 

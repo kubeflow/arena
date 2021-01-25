@@ -51,7 +51,7 @@ RUN OS=$(echo $OS_ARCH | cut -f1 -d-) && \
 # Create arena pacakge
 #
 
-FROM centos:7
+FROM centos:8
 
 ARG KUBE_VERSION
 ARG HELM_VERSION
