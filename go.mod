@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
-	github.com/go-openapi/spec v0.19.2
+	github.com/go-openapi/spec v0.20.2
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.4.2
 	github.com/mitchellh/go-homedir v1.1.0
@@ -13,8 +13,8 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.3.0
-	gopkg.in/yaml.v2 v2.3.0
+	github.com/stretchr/testify v1.6.1
+	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
 	k8s.io/api v0.17.2
 	k8s.io/apimachinery v0.17.2
