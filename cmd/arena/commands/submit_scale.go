@@ -117,18 +117,7 @@ type submitScaleJobArgs struct {
 	Envs map[string]string `yaml:"envs"`
 }
 
-func (submitArgs *submitScaleJobArgs) processScript() {
-	if submitArgs.Script == "" {
-		if submitArgs.Add {
-			submitArgs.Script = "/usr/local/bin/scaler.sh --add"
-		} else if submitArgs.Delete {
-			submitArgs.Script = "/usr/local/bin/scaler.sh --delete"
-		}
-	}
-}
-
 func (submitArgs *submitScaleJobArgs) prepare() (err error) {
-	submitArgs.processScript()
 	log.Debugf("scaleEnvs: %v", scaleEnvs)
 	if len(scaleEnvs) > 0 {
 		submitArgs.Envs = transformSliceToMap(scaleEnvs, "=")
