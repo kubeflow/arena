@@ -48,13 +48,13 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 		return types.AllTrainingJob
 	}
 	for trainingType, typeInfo := range types.TrainingTypeMap {
-		if string(typeInfo.Name) == jobType {
+		if strings.ToLower(string(typeInfo.Name)) == strings.ToLower(jobType) {
 			return trainingType
 		}
 		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
 			return trainingType
 		}
-		if typeInfo.Shorthand == jobType {
+		if strings.ToLower(typeInfo.Shorthand) == strings.ToLower(jobType) {
 			return trainingType
 		}
 	}
@@ -109,13 +109,13 @@ func TransferServingJobType(jobType string) types.ServingJobType {
 		return types.AllServingJob
 	}
 	for servingType, typeInfo := range types.ServingTypeMap {
-		if string(typeInfo.Name) == jobType {
+		if strings.ToLower(string(typeInfo.Name)) == strings.ToLower(jobType) {
 			return servingType
 		}
 		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
 			return servingType
 		}
-		if typeInfo.Shorthand == jobType {
+		if strings.ToLower(typeInfo.Shorthand) == strings.ToLower(jobType) {
 			return servingType
 		}
 	}

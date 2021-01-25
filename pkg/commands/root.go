@@ -39,6 +39,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(training.NewListCommand())
 	command.AddCommand(training.NewPruneCommand())
 	command.AddCommand(training.NewGetCommand())
+	command.AddCommand(training.NewAttachCommand())
 	command.AddCommand(training.NewLogViewerCommand())
 	command.AddCommand(training.NewLogsCommand())
 	command.AddCommand(training.NewDeleteCommand())

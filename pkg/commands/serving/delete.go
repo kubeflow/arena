@@ -29,8 +29,9 @@ func NewDeleteCommand() *cobra.Command {
 	var servingType string
 	var servingVersion string
 	var command = &cobra.Command{
-		Use:   "delete a serving job",
-		Short: "delete a serving job and its associated instances",
+		Use:     "delete JOB1 JOB2 ...JOBn [-T JOB_TYPE] [--version JOB_VERSION]",
+		Short:   "Delete a serving job and its associated instances",
+		Aliases: []string{"del"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

@@ -15,6 +15,7 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -27,6 +28,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
@@ -285,60 +287,41 @@ func (st *VolcanoJobTrainer) IsSupported(name, ns string) bool {
 		return false
 	}
 	isVolcanoJob := false
-	if config.GetArenaConfiger().IsDaemonMode() {
-		_, err := st.getTrainingJobFromCache(name, ns)
-		// if found the job,return true
-		return err == nil
-	}
-	_, err := st.getTrainingJob(name, ns)
+	_, err := st.GetTrainingJob(name, ns)
 	if err != nil {
 		return isVolcanoJob
 	}
 	return !isVolcanoJob
 }
 
-func (st *VolcanoJobTrainer) GetTrainingJob(name, namespace string) (job TrainingJob, err error) {
+func (st *VolcanoJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
+	volcanoJob := &v1alpha1.Job{}
+	var err error
 	if config.GetArenaConfiger().IsDaemonMode() {
-		return st.getTrainingJobFromCache(name, namespace)
-	}
-	// get job from api server
-	return st.getTrainingJob(name, namespace)
-}
-
-func (st *VolcanoJobTrainer) getTrainingJobFromCache(name, namespace string) (TrainingJob, error) {
-	job, pods := arenacache.GetArenaCache().GetVolcanoJob(namespace, name)
-	if job == nil {
-		return nil, types.ErrTrainingJobNotFound
-	}
-	filterPods, chiefPod := getPodsOfVolcanoJob(job, st, pods)
-	return &VolcanoJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(filterPods),
-			name:      name,
-		},
-		chiefPod:    chiefPod,
-		volcanoJob:  job,
-		pods:        filterPods,
-		trainerType: st.Type(),
-	}, nil
-}
-
-func (st *VolcanoJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
-	// get the job from the api server
-	job, err := st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		if strings.Contains(err.Error(), fmt.Sprintf(`jobs.batch.volcano.sh "%v" not found`, name)) {
-			return nil, types.ErrTrainingJobNotFound
+		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, volcanoJob)
+		if err != nil {
+			log.Errorf("%v", err)
+			if strings.Contains(err.Error(), fmt.Sprintf(`Job.batch.volcano.sh "%v" not found`, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find volcanojob %v from cache,reason: %v", name, err)
 		}
-		return nil, err
+
+	} else {
+		volcanoJob, err = st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).Get(name, metav1.GetOptions{})
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`jobs.batch.volcano.sh "%v" not found`, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find volcanojob from api server,reason: %v", err)
+		}
 	}
 	// get the pods from the api server
-	podList, err := st.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,app=%v", name, st.trainerType),
-	})
+	labels := map[string]string{
+		"release": name,
+		"app":     string(st.Type()),
+	}
+	podList, err := listJobPods(st.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
@@ -347,24 +330,20 @@ func (st *VolcanoJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 		pods = append(pods, pod.DeepCopy())
 	}
 	// filter pods and find chief pod
-	filterPods, chiefPod := getPodsOfVolcanoJob(job, st, pods)
+	filterPods, chiefPod := getPodsOfVolcanoJob(volcanoJob, st, pods)
 	return &VolcanoJob{
 		BasicJobInfo: &BasicJobInfo{
 			resources: podResources(filterPods),
 			name:      name,
 		},
-		volcanoJob:  job,
+		volcanoJob:  volcanoJob,
 		chiefPod:    chiefPod,
 		pods:        filterPods,
 		trainerType: st.Type(),
 	}, nil
 }
 
-func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (jobs []TrainingJob, err error) {
-	return st.listFromAPIServer(namespace, allNamespace)
-}
-
-func (st *VolcanoJobTrainer) listFromAPIServer(namespace string, allNamespace bool) ([]TrainingJob, error) {
+func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) ([]TrainingJob, error) {
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
@@ -375,8 +354,11 @@ func (st *VolcanoJobTrainer) listFromAPIServer(namespace string, allNamespace bo
 	trainingJobs := []TrainingJob{}
 	for _, item := range jobList.Items {
 		job := item.DeepCopy()
-		// get the pods from the api server
-		podList, err := listJobPods(st.client, job.Namespace, job.Name, st.trainerType)
+		labels := map[string]string{
+			"release": job.Name,
+			"app":     string(st.Type()),
+		}
+		podList, err := listJobPods(st.client, job.Namespace, labels)
 		if err != nil {
 			return nil, err
 		}
@@ -400,7 +382,7 @@ func (st *VolcanoJobTrainer) listFromAPIServer(namespace string, allNamespace bo
 	return trainingJobs, nil
 }
 
-func (st *VolcanoJobTrainer) listJobs(namespace string) (*v1alpha1.JobList, error){
+func (st *VolcanoJobTrainer) listJobs(namespace string) (*v1alpha1.JobList, error) {
 	if config.GetArenaConfiger().IsDaemonMode() {
 		list := &v1alpha1.JobList{}
 		return list, arenacache.GetCacheClient().ListTrainingJobs(list, namespace)

@@ -29,8 +29,9 @@ func NewLogsCommand() *cobra.Command {
 	loggerBuilder := logger.NewLoggerBuilder()
 	var jobType string
 	var command = &cobra.Command{
-		Use:   "logs training job",
-		Short: "print the logs for a task of the training job",
+		Use:     "logs JOB [-T JOB_TYPE]",
+		Short:   "Print the logs of a training job",
+		Aliases: []string{"log"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

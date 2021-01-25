@@ -18,7 +18,7 @@ Available Commands:
 func NewSubmitCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "submit",
-		Short: "Submit a job.",
+		Short: "Submit a training job.",
 		Long:  submitLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)

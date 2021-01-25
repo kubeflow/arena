@@ -57,5 +57,5 @@ type Processer interface {
 	// GetServingJob is used to get serving job
 	GetServingJobs(namespace, name, version string) ([]ServingJob, error)
 	// FilterServingJobs is used to filter serving jobs
-	FilterServingJobs(namespace string, allNamespace bool, filter string) ([]ServingJob, error)
+	FilterServingJobs(namespace string, allNamespace bool, filter map[string]string) ([]ServingJob, error)
 }

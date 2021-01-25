@@ -15,8 +15,9 @@ func NewListCommand() *cobra.Command {
 	var format string
 	var jobType string
 	var command = &cobra.Command{
-		Use:   "list",
-		Short: "list all the training jobs",
+		Use:     "list",
+		Short:   "List all the training jobs",
+		Aliases: []string{"ls"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

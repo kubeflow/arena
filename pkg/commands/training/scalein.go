@@ -23,7 +23,7 @@ Available Commands:
 func NewScaleInCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "scalein",
-		Short: "scalein a job.",
+		Short: "Scale in a training job.",
 		Long:  scaleinLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)

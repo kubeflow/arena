@@ -35,8 +35,8 @@ func NewGetCommand() *cobra.Command {
 	var showGPUs bool
 	var output string
 	var command = &cobra.Command{
-		Use:   "get training job",
-		Short: "display details of a training job",
+		Use:   "get JOB [-T JOB_TYPE]",
+		Short: "Display a training job details",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},
@@ -51,7 +51,7 @@ func NewGetCommand() *cobra.Command {
 				LogLevel:       viper.GetString("loglevel"),
 				Namespace:      viper.GetString("namespace"),
 				ArenaNamespace: viper.GetString("arena-namespace"),
-				IsDaemonMode:   false,
+				IsDaemonMode:   true,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)

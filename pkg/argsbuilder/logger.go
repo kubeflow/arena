@@ -77,12 +77,14 @@ func (l *LogArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	var sinceTime string
 	var tail int64
 	command.Flags().BoolVarP(&l.args.Follow, "follow", "f", false, "Specify if the logs should be streamed.")
+
 	command.Flags().StringVar(&since, "since", "", "Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.")
 	command.Flags().StringVar(&sinceTime, "since-time", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
 	command.Flags().Int64VarP(&tail, "tail", "t", -1, "Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.")
 	command.Flags().BoolVar(&l.args.Timestamps, "timestamps", false, "Include timestamps on each line in the log output")
 	// command.Flags().StringVar(&printer.pod, "instance", "", "Only return logs after a specific date (RFC3339). Defaults to all logs. Only one of since-time / since may be used.")
 	command.Flags().StringVarP(&l.args.InstanceName, "instance", "i", "", "Specify the task instance to get log")
+	command.Flags().StringVarP(&l.args.ContainerName, "container", "c", "", "Specify the container name of instance to get log")
 
 	l.AddArgValue("since", &since).
 		AddArgValue("since-time", &sinceTime).

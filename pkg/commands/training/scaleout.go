@@ -27,7 +27,7 @@ Available Commands:
 func NewScaleOutCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "scaleout",
-		Short: "scaleout a job.",
+		Short: "Scale out a  elastic training job.",
 		Long:  scaleoutLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)

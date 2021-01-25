@@ -14,7 +14,7 @@ func NewSubmitTFJobCommand() *cobra.Command {
 	builder := training.NewTFJobBuilder()
 	var command = &cobra.Command{
 		Use:     "tfjob",
-		Short:   "Submit TFJob as training job.",
+		Short:   "Submit a TFJob as training job.",
 		Aliases: []string{"tf"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())

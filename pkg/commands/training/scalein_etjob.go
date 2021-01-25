@@ -14,7 +14,7 @@ func NewScaleInETJobCommand() *cobra.Command {
 	builder := training.NewScaleInETJobBuilder()
 	var command = &cobra.Command{
 		Use:     "etjob",
-		Short:   "scalein a etjob",
+		Short:   "Scale in a elastic training job",
 		Aliases: []string{"et"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())

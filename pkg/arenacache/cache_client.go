@@ -3,6 +3,8 @@ package arenacache
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	v1alpha12 "github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
 	"github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
 	pytorch_v1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
@@ -10,7 +12,6 @@ import (
 	tfv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1"
 	volcano_v1alpha1 "github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 	log "github.com/sirupsen/logrus"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -20,7 +21,6 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sync"
 )
 
 var cacheClient *CacheClient
@@ -78,11 +78,11 @@ var releaseSelector = client.HasLabels{
 func matchLabelsSelector(name, jobType string) client.ListOption {
 	return client.MatchingLabels{
 		"release": name,
-		"app": jobType,
+		"app":     jobType,
 	}
 }
 
-func (c *CacheClient) Run() (err error){
+func (c *CacheClient) Run() (err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		if err = c.Cache.Start(context.Background().Done()); err != nil {
@@ -101,18 +101,7 @@ func (c *CacheClient) ListTrainingJobs(list runtime.Object, namespace string) er
 	return nil
 }
 
-// Because horovod job's labels is different, so can't use ListTrainingJobs to filter horovod jobs
-func (c *CacheClient) ListHorovodJobs(namespace string) (*batchv1.JobList, error) {
-	list := &batchv1.JobList{}
-	if err := cacheClient.List(context.Background(), list, client.InNamespace(namespace), releaseSelector, client.MatchingLabels{
-		"app": "tf-horovod",
-	}); err != nil {
-		return list, err
-	}
-	return list, nil
-}
-
-func (c *CacheClient) ListTrainingJobResources(list runtime.Object, namespace, name, trainingType string) error{
+func (c *CacheClient) ListTrainingJobResources(list runtime.Object, namespace, name, trainingType string) error {
 	return cacheClient.List(context.Background(), list, client.InNamespace(namespace), matchLabelsSelector(name, trainingType))
 }
 
@@ -169,5 +158,3 @@ func (c *CacheClient) ListResources(list runtime.Object, namespace string, optio
 	}
 	return nil
 }
-
-

@@ -22,8 +22,6 @@ Type:    %v
 Address: %v
 Description:
 %v
-
------------------------------------------------------------------------------------------
 `
 
 type normalNode struct {
@@ -73,7 +71,7 @@ func (n *normalNode) WideFormat() string {
 		role = "<none>"
 	}
 	nodeInfo := n.convert2NodeInfo()
-	return fmt.Sprintf(strings.TrimRight(normalNodeTemplate, "\n"),
+	return fmt.Sprintf(normalNodeTemplate,
 		n.Name(),
 		n.Status(),
 		role,
@@ -101,11 +99,9 @@ func displayNormalNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	PrintLine(w, "===================================== GPU MODE: None ====================================")
 	for _, node := range nodes {
 		PrintLine(w, node.WideFormat())
 	}
-	PrintLine(w, "")
 }
 
 func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showMode bool) (int, int, int) {
@@ -137,13 +133,37 @@ func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, sh
 	return 0, 0, 0
 }
 
+func displayNormalNodeCustomSummary(w *tabwriter.Writer, nodes []Node) {
+	if len(nodes) == 0 {
+		return
+	}
+	header := []string{"NAME", "IPADDRESS", "ROLE", "STATUS", "GPU(Total)", "GPU(Allocated)"}
+	PrintLine(w, header...)
+	for _, node := range nodes {
+		nodeInfo := node.Convert2NodeInfo().(types.NormalNodeInfo)
+		items := []string{}
+		items = append(items, node.Name())
+		items = append(items, node.IP())
+		role := nodeInfo.Role
+		if role == "" {
+			role = "<none>"
+		}
+		items = append(items, role)
+		items = append(items, node.Status())
+		items = append(items, "0")
+		items = append(items, "0")
+		PrintLine(w, items...)
+	}
+}
+
 func NewNormalNodeProcesser() NodeProcesser {
 	return &nodeProcesser{
-		nodeType:            types.NormalNode,
-		key:                 "normalNodes",
-		builder:             NewNormalNode,
-		canBuildNode:        func(node *v1.Node) bool { return true },
-		displayNodesDetails: displayNormalNodeDetails,
-		displayNodesSummary: displayNormalNodeSummary,
+		nodeType:                  types.NormalNode,
+		key:                       "normalNodes",
+		builder:                   NewNormalNode,
+		canBuildNode:              func(node *v1.Node) bool { return true },
+		displayNodesDetails:       displayNormalNodeDetails,
+		displayNodesSummary:       displayNormalNodeSummary,
+		displayNodesCustomSummary: displayNormalNodeCustomSummary,
 	}
 }
