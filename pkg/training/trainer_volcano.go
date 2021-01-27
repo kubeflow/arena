@@ -300,13 +300,11 @@ func (st *VolcanoJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 	if config.GetArenaConfiger().IsDaemonMode() {
 		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, volcanoJob)
 		if err != nil {
-			log.Errorf("%v", err)
 			if strings.Contains(err.Error(), fmt.Sprintf(`Job.batch.volcano.sh "%v" not found`, name)) {
 				return nil, types.ErrTrainingJobNotFound
 			}
 			return nil, fmt.Errorf("failed to find volcanojob %v from cache,reason: %v", name, err)
 		}
-
 	} else {
 		volcanoJob, err = st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {

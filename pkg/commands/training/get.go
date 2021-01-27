@@ -51,7 +51,7 @@ func NewGetCommand() *cobra.Command {
 				LogLevel:       viper.GetString("loglevel"),
 				Namespace:      viper.GetString("namespace"),
 				ArenaNamespace: viper.GetString("arena-namespace"),
-				IsDaemonMode:   true,
+				IsDaemonMode:   false,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
