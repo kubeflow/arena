@@ -83,7 +83,7 @@ func SubmitScaleInETJob(namespace string, submitArgs *types.ScaleInETJobArgs) er
 	scaleName := fmt.Sprintf("%s-%d", etjobName, time.Now().Unix())
 	log.Debugf("submitArgs: %v", submitArgs)
 	scaleinETChart := util.GetChartsFolder() + "/scalein"
-	err = workflow.SubmitJob(scaleName, "scalein", namespace, submitArgs, scaleinETChart)
+	err = workflow.SubmitOps(scaleName, "scalein", namespace, submitArgs, scaleinETChart)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func SubmitScaleOutETJob(namespace string, submitArgs *types.ScaleOutETJobArgs) 
 	scaleName := fmt.Sprintf("%s-%d", etjobName, time.Now().Unix())
 	log.Debugf("submitArgs: %v", submitArgs)
 	scaleoutETChart := util.GetChartsFolder() + "/scaleout"
-	err = workflow.SubmitJob(scaleName, "scaleout", namespace, submitArgs, scaleoutETChart)
+	err = workflow.SubmitOps(scaleName, "scaleout", namespace, submitArgs, scaleoutETChart)
 	if err != nil {
 		return err
 	}
