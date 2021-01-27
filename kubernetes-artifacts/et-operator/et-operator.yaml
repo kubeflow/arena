@@ -1,9 +1,3 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    app: et-operator
-  name: kube-ai
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -7694,13 +7688,13 @@ metadata:
   labels:
     app: et-operator
   name: et-operator
-  namespace: kube-ai
+  namespace: arena-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: et-operator-leader-election
-  namespace: kube-ai
+  namespace: arena-system
 rules:
   - apiGroups:
       - ""
@@ -7918,7 +7912,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: et-operator-leader-election
-  namespace: kube-ai
+  namespace: arena-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -7926,7 +7920,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: et-operator
-    namespace: kube-ai
+    namespace: arena-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -7939,7 +7933,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: et-operator
-    namespace: kube-ai
+    namespace: arena-system
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -7947,7 +7941,7 @@ metadata:
   labels:
     app: et-operator
   name: et-operator
-  namespace: kube-ai
+  namespace: arena-system
 spec:
   replicas: 1
   selector:
