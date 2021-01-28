@@ -51,7 +51,7 @@ func NewArenaClient(args types.ArenaClientArgs) (*ArenaClient, error) {
 		return nil, err
 	}
 	if configer.IsDaemonMode() {
-		if err := arenacache.InitCacheClient(configer.GetRestConfig());err != nil {
+		if err := arenacache.InitCacheClient(configer.GetRestConfig()); err != nil {
 			return client, err
 		}
 	}

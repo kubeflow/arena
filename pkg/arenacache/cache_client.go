@@ -3,6 +3,7 @@ package arenacache
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sync"
 
 	v1alpha12 "github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
@@ -53,7 +54,13 @@ func GetCacheClient() *CacheClient {
 	return cacheClient
 }
 func NewCacheClient(config *rest.Config) (*CacheClient, error) {
-	cc, err := cache.New(config, cache.Options{Resync: nil, Namespace: ""})
+	mapper, err := apiutil.NewDynamicRESTMapper(config)
+	if err != nil {
+		log.Errorf("failed to create cacheClient mapper, reason: %v", err)
+		// if create dynamic mapper failed, use default restMapper
+		mapper = nil
+	}
+	cc, err := cache.New(config, cache.Options{Mapper: mapper, Resync: nil, Namespace: ""})
 	if err != nil {
 		log.Errorf("failed to create cacheClient, reason: %v", err)
 		return nil, err
