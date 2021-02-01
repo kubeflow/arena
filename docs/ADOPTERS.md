@@ -10,3 +10,4 @@ Below are the adopters of project Arena. If you are using Arena to improve effic
 | Organization | Contact | Phases      | Description of Use |
 | ------------ | ------- | ----------- | ------------------ |
 | [Weibo](https://www.weibo.com) | [@phoenixwu0229](https://github.com/phoenixwu0229) | **Production** |  Weibo ML Platform |
+| [HUYA](https://www.huya.com) | [@BobLiu20](https://github.com/bobliu20) | **Production** |  HUYA AI Platform |
