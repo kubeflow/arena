@@ -376,14 +376,14 @@ func (s *SubmitTFJobArgsBuilder) checkRoleSequence() error {
 	}
 	roles := []string{}
 	for _, r := range strings.Split(roleSequence, ",") {
-		switch strings.Trim(r, " ") {
-		case "Worker", "w":
+		switch strings.ToLower(strings.Trim(r, " ")) {
+		case "worker", "w":
 			roles = append(roles, "Worker")
-		case "PS", "p":
+		case "ps", "p":
 			roles = append(roles, "PS")
-		case "Evaluator", "e":
+		case "evaluator", "e":
 			roles = append(roles, "Evaluator")
-		case "Chief", "c":
+		case "chief", "c":
 			roles = append(roles, "Chief")
 		default:
 			return fmt.Errorf("Unknown role: %v, the tfjob only supports:[Worker(w)|PS(p)|Evaluator(e)|Chief(c)]", r)
