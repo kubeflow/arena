@@ -247,6 +247,12 @@ func NewSparkJobTrainer() Trainer {
 	log.Debugf("Init Spark job trainer")
 	// TODO: disable the spark trainer,because there is some bugs to fix
 	enable := false
+	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
+		if crdName == SparkCRD {
+			enable = true
+			break
+		}
+	}
 	sparkjobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	return &SparkJobTrainer{
 		sparkjobClient: sparkjobClient,

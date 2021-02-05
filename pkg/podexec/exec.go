@@ -45,6 +45,12 @@ const (
 	defaultPodExecTimeout = 60 * time.Second
 )
 
+type AttachPodArgs struct {
+	Options          *ExecOptions
+	Command          []string
+	CmdArgsLenAtDash int
+}
+
 // RemoteExecutor defines the interface accepted by the Exec command - provided for test stubbing
 type RemoteExecutor interface {
 	Execute(method string, url *url.URL, config *restclient.Config, stdin io.Reader, stdout, stderr io.Writer, tty bool, terminalSizeQueue remotecommand.TerminalSizeQueue) error

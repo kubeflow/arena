@@ -10,7 +10,7 @@ we use the app.py script in project to start restful server,you can use arena to
 # arena serve custom \
 	--name=fast-style-transfer \
 	--gpus=1 \
-        --version=alpha \
+	--version=alpha \
 	--replicas=1 \
 	--restful-port=5000 \
 	--image=happy365/fast-style-transfer:latest \

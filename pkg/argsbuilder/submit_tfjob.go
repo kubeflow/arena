@@ -188,6 +188,9 @@ func (s *SubmitTFJobArgsBuilder) Build() error {
 	if err := s.checkRoleSequence(); err != nil {
 		return err
 	}
+	if err := s.addRequestGPUsToAnnotation(); err != nil {
+		return err
+	}
 	if err := s.check(); err != nil {
 		return err
 	}
@@ -346,6 +349,18 @@ func (s *SubmitTFJobArgsBuilder) transformSelectorArrayToMap(selectorArray *[]st
 	log.Debugf("use to Node Selectors %v to %v Selector", s.args.NodeSelectors, role)
 	s.args.TFNodeSelectors[role] = s.args.NodeSelectors
 
+}
+
+func (s *SubmitTFJobArgsBuilder) addRequestGPUsToAnnotation() error {
+	gpus := 0
+	gpus += s.args.ChiefCount
+	gpus += s.args.EvaluatorCount
+	gpus += s.args.WorkerCount * s.args.GPUCount
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	s.args.Annotations[types.RequestGPUsOfJobAnnoKey] = fmt.Sprintf("%v", gpus)
+	return nil
 }
 
 func (s *SubmitTFJobArgsBuilder) checkRoleSequence() error {

@@ -31,7 +31,7 @@ func NewCommand() *cobra.Command {
 	command.PersistentFlags().Bool("trace", false, "enable trace")
 	command.PersistentFlags().String("arena-namespace", "arena-system", "The namespace of arena system service, like tf-operator")
 	command.PersistentFlags().String("config", "", "Path to a kube config. Only required if out-of-cluster")
-	command.PersistentFlags().StringP("namespace", "n", "default", "the namespace of the job")
+	command.PersistentFlags().StringP("namespace", "n", "", "the namespace of the job")
 	command.AddCommand(training.NewSubmitCommand())
 	command.AddCommand(training.NewScaleOutCommand())
 	command.AddCommand(training.NewScaleInCommand())
