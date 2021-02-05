@@ -39,6 +39,70 @@ func DeleteJob(name, namespace, trainingType string) error {
 }
 
 /**
+*	Submit operation, scaleIn or scaleOut
+**/
+
+func SubmitOps(name string, trainingType string, namespace string, values interface{}, chart string, options ...string) error {
+	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
+	if found {
+		return fmt.Errorf("the job configmap %v-%v is already exist, please delete it first.", name, trainingType)
+	}
+
+	// 1. Generate value file
+	valueFileName, err := helm.GenerateValueFile(values)
+	if err != nil {
+		return err
+	}
+
+	// 2. Generate Template file
+	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart, options...)
+	if err != nil {
+		return err
+	}
+
+	// 3. Generate AppInfo file
+	appInfoFileName, err := kubectl.SaveAppInfo(template, namespace)
+	if err != nil {
+		return err
+	}
+
+	// 4. Create Application
+	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	if err != nil {
+		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
+	}
+
+	result, err := kubectl.InstallApps(template, namespace)
+	fmt.Printf("%s", result)
+	if err != nil {
+		// clean configmap
+		log.Infof("clean up the config map %s because creating application failed.", name)
+		log.Warnf("Please clean up the training job by using `arena delete %s --type %s`", name, trainingType)
+		return err
+	}
+
+	// 6. Clean up the template file
+	if log.GetLevel() != log.DebugLevel {
+		err = os.Remove(valueFileName)
+		if err != nil {
+			log.Warnf("Failed to delete %s due to %v", valueFileName, err)
+		}
+
+		err = os.Remove(template)
+		if err != nil {
+			log.Warnf("Failed to delete %s due to %v", template, err)
+		}
+
+		err = os.Remove(appInfoFileName)
+		if err != nil {
+			log.Warnf("Failed to delete %s due to %v", appInfoFileName, err)
+		}
+	}
+
+	return nil
+}
+
+/**
 *	Submit training job
 **/
 
