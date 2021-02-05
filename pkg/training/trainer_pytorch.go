@@ -44,6 +44,7 @@ const (
 	labelPyTorchGroupName    = "group-name"
 	labelPyTorchJobName      = "pytorch-job-name"
 	labelPyTorchJobRole      = "job-role"
+	PytorchCRD               = "pytorchjobs.kubeflow.org"
 )
 
 // PyTorch Job Information
@@ -250,13 +251,14 @@ type PyTorchJobTrainer struct {
 func NewPyTorchJobTrainer() Trainer {
 	log.Debugf("Init PyTorch job trainer")
 	// get pytorch operator client call pytorch operator api
-	enable := true
+	enable := false
 	pytorchjobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	// this step is used to check operator is installed or not
-	_, err := pytorchjobClient.KubeflowV1().PyTorchJobs("default").Get("test-operator", metav1.GetOptions{})
-	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
-		log.Debugf("not found pytorchjob operator,pytorchjob trainer is disabled")
-		enable = false
+	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
+		if crdName == PytorchCRD {
+			enable = true
+			break
+		}
 	}
 	return &PyTorchJobTrainer{
 		pytorchjobClient: pytorchjobClient,
@@ -306,7 +308,7 @@ func (tt *PyTorchJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 	} else {
 		pytorchjob, err = tt.pytorchjobClient.KubeflowV1().PyTorchJobs(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`pytorchjobs.kubeflow.org "%v" not found`, name)) {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, PytorchCRD, name)) {
 				return nil, types.ErrTrainingJobNotFound
 			}
 			return nil, fmt.Errorf("failed to find pytorchjob %v from api server,reason: %v", name, err)

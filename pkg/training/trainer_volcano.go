@@ -34,6 +34,10 @@ import (
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
 )
 
+const (
+	VolcanoCRD = "jobs.batch.volcano.sh"
+)
+
 // volcano Job wrapper
 type VolcanoJob struct {
 	*BasicJobInfo
@@ -258,12 +262,13 @@ type VolcanoJobTrainer struct {
 func NewVolcanoJobTrainer() Trainer {
 	log.Debugf("Init Volcano job trainer")
 	volcanoClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
-	enable := true
+	enable := false
 	// this step is used to check operator is installed or not
-	_, err := volcanoClient.BatchV1alpha1().Jobs("default").Get("test-operator", metav1.GetOptions{})
-	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
-		log.Debugf("not found volcano operator,volcano trainer is disabled")
-		enable = false
+	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
+		if crdName == VolcanoCRD {
+			enable = true
+			break
+		}
 	}
 	return &VolcanoJobTrainer{
 		volcanoJobClient: volcanoClient,
@@ -308,7 +313,7 @@ func (st *VolcanoJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 	} else {
 		volcanoJob, err = st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`jobs.batch.volcano.sh "%v" not found`, name)) {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, VolcanoCRD, name)) {
 				return nil, types.ErrTrainingJobNotFound
 			}
 			return nil, fmt.Errorf("failed to find volcanojob from api server,reason: %v", err)

@@ -8,6 +8,7 @@ import (
 	apistraining "github.com/kubeflow/arena/pkg/apis/training"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/podexec"
 	"github.com/kubeflow/arena/pkg/training"
 )
 
@@ -147,6 +148,28 @@ func (t *TrainingJobClient) Logs(jobName string, jobType types.TrainingJobType, 
 	args.Namespace = t.namespace
 	args.JobName = jobName
 	return training.AcceptJobLog(jobName, jobType, args)
+}
+
+func (t *TrainingJobClient) Attach(jobName string, jobType types.TrainingJobType, args *podexec.AttachPodArgs) error {
+	job, err := t.Get(jobName, jobType)
+	if err != nil {
+		return err
+	}
+	if len(job.Instances) == 0 {
+		return fmt.Errorf("can not attach the training job %v, because it has no instances", job.Name)
+	}
+	if args.Options.PodName == "" {
+		args.Options.PodName = job.ChiefName
+	}
+	command := []string{job.Name}
+	command = append(command, args.Command...)
+	if err := args.Options.Complete(command, t.namespace, args.CmdArgsLenAtDash); err != nil {
+		return err
+	}
+	if err := args.Options.Validate(); err != nil {
+		return err
+	}
+	return args.Options.Run()
 }
 
 // Delete deletes the target training job

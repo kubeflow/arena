@@ -363,7 +363,7 @@ func IsGPUExclusiveNode(node *v1.Node) bool {
 	if !ok {
 		return false
 	}
-	return int(val.Value()) > 0
+	return int(val.Value()) > 0 && int(val.Value()) <= 100
 }
 
 /*

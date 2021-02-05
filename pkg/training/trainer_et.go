@@ -38,10 +38,10 @@ import (
 
 const (
 	// et-operator added key of labels for pods.
-	etLabelGroupName       = "group-name"
-	etLabelTrainingJobName = "training-job-name"
-	etLabelTrainingJobRole = "training-job-role"
-
+	etLabelGroupName            = "group-name"
+	etLabelTrainingJobName      = "training-job-name"
+	etLabelTrainingJobRole      = "training-job-role"
+	ETCRD                       = "trainingjobs.kai.alibabacloud.com"
 	etJobMetaDataAnnotationsKey = "kubectl.kubernetes.io/last-applied-configuration"
 )
 
@@ -244,12 +244,13 @@ type ETJobTrainer struct {
 // NewETJobTrainer
 func NewETJobTrainer() Trainer {
 	log.Debugf("Init ET job trainer")
-	enable := true
+	enable := false
 	jobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
-	_, err := jobClient.EtV1alpha1().TrainingJobs("default").Get("test-operator", metav1.GetOptions{})
-	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
-		log.Debugf("not found etjob operator,etjob trainer is disabled")
-		enable = false
+	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
+		if crdName == ETCRD {
+			enable = true
+			break
+		}
 	}
 	return &ETJobTrainer{
 		jobClient:   jobClient,
@@ -292,10 +293,10 @@ func (ejt *ETJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, er
 	} else {
 		etjob, err = ejt.jobClient.EtV1alpha1().TrainingJobs(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`trainingjobs.kai.alibabacloud.com "%v" not found`, name)) {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, ETCRD, name)) {
 				return nil, types.ErrTrainingJobNotFound
 			}
-			return nil, fmt.Errorf("failed to find elastic job %v from api server,reason: %v",name , err)
+			return nil, fmt.Errorf("failed to find elastic job %v from api server,reason: %v", name, err)
 		}
 	}
 	// 2. Find the pod list, and determine the pod of the job

@@ -36,6 +36,10 @@ import (
 	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
 )
 
+const (
+	MPICRD = "mpijobs.kubeflow.org"
+)
+
 // MPI Job Information
 type MPIJob struct {
 	*BasicJobInfo
@@ -236,12 +240,13 @@ type MPIJobTrainer struct {
 func NewMPIJobTrainer() Trainer {
 	log.Debugf("Init MPI job trainer")
 	mpijobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
-	enable := true
+	enable := false
 	// this step is used to check operator is installed or not
-	_, err := mpijobClient.KubeflowV1alpha1().MPIJobs("default").Get("test-operator", metav1.GetOptions{})
-	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
-		log.Debugf("not found mpijob operator,mpijob trainer is disabled")
-		enable = false
+	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
+		if crdName == MPICRD {
+			enable = true
+			break
+		}
 	}
 	return &MPIJobTrainer{
 		mpijobClient: mpijobClient,
@@ -289,7 +294,7 @@ func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, er
 	} else {
 		mpijob, err = tt.mpijobClient.KubeflowV1alpha1().MPIJobs(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`mpijobs.kubeflow.org "%v" not found`, name)) {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, MPICRD, name)) {
 				return nil, types.ErrTrainingJobNotFound
 			}
 			return nil, fmt.Errorf("failed to find job %v from api server,reason: %v", name, err)

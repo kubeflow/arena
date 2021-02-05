@@ -16,26 +16,18 @@ package training
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
+	podattach "github.com/kubeflow/arena/pkg/apis/attach"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/podexec"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 func NewAttachCommand() *cobra.Command {
 	var jobType string
-	ioStreams := genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
-	options := &podexec.ExecOptions{
-		StreamOptions: podexec.StreamOptions{
-			IOStreams: ioStreams,
-		},
-		Executor: &podexec.DefaultRemoteExecutor{},
-	}
+	builder := podattach.NewAttachArgsBuilder()
 	var command = &cobra.Command{
 		Use:   "attach JOB [-i INSTANCE] [-c CONTAINER]",
 		Short: "Attach a training job and execute some commands",
@@ -58,28 +50,18 @@ func NewAttachCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			job, err := client.Training().Get(name, utils.TransferTrainingJobType(jobType))
+			command := []string{}
+			if len(args) > 1 {
+				command = args[1:]
+			}
+			attachArgs, err := builder.CmdArgsLenAtDash(cmd.ArgsLenAtDash()).Command(command).Build()
 			if err != nil {
 				return err
 			}
-			if options.PodName == "" {
-				options.PodName = job.ChiefName
-			}
-			argsLenAtDash := cmd.ArgsLenAtDash()
-			if len(args) == 1 {
-				args = append(args, "sh")
-			}
-			if err := options.Complete(args, viper.GetString("namespace"), argsLenAtDash); err != nil {
-				return err
-			}
-			if err := options.Validate(); err != nil {
-				return err
-			}
-			return options.Run()
+			return client.Training().Attach(name, utils.TransferTrainingJobType(jobType), attachArgs)
 		},
 	}
 	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The training type to get, the possible option is %v. (optional)", utils.GetSupportTrainingJobTypesInfo()))
-	command.Flags().StringVarP(&options.PodName, "instance", "i", "", "Job instance name")
-	command.Flags().StringVarP(&options.ContainerName, "container", "c", "", "Container name. If omitted, the first container in the instance will be chosen")
+	builder.AddCommandFlags(command)
 	return command
 }

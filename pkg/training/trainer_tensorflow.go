@@ -47,6 +47,7 @@ const (
 	labelGroupNameV1alpha2 = "group_name"
 	labelTFJobName         = "tf-job-name"
 	labelTFJobRole         = "tf-job-role"
+	TensorFlowCRD          = "tfjobs.kubeflow.org"
 )
 
 // TensorflowJob implements the TrainingJob
@@ -256,12 +257,12 @@ func NewTensorFlowJobTrainer() Trainer {
 	log.Debugf("Init TensorFlow job trainer")
 	arenaConfiger := config.GetArenaConfiger()
 	tfjobClient := versioned.NewForConfigOrDie(arenaConfiger.GetRestConfig())
-	enable := true
-	// this step is used to check operator is installed or not
-	_, err := tfjobClient.KubeflowV1().TFJobs("default").Get("test-operator", metav1.GetOptions{})
-	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
-		log.Debugf("not found tfjob operator,tensorflow trainer is disabled")
-		enable = false
+	enable := false
+	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
+		if crdName == TensorFlowCRD {
+			enable = true
+			break
+		}
 	}
 	return &TensorFlowJobTrainer{
 		tfjobClient: tfjobClient,
@@ -309,7 +310,7 @@ func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (Training
 	} else {
 		tfjob, err = tt.tfjobClient.KubeflowV1().TFJobs(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`tfjobs.kubeflow.org "%v" not found`, name)) {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, TensorFlowCRD, name)) {
 				return nil, types.ErrTrainingJobNotFound
 			}
 			return nil, fmt.Errorf("failed to find job %v from api server,reason: %v", name, err)
