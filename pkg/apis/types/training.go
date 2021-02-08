@@ -117,6 +117,9 @@ type TrainingJobInfo struct {
 
 	// AllocatedGPU stores the allocated gpus
 	AllocatedGPU int64 `json:"allocatedGPUs" yaml:"allocatedGPUs"`
+
+	// CreationTimestamp stores the creation timestamp of job
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
 
 // TrainingJobStatus defines all the kinds of JobStatus

@@ -244,18 +244,19 @@ func (s *servingJob) Instances() []types.ServingInstance {
 func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 	servingType := types.ServingTypeMap[s.servingType].Alias
 	servingJobInfo := types.ServingJobInfo{
-		Name:             s.name,
-		Namespace:        s.namespace,
-		Version:          s.version,
-		Type:             servingType,
-		Age:              util.ShortHumanDuration(s.Age()),
-		Desired:          s.DesiredInstances(),
-		IPAddress:        s.IPAddress(),
-		Available:        s.AvailableInstances(),
-		RequestGPU:       s.RequestGPUs(),
-		RequestGPUMemory: s.RequestGPUMemory(),
-		Endpoints:        s.Endpoints(),
-		Instances:        s.Instances(),
+		Name:              s.name,
+		Namespace:         s.namespace,
+		Version:           s.version,
+		Type:              servingType,
+		Age:               util.ShortHumanDuration(s.Age()),
+		Desired:           s.DesiredInstances(),
+		IPAddress:         s.IPAddress(),
+		Available:         s.AvailableInstances(),
+		RequestGPU:        s.RequestGPUs(),
+		RequestGPUMemory:  s.RequestGPUMemory(),
+		Endpoints:         s.Endpoints(),
+		Instances:         s.Instances(),
+		CreationTimestamp: s.StartTime().Unix(),
 	}
 	return servingJobInfo
 }

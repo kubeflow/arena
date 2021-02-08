@@ -114,14 +114,15 @@ func BuildJobInfo(job TrainingJob, showGPUs bool) *types.TrainingJobInfo {
 		Namespace: job.Namespace(),
 		Status:    types.TrainingJobStatus(GetJobRealStatus(job)),
 		//Duration:     util.ShortHumanDuration(job.Duration()),
-		Duration:     fmt.Sprintf("%vs", int(job.Duration().Seconds())),
-		Trainer:      types.TrainingJobType(job.Trainer()),
-		Priority:     getPriorityClass(job),
-		Tensorboard:  tensorboard,
-		ChiefName:    chiefPodName,
-		Instances:    instances,
-		RequestGPU:   job.RequestedGPU(),
-		AllocatedGPU: job.AllocatedGPU(),
+		Duration:          fmt.Sprintf("%vs", int(job.Duration().Seconds())),
+		Trainer:           types.TrainingJobType(job.Trainer()),
+		Priority:          getPriorityClass(job),
+		Tensorboard:       tensorboard,
+		ChiefName:         chiefPodName,
+		Instances:         instances,
+		RequestGPU:        job.RequestedGPU(),
+		AllocatedGPU:      job.AllocatedGPU(),
+		CreationTimestamp: job.StartTime().Unix(),
 	}
 }
 
