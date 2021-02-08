@@ -135,6 +135,10 @@ ${sudo_prefix} rm -rf /usr/local/bin/arena-helm
 
 ${sudo_prefix} cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
 
+${sudo_prefix} rm -rf /usr/local/bin/arena-gen-kubeconfig.sh
+
+${sudo_prefix} cp $SCRIPT_DIR/bin/arena-gen-kubeconfig.sh /usr/local/bin/arena-gen-kubeconfig.sh
+
 # For non-root user, put the charts dir to the home directory
 if [ `id -u` -eq 0 ];then  
     if [ -d "/charts" ]; then
