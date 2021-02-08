@@ -74,6 +74,8 @@ COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena $ARENA_HOME/bin/ar
 
 COPY --from=build /go/src/github.com/kubeflow/arena/install.sh $ARENA_HOME/install.sh
 
+COPY --from=build /go/src/github.com/kubeflow/arena/arena-gen-kubeconfig.sh $ARENA_HOME/bin/arena-gen-kubeconfig.sh
+
 COPY --from=build /usr/local/bin/helm $ARENA_HOME/bin/helm
 
 COPY --from=build /go/src/github.com/kubeflow/arena/kubernetes-artifacts $ARENA_HOME/kubernetes-artifacts

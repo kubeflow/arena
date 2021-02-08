@@ -1,0 +1,84 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: arena:{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs:
+    - '*'
+  - apiGroups:
+    - ""
+    resources:
+    - services/proxy
+    - persistentvolumeclaims
+    - events
+    verbs:
+    - get
+    - list
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    - pods/log
+    - pods/exec 
+    - services
+    verbs:
+    - '*'
+  - apiGroups:
+    - ""
+    - apps
+    - extensions
+    resources:
+    - deployments
+    - replicasets
+    verbs:
+    - '*'
+  - apiGroups:
+    - batch
+    resources:
+    - jobs
+    verbs:
+    - '*'
+  - apiGroups:
+    - kubeflow.org
+    resources:
+    - tfjobs
+    verbs:
+    - '*'
+  - apiGroups:
+    - kubeflow.org
+    resources:
+    - mpijobs
+    verbs:
+    - '*'
+  - apiGroups:
+    - kubeflow.org
+    resources:
+    - pytorchjobs
+    verbs:
+    - '*'
+  - apiGroups:
+    - kai.alibabacloud.com
+    resources:
+    - trainingjobs
+    verbs:
+    - '*'
+  - apiGroups:
+    - sparkoperator.k8s.io
+    resources:
+    - sparkapplications
+    verbs:
+    - '*'
+  - apiGroups:
+    - batch.volcano.sh
+    resources:
+    - jobs
+    verbs:
+    - '*'
+{{- with .Values.roles }}
+{{- toYaml . | nindent 2 }}
+{{- end }}

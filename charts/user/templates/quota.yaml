@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: arena-quota-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  hard:
+{{- with .Values.quota }}
+{{- toYaml . | nindent 4 }}
+{{- end }}

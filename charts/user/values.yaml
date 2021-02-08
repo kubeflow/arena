@@ -1,0 +1,29 @@
+# Default values for user.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+#quota:
+#  requests.cpu: "10"
+#  requests.memory: "20Gi"
+#  limits.cpu: "20"
+#  limits.memory: "30Gi"
+#  requests.nvidia.com/gpu: 20
+
+#roles:
+#  - apiGroups:
+#      - ""
+#      - apps
+#      - extensions
+#    resources:
+#      - deployments
+#      - replicasets
+#    verbs:
+#      - '*'
+
+#clusterRoles:
+#  - apiGroups:
+#    - apiextensions.k8s.io
+#    resources:
+#    - customresourcedefinitions
+#    verbs:
+#    - list
