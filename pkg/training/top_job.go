@@ -86,8 +86,9 @@ func topTrainingJobs(args []string, namespace string, allNamespaces bool, jobTyp
 	}
 	jobs = makeTrainingJobOrderdByGPUCount(jobs)
 	jobInfos := []types.TrainingJobInfo{}
+	services, nodes := PrepareServicesAndNodesForTensorboard(jobs, allNamespaces)
 	for _, job := range jobs {
-		jobInfo := BuildJobInfo(job, true)
+		jobInfo := BuildJobInfo(job, true, services, nodes)
 		jobInfos = append(jobInfos, *jobInfo)
 	}
 	switch format {

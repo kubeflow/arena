@@ -15,18 +15,13 @@
 package training
 
 import (
-	"context"
+	"fmt"
 
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/arenacache"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"fmt"
 )
 
 func dashboard(k8sclient kubernetes.Interface, namespace string, name string) (string, error) {
@@ -36,6 +31,10 @@ func dashboard(k8sclient kubernetes.Interface, namespace string, name string) (s
 	// 		APIVersion: "v1",
 	// 	}, LabelSelector: fmt.Sprintf("release=%s", name),
 	// })
+	nodes, err := k8saccesser.GetK8sResourceAccesser().ListNodes("")
+	if err != nil {
+		return "", err
+	}
 
 	url, err := dashboardFromLoadbalancer(k8sclient, namespace, name)
 	if err != nil {
@@ -48,7 +47,7 @@ func dashboard(k8sclient kubernetes.Interface, namespace string, name string) (s
 	}
 
 	//dashboardFromNodePort
-	url, err = dashboardFromNodePort(k8sclient, namespace, name)
+	url, err = dashboardFromNodePort(k8sclient, namespace, name, nodes)
 	if err != nil {
 		logrus.Debugf("Failed to find the dashboard entry in the nodePort from %s in namespace %s due to %v",
 			name,
@@ -57,38 +56,22 @@ func dashboard(k8sclient kubernetes.Interface, namespace string, name string) (s
 	} else if len(url) > 0 {
 		return url, nil
 	}
-	ep := &corev1.Endpoints{}
-	if config.GetArenaConfiger().IsDaemonMode() {
-		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, ep)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		ep, err = k8sclient.CoreV1().Endpoints(namespace).Get(name, metav1.GetOptions{})
-		if err != nil {
-			return "", err
-		}
+	ep, err := k8saccesser.GetK8sResourceAccesser().GetEndpoints(namespace, name)
+	if err != nil {
+		return "", err
 	}
-	// for _, subset := range ep.Subsets{
-	// 	adresses := subset.Addresses
-	// }
-
 	if len(ep.Subsets) < 1 {
 		return "", fmt.Errorf("Failed to find endpoint for dashboard %s in namespace %s", name, namespace)
 	}
-
 	subset := ep.Subsets[0]
 	if len(subset.Addresses) < 1 {
 		return "", fmt.Errorf("Failed to find address for dashboard %s in namespace %s", name, namespace)
 	}
-
 	if len(subset.Ports) < 1 {
 		return "", fmt.Errorf("Failed to find port for dashboard %s in namespace %s", name, namespace)
 	}
-
 	port := subset.Ports[0].Port
 	ip := subset.Addresses[0].IP
-
 	// return podList.Items, err
 	return fmt.Sprintf("%s:%d", ip, port), nil
 }
@@ -123,19 +106,9 @@ func GetJobDashboards(dashboard string, job *v1.Job, pods []corev1.Pod) []string
 
 // Get dashboard url if it's load balancer
 func dashboardFromLoadbalancer(k8sclient kubernetes.Interface, namespace string, name string) (string, error) {
-	svc := &corev1.Service{}
-	var err error
-	if config.GetArenaConfiger().IsDaemonMode() {
-		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, svc)
-		if err != nil {
-			return "", err
-		}
-
-	} else {
-		svc, err = k8sclient.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
-		if err != nil {
-			return "", err
-		}
+	svc, err := k8saccesser.GetK8sResourceAccesser().GetService(namespace, name)
+	if err != nil {
+		return "", err
 	}
 	if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
 		if len(svc.Status.LoadBalancer.Ingress) > 0 {
@@ -149,20 +122,10 @@ func dashboardFromLoadbalancer(k8sclient kubernetes.Interface, namespace string,
 }
 
 // Get dashboard url if it's nodePort
-func dashboardFromNodePort(k8sclient kubernetes.Interface, namespace string, name string) (string, error) {
-	svc := &corev1.Service{}
-	var err error
-	if config.GetArenaConfiger().IsDaemonMode() {
-		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, svc)
-		if err != nil {
-			return "", err
-		}
-
-	} else {
-		svc, err = k8sclient.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
-		if err != nil {
-			return "", err
-		}
+func dashboardFromNodePort(k8sclient kubernetes.Interface, namespace string, name string, nodes []*corev1.Node) (string, error) {
+	svc, err := k8saccesser.GetK8sResourceAccesser().GetService(namespace, name)
+	if err != nil {
+		return "", err
 	}
 	if svc.Spec.Type == corev1.ServiceTypeNodePort {
 		if len(svc.Spec.Ports) > 0 {
@@ -172,30 +135,20 @@ func dashboardFromNodePort(k8sclient kubernetes.Interface, namespace string, nam
 			for _, port := range svc.Spec.Ports {
 				nodePort := port.NodePort
 				// Get node address
-				nodeList := &corev1.NodeList{}
-				if config.GetArenaConfiger().IsDaemonMode() {
-					err = arenacache.GetCacheClient().List(context.Background(), nodeList)
-				} else {
-					nodeList, err = k8sclient.CoreV1().Nodes().List(metav1.ListOptions{})
-				}
-				if err != nil {
-					return "", err
-				}
 				node := corev1.Node{}
 				findReadyNode := false
 
-				for _, item := range nodeList.Items {
+				for _, item := range nodes {
 					for _, condition := range item.Status.Conditions {
 						if condition.Type == "Ready" {
 							if condition.Status == "True" {
-								node = item
+								node = *item
 								findReadyNode = true
 								break
 							}
 						}
 					}
 				}
-
 				if !findReadyNode {
 					return "", fmt.Errorf("Failed to find the ready node for exporting dashboard.")
 				}

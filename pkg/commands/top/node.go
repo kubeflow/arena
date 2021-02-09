@@ -17,10 +17,12 @@ package top
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -28,6 +30,7 @@ import (
 func NewTopNodeCommand() *cobra.Command {
 	var (
 		showDetails bool
+		showMetric  bool
 		output      string
 		nodeType    string
 		notStop     bool
@@ -43,6 +46,10 @@ func NewTopNodeCommand() *cobra.Command {
 			if notStop {
 				isDaemonMode = true
 			}
+			now := time.Now()
+			defer func() {
+				log.Debugf("execute time of top nodes: %v\n", time.Now().Sub(now))
+			}()
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
 				LogLevel:       viper.GetString("loglevel"),
@@ -53,12 +60,13 @@ func NewTopNodeCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			return client.Node().ListAndPrintNodes(args, utils.TransferNodeType(nodeType), utils.TransferPrintFormat(output), showDetails, notStop)
+			return client.Node().ListAndPrintNodes(args, utils.TransferNodeType(nodeType), utils.TransferPrintFormat(output), showDetails, notStop, showMetric)
 		},
 	}
 	command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
 	command.Flags().BoolVarP(&notStop, "refresh", "r", false, "Display continuously")
 	command.Flags().StringVarP(&nodeType, "gpu-mode", "m", "", fmt.Sprintf("Display node information with following gpu mode:[%v]", strings.Join(utils.GetSupportedNodeTypes(), "|")))
 	command.Flags().StringVarP(&output, "output", "o", "wide", "Output format. One of: json|yaml|wide")
+	command.Flags().BoolVar(&showMetric, "metric", false, "Work with prometheus,this option requires prometheus has been installed in cluster")
 	return command
 }

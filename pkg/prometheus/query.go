@@ -13,10 +13,10 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/prometheus/common/model"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/kubeflow/arena/pkg/arenacache"
 	"github.com/prometheus/client_golang/api"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	v1 "k8s.io/api/core/v1"
@@ -207,27 +207,14 @@ func getPrometheusServer(client *kubernetes.Clientset) *types.PrometheusServer {
 
 func getPrometheusService(client *kubernetes.Clientset, label string) *v1.Service {
 	// find the prometheus server from all namespaces
-	serviceList, err := listSvc(client, label)
+	services, err := k8saccesser.GetK8sResourceAccesser().ListServices(metav1.NamespaceAll, label)
 	if err != nil {
 		log.Debugf("Failed to get PrometheusServiceName: %v", err)
 		return nil
 	}
-	if len(serviceList.Items) == 0 {
+	if len(services) == 0 {
 		log.Debugf("not found k8s services which own labels:[%v]", label)
 		return nil
 	}
-	return serviceList.Items[0].DeepCopy()
-}
-
-func listSvc(client *kubernetes.Clientset, label string) (*v1.ServiceList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		svcList := &v1.ServiceList{}
-		return svcList, arenacache.GetCacheClient().ListResources(svcList, metav1.NamespaceAll, metav1.ListOptions{
-			LabelSelector: label,
-		})
-	}
-
-	return client.CoreV1().Services(metav1.NamespaceAll).List(metav1.ListOptions{
-		LabelSelector: label,
-	})
+	return services[0].DeepCopy()
 }

@@ -15,22 +15,21 @@
 package training
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/kubeflow/arena/pkg/operators/et-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
+	appv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/arenacache"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
@@ -41,7 +40,6 @@ const (
 	etLabelGroupName            = "group-name"
 	etLabelTrainingJobName      = "training-job-name"
 	etLabelTrainingJobRole      = "training-job-role"
-	ETCRD                       = "trainingjobs.kai.alibabacloud.com"
 	etJobMetaDataAnnotationsKey = "kubectl.kubernetes.io/last-applied-configuration"
 )
 
@@ -243,15 +241,16 @@ type ETJobTrainer struct {
 
 // NewETJobTrainer
 func NewETJobTrainer() Trainer {
-	log.Debugf("Init ET job trainer")
 	enable := false
 	jobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
-	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
-		if crdName == ETCRD {
-			enable = true
-			break
-		}
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(k8saccesser.ETCRDName, metav1.GetOptions{})
+	if err == nil {
+		log.Debugf("ETJobTrainer is enabled")
+		enable = true
+	} else {
+		log.Debugf("ETJobTrainer is disabled,reason: %v", err)
 	}
+	log.Debugf("Succeed to init ETJobTrainer")
 	return &ETJobTrainer{
 		jobClient:   jobClient,
 		client:      config.GetArenaConfiger().GetClientSet(),
@@ -280,47 +279,27 @@ func (ejt *ETJobTrainer) IsSupported(name, ns string) bool {
 
 func (ejt *ETJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
 	// 1. Get the batchJob of training Job
-	etjob := &v1alpha1.TrainingJob{}
-	var err error
-	if config.GetArenaConfiger().IsDaemonMode() {
-		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, etjob)
-		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`TrainingJob.kai.alibabacloud.com "%v" not found`, name)) {
-				return nil, types.ErrTrainingJobNotFound
-			}
-			return nil, fmt.Errorf("failed to find elastic job %v from cache,reason: %v", name, err)
-		}
-	} else {
-		etjob, err = ejt.jobClient.EtV1alpha1().TrainingJobs(namespace).Get(name, metav1.GetOptions{})
-		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, ETCRD, name)) {
-				return nil, types.ErrTrainingJobNotFound
-			}
-			return nil, fmt.Errorf("failed to find elastic job %v from api server,reason: %v", name, err)
-		}
+	etjob, err := k8saccesser.GetK8sResourceAccesser().GetETJob(ejt.jobClient, namespace, name)
+	if err != nil {
+		return nil, err
 	}
 	// 2. Find the pod list, and determine the pod of the job
-	labels := map[string]string{
-		"release": name,
-		"app":     string(ejt.Type()),
-	}
-	podList, err := listJobPods(ejt.client, namespace, labels)
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("release=%v,app=%v", name, ejt.Type()), "", nil)
 	if err != nil {
 		return nil, err
 	}
-	pods := []*v1.Pod{}
-	for _, pod := range podList.Items {
-		pods = append(pods, pod.DeepCopy())
+	jobs, err := k8saccesser.GetK8sResourceAccesser().ListBatchJobs(namespace, etLabelTrainingJobName)
+	if err != nil {
+		return nil, err
+	}
+	statefulsets, err := k8saccesser.GetK8sResourceAccesser().ListStatefulSets(namespace, etLabelTrainingJobName)
+	if err != nil {
+		return nil, err
 	}
 	filterPods, chiefPod := getPodsOfETJob(etjob, ejt, pods)
-	// 3. Find the other resources, like statefulset,job
-	resources, err := ejt.resources(name, namespace, filterPods)
-	if err != nil {
-		return nil, err
-	}
 	return &ETJob{
 		BasicJobInfo: &BasicJobInfo{
-			resources: resources,
+			resources: ejt.resources(statefulsets, jobs, name, namespace, filterPods),
 			name:      name,
 		},
 		trainingjob: etjob,
@@ -356,17 +335,16 @@ func (ejt *ETJobTrainer) isETPod(name, ns string, pod *v1.Pod) bool {
 	return utils.IsETPod(name, ns, pod)
 }
 
-func (ejt *ETJobTrainer) resources(name string, namespace string, pods []*v1.Pod) ([]Resource, error) {
-	var resources []Resource
-	labels := map[string]string{
-		etLabelTrainingJobName: name,
-	}
+func (ejt *ETJobTrainer) resources(statefulsets []*appv1.StatefulSet, batchJobs []*batchv1.Job, name string, namespace string, pods []*v1.Pod) []Resource {
+	resources := []Resource{}
 	// 2. Find the pod list, and determine the pod of the job
-	stsList, err := listStatefulSets(ejt.client, namespace, labels)
-	if err != nil {
-		return resources, err
-	}
-	for _, sts := range stsList.Items {
+	for _, sts := range statefulsets {
+		if sts.Labels[etLabelTrainingJobName] != name {
+			continue
+		}
+		if sts.Namespace != namespace {
+			continue
+		}
 		resources = append(resources, Resource{
 			Name:         sts.Name,
 			Uid:          string(sts.UID),
@@ -374,12 +352,13 @@ func (ejt *ETJobTrainer) resources(name string, namespace string, pods []*v1.Pod
 		})
 	}
 
-	// 2. Find the pod list, and determine the pod of the job
-	jobList, err := listJobBatchJobs(ejt.client, namespace, labels)
-	if err != nil {
-		return resources, err
-	}
-	for _, job := range jobList.Items {
+	for _, job := range batchJobs {
+		if job.Namespace != namespace {
+			continue
+		}
+		if job.Labels[etLabelTrainingJobName] != name {
+			continue
+		}
 		resources = append(resources, Resource{
 			Name:         job.Name,
 			Uid:          string(job.UID),
@@ -387,7 +366,7 @@ func (ejt *ETJobTrainer) resources(name string, namespace string, pods []*v1.Pod
 		})
 	}
 	resources = append(resources, podResources(pods)...)
-	return resources, nil
+	return resources
 }
 
 /**
@@ -399,49 +378,29 @@ func (ejt *ETJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
-	jobList, err := ejt.listJobs(namespace)
+	etjobs, err := k8saccesser.GetK8sResourceAccesser().ListETJobs(ejt.jobClient, namespace)
 	if err != nil {
 		return trainingJobs, err
 	}
-	for _, item := range jobList.Items {
-		job := item.DeepCopy()
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("app=%v", ejt.Type()), "", nil)
+	if err != nil {
+		return trainingJobs, err
+	}
+	for _, etjob := range etjobs {
 		// Find the pod list, and determine the pod of the job
-		labels := map[string]string{
-			"release": job.Name,
-			"app":     string(ejt.Type()),
-		}
-		podList, err := listJobPods(ejt.client, job.Namespace, labels)
-		if err != nil {
-			log.Debugf("failed to get pods of job %v,%v", job.Name, err)
-			continue
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
-		filterPods, chiefPod := getPodsOfETJob(job, ejt, pods)
+		filterPods, chiefPod := getPodsOfETJob(etjob, ejt, pods)
 		trainingJobs = append(trainingJobs, &ETJob{
 			BasicJobInfo: &BasicJobInfo{
 				resources: podResources(filterPods),
-				name:      job.Name,
+				name:      etjob.Name,
 			},
-			trainingjob: job,
+			trainingjob: etjob,
 			chiefPod:    chiefPod,
 			pods:        filterPods,
 			trainerType: ejt.Type(),
 		})
 	}
 	return trainingJobs, nil
-}
-
-func (ejt *ETJobTrainer) listJobs(namespace string) (*v1alpha1.TrainingJobList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		list := &v1alpha1.TrainingJobList{}
-		return list, arenacache.GetCacheClient().ListTrainingJobs(list, namespace)
-	}
-	return ejt.jobClient.EtV1alpha1().TrainingJobs(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release"),
-	})
 }
 
 func parseAnnotations(trainingjob *v1alpha1.TrainingJob) (map[string]interface{}, map[string]interface{}) {

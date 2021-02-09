@@ -53,14 +53,14 @@ func isTrainingConfigExist(name, trainingType, namespace string) bool {
 /**
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
-func BuildJobInfo(job TrainingJob, showGPUs bool) *types.TrainingJobInfo {
+func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes []*v1.Node) *types.TrainingJobInfo {
 	chiefPodName := ""
-	namespace := ""
+	//namespace := ""
 	if job.ChiefPod() != nil {
 		chiefPodName = job.ChiefPod().Name
-		namespace = job.ChiefPod().Namespace
+		//namespace = job.ChiefPod().Namespace
 	}
-	tensorboard, err := tensorboardURL(job.Name(), namespace)
+	tensorboard, err := tensorboardURL(job.Name(), job.Namespace(), services, nodes)
 	if err != nil {
 		log.Debugf("Tensorboard dones't show up because of %v, or tensorboard url %s", err, tensorboard)
 	}

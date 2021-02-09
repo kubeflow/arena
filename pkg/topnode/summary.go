@@ -22,11 +22,11 @@ cn-shanghai.192.168.7.182  192.168.7.182  <none>  Ready   1           0         
 cn-shanghai.192.168.7.186  192.168.7.186  <none>  Ready   4           0               topology
 cn-shanghai.192.168.7.183  192.168.7.183  <none>  Ready   4           2.1             share
 */
-func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, format types.FormatStyle) error {
+func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, format types.FormatStyle, showMetric bool) error {
 	totalGPUs := 0
 	allocatedGPUs := 0
 	unhealthyGPUs := 0
-	nodes, err := BuildNodes(nodeNames, targetNodeType)
+	nodes, err := BuildNodes(nodeNames, targetNodeType, showMetric)
 	if err != nil {
 		return err
 	}

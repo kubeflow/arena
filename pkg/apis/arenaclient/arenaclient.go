@@ -6,7 +6,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/arenacache"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/util"
 )
 
@@ -46,10 +46,8 @@ func NewArenaClient(args types.ArenaClientArgs) (*ArenaClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	if configer.IsDaemonMode() {
-		if err := arenacache.InitCacheClient(configer.GetRestConfig()); err != nil {
-			return client, err
-		}
+	if err := k8saccesser.InitK8sResourceAccesser(configer.GetRestConfig(), configer.GetClientSet(), configer.IsDaemonMode()); err != nil {
+		return client, err
 	}
 	client.arenaConfiger = configer
 	// the namespace may be updated

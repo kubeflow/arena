@@ -47,6 +47,7 @@ function run() {
         logger debug "the user manifest yaml has been stored to $OUTPUT"
         return 
     fi 
+    check_namespace
     check_user_is_existed
     if [[ $USER_EXISTED == "false" ]]  || [[ $FORCE == "1" ]];then
         get_chart_dir
@@ -54,6 +55,14 @@ function run() {
     fi
     get_cluster_url
     generate_kubeconfig
+}
+
+function check_namespace() {
+    if arena-kubectl get ns | grep "^${USER_NAMESPACE} " &> /dev/null;then
+        logger debug "namespace ${USER_NAMESPACE} has been existed,skip to create it"
+        return
+    fi
+    arena-kubectl create ns ${USER_NAMESPACE}
 }
 
 function check_admin_kubeconfig() {
@@ -184,13 +193,14 @@ function generate_kubeconfig() {
 
     arena-kubectl config \
     --kubeconfig=$OUTPUT \
-    set-context registry \
+    set-context $USER_NAME \
+    --namespace="$USER_NAMESPACE" \
     --cluster=$CLUSTER_URL \
     --user=$user
 
     arena-kubectl config \
     --kubeconfig=$OUTPUT \
-    use-context registry
+    use-context $USER_NAME
     
     rm -rf $TEMPDIR
     logger debug "kubeconfig written to file $OUTPUT"

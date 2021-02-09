@@ -35,12 +35,12 @@ func (t *NodeClient) Namespace(namespace string) *NodeClient {
 }
 
 // Details is used to serve api
-func (t *NodeClient) Details(nodeNames []string, nodeType types.NodeType) (types.AllNodeInfo, error) {
-	return topnode.ListNodeDetails(nodeNames, nodeType)
+func (t *NodeClient) Details(nodeNames []string, nodeType types.NodeType, showMetric bool) (types.AllNodeInfo, error) {
+	return topnode.ListNodeDetails(nodeNames, nodeType, showMetric)
 }
 
 //  ListAndPrintNodes is used to display nodes informations
-func (t *NodeClient) ListAndPrintNodes(nodeNames []string, nodeType types.NodeType, format types.FormatStyle, details bool, notStop bool) error {
+func (t *NodeClient) ListAndPrintNodes(nodeNames []string, nodeType types.NodeType, format types.FormatStyle, details bool, notStop bool, showMetric bool) error {
 	if format == types.UnknownFormat {
 		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
 	}
@@ -49,13 +49,13 @@ func (t *NodeClient) ListAndPrintNodes(nodeNames []string, nodeType types.NodeTy
 	}
 	if details {
 		if !notStop {
-			return topnode.DisplayNodeDetails(nodeNames, nodeType, format)
+			return topnode.DisplayNodeDetails(nodeNames, nodeType, format, showMetric)
 		}
 		if len(nodeNames) != 1 {
 			return fmt.Errorf("must specify only one node name when '-r' is enabled")
 		}
 		for {
-			err := topnode.DisplayNodeDetails(nodeNames, nodeType, format)
+			err := topnode.DisplayNodeDetails(nodeNames, nodeType, format, showMetric)
 			if err != nil {
 				log.Errorf("failed to display node details,reason: %v", err)
 			}
@@ -65,5 +65,5 @@ func (t *NodeClient) ListAndPrintNodes(nodeNames []string, nodeType types.NodeTy
 			time.Sleep(2 * time.Second)
 		}
 	}
-	return topnode.DisplayNodeSummary(nodeNames, nodeType, format)
+	return topnode.DisplayNodeSummary(nodeNames, nodeType, format, showMetric)
 }

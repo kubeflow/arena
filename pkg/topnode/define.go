@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/pkg/arenacache"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -14,12 +14,12 @@ import (
 	"github.com/kubeflow/arena/pkg/prometheus"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 )
 
 type buildNodeArgs struct {
+	pods           []*v1.Pod
 	configmaps     []*v1.ConfigMap
 	nodeGPUMetrics map[string]types.NodeGpuMetric
 }
@@ -229,37 +229,40 @@ func (n *nodeProcesser) SupportedNodeType() types.NodeType {
 	return n.nodeType
 }
 
-func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, error) {
+func BuildNodes(nodeNames []string, targetNodeType types.NodeType, showMetric bool) ([]Node, error) {
 	client := config.GetArenaConfiger().GetClientSet()
-	nodeList, err := listNodes(client)
+	allNodes, err := k8saccesser.GetK8sResourceAccesser().ListNodes("")
 	if err != nil {
 		return nil, err
 	}
-	configMapList, err := listGPUTopoNodeConfigMapList(client)
+	configmaps, err := k8saccesser.GetK8sResourceAccesser().ListConfigMaps("kube-system", types.GPUTopologyNodeLabels)
 	if err != nil {
 		return nil, err
-	}
-	configmaps := []*v1.ConfigMap{}
-	for _, c := range configMapList.Items {
-		configmaps = append(configmaps, c.DeepCopy())
 	}
 	names := map[string]bool{}
 	for _, name := range nodeNames {
 		names[name] = true
 	}
-	nodeGPUMetrics, err := GetNodeGpuMetrics(client)
-	if err != nil {
-		log.Debugf("failed to get node metrics: %v", err)
+	nodeGPUMetrics := map[string]types.NodeGpuMetric{}
+	if showMetric {
+		nodeGPUMetrics, err = GetNodeGpuMetrics(client)
+		if err != nil {
+			log.Debugf("failed to get node metrics: %v", err)
+			nodeGPUMetrics = map[string]types.NodeGpuMetric{}
+		}
 	}
-	if nodeGPUMetrics == nil {
-		nodeGPUMetrics = map[string]types.NodeGpuMetric{}
+	pods, err := listRunningPods()
+	if err != nil {
+		log.Errorf("failed to list active running pods,reason: %v", err)
+		return nil, err
 	}
 	nodes := []Node{}
 	args := buildNodeArgs{
 		configmaps:     configmaps,
 		nodeGPUMetrics: nodeGPUMetrics,
+		pods:           pods,
 	}
-	for index, n := range nodeList.Items {
+	for index, n := range allNodes {
 		node := n.DeepCopy()
 		if !filterNode(names, node.Name) {
 			continue
@@ -280,37 +283,20 @@ func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, erro
 	return nodes, nil
 }
 
-func listNodePods(client *kubernetes.Clientset, nodeName string) ([]*v1.Pod, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return arenacache.GetCacheClient().ListNodeRunningPods(nodeName)
+func listRunningPods() ([]*v1.Pod, error) {
+	labelSelector := fmt.Sprintf("status.phase!=%v,status.phase!=%v", v1.PodFailed, v1.PodSucceeded)
+	var filterFunc = func(pod *v1.Pod) bool {
+		if pod.Status.Phase == v1.PodFailed || pod.Status.Phase == v1.PodSucceeded {
+			return false
+		}
+		return true
 	}
-	return utils.AcquireAllActivePodsOfNode(client, nodeName)
-}
-
-func listGPUTopoNodeConfigMapList(client *kubernetes.Clientset) (*v1.ConfigMapList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		cmList := &v1.ConfigMapList{}
-		return cmList, arenacache.GetCacheClient().ListResources(cmList, "kube-system", metav1.ListOptions{
-			LabelSelector: types.GPUTopologyNodeLabels,
-		})
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods("", "", labelSelector, filterFunc)
+	if err != nil {
+		return nil, err
 	}
-
-	return client.CoreV1().ConfigMaps("kube-system").List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: types.GPUTopologyNodeLabels,
-	})
+	return pods, nil
 }
-
-func listNodes(client *kubernetes.Clientset) (*v1.NodeList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		nodeList := &v1.NodeList{}
-		return nodeList, arenacache.GetCacheClient().ListResources(nodeList, "", metav1.ListOptions{})
-	}
-	return client.CoreV1().Nodes().List(metav1.ListOptions{})
-}
-
 func filterNode(names map[string]bool, nodeName string) bool {
 	if len(names) == 0 {
 		return true
@@ -331,4 +317,15 @@ func getGPUMetricsByNodeName(nodeName string, metrics map[string]types.NodeGpuMe
 		return result
 	}
 	return metrics[nodeName]
+}
+
+func getNodePods(node *v1.Node, pods []*v1.Pod) []*v1.Pod {
+	nodePods := []*v1.Pod{}
+	for _, pod := range pods {
+		if pod.Spec.NodeName != node.Name {
+			continue
+		}
+		nodePods = append(nodePods, pod)
+	}
+	return nodePods
 }
