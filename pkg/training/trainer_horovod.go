@@ -224,7 +224,7 @@ func NewHorovodJobTrainer() Trainer {
 	return &HorovodJobTrainer{
 		client:      config.GetArenaConfiger().GetClientSet(),
 		trainerType: types.HorovodTrainingJob,
-		enabled:     true,
+		enabled:     false,
 	}
 }
 
@@ -256,25 +256,21 @@ func (h *HorovodJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob,
 		"release": name,
 		"app":     "tf-horovod",
 	}
-	jobList, err := listJobBatchJobs(h.client, namespace, labels)
+	jobs, err := listJobBatchJobs(h.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
-	if len(jobList.Items) == 0 {
+	if len(jobs) == 0 {
 		return nil, types.ErrTrainingJobNotFound
 	}
-	job := jobList.Items[0]
+	job := jobs[0]
 	// 2. Find the pod list, and determine the pod of the job
-	podList, err := listJobPods(h.client, namespace, labels)
+	pods, err := listJobPods(h.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
-	pods := []*v1.Pod{}
-	for _, pod := range podList.Items {
-		pods = append(pods, pod.DeepCopy())
-	}
 	// get chief pod
-	filterPods, chiefPod := getPodsOfHorovodJob(h, &job, pods)
+	filterPods, chiefPod := getPodsOfHorovodJob(h, job, pods)
 
 	// 3. Find the other resources, like statefulset,job
 	return &HorovodJob{
@@ -282,7 +278,7 @@ func (h *HorovodJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob,
 			name:      name,
 			resources: podResources(filterPods),
 		},
-		job:         &job,
+		job:         job,
 		chiefPod:    chiefPod,
 		pods:        filterPods,
 		trainerType: h.Type(),
@@ -299,29 +295,22 @@ func (h *HorovodJobTrainer) ListTrainingJobs(namespace string, allNamespace bool
 	trainingJobs := []TrainingJob{}
 	// 1. Get the batchJob of training Job
 	labels := map[string]string{
-		"release": "",
-		"app":     "tf-horovod",
+		"app": "tf-horovod",
 	}
-	jobList, err := listJobBatchJobs(h.client, namespace, labels)
+	jobs, err := listJobBatchJobs(h.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
-	for _, item := range jobList.Items {
+	labels = map[string]string{
+		"release": "",
+		"app":     "tf-horovod",
+	}
+	pods, err := listJobPods(h.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range jobs {
 		job := item.DeepCopy()
-		// 2. Find the pod list, and determine the pod of the job
-		labels = map[string]string{
-			"release": job.Name,
-			"app":     "tf-horovod",
-		}
-		podList, err := listJobPods(h.client, job.Namespace, labels)
-		if err != nil {
-			log.Errorf("failed to get pods of job %v,reason: %v", job.Name, err)
-			continue
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
 		// get chief pod
 		filterPods, chiefPod := getPodsOfHorovodJob(h, job, pods)
 		trainingJobs = append(trainingJobs, &HorovodJob{

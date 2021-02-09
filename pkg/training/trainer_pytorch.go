@@ -30,6 +30,8 @@ import (
 	"github.com/kubeflow/arena/pkg/arenacache"
 	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
+	appv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -249,17 +251,17 @@ type PyTorchJobTrainer struct {
 
 // NewPyTorchJobTrainer
 func NewPyTorchJobTrainer() Trainer {
-	log.Debugf("Init PyTorch job trainer")
 	// get pytorch operator client call pytorch operator api
 	enable := false
 	pytorchjobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
-	// this step is used to check operator is installed or not
-	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
-		if crdName == PytorchCRD {
-			enable = true
-			break
-		}
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(PytorchCRD, metav1.GetOptions{})
+	if err == nil {
+		log.Debugf("PytorchJobTrainer is enabled")
+		enable = true
+	} else {
+		log.Debugf("PytorchJobTrainer is disabled")
 	}
+	log.Debugf("Succeed to init PytorchJobTrainer")
 	return &PyTorchJobTrainer{
 		pytorchjobClient: pytorchjobClient,
 		client:           config.GetArenaConfiger().GetClientSet(),
@@ -319,25 +321,28 @@ func (tt *PyTorchJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 		"release": name,
 		"app":     string(tt.Type()),
 	}
-	podList, err := listJobPods(tt.client, namespace, labels)
+	allPods, err := listJobPods(tt.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
-	allPods := []*v1.Pod{}
-	for _, pod := range podList.Items {
-		allPods = append(allPods, pod.DeepCopy())
+	labels = map[string]string{
+		"pytorch_job_name": "",
+	}
+	jobs, err := listJobBatchJobs(tt.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
+	statefulsets, err := listStatefulSets(tt.client, namespace, labels)
+	if err != nil {
+		return nil, err
 	}
 	// important for getting pytorchjob status
 	pytorchjob.Status.Conditions = makeJobStatusSortedByTime(pytorchjob.Status.Conditions)
 	pods, chiefPod := getPodsOfPyTorchJob(tt, pytorchjob, allPods)
 	// 3. Find the other resources, like statefulset,job
-	resources, err := tt.resources(name, namespace, pods)
-	if err != nil {
-		return nil, err
-	}
 	return &PyTorchJob{
 		BasicJobInfo: &BasicJobInfo{
-			resources: resources,
+			resources: tt.resources(statefulsets, jobs, name, namespace, pods),
 			name:      name,
 		},
 		pytorchjob:  pytorchjob,
@@ -376,17 +381,16 @@ func (tt *PyTorchJobTrainer) isPyTorchPod(name, ns string, pod *v1.Pod) bool {
 	return utils.IsPyTorchPod(name, ns, pod)
 }
 
-func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1.Pod) ([]Resource, error) {
+func (tt *PyTorchJobTrainer) resources(statefulsets []*appv1.StatefulSet, batchJobs []*batchv1.Job, name string, namespace string, pods []*v1.Pod) []Resource {
 	resources := []Resource{}
-	labels := map[string]string{
-		"pytorch_job_name": name,
-	}
 	// 2. Find the pod list, and determine the pod of the job
-	stsList, err := listStatefulSets(tt.client, namespace, labels)
-	if err != nil {
-		return resources, err
-	}
-	for _, sts := range stsList.Items {
+	for _, sts := range statefulsets {
+		if sts.Labels["pytorch_job_name"] != name {
+			continue
+		}
+		if sts.Namespace != namespace {
+			continue
+		}
 		resources = append(resources, Resource{
 			Name:         sts.Name,
 			Uid:          string(sts.UID),
@@ -394,12 +398,13 @@ func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1
 		})
 	}
 
-	// 2. Find the pod list, and determine the pod of the job
-	jobList, err := listJobBatchJobs(tt.client, namespace, labels)
-	if err != nil {
-		return resources, err
-	}
-	for _, job := range jobList.Items {
+	for _, job := range batchJobs {
+		if job.Namespace != namespace {
+			continue
+		}
+		if job.Labels["pytorch_job_name"] != name {
+			continue
+		}
 		resources = append(resources, Resource{
 			Name:         job.Name,
 			Uid:          string(job.UID),
@@ -407,7 +412,7 @@ func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1
 		})
 	}
 	resources = append(resources, podResources(pods)...)
-	return resources, nil
+	return resources
 }
 
 /**
@@ -424,21 +429,15 @@ func (tt *PyTorchJobTrainer) ListTrainingJobs(namespace string, allNamespace boo
 	if err != nil {
 		return trainingJobs, err
 	}
+	labels := map[string]string{
+		"app": string(tt.Type()),
+	}
+	pods, err := listJobPods(tt.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
 	for _, job := range pyjobList.Items {
 		pyjob := job.DeepCopy()
-		labels := map[string]string{
-			"release": pyjob.Name,
-			"app":     string(tt.Type()),
-		}
-		podList, err := listJobPods(tt.client, pyjob.Namespace, labels)
-		if err != nil {
-			log.Errorf("failed to get pods of job %v,reason: %v", pyjob.Name, err)
-			continue
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
 		pyjob.Status.Conditions = makeJobStatusSortedByTime(pyjob.Status.Conditions)
 		filterPods, chiefPod := getPodsOfPyTorchJob(tt, pyjob, pods)
 		trainingJobs = append(trainingJobs, &PyTorchJob{

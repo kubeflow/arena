@@ -225,7 +225,7 @@ gopkg.in/ini.v1
 gopkg.in/yaml.v2
 # istio.io/api v0.0.0-20180824201241-76349c53b87f
 istio.io/api/networking/v1alpha3
-# k8s.io/api v0.17.2 => k8s.io/api v0.16.9
+# k8s.io/api v0.18.3 => k8s.io/api v0.16.9
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
 k8s.io/api/admissionregistration/v1
@@ -275,7 +275,7 @@ k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1
-# k8s.io/apimachinery v0.17.2 => k8s.io/apimachinery v0.16.10-beta.0
+# k8s.io/apimachinery v0.18.3 => k8s.io/apimachinery v0.16.10-beta.0
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
@@ -340,7 +340,7 @@ k8s.io/cli-runtime/pkg/kustomize/k8sdeps/transformer/patch
 k8s.io/cli-runtime/pkg/kustomize/k8sdeps/validator
 k8s.io/cli-runtime/pkg/printers
 k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.17.2 => k8s.io/client-go v0.16.9
+# k8s.io/client-go v0.18.3 => k8s.io/client-go v0.16.9
 k8s.io/client-go/discovery
 k8s.io/client-go/discovery/cached/disk
 k8s.io/client-go/discovery/fake
@@ -419,10 +419,10 @@ k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 # k8s.io/klog v1.0.0
 k8s.io/klog
-# k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
+# k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
-# k8s.io/kubectl v0.0.0-00010101000000-000000000000 => k8s.io/kubectl v0.16.9
+# k8s.io/kubectl v0.0.0 => k8s.io/kubectl v0.16.9
 k8s.io/kubectl/pkg/apps
 k8s.io/kubectl/pkg/describe
 k8s.io/kubectl/pkg/describe/versioned

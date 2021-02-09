@@ -47,10 +47,7 @@ type gputopo struct {
 }
 
 func NewGPUTopologyNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
-	pods, err := listNodePods(client, node.Name)
-	if err != nil {
-		return nil, err
-	}
+	pods := getNodePods(node, args.pods)
 	var configmap *v1.ConfigMap
 	for _, c := range args.configmaps {
 		if val, ok := c.Labels["nodename"]; ok && val == node.Name {

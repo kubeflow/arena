@@ -97,7 +97,8 @@ func (t *TrainingJobClient) Get(jobName string, jobType types.TrainingJobType) (
 	if err != nil {
 		return nil, err
 	}
-	jobInfo := training.BuildJobInfo(job, true)
+	services, nodes := training.PrepareServicesAndNodesForTensorboard([]training.TrainingJob{job}, false)
+	jobInfo := training.BuildJobInfo(job, true, services, nodes)
 	return jobInfo, nil
 }
 
@@ -124,8 +125,9 @@ func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.Training
 		return nil, err
 	}
 	jobInfos := []*types.TrainingJobInfo{}
+	services, nodes := training.PrepareServicesAndNodesForTensorboard(jobs, allNamespaces)
 	for _, job := range jobs {
-		jobInfos = append(jobInfos, training.BuildJobInfo(job, true))
+		jobInfos = append(jobInfos, training.BuildJobInfo(job, true, services, nodes))
 	}
 	return jobInfos, nil
 }

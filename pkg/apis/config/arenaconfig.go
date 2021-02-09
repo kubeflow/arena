@@ -70,10 +70,12 @@ func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 	if err != nil {
 		return nil, err
 	}
-	crdNames, err := getClusterInstalledCRDs(apiExtensionClientSet)
-	if err != nil {
-		return nil, err
-	}
+	/*
+		crdNames, err := getClusterInstalledCRDs(apiExtensionClientSet)
+		if err != nil {
+			return nil, err
+		}
+	*/
 	namespace := updateNamespace(args.Namespace, arenaConfigs, clientConfig)
 	return &ArenaConfiger{
 		restConfig:            restConfig,
@@ -84,7 +86,7 @@ func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 		arenaNamespace:        args.ArenaNamespace,
 		configs:               arenaConfigs,
 		isDaemonMode:          args.IsDaemonMode,
-		clusterInstalledCRDs:  crdNames,
+		clusterInstalledCRDs:  []string{},
 	}, nil
 }
 
@@ -183,6 +185,7 @@ func updateNamespace(namespace string, arenaConfigs map[string]string, clientCon
 
 func getClusterInstalledCRDs(client *extclientset.Clientset) ([]string, error) {
 	selectorListOpts := metav1.ListOptions{}
+
 	list, err := client.ApiextensionsV1().CustomResourceDefinitions().List(selectorListOpts)
 	if err != nil {
 		return nil, err

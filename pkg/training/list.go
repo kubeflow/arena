@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"text/tabwriter"
 	"time"
 
@@ -24,43 +25,56 @@ func ListTrainingJobs(namespace string, allNamespaces bool, jobType types.Traini
 	if jobType == types.UnknownTrainingJob {
 		return nil, fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
 	}
-	for trainerType, trainer := range trainers {
-		if !trainer.IsEnabled() {
-			continue
-		}
-		if !isNeededTrainingType(trainerType, jobType) {
-			continue
-		}
-		trainingJobs, err := trainer.ListTrainingJobs(namespace, allNamespaces)
-		if err != nil {
-			return nil, err
-		}
-		jobs = append(jobs, trainingJobs...)
+	var wg sync.WaitGroup
+	locker := new(sync.RWMutex)
+	for tType, t := range trainers {
+		wg.Add(1)
+		trainer := t
+		trainerType := tType
+		go func() {
+			defer wg.Done()
+			if !trainer.IsEnabled() {
+				return
+			}
+			if !isNeededTrainingType(trainerType, jobType) {
+				return
+			}
+			trainingJobs, err := trainer.ListTrainingJobs(namespace, allNamespaces)
+			if err != nil {
+				log.Debugf("trainer %v failed to list training jobs: %v",trainerType, err)
+				return
+			}
+			locker.Lock()
+			jobs = append(jobs, trainingJobs...)
+			locker.Unlock()
+		}()
 	}
+	wg.Wait()
 	jobs = makeTrainingJobOrderdByAge(jobs)
 	return jobs, nil
 }
 
 func DisplayTrainingJobList(jobInfoList []TrainingJob, format string, allNamespaces bool) {
 	jobInfos := []*types.TrainingJobInfo{}
+	services, nodes := PrepareServicesAndNodesForTensorboard(jobInfoList, allNamespaces)
 	switch format {
 	case "json":
 		for _, jobInfo := range jobInfoList {
-			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, true))
+			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, true, services, nodes))
 		}
 		data, _ := json.MarshalIndent(jobInfos, "", "    ")
 		fmt.Printf("%v", string(data))
 		return
 	case "yaml":
 		for _, jobInfo := range jobInfoList {
-			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, true))
+			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, true, services, nodes))
 		}
 		data, _ := yaml.Marshal(jobInfos)
 		fmt.Printf("%v", string(data))
 		return
 	case "", "wide":
 		for _, jobInfo := range jobInfoList {
-			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, false))
+			jobInfos = append(jobInfos, BuildJobInfo(jobInfo, false, services, nodes))
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		header := []string{}

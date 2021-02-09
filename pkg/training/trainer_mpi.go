@@ -25,6 +25,7 @@ import (
 	"github.com/kubeflow/arena/pkg/arenacache"
 	"github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
+	appv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -238,16 +239,17 @@ type MPIJobTrainer struct {
 
 // NewMPIJobTrainer
 func NewMPIJobTrainer() Trainer {
-	log.Debugf("Init MPI job trainer")
 	mpijobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	enable := false
 	// this step is used to check operator is installed or not
-	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
-		if crdName == MPICRD {
-			enable = true
-			break
-		}
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(MPICRD, metav1.GetOptions{})
+	if err == nil {
+		log.Debugf("MPIJobTrainer is enabled")
+		enable = true
+	} else {
+		log.Debugf("MPIJobTrainer is disabled")
 	}
+	log.Debugf("Succeed to init MPIJobTrainer")
 	return &MPIJobTrainer{
 		mpijobClient: mpijobClient,
 		client:       config.GetArenaConfiger().GetClientSet(),
@@ -301,28 +303,34 @@ func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, er
 		}
 	}
 	// 1. get the batch job of the mpijob
-	job := tt.getChiefJob(name, namespace)
-	// 2. Find the pod list, and determine the pod of the job
 	labels := map[string]string{
-		"release": name,
-		"app":     string(tt.Type()),
+		"mpi_job_name": "",
 	}
-	podList, err := listJobPods(tt.client, namespace, labels)
+	jobs, err := listJobBatchJobs(tt.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
-	allPods := []*v1.Pod{}
-	for _, pod := range podList.Items {
-		allPods = append(allPods, pod.DeepCopy())
+	chiefJob := tt.getChiefJob(jobs, name, namespace)
+
+	// 2.get the statefulset
+	statefulsets, err := listStatefulSets(tt.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
+	// 2. Find the pod list, and determine the pod of the job
+	labels = map[string]string{
+		"release": name,
+		"app":     string(tt.Type()),
+	}
+	allPods, err := listJobPods(tt.client, namespace, labels)
+	if err != nil {
+		return nil, err
 	}
 	// get chief pod
 	pods, chiefPod := getPodsOfMPIJob(tt, mpijob, allPods)
 
 	// 3. Find the other resources, like statefulset,job
-	resources, err := tt.resources(name, namespace, pods)
-	if err != nil {
-		return nil, err
-	}
+	resources := tt.resources(statefulsets, jobs, name, namespace, pods)
 	return &MPIJob{
 		BasicJobInfo: &BasicJobInfo{
 			resources: resources,
@@ -330,40 +338,22 @@ func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, er
 		},
 		mpijob:      mpijob,
 		chiefPod:    chiefPod,
-		chiefjob:    &job,
+		chiefjob:    chiefJob,
 		pods:        pods,
 		trainerType: tt.Type(),
 	}, nil
 
 }
 
-func (tt *MPIJobTrainer) getChiefJob(name string, namespace string) (job batchv1.Job) {
-	labels := map[string]string{
-		"mpi_job_name": name,
+func (tt *MPIJobTrainer) getChiefJob(jobs []*batchv1.Job, name string, namespace string) *batchv1.Job {
+	chiefJob := &batchv1.Job{}
+	for _, job := range jobs {
+		if tt.isChiefJob(job, name, namespace) {
+			chiefJob = job
+			break
+		}
 	}
-	jobList, err := listJobBatchJobs(tt.client, namespace, labels)
-	if len(jobList.Items) > 0 {
-		job = jobList.Items[0]
-		return job
-	}
-	if err != nil {
-		log.Debugf("mpijob list failed due to %v with mpi_job_name=%s", err, name)
-	}
-	labels = map[string]string{
-		"mpi_job_name": fmt.Sprintf("%v-mpijob", name),
-	}
-	jobList, err = listJobBatchJobs(tt.client, namespace, labels)
-	if len(jobList.Items) > 0 {
-		job = jobList.Items[0]
-		return job
-	}
-	if err != nil {
-		log.Debugf("mpijob list failed due to %v with mpi_job_name=%s", err, name)
-	}
-	if len(jobList.Items) > 0 {
-		job = jobList.Items[0]
-	}
-	return job
+	return chiefJob
 }
 
 func (tt *MPIJobTrainer) isChiefJob(job *batchv1.Job, name string, namespace string) bool {
@@ -375,14 +365,10 @@ func (tt *MPIJobTrainer) isChiefJob(job *batchv1.Job, name string, namespace str
 			namespace)
 		return false
 	}
-
 	if job.Name == fmt.Sprintf("%s-launcher", name) || job.Name == fmt.Sprintf("%s-mpijob-launcher", name) {
 		log.Debugf("The job %s is the chief job of %s", job.Name, name)
 		return true
-	} else {
-		log.Debugf("The job %s is not the chief job of %s", job.Name, name)
 	}
-
 	return false
 }
 
@@ -417,17 +403,16 @@ func (tt *MPIJobTrainer) isMPIPod(name, ns string, pod *v1.Pod) bool {
 	return utils.IsMPIPod(name, ns, pod)
 }
 
-func (tt *MPIJobTrainer) resources(name string, namespace string, pods []*v1.Pod) ([]Resource, error) {
+func (tt *MPIJobTrainer) resources(statefulsets []*appv1.StatefulSet, batchJobs []*batchv1.Job, name string, namespace string, pods []*v1.Pod) []Resource {
 	resources := []Resource{}
-	labels := map[string]string{
-		"mpi_job_name": name,
-	}
 	// 2. Find the pod list, and determine the pod of the job
-	stsList, err := listStatefulSets(tt.client, namespace, labels)
-	if err != nil {
-		return resources, err
-	}
-	for _, sts := range stsList.Items {
+	for _, sts := range statefulsets {
+		if sts.Labels["mpi_job_name"] != name {
+			continue
+		}
+		if sts.Namespace != namespace {
+			continue
+		}
 		resources = append(resources, Resource{
 			Name:         sts.Name,
 			Uid:          string(sts.UID),
@@ -435,12 +420,13 @@ func (tt *MPIJobTrainer) resources(name string, namespace string, pods []*v1.Pod
 		})
 	}
 
-	// 2. Find the pod list, and determine the pod of the job
-	jobList, err := listJobBatchJobs(tt.client, namespace, labels)
-	if err != nil {
-		return resources, err
-	}
-	for _, job := range jobList.Items {
+	for _, job := range batchJobs {
+		if job.Namespace != namespace {
+			continue
+		}
+		if job.Labels["mpi_job_name"] != name && job.Labels["mpi_job_name"] != fmt.Sprintf("%v-mpijob", name) {
+			continue
+		}
 		resources = append(resources, Resource{
 			Name:         job.Name,
 			Uid:          string(job.UID),
@@ -448,7 +434,7 @@ func (tt *MPIJobTrainer) resources(name string, namespace string, pods []*v1.Pod
 		})
 	}
 	resources = append(resources, podResources(pods)...)
-	return resources, nil
+	return resources
 }
 
 /**
@@ -464,22 +450,23 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 	if err != nil {
 		return trainingJobs, err
 	}
+	labels := map[string]string{
+		"app": string(tt.Type()),
+	}
+	pods, err := listJobPods(tt.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
+	labels = map[string]string{
+		"mpi_job_name": "",
+	}
+	jobs, err := listJobBatchJobs(tt.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
 	for _, item := range mpijobList.Items {
 		mpijob := item.DeepCopy()
-		labels := map[string]string{
-			"release": mpijob.Name,
-			"app":     string(tt.Type()),
-		}
-		podList, err := listJobPods(tt.client, mpijob.Namespace, labels)
-		if err != nil {
-			log.Errorf("failed to get pods of job %v,reason: %v", mpijob.Name, err)
-			continue
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
-		job := tt.getChiefJob(mpijob.Name, mpijob.Namespace)
+		chiefJob := tt.getChiefJob(jobs, mpijob.Name, mpijob.Namespace)
 		// 3.find the pods, and determine the pod of the job
 		filterPods, chiefPod := getPodsOfMPIJob(tt, mpijob, pods)
 		trainingJobs = append(trainingJobs, &MPIJob{
@@ -490,7 +477,7 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 			mpijob:      mpijob,
 			chiefPod:    chiefPod,
 			pods:        filterPods,
-			chiefjob:    &job,
+			chiefjob:    chiefJob,
 			trainerType: tt.Type(),
 		})
 	}

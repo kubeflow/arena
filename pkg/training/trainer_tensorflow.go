@@ -254,16 +254,17 @@ type TensorFlowJobTrainer struct {
 }
 
 func NewTensorFlowJobTrainer() Trainer {
-	log.Debugf("Init TensorFlow job trainer")
 	arenaConfiger := config.GetArenaConfiger()
 	tfjobClient := versioned.NewForConfigOrDie(arenaConfiger.GetRestConfig())
 	enable := false
-	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
-		if crdName == TensorFlowCRD {
-			enable = true
-			break
-		}
+	_, err := arenaConfiger.GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(TensorFlowCRD, metav1.GetOptions{})
+	if err == nil {
+		log.Debugf("TensorflowJobTrainer is enabled")
+		enable = true
+	} else {
+		log.Debugf("TensorflowJobTrainer is disabled")
 	}
+	log.Debugf("Succeed to init TensorflowJobTrainer")
 	return &TensorFlowJobTrainer{
 		tfjobClient: tfjobClient,
 		client:      arenaConfiger.GetClientSet(),
@@ -321,11 +322,7 @@ func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (Training
 		"release": name,
 		"app":     string(tt.Type()),
 	}
-	podList, err := listJobPods(tt.client, namespace, labels)
-	allPods := []*v1.Pod{}
-	for _, pod := range podList.Items {
-		allPods = append(allPods, pod.DeepCopy())
-	}
+	allPods, err := listJobPods(tt.client, namespace, labels)
 	// Sort tfjob status conditions and make the newest condition at first
 	tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
 	if err != nil {
@@ -411,21 +408,15 @@ func (tt *TensorFlowJobTrainer) ListTrainingJobs(namespace string, allNamespace 
 	if err != nil {
 		return trainingJobs, err
 	}
+	labels := map[string]string{
+		"app": string(tt.Type()),
+	}
+	pods, err := listJobPods(tt.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
 	for _, job := range tfjobList.Items {
 		tfjob := job.DeepCopy()
-		labels := map[string]string{
-			"release": tfjob.Name,
-			"app":     string(tt.Type()),
-		}
-		podList, err := listJobPods(tt.client, tfjob.Namespace, labels)
-		if err != nil {
-			log.Errorf("failed to get pods of job %v,reason: %v", tfjob.Name, err)
-			continue
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
 		tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
 		filterPods, chiefPod := getPodsOfTFJob(tt, tfjob, pods)
 		trainingJobs = append(trainingJobs, &TensorFlowJob{

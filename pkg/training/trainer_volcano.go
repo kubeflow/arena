@@ -260,16 +260,16 @@ type VolcanoJobTrainer struct {
 }
 
 func NewVolcanoJobTrainer() Trainer {
-	log.Debugf("Init Volcano job trainer")
 	volcanoClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	enable := false
-	// this step is used to check operator is installed or not
-	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
-		if crdName == VolcanoCRD {
-			enable = true
-			break
-		}
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(VolcanoCRD, metav1.GetOptions{})
+	if err == nil {
+		log.Debugf("VolcanoJobTrainer is enabled")
+		enable = true
+	} else {
+		log.Debugf("VolcanoJobTrainer is disabled")
 	}
+	log.Debugf("Succeed to init Volcano job trainer")
 	return &VolcanoJobTrainer{
 		volcanoJobClient: volcanoClient,
 		client:           config.GetArenaConfiger().GetClientSet(),
@@ -324,13 +324,9 @@ func (st *VolcanoJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 		"release": name,
 		"app":     string(st.Type()),
 	}
-	podList, err := listJobPods(st.client, namespace, labels)
+	pods, err := listJobPods(st.client, namespace, labels)
 	if err != nil {
 		return nil, err
-	}
-	pods := []*v1.Pod{}
-	for _, pod := range podList.Items {
-		pods = append(pods, pod.DeepCopy())
 	}
 	// filter pods and find chief pod
 	filterPods, chiefPod := getPodsOfVolcanoJob(volcanoJob, st, pods)
@@ -354,21 +350,16 @@ func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace boo
 	if err != nil {
 		return nil, err
 	}
+	labels := map[string]string{
+		"app": string(st.Type()),
+	}
+	pods, err := listJobPods(st.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
 	trainingJobs := []TrainingJob{}
 	for _, item := range jobList.Items {
 		job := item.DeepCopy()
-		labels := map[string]string{
-			"release": job.Name,
-			"app":     string(st.Type()),
-		}
-		podList, err := listJobPods(st.client, job.Namespace, labels)
-		if err != nil {
-			return nil, err
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
 		// filter pods and find chief pod
 		filterPods, chiefPod := getPodsOfVolcanoJob(job, st, pods)
 		trainingJobs = append(trainingJobs, &VolcanoJob{

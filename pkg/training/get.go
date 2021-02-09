@@ -17,6 +17,7 @@ package training
 import (
 	"fmt"
 	"strconv"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 
@@ -112,24 +113,28 @@ func getTrainingJobByType(name, namespace, trainingType string) (job TrainingJob
 func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err error) {
 	jobs = []TrainingJob{}
 	trainers := GetAllTrainers()
+	var wg sync.WaitGroup
+	locker := new(sync.RWMutex)
 	for _, trainer := range trainers {
-		if !trainer.IsEnabled() {
-			log.Debugf("the trainer %v is disabled,skip to use this trainer to get the training job", trainer.Type())
-			continue
-		}
-		if !trainer.IsSupported(name, namespace) {
-			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
-			continue
-		}
-		job, err := trainer.GetTrainingJob(name, namespace)
-		if err != nil {
-			if err == types.ErrTrainingJobNotFound {
-				continue
+		wg.Add(1)
+		t := trainer
+		go func() {
+			defer wg.Done()
+			if !t.IsEnabled() {
+				log.Debugf("the trainer %v is disabled,skip to use this trainer to get the training job", t.Type())
+				return
 			}
-			return nil, err
-		}
-		jobs = append(jobs, job)
+			job, err := t.GetTrainingJob(name, namespace)
+			if err != nil {
+				log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, t.Type())
+				return
+			}
+			locker.Lock()
+			jobs = append(jobs, job)
+			locker.Unlock()
+		}()
 	}
+	wg.Wait()
 	if len(jobs) == 0 {
 		log.Debugf("Failed to find the training job %s in namespace %s", name, namespace)
 		return nil, types.ErrTrainingJobNotFound
@@ -138,26 +143,27 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 }
 
 func PrintTrainingJob(job TrainingJob, format string, showEvents bool, showGPUs bool) {
+	services, nodes := PrepareServicesAndNodesForTensorboard([]TrainingJob{job}, false)
 	switch format {
 	case "name":
 		fmt.Println(job.Name())
 		// for future CRD support
 	case "json":
-		outBytes, err := json.MarshalIndent(BuildJobInfo(job, showGPUs), "", "    ")
+		outBytes, err := json.MarshalIndent(BuildJobInfo(job, showGPUs, services, nodes), "", "    ")
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Printf(string(outBytes))
 		}
 	case "yaml":
-		outBytes, err := yaml.Marshal(BuildJobInfo(job, showGPUs))
+		outBytes, err := yaml.Marshal(BuildJobInfo(job, showGPUs, services, nodes))
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Printf(string(outBytes))
 		}
 	case "wide", "":
-		printSingleJobHelper(BuildJobInfo(job, showGPUs), job.Resources(), showEvents, showGPUs)
+		printSingleJobHelper(BuildJobInfo(job, showGPUs, services, nodes), job.Resources(), showEvents, showGPUs)
 		job.Resources()
 	default:
 		log.Fatalf("Unknown output format: %s", format)

@@ -1,6 +1,7 @@
 package topnode
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -15,11 +16,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type buildNodeArgs struct {
+	pods           []*v1.Pod
 	configmaps     []*v1.ConfigMap
 	nodeGPUMetrics map[string]types.NodeGpuMetric
 }
@@ -229,7 +233,7 @@ func (n *nodeProcesser) SupportedNodeType() types.NodeType {
 	return n.nodeType
 }
 
-func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, error) {
+func BuildNodes(nodeNames []string, targetNodeType types.NodeType, showMetric bool) ([]Node, error) {
 	client := config.GetArenaConfiger().GetClientSet()
 	nodeList, err := listNodes(client)
 	if err != nil {
@@ -247,17 +251,24 @@ func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, erro
 	for _, name := range nodeNames {
 		names[name] = true
 	}
-	nodeGPUMetrics, err := GetNodeGpuMetrics(client)
-	if err != nil {
-		log.Debugf("failed to get node metrics: %v", err)
+	nodeGPUMetrics := map[string]types.NodeGpuMetric{}
+	if showMetric {
+		nodeGPUMetrics, err = GetNodeGpuMetrics(client)
+		if err != nil {
+			log.Debugf("failed to get node metrics: %v", err)
+			nodeGPUMetrics = map[string]types.NodeGpuMetric{}
+		}
 	}
-	if nodeGPUMetrics == nil {
-		nodeGPUMetrics = map[string]types.NodeGpuMetric{}
+	pods, err := listRunningPods(client)
+	if err != nil {
+		log.Errorf("failed to list active running pods,reason: %v", err)
+		return nil, err
 	}
 	nodes := []Node{}
 	args := buildNodeArgs{
 		configmaps:     configmaps,
 		nodeGPUMetrics: nodeGPUMetrics,
+		pods:           pods,
 	}
 	for index, n := range nodeList.Items {
 		node := n.DeepCopy()
@@ -278,6 +289,34 @@ func BuildNodes(nodeNames []string, targetNodeType types.NodeType) ([]Node, erro
 		return nil, fmt.Errorf("failed to display nodes's informations: not found nodes")
 	}
 	return nodes, nil
+}
+
+func listRunningPods(k8sclient *kubernetes.Clientset) ([]*v1.Pod, error) {
+	labelSelector := fmt.Sprintf("status.phase!=%v,status.phase!=%v", v1.PodFailed, v1.PodSucceeded)
+	selectors, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+	podList := &v1.PodList{}
+	namespace := ""
+	if config.GetArenaConfiger().IsDaemonMode() {
+		err = arenacache.GetCacheClient().List(context.Background(), podList, client.InNamespace(namespace), &client.ListOptions{LabelSelector: selectors})
+	} else {
+		podList, err = k8sclient.CoreV1().Pods(namespace).List(metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ListOptions",
+				APIVersion: "v1",
+			}, FieldSelector: selectors.String(),
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	pods := []*v1.Pod{}
+	for _, pod := range podList.Items {
+		pods = append(pods, pod.DeepCopy())
+	}
+	return pods, nil
 }
 
 func listNodePods(client *kubernetes.Clientset, nodeName string) ([]*v1.Pod, error) {
@@ -331,4 +370,15 @@ func getGPUMetricsByNodeName(nodeName string, metrics map[string]types.NodeGpuMe
 		return result
 	}
 	return metrics[nodeName]
+}
+
+func getNodePods(node *v1.Node, pods []*v1.Pod) []*v1.Pod {
+	nodePods := []*v1.Pod{}
+	for _, pod := range pods {
+		if pod.Spec.NodeName != node.Name {
+			continue
+		}
+		nodePods = append(nodePods, pod)
+	}
+	return nodePods
 }

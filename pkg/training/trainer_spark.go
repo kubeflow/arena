@@ -244,16 +244,17 @@ type SparkJobTrainer struct {
 }
 
 func NewSparkJobTrainer() Trainer {
-	log.Debugf("Init Spark job trainer")
 	// TODO: disable the spark trainer,because there is some bugs to fix
 	enable := false
-	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
-		if crdName == SparkCRD {
-			enable = true
-			break
-		}
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(SparkCRD, metav1.GetOptions{})
+	if err == nil {
+		log.Debugf("SparkJobTrainer is enabled")
+		enable = true
+	} else {
+		log.Debugf("SparkJobTrainer is disabled")
 	}
 	sparkjobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
+	log.Debugf("Succeed to init SparkJobTrainer")
 	return &SparkJobTrainer{
 		sparkjobClient: sparkjobClient,
 		client:         config.GetArenaConfiger().GetClientSet(),
@@ -322,13 +323,9 @@ func (st *SparkJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, 
 		"release": name,
 		"app":     string(st.Type()),
 	}
-	podList, err := listJobPods(st.client, namespace, labels)
+	pods, err := listJobPods(st.client, namespace, labels)
 	if err != nil {
 		return nil, err
-	}
-	pods := []*v1.Pod{}
-	for _, pod := range podList.Items {
-		pods = append(pods, pod.DeepCopy())
 	}
 	filterPods, chiefPod := getPodsOfSparkJob(sparkJob, st, pods)
 
@@ -348,6 +345,13 @@ func (st *SparkJobTrainer) ListTrainingJobs(namespace string, allNamespace bool)
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
+	labels := map[string]string{
+		"app": string(st.Type()),
+	}
+	pods, err := listJobPods(st.client, namespace, labels)
+	if err != nil {
+		return nil, err
+	}
 	trainingJobs := []TrainingJob{}
 	sparkJobList, err := st.listJobs(namespace)
 	if err != nil {
@@ -355,18 +359,6 @@ func (st *SparkJobTrainer) ListTrainingJobs(namespace string, allNamespace bool)
 	}
 	for _, item := range sparkJobList.Items {
 		sparkjob := item.DeepCopy()
-		labels := map[string]string{
-			"release": sparkjob.Name,
-			"app":     string(st.Type()),
-		}
-		podList, err := listJobPods(st.client, sparkjob.Namespace, labels)
-		if err != nil {
-			return nil, err
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
 		filterPods, chiefPod := getPodsOfSparkJob(sparkjob, st, pods)
 		trainingJobs = append(trainingJobs, &SparkJob{
 			BasicJobInfo: &BasicJobInfo{

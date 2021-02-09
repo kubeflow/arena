@@ -33,6 +33,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 var trainers map[types.TrainingJobType]Trainer
@@ -41,20 +42,30 @@ var once sync.Once
 
 func GetAllTrainers() map[types.TrainingJobType]Trainer {
 	once.Do(func() {
+		locker := new(sync.RWMutex)
 		trainers = map[types.TrainingJobType]Trainer{}
 		trainerInits := []func() Trainer{
 			NewTensorFlowJobTrainer,
 			NewPyTorchJobTrainer,
 			NewMPIJobTrainer,
+			NewETJobTrainer,
 			NewHorovodJobTrainer,
 			NewVolcanoJobTrainer,
-			NewETJobTrainer,
 			NewSparkJobTrainer,
 		}
+		var wg sync.WaitGroup
 		for _, initFunc := range trainerInits {
-			trainer := initFunc()
-			trainers[trainer.Type()] = trainer
+			wg.Add(1)
+			f := initFunc
+			go func() {
+				defer wg.Done()
+				trainer := f()
+				locker.Lock()
+				trainers[trainer.Type()] = trainer
+				locker.Unlock()
+			}()
 		}
+		wg.Wait()
 	})
 	return trainers
 }
@@ -118,7 +129,6 @@ func getPodsOfTrainingJob(name, namespace string, podList []*v1.Pod, isTrainingJ
 		nonePendingChiefPod *v1.Pod
 	)
 	for _, item := range podList {
-		log.Debugf("found pod: %v", item.Name)
 		if !isTrainingJobPod(name, namespace, item) {
 			continue
 		}
@@ -169,104 +179,152 @@ func CheckOperatorIsInstalled(crdName string) bool {
 	return false
 }
 
-func listJobPods(k8sclient *kubernetes.Clientset, namespace string, labels map[string]string) (*v1.PodList, error) {
+func listJobPods(k8sclient *kubernetes.Clientset, namespace string, podLabels map[string]string) ([]*v1.Pod, error) {
+	pods := []*v1.Pod{}
+	podList := &v1.PodList{}
+	selectors, err := parseLabelSelectors(podLabels)
+	if err != nil {
+		return nil, err
+	}
 	if config.GetArenaConfiger().IsDaemonMode() {
-		list := &v1.PodList{}
-		err := arenacache.GetCacheClient().List(context.Background(), list, client.InNamespace(namespace), client.MatchingLabels(labels))
-		if err != nil {
-			return nil, err
-		}
-		return list, nil
+		err = arenacache.GetCacheClient().List(context.Background(), podList, client.InNamespace(namespace), &client.ListOptions{LabelSelector: selectors})
+	} else {
+		podList, err = k8sclient.CoreV1().Pods(namespace).List(metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ListOptions",
+				APIVersion: "v1",
+			}, LabelSelector: selectors.String(),
+		})
 	}
-	labelSelector := []string{}
-	for key, value := range labels {
-		if value != "" {
-			labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
-			continue
-		}
-		labelSelector = append(labelSelector, key)
+	if err != nil {
+		return nil, err
 	}
-	return k8sclient.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: strings.Join(labelSelector, ","),
-	})
+	for _, pod := range podList.Items {
+		pods = append(pods, pod.DeepCopy())
+	}
+	return pods, nil
 }
 
-func listStatefulSets(k8sclient *kubernetes.Clientset, namespace string, labels map[string]string) (*appv1.StatefulSetList, error) {
+func listStatefulSets(k8sclient *kubernetes.Clientset, namespace string, stsLabels map[string]string) ([]*appv1.StatefulSet, error) {
+	statefulsets := []*appv1.StatefulSet{}
+	stsList := &appv1.StatefulSetList{}
+	selectors, err := parseLabelSelectors(stsLabels)
+	if err != nil {
+		return nil, err
+	}
 	if config.GetArenaConfiger().IsDaemonMode() {
-		stsList := &appv1.StatefulSetList{}
-		err := arenacache.GetCacheClient().List(context.Background(), stsList, client.InNamespace(namespace), client.MatchingLabels(labels))
-		if err != nil {
-			return nil, err
-		}
-		return stsList, nil
+		err = arenacache.GetCacheClient().List(context.Background(), stsList, client.InNamespace(namespace), &client.ListOptions{LabelSelector: selectors})
+	} else {
+		// 2. Find the pod list, and determine the pod of the job
+		stsList, err = k8sclient.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ListOptions",
+				APIVersion: "v1",
+			}, LabelSelector: selectors.String(),
+		})
 	}
-	labelSelector := []string{}
-	for key, value := range labels {
-		if value != "" {
-			labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
-			continue
-		}
-		labelSelector = append(labelSelector, key)
+	if err != nil {
+		return nil, err
 	}
-	// 2. Find the pod list, and determine the pod of the job
-	return k8sclient.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: strings.Join(labelSelector, ","),
-	})
+	for _, sts := range stsList.Items {
+		statefulsets = append(statefulsets, sts.DeepCopy())
+	}
+	return statefulsets, nil
 }
 
-func listJobBatchJobs(k8sclient *kubernetes.Clientset, namespace string, labels map[string]string) (*batchv1.JobList, error) {
+func listJobBatchJobs(k8sclient *kubernetes.Clientset, namespace string, jobLabels map[string]string) ([]*batchv1.Job, error) {
+	jobs := []*batchv1.Job{}
+	jobList := &batchv1.JobList{}
+	selectors, err := parseLabelSelectors(jobLabels)
+	if err != nil {
+		return nil, err
+	}
 	if config.GetArenaConfiger().IsDaemonMode() {
-		jobList := &batchv1.JobList{}
-		err := arenacache.GetCacheClient().List(context.Background(), jobList, client.InNamespace(namespace), client.MatchingLabels(labels))
-		if err != nil {
-			return nil, err
-		}
-		return jobList, nil
+		err = arenacache.GetCacheClient().List(context.Background(), jobList, client.InNamespace(namespace), &client.ListOptions{LabelSelector: selectors})
+	} else {
+		jobList, err = k8sclient.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ListOptions",
+				APIVersion: "v1",
+			}, LabelSelector: selectors.String(),
+		})
 	}
-	labelSelector := []string{}
-	for key, value := range labels {
-		if value != "" {
-			labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
-			continue
-		}
-		labelSelector = append(labelSelector, key)
+	if err != nil {
+		return nil, err
 	}
-	return k8sclient.BatchV1().Jobs(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: strings.Join(labelSelector, ","),
-	})
+	for _, j := range jobList.Items {
+		jobs = append(jobs, j.DeepCopy())
+	}
+	return jobs, nil
 }
 
-func listServices(k8sclient *kubernetes.Clientset, namespace string, labels map[string]string) (*v1.ServiceList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		serviceList := &v1.ServiceList{}
-		err := arenacache.GetCacheClient().List(context.Background(), serviceList, client.InNamespace(namespace), client.MatchingLabels(labels))
-		if err != nil {
-			return nil, err
-		}
-		return serviceList, nil
+func ListServices(k8sclient *kubernetes.Clientset, namespace string, svcLabels map[string]string) ([]*v1.Service, error) {
+	return listServices(k8sclient, namespace, svcLabels)
+}
+func listServices(k8sclient *kubernetes.Clientset, namespace string, svcLabels map[string]string) ([]*v1.Service, error) {
+	services := []*v1.Service{}
+	serviceList := &v1.ServiceList{}
+	selectors, err := parseLabelSelectors(svcLabels)
+	if err != nil {
+		return nil, err
 	}
+	if config.GetArenaConfiger().IsDaemonMode() {
+		err = arenacache.GetCacheClient().List(context.Background(), serviceList, client.InNamespace(namespace), &client.ListOptions{LabelSelector: selectors})
+	} else {
+		serviceList, err = k8sclient.CoreV1().Services(namespace).List(metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ListOptions",
+				APIVersion: "v1",
+			}, LabelSelector: selectors.String(),
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, svc := range serviceList.Items {
+		services = append(services, svc.DeepCopy())
+	}
+	return services, nil
+}
+
+func ListNodes(k8sclient *kubernetes.Clientset, nodeLabels map[string]string) ([]*v1.Node, error) {
+	return listNodes(k8sclient, nodeLabels)
+}
+
+func listNodes(k8sclient *kubernetes.Clientset, nodeLabels map[string]string) ([]*v1.Node, error) {
+	nodeList := &v1.NodeList{}
+	nodes := []*v1.Node{}
+	selectors, err := parseLabelSelectors(nodeLabels)
+	if err != nil {
+		return nil, err
+	}
+	if config.GetArenaConfiger().IsDaemonMode() {
+		err = arenacache.GetCacheClient().List(context.Background(), nodeList, &client.ListOptions{LabelSelector: selectors})
+	} else {
+		nodeList, err = k8sclient.CoreV1().Nodes().List(metav1.ListOptions{})
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range nodeList.Items {
+		nodes = append(nodes, node.DeepCopy())
+	}
+	return nodes, nil
+}
+
+func parseLabelSelectors(objectLabels map[string]string) (labels.Selector, error) {
 	labelSelector := []string{}
-	for key, value := range labels {
-		labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
+	for key, value := range objectLabels {
 		if value != "" {
 			labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
 			continue
 		}
 		labelSelector = append(labelSelector, key)
 	}
-	return k8sclient.CoreV1().Services(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: strings.Join(labelSelector, ","),
-	})
+	selector, err := labels.Parse(strings.Join(labelSelector, ","))
+	if err != nil {
+		log.Errorf("failed to parse label selectors,reason: %v", err)
+		return nil, err
+	}
+	return selector, nil
 }
