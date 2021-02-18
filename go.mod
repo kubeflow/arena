@@ -8,12 +8,12 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.4.2
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/prometheus/client_golang v1.0.0
-	github.com/prometheus/common v0.4.1
-	github.com/sirupsen/logrus v1.4.2
+	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/common v0.16.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	gopkg.in/yaml.v2 v2.3.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
 	k8s.io/api v0.17.2
