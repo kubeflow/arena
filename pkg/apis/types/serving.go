@@ -11,6 +11,8 @@ const (
 	TRTServingJob ServingJobType = "trt-serving"
 	// KFServingJob defines the kfserving job
 	KFServingJob ServingJobType = "kf-serving"
+	// SeldonServingJob defines the seldon core job
+	SeldonServingJob ServingJobType = "seldon"
 	// CustomServingJob defines the custom serving job
 	CustomServingJob ServingJobType = "custom-serving"
 	// AllServingJob represents all serving job type
@@ -167,5 +169,11 @@ type KFServingArgs struct {
 	ModelType         string `yaml:"modelType"`     // --modelType
 	CanaryPercent     int    `yaml:"canaryPercent"` // --canaryTrafficPercent
 	StorageUri        string `yaml:"storageUri"`    // --storageUri
+	CommonServingArgs `yaml:",inline"`
+}
+
+type SeldonServingArgs struct {
+	Implementation    	string `yaml:"implementation"`	// --implementation
+	ModelUri        	string `yaml:"modelUri"`    	// --modelUri
 	CommonServingArgs `yaml:",inline"`
 }

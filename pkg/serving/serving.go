@@ -49,6 +49,7 @@ func GetAllProcesser() map[types.ServingJobType]Processer {
 			NewKFServingProcesser,
 			NewTensorflowServingProcesser,
 			NewTensorrtServingProcesser,
+			NewSeldonServingProcesser,
 		}
 		for _, initFunc := range processerInits {
 			p := initFunc()

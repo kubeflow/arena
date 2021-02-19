@@ -9,7 +9,8 @@ Available Commands:
   tensorflow,tf  Submit a TensorFlow Serving Job.
   tensorrt,trt   Submit a TensorRT Serving Job
   custom         Submit a Custom Serving Job  
-  kfserving,kfs  Submit a kubeflow Serving Job`
+  kfserving,kfs  Submit a kubeflow Serving Job
+  seldon		 Submit a Seldon Serving Job`
 )
 
 func NewServeCommand() *cobra.Command {
@@ -25,6 +26,7 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewSubmitTRTServingJobCommand())
 	command.AddCommand(NewSubmitCustomServingJobCommand())
 	command.AddCommand(NewSubmitKFServingJobCommand())
+	command.AddCommand(NewSubmitSeldonServingJobCommand())
 	command.AddCommand(NewListCommand())
 	command.AddCommand(NewDeleteCommand())
 	command.AddCommand(NewGetCommand())
