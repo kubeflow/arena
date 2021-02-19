@@ -327,7 +327,7 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/cli-runtime v0.16.9 => k8s.io/cli-runtime v0.16.9
+# k8s.io/cli-runtime v0.20.4 => k8s.io/cli-runtime v0.16.9
 k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/kustomize
 k8s.io/cli-runtime/pkg/kustomize/k8sdeps
