@@ -2,10 +2,12 @@ package training
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -22,6 +24,10 @@ func NewListCommand() *cobra.Command {
 			viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			now := time.Now()
+			defer func() {
+				log.Debugf("execute time of listing training jobs: %v\n", time.Now().Sub(now))
+			}()
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
 				LogLevel:       viper.GetString("loglevel"),

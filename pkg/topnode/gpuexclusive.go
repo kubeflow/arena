@@ -45,10 +45,7 @@ type gpuexclusive struct {
 }
 
 func NewGPUExclusiveNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
-	pods, err := listNodePods(client, node.Name)
-	if err != nil {
-		return nil, err
-	}
+	pods := getNodePods(node, args.pods)
 	return &gpuexclusive{
 		node:       node,
 		pods:       pods,

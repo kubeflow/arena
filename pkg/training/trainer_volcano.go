@@ -15,27 +15,20 @@
 package training
 
 import (
-	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/arenacache"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 	"github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
-)
-
-const (
-	VolcanoCRD = "jobs.batch.volcano.sh"
 )
 
 // volcano Job wrapper
@@ -260,16 +253,16 @@ type VolcanoJobTrainer struct {
 }
 
 func NewVolcanoJobTrainer() Trainer {
-	log.Debugf("Init Volcano job trainer")
 	volcanoClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	enable := false
-	// this step is used to check operator is installed or not
-	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
-		if crdName == VolcanoCRD {
-			enable = true
-			break
-		}
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(k8saccesser.VolcanoCRDName, metav1.GetOptions{})
+	if err == nil {
+		log.Debugf("VolcanoJobTrainer is enabled")
+		enable = true
+	} else {
+		log.Debugf("VolcanoJobTrainer is disabled,reason: %v", err)
 	}
+	log.Debugf("Succeed to init Volcano job trainer")
 	return &VolcanoJobTrainer{
 		volcanoJobClient: volcanoClient,
 		client:           config.GetArenaConfiger().GetClientSet(),
@@ -300,37 +293,14 @@ func (st *VolcanoJobTrainer) IsSupported(name, ns string) bool {
 }
 
 func (st *VolcanoJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
-	volcanoJob := &v1alpha1.Job{}
-	var err error
-	if config.GetArenaConfiger().IsDaemonMode() {
-		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, volcanoJob)
-		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`Job.batch.volcano.sh "%v" not found`, name)) {
-				return nil, types.ErrTrainingJobNotFound
-			}
-			return nil, fmt.Errorf("failed to find volcanojob %v from cache,reason: %v", name, err)
-		}
-	} else {
-		volcanoJob, err = st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).Get(name, metav1.GetOptions{})
-		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, VolcanoCRD, name)) {
-				return nil, types.ErrTrainingJobNotFound
-			}
-			return nil, fmt.Errorf("failed to find volcanojob from api server,reason: %v", err)
-		}
-	}
-	// get the pods from the api server
-	labels := map[string]string{
-		"release": name,
-		"app":     string(st.Type()),
-	}
-	podList, err := listJobPods(st.client, namespace, labels)
+	accesser := k8saccesser.GetK8sResourceAccesser()
+	volcanoJob, err := accesser.GetVolcanoJob(st.volcanoJobClient, namespace, name)
 	if err != nil {
 		return nil, err
 	}
-	pods := []*v1.Pod{}
-	for _, pod := range podList.Items {
-		pods = append(pods, pod.DeepCopy())
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("release=%v,app=%v", name, st.Type()), "", nil)
+	if err != nil {
+		return nil, err
 	}
 	// filter pods and find chief pod
 	filterPods, chiefPod := getPodsOfVolcanoJob(volcanoJob, st, pods)
@@ -350,25 +320,16 @@ func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace boo
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
-	jobList, err := st.listJobs(namespace)
+	jobs, err := k8saccesser.GetK8sResourceAccesser().ListVolcanoJobs(st.volcanoJobClient, namespace)
+	if err != nil {
+		return nil, err
+	}
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("app=%v", st.Type()), "", nil)
 	if err != nil {
 		return nil, err
 	}
 	trainingJobs := []TrainingJob{}
-	for _, item := range jobList.Items {
-		job := item.DeepCopy()
-		labels := map[string]string{
-			"release": job.Name,
-			"app":     string(st.Type()),
-		}
-		podList, err := listJobPods(st.client, job.Namespace, labels)
-		if err != nil {
-			return nil, err
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
+	for _, job := range jobs {
 		// filter pods and find chief pod
 		filterPods, chiefPod := getPodsOfVolcanoJob(job, st, pods)
 		trainingJobs = append(trainingJobs, &VolcanoJob{
@@ -383,16 +344,6 @@ func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace boo
 		})
 	}
 	return trainingJobs, nil
-}
-
-func (st *VolcanoJobTrainer) listJobs(namespace string) (*v1alpha1.JobList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		list := &v1alpha1.JobList{}
-		return list, arenacache.GetCacheClient().ListTrainingJobs(list, namespace)
-	}
-	return st.volcanoJobClient.BatchV1alpha1().Jobs(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release"),
-	})
 }
 
 func (st *VolcanoJobTrainer) isVolcanoJob(name, ns string, job *v1alpha1.Job) bool {

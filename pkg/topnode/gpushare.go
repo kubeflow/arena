@@ -45,10 +45,7 @@ type gpushare struct {
 }
 
 func NewGPUShareNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
-	pods, err := listNodePods(client, node.Name)
-	if err != nil {
-		return nil, err
-	}
+	pods := getNodePods(node, args.pods)
 	return &gpushare{
 		node:       node,
 		pods:       pods,

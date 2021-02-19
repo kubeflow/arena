@@ -40,7 +40,7 @@ func NewTopJobCommand() *cobra.Command {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
 			return client.Training().Top(
-				args, viper.GetString("namespace"),
+				args,
 				allNamespaces,
 				utils.TransferTrainingJobType(jobType),
 				instanceName,

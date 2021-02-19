@@ -3,8 +3,9 @@ package arenacache
 import (
 	"context"
 	"fmt"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sync"
+
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	v1alpha12 "github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
 	"github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
@@ -14,6 +15,7 @@ import (
 	volcano_v1alpha1 "github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"

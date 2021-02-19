@@ -14,7 +14,7 @@ Now, assume that there is 3 users to use arena and their privileges are describe
 
 the following steps describe how to generate the kubeconfig files of the users.
 
-1. Prepare the user configuration file, you can refer the ~/charts/user/values.yaml or /charts/user/values.yaml to write your own user configuration file.
+1.Prepare the user configuration file, you can refer the ~/charts/user/values.yaml or /charts/user/values.yaml to write your own user configuration file.
 
 The user alex doesn't need to prepare a user configuration file,because it use the default configuration. 
 
@@ -54,18 +54,8 @@ roles:
 ```
 and store it to /tmp/tom-config.yaml
 
-2.Create the user namespace.
 
-```
-$ kubectl create ns workplace1
-
-$ kubectl create ns workplace2
-
-$ kubectl create ns workplace3
-
-```
-
-3.Generate user kubeconfig, the script 'arena-gen-kubeconfig.sh' can help you:
+2.Generate user kubeconfig, the script 'arena-gen-kubeconfig.sh' can help you:
 
 ```
 $ arena-gen-kubeconfig.sh -h
@@ -122,16 +112,16 @@ $ arena-gen-kubeconfig.sh --user-name tom --user-namespace workplace3 --user-con
 ```
 the kubeconfig file will store at /tmp/tom.kubeconfig 
 
-4.Make the kubeconfig file is valid, you can set the env KUBECONFIG like:
+3.Make the kubeconfig file is valid, you can set the env KUBECONFIG like:
 
 ```
 $ export KUBECONFIG=/tmp/alex.kubeconfig
  
 ```
 
-5.Now you can use arena to submit your training jobs.
+4.Now you can use arena to submit your training jobs.
 
-6.If you want to delete the user,execute the command like:
+5.If you want to delete the user,execute the command like:
 
 ```
 $ arena-gen-kubeconfig.sh --user-name tom --user-namespace workplace3 --delete
