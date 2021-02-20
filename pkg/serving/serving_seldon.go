@@ -23,7 +23,7 @@ func NewSeldonServingProcesser() Processer {
 		enable:          true,
 		useIstioGateway: true,
 	}
-	return &KFServingProcesser{
+	return &SeldonServingProcesser{
 		processer: p,
 	}
 }
@@ -42,7 +42,7 @@ func SubmitSeldonServingJob(namespace string, args *types.SeldonServingArgs) (er
 	}
 	// if job has been existed,skip to create it and return an error
 	if len(jobs) != 0 {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena serve delete %s -n kfserving'", args.Name, args.Name)
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena serve delete %s -n namespace'", args.Name, args.Name)
 	}
 	// the master is also considered as a worker
 	chart := util.GetChartsFolder() + "/seldon-core"
