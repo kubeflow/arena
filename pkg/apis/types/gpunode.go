@@ -41,48 +41,77 @@ var NodeTypeSlice = []NodeTypeInfo{
 }
 
 type CommonNodeInfo struct {
-	Name   string   `json:"name" yaml:"name"`
-	IP     string   `json:"ip" yaml:"ip"`
-	Status string   `json:"status" yaml:"status"`
-	Role   string   `json:"role" yaml:"role"`
-	Type   NodeType `json:"type" yaml:"type"`
+	Name        string   `json:"name" yaml:"name"`
+	Description string   `json:"description" yaml:"description"`
+	IP          string   `json:"ip" yaml:"ip"`
+	Status      string   `json:"status" yaml:"status"`
+	Role        string   `json:"role" yaml:"role"`
+	Type        NodeType `json:"type" yaml:"type"`
+}
+
+/*
+type CommonGPUNodeInfo struct {
+	TotalGPUs           int             `json:"totalGPUs" yaml:"totalGPUs"`
+	AllocatedGPUs       int             `json:"allocatedGPUs" yaml:"allocatedGPUs"`
+	UnhealthyGPUs       int             `json:"unhealthyGPUs" yaml:"unhealthyGPUs"`
+	TotalGPUMemory      float64         `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+	AllocatedGPUMemory  float64         `json:"allocatedGPUMemory" yaml:"allocatedGPUMemory"`
+	UsedGPUMemory       float64         `json:"usedGPUMemory" yaml:"usedGPUMemory"`
+	Devices             []GPUDeviceInfo `json:"devices" yaml:"devices"`
+	DutyCycle           float64         `json:"dutyCycle" yaml:"dutyCycle"`
+	GPUMetrics          NodeGpuMetric   `json:"gpuMetrics" yaml:"gpuMetrics"`
+	GPUMetricsIsEnabled bool            `json:"gpuMetricsIsEnabled" yaml:"gpuMetricsIsEnabled"`
+}
+*/
+
+type CommonGPUNodeInfo struct {
+	TotalGPUs     int                  `json:"totalGPUs" yaml:"totalGPUs"`
+	AllocatedGPUs int                  `json:"allocatedGPUs" yaml:"allocatedGPUs"`
+	UnhealthyGPUs int                  `json:"unhealthyGPUs" yaml:"unhealthyGPUs"`
+	GPUMetrics    []*AdvancedGpuMetric `json:"gpuMetrics" yaml:"gpuMetrics"`
+}
+
+type GPUDeviceInfo struct {
+	ID                 string  `json:"id" yaml:"id"`
+	TotalGPUMemory     float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+	AllocatedGPUMemory float64 `json:"allocatedGPUMemory" yaml:"allocatedGPUMemory"`
+	UsedGPUMemory      float64 `json:"usedGPUMemory" yaml:"usedGPUMemory"`
+	DutyCycle          float64 `json:"dutyCycle" yaml:"dutyCycle"`
 }
 
 type GPUShareNodeInfo struct {
-	GPUCount        int                  `json:"gpuCount" yaml:"gpuCount"`
-	TotalGPUMem     int                  `json:"totalGPUMemory" yaml:"totalGPUMemory"`
-	UnHealthyGPUMem int                  `json:"unhealthyGPUMemory" yaml:"unhealthyGPUMemory"`
-	UsedGPUMem      int                  `json:"usedGPUMemory" yaml:"usedGPUMemory"`
-	Pods            []GPUSharePodInfo    `json:"instances" yaml:"instances"`
-	Devices         []GPUShareDeviceInfo `json:"devices" yaml:"devices"`
-	CommonNodeInfo  `yaml:",inline" json:",inline"`
-}
-
-type GPUShareDeviceInfo struct {
-	ID          string `json:"id" yaml:"id"`
-	IsHealthy   bool   `json:"-" yaml:"-"`
-	UsedGPUMem  int    `json:"usedGPUMemory" yaml:"usedGPUMemory"`
-	TotalGPUMem int    `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+	PodInfos           []GPUSharePodInfo    `json:"instances" yaml:"instances"`
+	TotalGPUMemory     float64              `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+	AllocatedGPUMemory float64              `json:"allocatedGPUMemory" yaml:"allocatedGPUMemory"`
+	Devices            []GPUShareNodeDevice `json:"devices" yaml:"devices"`
+	CommonGPUNodeInfo  `yaml:",inline" json:",inline"`
+	CommonNodeInfo     `yaml:",inline" json:",inline"`
 }
 
 type GPUSharePodInfo struct {
 	Name          string         `json:"name" yaml:"name"`
 	Namespace     string         `json:"namespace" yaml:"namespace"`
+	Status        string         `json:"status" yaml:"status"`
 	RequestMemory int            `json:"requestGPUMemory" yaml:"requestGPUMemory"`
 	Allocation    map[string]int `json:"allocation" yaml:"allocation"`
 }
 
+type GPUShareNodeDevice struct {
+	Id                 string  `json:"id" yaml:"id"`
+	TotalGPUMemory     float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+	AllocatedGPUMemory float64 `json:"allocatedGPUMemory" yaml:"allocatedGPUMemory"`
+}
+
 type GPUExclusiveNodeInfo struct {
-	TotalGPUs      int                   `json:"totalGPUs" yaml:"totalGPUs"`
-	UsedGPUs       int                   `json:"usedGPUs" yaml:"usedGPUs"`
-	UnHealthyGPUs  int                   `json:"unhealthyGPUs" yaml:"unhealthyGPUs"`
-	PodInfos       []GPUExclusivePodInfo `json:"instances" yaml:"instances"`
-	CommonNodeInfo `yaml:",inline" json:",inline"`
+	PodInfos          []GPUExclusivePodInfo `json:"instances" yaml:"instances"`
+	CommonNodeInfo    `yaml:",inline" json:",inline"`
+	CommonGPUNodeInfo `yaml:",inline" json:",inline"`
 }
 
 type GPUExclusivePodInfo struct {
 	Name       string `json:"name" yaml:"name"`
 	Namespace  string `json:"namespace" yaml:"namespace"`
+	Status     string `json:"status" yaml:"status"`
 	RequestGPU int    `json:"requestGPUs" yaml:"requestGPUs"`
 }
 
@@ -92,23 +121,12 @@ type NormalNodeInfo struct {
 
 type AllNodeInfo map[string][]interface{}
 
-/*
-type AllNodeInfo struct {
-	GPUShareNodes     []GPUShareNodeInfo     `json:"gpushare_nodes" yaml:"gpushare_nodes"`
-	GPUExclusiveNodes []GPUExclusiveNodeInfo `json:"gpu_exclusive_nodes" yaml:"gpu_exclusive_nodes"`
-	NormalNodes       []NormalNodeInfo       `json:"normal_nodes" yaml:"normal_nodes"`
-	GPUTopologyNodes  []GPUTopologyNodeInfo  `json:"gpu_topology_nodes" yaml:"gpu_topology_nodes"`
-}
-*/
-
 type GPUTopologyNodeInfo struct {
-	TotalGPUs      int                     `json:"totalGPUs" yaml:"totalGPUs"`
-	UsedGPUs       int                     `json:"usedGPUs" yaml:"usedGPUs"`
-	UnHealthyGPUs  int                     `json:"unhealthyGPUs" yaml:"unhealthyGPUs"`
-	PodInfos       []GPUTopologyPodInfo    `json:"instances" yaml:"instances"`
-	GPUTopology    GPUTopology             `json:"gpuTopology" yaml:"gpuTopology"`
-	Devices        []GPUTopologyDeviceInfo `json:"devices" yaml:"devices"`
-	CommonNodeInfo `yaml:",inline" json:",inline"`
+	PodInfos          []GPUTopologyPodInfo `json:"instances" yaml:"instances"`
+	GPUTopology       GPUTopology          `json:"gpuTopology" yaml:"gpuTopology"`
+	CommonGPUNodeInfo `yaml:",inline" json:",inline"`
+	CommonNodeInfo    `yaml:",inline" json:",inline"`
+	Devices           []GPUTopologyNodeDevice `yaml:"devices" yaml:"devices"`
 }
 
 type GPUTopology struct {
@@ -119,13 +137,14 @@ type GPUTopology struct {
 type GPUTopologyPodInfo struct {
 	Name        string   `json:"name" yaml:"name"`
 	Namespace   string   `json:"namespace" yaml:"namespace"`
+	Status      string   `json:"status" yaml:"status"`
 	RequestGPU  int      `json:"requestGPUs" yaml:"requestGPUs"`
 	Allocation  []string `json:"allocation" yaml:"allocation"`
 	VisibleGPUs []string `json:"visibleGPUs" yaml:"visibleGPUs"`
 }
 
-type GPUTopologyDeviceInfo struct {
-	Index   string `json:"gpuIndex" yaml:"gpuIndex"`
-	Status  string `json:"status" yaml:"status"`
+type GPUTopologyNodeDevice struct {
+	Id      string `json:"id" yaml:"id"`
 	Healthy bool   `json:"healthy" yaml:"healthy"`
+	Status  string `json:"status" yaml:"status"`
 }

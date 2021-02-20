@@ -20,7 +20,6 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/arenacache"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -68,6 +67,10 @@ func (h *HorovodJob) AllPods() []*v1.Pod {
 func (h *HorovodJob) RequestedGPU() int64 {
 	if h.requestedGPU > 0 {
 		return h.requestedGPU
+	}
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(h.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
 	}
 	for _, pod := range h.pods {
 		h.requestedGPU += gpuInPod(*pod)
@@ -236,14 +239,7 @@ func (h *HorovodJobTrainer) IsSupported(name, ns string) bool {
 		return false
 	}
 	isHorovodJob := false
-	if config.GetArenaConfiger().IsDaemonMode() {
-		_, err := h.getTrainingJobFromCache(name, ns)
-		if err != nil {
-			return isHorovodJob
-		}
-		return !isHorovodJob
-	}
-	_, err := h.getTrainingJob(name, ns)
+	_, err := h.GetTrainingJob(name, ns)
 	if err != nil {
 		return isHorovodJob
 	}
@@ -254,23 +250,13 @@ func (h *HorovodJobTrainer) Type() types.TrainingJobType {
 	return h.trainerType
 }
 
-func (h *HorovodJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
-	// if arena is daemon mode,get job from cache
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return h.getTrainingJobFromCache(name, namespace)
-	}
-	// get job from api server
-	return h.getTrainingJob(name, namespace)
-}
-
-func (h *HorovodJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
+func (h *HorovodJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
 	// 1. Get the batchJob of training Job
-	jobList, err := h.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,app=tf-horovod", name),
-	})
+	labels := map[string]string{
+		"release": name,
+		"app":     "tf-horovod",
+	}
+	jobList, err := listJobBatchJobs(h.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
@@ -279,12 +265,7 @@ func (h *HorovodJobTrainer) getTrainingJob(name, namespace string) (TrainingJob,
 	}
 	job := jobList.Items[0]
 	// 2. Find the pod list, and determine the pod of the job
-	podList, err := h.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,app=tf-horovod", name),
-	})
+	podList, err := listJobPods(h.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
@@ -308,75 +289,31 @@ func (h *HorovodJobTrainer) getTrainingJob(name, namespace string) (TrainingJob,
 	}, nil
 }
 
-// Get the training job from Cache
-func (h *HorovodJobTrainer) getTrainingJobFromCache(name, namespace string) (TrainingJob, error) {
-	// 1.find the k8s job from the cache
-	jobs, allPods := arenacache.GetArenaCache().FilterK8sJobs(func(job *batchv1.Job) bool {
-		return h.isHorovodJob(name, namespace, job)
-	}, func(job *batchv1.Job, pod *v1.Pod) bool {
-		return h.isHorovodPod(job.Name, job.Namespace, pod)
-	})
-	if len(jobs) == 0 {
-		return nil, types.ErrTrainingJobNotFound
-	}
-	job := &batchv1.Job{}
-	pods := []*v1.Pod{}
-	for key, j := range jobs {
-		job = j
-		pods = allPods[key]
-		break
-	}
-	// 2.find the pods, and determine the pod of the job
-	filterPods, chiefPod := getPodsOfHorovodJob(h, job, pods)
-
-	return &HorovodJob{
-		BasicJobInfo: &BasicJobInfo{
-			name:      name,
-			resources: podResources(filterPods),
-		},
-		job:         job,
-		chiefPod:    chiefPod,
-		pods:        filterPods,
-		trainerType: h.Type(),
-	}, nil
-}
-
 /**
 * List Training jobs
  */
-func (h *HorovodJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (jobs []TrainingJob, err error) {
-	// if arena is configured as daemon,getting all mpijobs from cache is corrent
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return h.listFromCache(namespace, allNamespace)
-	}
-	return h.listFromAPIServer(namespace, allNamespace)
-}
-
-// listFromAPIServer lists the horovod from api server
-func (h *HorovodJobTrainer) listFromAPIServer(namespace string, allNamespace bool) ([]TrainingJob, error) {
+func (h *HorovodJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) ([]TrainingJob, error) {
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
 	// 1. Get the batchJob of training Job
-	jobList, err := h.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release,app=tf-horovod"),
-	})
+	labels := map[string]string{
+		"release": "",
+		"app":     "tf-horovod",
+	}
+	jobList, err := listJobBatchJobs(h.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
 	for _, item := range jobList.Items {
 		job := item.DeepCopy()
 		// 2. Find the pod list, and determine the pod of the job
-		podList, err := h.client.CoreV1().Pods(job.Namespace).List(metav1.ListOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ListOptions",
-				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s,app=tf-horovod", job.Name),
-		})
+		labels = map[string]string{
+			"release": job.Name,
+			"app":     "tf-horovod",
+		}
+		podList, err := listJobPods(h.client, job.Namespace, labels)
 		if err != nil {
 			log.Errorf("failed to get pods of job %v,reason: %v", job.Name, err)
 			continue
@@ -387,35 +324,6 @@ func (h *HorovodJobTrainer) listFromAPIServer(namespace string, allNamespace boo
 		}
 		// get chief pod
 		filterPods, chiefPod := getPodsOfHorovodJob(h, job, pods)
-		trainingJobs = append(trainingJobs, &HorovodJob{
-			BasicJobInfo: &BasicJobInfo{
-				name:      job.Name,
-				resources: podResources(filterPods),
-			},
-			job:         job,
-			chiefPod:    chiefPod,
-			pods:        filterPods,
-			trainerType: h.Type(),
-		})
-	}
-	return trainingJobs, nil
-}
-
-// listFromCache lists mpijobs from arena cache
-func (h *HorovodJobTrainer) listFromCache(namespace string, allNamespace bool) ([]TrainingJob, error) {
-	// 1.define filter function
-	filter := func(job *batchv1.Job) bool { return job.Namespace == namespace }
-	// 2.if all namespaces is true,get all mpijobs
-	if allNamespace {
-		filter = func(job *batchv1.Job) bool { return true }
-	}
-	jobs, allPods := arenacache.GetArenaCache().FilterK8sJobs(filter, func(job *batchv1.Job, pod *v1.Pod) bool {
-		return h.isHorovodPod(job.Name, job.Namespace, pod)
-	})
-	trainingJobs := []TrainingJob{}
-	for key, job := range jobs {
-		// find the pods, and determine the pod of the job
-		filterPods, chiefPod := getPodsOfHorovodJob(h, job, allPods[key])
 		trainingJobs = append(trainingJobs, &HorovodJob{
 			BasicJobInfo: &BasicJobInfo{
 				name:      job.Name,

@@ -354,6 +354,13 @@ func (b *TFJobBuilder) CleanPodPolicy(policy string) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) RoleSequence(roles []string) *TFJobBuilder {
+	if roles != nil && len(roles) != 0 {
+		b.argValues["role-sequence"] = strings.Join(roles, ",")
+	}
+	return b
+}
+
 func (b *TFJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
 		b.AddArgValue(key, value)

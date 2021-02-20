@@ -72,7 +72,7 @@ func NewGetCommand() *cobra.Command {
 					log.Errorf("failed to create arena client: %v", err)
 					os.Exit(1)
 				}
-				err = client.Training().GetAndPrint(name, utils.TransferTrainingJobType(trainingType), printArgs.Output, printArgs.ShowEvents)
+				err = client.Training().GetAndPrint(name, utils.TransferTrainingJobType(trainingType), printArgs.Output, printArgs.ShowEvents, true)
 				if err != nil {
 					log.Errorf("failed to get job details: %v", err)
 					os.Exit(1)

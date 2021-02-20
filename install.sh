@@ -28,7 +28,11 @@ function support_image_regionalization(){
 		if [ -d $path ];then
 			support_image_regionalization $path
 		else
-			sed -i  "s@registry\..*aliyuncs.com@registry-vpc.${REGION}.aliyuncs.com@g" $path
+        	if [[ $PULL_IMAGE_BY_VPC_NETWORK == "true" ]];then
+				sed -i  "s@registry\..*aliyuncs.com@registry-vpc.${REGION}.aliyuncs.com@g" $path
+			else
+				sed -i  "s@registry\..*aliyuncs.com@registry.${REGION}.aliyuncs.com@g" $path
+			fi
 		fi
 	done
 }
@@ -130,6 +134,10 @@ ${sudo_prefix} cp $SCRIPT_DIR/bin/arena /usr/local/bin/arena
 ${sudo_prefix} rm -rf /usr/local/bin/arena-helm
 
 ${sudo_prefix} cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
+
+${sudo_prefix} rm -rf /usr/local/bin/arena-gen-kubeconfig.sh
+
+${sudo_prefix} cp $SCRIPT_DIR/bin/arena-gen-kubeconfig.sh /usr/local/bin/arena-gen-kubeconfig.sh
 
 # For non-root user, put the charts dir to the home directory
 if [ `id -u` -eq 0 ];then  

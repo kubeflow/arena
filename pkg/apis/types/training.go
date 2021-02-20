@@ -117,6 +117,9 @@ type TrainingJobInfo struct {
 
 	// AllocatedGPU stores the allocated gpus
 	AllocatedGPU int64 `json:"allocatedGPUs" yaml:"allocatedGPUs"`
+
+	// CreationTimestamp stores the creation timestamp of job
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
 
 // TrainingJobStatus defines all the kinds of JobStatus
@@ -135,6 +138,8 @@ const (
 
 // TrainingJobInstance defines the instance of training job
 type TrainingJobInstance struct {
+	// IP defines the instance ip
+	IP string `json:"ip" yaml:"ip"`
 	// the status of of instance
 	Status string `json:"status"`
 	// the name of instance
@@ -152,3 +157,7 @@ type TrainingJobInstance struct {
 	// GpuDutyCycle stores the gpu metrics
 	GPUMetrics map[string]GpuMetric `json:"gpuMetrics" yaml:"gpuMetrics"`
 }
+
+const (
+	RequestGPUsOfJobAnnoKey = "requestGPUsOfJobOwner"
+)

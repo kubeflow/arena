@@ -25,12 +25,16 @@ func NewTopJobCommand() *cobra.Command {
 			viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			isDaemonMode := false
+			if notStop {
+				isDaemonMode = true
+			}
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
 				LogLevel:       viper.GetString("loglevel"),
 				Namespace:      viper.GetString("namespace"),
 				ArenaNamespace: viper.GetString("arena-namespace"),
-				IsDaemonMode:   false,
+				IsDaemonMode:   isDaemonMode,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)

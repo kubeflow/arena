@@ -77,6 +77,8 @@ type ServingJobInfo struct {
 	RequestGPU int `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory specifies the request gpu memory,only for gpushare
 	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	// CreationTimestamp stores the creation timestamp of job
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
 
 type Endpoint struct {

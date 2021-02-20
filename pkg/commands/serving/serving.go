@@ -30,6 +30,7 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewListCommand())
 	command.AddCommand(NewDeleteCommand())
 	command.AddCommand(NewGetCommand())
+	command.AddCommand(NewAttachCommand())
 	command.AddCommand(NewLogsCommand())
 	command.AddCommand(NewTrafficRouterSplitCommand())
 	return command

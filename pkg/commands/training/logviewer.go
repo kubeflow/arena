@@ -27,8 +27,8 @@ import (
 func NewLogViewerCommand() *cobra.Command {
 	var jobType string
 	var command = &cobra.Command{
-		Use:   "logviewer job",
-		Short: "display Log Viewer URL of a training job",
+		Use:   "logviewer JOB [-T JOB_TYPE]",
+		Short: "Display Log Viewer URL of a training job",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

@@ -2,11 +2,13 @@ package arenaclient
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	apiserving "github.com/kubeflow/arena/pkg/apis/serving"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/podexec"
 	"github.com/kubeflow/arena/pkg/serving"
 )
 
@@ -112,6 +114,34 @@ func (t *ServingJobClient) Logs(jobName, version string, jobType types.ServingJo
 	return serving.AcceptJobLog(jobName, version, jobType, args)
 }
 
+func (t *ServingJobClient) Attach(jobName, version string, jobType types.ServingJobType, args *podexec.AttachPodArgs) error {
+	job, err := t.Get(jobName, version, jobType)
+	if err != nil {
+		return err
+	}
+	if len(job.Instances) == 0 {
+		return fmt.Errorf("can not attach the training job %v, because it has no instances", job.Name)
+	}
+	if args.Options.PodName == "" {
+		if len(job.Instances) > 1 {
+			return fmt.Errorf("%v", moreThanOneInstanceHelpInfo(job.Instances))
+		}
+		if len(job.Instances) == 0 {
+			return fmt.Errorf("not found instances of serving job %v", job.Name)
+		}
+		args.Options.PodName = job.Instances[0].Name
+	}
+	command := []string{job.Name}
+	command = append(command, args.Command...)
+	if err := args.Options.Complete(command, t.namespace, args.CmdArgsLenAtDash); err != nil {
+		return err
+	}
+	if err := args.Options.Validate(); err != nil {
+		return err
+	}
+	return args.Options.Run()
+}
+
 // Delete deletes the target training job
 func (t *ServingJobClient) Delete(jobType types.ServingJobType, version string, jobNames ...string) error {
 	for _, jobName := range jobNames {
@@ -125,4 +155,15 @@ func (t *ServingJobClient) Delete(jobType types.ServingJobType, version string, 
 
 func (t *ServingJobClient) TrafficRouterSplit(args *types.TrafficRouterSplitArgs) error {
 	return serving.RunTrafficRouterSplit(args.Namespace, args)
+}
+
+func moreThanOneInstanceHelpInfo(instances []types.ServingInstance) string {
+	header := fmt.Sprintf("There is %d instances have been found:", len(instances))
+	lines := []string{}
+	footer := fmt.Sprintf("please use '-i' or '--instance' to filter.")
+	for _, i := range instances {
+		lines = append(lines, fmt.Sprintf("%v", i.Name))
+	}
+	return fmt.Sprintf("%s\n\n%s\n\n%s\n", header, strings.Join(lines, "\n"), footer)
+
 }

@@ -32,10 +32,11 @@ var dashboardURL string
 func NewGetCommand() *cobra.Command {
 	var jobType string
 	var showEvents bool
+	var showGPUs bool
 	var output string
 	var command = &cobra.Command{
-		Use:   "get training job",
-		Short: "display details of a training job",
+		Use:   "get JOB [-T JOB_TYPE]",
+		Short: "Display a training job details",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},
@@ -55,11 +56,12 @@ func NewGetCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			return client.Training().GetAndPrint(name, utils.TransferTrainingJobType(jobType), output, showEvents)
+			return client.Training().GetAndPrint(name, utils.TransferTrainingJobType(jobType), output, showEvents, showGPUs)
 		},
 	}
 	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The training type to get, the possible option is %v. (optional)", utils.GetSupportTrainingJobTypesInfo()))
 	command.Flags().BoolVarP(&showEvents, "events", "e", false, "Specify if show pending pod's events.")
+	command.Flags().BoolVarP(&showGPUs, "gpus", "g", false, "Specify if show gpu utilizations of job.")
 	command.Flags().StringVarP(&output, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	return command
 }

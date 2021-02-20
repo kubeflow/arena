@@ -492,7 +492,7 @@ func initIstioClient() (*rest.RESTClient, error) {
 			return nil
 		})
 	err = schemeBuilder.AddToScheme(types)
-	restConfig.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)}
+	restConfig.NegotiatedSerializer = serializer.NewCodecFactory(types)
 	// create the clientset
 
 	return rest.RESTClientFor(restConfig)

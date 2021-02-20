@@ -30,6 +30,7 @@ func NewTopNodeCommand() *cobra.Command {
 		showDetails bool
 		output      string
 		nodeType    string
+		notStop     bool
 	)
 	var command = &cobra.Command{
 		Use:   "node",
@@ -38,20 +39,25 @@ func NewTopNodeCommand() *cobra.Command {
 			viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			isDaemonMode := false
+			if notStop {
+				isDaemonMode = true
+			}
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
 				LogLevel:       viper.GetString("loglevel"),
 				Namespace:      viper.GetString("namespace"),
 				ArenaNamespace: viper.GetString("arena-namespace"),
-				IsDaemonMode:   false,
+				IsDaemonMode:   isDaemonMode,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			return client.Node().ListAndPrintNodes(args, utils.TransferNodeType(nodeType), utils.TransferPrintFormat(output), showDetails)
+			return client.Node().ListAndPrintNodes(args, utils.TransferNodeType(nodeType), utils.TransferPrintFormat(output), showDetails, notStop)
 		},
 	}
 	command.Flags().BoolVarP(&showDetails, "details", "d", false, "Display details")
+	command.Flags().BoolVarP(&notStop, "refresh", "r", false, "Display continuously")
 	command.Flags().StringVarP(&nodeType, "gpu-mode", "m", "", fmt.Sprintf("Display node information with following gpu mode:[%v]", strings.Join(utils.GetSupportedNodeTypes(), "|")))
 	command.Flags().StringVarP(&output, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	return command

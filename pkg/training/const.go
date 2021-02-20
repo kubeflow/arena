@@ -38,6 +38,8 @@ const (
 	nodeLabelRole = "kubernetes.io/role"
 
 	aliyunENIAnnotation = "k8s.aliyun.com/eni"
+
+	requestGPUsOfJobAnnoKey = "requestGPUsOfJobOwner"
 )
 
 var (

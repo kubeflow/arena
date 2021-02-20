@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 
@@ -27,6 +28,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -85,7 +87,7 @@ func topTrainingJobs(args []string, namespace string, allNamespaces bool, jobTyp
 	jobs = makeTrainingJobOrderdByGPUCount(jobs)
 	jobInfos := []types.TrainingJobInfo{}
 	for _, job := range jobs {
-		jobInfo := BuildJobInfo(job)
+		jobInfo := BuildJobInfo(job, true)
 		jobInfos = append(jobInfos, *jobInfo)
 	}
 	switch format {
@@ -119,7 +121,7 @@ func topTrainingJobs(args []string, namespace string, allNamespaces bool, jobTyp
 func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notStop bool, format types.FormatStyle) string {
 	outputs := []string{}
 	for _, jobInfo := range jobs {
-		lines := []string{"", "Instances:", "  NAME\tSTATUS\tGPU(Request)\tNODE\tGPU(DeviceIndex)\tGPU(DutyCycle)\tGPU(Memory/MiB)"}
+		lines := []string{"", "Instances:", "  NAME\tSTATUS\tGPU(Request)\tNODE\tGPU(DeviceIndex)\tGPU(DutyCycle)\tGPU_MEMORY(Used/Total)"}
 		lines = append(lines, "  ----\t------\t------------\t----\t----------------\t--------------\t---------------")
 		for _, instance := range jobInfo.Instances {
 			if instanceName != "" && instanceName != instance.Name {
@@ -147,7 +149,7 @@ func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notSto
 					hostIP = ""
 				}
 				gpuMetric := instance.GPUMetrics[gpuId]
-				lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v\t%.1f%%\t%.1fMiB/%.1fMiB",
+				lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v\t%.1f%%\t%.1f/%.1f(MiB)",
 					name,
 					status,
 					requestGPUs,
@@ -159,6 +161,14 @@ func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notSto
 				))
 			}
 		}
+		var duration int64
+		var err error
+		jobInfo.Duration = strings.Replace(jobInfo.Duration, "s", "", -1)
+		duration, err = strconv.ParseInt(jobInfo.Duration, 10, 64)
+		if err != nil {
+			log.Debugf("failed to parse duration: %v", err)
+
+		}
 		lines = append(lines, "", "GPUs:")
 		lines = append(lines, fmt.Sprintf("  Allocated/Requested GPUs of Job: %v/%v", jobInfo.AllocatedGPU, jobInfo.RequestGPU))
 		outputs = append(outputs, fmt.Sprintf(strings.Trim(topJobTemplate, "\n"),
@@ -166,8 +176,8 @@ func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notSto
 			jobInfo.Status,
 			jobInfo.Namespace,
 			jobInfo.Priority,
-			jobInfo.Trainer,
-			jobInfo.Duration,
+			strings.ToUpper(fmt.Sprintf("%v", jobInfo.Trainer)),
+			util.ShortHumanDuration(time.Duration(duration)*time.Second),
 			strings.Join(lines, "\n"),
 		))
 	}
@@ -199,12 +209,20 @@ func displayWithNoMetric(jobs []types.TrainingJobInfo, notStop bool, format type
 		if allNamespaces {
 			namespace = fmt.Sprintf("%v\t", jobInfo.Namespace)
 		}
+		var duration int64
+		var err error
+		jobInfo.Duration = strings.Replace(jobInfo.Duration, "s", "", -1)
+		duration, err = strconv.ParseInt(jobInfo.Duration, 10, 64)
+		if err != nil {
+			log.Debugf("failed to parse duration: %v", err)
+
+		}
 		lines = append(lines, fmt.Sprintf("%v%v\t%v\t%v\t%v\t%v\t%v\t%v",
 			namespace,
 			jobInfo.Name,
 			jobInfo.Status,
-			jobInfo.Trainer,
-			jobInfo.Duration,
+			strings.ToUpper(fmt.Sprintf("%v", jobInfo.Trainer)),
+			util.ShortHumanDuration(time.Duration(duration)*time.Second),
 			jobInfo.RequestGPU,
 			jobInfo.AllocatedGPU,
 			hostIP,

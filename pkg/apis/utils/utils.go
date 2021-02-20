@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -47,13 +48,13 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 		return types.AllTrainingJob
 	}
 	for trainingType, typeInfo := range types.TrainingTypeMap {
-		if string(typeInfo.Name) == jobType {
+		if strings.ToLower(string(typeInfo.Name)) == strings.ToLower(jobType) {
 			return trainingType
 		}
 		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
 			return trainingType
 		}
-		if typeInfo.Shorthand == jobType {
+		if strings.ToLower(typeInfo.Shorthand) == strings.ToLower(jobType) {
 			return trainingType
 		}
 	}
@@ -108,13 +109,13 @@ func TransferServingJobType(jobType string) types.ServingJobType {
 		return types.AllServingJob
 	}
 	for servingType, typeInfo := range types.ServingTypeMap {
-		if string(typeInfo.Name) == jobType {
+		if strings.ToLower(string(typeInfo.Name)) == strings.ToLower(jobType) {
 			return servingType
 		}
 		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
 			return servingType
 		}
-		if typeInfo.Shorthand == jobType {
+		if strings.ToLower(typeInfo.Shorthand) == strings.ToLower(jobType) {
 			return servingType
 		}
 	}
@@ -195,4 +196,31 @@ func DefineNodeStatus(node *v1.Node) string {
 		status = append(status, "SchedulingDisabled")
 	}
 	return strings.Join(status, ",")
+}
+
+func CheckFileExist(filename string) bool {
+	var exist = true
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		exist = false
+	}
+	return exist
+}
+
+func DataUnitTransfer(from string, to string, value float64) float64 {
+	knownUnits := []string{"bytes", "KiB", "MiB", "GiB", "TiB"}
+	fromPosition := -1
+	toPosition := -1
+	for index, unit := range knownUnits {
+		if unit == from {
+			fromPosition = index
+		}
+		if unit == to {
+			toPosition = index
+		}
+	}
+	if fromPosition == -1 || toPosition == -1 {
+		return value
+	}
+	return value * math.Pow(1024, float64(fromPosition-toPosition))
 }

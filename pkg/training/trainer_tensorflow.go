@@ -15,6 +15,7 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"time"
 
@@ -34,6 +36,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/arenacache"
+	//k8stypes "k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -44,6 +47,7 @@ const (
 	labelGroupNameV1alpha2 = "group_name"
 	labelTFJobName         = "tf-job-name"
 	labelTFJobRole         = "tf-job-role"
+	TensorFlowCRD          = "tfjobs.kubeflow.org"
 )
 
 // TensorflowJob implements the TrainingJob
@@ -190,6 +194,10 @@ func (tj *TensorFlowJob) RequestedGPU() int64 {
 	if tj.requestedGPU > 0 {
 		return tj.requestedGPU
 	}
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(tj.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
+	}
 	for _, pod := range tj.pods {
 		tj.requestedGPU += gpuInPod(*pod)
 	}
@@ -249,12 +257,12 @@ func NewTensorFlowJobTrainer() Trainer {
 	log.Debugf("Init TensorFlow job trainer")
 	arenaConfiger := config.GetArenaConfiger()
 	tfjobClient := versioned.NewForConfigOrDie(arenaConfiger.GetRestConfig())
-	enable := true
-	// this step is used to check operator is installed or not
-	_, err := tfjobClient.KubeflowV1().TFJobs("default").Get("test-operator", metav1.GetOptions{})
-	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
-		log.Debugf("not found tfjob operator,tensorflow trainer is disabled")
-		enable = false
+	enable := false
+	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
+		if crdName == TensorFlowCRD {
+			enable = true
+			break
+		}
 	}
 	return &TensorFlowJobTrainer{
 		tfjobClient: tfjobClient,
@@ -279,14 +287,7 @@ func (tt *TensorFlowJobTrainer) IsSupported(name, namespace string) bool {
 		return false
 	}
 	isTensorFlow := false
-	if config.GetArenaConfiger().IsDaemonMode() {
-		_, err := tt.getTrainingJobFromCache(name, namespace)
-		if err != nil {
-			return isTensorFlow
-		}
-		return !isTensorFlow
-	}
-	_, err := tt.getTrainingJob(name, namespace)
+	_, err := tt.GetTrainingJob(name, namespace)
 	if err != nil {
 		return isTensorFlow
 	}
@@ -294,30 +295,34 @@ func (tt *TensorFlowJobTrainer) IsSupported(name, namespace string) bool {
 }
 
 func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return tt.getTrainingJobFromCache(name, namespace)
-	}
-	// get job from api server
-	return tt.getTrainingJob(name, namespace)
-}
-
-func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
 	// 1.get the tfjob
-	tfjob, err := tt.tfjobClient.KubeflowV1().TFJobs(namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		if strings.Contains(err.Error(), fmt.Sprintf(`tfjobs.kubeflow.org "%v" not found`, name)) {
-			return nil, types.ErrTrainingJobNotFound
+	tfjob := &tfv1.TFJob{}
+	var err error
+	if config.GetArenaConfiger().IsDaemonMode() {
+		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, tfjob)
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`TFJob.kubeflow.org "%v" not found`, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find tfjob %v from cache,reason: %v", name, err)
 		}
-		return nil, fmt.Errorf("failed to find job %v,reason: %v", name, err)
+
+	} else {
+		tfjob, err = tt.tfjobClient.KubeflowV1().TFJobs(namespace).Get(name, metav1.GetOptions{})
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, TensorFlowCRD, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find job %v from api server,reason: %v", name, err)
+		}
 	}
 	// 2.get the pods of the job
+	labels := map[string]string{
+		"release": name,
+		"app":     string(tt.Type()),
+	}
+	podList, err := listJobPods(tt.client, namespace, labels)
 	allPods := []*v1.Pod{}
-	podList, err := tt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,app=%v", name, tt.trainerType),
-	})
 	for _, pod := range podList.Items {
 		allPods = append(allPods, pod.DeepCopy())
 	}
@@ -339,26 +344,6 @@ func (tt *TensorFlowJobTrainer) getTrainingJob(name, namespace string) (Training
 		trainerType: tt.Type(),
 	}, nil
 
-}
-
-// Get the training job from Cache
-func (tt *TensorFlowJobTrainer) getTrainingJobFromCache(name, namespace string) (TrainingJob, error) {
-	tfjob, pods := arenacache.GetArenaCache().GetTFJob(namespace, name)
-	if tfjob == nil {
-		return nil, types.ErrTrainingJobNotFound
-	}
-	tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
-	filterPods, chiefPod := getPodsOfTFJob(tt, tfjob, pods)
-	return &TensorFlowJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(filterPods),
-			name:      name,
-		},
-		tfjob:       tfjob,
-		chiefPod:    chiefPod,
-		pods:        filterPods,
-		trainerType: tt.Type(),
-	}, nil
 }
 
 func (tt *TensorFlowJobTrainer) isChiefPod(tfjob *tfv1.TFJob, item *v1.Pod) bool {
@@ -416,34 +401,23 @@ func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item *v1.Pod) b
 /**
 * List Training jobs
  */
-func (tt *TensorFlowJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) ([]TrainingJob, error) {
-	// if arena is configured as daemon,getting all tfjobs from cache is corrent
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return tt.listFromCache(namespace, allNamespace)
-	}
-	return tt.listFromAPIServer(namespace, allNamespace)
-}
 
-func (tt *TensorFlowJobTrainer) listFromAPIServer(namespace string, allNamespace bool) ([]TrainingJob, error) {
+func (tt *TensorFlowJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) ([]TrainingJob, error) {
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
-	// list all jobs from k8s apiserver
-	tfjobList, err := tt.tfjobClient.KubeflowV1().TFJobs(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release"),
-	})
+	tfjobList, err := tt.listJobs(namespace)
 	if err != nil {
 		return trainingJobs, err
 	}
 	for _, job := range tfjobList.Items {
 		tfjob := job.DeepCopy()
-		podList, err := tt.client.CoreV1().Pods(tfjob.Namespace).List(metav1.ListOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ListOptions",
-				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", tfjob.Name, tt.trainerType),
-		})
+		labels := map[string]string{
+			"release": tfjob.Name,
+			"app":     string(tt.Type()),
+		}
+		podList, err := listJobPods(tt.client, tfjob.Namespace, labels)
 		if err != nil {
 			log.Errorf("failed to get pods of job %v,reason: %v", tfjob.Name, err)
 			continue
@@ -468,28 +442,14 @@ func (tt *TensorFlowJobTrainer) listFromAPIServer(namespace string, allNamespace
 	return trainingJobs, nil
 }
 
-func (tt *TensorFlowJobTrainer) listFromCache(namespace string, allNamespace bool) ([]TrainingJob, error) {
-	filter := func(job *tfv1.TFJob) bool { return job.Namespace == namespace }
-	trainingJobs := []TrainingJob{}
-	if allNamespace {
-		filter = func(job *tfv1.TFJob) bool { return true }
+func (tt *TensorFlowJobTrainer) listJobs(namespace string) (*tfv1.TFJobList, error) {
+	if config.GetArenaConfiger().IsDaemonMode() {
+		list := &tfv1.TFJobList{}
+		return list, arenacache.GetCacheClient().ListTrainingJobs(list, namespace)
 	}
-	jobs, pods := arenacache.GetArenaCache().FilterTFJobs(filter)
-	for jobKey, tfjob := range jobs {
-		tfjob.Status.Conditions = makeJobStatusSortedByTime(tfjob.Status.Conditions)
-		filterPods, chiefPod := getPodsOfTFJob(tt, tfjob, pods[jobKey])
-		trainingJobs = append(trainingJobs, &TensorFlowJob{
-			BasicJobInfo: &BasicJobInfo{
-				resources: podResources(filterPods),
-				name:      tfjob.Name,
-			},
-			tfjob:       tfjob,
-			chiefPod:    chiefPod,
-			pods:        filterPods,
-			trainerType: tt.Type(),
-		})
-	}
-	return trainingJobs, nil
+	return tt.tfjobClient.KubeflowV1().TFJobs(namespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("release"),
+	})
 }
 
 type orderedTrainingJobConditionsByTime []commonv1.JobCondition

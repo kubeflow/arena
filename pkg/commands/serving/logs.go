@@ -30,8 +30,9 @@ func NewLogsCommand() *cobra.Command {
 	var servingType string
 	var version string
 	var command = &cobra.Command{
-		Use:   "logs serving job",
-		Short: "print the logs for a task of the serving job",
+		Use:     "logs JOB [-T JOB_TYPE] [-v JOB_VERSION] [-i JOB_INSTANCE]",
+		Short:   "Print the logs of a serving job",
+		Aliases: []string{"log"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

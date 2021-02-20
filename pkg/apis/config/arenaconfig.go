@@ -10,7 +10,8 @@ import (
 	config "github.com/kubeflow/arena/pkg/util/config"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
-
+	extclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -45,13 +46,15 @@ func GetArenaConfiger() *ArenaConfiger {
 }
 
 type ArenaConfiger struct {
-	restConfig     *rest.Config
-	clientConfig   clientcmd.ClientConfig
-	clientset      *kubernetes.Clientset
-	namespace      string
-	arenaNamespace string
-	configs        map[string]string
-	isDaemonMode   bool
+	restConfig            *rest.Config
+	clientConfig          clientcmd.ClientConfig
+	clientset             *kubernetes.Clientset
+	apiExtensionClientset *extclientset.Clientset
+	namespace             string
+	arenaNamespace        string
+	configs               map[string]string
+	isDaemonMode          bool
+	clusterInstalledCRDs  []string
 }
 
 func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
@@ -63,14 +66,25 @@ func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 	if err != nil {
 		return nil, err
 	}
+	apiExtensionClientSet, err := extclientset.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+	crdNames, err := getClusterInstalledCRDs(apiExtensionClientSet)
+	if err != nil {
+		return nil, err
+	}
+	namespace := updateNamespace(args.Namespace, arenaConfigs, clientConfig)
 	return &ArenaConfiger{
-		restConfig:     restConfig,
-		clientConfig:   clientConfig,
-		clientset:      clientSet,
-		namespace:      args.Namespace,
-		arenaNamespace: args.ArenaNamespace,
-		configs:        arenaConfigs,
-		isDaemonMode:   args.IsDaemonMode,
+		restConfig:            restConfig,
+		clientConfig:          clientConfig,
+		clientset:             clientSet,
+		apiExtensionClientset: apiExtensionClientSet,
+		namespace:             namespace,
+		arenaNamespace:        args.ArenaNamespace,
+		configs:               arenaConfigs,
+		isDaemonMode:          args.IsDaemonMode,
+		clusterInstalledCRDs:  crdNames,
 	}, nil
 }
 
@@ -87,6 +101,10 @@ func (a *ArenaConfiger) GetRestConfig() *rest.Config {
 // GetClientSet returns the kubernetes ClientSet
 func (a *ArenaConfiger) GetClientSet() *kubernetes.Clientset {
 	return a.clientset
+}
+
+func (a *ArenaConfiger) GetAPIExtensionClientSet() *extclientset.Clientset {
+	return a.apiExtensionClientset
 }
 
 // GetArenaNamespace returns the kubernetes namespace which some operators exists in
@@ -106,6 +124,10 @@ func (a *ArenaConfiger) GetConfigsFromConfigFile() map[string]string {
 
 func (a *ArenaConfiger) IsDaemonMode() bool {
 	return a.isDaemonMode
+}
+
+func (a *ArenaConfiger) GetClusterInstalledCRDs() []string {
+	return a.clusterInstalledCRDs
 }
 
 // loadArenaConifg returns configs in map
@@ -139,4 +161,35 @@ func loadArenaConifg() (map[string]string, error) {
 	arenaConfigs = config.ReadConfigFile(configFileName)
 	log.Debugf("arena configs: %v", arenaConfigs)
 	return arenaConfigs, nil
+}
+
+func updateNamespace(namespace string, arenaConfigs map[string]string, clientConfig clientcmd.ClientConfig) string {
+	if namespace != "" {
+		return namespace
+	}
+	log.Debugf("we need to update the namespace")
+	if n, ok := arenaConfigs["namespace"]; ok {
+		log.Debugf("read namespace %v from arena configuration file", n)
+		return n
+	}
+	n, _, err := clientConfig.Namespace()
+	if err == nil {
+		log.Debugf("read namespace %v from kubeconfig", n)
+		return n
+	}
+	log.Debugf("failed to read namespace from kubeconfig,we set the default namespace with 'default'")
+	return "default"
+}
+
+func getClusterInstalledCRDs(client *extclientset.Clientset) ([]string, error) {
+	selectorListOpts := metav1.ListOptions{}
+	list, err := client.ApiextensionsV1().CustomResourceDefinitions().List(selectorListOpts)
+	if err != nil {
+		return nil, err
+	}
+	crds := []string{}
+	for _, crd := range list.Items {
+		crds = append(crds, crd.Name)
+	}
+	return crds, nil
 }

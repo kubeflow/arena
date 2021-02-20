@@ -199,6 +199,9 @@ func (s *SubmitArgsBuilder) Build() error {
 	if err := s.addPodGroupLabel(); err != nil {
 		return err
 	}
+	if err := s.addRequestGPUsToAnnotation(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -291,7 +294,12 @@ func (s *SubmitArgsBuilder) setAnnotations() error {
 	if len(*annotations) <= 0 {
 		return nil
 	}
-	s.args.Annotations = transformSliceToMap(*annotations, "=")
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	for key, val := range transformSliceToMap(*annotations, "=") {
+		s.args.Annotations[key] = val
+	}
 	value := s.args.Annotations[aliyunENIAnnotation]
 	if value == "true" {
 		s.args.UseENI = true
@@ -471,7 +479,12 @@ func (s *SubmitArgsBuilder) setEnvs() error {
 		return nil
 	}
 	envs = value.(*[]string)
-	s.args.Envs = transformSliceToMap(*envs, "=")
+	if s.args.Envs == nil {
+		s.args.Envs = map[string]string{}
+	}
+	for key, val := range transformSliceToMap(*envs, "=") {
+		s.args.Envs[key] = val
+	}
 	return nil
 }
 
@@ -489,5 +502,10 @@ func (s *SubmitArgsBuilder) addPodGroupLabel() error {
 		s.args.PodGroupName = fmt.Sprintf("%v_%v", s.args.TrainingType, s.args.Name)
 		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount)
 	}
+	return nil
+}
+
+func (s *SubmitArgsBuilder) addRequestGPUsToAnnotation() error {
+	s.args.Annotations[types.RequestGPUsOfJobAnnoKey] = fmt.Sprintf("%v", s.args.WorkerCount*s.args.GPUCount)
 	return nil
 }

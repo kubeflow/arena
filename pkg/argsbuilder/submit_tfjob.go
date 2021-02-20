@@ -77,6 +77,7 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		chiefSelectors     []string
 		psSelectors        []string
 		evaluatorSelectors []string
+		roleSequence       string
 	)
 	command.Flags().StringVar(&s.args.WorkerImage, "workerImage", "", "the docker image for tensorflow workers")
 	command.Flags().MarkDeprecated("workerImage", "please use --worker-image instead")
@@ -144,11 +145,13 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringSliceVar(&chiefSelectors, "chief-selector", []string{}, `assigning jobs with "Chief" role to some k8s particular nodes(this option would cover --selector), usage: "--chief-selector=key=value"`)
 	command.Flags().StringSliceVar(&evaluatorSelectors, "evaluator-selector", []string{}, `assigning jobs with "Evaluator" role to some k8s particular nodes(this option would cover --selector), usage: "--evaluator-selector=key=value"`)
 	command.Flags().StringSliceVar(&psSelectors, "ps-selector", []string{}, `assigning jobs with "PS" role to some k8s particular nodes(this option would cover --selector), usage: "--ps-selector=key=value"`)
+	command.Flags().StringVar(&roleSequence, "role-sequence", "", `specify the tfjob role sequence,like: "Worker,PS,Chief,Evaluator" or "w,p,c,e"`)
 
 	s.AddArgValue("worker-selector", &workerSelectors).
 		AddArgValue("chief-selector", &chiefSelectors).
 		AddArgValue("evaluator-selector", &evaluatorSelectors).
-		AddArgValue("ps-selector", &psSelectors)
+		AddArgValue("ps-selector", &psSelectors).
+		AddArgValue("role-sequence", &roleSequence)
 }
 
 func (s *SubmitTFJobArgsBuilder) PreBuild() error {
@@ -180,6 +183,12 @@ func (s *SubmitTFJobArgsBuilder) Build() error {
 		return err
 	}
 	if err := s.setRuntime(); err != nil {
+		return err
+	}
+	if err := s.checkRoleSequence(); err != nil {
+		return err
+	}
+	if err := s.addRequestGPUsToAnnotation(); err != nil {
 		return err
 	}
 	if err := s.check(); err != nil {
@@ -273,9 +282,15 @@ func (s *SubmitTFJobArgsBuilder) transform() error {
 func (s *SubmitTFJobArgsBuilder) checkGangCapablitiesInCluster() error {
 	s.args.HasGangScheduler = false
 	arenaConfiger := config.GetArenaConfiger()
-	_, err := arenaConfiger.GetClientSet().AppsV1beta1().Deployments(metav1.NamespaceSystem).Get(gangSchdName, metav1.GetOptions{})
+	podList, err := arenaConfiger.GetClientSet().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=%v", gangSchdName),
+	})
 	if err != nil {
 		log.Debugf("Failed to find %s due to %v", gangSchdName, err)
+		return nil
+	}
+	if len(podList.Items) == 0 {
+		log.Debugf("not found %v scheduler,it represents that you don't deploy it", gangSchdName)
 		return nil
 	}
 	log.Debugf("Found %s successfully, the gang scheduler is enabled in the cluster.", gangSchdName)
@@ -334,4 +349,64 @@ func (s *SubmitTFJobArgsBuilder) transformSelectorArrayToMap(selectorArray *[]st
 	log.Debugf("use to Node Selectors %v to %v Selector", s.args.NodeSelectors, role)
 	s.args.TFNodeSelectors[role] = s.args.NodeSelectors
 
+}
+
+func (s *SubmitTFJobArgsBuilder) addRequestGPUsToAnnotation() error {
+	gpus := 0
+	gpus += s.args.ChiefCount
+	gpus += s.args.EvaluatorCount
+	gpus += s.args.WorkerCount * s.args.GPUCount
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	s.args.Annotations[types.RequestGPUsOfJobAnnoKey] = fmt.Sprintf("%v", gpus)
+	return nil
+}
+
+func (s *SubmitTFJobArgsBuilder) checkRoleSequence() error {
+	roleSequence := ""
+	var getRoleSeqFromConfig = func() {
+		configs := config.GetArenaConfiger().GetConfigsFromConfigFile()
+		value, ok := configs["tfjob_role_sequence"]
+		if !ok {
+			return
+		}
+		log.Debugf("read tfjob role sequence from config file")
+		roleSequence = strings.Trim(value, " ")
+	}
+	item, ok := s.argValues["role-sequence"]
+	if !ok {
+		getRoleSeqFromConfig()
+	} else {
+		v := item.(*string)
+		roleSequence = *v
+		if roleSequence == "" {
+			getRoleSeqFromConfig()
+		} else {
+			log.Debugf("read tfjob role sequence from command option")
+		}
+	}
+	if roleSequence == "" {
+		return nil
+	}
+	roles := []string{}
+	for _, r := range strings.Split(roleSequence, ",") {
+		switch strings.ToLower(strings.Trim(r, " ")) {
+		case "worker", "w":
+			roles = append(roles, "Worker")
+		case "ps", "p":
+			roles = append(roles, "PS")
+		case "evaluator", "e":
+			roles = append(roles, "Evaluator")
+		case "chief", "c":
+			roles = append(roles, "Chief")
+		default:
+			return fmt.Errorf("Unknown role: %v, the tfjob only supports:[Worker(w)|PS(p)|Evaluator(e)|Chief(c)]", r)
+		}
+	}
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	s.args.Annotations["job-role-sequence"] = strings.Join(roles, ",")
+	return nil
 }

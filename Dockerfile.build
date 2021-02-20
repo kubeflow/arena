@@ -3,7 +3,7 @@
 # 
 # Create a go runtime for building arena
 
-ARG GOLANG_VERSION=1.10
+ARG GOLANG_VERSION=1.14
 ARG KUBE_VERSION=v1.11.2
 ARG HELM_VERSION=v2.14.1
 ARG VERSION=v0.3.0-rc
@@ -73,6 +73,8 @@ RUN mkdir -p $ARENA_HOME/bin
 COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena $ARENA_HOME/bin/arena
 
 COPY --from=build /go/src/github.com/kubeflow/arena/install.sh $ARENA_HOME/install.sh
+
+COPY --from=build /go/src/github.com/kubeflow/arena/arena-gen-kubeconfig.sh $ARENA_HOME/bin/arena-gen-kubeconfig.sh
 
 COPY --from=build /usr/local/bin/helm $ARENA_HOME/bin/helm
 

@@ -69,6 +69,8 @@ func (s *SubmitPytorchJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "None", "How to clean tasks after Training is done, support None, Running, All.")
+	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
+	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 }
 
 func (s *SubmitPytorchJobArgsBuilder) PreBuild() error {

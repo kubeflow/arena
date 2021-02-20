@@ -49,13 +49,11 @@ func DisplayNodeDetails(nodeNames []string, nodeType types.NodeType, format type
 		processer := processers[i]
 		processer.DisplayNodesDetails(w, nodes)
 	}
-	PrintLine(w, "===================================== End ===============================================")
 	_ = w.Flush()
 	return nil
 }
 
 func PrintLine(w io.Writer, fields ...string) {
-	//w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	buffer := strings.Join(fields, "\t")
 	fmt.Fprintln(w, buffer)
 }

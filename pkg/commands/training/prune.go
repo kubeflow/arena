@@ -28,7 +28,7 @@ func NewPruneCommand() *cobra.Command {
 	var since time.Duration
 	var command = &cobra.Command{
 		Use:   "prune history job",
-		Short: "prune history job",
+		Short: "Prune the history jobs",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

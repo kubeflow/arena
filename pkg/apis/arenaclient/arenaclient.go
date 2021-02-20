@@ -6,6 +6,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/arenacache"
 	"github.com/kubeflow/arena/pkg/util"
 )
 
@@ -32,16 +33,11 @@ func NewArenaClient(args types.ArenaClientArgs) (*ArenaClient, error) {
 	}
 	// set log level
 	util.SetLogLevel(args.LogLevel)
-	// if namespace is null,transfer it to "default"
-	if args.Namespace == "" {
-		args.Namespace = "default"
-	}
 	// if arenaSystemNamespace is null,transfer it to "arena-system"
 	if args.ArenaNamespace == "" {
 		args.ArenaNamespace = "arena-system"
 	}
 	client := &ArenaClient{
-		namespace:            args.Namespace,
 		arenaSystemNamespace: args.ArenaNamespace,
 	}
 	// InitArenaConfiger creates and init ArenaConfiger
@@ -50,7 +46,14 @@ func NewArenaClient(args types.ArenaClientArgs) (*ArenaClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	if configer.IsDaemonMode() {
+		if err := arenacache.InitCacheClient(configer.GetRestConfig()); err != nil {
+			return client, err
+		}
+	}
 	client.arenaConfiger = configer
+	// the namespace may be updated
+	client.namespace = configer.GetNamespace()
 	return client, err
 }
 

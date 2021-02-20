@@ -1,3 +1,38 @@
+## [Release 0.7.0]
+
+### Added
+
+- Support using apis to manage training or serving jobs(arena-go-sdk)
+- Support getting gpu metrics from Alibaba Cloud ARMS Prometheus
+- Support getting node gpu metrics
+- Command of "arena get" supports "-g" option
+- Support the arena daemon mode, reduce the api-server pressure, arena can listen k8s objects in this mode
+- Command of "arena logs" supports "-c" to specify container
+- Support to attach a job container and execute some commands("arena attach")
+- Command of "arena top node" supports "-r" option
+
+### Changed
+
+- Refact the code
+- Change the output of "arena top node" command
+- Change the output of "arena list" command
+- Change the output of "arena get" command
+- Change the output of "arena serve get" command  
+- Change the output of "arena serve list" command 
+- Change the go version of building arena(includes CI) to 1.14.10
+- Optimize the elastic training job
+- Update the client-go to v1.16.9
+  
+### Fixed
+
+- Fix the bug when use "arena serve delete" to delete multiple serving jobs.
+
+### Deprecated
+
+- the option "-s" of "arena top node" has been deprecated, replace it with "arena top node -m s"
+
+
+
 ## [Release 0.4.0]
 
 ### Added

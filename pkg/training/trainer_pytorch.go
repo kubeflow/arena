@@ -15,10 +15,12 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	commonv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"time"
 
@@ -42,6 +44,7 @@ const (
 	labelPyTorchGroupName    = "group-name"
 	labelPyTorchJobName      = "pytorch-job-name"
 	labelPyTorchJobRole      = "job-role"
+	PytorchCRD               = "pytorchjobs.kubeflow.org"
 )
 
 // PyTorch Job Information
@@ -200,6 +203,10 @@ func (pj *PyTorchJob) RequestedGPU() int64 {
 	if pj.requestedGPU > 0 {
 		return pj.requestedGPU
 	}
+	requestGPUs := getRequestGPUsOfJobFromPodAnnotation(pj.pods)
+	if requestGPUs > 0 {
+		return requestGPUs
+	}
 	for _, pod := range pj.pods {
 		pj.requestedGPU += gpuInPod(*pod)
 	}
@@ -244,13 +251,14 @@ type PyTorchJobTrainer struct {
 func NewPyTorchJobTrainer() Trainer {
 	log.Debugf("Init PyTorch job trainer")
 	// get pytorch operator client call pytorch operator api
-	enable := true
+	enable := false
 	pytorchjobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	// this step is used to check operator is installed or not
-	_, err := pytorchjobClient.KubeflowV1().PyTorchJobs("default").Get("test-operator", metav1.GetOptions{})
-	if err != nil && strings.Contains(err.Error(), errNotFoundOperator.Error()) {
-		log.Debugf("not found pytorchjob operator,pytorchjob trainer is disabled")
-		enable = false
+	for _, crdName := range config.GetArenaConfiger().GetClusterInstalledCRDs() {
+		if crdName == PytorchCRD {
+			enable = true
+			break
+		}
 	}
 	return &PyTorchJobTrainer{
 		pytorchjobClient: pytorchjobClient,
@@ -276,14 +284,7 @@ func (tt *PyTorchJobTrainer) IsSupported(name, ns string) bool {
 		return false
 	}
 	isPyTorchJob := false
-	if config.GetArenaConfiger().IsDaemonMode() {
-		_, err := tt.getTrainingJobFromCache(name, ns)
-		if err != nil {
-			return isPyTorchJob
-		}
-		return !isPyTorchJob
-	}
-	_, err := tt.getTrainingJob(name, ns)
+	_, err := tt.GetTrainingJob(name, ns)
 	if err != nil {
 		return isPyTorchJob
 	}
@@ -291,31 +292,34 @@ func (tt *PyTorchJobTrainer) IsSupported(name, ns string) bool {
 }
 
 // Get the training job from cache or directly
-func (tt *PyTorchJobTrainer) GetTrainingJob(name, namespace string) (tj TrainingJob, err error) {
-	// if arena is daemon mode,get job from cache
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return tt.getTrainingJobFromCache(name, namespace)
-	}
-	// get job from api server
-	return tt.getTrainingJob(name, namespace)
-}
 
-// getTrainingJob gets job from api server
-func (tt *PyTorchJobTrainer) getTrainingJob(name, namespace string) (TrainingJob, error) {
-	pytorchjob, err := tt.pytorchjobClient.KubeflowV1().PyTorchJobs(namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		if strings.Contains(err.Error(), fmt.Sprintf(`pytorchjobs.kubeflow.org "%v" not found`, name)) {
-			return nil, types.ErrTrainingJobNotFound
+func (tt *PyTorchJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {
+	pytorchjob := &pytorchv1.PyTorchJob{}
+	var err error
+	if config.GetArenaConfiger().IsDaemonMode() {
+		err = arenacache.GetCacheClient().Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, pytorchjob)
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`PyTorchJob.kubeflow.org "%v" not found`, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find pytorchjob %v from cache,reason: %v", name, err)
 		}
-		return nil, fmt.Errorf("failed to find job %v,reason: %v", name, err)
+
+	} else {
+		pytorchjob, err = tt.pytorchjobClient.KubeflowV1().PyTorchJobs(namespace).Get(name, metav1.GetOptions{})
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, PytorchCRD, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find pytorchjob %v from api server,reason: %v", name, err)
+		}
 	}
 	// 2. Find the pod list, and determine the pod of the job
-	podList, err := tt.client.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("release=%s,app=%v", name, tt.trainerType),
-	})
+	labels := map[string]string{
+		"release": name,
+		"app":     string(tt.Type()),
+	}
+	podList, err := listJobPods(tt.client, namespace, labels)
 	if err != nil {
 		return nil, err
 	}
@@ -342,26 +346,6 @@ func (tt *PyTorchJobTrainer) getTrainingJob(name, namespace string) (TrainingJob
 		trainerType: tt.Type(),
 	}, nil
 
-}
-
-// Get the training job from Cache
-func (tt *PyTorchJobTrainer) getTrainingJobFromCache(name, namespace string) (TrainingJob, error) {
-	pyjob, pods := arenacache.GetArenaCache().GetPytorchJob(namespace, name)
-	if pyjob == nil {
-		return nil, types.ErrTrainingJobNotFound
-	}
-	pyjob.Status.Conditions = makeJobStatusSortedByTime(pyjob.Status.Conditions)
-	filterPods, chiefPod := getPodsOfPyTorchJob(tt, pyjob, pods)
-	return &PyTorchJob{
-		BasicJobInfo: &BasicJobInfo{
-			resources: podResources(filterPods),
-			name:      name,
-		},
-		pytorchjob:  pyjob,
-		chiefPod:    chiefPod,
-		pods:        filterPods,
-		trainerType: tt.Type(),
-	}, nil
 }
 
 func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob *pytorchv1.PyTorchJob, item *v1.Pod) bool {
@@ -394,14 +378,11 @@ func (tt *PyTorchJobTrainer) isPyTorchPod(name, ns string, pod *v1.Pod) bool {
 
 func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1.Pod) ([]Resource, error) {
 	resources := []Resource{}
-
+	labels := map[string]string{
+		"pytorch_job_name": name,
+	}
 	// 2. Find the pod list, and determine the pod of the job
-	stsList, err := tt.client.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("pytorch_job_name=%s", name),
-	})
+	stsList, err := listStatefulSets(tt.client, namespace, labels)
 	if err != nil {
 		return resources, err
 	}
@@ -414,16 +395,11 @@ func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1
 	}
 
 	// 2. Find the pod list, and determine the pod of the job
-	jobs, err := tt.client.BatchV1().Jobs(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: fmt.Sprintf("pytorch_job_name=%s", name),
-	})
+	jobList, err := listJobBatchJobs(tt.client, namespace, labels)
 	if err != nil {
 		return resources, err
 	}
-	for _, job := range jobs.Items {
+	for _, job := range jobList.Items {
 		resources = append(resources, Resource{
 			Name:         job.Name,
 			Uid:          string(job.UID),
@@ -437,34 +413,24 @@ func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1
 /**
 * List Training jobs
  */
-func (tt *PyTorchJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (jobs []TrainingJob, err error) {
-	// if arena is configured as daemon,getting all pytorch jobs from cache is corrent
-	if config.GetArenaConfiger().IsDaemonMode() {
-		return tt.listFromCache(namespace, allNamespace)
-	}
-	return tt.listFromAPIServer(namespace, allNamespace)
-}
 
-func (tt *PyTorchJobTrainer) listFromAPIServer(namespace string, allNamespace bool) ([]TrainingJob, error) {
+func (tt *PyTorchJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) ([]TrainingJob, error) {
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
 	// list all jobs from k8s apiserver
-	pyjobList, err := tt.pytorchjobClient.KubeflowV1().PyTorchJobs(namespace).List(metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("release"),
-	})
+	pyjobList, err := tt.listJobs(namespace)
 	if err != nil {
 		return trainingJobs, err
 	}
 	for _, job := range pyjobList.Items {
 		pyjob := job.DeepCopy()
-		podList, err := tt.client.CoreV1().Pods(pyjob.Namespace).List(metav1.ListOptions{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "ListOptions",
-				APIVersion: "v1",
-			}, LabelSelector: fmt.Sprintf("release=%s,app=%v", pyjob.Name, tt.trainerType),
-		})
+		labels := map[string]string{
+			"release": pyjob.Name,
+			"app":     string(tt.Type()),
+		}
+		podList, err := listJobPods(tt.client, pyjob.Namespace, labels)
 		if err != nil {
 			log.Errorf("failed to get pods of job %v,reason: %v", pyjob.Name, err)
 			continue
@@ -489,28 +455,14 @@ func (tt *PyTorchJobTrainer) listFromAPIServer(namespace string, allNamespace bo
 	return trainingJobs, nil
 }
 
-func (tt *PyTorchJobTrainer) listFromCache(namespace string, allNamespace bool) ([]TrainingJob, error) {
-	filter := func(job *pytorchv1.PyTorchJob) bool { return job.Namespace == namespace }
-	trainingJobs := []TrainingJob{}
-	if allNamespace {
-		filter = func(job *pytorchv1.PyTorchJob) bool { return true }
+func (tt *PyTorchJobTrainer) listJobs(namespace string) (*pytorchv1.PyTorchJobList, error) {
+	if config.GetArenaConfiger().IsDaemonMode() {
+		list := &pytorchv1.PyTorchJobList{}
+		return list, arenacache.GetCacheClient().ListTrainingJobs(list, namespace)
 	}
-	jobs, pods := arenacache.GetArenaCache().FilterPytorchJobs(filter)
-	for jobKey, pyjob := range jobs {
-		pyjob.Status.Conditions = makeJobStatusSortedByTime(pyjob.Status.Conditions)
-		filterPods, chiefPod := getPodsOfPyTorchJob(tt, pyjob, pods[jobKey])
-		trainingJobs = append(trainingJobs, &PyTorchJob{
-			BasicJobInfo: &BasicJobInfo{
-				resources: podResources(filterPods),
-				name:      pyjob.Name,
-			},
-			pytorchjob:  pyjob,
-			chiefPod:    chiefPod,
-			pods:        filterPods,
-			trainerType: tt.Type(),
-		})
-	}
-	return trainingJobs, nil
+	return tt.pytorchjobClient.KubeflowV1().PyTorchJobs(namespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("release"),
+	})
 }
 
 // Get PriorityClass

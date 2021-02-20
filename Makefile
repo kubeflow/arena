@@ -113,9 +113,13 @@ build-pkg:
 				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
 				 --build-arg "VERSION=${VERSION}" \
 				 --build-arg "OS_ARCH=${OS_ARCH}" \
-				 --build-arg "GOLANG_VERSION=1.10" \
+				 --build-arg "GOLANG_VERSION=1.14" \
 				 --build-arg "TARGET=cli-${OS_ARCH}" \
 	-t arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} -f Dockerfile.build .
 	docker run -itd --name=arena-pkg arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} /bin/bash
 	docker cp arena-pkg:/arena-installer-${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH}.tar.gz .
 	docker rm -f arena-pkg
+
+
+build-dependabot:
+	python3 hack/create_dependabot.py

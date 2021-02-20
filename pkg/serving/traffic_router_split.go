@@ -238,7 +238,8 @@ func initIstioClient() (*rest.RESTClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	restConfig.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)}
+	restConfig.NegotiatedSerializer = serializer.NewCodecFactory(types)
+
 	// create the clientset
 
 	return rest.RESTClientFor(restConfig)
