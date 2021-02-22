@@ -1,0 +1,15 @@
+{{- $gpuCount := .Values.gpuCount -}}
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: {{ .Values.servingName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  name: {{ .Values.servingName }}
+  predictors:
+    - graph:
+        implementation: {{ .Values.implementation }}
+        modelUri: {{ .Values.modelUri }}
+        name: inference
+      name: default
+      replicas: {{ .Values.replicas }}

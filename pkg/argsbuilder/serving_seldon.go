@@ -52,7 +52,7 @@ func (s *SeldonServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 	command.Flags().StringVar(&s.args.Implementation, "implementation", "TENSORFLOW_SERVER", "the type of serving implementation, default to TENSORFLOW_SERVER")
-	command.Flags().StringVar(&s.args.ModelUri, "model-uri", "", "the uri direct to the model file")
+	command.Flags().StringVar(&s.args.ModelUri, "modelUri", "", "the uri direct to the model file")
 }
 
 func (s *SeldonServingArgsBuilder) PreBuild() error {
