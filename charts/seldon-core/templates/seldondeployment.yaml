@@ -6,7 +6,32 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   predictors:
-    - graph:
+    - componentSpecs:
+      - spec:
+          containers:
+            - name: inference
+              resources:
+                limits:
+                  {{- if .Values.cpu }}
+                  cpu: {{ .Values.cpu }}
+                  {{- end }}
+                  {{- if .Values.memory }}
+                  memory: {{ .Values.memory }}
+                  {{- end }}
+                  {{- if gt (int $gpuCount) 0 }}
+                  nvidia.com/gpu: {{ .Values.gpuCount }}
+                  {{- end }}
+                requests:
+                  {{- if .Values.cpu }}
+                  cpu: {{ .Values.cpu }}
+                  {{- end }}
+                  {{- if .Values.memory }}
+                  memory: {{ .Values.memory }}
+                  {{- end }}
+                  {{- if gt (int $gpuCount) 0 }}
+                  nvidia.com/gpu: {{ .Values.gpuCount }}
+                  {{- end }}
+      graph:
         implementation: {{ .Values.implementation }}
         modelUri: {{ .Values.modelUri }}
         name: inference
