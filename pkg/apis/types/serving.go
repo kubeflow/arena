@@ -12,7 +12,7 @@ const (
 	// KFServingJob defines the kfserving job
 	KFServingJob ServingJobType = "kf-serving"
 	// SeldonServingJob defines the seldon core job
-	SeldonServingJob ServingJobType = "seldon"
+	SeldonServingJob ServingJobType = "seldon-serving"
 	// CustomServingJob defines the custom serving job
 	CustomServingJob ServingJobType = "custom-serving"
 	// AllServingJob represents all serving job type
@@ -48,6 +48,11 @@ var ServingTypeMap = map[ServingJobType]ServingTypeInfo{
 		Name:      TRTServingJob,
 		Alias:     "Tensorrt",
 		Shorthand: "trt",
+	},
+	SeldonServingJob: {
+		Name: SeldonServingJob,
+		Alias: "Seldon",
+		Shorthand: "seldon",
 	},
 }
 
