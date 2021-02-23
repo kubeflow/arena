@@ -44,7 +44,7 @@ Arena is a command-line interface to run and monitor the machine learning traini
 - [19. Run a distributed Pytorch Job](docs/userguide/18-pytorchjob-distributed.md)
 - [20. Run a KFServing Job](docs/userguide/27-kfserving-custom.md)
 - [21. Run a Elastic Training Job](docs/userguide/28-elastictraining-tensorflow2-mnist.md)
-- [21. Run a Seldon Core Job](docs/userguide/32-seldon-serving.md)
+- [22. Run a Seldon Core Job](docs/userguide/32-seldon-serving.md)
 ## Demo
 
 [![](demo.jpg)](http://cloud.video.taobao.com/play/u/2987821887/p/1/e/6/t/1/50210690772.mp4)
