@@ -16,10 +16,12 @@ package training
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -45,6 +47,10 @@ func NewGetCommand() *cobra.Command {
 				cmd.HelpFunc()(cmd, args)
 				return fmt.Errorf("not set job name,please set it")
 			}
+			now := time.Now()
+			defer func() {
+				log.Debugf("execute time of get training job: %v", time.Now().Sub(now))
+			}()
 			name := args[0]
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),

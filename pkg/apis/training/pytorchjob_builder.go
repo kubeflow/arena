@@ -228,6 +228,22 @@ func (b *PytorchJobBuilder) WorkerCount(count int) *PytorchJobBuilder {
 	return b
 }
 
+// CPU assign cpu limts,match option --cpu
+func (b *PytorchJobBuilder) CPU(cpu string) *PytorchJobBuilder {
+	if cpu != "" {
+		b.args.Cpu = cpu
+	}
+	return b
+}
+
+// Memory assign memory limits,match option --memory
+func (b *PytorchJobBuilder) Memory(memory string) *PytorchJobBuilder {
+	if memory != "" {
+		b.args.Memory = memory
+	}
+	return b
+}
+
 // Build is used to build the job
 func (b *PytorchJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {

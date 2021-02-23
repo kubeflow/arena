@@ -17,6 +17,7 @@ package training
 import (
 	"fmt"
 	"strconv"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 
@@ -65,6 +66,9 @@ func SearchTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 	if jobType != types.AllTrainingJob {
 		job, err := getTrainingJobByType(jobName, namespace, string(jobType))
 		if err != nil {
+			if strings.Contains(err.Error(), "forbidden: User") {
+				return nil, fmt.Errorf("the user has no privileges to get the training job in namespace %v,reason: %v", namespace, err)
+			}
 			if isTrainingConfigExist(jobName, string(jobType), namespace) {
 				log.Warningf(errGetMsg, jobName, jobName, "--type "+string(jobType))
 			}
@@ -75,9 +79,6 @@ func SearchTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 	// 3.if job type is not given,search job by name
 	jobs, err := getTrainingJobsByName(jobName, namespace)
 	if err != nil {
-		if len(getTrainingTypes(jobName, namespace)) > 0 {
-			log.Warningf(errGetMsg, jobName, jobName, "")
-		}
 		return nil, err
 	}
 	if len(jobs) == 1 {
@@ -112,23 +113,36 @@ func getTrainingJobByType(name, namespace, trainingType string) (job TrainingJob
 func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err error) {
 	jobs = []TrainingJob{}
 	trainers := GetAllTrainers()
+	var wg sync.WaitGroup
+	locker := new(sync.RWMutex)
+	noPrivileges := false
 	for _, trainer := range trainers {
-		if !trainer.IsEnabled() {
-			log.Debugf("the trainer %v is disabled,skip to use this trainer to get the training job", trainer.Type())
-			continue
-		}
-		if !trainer.IsSupported(name, namespace) {
-			log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, trainer.Type())
-			continue
-		}
-		job, err := trainer.GetTrainingJob(name, namespace)
-		if err != nil {
-			if err == types.ErrTrainingJobNotFound {
-				continue
+		wg.Add(1)
+		t := trainer
+		go func() {
+			defer wg.Done()
+			if !t.IsEnabled() {
+				log.Debugf("the trainer %v is disabled,skip to use this trainer to get the training job", t.Type())
+				return
 			}
-			return nil, err
-		}
-		jobs = append(jobs, job)
+			job, err := t.GetTrainingJob(name, namespace)
+			if err != nil {
+				if strings.Contains(err.Error(), "forbidden: User") {
+					log.Debugf("the user has no privileges to get the %v in namespace %v,reason: %v", t.Type(), namespace, err)
+					noPrivileges = true
+					return
+				}
+				log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, t.Type())
+				return
+			}
+			locker.Lock()
+			jobs = append(jobs, job)
+			locker.Unlock()
+		}()
+	}
+	wg.Wait()
+	if noPrivileges {
+		return nil, fmt.Errorf("the user has no privileges to get the training job in namespace %v", namespace)
 	}
 	if len(jobs) == 0 {
 		log.Debugf("Failed to find the training job %s in namespace %s", name, namespace)
@@ -138,26 +152,27 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 }
 
 func PrintTrainingJob(job TrainingJob, format string, showEvents bool, showGPUs bool) {
+	services, nodes := PrepareServicesAndNodesForTensorboard([]TrainingJob{job}, false)
 	switch format {
 	case "name":
 		fmt.Println(job.Name())
 		// for future CRD support
 	case "json":
-		outBytes, err := json.MarshalIndent(BuildJobInfo(job, showGPUs), "", "    ")
+		outBytes, err := json.MarshalIndent(BuildJobInfo(job, showGPUs, services, nodes), "", "    ")
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Printf(string(outBytes))
 		}
 	case "yaml":
-		outBytes, err := yaml.Marshal(BuildJobInfo(job, showGPUs))
+		outBytes, err := yaml.Marshal(BuildJobInfo(job, showGPUs, services, nodes))
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Printf(string(outBytes))
 		}
 	case "wide", "":
-		printSingleJobHelper(BuildJobInfo(job, showGPUs), job.Resources(), showEvents, showGPUs)
+		printSingleJobHelper(BuildJobInfo(job, showGPUs, services, nodes), job.Resources(), showEvents, showGPUs)
 		job.Resources()
 	default:
 		log.Fatalf("Unknown output format: %s", format)

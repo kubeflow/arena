@@ -1,24 +1,21 @@
 package serving
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/arenacache"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	appv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -287,65 +284,99 @@ func (p *processer) IsSupported(namespace, name, version string) bool {
 }
 
 func (p *processer) GetServingJobs(namespace, name, version string) ([]ServingJob, error) {
-	selector := map[string]string{
-		servingNameLabelKey: name,
-		servingTypeLabelKey: string(p.processerType),
-	}
+	selector := fmt.Sprintf("%v=%v,%v=%v", servingNameLabelKey, name, servingTypeLabelKey, p.processerType)
 	if version != "" {
-		selector[servingVersionLabelKey] = version
+		selector = fmt.Sprintf("%v=%v,%v=%v,%v=%v",
+			servingNameLabelKey,
+			name,
+			servingTypeLabelKey,
+			p.processerType,
+			servingVersionLabelKey,
+			version,
+		)
 	}
 	return p.FilterServingJobs(namespace, false, selector)
 }
 
-func (p *processer) FilterServingJobs(namespace string, allNamespace bool, labels map[string]string) ([]ServingJob, error) {
+func (p *processer) FilterServingJobs(namespace string, allNamespace bool, label string) ([]ServingJob, error) {
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
 	// 1.get deployment
-	deploymentList, err := listDeployments(p.client, namespace, labels)
+	deployments, err := k8saccesser.GetK8sResourceAccesser().ListDeployments(namespace, label)
 	if err != nil {
 		return nil, err
 	}
+	selector := fmt.Sprintf("%v,%v,%v=%v", servingNameLabelKey, servingVersionLabelKey, servingTypeLabelKey, p.processerType)
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, selector, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	services, err := k8saccesser.GetK8sResourceAccesser().ListServices(namespace, selector)
+	if err != nil {
+		return nil, err
+	}
+	istioGatewayServices := p.getIstioGatewayService()
 	servingJobs := []ServingJob{}
-	for _, d := range deploymentList.Items {
-		deployment := d.DeepCopy()
-		selector := map[string]string{
-			servingNameLabelKey:    deployment.Labels[servingNameLabelKey],
-			servingVersionLabelKey: deployment.Labels[servingVersionLabelKey],
-			servingTypeLabelKey:    string(p.processerType),
+	for _, deployment := range deployments {
+		filterPods := []*v1.Pod{}
+		filterServices := []*v1.Service{}
+		for _, pod := range pods {
+			if p.isDeploymentPod(deployment, pod) {
+				filterPods = append(filterPods, pod)
+			}
 		}
-		// 2.get pods
-		podList, err := listJobPods(p.client, deployment.Namespace, selector)
-		if err != nil {
-			return nil, err
-		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
-		}
-		// 3.get services
-		serviceList, err := listJobServices(p.client, deployment.Namespace, selector)
-		if err != nil {
-			return nil, err
-		}
-		services := []*v1.Service{}
-		for _, s := range serviceList.Items {
-			services = append(services, s.DeepCopy())
+		for _, svc := range services {
+			if p.isDeploymentService(deployment, svc) {
+				filterServices = append(filterServices, svc)
+			}
 		}
 		// 4. get istio gateway
-		istioServices := p.getIstioGatewayService()
 		servingJobs = append(servingJobs, &servingJob{
 			name:          deployment.Labels[servingNameLabelKey],
 			namespace:     deployment.Namespace,
 			servingType:   p.processerType,
 			version:       deployment.Labels[servingVersionLabelKey],
 			deployment:    deployment,
-			pods:          pods,
-			services:      services,
-			istioServices: istioServices,
+			pods:          filterPods,
+			services:      filterServices,
+			istioServices: istioGatewayServices,
 		})
 	}
 	return servingJobs, nil
+}
+
+func (p *processer) isDeploymentPod(d *appv1.Deployment, pod *v1.Pod) bool {
+	if d.Namespace != pod.Namespace {
+		return false
+	}
+	if pod.Labels[servingNameLabelKey] != d.Labels[servingNameLabelKey] {
+		return false
+	}
+	if pod.Labels[servingVersionLabelKey] != d.Labels[servingVersionLabelKey] {
+		return false
+	}
+	if pod.Labels[servingTypeLabelKey] != string(p.processerType) {
+		return false
+	}
+	return true
+}
+
+func (p *processer) isDeploymentService(d *appv1.Deployment, svc *v1.Service) bool {
+	if d.Namespace != svc.Namespace {
+		return false
+	}
+	if svc.Labels[servingNameLabelKey] != d.Labels[servingNameLabelKey] {
+		return false
+	}
+	if svc.Labels[servingVersionLabelKey] != d.Labels[servingVersionLabelKey] {
+		return false
+	}
+	if svc.Labels[servingTypeLabelKey] != string(p.processerType) {
+		return false
+	}
+	return true
+
 }
 
 func (p *processer) getIstioGatewayService() []*v1.Service {
@@ -353,26 +384,14 @@ func (p *processer) getIstioGatewayService() []*v1.Service {
 	if !p.useIstioGateway {
 		return istioServices
 	}
-	labels := map[string]string{
-		"app":   "istio-ingressgateway",
-		"istio": "ingressgateway",
-	}
-	istioServiceList, err := listJobServices(p.client, metav1.NamespaceAll, labels)
-	if err != nil {
-		log.Debugf("failed to get istio gateway,reason: %v,we will use cluster ip to endpoint", err)
-		return istioServices
-	}
-	for _, s := range istioServiceList.Items {
-		istioServices = append(istioServices, s.DeepCopy())
-	}
+	istioServices, _ = k8saccesser.GetK8sResourceAccesser().ListServices(
+		metav1.NamespaceAll,
+		"app=istio-ingressgateway,istio=ingressgateway")
 	return istioServices
 }
 
 func (p *processer) ListServingJobs(namespace string, allNamespace bool) ([]ServingJob, error) {
-	selector := map[string]string{
-		servingTypeLabelKey: string(p.processerType),
-	}
-	return p.FilterServingJobs(namespace, allNamespace, selector)
+	return p.FilterServingJobs(namespace, allNamespace, fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType))
 }
 
 func (p *processer) IsDeploymentPod(deployment *appv1.Deployment, pod *v1.Pod) bool {
@@ -427,81 +446,4 @@ func (p *processer) IsKnownService(namespace, name, version string, service *v1.
 		return false
 	}
 	return true
-}
-
-func listJobPods(k8sclient *kubernetes.Clientset, namespace string, labels map[string]string) (*v1.PodList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		list := &v1.PodList{}
-		err := arenacache.GetCacheClient().List(context.Background(), list, client.InNamespace(namespace), client.MatchingLabels(labels))
-		if err != nil {
-			return nil, err
-		}
-		return list, nil
-	}
-	labelSelector := []string{}
-	for key, value := range labels {
-		if value != "" {
-			labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
-			continue
-		}
-		labelSelector = append(labelSelector, key)
-	}
-	return k8sclient.CoreV1().Pods(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: strings.Join(labelSelector, ","),
-	})
-}
-
-func listDeployments(k8sclient *kubernetes.Clientset, namespace string, labels map[string]string) (*appv1.DeploymentList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		list := &appv1.DeploymentList{}
-		err := arenacache.GetCacheClient().List(context.Background(), list, client.InNamespace(namespace), client.MatchingLabels(labels))
-		if err != nil {
-			return nil, err
-		}
-		return list, nil
-	}
-	labelSelector := []string{}
-	for key, value := range labels {
-		if value != "" {
-			labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
-			continue
-		}
-		labelSelector = append(labelSelector, key)
-	}
-	// 2. Find the pod list, and determine the pod of the job
-	return k8sclient.AppsV1().Deployments(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: strings.Join(labelSelector, ","),
-	})
-}
-
-func listJobServices(k8sclient *kubernetes.Clientset, namespace string, labels map[string]string) (*v1.ServiceList, error) {
-	if config.GetArenaConfiger().IsDaemonMode() {
-		serviceList := &v1.ServiceList{}
-		err := arenacache.GetCacheClient().List(context.Background(), serviceList, client.InNamespace(namespace), client.MatchingLabels(labels))
-		if err != nil {
-			return nil, err
-		}
-		return serviceList, nil
-	}
-	labelSelector := []string{}
-	for key, value := range labels {
-		labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
-		if value != "" {
-			labelSelector = append(labelSelector, fmt.Sprintf("%v=%v", key, value))
-			continue
-		}
-		labelSelector = append(labelSelector, key)
-	}
-	return k8sclient.CoreV1().Services(namespace).List(metav1.ListOptions{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ListOptions",
-			APIVersion: "v1",
-		}, LabelSelector: strings.Join(labelSelector, ","),
-	})
 }

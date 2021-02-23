@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
@@ -41,22 +42,22 @@ func NewSeldonServingProcesser() Processer {
 }
 
 func (p *SeldonServingProcesser) GetServingJobs(namespace, name, version string) ([]ServingJob, error) {
-	selector := map[string]string{
-		servingNameLabelKey: name,
-		servingTypeLabelKey: string(p.processerType),
-	}
+	selector := fmt.Sprintf("%v=%v,%v=%v", servingNameLabelKey, name, servingTypeLabelKey, p.processerType)
 	if version != "" {
-		selector[servingVersionLabelKey] = version
+		selector = fmt.Sprintf("%v=%v,%v=%v,%v=%v",
+			servingNameLabelKey,
+			name,
+			servingTypeLabelKey,
+			p.processerType,
+			servingVersionLabelKey,
+			version,
+		)
 	}
 	return p.FilterServingJobs(namespace, false, selector)
 }
 
 func (p *SeldonServingProcesser) ListServingJobs(namespace string, allNamespace bool) ([]ServingJob, error) {
-	selector := map[string]string{
-		servingTypeLabelKey: string(p.processerType),
-	}
-
-	return p.FilterServingJobs(namespace, allNamespace, selector)
+	return p.FilterServingJobs(namespace, allNamespace, fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType))
 }
 
 func (s *seldonServingJob) Convert2JobInfo() types.ServingJobInfo {
@@ -167,46 +168,42 @@ func (s *seldonServingJob) Endpoints() []types.Endpoint {
 	return endpoints
 }
 
-func (p *SeldonServingProcesser) FilterServingJobs(namespace string, allNamespace bool, labels map[string]string) ([]ServingJob, error) {
+func (p *SeldonServingProcesser) FilterServingJobs(namespace string, allNamespace bool, label string) ([]ServingJob, error) {
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
-	// 1.get deployment
-	deploymentList, err := listDeployments(p.client, namespace, labels)
+
+	deployments, err := k8saccesser.GetK8sResourceAccesser().ListDeployments(namespace, label)
 	if err != nil {
 		return nil, err
 	}
+	selector := fmt.Sprintf("%v,%v,%v=%v", servingNameLabelKey, servingVersionLabelKey, servingTypeLabelKey, p.processerType)
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, selector, "", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	istioGatewayServices := p.getIstioGatewayService()
 	servingJobs := []ServingJob{}
-	for _, d := range deploymentList.Items {
-		deployment := d.DeepCopy()
-		selector := map[string]string{
-			servingNameLabelKey:    deployment.Labels[servingNameLabelKey],
-			servingVersionLabelKey: deployment.Labels[servingVersionLabelKey],
-			servingTypeLabelKey:    string(p.processerType),
+
+	for _, deployment := range deployments {
+		filterPods := []*v1.Pod{}
+		filterServices := []*v1.Service{}
+		for _, pod := range pods {
+			if p.isDeploymentPod(deployment, pod) {
+				filterPods = append(filterPods, pod)
+			}
 		}
-		// 2.get pods
-		podList, err := listJobPods(p.client, deployment.Namespace, selector)
+
+		serviceSelector := fmt.Sprintf("%v=%v", seldonApp, deployment.Labels[seldonApp])
+		services, err := k8saccesser.GetK8sResourceAccesser().ListServices(namespace, serviceSelector)
 		if err != nil {
-			return nil, err
+			continue
 		}
-		pods := []*v1.Pod{}
-		for _, pod := range podList.Items {
-			pods = append(pods, pod.DeepCopy())
+
+		for _, svc := range services {
+			filterServices = append(filterServices, svc)
 		}
-		// 3.get services
-		serviceSelector := map[string]string {
-			seldonApp: deployment.Labels[seldonApp],
-		}
-		serviceList, err := listJobServices(p.client, deployment.Namespace, serviceSelector)
-		if err != nil {
-			return nil, err
-		}
-		services := []*v1.Service{}
-		for _, s := range serviceList.Items {
-			services = append(services, s.DeepCopy())
-		}
-		// 4. get istio gateway
-		istioServices := p.getIstioGatewayService()
 
 		job := &servingJob{
 			name:          deployment.Labels[servingNameLabelKey],
@@ -214,14 +211,16 @@ func (p *SeldonServingProcesser) FilterServingJobs(namespace string, allNamespac
 			servingType:   p.processerType,
 			version:       deployment.Labels[servingVersionLabelKey],
 			deployment:    deployment,
-			pods:          pods,
-			services:      services,
-			istioServices: istioServices,
+			pods:          filterPods,
+			services:      filterServices,
+			istioServices: istioGatewayServices,
 		}
+
 		servingJobs = append(servingJobs, &seldonServingJob{
 			servingJob: job,
 		})
 	}
+
 	return servingJobs, nil
 }
 

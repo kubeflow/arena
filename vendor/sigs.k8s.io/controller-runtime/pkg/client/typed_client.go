@@ -43,7 +43,8 @@ func (c *typedClient) Create(ctx context.Context, obj runtime.Object, opts ...Cr
 		Resource(o.resource()).
 		Body(obj).
 		VersionedParams(createOpts.AsCreateOptions(), c.paramCodec).
-		Do(ctx).
+		Context(ctx).
+		Do().
 		Into(obj)
 }
 
@@ -62,7 +63,8 @@ func (c *typedClient) Update(ctx context.Context, obj runtime.Object, opts ...Up
 		Name(o.GetName()).
 		Body(obj).
 		VersionedParams(updateOpts.AsUpdateOptions(), c.paramCodec).
-		Do(ctx).
+		Context(ctx).
+		Do().
 		Into(obj)
 }
 
@@ -81,7 +83,8 @@ func (c *typedClient) Delete(ctx context.Context, obj runtime.Object, opts ...De
 		Resource(o.resource()).
 		Name(o.GetName()).
 		Body(deleteOpts.AsDeleteOptions()).
-		Do(ctx).
+		Context(ctx).
+		Do().
 		Error()
 }
 
@@ -100,7 +103,8 @@ func (c *typedClient) DeleteAllOf(ctx context.Context, obj runtime.Object, opts 
 		Resource(o.resource()).
 		VersionedParams(deleteAllOfOpts.AsListOptions(), c.paramCodec).
 		Body(deleteAllOfOpts.AsDeleteOptions()).
-		Do(ctx).
+		Context(ctx).
+		Do().
 		Error()
 }
 
@@ -123,7 +127,8 @@ func (c *typedClient) Patch(ctx context.Context, obj runtime.Object, patch Patch
 		Name(o.GetName()).
 		VersionedParams(patchOpts.ApplyOptions(opts).AsPatchOptions(), c.paramCodec).
 		Body(data).
-		Do(ctx).
+		Context(ctx).
+		Do().
 		Into(obj)
 }
 
@@ -136,7 +141,8 @@ func (c *typedClient) Get(ctx context.Context, key ObjectKey, obj runtime.Object
 	return r.Get().
 		NamespaceIfScoped(key.Namespace, r.isNamespaced()).
 		Resource(r.resource()).
-		Name(key.Name).Do(ctx).Into(obj)
+		Context(ctx).
+		Name(key.Name).Do().Into(obj)
 }
 
 // List implements client.Client
@@ -151,7 +157,8 @@ func (c *typedClient) List(ctx context.Context, obj runtime.Object, opts ...List
 		NamespaceIfScoped(listOpts.Namespace, r.isNamespaced()).
 		Resource(r.resource()).
 		VersionedParams(listOpts.AsListOptions(), c.paramCodec).
-		Do(ctx).
+		Context(ctx).
+		Do().
 		Into(obj)
 }
 
@@ -172,7 +179,8 @@ func (c *typedClient) UpdateStatus(ctx context.Context, obj runtime.Object, opts
 		SubResource("status").
 		Body(obj).
 		VersionedParams((&UpdateOptions{}).ApplyOptions(opts).AsUpdateOptions(), c.paramCodec).
-		Do(ctx).
+		Context(ctx).
+		Do().
 		Into(obj)
 }
 
@@ -196,6 +204,7 @@ func (c *typedClient) PatchStatus(ctx context.Context, obj runtime.Object, patch
 		SubResource("status").
 		Body(data).
 		VersionedParams(patchOpts.ApplyOptions(opts).AsPatchOptions(), c.paramCodec).
-		Do(ctx).
+		Context(ctx).
+		Do().
 		Into(obj)
 }

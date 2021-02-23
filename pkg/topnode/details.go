@@ -12,8 +12,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ListNodeDetails(nodeNames []string, nodeType types.NodeType) (types.AllNodeInfo, error) {
-	nodes, err := BuildNodes(nodeNames, nodeType)
+func ListNodeDetails(nodeNames []string, nodeType types.NodeType, showMetric bool) (types.AllNodeInfo, error) {
+	nodes, err := BuildNodes(nodeNames, nodeType, showMetric)
 	allNodeInfos := types.AllNodeInfo{}
 	if err != nil {
 		return allNodeInfos, err
@@ -24,8 +24,8 @@ func ListNodeDetails(nodeNames []string, nodeType types.NodeType) (types.AllNode
 	return allNodeInfos, nil
 }
 
-func DisplayNodeDetails(nodeNames []string, nodeType types.NodeType, format types.FormatStyle) error {
-	nodes, err := BuildNodes(nodeNames, nodeType)
+func DisplayNodeDetails(nodeNames []string, nodeType types.NodeType, format types.FormatStyle, showMetric bool) error {
+	nodes, err := BuildNodes(nodeNames, nodeType, showMetric)
 	if err != nil {
 		return err
 	}

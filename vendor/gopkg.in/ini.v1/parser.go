@@ -84,10 +84,7 @@ func (p *parser) BOM() error {
 	case mask[0] == 254 && mask[1] == 255:
 		fallthrough
 	case mask[0] == 255 && mask[1] == 254:
-		_, err = p.buf.Read(mask)
-		if err != nil {
-			return err
-		}
+		p.buf.Read(mask)
 	case mask[0] == 239 && mask[1] == 187:
 		mask, err := p.buf.Peek(3)
 		if err != nil && err != io.EOF {
@@ -96,10 +93,7 @@ func (p *parser) BOM() error {
 			return nil
 		}
 		if mask[2] == 191 {
-			_, err = p.buf.Read(mask)
-			if err != nil {
-				return err
-			}
+			p.buf.Read(mask)
 		}
 	}
 	return nil
@@ -141,7 +135,7 @@ func readKeyName(delimiters string, in []byte) (string, int, error) {
 	}
 
 	// Get out key name
-	var endIdx int
+	endIdx := -1
 	if len(keyQuote) > 0 {
 		startIdx := len(keyQuote)
 		// FIXME: fail case -> """"""name"""=value
@@ -187,7 +181,7 @@ func (p *parser) readMultilines(line, val, valQuote string) (string, error) {
 		}
 		val += next
 		if p.isEOF {
-			return "", fmt.Errorf("missing closing key quote from %q to %q", line, next)
+			return "", fmt.Errorf("missing closing key quote from '%s' to '%s'", line, next)
 		}
 	}
 	return val, nil
@@ -419,10 +413,7 @@ func (f *File) parse(reader io.Reader) (err error) {
 		if f.options.AllowNestedValues &&
 			isLastValueEmpty && len(line) > 0 {
 			if line[0] == ' ' || line[0] == '\t' {
-				err = lastRegularKey.addNestedValue(string(bytes.TrimSpace(line)))
-				if err != nil {
-					return err
-				}
+				lastRegularKey.addNestedValue(string(bytes.TrimSpace(line)))
 				continue
 			}
 		}
@@ -462,14 +453,14 @@ func (f *File) parse(reader io.Reader) (err error) {
 
 			section.Comment = strings.TrimSpace(p.comment.String())
 
-			// Reset auto-counter and comments
+			// Reset aotu-counter and comments
 			p.comment.Reset()
 			p.count = 1
 
 			inUnparseableSection = false
 			for i := range f.options.UnparseableSections {
 				if f.options.UnparseableSections[i] == name ||
-					(f.options.Insensitive && strings.EqualFold(f.options.UnparseableSections[i], name)) {
+					(f.options.Insensitive && strings.ToLower(f.options.UnparseableSections[i]) == strings.ToLower(name)) {
 					inUnparseableSection = true
 					continue
 				}
