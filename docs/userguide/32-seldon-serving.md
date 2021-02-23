@@ -1,8 +1,7 @@
 This guide walks through the steps to deploy and serve a custom model with seldon core
 
-1. Setup
-
-Follow the Seldon Core [guide](https://github.com/SeldonIO/seldon-core#install-seldon-core) to install Seldon Core.For the prerequisites,you should ensure 8g memory and 4 core cpu available in your environment.
+1. Setup 
+   Follow the Seldon Core [guide](https://github.com/SeldonIO/seldon-core#install-seldon-core) to install Seldon Core.For the prerequisites,you should ensure 8g memory and 4 core cpu available in your environment.
 
 2. Summit your serving job into seldon core
 ```shell script

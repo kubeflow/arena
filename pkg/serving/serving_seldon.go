@@ -40,6 +40,17 @@ func NewSeldonServingProcesser() Processer {
 	}
 }
 
+func (p *SeldonServingProcesser) GetServingJobs(namespace, name, version string) ([]ServingJob, error) {
+	selector := map[string]string{
+		servingNameLabelKey: name,
+		servingTypeLabelKey: string(p.processerType),
+	}
+	if version != "" {
+		selector[servingVersionLabelKey] = version
+	}
+	return p.FilterServingJobs(namespace, false, selector)
+}
+
 func (p *SeldonServingProcesser) ListServingJobs(namespace string, allNamespace bool) ([]ServingJob, error) {
 	selector := map[string]string{
 		servingTypeLabelKey: string(p.processerType),
