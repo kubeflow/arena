@@ -1,0 +1,42 @@
+site_name: Arena Documentation
+
+repo_url: https://github.com/kubeflow/arena
+edit_uri: https://github.com/kubeflow/arena/tree/master/docs
+
+nav:
+  - Home: index.md
+  - Installation: installation/index.md
+  - User Guide:
+    - Training Job Guide: training/index.md
+    - Serving Job Guide: serving/index.md
+    - Display Resource Usage Guide: top/index.md
+    - Supports Multiple Users Guide: multiple-users.md
+  - SDK:
+    - Golang: sdk/go/index.md
+  - Release Notes:
+    - v0.7.0: releases/v0.7.0.md
+    - v0.4.0: releases/v0.4.0.md
+    - v0.3.0: releases/v0.3.0.md
+    - v0.2.0: releases/v0.2.0.md
+    - v0.1.0: releases/v0.1.0.md
+  - FAQ: faq/index.md
+  - About: 
+    - Adopter: about/ADOPTERS.md 
+
+theme: 
+  name: material
+  #name: mkdocs
+  #name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - yaml
+    - django
+
+markdown_extensions:
+    - admonition
+
+copyright: Copyright &copy; 2021 <a href="https://github.com/happy2048">Junfeng Yang</a>, Maintained by the Arena Team.
+
+plugins:
+    - search
+
