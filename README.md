@@ -4,6 +4,7 @@
 [![Build Status](https://travis-ci.org/kubeflow/arena.svg?branch=master)](https://travis-ci.org/kubeflow/arena) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubeflow/arena)](https://goreportcard.com/report/github.com/kubeflow/arena)
 
+View the [Arena documentation](https://arena-docs.readthedocs.io/en/latest).
 
 ## Overview
 
