@@ -4,6 +4,7 @@
 [![Build Status](https://travis-ci.org/kubeflow/arena.svg?branch=master)](https://travis-ci.org/kubeflow/arena) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubeflow/arena)](https://goreportcard.com/report/github.com/kubeflow/arena)
 
+View the [Arena documentation](https://arena-docs.readthedocs.io/en/latest).
 
 ## Overview
 
@@ -17,34 +18,13 @@ For the Chinese version, please refer to [中文文档](README_cn.md)
 
 ## Setup
 
-You can follow up the [Installation guide](docs/installation/INSTALL_FROM_BINARY.md)
+You can follow up the [Installation guide](https://arena-docs.readthedocs.io/en/latest/installation)
 
 ## User Guide
 
-Arena is a command-line interface to run and monitor the machine learning training jobs and check their results in an easy way. Currently it supports solo/distributed training.
+Arena is a command-line interface to run and monitor the machine learning training jobs and check their results in an easy way. Please refer the [User Guide](https://arena-docs.readthedocs.io/en/latest/training) to manage your training jobs. 
 
-- [1. Run a training Job with source code from git](docs/userguide/1-tfjob-standalone.md)
-- [2. Run a training Job with tensorboard](docs/userguide/2-tfjob-tensorboard.md)
-- [3. Run a distributed training Job](docs/userguide/3-tfjob-distributed.md)
-- [4. Run a distributed training Job with external data](docs/userguide/4-tfjob-distributed-data.md)
-- [5. Run a distributed training Job based on MPI](docs/userguide/5-mpijob-distributed.md)
-- [6. Run a distributed TensorFlow training job with gang scheduler](docs/userguide/6-tfjob-gangschd.md)
-- [7. Run TensorFlow Serving](docs/userguide/7-tf-serving.md)
-- [8. Run TensorFlow Estimator](docs/userguide/8-tfjob-estimator.md)
-- [9. Monitor GPUs of the training job ](docs/userguide/9-top-job-gpu-metric.md)
-- [10. Run a distributed training job with RDMA](docs/userguide/10-rdma-integration.md)
-- [11. Run a distributed spark job](docs/userguide/11-sparkjob-distributed.md)
-- [12. Run a Volcano job](docs/userguide/12-volcanojob.md)
-- [13. Preempted mpi job](docs/userguide/13-preempted-mpijob.md)
-- [14. Submit jobs with node selectors](docs/userguide/14-submit-with-node-selector.md)
-- [15. Submit jobs with tolerating taints](docs/userguide/14-submit-with-node-toleration.md)
-- [16. Run a custom serving job](docs/userguide/15-custom-serving-sample.md)
-- [17. Run a training Job with configuration files](docs/userguide/16-assign-config-file.md)
-- [18. Run a standalone Pytorch Job](docs/userguide/17-pytorchjob-standalone.md)
-- [19. Run a distributed Pytorch Job](docs/userguide/18-pytorchjob-distributed.md)
-- [20. Run a KFServing Job](docs/userguide/27-kfserving-custom.md)
-- [21. Run a Elastic Training Job](docs/userguide/28-elastictraining-tensorflow2-mnist.md)
-- [22. Run a Seldon Core Job](docs/userguide/32-seldon-serving.md)
+
 ## Demo
 
 [![](demo.jpg)](http://cloud.video.taobao.com/play/u/2987821887/p/1/e/6/t/1/50210690772.mp4)
@@ -66,7 +46,7 @@ make
 
 `arena` binary is located in directory `arena/bin`. You may want to add the directory to `$PATH`.
 
-Then you can follow [Installation guide for developer](docs/installation/INSTALL_FROM_SOURCE.md)
+Then you can follow [Installation guide for developer](https://arena-docs.readthedocs.io/en/latest/installation)
 
 ## CPU Profiling
 
@@ -84,12 +64,12 @@ Then you can analyze the profile by following [Go CPU profiling: pprof and speed
 
 ## Adopters
 
-If you are intrested in Arena and would like to share your experiences with others, you are warmly welcome to add your information on [ADOPTERS.md](docs/ADOPTERS.md) page. We will continuousely discuss new requirements and feature design with you in advance.
+If you are intrested in Arena and would like to share your experiences with others, you are warmly welcome to add your information on [ADOPTERS.md](https://arena-docs.readthedocs.io/en/latest/about/ADOPTERS) page. We will continuousely discuss new requirements and feature design with you in advance.
 
 
 ## FAQ
 
-Please refer to [FAQ](FAQ.md)
+Please refer to [FAQ](https://arena-docs.readthedocs.io/en/latest/faq)
 
 ## CLI Document
 

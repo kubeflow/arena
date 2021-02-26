@@ -505,7 +505,7 @@ spec:
             - --enable-leader-election
           command:
             - /manager
-          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/et-controller:afb47f1
+          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/et-controller:1499985
           name: manager
       serviceAccountName: et-operator
       terminationGracePeriodSeconds: 10
