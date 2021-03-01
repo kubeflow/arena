@@ -1,0 +1,44 @@
+{{- $gpuCount := .Values.gpuCount -}}
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: {{ .Values.servingName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  predictors:
+    - componentSpecs:
+      - spec:
+          containers:
+            - name: inference
+              resources:
+                limits:
+                  {{- if .Values.cpu }}
+                  cpu: {{ .Values.cpu }}
+                  {{- end }}
+                  {{- if .Values.memory }}
+                  memory: {{ .Values.memory }}
+                  {{- end }}
+                  {{- if gt (int $gpuCount) 0 }}
+                  nvidia.com/gpu: {{ .Values.gpuCount }}
+                  {{- end }}
+                requests:
+                  {{- if .Values.cpu }}
+                  cpu: {{ .Values.cpu }}
+                  {{- end }}
+                  {{- if .Values.memory }}
+                  memory: {{ .Values.memory }}
+                  {{- end }}
+                  {{- if gt (int $gpuCount) 0 }}
+                  nvidia.com/gpu: {{ .Values.gpuCount }}
+                  {{- end }}
+      graph:
+        implementation: {{ .Values.implementation }}
+        modelUri: {{ .Values.modelUri }}
+        name: inference
+      name: default
+      replicas: {{ .Values.replicas }}
+      labels:
+        servingName: "{{ .Values.servingName }}"
+        serviceName: "{{ .Values.servingName }}"
+        servingType: seldon-serving
+        servingVersion: "{{ .Values.servingVersion }}"

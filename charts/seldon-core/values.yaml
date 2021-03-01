@@ -1,0 +1,13 @@
+# Default values for seldon core.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+cpu: 500m
+memory: 1Gi
+gpuCount: 0
+replicas: 1
+
+servingName: predictor
+namespace: default
+implementation: SKLEARN_SERVER
+modelUri: gs://seldon-models/sklearn/iris
