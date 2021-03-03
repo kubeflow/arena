@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -30,13 +31,36 @@ func ListServingJobs(namespace string, allNamespace bool, servingType types.Serv
 		return processer.ListServingJobs(namespace, allNamespace)
 	}
 	servingJobs := []ServingJob{}
-	for _, p := range processers {
-		jobs, err := p.ListServingJobs(namespace, allNamespace)
-		if err != nil {
-			log.Debugf("failed to get serving jobs whose type are %v", p.Type())
-			continue
+	var wg sync.WaitGroup
+	locker := new(sync.RWMutex)
+	noPrivileges := false
+	for _, pr := range processers {
+		wg.Add(1)
+		p := pr
+		go func() {
+			defer wg.Done()
+			jobs, err := p.ListServingJobs(namespace, allNamespace)
+			if err != nil {
+				if strings.Contains(err.Error(), "forbidden: User") {
+					log.Debugf("the user has no privileges to get the serving job %v,reason: %v", p.Type(), err)
+					noPrivileges = true
+					return
+				}
+				log.Debugf("failed to get serving jobs whose type are %v", p.Type())
+				return
+			}
+			locker.Lock()
+			servingJobs = append(servingJobs, jobs...)
+			locker.Unlock()
+		}()
+	}
+	wg.Wait()
+	if noPrivileges {
+		item := fmt.Sprintf("namespace %v", namespace)
+		if allNamespace {
+			item = fmt.Sprintf("all namespaces")
 		}
-		servingJobs = append(servingJobs, jobs...)
+		return nil, fmt.Errorf("the user has no privileges to list the serving jobs in %v", item)
 	}
 	return servingJobs, nil
 }

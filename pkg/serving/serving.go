@@ -42,6 +42,7 @@ var once sync.Once
 
 func GetAllProcesser() map[types.ServingJobType]Processer {
 	once.Do(func() {
+		locker := new(sync.RWMutex)
 		processers = map[types.ServingJobType]Processer{}
 		processerInits := []func() Processer{
 			NewCustomServingProcesser,
@@ -50,10 +51,19 @@ func GetAllProcesser() map[types.ServingJobType]Processer {
 			NewTensorrtServingProcesser,
 			NewSeldonServingProcesser,
 		}
+		var wg sync.WaitGroup
 		for _, initFunc := range processerInits {
-			p := initFunc()
-			processers[p.Type()] = p
+			wg.Add(1)
+			f := initFunc
+			go func() {
+				defer wg.Done()
+				p := f()
+				locker.Lock()
+				processers[p.Type()] = p
+				locker.Unlock()
+			}()
 		}
+		wg.Wait()
 	})
 	return processers
 }

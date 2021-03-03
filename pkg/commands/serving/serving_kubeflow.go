@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
+	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/serving"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/spf13/cobra"
@@ -30,7 +31,7 @@ func NewSubmitKFServingJobCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v\n", err)
 			}
-			job, err := builder.Namespace(viper.GetString("namespace")).Command(args).Build()
+			job, err := builder.Namespace(config.GetArenaConfiger().GetNamespace()).Command(args).Build()
 			if err != nil {
 				return fmt.Errorf("failed to validate command args: %v", err)
 			}
