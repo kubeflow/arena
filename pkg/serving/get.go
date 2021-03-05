@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"text/tabwriter"
 
 	"gopkg.in/yaml.v2"
@@ -54,13 +55,32 @@ func SearchServingJob(namespace, name, version string, servingType types.Serving
 		return servingJobs[0], nil
 	}
 	jobs := []ServingJob{}
-	for _, p := range processers {
-		servingJobs, err := p.GetServingJobs(namespace, name, version)
-		if err != nil {
-			log.Debugf("processer %v does not support the serving job %v", p.Type(), name)
-			continue
-		}
-		jobs = append(jobs, servingJobs...)
+	var wg sync.WaitGroup
+	locker := new(sync.RWMutex)
+	noPrivileges := false
+	for _, pr := range processers {
+		wg.Add(1)
+		p := pr
+		go func() {
+			defer wg.Done()
+			servingJobs, err := p.GetServingJobs(namespace, name, version)
+			if err != nil {
+				if strings.Contains(err.Error(), "forbidden: User") {
+					log.Debugf("the user has no privileges to get the serving job %v,reason: %v", p.Type(), err)
+					noPrivileges = true
+					return
+				}
+				log.Debugf("processer %v does not support the serving job %v", p.Type(), name)
+				return
+			}
+			locker.Lock()
+			jobs = append(jobs, servingJobs...)
+			locker.Unlock()
+		}()
+	}
+	wg.Wait()
+	if noPrivileges {
+		return nil, fmt.Errorf("the user has no privileges to get the serving job in namespace %v", namespace)
 	}
 	if len(jobs) == 0 {
 		return nil, fmt.Errorf(errNotFoundServingJobMessage, name, name)
