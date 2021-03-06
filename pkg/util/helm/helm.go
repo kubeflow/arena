@@ -22,7 +22,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -67,9 +66,6 @@ func InstallRelease(name string, namespace string, values interface{}, chartName
 	log.Debugf("Exec %s, %v", binary, args)
 
 	env := os.Environ()
-	if types.KubeConfig != "" {
-		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
 
 	// return syscall.Exec(cmd, args, env)
 	// 5. execute the command
@@ -104,10 +100,6 @@ func CheckRelease(name string) (exist bool, err error) {
 
 	cmd := exec.Command(helmCmd[0], "get", name)
 	// support multiple cluster management
-	if types.KubeConfig != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
-
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("cmd.Start: %v", err)
 		return exist, err
@@ -150,10 +142,6 @@ func DeleteRelease(name string) error {
 	args := []string{"del", "--purge", name}
 	cmd := exec.Command(binary, args...)
 
-	env := os.Environ()
-	if types.KubeConfig != "" {
-		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
 	// return syscall.Exec(cmd, args, env)
 	out, err := cmd.Output()
 	log.Debugf("Delete release's result: %s\n", string(out))
@@ -169,9 +157,6 @@ func ListReleases() (releases []string, err error) {
 
 	cmd := exec.Command(helmCmd[0], "list", "-q")
 	// support multiple cluster management
-	if types.KubeConfig != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
 	out, err := cmd.Output()
 	if err != nil {
 		return releases, err
@@ -188,9 +173,6 @@ func ListReleaseMap() (releaseMap map[string]string, err error) {
 
 	cmd := exec.Command(helmCmd[0], "list")
 	// support multiple cluster management
-	if types.KubeConfig != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
 	out, err := cmd.Output()
 	if err != nil {
 		return releaseMap, err
@@ -221,9 +203,6 @@ func ListAllReleasesWithDetail() (releaseMap map[string][]string, err error) {
 
 	cmd := exec.Command(helmCmd[0], "list", "--all")
 	// support multiple cluster management
-	if types.KubeConfig != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
 	out, err := cmd.Output()
 	if err != nil {
 		return releaseMap, err

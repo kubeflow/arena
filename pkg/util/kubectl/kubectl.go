@@ -21,7 +21,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -124,10 +123,6 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (output string,
 	log.Debugf("Exec bash -c %v", args)
 
 	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
-	env := os.Environ()
-	if types.KubeConfig != "" {
-		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
 	out, err := cmd.Output()
 	log.Debugf("%s", string(out))
 
@@ -266,10 +261,6 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 	log.Debugf("Exec bash -c %s", strings.Join(args, " "))
 
 	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
-	env := os.Environ()
-	if types.KubeConfig != "" {
-		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
 	out, err := cmd.Output()
 	fmt.Printf("%s", string(out))
 
@@ -290,9 +281,6 @@ func kubectl(args []string) ([]byte, error) {
 	log.Debugf("Exec %s, %v", binary, args)
 
 	env := os.Environ()
-	if types.KubeConfig != "" {
-		env = append(env, fmt.Sprintf("KUBECONFIG=%s", types.KubeConfig))
-	}
 
 	// return syscall.Exec(cmd, args, env)
 	// 2. execute the command

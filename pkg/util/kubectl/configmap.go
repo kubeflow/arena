@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/types"
+	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -50,7 +50,7 @@ func ListAppConfigMaps(clientset *kubernetes.Clientset, namespace string, traini
 			if strings.HasSuffix(cm.Name, fmt.Sprintf("-%s", trainingType)) {
 				found = true
 				job.Name = strings.TrimSuffix(cm.Name, fmt.Sprintf("-%s", trainingType))
-				job.Type = trainingType
+				job.Trainer = types.TrainingJobType(trainingType)
 				job.Namespace = cm.Namespace
 				break innerLoop
 			}
@@ -59,12 +59,12 @@ func ListAppConfigMaps(clientset *kubernetes.Clientset, namespace string, traini
 		if found {
 			jobs = append(jobs, job)
 		} else {
-			log.Debugf("drop %s in training configmap", job)
+			log.Debugf("drop %v in training configmap", job)
 		}
 
 	}
 
-	log.Debugf("the job training configmap: %q", jobs)
+	log.Debugf("the job training configmap: %v", jobs)
 
 	return jobs, nil
 }

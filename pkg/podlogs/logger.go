@@ -17,6 +17,8 @@ import (
 var (
 	ErrPodNotFound      = errors.New(`no logs return,because not found instance`)
 	ErrTooManyPodsFound = errors.New(`too many pods found in the job,`)
+	ErrPodNotRunning    = errors.New(`is not running`)
+	ErrPodStatusUnknown = errors.New(`status is unknown`)
 )
 
 type PodLogger struct {
