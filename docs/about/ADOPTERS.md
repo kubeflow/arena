@@ -14,3 +14,4 @@ Below are the adopters of project Arena. If you are using Arena to improve effic
 | [Microsoft](https://www.microsoft.com) | [@chaowangnk1](https://github.com/chaowangnk1) | **Testing** |  AzureML DataCache internal benchmark system |
 | [Unisound](https://www.unisound.com) | [@xieydd](https://github.com/xieydd) | **Production** | Unisound ATLAS AI Platform |
 | [DOUYU](https://www.douyu.com) | [@gongcan1219](https://github.com/gongcan1219) | **Production** | DOUYU AI Platform |
+| [NJU PASA Lab](http://pasa-bigdata.nju.edu.cn) | [@iluoeli](https://github.com/iluoeli) | **Testing** | ML Platform |
