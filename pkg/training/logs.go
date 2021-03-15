@@ -16,10 +16,12 @@ package training
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	podlogs "github.com/kubeflow/arena/pkg/podlogs"
+	v1 "k8s.io/api/core/v1"
 )
 
 // AcceptJobLog is used for arena-go-sdk
@@ -34,10 +36,13 @@ func AcceptJobLog(jobName string, trainingType types.TrainingJobType, args *type
 	if err != nil {
 		return err
 	}
-	chiefPod := job.ChiefPod()
 	// 3.if instance name not set,set the chief pod name to instance name
-	if args.InstanceName == "" && chiefPod != nil {
-		args.InstanceName = chiefPod.Name
+	if args.InstanceName == "" {
+		name, err := getInstanceName(job)
+		if err != nil {
+			return err
+		}
+		args.InstanceName = name
 	}
 	podStatuses := map[string]string{}
 	for _, pod := range job.AllPods() {
@@ -71,4 +76,32 @@ func getTrainingJobTypes() []string {
 		jobTypes = append(jobTypes, string(trainingType))
 	}
 	return jobTypes
+}
+
+func getInstanceName(job TrainingJob) (string, error) {
+	pods := job.AllPods()
+	// if not found pods,return an error
+	if pods == nil || len(pods) == 0 {
+		return "", fmt.Errorf("not found instances of the job %v", job.Name())
+	}
+	// if the job has only one pod,return its' name
+	if len(pods) == 1 {
+		return pods[0].Name, nil
+	}
+	// if job has many pods and the chief pod name is existed,return it
+	if job.ChiefPod() != nil && job.ChiefPod().Name != "" {
+		return job.ChiefPod().Name, nil
+	}
+	// return an error
+	return "", fmt.Errorf("%v", moreThanOneInstanceHelpInfo(pods))
+}
+
+func moreThanOneInstanceHelpInfo(pods []*v1.Pod) string {
+	header := fmt.Sprintf("There is %d instances have been found:", len(pods))
+	lines := []string{}
+	footer := fmt.Sprintf("please use '-i' or '--instance' to filter.")
+	for _, p := range pods {
+		lines = append(lines, fmt.Sprintf("%v", p.Name))
+	}
+	return fmt.Sprintf("%s\n\n%s\n\n%s\n", header, strings.Join(lines, "\n"), footer)
 }
