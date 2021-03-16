@@ -1,0 +1,9 @@
+bin/
+**/*.tgz
+**/.DS_Store
+.idea/
+.kube
+target/
+Library
+src/main/main.iml
+*.iml
