@@ -4,3 +4,8 @@ bin/
 .idea
 .kube
 Library
+
+sdk/arena-python-sdk/dist/
+sdk/arena-python-sdk/build/
+sdk/arena-python-sdk/arenasdk.egg-info/
+__pycache__
