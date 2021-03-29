@@ -7,8 +7,8 @@ type SubmitSparkJobArgs struct {
 	Image        string          `yaml:"Image"`
 	MainClass    string          `yaml:"MainClass"`
 	Jar          string          `yaml:"Jar"`
-	Executor     `yaml:",inline"`
-	Driver       `yaml:",inline"`
+	Executor     *Executor       `yaml:"Executor"`
+	Driver       *Driver         `yaml:"Driver"`
 }
 
 type Driver struct {

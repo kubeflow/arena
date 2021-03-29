@@ -20,10 +20,6 @@ func NewSubmitSparkJobCommand() *cobra.Command {
 			viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				cmd.HelpFunc()(cmd, args)
-				return fmt.Errorf("not found command args")
-			}
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
 				LogLevel:       viper.GetString("loglevel"),

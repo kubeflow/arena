@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1beta2
 
 // SetSparkApplicationDefaults sets default values for certain fields of a SparkApplication.
 func SetSparkApplicationDefaults(app *SparkApplication) {
@@ -43,13 +43,13 @@ func SetSparkApplicationDefaults(app *SparkApplication) {
 		}
 	}
 
-	setDriverSpecDefaults(app.Spec.Driver)
-	setExecutorSpecDefaults(app.Spec.Executor)
+	setDriverSpecDefaults(&app.Spec.Driver)
+	setExecutorSpecDefaults(&app.Spec.Executor)
 }
 
-func setDriverSpecDefaults(spec DriverSpec) {
+func setDriverSpecDefaults(spec *DriverSpec) {
 	if spec.Cores == nil {
-		spec.Cores = new(float32)
+		spec.Cores = new(int32)
 		*spec.Cores = 1
 	}
 	if spec.Memory == nil {
@@ -58,9 +58,9 @@ func setDriverSpecDefaults(spec DriverSpec) {
 	}
 }
 
-func setExecutorSpecDefaults(spec ExecutorSpec) {
+func setExecutorSpecDefaults(spec *ExecutorSpec) {
 	if spec.Cores == nil {
-		spec.Cores = new(float32)
+		spec.Cores = new(int32)
 		*spec.Cores = 1
 	}
 	if spec.Memory == nil {

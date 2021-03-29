@@ -8,7 +8,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
-	"github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
+	"github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta2"
 	"github.com/kubeflow/arena/pkg/operators/spark-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -19,7 +19,7 @@ import (
 // spark application wrapper
 type SparkJob struct {
 	*BasicJobInfo
-	sparkjob    *v1beta1.SparkApplication
+	sparkjob    *v1beta2.SparkApplication
 	trainerType types.TrainingJobType
 	pods        []*v1.Pod
 	chiefPod    *v1.Pod
@@ -110,23 +110,23 @@ func (sj *SparkJob) GetStatus() (status string) {
 }
 
 func (sj *SparkJob) isSucceeded() bool {
-	return sj.sparkjob.Status.AppState.State == v1beta1.CompletedState
+	return sj.sparkjob.Status.AppState.State == v1beta2.CompletedState
 }
 
 func (sj *SparkJob) isFailed() bool {
-	return sj.sparkjob.Status.AppState.State == v1beta1.FailedState
+	return sj.sparkjob.Status.AppState.State == v1beta2.FailedState
 }
 
 func (sj *SparkJob) isPending() bool {
-	return sj.sparkjob.Status.AppState.State == v1beta1.PendingRerunState
+	return sj.sparkjob.Status.AppState.State == v1beta2.PendingRerunState
 }
 
 func (sj *SparkJob) isSubmitted() bool {
-	return sj.sparkjob.Status.AppState.State == v1beta1.SubmittedState
+	return sj.sparkjob.Status.AppState.State == v1beta2.SubmittedState
 }
 
 func (sj *SparkJob) isRunning() bool {
-	return sj.sparkjob.Status.AppState.State == v1beta1.RunningState
+	return sj.sparkjob.Status.AppState.State == v1beta2.RunningState
 }
 
 func (sj *SparkJob) StartTime() *metav1.Time {
@@ -272,7 +272,7 @@ func (st *SparkJobTrainer) IsSupported(name, ns string) bool {
 	return err == nil
 }
 
-func (st *SparkJobTrainer) isSparkJob(name, ns string, job v1beta1.SparkApplication) bool {
+func (st *SparkJobTrainer) isSparkJob(name, ns string, job v1beta2.SparkApplication) bool {
 	if val, ok := job.Labels["release"]; ok && (val == name) {
 		log.Debugf("the sparkjob %s with labels %s", job.Name, val)
 	} else {
@@ -355,7 +355,7 @@ func (st *SparkJobTrainer) isChiefPod(item *v1.Pod) bool {
 	return true
 }
 
-func getPodsOfSparkJob(job *v1beta1.SparkApplication, st *SparkJobTrainer, podList []*v1.Pod) (pods []*v1.Pod, chiefPod *v1.Pod) {
+func getPodsOfSparkJob(job *v1beta2.SparkApplication, st *SparkJobTrainer, podList []*v1.Pod) (pods []*v1.Pod, chiefPod *v1.Pod) {
 	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, st.isSparkPod, func(pod *v1.Pod) bool {
 		return st.isChiefPod(pod)
 	})

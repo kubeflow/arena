@@ -30,7 +30,7 @@ import (
 	mpiversioned "github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
 	pytorch_v1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
 	pyversioned "github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
-	spark_v1beta1 "github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
+	spark_v1beta2 "github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta2"
 	sparkversioned "github.com/kubeflow/arena/pkg/operators/spark-operator/client/clientset/versioned"
 	tfv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1"
 	tfversioned "github.com/kubeflow/arena/pkg/operators/tf-operator/client/clientset/versioned"
@@ -46,7 +46,7 @@ func init() {
 	v1alpha1.AddToScheme(scheme.Scheme)
 	v1alpha12.AddToScheme(scheme.Scheme)
 	pytorch_v1.AddToScheme(scheme.Scheme)
-	spark_v1beta1.AddToScheme(scheme.Scheme)
+	spark_v1beta2.AddToScheme(scheme.Scheme)
 	volcano_v1alpha1.AddToScheme(scheme.Scheme)
 }
 
@@ -511,9 +511,9 @@ func (k *k8sResourceAccesser) ListVolcanoJobs(volcanojobClient *volcanovesioned.
 	return jobs, nil
 }
 
-func (k *k8sResourceAccesser) ListSparkJobs(sparkjobClient *sparkversioned.Clientset, namespace string) ([]*spark_v1beta1.SparkApplication, error) {
-	jobs := []*spark_v1beta1.SparkApplication{}
-	jobList := &spark_v1beta1.SparkApplicationList{}
+func (k *k8sResourceAccesser) ListSparkJobs(sparkjobClient *sparkversioned.Clientset, namespace string) ([]*spark_v1beta2.SparkApplication, error) {
+	jobs := []*spark_v1beta2.SparkApplication{}
+	jobList := &spark_v1beta2.SparkApplicationList{}
 	var err error
 	labelSelector, err := parseLabelSelector(fmt.Sprintf("app=%v,release", types.SparkTrainingJob))
 	if err != nil {
@@ -528,7 +528,7 @@ func (k *k8sResourceAccesser) ListSparkJobs(sparkjobClient *sparkversioned.Clien
 				LabelSelector: labelSelector,
 			})
 	} else {
-		jobList, err = sparkjobClient.SparkoperatorV1beta1().SparkApplications(namespace).List(metav1.ListOptions{
+		jobList, err = sparkjobClient.SparkoperatorV1beta2().SparkApplications(namespace).List(metav1.ListOptions{
 			LabelSelector: labelSelector.String(),
 		})
 	}
@@ -657,8 +657,8 @@ func (k *k8sResourceAccesser) GetVolcanoJob(volcanojobClient *volcanovesioned.Cl
 	return volcanoJob, err
 }
 
-func (k *k8sResourceAccesser) GetSparkJob(sparkjobClient *sparkversioned.Clientset, namespace string, name string) (*spark_v1beta1.SparkApplication, error) {
-	sparkJob := &spark_v1beta1.SparkApplication{}
+func (k *k8sResourceAccesser) GetSparkJob(sparkjobClient *sparkversioned.Clientset, namespace string, name string) (*spark_v1beta2.SparkApplication, error) {
+	sparkJob := &spark_v1beta2.SparkApplication{}
 	var err error
 	if k.cacheEnabled {
 		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, sparkJob)
@@ -670,7 +670,7 @@ func (k *k8sResourceAccesser) GetSparkJob(sparkjobClient *sparkversioned.Clients
 		}
 
 	} else {
-		sparkJob, err = sparkjobClient.SparkoperatorV1beta1().SparkApplications(namespace).Get(name, metav1.GetOptions{})
+		sparkJob, err = sparkjobClient.SparkoperatorV1beta2().SparkApplications(namespace).Get(name, metav1.GetOptions{})
 		if err != nil {
 			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, SparkCRDName, name)) {
 				return nil, types.ErrTrainingJobNotFound

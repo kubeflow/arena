@@ -16,11 +16,11 @@ func NewSparkJobBuilder() *SparkJobBuilder {
 		Image:     "registry.aliyuncs.com/acs/spark:v2.4.0",
 		MainClass: "org.apache.spark.examples.SparkPi",
 		Jar:       "local:///opt/spark/examples/jars/spark-examples_2.11-2.4.0.jar",
-		Driver: types.Driver{
+		Driver: &types.Driver{
 			CPURequest:    1,
 			MemoryRequest: "500m",
 		},
-		Executor: types.Executor{
+		Executor: &types.Executor{
 			Replicas:      1,
 			CPURequest:    1,
 			MemoryRequest: "500m",
