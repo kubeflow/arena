@@ -40,7 +40,7 @@ func SubmitSparkJob(namespace string, submitArgs *types.SubmitSparkJobArgs) (err
 		return err
 	}
 	sparkChart := util.GetChartsFolder() + "/sparkjob"
-	err = workflow.SubmitJob(submitArgs.Name, string(types.PytorchTrainingJob), namespace, submitArgs, sparkChart)
+	err = workflow.SubmitJob(submitArgs.Name, string(types.SparkTrainingJob), namespace, submitArgs, sparkChart)
 	if err != nil {
 		return err
 	}

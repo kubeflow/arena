@@ -17,62 +17,90 @@ Arena supports and simplifies distributed spark job.
 
 Arena spark job is based on [spark-on-k8s-operator](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator).You can create spark job image with tool [docker-image-tool](https://spark.apache.org/docs/latest/running-on-kubernetes.html#docker-images).
 
-3\. How to use Arena spark job
+3\. Install the spark operator.
 
+We recommend using helm to install spark-operator, add the repo:
 
-step1: install spark operator(``arena-system`` is the default namespace,if not exist please create it).
+```
+$ helm repo add spark-operator https://googlecloudplatform.github.io/spark-on-k8s-operator
+```
 
-    $ kubectl create -f arena/kubernetes-artifacts/spark-operator/spark-operator.yaml
+Then install it.
 
-step2: create rbac of spark job, the spark job need service account ``spark`` to create executors.
+```
+$ helm install my-release spark-operator/spark-operator --namespace spark-operator --create-namespace
+```
 
-    $ kubectl create -f arena/kubernetes-artifacts/spark-operator/spark-rbac.yaml
+This will install the Kubernetes Operator for Apache Spark into the namespace spark-operator. The operator by default watches and handles SparkApplications in every namespaces. If you would like to limit the operator to watch and handle SparkApplications in a single namespace, e.g., default instead, add the following option to the helm install command:
 
-The default namespace is ``default``. If you want to run spark job in other namespaces. You can change namespace in spark-rbac.yaml and create a new service account.
+```
+$ helm install my-release spark-operator/spark-operator --namespace spark-operator --create-namespace --set sparkJobNamespace=default
+```
+
+Please refer [spark-on-k8s-operator](https://github.com/GoogleCloudPlatform/spark-on-k8s-operator) to get more details about  how to install spark operator. 
+
 
 4\. Submit a spark job,the following command shows how to use arena to submit a sparkjob.
 
-    $ arena submit sparkjob \
-        --name=demo \
-        --image=registry.aliyuncs.com/acs/spark:v2.4.0 \
-        --main-class=org.apache.spark.examples.SparkPi \
-        --jar=local:///opt/spark/examples/jars/spark-examples_2.11-2.4.0.jar
+```
+$ arena submit spark \
+   --name=sparktest \
+   --image=registry.aliyuncs.com/acs/spark-pi:ack-2.4.5-latest \
+   --main-class=org.apache.spark.examples.SparkPi \
+   --jar=local:///opt/spark/examples/jars/spark-examples_2.11-2.4.5.jar
 
-    configmap/demo-sparkjob created
-    configmap/demo-sparkjob labeled
-    sparkapplication.sparkoperator.k8s.io/demo created
-    INFO[0005] The Job demo has been submitted successfully
-    INFO[0005] You can run `arena get demo --type sparkjob` to check the job status
+   configmap/sparktest-sparkjob created
+   configmap/sparktest-sparkjob labeled
+   sparkapplication.sparkoperator.k8s.io/sparktest created
+   INFO[0001] The Job sparktest has been submitted successfully
+   INFO[0001] You can run `arena get sparktest --type sparkjob` to check the job status
+```
+!!! note
+
+    The Spark version is 2.4.5 which includes the kubernetes client version 4.6.3 and the supported kubernetes versions go all the way up to v1.17.0. If you want to get more details, please refer the https://stackoverflow.com/questions/61565751/why-am-i-not-able-to-run-sparkpi-example-on-a-kubernetes-k8s-cluster.
 
 5\. Get spark job details 
 
-    $ arena get --type=sparkjob demo
+```
+$ arena get sparktest
+Name:      sparktest
+Status:    SUCCEEDED
+Namespace: default
+Priority:  N/A
+Trainer:   SPARKJOB
+Duration:  12s
 
-    STATUS: SUCCEEDED
-    NAMESPACE: default
-    TRAINING DURATION: 15s
+Instances:
+  NAME              STATUS     AGE  IS_CHIEF  GPU(Requested)  NODE
+  ----              ------     ---  --------  --------------  ----
+  sparktest-driver  Completed  12s  true      0               cn-beijing.192.168.8.52
 
-    NAME   STATUS     TRAINER   AGE  INSTANCE      NODE
-    demo1  SUCCEEDED  SPARKJOB  1h   demo1-driver  N/A
+```
 
 6\. Get logs of the spark job.
 
-    $ arena logs -f demo 
-    ...
-    2019-05-08T08:25:32.104432515Z 2019-05-08 08:25:32 INFO  BlockManagerMaster:54 - BlockManagerMaster stopped
-    2019-05-08T08:25:32.10761075Z 2019-05-08 08:25:32 INFO  OutputCommitCoordinator$OutputCommitCoordinatorEndpoint:54 - OutputCommitCoordinator stopped!
-    2019-05-08T08:25:32.114734944Z 2019-05-08 08:25:32 INFO  SparkContext:54 - Successfully stopped SparkContext
-    2019-05-08T08:25:32.117170277Z 2019-05-08 08:25:32 INFO  ShutdownHookManager:54 - Shutdown hook called
-    2019-05-08T08:25:32.118273045Z 2019-05-08 08:25:32 INFO  ShutdownHookManager:54 - Deleting directory /tmp/spark-bdb4e416-5ab7-420c-905e-ef43c30fb187
-    2019-05-08T08:25:32.120019227Z 2019-05-08 08:25:32 INFO  ShutdownHookManager:54 - Deleting directory /var/data/spark-118b216d-2d39-4287-ad71-5b5d7c7195c9/spark-06dbab1f-13aa-474c-a1db-8845e14627bf
+```
+$ arena logs sparktest  --tail 10
+21/03/29 07:52:25 WARN ExecutorPodsWatchSnapshotSource: Kubernetes client has been closed (this is expected if the application is shutting down.)
+21/03/29 07:52:25 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+21/03/29 07:52:25 INFO MemoryStore: MemoryStore cleared
+21/03/29 07:52:25 INFO BlockManager: BlockManager stopped
+21/03/29 07:52:25 INFO BlockManagerMaster: BlockManagerMaster stopped
+21/03/29 07:52:25 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+21/03/29 07:52:25 INFO SparkContext: Successfully stopped SparkContext
+21/03/29 07:52:25 INFO ShutdownHookManager: Shutdown hook called
+21/03/29 07:52:25 INFO ShutdownHookManager: Deleting directory /tmp/spark-e8c052b4-0522-492a-ad77-e6734746c417
+21/03/29 07:52:25 INFO ShutdownHookManager: Deleting directory /var/data/spark-349e799f-f21e-4433-afd2-61d3b08875e4/spark-b7824f43-5839-4566-92be-a93014283f31
 
+```
 
 7\. Delete the spark job when it finished.
 
-    $ arena delete --type=sparkjob demo 
-
-    sparkapplication.sparkoperator.k8s.io "demo1" deleted
-    time="2019-05-08T17:27:06+08:00" level=info msg="The Job demo1 has been deleted successfully"
-    configmap "demo1-sparkjob" deleted
-
+```
+# arena delete sparktest
+sparkapplication.sparkoperator.k8s.io "sparktest" deleted
+configmap "sparktest-sparkjob" deleted
+INFO[0001] The training job sparktest has been deleted successfully
 Congratulations! You've run the distributed spark job with ``arena`` successfully. 
+
+```

@@ -29,7 +29,7 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewSubmitPytorchJobCommand())
 	command.AddCommand(NewSubmitHorovodJobCommand())
 	// Warning: Spark is not work,skip it
-	//command.AddCommand(NewSubmitSparkJobCommand())
+	command.AddCommand(NewSubmitSparkJobCommand())
 	command.AddCommand(NewVolcanoJobCommand())
 	command.AddCommand(NewSubmitETJobCommand())
 	return command

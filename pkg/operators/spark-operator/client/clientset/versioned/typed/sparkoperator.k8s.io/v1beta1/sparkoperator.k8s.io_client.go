@@ -23,6 +23,7 @@ package v1beta1
 import (
 	v1beta1 "github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta1"
 	"github.com/kubeflow/arena/pkg/operators/spark-operator/client/clientset/versioned/scheme"
+	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -32,7 +33,7 @@ type SparkoperatorV1beta1Interface interface {
 	SparkApplicationsGetter
 }
 
-// SparkoperatorV1beta1Client is used to interact with features provided by the sparkoperator group.
+// SparkoperatorV1beta1Client is used to interact with features provided by the sparkoperator.k8s.io group.
 type SparkoperatorV1beta1Client struct {
 	restClient rest.Interface
 }
@@ -77,7 +78,8 @@ func setConfigDefaults(config *rest.Config) error {
 	gv := v1beta1.SchemeGroupVersion
 	config.GroupVersion = &gv
 	config.APIPath = "/apis"
-	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	//config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
+	config.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
 
 	if config.UserAgent == "" {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()

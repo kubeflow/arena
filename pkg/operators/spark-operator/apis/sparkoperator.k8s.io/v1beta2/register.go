@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1beta2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +24,7 @@ import (
 	"github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io"
 )
 
-const Version = "v1alpha1"
+const Version = "v1beta2"
 
 var (
 	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
