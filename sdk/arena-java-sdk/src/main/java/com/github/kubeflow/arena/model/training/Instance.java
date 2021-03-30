@@ -2,14 +2,8 @@ package com.github.kubeflow.arena.model.training;
 
 import com.alibaba.fastjson.JSON;
 import com.github.kubeflow.arena.exceptions.ArenaException;
-import io.kubernetes.client.ApiException;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.Configuration;
-import io.kubernetes.client.ApiClient;
 import com.github.kubeflow.arena.model.common.*;
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.Response;
-import io.kubernetes.client.models.V1Pod;
+
 
 import java.io.InputStream;
 
@@ -18,6 +12,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import com.github.kubeflow.arena.enums.TrainingJobType;
 import  com.github.kubeflow.arena.enums.ArenaErrorEnum;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Pod;
+import okhttp3.Call;
+import okhttp3.Response;
 
 public class Instance {
 
@@ -128,9 +129,9 @@ public class Instance {
 
     public InputStream getLog(Logger logger) throws ArenaException, IOException  {
         ApiClient apiClient = Configuration.getDefaultApiClient();
-        int defaultTimeout = apiClient.getHttpClient().getReadTimeout()/1000;
+        int defaultTimeout = apiClient.getReadTimeout();
         if (logger.getFollowTimeout() != null && logger.getFollowTimeout() != 0) {
-            apiClient.getHttpClient().setReadTimeout(logger.getFollowTimeout(),TimeUnit.SECONDS);
+            apiClient.setReadTimeout(logger.getFollowTimeout() * 1000);
         }
         CoreV1Api coreClient = new CoreV1Api(apiClient);
         V1Pod pod;
@@ -138,15 +139,15 @@ public class Instance {
             //CoreV1Api api = new CoreV1Api(apiClient);
             pod = coreClient.readNamespacedPod(this.name, this.namespace, null, null, false);
         }catch (ApiException e) {
-            apiClient.getHttpClient().setReadTimeout(defaultTimeout,TimeUnit.SECONDS);
+            apiClient.setReadTimeout(defaultTimeout);
             throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS,e.getMessage());
         }
         if (pod.getSpec() == null) {
-            apiClient.getHttpClient().setReadTimeout(defaultTimeout,TimeUnit.SECONDS);
+            apiClient.setReadTimeout(defaultTimeout);
             throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS,"pod.spec is null and container isn't specified.");
         }
         if (pod.getSpec().getContainers() == null || pod.getSpec().getContainers().size() < 1) {
-            apiClient.getHttpClient().setReadTimeout(defaultTimeout,TimeUnit.SECONDS);
+            apiClient.setReadTimeout(defaultTimeout);
             throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS,"pod.spec.containers has no containers");
         }
         String container = pod.getSpec().getContainers().get(0).getName();
@@ -167,22 +168,23 @@ public class Instance {
                     container,
                     follow,
                     null,
+                    null,
                     "false",
                     false,
                     sinceSeconds,
                     tailLines,
                     timestamps,
-                    null, null);
+                    null);
             response = call.execute();
         }catch (ApiException e) {
-            apiClient.getHttpClient().setReadTimeout(defaultTimeout,TimeUnit.SECONDS);
+            apiClient.setReadTimeout(defaultTimeout);
             throw  new ArenaException(ArenaErrorEnum.TRAINING_LOGS,e.getMessage());
         }
         if (!response.isSuccessful()) {
-            apiClient.getHttpClient().setReadTimeout(defaultTimeout,TimeUnit.SECONDS);
+            apiClient.setReadTimeout(defaultTimeout);
             throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS,"Logs request failed: " + response.code());
         }
-        apiClient.getHttpClient().setReadTimeout(defaultTimeout,TimeUnit.SECONDS);
+        apiClient.setReadTimeout(defaultTimeout);
         return response.body().byteStream();
     }
 

@@ -2,9 +2,8 @@ package com.github.kubeflow.arena.client;
 
 import com.github.kubeflow.arena.enums.ArenaErrorEnum;
 import com.github.kubeflow.arena.exceptions.ArenaException;
-import io.kubernetes.client.ApiClient;
 import com.github.kubeflow.arena.utils.Utils;
-
+import io.kubernetes.client.openapi.ApiClient;
 
 import java.io.File;
 import java.io.IOException;
