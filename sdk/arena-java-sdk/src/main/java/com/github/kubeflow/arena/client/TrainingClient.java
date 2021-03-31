@@ -1,7 +1,5 @@
 package com.github.kubeflow.arena.client;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.kubeflow.arena.enums.ArenaErrorEnum;
 import com.github.kubeflow.arena.exceptions.ArenaException;
@@ -19,7 +17,7 @@ public class TrainingClient {
     private String kubeConfig = "";
     private String loglevel = "";
     private String arenaSystemNamespace = "";
-    private static String  arenaBinary = "arena";
+    private static String arenaBinary = "arena";
 
     public TrainingClient(String kubeConfig,String namespace,String loglevel,String arenaSystemNamespace) {
         this.namespace = namespace;
@@ -163,7 +161,7 @@ public class TrainingClient {
     }
 
     private ArrayList<String> generateCommands(String... subCommand) {
-        ArrayList<String> cmds = new ArrayList<String>();
+        ArrayList<String> cmds = new ArrayList<>();
         cmds.add(arenaBinary);
         for(int i = 0;i < subCommand.length;i++) {
             cmds.add(subCommand[i]);
