@@ -22,14 +22,13 @@ Arena 是一个命令行工具，可供数据科学家轻而易举地运行和�
 
 Arena 是一种命令行界面，支持轻而易举地运行和监控机器学习训练作业，并便捷地检查结果。目前，它支持独立/分布式训练。
 
-- [1.使用 git 上的源代码运行训练作业](docs/userguide_cn/1-tfjob-standalone.md)
-- [2.使用 tensorboard 运行训练作业](docs/userguide_cn/2-tfjob-tensorboard.md)
-- [3.运行分布式训练作业](docs/userguide_cn/3-tfjob-distributed.md)
-- [4.使用外部数据运行分布式训练作业](docs/userguide_cn/4-tfjob-distributed-data.md)
-- [5.运行基于 MPI 的分布式训练作业](docs/userguide_cn/5-mpijob-distributed.md)
-- [6.使用群调度器运行分布式 TensorFlow 训练作业](docs/userguide_cn/6-tfjob-gangschd.md)
-- [7.运行 TensorFlow Serving](docs/userguide_cn/7-tf-serving.md)
-- [8.运行 TensorFlow Estimator](docs/userguide_cn/8-tfjob-estimator.md)
+- [1.使用 git 上的源代码运行训练作业](https://arena-docs.readthedocs.io/en/latest/training/tfjob/standalone/)
+- [2.使用 tensorboard 运行训练作业](https://arena-docs.readthedocs.io/en/latest/training/tfjob/tensorboard/)
+- [3.运行分布式训练作业](https://arena-docs.readthedocs.io/en/latest/training/tfjob/distributed/)
+- [4.使用外部数据运行分布式训练作业](https://arena-docs.readthedocs.io/en/latest/training/tfjob/dataset/)
+- [5.运行基于 MPI 的分布式训练作业](https://arena-docs.readthedocs.io/en/latest/training/mpijob/distributed/)
+- [6.使用群调度器运行分布式 TensorFlow 训练作业](https://arena-docs.readthedocs.io/en/latest/training/etjob/elastictraining-tensorflow2-mnist/)
+- [7.运行 TensorFlow Serving](https://arena-docs.readthedocs.io/en/latest/serving/tfserving/serving/)
 
 ## 演示
 
