@@ -65,6 +65,11 @@ func (a *ArenaClient) Serving() *ServingJobClient {
 	return NewServingJobClient(a.namespace, a.arenaConfiger)
 }
 
+// Serving returns the Cron job client
+func (a *ArenaClient) Cron() *CronTaskClient {
+	return NewCronTaskClient(a.namespace, a.arenaConfiger)
+}
+
 func (a *ArenaClient) Node() *NodeClient {
 	return NewNodeClient(a.namespace, a.arenaConfiger)
 }
