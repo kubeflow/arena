@@ -1,0 +1,27 @@
+{{- if (not .Values.submittfjobargs.enableGangScheduler) -}}
+{{- if .Values.submittfjobargs.useTensorboard }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-tensorboard
+  labels:
+    app: {{ template "tfjob.name" . }}
+    chart: {{ template "tfjob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    role: tensorboard
+    createdBy: "TFJob"
+spec:
+  type: {{ .Values.submittfjobargs.tensorboardServiceType }}
+  ports:
+    - port: 6006
+      targetPort: 6006
+      protocol: TCP
+      name: tensorboard
+  selector:
+    app: {{ template "tfjob.name" . }}
+    chart: {{ template "tfjob.chart" . }}
+    release: {{ .Release.Name }}
+    role: tensorboard
+{{- end }}
+{{- end }}

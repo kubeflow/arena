@@ -75,3 +75,8 @@ func (c *CronTaskClient) GetAndPrint(name string) error {
 	fmt.Println(string(b))
 	return nil
 }
+
+func (c *CronTaskClient) Delete(names ...string) error {
+	fmt.Println("====== delete cron ")
+	return nil
+}

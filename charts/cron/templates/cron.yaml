@@ -1,0 +1,11 @@
+apiVersion: "apps.kubedl.io/v1alpha1"
+kind: "Cron"
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  schedule: {{ .Values.commoncronargs.schedule }}
+  concurrencyPolicy: {{ .Values.commoncronargs.concurrencyPolicy }}
+  deadline: {{ .Values.commoncronargs.deadline }}
+  historyLimit: {{ .Values.commoncronargs.historyLimit }}
+  template:
+    {{- include "arena.tfjob" . | nindent 6 }}

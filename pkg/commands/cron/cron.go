@@ -22,9 +22,10 @@ var (
 	dataLong = `manage data volumes.
 
 Available Commands:
-  tfjob                Submit a cron tfjob.
-  list,ls              List the cron jobs.
+  tfjob                Submit a tfjob cron task.
+  list,ls              List the cron tasks.
   get                  Get cron task by name.
+  delete,del           Delete cron task by name.
     `
 )
 
@@ -42,6 +43,7 @@ func NewCronCommand() *cobra.Command {
 	command.AddCommand(NewCronTFJobCommand())
 	command.AddCommand(NewCronGetCommand())
 	command.AddCommand(NewCronListCommand())
+	command.AddCommand(NewCronDeleteCommand())
 
 	return command
 }

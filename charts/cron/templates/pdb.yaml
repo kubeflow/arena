@@ -1,0 +1,29 @@
+{{- $workers := .Values.submittfjobargs.workers -}}
+{{- $ps := .Values.submittfjobargs.ps -}}
+{{- $chief := .Values.submittfjobargs.chief -}}
+{{- $evaluator := .Values.submittfjobargs.evaluator -}}
+{{- $total := .Values.submittfjobargs.total -}}
+{{- if .Values.submittfjobargs.ps }}
+{{- if .Values.submittfjobargs.hasGangScheduler }}
+{{- if .Values.submittfjobargs.enableGangScheduler }}
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ template "tfjob.name" . }}
+    chart: {{ template "tfjob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+{{- if .Values.submittfjobargs.chief }}
+  minAvailable: {{ add $workers $ps $chief $evaluator }}
+{{- else }}
+  minAvailable: {{ add $workers $ps }}
+{{- end }}
+  selector:
+    matchLabels:
+      tf-job-name: {{ .Release.Name }}
+{{- end }}
+{{- end }}
+{{- end }}

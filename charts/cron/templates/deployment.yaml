@@ -1,0 +1,139 @@
+{{- if (not .Values.submittfjobargs.enableGangScheduler) -}}
+{{- if .Values.submittfjobargs.useTensorboard }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-tensorboard
+  labels:
+    app: {{ template "tfjob.name" . }}
+    chart: {{ template "tfjob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "TFJob"
+    role: tensorboard
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "tfjob.name" . }}
+      chart: {{ template "tfjob.chart" . }}
+      release: {{ .Release.Name }}
+      role: tensorboard
+  template:
+    metadata:
+      labels:
+        app: {{ template "tfjob.name" . }}
+        chart: {{ template "tfjob.chart" . }}
+        release: {{ .Release.Name }}
+        role: tensorboard
+    spec:
+      {{- if ne (len .Values.submittfjobargs.tolerations) 0 }}
+      tolerations:
+      {{- range $tolerationKey := .Values.submittfjobargs.tolerations }}
+        {{- if eq $tolerationKey "all" }}
+        - operator: "Exists"
+        {{- else }}
+        - key: "{{ $tolerationKey }}"
+          operator: "Exists"
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.submittfjobargs.priorityClassName }}
+      priorityClassName: {{ .Values.submittfjobargs.priorityClassName }}
+      {{- end }}
+      {{- if .Values.submittfjobargs.ps }}
+      {{- if .Values.submittfjobargs.hasGangScheduler }}
+      {{- if .Values.submittfjobargs.enableGangScheduler }}
+      schedulerName: {{ .Values.submittfjobargs.schedulerName }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values: 
+                  - {{ template "tfjob.name" . }}
+              - key: release
+                operator: In
+                values: 
+                  - {{ .Release.Name }}
+              {{- if .Values.submittfjobargs.chief }}
+              - key: tf-replica-type
+                operator: In
+                values: 
+                  - "chief"
+              {{- else }}
+              - key: tf-replica-index
+                operator: In
+                values: 
+                  - "0"
+              - key: tf-replica-type
+                operator: In
+                values: 
+                  - "worker"
+              {{- end }}
+            topologyKey: kubernetes.io/hostname
+      {{- if .Values.submittfjobargs.enablePodSecurityContext }}
+      {{- if .Values.submittfjobargs.isNonRoot}}
+      securityContext:
+        runAsUser: {{ .Values.submittfjobargs.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.submittfjobargs.podSecurityContext.runAsGroup }}
+        runAsNonRoot: {{ .Values.submittfjobargs.podSecurityContext.runAsNonRoot }}
+        supplementalGroups:
+          {{- range $group := .Values.submittfjobargs.podSecurityContext.supplementalGroups }}
+          - {{ $group -}}
+          {{ end }}
+      {{- end }}
+      {{- end }}
+      volumes:
+        {{- if .Values.submittfjobargs.isLocalLogging }}
+        - hostPath:
+            path: "{{ .Values.submittfjobargs.hostLogPath }}"
+          name: training-logs-volume
+        {{- end }}
+        {{- if (not .Values.submittfjobargs.isLocalLogging) }}
+        {{- if .Values.submittfjobargs.dataset }}   
+        {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+        - name: "{{ $pvcName }}"
+          persistentVolumeClaim:
+            claimName: "{{ $pvcName }}"
+        {{- end }}
+        {{- end }}
+        {{- end }}
+      {{- if ne (len .Values.submittfjobargs.imagePullSecrets) 0 }}
+      imagePullSecrets:
+      {{- range $imagePullSecret := .Values.submittfjobargs.imagePullSecrets }}
+        - name: "{{ $imagePullSecret }}"
+      {{- end }}
+      {{- end }}
+      containers:
+      - name: tensorboard      
+        {{- if .Values.submittfjobargs.isLocalLogging }}
+        command: ["tensorboard", "--logdir", "/output/training_logs",  "--host",  "0.0.0.0"]
+        {{- else}}
+        command: ["tensorboard", "--logdir", "{{ .Values.submittfjobargs.trainingLogdir }}",  "--host",  "0.0.0.0"]
+        {{- end }}
+        image: "{{ .Values.submittfjobargs.tensorboardImage }}"
+        imagePullPolicy: {{ .Values.submittfjobargs.tensorboardImagePullpolicy }}
+        resources:
+{{ toYaml .Values.submittfjobargs.tensorboardResources | indent 10 }}
+        ports:
+        - containerPort: 6006
+        volumeMounts:
+        {{- if .Values.submittfjobargs.isLocalLogging }}
+        - mountPath: /output/training_logs
+          name: training-logs-volume
+        {{- else }}
+        {{- if .Values.submittfjobargs.dataset }}   
+        {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+        - name: "{{ $pvcName }}"
+          mountPath: "{{ $destPath }}"
+        {{- end }}
+        {{- end }}
+        {{- end }}
+{{- end }}
+{{- end }}

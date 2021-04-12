@@ -1,0 +1,88 @@
+# Default values for cron
+
+commoncronargs:
+  schedule: "0 0 22 * * ?"
+  concurrencyPolicy: Allow
+  deadline: "2021-04-01T13:00:12Z"
+  historyLimit: 10
+
+# Default values for tfjob.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+submittfjobargs:
+  useHostNetwork: false
+  useHostPID: true
+  useHostIPC: true
+  gpuCount: 0 # user define
+  privileged: false
+
+  chief: 0
+  # Possible value: Chief/Master
+  chiefName: Chief
+  # chiefPort: 2221
+  chiefAnnotations: {}
+  # chiefAnnotations:
+
+  workers: 1
+  workerImage: kubeflow/tf-dist-mnist-test:1.0
+  # workerCPU: 1
+  # workerMemory: 1 Gi
+  # workPort: 2222
+
+  ps: 0
+  psImage: kubeflow/tf-dist-mnist-test:1.0
+  # psCPU: 1
+  # psMemory: 1 Gi
+  # psPort: 2223
+  annotations: {}
+
+  evaluator: 0
+  evaluatorImage: kubeflow/tf-dist-mnist-test:1.0
+  evaluatorAnnotations: {}
+
+  # rsync image
+  rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
+  # git sync image
+  gitImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/git-sync:v3.1.1
+
+  imagePullPolicy: Always
+
+  useTensorboard: false
+  tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/tensorflow:1.5.0-devel
+  tensorboardImagePullpolicy: Always
+  tensorboardServiceType: NodePort
+  tensorboardResources: {}
+  # tensorboardResources:
+  #   limits:
+  #     cpu: 500m
+  #     memory: 500Mi
+  #   requests:
+  #     cpu: 500m
+  #     memory: 500Mi
+
+  trainingLogdir: /output/training_logs
+
+  # disable by default
+  binpack: false
+
+  # enable gang scheduler
+  enableGangScheduler: false
+  schedulerName: kube-batchd
+
+  # enable RDMA support
+  enableRDMA: false
+
+  ingress: false
+
+  # hostLogPath: /training_logs/112345_logs
+
+  # nvidiaPath: /usr/local/nvidia-docker/nvidia_driver/384.81
+
+  # enable PodSecurityContext
+  # In the future, this flag should be protected separately, in case of arena admin and users are not the same people
+  enablePodSecurityContext: false
+
+
+  # enable priorityClassName
+  priorityClassName: ""
