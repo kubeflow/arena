@@ -59,3 +59,7 @@ enablePodSecurityContext: false
 priorityClassName: ""
 podGroupName: ""
 podGroupMinAvailable: "1"
+
+# enable gpu topology scheduling
+gputopology: false
+gputopologyreplica: "1"
