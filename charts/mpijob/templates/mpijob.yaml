@@ -34,6 +34,10 @@ spec:
         pod-group.scheduling.sigs.k8s.io/name: {{ .Values.podGroupName }}
         pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
         {{- end }}
+        {{- if .Values.gputopology }}
+        gpu-topology: {{ .Release.Name }}
+        gpu-topology-replica: "{{ .Values.gputopologyreplica }}"
+        {{- end}}
       annotations:
           {{- range $key, $value := .Values.annotations }}
             {{ $key }}: {{ $value | quote }}
@@ -60,7 +64,10 @@ spec:
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
       restartPolicy: Never
-      {{- if .Values.useHostNetwork }}
+      {{- if .Values.gputopology }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- else if .Values.useHostNetwork }}
       {{- if not .Values.useENI }}
       hostNetwork: {{ .Values.useHostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
@@ -123,7 +130,8 @@ spec:
         name: {{ .name }}
       {{- end }}
       {{- end }}
-      {{- if .Values.shmSize }}
+      {{- if .Values.gputopology }}
+      {{- else if .Values.shmSize }}
       - name: dshm
         emptyDir:
           medium: Memory
@@ -199,8 +207,10 @@ spec:
         - "{{ .Values.command }}"
         resources:             
           requests:
-            {{- if gt (int $gpuCount) 0}}  
-            {{- if .Values.nvidiaPath }}
+            {{- if gt (int $gpuCount) 0}}
+            {{- if .Values.gputopology }}
+            aliyun.com/gpu: {{ $gpuCount | quote }}
+            {{- else if .Values.nvidiaPath }}
             alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
             {{- else}}
             nvidia.com/gpu: {{ $gpuCount | quote }}
@@ -216,8 +226,10 @@ spec:
             rdma/hca: "1"
             {{- end}}
           limits:
-            {{- if gt (int $gpuCount) 0}}   
-            {{- if .Values.nvidiaPath }}
+            {{- if gt (int $gpuCount) 0}}
+            {{- if .Values.gputopology }}
+            aliyun.com/gpu: {{ $gpuCount | quote }}
+            {{- else if .Values.nvidiaPath }}
             alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
             {{- else}}
             nvidia.com/gpu: {{ $gpuCount | quote }}
@@ -287,7 +299,8 @@ spec:
           mountPath: "{{ $destPath }}"
         {{- end }}
         {{- end }}
-        {{- if .Values.shmSize }}
+        {{- if .Values.gputopology }}
+        {{- else if .Values.shmSize }}
         - mountPath: /dev/shm
           name: dshm
         {{- end }}

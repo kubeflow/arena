@@ -40,6 +40,7 @@ MPIJobBuilder has following functions to custom your MPI training job.
 | WorkerCount(count int) *MPIJobBuilder| specify the worker count | --workers|
 | CPU(cpu string) *MPIJobBuilder| specify the cpu limits| --cpu |
 | Memory(memory string) *MPIJobBuilder| specify the memory limits| --memory|
+| EnableGPUTopology() *MPIJobBuilder| enable gpu topology scheduling| --gputopology|
 |  Build() (*Job, error) | build the MPI training job | - |
 
 ## Example

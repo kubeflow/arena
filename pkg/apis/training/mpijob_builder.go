@@ -235,6 +235,12 @@ func (b *MPIJobBuilder) Memory(memory string) *MPIJobBuilder {
 	return b
 }
 
+// EnableGPUTopology is used to enable gpu topology scheduling
+func (b *MPIJobBuilder) EnableGPUTopology() *MPIJobBuilder {
+	b.args.GPUTopology = true
+	return b
+}
+
 // Build is used to build the job
 func (b *MPIJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {

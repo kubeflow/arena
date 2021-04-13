@@ -97,3 +97,7 @@
 ### 0.23.0
 
 * launcher not to mount pvc 
+
+### 0.24.0
+
+* support gpu topology scheduling
