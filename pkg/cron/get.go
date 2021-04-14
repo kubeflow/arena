@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -21,8 +20,10 @@ Namespace:          %v
 Type:               %v
 Schedule:           %v
 Suspend:            %v
-Deadline:           %v
 ConcurrencyPolicy:  %v
+CreationTimestamp:  %v
+LastScheduleTime:   %v
+Deadline:           %v
 %v
 `
 
@@ -34,34 +35,17 @@ func GetCronInfo(name, namespace string) (*types.CronInfo, error) {
 		return nil, err
 	}
 
-	ret, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(name, metav1.GetOptions{})
+	result, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := ret.MarshalJSON()
+	b, err := result.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	r := gjson.ParseBytes(b)
-
-	creationTimestamp := r.Get("metadata").Get("creationTimestamp").String()
-	createTime, err := formatTime(creationTimestamp)
-
-	c := &types.CronInfo{
-		Name: r.Get("metadata").Get("name").String(),
-		Namespace: r.Get("metadata").Get("namespace").String(),
-		Type: r.Get("spec").Get("template").Get("kind").String(),
-		Schedule: r.Get("spec").Get("schedule").String(),
-		ConcurrencyPolicy: r.Get("spec").Get("concurrencyPolicy").String(),
-		HistoryLimit: r.Get("spec").Get("historyLimit").Int(),
-		Deadline: r.Get("spec").Get("deadline").String(),
-		Suspend: r.Get("spec").Get("suspend").Bool(),
-		CreationTimestamp: createTime.Unix(),
-	}
-
-	return c, nil
+	return buildCronInfo(b)
 }
 
 func DisplayCron(cron *types.CronInfo, format types.FormatStyle) {
@@ -80,16 +64,18 @@ func DisplayCron(cron *types.CronInfo, format types.FormatStyle) {
 		lines := []string{"\nHistory:", "NAME\tSTATUS\tTRAINER\tDURATION\tGPU(Requested)\tGPU(Allocated)\tNODE"}
 		lines = append(lines, "----\t------\t-------\t--------\t--------------\t--------------\t----")
 
-		PrintLine(w, fmt.Sprintf(strings.Trim(getCronTemplate, "\n"),
+		printLine(w, fmt.Sprintf(strings.Trim(getCronTemplate, "\n"),
 			cron.Name,
 			cron.Namespace,
 			cron.Type,
 			cron.Schedule,
 			strconv.FormatBool(cron.Suspend),
-			cron.Deadline,
 			cron.ConcurrencyPolicy,
+			cron.CreationTimestamp,
+			cron.LastScheduleTime,
+			cron.Deadline,
 			strings.Join(lines, "\n"),
-			))
+		))
 
 		_ = w.Flush()
 		return

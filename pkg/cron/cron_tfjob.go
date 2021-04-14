@@ -15,18 +15,13 @@ func SubmitCronTFJob(namespace string, submitArgs *types.CronTFJobArgs) (err err
 		return err
 	}
 	fmt.Println(string(b))
-	cron_tfjob_chart := util.GetChartsFolder() + "/cron-tfjob"
-	// the master is also considered as a worker
-	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
+	cronTFJobChart := util.GetChartsFolder() + "/cron-tfjob"
 
-	//if submitArgs.TFRuntime != nil {
-	//	cron_tfjob_chart = util.GetChartsFolder() + "/" + submitArgs.TFRuntime.GetChartName()
-	//}
-	err = workflow.SubmitJob(submitArgs.Name, string(types.CronTFTrainingJob), namespace, submitArgs, cron_tfjob_chart, submitArgs.HelmOptions...)
+	err = workflow.SubmitJob(submitArgs.Name, string(types.CronTFTrainingJob), namespace, submitArgs, cronTFJobChart, submitArgs.HelmOptions...)
 	if err != nil {
 		return err
 	}
-	log.Infof("The Job %s has been submitted successfully", submitArgs.Name)
+	log.Infof("The cron tfjob %s has been submitted successfully", submitArgs.Name)
 	log.Infof("You can run `arena cron get %s` to check the cron status", submitArgs.Name)
 
 	return nil

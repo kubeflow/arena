@@ -87,10 +87,10 @@ type CronInfo struct {
 
 	// Information when was the last time the job was successfully scheduled.
 	// +optional
-	LastScheduleTime *metav1.Time `json:"lastScheduleTime,omitempty"`
+	LastScheduleTime string `json:"lastScheduleTime,omitempty"`
 
 	// CreationTimestamp stores the creation timestamp of job
-	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
+	CreationTimestamp string `json:"creationTimestamp" yaml:"creationTimestamp"`
 
 	History []CronHistoryInfo `json:"cronHistory" yaml:"cronHistory"`
 }
