@@ -11,8 +11,20 @@ import (
 	"k8s.io/client-go/dynamic"
 	"os"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 )
+
+var getCronTemplate = `
+Name:               %v
+Namespace:          %v
+Type:               %v
+Schedule:           %v
+Suspend:            %v
+Deadline:           %v
+ConcurrencyPolicy:  %v
+%v
+`
 
 func GetCronInfo(name, namespace string) (*types.CronInfo, error) {
 	config := config.GetArenaConfiger().GetRestConfig()
@@ -64,23 +76,20 @@ func DisplayCron(cron *types.CronInfo, format types.FormatStyle) {
 		return
 	case "", "wide":
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		var header []string
-		header = append(header, []string{"NAMESPACE", "NAME", "TYPE", "SCHEDULE", "SUSPEND", "DEADLINE", "CONCURRENCYPOLICY"}...)
-		PrintLine(w, header...)
 
-		var items []string
-		items = append(items, []string{
-			cron.Namespace,
+		lines := []string{"\nHistory:", "NAME\tSTATUS\tTRAINER\tDURATION\tGPU(Requested)\tGPU(Allocated)\tNODE"}
+		lines = append(lines, "----\t------\t-------\t--------\t--------------\t--------------\t----")
+
+		PrintLine(w, fmt.Sprintf(strings.Trim(getCronTemplate, "\n"),
 			cron.Name,
+			cron.Namespace,
 			cron.Type,
 			cron.Schedule,
 			strconv.FormatBool(cron.Suspend),
 			cron.Deadline,
 			cron.ConcurrencyPolicy,
-		}...)
-		PrintLine(w, items...)
-
-		PrintLine(w, "\nHistory")
+			strings.Join(lines, "\n"),
+			))
 
 		_ = w.Flush()
 		return

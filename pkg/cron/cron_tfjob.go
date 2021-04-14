@@ -27,7 +27,7 @@ func SubmitCronTFJob(namespace string, submitArgs *types.CronTFJobArgs) (err err
 		return err
 	}
 	log.Infof("The Job %s has been submitted successfully", submitArgs.Name)
-	log.Infof("You can run `arena get %s --type %s` to check the job status", submitArgs.Name, submitArgs.TrainingType)
+	log.Infof("You can run `arena cron get %s` to check the cron status", submitArgs.Name)
 
 	return nil
 }

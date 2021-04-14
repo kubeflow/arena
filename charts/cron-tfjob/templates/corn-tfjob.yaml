@@ -18,6 +18,12 @@ spec:
     kind: "TFJob"
     workload:
       metadata:
+        labels:
+          app: "tfjob"
+          chart: {{ template "cron-tfjob.chart" . }}
+          release: {{ .Release.Name }}
+          heritage: {{ .Release.Service }}
+          createdBy: "CronTFJob"
         generateName: {{ .Release.Name }}
       spec:
       {{- if .Values.tfjob.cleanPodPolicy }}
@@ -36,11 +42,11 @@ spec:
             template:
               metadata:
                 labels:
-                  app: {{ template "tfjob.name" . }}
-                  chart: {{ template "tfjob.chart" . }}
+                  app: "tfjob"
+                  chart: {{ template "cron-tfjob.chart" . }}
                   release: {{ .Release.Name }}
                   heritage: {{ .Release.Service }}
-                  createdBy: "TFJob"
+                  createdBy: "CronTFJob"
                 annotations:
                 {{- range $key, $value := .Values.tfjob.annotations }}
                   {{ $key }}: {{ $value | quote }}
@@ -326,11 +332,11 @@ spec:
             template:
               metadata:
                 labels:
-                  app: {{ template "tfjob.name" . }}
-                  chart: {{ template "tfjob.chart" . }}
+                  app: "tfjob"
+                  chart: {{ template "cron-tfjob.chart" . }}
                   release: {{ .Release.Name }}
                   heritage: {{ .Release.Service }}
-                  createdBy: "TFJob"
+                  createdBy: "CronTFJob"
                 annotations:
                 {{- range $key, $value := .Values.tfjob.annotations }}
                   {{ $key }}: {{ $value | quote }}
@@ -646,11 +652,11 @@ spec:
             template:
               metadata:
                 labels:
-                  app: {{ template "tfjob.name" . }}
-                  chart: {{ template "tfjob.chart" . }}
+                  app: "tfjob"
+                  chart: {{ template "cron-tfjob.chart" . }}
                   release: {{ .Release.Name }}
                   heritage: {{ .Release.Service }}
-                  createdBy: "TFJob"
+                  createdBy: "CronTFJob"
                 annotations:
                 {{- range $key, $value := .Values.tfjob.annotations }}
                   {{ $key }}: {{ $value | quote }}
@@ -963,11 +969,11 @@ spec:
             template:
               metadata:
                 labels:
-                  app: {{ template "tfjob.name" . }}
-                  chart: {{ template "tfjob.chart" . }}
+                  app: "tfjob"
+                  chart: {{ template "cron-tfjob.chart" . }}
                   release: {{ .Release.Name }}
                   heritage: {{ .Release.Service }}
-                  createdBy: "TFJob"
+                  createdBy: "CronTFJob"
                 annotations:
                 {{- range $key, $value := .Values.tfjob.annotations }}
                   {{ $key }}: {{ $value | quote }}
