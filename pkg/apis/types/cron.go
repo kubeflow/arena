@@ -1,11 +1,11 @@
 package types
 
-// TrainingJobType defines the supporting training job type
-type CronTaskType string
+// CronType defines the supporting job type
+type CronType string
 
 const (
 	// CronTFTrainingJob defines the cron tfjob
-	CronTFTrainingJob CronTaskType = "tfjob"
+	CronTFTrainingJob CronType = "tfjob"
 )
 
 type ConcurrencyPolicy string
@@ -15,9 +15,6 @@ const (
 	ConcurrencyForbid  ConcurrencyPolicy = "Forbid"
 	ConcurrencyReplace ConcurrencyPolicy = "Replace"
 )
-
-type CronTaskInfo struct {
-}
 
 type CommonCronArgs struct {
 	// The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
@@ -38,10 +35,13 @@ type CommonCronArgs struct {
 	// The number of finished job history to retain.
 	// This is a pointer to distinguish between explicit zero and not specified.
 	// +optional
-	JobsHistoryLimit int `yaml:"jobsHistoryLimit"` // --jobs-history-limit
+	HistoryLimit int `yaml:"historyLimit"` // --history-limit
 }
 
 type CronTFJobArgs struct {
-	CommonCronArgs
-	SubmitTFJobArgs
+	CommonCronArgs  `yaml:"cron"`
+	SubmitTFJobArgs `yaml:"tfjob"`
+}
+
+type CronInfo struct {
 }

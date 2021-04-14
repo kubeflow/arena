@@ -1,6 +1,5 @@
 # Default values for cron
-
-commoncronargs:
+cron:
   schedule: "0 0 22 * * ?"
   concurrencyPolicy: Allow
   deadline: "2021-04-01T13:00:12Z"
@@ -10,7 +9,7 @@ commoncronargs:
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-submittfjobargs:
+tfjob:
   useHostNetwork: false
   useHostPID: true
   useHostIPC: true

@@ -33,12 +33,12 @@ type Job struct {
 	baseJob
 }
 
-func NewJob(name string, jobType types.CronTaskType, args interface{}) *Job {
+func NewJob(name string, jobType types.CronType, args interface{}) *Job {
 	return &Job{
 		baseJob: newBaseJob(name, string(jobType), args),
 	}
 }
 
-func (j *Job) Type() types.CronTaskType {
-	return types.CronTaskType(j.baseJob.Type())
+func (j *Job) Type() types.CronType {
+	return types.CronType(j.baseJob.Type())
 }

@@ -15,7 +15,7 @@ func SubmitCronTFJob(namespace string, submitArgs *types.CronTFJobArgs) (err err
 		return err
 	}
 	fmt.Println(string(b))
-	cron_tfjob_chart := util.GetChartsFolder() + "/cron"
+	cron_tfjob_chart := util.GetChartsFolder() + "/cron-tfjob"
 	// the master is also considered as a worker
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 

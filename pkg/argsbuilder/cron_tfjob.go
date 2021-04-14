@@ -73,7 +73,7 @@ func (c *CronTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&c.args.ConcurrencyPolicy, "concurrency-policy", "", "specifies how to treat concurrent executions of a task")
 	command.Flags().BoolVar(&c.args.Suspend, "suspend", false, "if suspend the cron task")
 	command.Flags().StringVar(&c.args.Deadline, "deadline", "", "the timestamp that a cron job can keep scheduling util then")
-	command.Flags().IntVar(&c.args.JobsHistoryLimit, "jobs-history-limit", 0, "the number of finished job history to retain")
+	command.Flags().IntVar(&c.args.HistoryLimit, "history-limit", 0, "the number of finished job history to retain")
 
 	// tfjob arguments
 	command.Flags().StringVar(&c.args.WorkerImage, "worker-image", "", "the docker image for tensorflow workers")

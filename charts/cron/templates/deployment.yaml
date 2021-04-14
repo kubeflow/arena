@@ -1,5 +1,5 @@
-{{- if (not .Values.submittfjobargs.enableGangScheduler) -}}
-{{- if .Values.submittfjobargs.useTensorboard }}
+{{- if (not .Values.tfjob.enableGangScheduler) -}}
+{{- if .Values.tfjob.useTensorboard }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,9 +27,9 @@ spec:
         release: {{ .Release.Name }}
         role: tensorboard
     spec:
-      {{- if ne (len .Values.submittfjobargs.tolerations) 0 }}
+      {{- if ne (len .Values.tfjob.tolerations) 0 }}
       tolerations:
-      {{- range $tolerationKey := .Values.submittfjobargs.tolerations }}
+      {{- range $tolerationKey := .Values.tfjob.tolerations }}
         {{- if eq $tolerationKey "all" }}
         - operator: "Exists"
         {{- else }}
@@ -38,13 +38,13 @@ spec:
         {{- end }}
       {{- end }}
       {{- end }}
-      {{- if .Values.submittfjobargs.priorityClassName }}
-      priorityClassName: {{ .Values.submittfjobargs.priorityClassName }}
+      {{- if .Values.tfjob.priorityClassName }}
+      priorityClassName: {{ .Values.tfjob.priorityClassName }}
       {{- end }}
-      {{- if .Values.submittfjobargs.ps }}
-      {{- if .Values.submittfjobargs.hasGangScheduler }}
-      {{- if .Values.submittfjobargs.enableGangScheduler }}
-      schedulerName: {{ .Values.submittfjobargs.schedulerName }}
+      {{- if .Values.tfjob.ps }}
+      {{- if .Values.tfjob.hasGangScheduler }}
+      {{- if .Values.tfjob.enableGangScheduler }}
+      schedulerName: {{ .Values.tfjob.schedulerName }}
       {{- end }}
       {{- end }}
       {{- end }}
@@ -61,7 +61,7 @@ spec:
                 operator: In
                 values: 
                   - {{ .Release.Name }}
-              {{- if .Values.submittfjobargs.chief }}
+              {{- if .Values.tfjob.chief }}
               - key: tf-replica-type
                 operator: In
                 values: 
@@ -77,59 +77,59 @@ spec:
                   - "worker"
               {{- end }}
             topologyKey: kubernetes.io/hostname
-      {{- if .Values.submittfjobargs.enablePodSecurityContext }}
-      {{- if .Values.submittfjobargs.isNonRoot}}
+      {{- if .Values.tfjob.enablePodSecurityContext }}
+      {{- if .Values.tfjob.isNonRoot}}
       securityContext:
-        runAsUser: {{ .Values.submittfjobargs.podSecurityContext.runAsUser }}
-        runAsGroup: {{ .Values.submittfjobargs.podSecurityContext.runAsGroup }}
-        runAsNonRoot: {{ .Values.submittfjobargs.podSecurityContext.runAsNonRoot }}
+        runAsUser: {{ .Values.tfjob.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.tfjob.podSecurityContext.runAsGroup }}
+        runAsNonRoot: {{ .Values.tfjob.podSecurityContext.runAsNonRoot }}
         supplementalGroups:
-          {{- range $group := .Values.submittfjobargs.podSecurityContext.supplementalGroups }}
+          {{- range $group := .Values.tfjob.podSecurityContext.supplementalGroups }}
           - {{ $group -}}
           {{ end }}
       {{- end }}
       {{- end }}
       volumes:
-        {{- if .Values.submittfjobargs.isLocalLogging }}
+        {{- if .Values.tfjob.isLocalLogging }}
         - hostPath:
-            path: "{{ .Values.submittfjobargs.hostLogPath }}"
+            path: "{{ .Values.tfjob.hostLogPath }}"
           name: training-logs-volume
         {{- end }}
-        {{- if (not .Values.submittfjobargs.isLocalLogging) }}
-        {{- if .Values.submittfjobargs.dataset }}   
-        {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+        {{- if (not .Values.tfjob.isLocalLogging) }}
+        {{- if .Values.tfjob.dataset }}   
+        {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
         - name: "{{ $pvcName }}"
           persistentVolumeClaim:
             claimName: "{{ $pvcName }}"
         {{- end }}
         {{- end }}
         {{- end }}
-      {{- if ne (len .Values.submittfjobargs.imagePullSecrets) 0 }}
+      {{- if ne (len .Values.tfjob.imagePullSecrets) 0 }}
       imagePullSecrets:
-      {{- range $imagePullSecret := .Values.submittfjobargs.imagePullSecrets }}
+      {{- range $imagePullSecret := .Values.tfjob.imagePullSecrets }}
         - name: "{{ $imagePullSecret }}"
       {{- end }}
       {{- end }}
       containers:
       - name: tensorboard      
-        {{- if .Values.submittfjobargs.isLocalLogging }}
+        {{- if .Values.tfjob.isLocalLogging }}
         command: ["tensorboard", "--logdir", "/output/training_logs",  "--host",  "0.0.0.0"]
         {{- else}}
-        command: ["tensorboard", "--logdir", "{{ .Values.submittfjobargs.trainingLogdir }}",  "--host",  "0.0.0.0"]
+        command: ["tensorboard", "--logdir", "{{ .Values.tfjob.trainingLogdir }}",  "--host",  "0.0.0.0"]
         {{- end }}
-        image: "{{ .Values.submittfjobargs.tensorboardImage }}"
-        imagePullPolicy: {{ .Values.submittfjobargs.tensorboardImagePullpolicy }}
+        image: "{{ .Values.tfjob.tensorboardImage }}"
+        imagePullPolicy: {{ .Values.tfjob.tensorboardImagePullpolicy }}
         resources:
-{{ toYaml .Values.submittfjobargs.tensorboardResources | indent 10 }}
+{{ toYaml .Values.tfjob.tensorboardResources | indent 10 }}
         ports:
         - containerPort: 6006
         volumeMounts:
-        {{- if .Values.submittfjobargs.isLocalLogging }}
+        {{- if .Values.tfjob.isLocalLogging }}
         - mountPath: /output/training_logs
           name: training-logs-volume
         {{- else }}
-        {{- if .Values.submittfjobargs.dataset }}   
-        {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+        {{- if .Values.tfjob.dataset }}   
+        {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
         - name: "{{ $pvcName }}"
           mountPath: "{{ $destPath }}"
         {{- end }}

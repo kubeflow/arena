@@ -1,10 +1,10 @@
 {{- define "arena.tfjob" -}}
-{{- $gpuCount := .Values.submittfjobargs.gpuCount -}}
-{{- $psGpuCount := .Values.submittfjobargs.psGPU -}}
-{{- $syncMode := .Values.submittfjobargs.syncMode -}}
-{{- $cleanPodPolicy := .Values.submittfjobargs.cleanPodPolicy -}}
-{{- $dataDirs := .Values.submittfjobargs.dataDirs -}}
-{{- $tfNodeSelectors :=.Values.submittfjobargs.tfNodeSelectors -}}
+{{- $gpuCount := .Values.tfjob.gpuCount -}}
+{{- $psGpuCount := .Values.tfjob.psGPU -}}
+{{- $syncMode := .Values.tfjob.syncMode -}}
+{{- $cleanPodPolicy := .Values.tfjob.cleanPodPolicy -}}
+{{- $dataDirs := .Values.tfjob.dataDirs -}}
+{{- $tfNodeSelectors :=.Values.tfjob.tfNodeSelectors -}}
 apiVersion: "kubeflow.org/v1"
 kind: "TFJob"
 metadata:
@@ -16,7 +16,7 @@ metadata:
     heritage: {{ .Release.Service }}
     createdBy: "TFJob"
 spec:
-{{- if .Values.submittfjobargs.cleanPodPolicy }}
+{{- if .Values.tfjob.cleanPodPolicy }}
 {{- if eq "None" $cleanPodPolicy }}
   cleanPodPolicy: None
 {{- end }}
@@ -25,9 +25,9 @@ spec:
 {{- end }}
 {{- end }}
   tfReplicaSpecs:
-{{- if .Values.submittfjobargs.ps }}
+{{- if .Values.tfjob.ps }}
     PS:
-      replicas: {{ .Values.submittfjobargs.ps }}
+      replicas: {{ .Values.tfjob.ps }}
       restartPolicy: Never
       template:
         metadata:
@@ -38,7 +38,7 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
           annotations:
-          {{- range $key, $value := .Values.submittfjobargs.annotations }}
+          {{- range $key, $value := .Values.tfjob.annotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
@@ -48,9 +48,9 @@ spec:
             {{ $nodeKey }}: "{{ $nodeVal }}"
           {{- end }}
           {{- end }}
-          {{- if ne (len .Values.submittfjobargs.tolerations) 0 }}
+          {{- if ne (len .Values.tfjob.tolerations) 0 }}
           tolerations:
-          {{- range $tolerationKey := .Values.submittfjobargs.tolerations }}
+          {{- range $tolerationKey := .Values.tfjob.tolerations }}
             {{- if eq $tolerationKey "all" }}
             - operator: "Exists"
             {{- else }}
@@ -59,17 +59,17 @@ spec:
             {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.priorityClassName }}
-          priorityClassName: {{ .Values.submittfjobargs.priorityClassName }}
+          {{- if .Values.tfjob.priorityClassName }}
+          priorityClassName: {{ .Values.tfjob.priorityClassName }}
           {{- end }}
-          {{- if .Values.submittfjobargs.ps }}
-          {{- if .Values.submittfjobargs.hasGangScheduler }}
-          {{- if .Values.submittfjobargs.enableGangScheduler }}
-          schedulerName: {{ .Values.submittfjobargs.schedulerName }}
+          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.hasGangScheduler }}
+          {{- if .Values.tfjob.enableGangScheduler }}
+          schedulerName: {{ .Values.tfjob.schedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.binpack }}
+          {{- if .Values.tfjob.binpack }}
           affinity:
             podAffinity:
               preferredDuringSchedulingIgnoredDuringExecution:
@@ -105,50 +105,50 @@ spec:
                         values:
                           - ps      
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostNetwork }}
-          {{- if not .Values.submittfjobargs.useENI }}
-          hostNetwork: {{ .Values.submittfjobargs.useHostNetwork }}
+          {{- if .Values.tfjob.useHostNetwork }}
+          {{- if not .Values.tfjob.useENI }}
+          hostNetwork: {{ .Values.tfjob.useHostNetwork }}
           dnsPolicy: ClusterFirstWithHostNet
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostPID }}
-          hostPID: {{ .Values.submittfjobargs.useHostPID }}
+          {{- if .Values.tfjob.useHostPID }}
+          hostPID: {{ .Values.tfjob.useHostPID }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostIPC }}
-          hostIPC: {{ .Values.submittfjobargs.useHostIPC }}
+          {{- if .Values.tfjob.useHostIPC }}
+          hostIPC: {{ .Values.tfjob.useHostIPC }}
           {{- end }}
-          {{- if .Values.submittfjobargs.enablePodSecurityContext }}
-          {{- if .Values.submittfjobargs.isNonRoot}}
+          {{- if .Values.tfjob.enablePodSecurityContext }}
+          {{- if .Values.tfjob.isNonRoot}}
           securityContext:
-            runAsUser: {{ .Values.submittfjobargs.podSecurityContext.runAsUser }}
-            runAsGroup: {{ .Values.submittfjobargs.podSecurityContext.runAsGroup }}
-            runAsNonRoot: {{ .Values.submittfjobargs.podSecurityContext.runAsNonRoot }}
+            runAsUser: {{ .Values.tfjob.podSecurityContext.runAsUser }}
+            runAsGroup: {{ .Values.tfjob.podSecurityContext.runAsGroup }}
+            runAsNonRoot: {{ .Values.tfjob.podSecurityContext.runAsNonRoot }}
             supplementalGroups:
-              {{- range $group := .Values.submittfjobargs.podSecurityContext.supplementalGroups }}
+              {{- range $group := .Values.tfjob.podSecurityContext.supplementalGroups }}
               - {{ $group -}}
               {{ end }}
           {{- end }}
           {{- end }}
           volumes:
-            {{- if ne (len .Values.submittfjobargs.configFiles) 0 }}
+            {{- if ne (len .Values.tfjob.configFiles) 0 }}
             {{- $releaseName := .Release.Name }}
-            {{- range $containerPathKey,$configFileInfos := .Values.submittfjobargs.configFiles }}
+            {{- range $containerPathKey,$configFileInfos := .Values.tfjob.configFiles }}
             - name: {{ $containerPathKey }}
               configMap:
                 name: {{ $releaseName }}-{{ $containerPathKey }}
             {{- end }}
             {{- end }}
-            {{- if .Values.submittfjobargs.syncMode }}
+            {{- if .Values.tfjob.syncMode }}
             - name: code-sync
               emptyDir: {}
             {{- end}}
-            {{- if .Values.submittfjobargs.nvidiaPath }}
+            {{- if .Values.tfjob.nvidiaPath }}
             - hostPath:
-                path: "{{ .Values.submittfjobargs.nvidiaPath }}"
+                path: "{{ .Values.tfjob.nvidiaPath }}"
               name: nvidia
             {{- end }}
-            {{- if .Values.submittfjobargs.dataset }}
-            {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+            {{- if .Values.tfjob.dataset }}
+            {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
             - name: "{{ $pvcName }}"
               persistentVolumeClaim:
                 claimName: "{{ $pvcName }}"
@@ -161,48 +161,48 @@ spec:
               name: {{ .name }}
             {{- end }}
             {{- end }}
-          {{- if .Values.submittfjobargs.syncMode }}
+          {{- if .Values.tfjob.syncMode }}
           initContainers:
           - name: init-code
-            {{- if .Values.submittfjobargs.syncImage }}
-            image: "{{ .Values.submittfjobargs.syncImage }}"
+            {{- if .Values.tfjob.syncImage }}
+            image: "{{ .Values.tfjob.syncImage }}"
             {{- else }}
-            {{- if eq .Values.submittfjobargs.syncMode "rsync" }}
-            image: "{{ .Values.submittfjobargs.rsyncImage }}"
+            {{- if eq .Values.tfjob.syncMode "rsync" }}
+            image: "{{ .Values.tfjob.rsyncImage }}"
             {{- end }}
-            {{- if eq .Values.submittfjobargs.syncMode "git" }}
-            image: "{{ .Values.submittfjobargs.gitImage }}"
+            {{- if eq .Values.tfjob.syncMode "git" }}
+            image: "{{ .Values.tfjob.gitImage }}"
             {{- end }}
             {{- end }}
-            imagePullPolicy: {{ .Values.submittfjobargs.imagePullPolicy }}
+            imagePullPolicy: {{ .Values.tfjob.imagePullPolicy }}
             {{- if eq "rsync" $syncMode }}
-            command: ["rsync", "-avP", "{{ .Values.submittfjobargs.syncSource}}", "/code"]
+            command: ["rsync", "-avP", "{{ .Values.tfjob.syncSource}}", "/code"]
             {{- end }}
             resources:
               requests:
-                {{- if .Values.submittfjobargs.psCPU }}
-                cpu: {{ .Values.submittfjobargs.psCPU | quote }}
+                {{- if .Values.tfjob.psCPU }}
+                cpu: {{ .Values.tfjob.psCPU | quote }}
                 {{- end}}
-                {{- if .Values.submittfjobargs.psMemory }}
-                memory: {{ .Values.submittfjobargs.psMemory | quote }}
+                {{- if .Values.tfjob.psMemory }}
+                memory: {{ .Values.tfjob.psMemory | quote }}
                 {{- end}}
               limits:
-                {{- if .Values.submittfjobargs.psCPU }}
-                cpu: {{ .Values.submittfjobargs.psCPU | quote }}
+                {{- if .Values.tfjob.psCPU }}
+                cpu: {{ .Values.tfjob.psCPU | quote }}
                 {{- end}}
-                {{- if .Values.submittfjobargs.psMemory }}
-                memory: {{ .Values.submittfjobargs.psMemory | quote }}
+                {{- if .Values.tfjob.psMemory }}
+                memory: {{ .Values.tfjob.psMemory | quote }}
                 {{- end}}
             env:
-            {{- range $key, $value := .Values.submittfjobargs.envs }}
+            {{- range $key, $value := .Values.tfjob.envs }}
               - name: "{{ $key }}"
                 value: "{{ $value }}"
             {{- end }}
             {{- if eq "git" $syncMode }}
               - name: GIT_SYNC_REPO
-                value: {{ .Values.submittfjobargs.syncSource}}
+                value: {{ .Values.tfjob.syncSource}}
               - name: GIT_SYNC_DEST
-                value: {{ .Values.submittfjobargs.syncGitProjectName}}
+                value: {{ .Values.tfjob.syncGitProjectName}}
               - name: GIT_SYNC_ROOT
                 value: /code
               - name: GIT_SYNC_ONE_TIME
@@ -212,23 +212,23 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
-          {{- if ne (len .Values.submittfjobargs.imagePullSecrets) 0 }}
+          {{- if ne (len .Values.tfjob.imagePullSecrets) 0 }}
           imagePullSecrets:
-          {{- range $imagePullSecret := .Values.submittfjobargs.imagePullSecrets }}
+          {{- range $imagePullSecret := .Values.tfjob.imagePullSecrets }}
             - name: "{{ $imagePullSecret }}"
           {{- end }}
           {{- end }}
           containers:
             - name: tensorflow
-              image: {{ .Values.submittfjobargs.psImage }}
-              imagePullPolicy: {{ .Values.submittfjobargs.imagePullPolicy }}
-              {{- if .Values.submittfjobargs.workingDir }}
-              workingDir: {{ .Values.submittfjobargs.workingDir }}
+              image: {{ .Values.tfjob.psImage }}
+              imagePullPolicy: {{ .Values.tfjob.imagePullPolicy }}
+              {{- if .Values.tfjob.workingDir }}
+              workingDir: {{ .Values.tfjob.workingDir }}
               {{- end }}
-              {{- if .Values.submittfjobargs.privileged }}
+              {{- if .Values.tfjob.privileged }}
               securityContext:
                 privileged: true
-              {{- else if .Values.submittfjobargs.enableRDMA }}
+              {{- else if .Values.tfjob.enableRDMA }}
               securityContext:
                 capabilities:
                   add:
@@ -237,48 +237,48 @@ spec:
               resources:
                 requests:
                   {{- if gt (int $psGpuCount) 0}}
-                  nvidia.com/gpu: {{ .Values.submittfjobargs.psGPU | quote }}
+                  nvidia.com/gpu: {{ .Values.tfjob.psGPU | quote }}
                   {{- end }}
-                  {{- if .Values.submittfjobargs.psCPU }}
-                  cpu: {{ .Values.submittfjobargs.psCPU | quote }}
+                  {{- if .Values.tfjob.psCPU }}
+                  cpu: {{ .Values.tfjob.psCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.psMemory }}
-                  memory: {{ .Values.submittfjobargs.psMemory | quote }}
+                  {{- if .Values.tfjob.psMemory }}
+                  memory: {{ .Values.tfjob.psMemory | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.enableRDMA }}
+                  {{- if .Values.tfjob.enableRDMA }}
                   rdma/hca: "1"
                   {{- end}}
                 limits:
                   {{- if gt (int $psGpuCount) 0}}
-                  nvidia.com/gpu: {{ .Values.submittfjobargs.psGPU | quote }}
+                  nvidia.com/gpu: {{ .Values.tfjob.psGPU | quote }}
                   {{- end }}
-                  {{- if .Values.submittfjobargs.psCPU }}
-                  cpu: {{ .Values.submittfjobargs.psCPU | quote }}
+                  {{- if .Values.tfjob.psCPU }}
+                  cpu: {{ .Values.tfjob.psCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.psMemory }}
-                  memory: {{ .Values.submittfjobargs.psMemory | quote }}
+                  {{- if .Values.tfjob.psMemory }}
+                  memory: {{ .Values.tfjob.psMemory | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.enableRDMA }}
+                  {{- if .Values.tfjob.enableRDMA }}
                   rdma/hca: "1"
                   {{- end}}
-              {{- if .Values.submittfjobargs.psPort }}
+              {{- if .Values.tfjob.psPort }}
               ports:
-                - containerPort: {{ .Values.submittfjobargs.psPort }}
+                - containerPort: {{ .Values.tfjob.psPort }}
                   name: tfjob-port
               {{- end}}
               command:
                 - "sh"
                 - "-c"
-                - {{ .Values.submittfjobargs.command }}
+                - {{ .Values.tfjob.command }}
               env:
-              {{- range $key, $value := .Values.submittfjobargs.envs }}
+              {{- range $key, $value := .Values.tfjob.envs }}
                 - name: "{{ $key }}"
                   value: "{{ $value }}"
               {{- end }}
               volumeMounts:
-                {{- if ne (len .Values.submittfjobargs.configFiles) 0 }}
+                {{- if ne (len .Values.tfjob.configFiles) 0 }}
                 {{- $releaseName := .Release.Name }}
-                {{- range $containerPathKey,$configFileInfos := .Values.submittfjobargs.configFiles }}
+                {{- range $containerPathKey,$configFileInfos := .Values.tfjob.configFiles }}
                 {{- $visit := "false" }}
                 {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
                 {{- if eq  "false" $visit }}
@@ -289,17 +289,17 @@ spec:
                 {{- end }}
                 {{- end }}
                 {{- end }}
-                {{- if .Values.submittfjobargs.syncMode }}
-                {{- if .Values.submittfjobargs.workingDir }}
+                {{- if .Values.tfjob.syncMode }}
+                {{- if .Values.tfjob.workingDir }}
                 - name: code-sync
-                  mountPath: {{ .Values.submittfjobargs.workingDir }}/code
+                  mountPath: {{ .Values.tfjob.workingDir }}/code
                 {{- else }}
                 - name: code-sync
                   mountPath: /code
                 {{- end}}
                 {{- end}}
-                {{- if .Values.submittfjobargs.dataset }}
-                {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+                {{- if .Values.tfjob.dataset }}
+                {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
                 - name: "{{ $pvcName }}"
                   mountPath: "{{ $destPath }}"
                 {{- end }}
@@ -311,10 +311,10 @@ spec:
                 {{- end }}
                 {{- end }}
 {{- end }}
-{{- if .Values.submittfjobargs.workers }}
+{{- if .Values.tfjob.workers }}
     Worker:
-      replicas: {{ .Values.submittfjobargs.workers }}
-      {{- if .Values.submittfjobargs.chief }}
+      replicas: {{ .Values.tfjob.workers }}
+      {{- if .Values.tfjob.chief }}
       restartPolicy: OnFailure
       {{- else }}
       restartPolicy: Never
@@ -328,7 +328,7 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
           annotations:
-          {{- range $key, $value := .Values.submittfjobargs.annotations }}
+          {{- range $key, $value := .Values.tfjob.annotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
@@ -338,9 +338,9 @@ spec:
             {{ $nodeKey }}: "{{ $nodeVal }}"
           {{- end }}
           {{- end }}
-          {{- if ne (len .Values.submittfjobargs.tolerations) 0 }}
+          {{- if ne (len .Values.tfjob.tolerations) 0 }}
           tolerations:
-          {{- range $tolerationKey := .Values.submittfjobargs.tolerations }}
+          {{- range $tolerationKey := .Values.tfjob.tolerations }}
             {{- if eq $tolerationKey "all" }}
             - operator: "Exists"
             {{- else }}
@@ -349,18 +349,18 @@ spec:
             {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.priorityClassName }}
-          priorityClassName: {{ .Values.submittfjobargs.priorityClassName }}
+          {{- if .Values.tfjob.priorityClassName }}
+          priorityClassName: {{ .Values.tfjob.priorityClassName }}
           {{- end }}
-          {{- if .Values.submittfjobargs.ps }}
-          {{- if .Values.submittfjobargs.hasGangScheduler }}
-          {{- if .Values.submittfjobargs.enableGangScheduler }}
-          schedulerName: {{ .Values.submittfjobargs.schedulerName }}
+          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.hasGangScheduler }}
+          {{- if .Values.tfjob.enableGangScheduler }}
+          schedulerName: {{ .Values.tfjob.schedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.ps }}
-          {{- if .Values.submittfjobargs.binpack }}
+          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.binpack }}
           affinity:
             podAffinity:
               preferredDuringSchedulingIgnoredDuringExecution:
@@ -397,59 +397,59 @@ spec:
                           - worker
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostNetwork }}
-          {{- if not .Values.submittfjobargs.useENI }}
-          hostNetwork: {{ .Values.submittfjobargs.useHostNetwork }}
+          {{- if .Values.tfjob.useHostNetwork }}
+          {{- if not .Values.tfjob.useENI }}
+          hostNetwork: {{ .Values.tfjob.useHostNetwork }}
           dnsPolicy: ClusterFirstWithHostNet
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostPID }}
-          hostPID: {{ .Values.submittfjobargs.useHostPID }}
+          {{- if .Values.tfjob.useHostPID }}
+          hostPID: {{ .Values.tfjob.useHostPID }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostIPC }}
-          hostIPC: {{ .Values.submittfjobargs.useHostIPC }}
+          {{- if .Values.tfjob.useHostIPC }}
+          hostIPC: {{ .Values.tfjob.useHostIPC }}
           {{- end }}
-          {{- if .Values.submittfjobargs.enablePodSecurityContext }}
-          {{- if .Values.submittfjobargs.isNonRoot}}
+          {{- if .Values.tfjob.enablePodSecurityContext }}
+          {{- if .Values.tfjob.isNonRoot}}
           securityContext:
-            runAsUser: {{ .Values.submittfjobargs.podSecurityContext.runAsUser }}
-            runAsGroup: {{ .Values.submittfjobargs.podSecurityContext.runAsGroup }}
-            runAsNonRoot: {{ .Values.submittfjobargs.podSecurityContext.runAsNonRoot }}
+            runAsUser: {{ .Values.tfjob.podSecurityContext.runAsUser }}
+            runAsGroup: {{ .Values.tfjob.podSecurityContext.runAsGroup }}
+            runAsNonRoot: {{ .Values.tfjob.podSecurityContext.runAsNonRoot }}
             supplementalGroups:
-              {{- range $group := .Values.submittfjobargs.podSecurityContext.supplementalGroups }}
+              {{- range $group := .Values.tfjob.podSecurityContext.supplementalGroups }}
               - {{ $group -}}
               {{ end }}
           {{- end }}
           {{- end }}
           volumes:
-            {{- if ne (len .Values.submittfjobargs.configFiles) 0 }}
+            {{- if ne (len .Values.tfjob.configFiles) 0 }}
             {{- $releaseName := .Release.Name }}
-            {{- range $containerPathKey,$configFileInfos := .Values.submittfjobargs.configFiles }}
+            {{- range $containerPathKey,$configFileInfos := .Values.tfjob.configFiles }}
             - name: {{ $containerPathKey }}
               configMap:
                 name: {{ $releaseName }}-{{ $containerPathKey }}
             {{- end }}
             {{- end }}
-            {{- if .Values.submittfjobargs.useTensorboard }}
-            {{- if .Values.submittfjobargs.isLocalLogging }}
+            {{- if .Values.tfjob.useTensorboard }}
+            {{- if .Values.tfjob.isLocalLogging }}
             - hostPath:
-                path: "{{ .Values.submittfjobargs.hostLogPath }}"
+                path: "{{ .Values.tfjob.hostLogPath }}"
               name: training-logs-volume
             {{- end}}
             {{- end}}
-            {{- if .Values.submittfjobargs.syncMode }}
+            {{- if .Values.tfjob.syncMode }}
             - name: code-sync
               emptyDir: {}
             {{- end}}
             {{- if gt (int $gpuCount) 0}}
-            {{- if .Values.submittfjobargs.nvidiaPath }}
+            {{- if .Values.tfjob.nvidiaPath }}
             - hostPath:
-                path: "{{ .Values.submittfjobargs.nvidiaPath }}"
+                path: "{{ .Values.tfjob.nvidiaPath }}"
               name: nvidia
             {{- end }}
             {{- end }}
-            {{- if .Values.submittfjobargs.dataset }}
-            {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+            {{- if .Values.tfjob.dataset }}
+            {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
             - name: "{{ $pvcName }}"
               persistentVolumeClaim:
                 claimName: "{{ $pvcName }}"
@@ -462,48 +462,48 @@ spec:
               name: {{ .name }}
             {{- end }}
             {{- end }}
-          {{- if .Values.submittfjobargs.syncMode }}
+          {{- if .Values.tfjob.syncMode }}
           initContainers:
           - name: init-code
-            {{- if .Values.submittfjobargs.syncImage }}
-            image: "{{ .Values.submittfjobargs.syncImage }}"
+            {{- if .Values.tfjob.syncImage }}
+            image: "{{ .Values.tfjob.syncImage }}"
             {{- else }}
-            {{- if eq .Values.submittfjobargs.syncMode "rsync" }}
-            image: "{{ .Values.submittfjobargs.rsyncImage }}"
+            {{- if eq .Values.tfjob.syncMode "rsync" }}
+            image: "{{ .Values.tfjob.rsyncImage }}"
             {{- end }}
-            {{- if eq .Values.submittfjobargs.syncMode "git" }}
-            image: "{{ .Values.submittfjobargs.gitImage }}"
+            {{- if eq .Values.tfjob.syncMode "git" }}
+            image: "{{ .Values.tfjob.gitImage }}"
             {{- end }}
             {{- end }}
-            imagePullPolicy: {{ .Values.submittfjobargs.imagePullPolicy }}
+            imagePullPolicy: {{ .Values.tfjob.imagePullPolicy }}
             {{- if eq "rsync" $syncMode }}
-            command: ["rsync", "-avP", "{{ .Values.submittfjobargs.syncSource}}", "/code"]
+            command: ["rsync", "-avP", "{{ .Values.tfjob.syncSource}}", "/code"]
             {{- end }}
             resources:
               requests:
-                  {{- if .Values.submittfjobargs.workerCPU }}
-                  cpu: {{ .Values.submittfjobargs.workerCPU | quote }}
+                  {{- if .Values.tfjob.workerCPU }}
+                  cpu: {{ .Values.tfjob.workerCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.workerMemory }}
-                  memory: {{ .Values.submittfjobargs.workerMemory | quote }}
+                  {{- if .Values.tfjob.workerMemory }}
+                  memory: {{ .Values.tfjob.workerMemory | quote }}
                   {{- end}}
               limits:
-                  {{- if .Values.submittfjobargs.workerCPU }}
-                  cpu: {{ .Values.submittfjobargs.workerCPU | quote }}
+                  {{- if .Values.tfjob.workerCPU }}
+                  cpu: {{ .Values.tfjob.workerCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.workerMemory }}
-                  memory: {{ .Values.submittfjobargs.workerMemory | quote }}
+                  {{- if .Values.tfjob.workerMemory }}
+                  memory: {{ .Values.tfjob.workerMemory | quote }}
                   {{- end}}
             env:
-            {{- range $key, $value := .Values.submittfjobargs.envs }}
+            {{- range $key, $value := .Values.tfjob.envs }}
               - name: "{{ $key }}"
                 value: "{{ $value }}"
             {{- end }}
             {{- if eq "git" $syncMode }}
               - name: GIT_SYNC_REPO
-                value: {{ .Values.submittfjobargs.syncSource}}
+                value: {{ .Values.tfjob.syncSource}}
               - name: GIT_SYNC_DEST
-                value: {{ .Values.submittfjobargs.syncGitProjectName}}
+                value: {{ .Values.tfjob.syncGitProjectName}}
               - name: GIT_SYNC_ROOT
                 value: /code
               - name: GIT_SYNC_ONE_TIME
@@ -513,23 +513,23 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
-          {{- if ne (len .Values.submittfjobargs.imagePullSecrets) 0 }}
+          {{- if ne (len .Values.tfjob.imagePullSecrets) 0 }}
           imagePullSecrets:
-          {{- range $imagePullSecret := .Values.submittfjobargs.imagePullSecrets }}
+          {{- range $imagePullSecret := .Values.tfjob.imagePullSecrets }}
             - name: "{{ $imagePullSecret }}"
           {{- end }}
           {{- end }}
           containers:
             - name: tensorflow
-              image: {{ .Values.submittfjobargs.workerImage }}
-              imagePullPolicy: {{ .Values.submittfjobargs.imagePullPolicy }}
-              {{- if .Values.submittfjobargs.workingDir }}
-              workingDir: {{ .Values.submittfjobargs.workingDir }}
+              image: {{ .Values.tfjob.workerImage }}
+              imagePullPolicy: {{ .Values.tfjob.imagePullPolicy }}
+              {{- if .Values.tfjob.workingDir }}
+              workingDir: {{ .Values.tfjob.workingDir }}
               {{- end }}
-              {{- if .Values.submittfjobargs.privileged }}
+              {{- if .Values.tfjob.privileged }}
               securityContext:
                 privileged: true
-              {{- else if .Values.submittfjobargs.enableRDMA }}
+              {{- else if .Values.tfjob.enableRDMA }}
               securityContext:
                 capabilities:
                   add:
@@ -538,56 +538,56 @@ spec:
               resources:
                 requests:
                   {{- if gt (int $gpuCount) 0}}
-                  {{- if .Values.submittfjobargs.nvidiaPath }}
+                  {{- if .Values.tfjob.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
                   {{- else}}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.workerCPU }}
-                  cpu: {{ .Values.submittfjobargs.workerCPU | quote }}
+                  {{- if .Values.tfjob.workerCPU }}
+                  cpu: {{ .Values.tfjob.workerCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.workerMemory }}
-                  memory: {{ .Values.submittfjobargs.workerMemory | quote }}
+                  {{- if .Values.tfjob.workerMemory }}
+                  memory: {{ .Values.tfjob.workerMemory | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.enableRDMA }}
+                  {{- if .Values.tfjob.enableRDMA }}
                   rdma/hca: "1"
                   {{- end}}
                 limits:
                   {{- if gt (int $gpuCount) 0}}
-                  {{- if .Values.submittfjobargs.nvidiaPath }}
+                  {{- if .Values.tfjob.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
                   {{- else}}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.workerCPU }}
-                  cpu: {{ .Values.submittfjobargs.workerCPU | quote }}
+                  {{- if .Values.tfjob.workerCPU }}
+                  cpu: {{ .Values.tfjob.workerCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.workerMemory }}
-                  memory: {{ .Values.submittfjobargs.workerMemory | quote }}
+                  {{- if .Values.tfjob.workerMemory }}
+                  memory: {{ .Values.tfjob.workerMemory | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.enableRDMA }}
+                  {{- if .Values.tfjob.enableRDMA }}
                   rdma/hca: "1"
                   {{- end}}
-              {{- if .Values.submittfjobargs.workerPort }}
+              {{- if .Values.tfjob.workerPort }}
               ports:
-                - containerPort: {{ .Values.submittfjobargs.workerPort }}
+                - containerPort: {{ .Values.tfjob.workerPort }}
                   name: tfjob-port
               {{- end}}
               command:
                 - "sh"
                 - "-c"
-                - {{ .Values.submittfjobargs.command }}
+                - {{ .Values.tfjob.command }}
               env:
-              {{- range $key, $value := .Values.submittfjobargs.envs }}
+              {{- range $key, $value := .Values.tfjob.envs }}
                 - name: "{{ $key }}"
                   value: "{{ $value }}"
               {{- end }}
               volumeMounts:
-                {{- if ne (len .Values.submittfjobargs.configFiles) 0 }}
+                {{- if ne (len .Values.tfjob.configFiles) 0 }}
                 {{- $releaseName := .Release.Name }}
-                {{- range $containerPathKey,$configFileInfos := .Values.submittfjobargs.configFiles }}
+                {{- range $containerPathKey,$configFileInfos := .Values.tfjob.configFiles }}
                 {{- $visit := "false" }}
                 {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
                 {{- if eq  "false" $visit }}
@@ -598,31 +598,31 @@ spec:
                 {{- end }}
                 {{- end }}
                 {{- end }}
-                {{- if (not .Values.submittfjobargs.chief) }}
-                {{- if .Values.submittfjobargs.useTensorboard }}
-                {{- if .Values.submittfjobargs.isLocalLogging }}
-                - mountPath: {{ .Values.submittfjobargs.trainingLogdir }}
+                {{- if (not .Values.tfjob.chief) }}
+                {{- if .Values.tfjob.useTensorboard }}
+                {{- if .Values.tfjob.isLocalLogging }}
+                - mountPath: {{ .Values.tfjob.trainingLogdir }}
                   name: training-logs-volume
                 {{- end}}
                 {{- end}}
                 {{- end}}
-                {{- if .Values.submittfjobargs.syncMode }}
-                {{- if .Values.submittfjobargs.workingDir }}
+                {{- if .Values.tfjob.syncMode }}
+                {{- if .Values.tfjob.workingDir }}
                 - name: code-sync
-                  mountPath: {{ .Values.submittfjobargs.workingDir }}/code
+                  mountPath: {{ .Values.tfjob.workingDir }}/code
                 {{- else }}
                 - name: code-sync
                   mountPath: /code
                 {{- end}}
                 {{- end}}
-                {{- if .Values.submittfjobargs.dataset }}
-                {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+                {{- if .Values.tfjob.dataset }}
+                {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
                 - name: "{{ $pvcName }}"
                   mountPath: "{{ $destPath }}"
                 {{- end }}
                 {{- end }}
                 {{- if gt (int $gpuCount) 0}}
-                {{- if .Values.submittfjobargs.nvidiaPath }}
+                {{- if .Values.tfjob.nvidiaPath }}
                 - mountPath: /usr/local/nvidia
                   name: nvidia
                 {{- end }}
@@ -635,8 +635,8 @@ spec:
                 {{- end }}
 
 {{- end }}
-{{- if .Values.submittfjobargs.chief }}
-{{ .Values.submittfjobargs.chiefName | indent  4}}:
+{{- if .Values.tfjob.chief }}
+{{ .Values.tfjob.chiefName | indent  4}}:
       restartPolicy: Never
       replicas: 1
       template:
@@ -648,7 +648,7 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
           annotations:
-          {{- range $key, $value := .Values.submittfjobargs.annotations }}
+          {{- range $key, $value := .Values.tfjob.annotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
@@ -658,9 +658,9 @@ spec:
             {{ $nodeKey }}: "{{ $nodeVal }}"
           {{- end }}
           {{- end }}
-          {{- if ne (len .Values.submittfjobargs.tolerations) 0 }}
+          {{- if ne (len .Values.tfjob.tolerations) 0 }}
           tolerations:
-          {{- range $tolerationKey := .Values.submittfjobargs.tolerations }}
+          {{- range $tolerationKey := .Values.tfjob.tolerations }}
             {{- if eq $tolerationKey "all" }}
             - operator: "Exists"
             {{- else }}
@@ -669,18 +669,18 @@ spec:
             {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.priorityClassName }}
-          priorityClassName: {{ .Values.submittfjobargs.priorityClassName }}
+          {{- if .Values.tfjob.priorityClassName }}
+          priorityClassName: {{ .Values.tfjob.priorityClassName }}
           {{- end }}
-          {{- if .Values.submittfjobargs.ps }}
-          {{- if .Values.submittfjobargs.hasGangScheduler }}
-          {{- if .Values.submittfjobargs.enableGangScheduler }}
-          schedulerName: {{ .Values.submittfjobargs.schedulerName }}
+          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.hasGangScheduler }}
+          {{- if .Values.tfjob.enableGangScheduler }}
+          schedulerName: {{ .Values.tfjob.schedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.ps }}
-          {{- if .Values.submittfjobargs.binpack }}
+          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.binpack }}
           affinity:
             podAffinity:
               preferredDuringSchedulingIgnoredDuringExecution:
@@ -717,59 +717,59 @@ spec:
                           - worker
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostNetwork }}
-          {{- if not .Values.submittfjobargs.useENI }}
-          hostNetwork: {{ .Values.submittfjobargs.useHostNetwork }}
+          {{- if .Values.tfjob.useHostNetwork }}
+          {{- if not .Values.tfjob.useENI }}
+          hostNetwork: {{ .Values.tfjob.useHostNetwork }}
           dnsPolicy: ClusterFirstWithHostNet
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostPID }}
-          hostPID: {{ .Values.submittfjobargs.useHostPID }}
+          {{- if .Values.tfjob.useHostPID }}
+          hostPID: {{ .Values.tfjob.useHostPID }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostIPC }}
-          hostIPC: {{ .Values.submittfjobargs.useHostIPC }}
+          {{- if .Values.tfjob.useHostIPC }}
+          hostIPC: {{ .Values.tfjob.useHostIPC }}
           {{- end }}
-          {{- if .Values.submittfjobargs.enablePodSecurityContext }}
-          {{- if .Values.submittfjobargs.isNonRoot}}
+          {{- if .Values.tfjob.enablePodSecurityContext }}
+          {{- if .Values.tfjob.isNonRoot}}
           securityContext:
-            runAsUser: {{ .Values.submittfjobargs.podSecurityContext.runAsUser }}
-            runAsGroup: {{ .Values.submittfjobargs.podSecurityContext.runAsGroup }}
-            runAsNonRoot: {{ .Values.submittfjobargs.podSecurityContext.runAsNonRoot }}
+            runAsUser: {{ .Values.tfjob.podSecurityContext.runAsUser }}
+            runAsGroup: {{ .Values.tfjob.podSecurityContext.runAsGroup }}
+            runAsNonRoot: {{ .Values.tfjob.podSecurityContext.runAsNonRoot }}
             supplementalGroups:
-              {{- range $group := .Values.submittfjobargs.podSecurityContext.supplementalGroups }}
+              {{- range $group := .Values.tfjob.podSecurityContext.supplementalGroups }}
               - {{ $group -}}
               {{ end }}
           {{- end }}
           {{- end }}
           volumes:
-            {{- if ne (len .Values.submittfjobargs.configFiles) 0 }}
+            {{- if ne (len .Values.tfjob.configFiles) 0 }}
             {{- $releaseName := .Release.Name }}
-            {{- range $containerPathKey,$configFileInfos := .Values.submittfjobargs.configFiles }}
+            {{- range $containerPathKey,$configFileInfos := .Values.tfjob.configFiles }}
             - name: {{ $containerPathKey }}
               configMap:
                 name: {{ $releaseName }}-{{ $containerPathKey }}
             {{- end }}
             {{- end }}
-            {{- if .Values.submittfjobargs.useTensorboard }}
-            {{- if .Values.submittfjobargs.isLocalLogging }}
+            {{- if .Values.tfjob.useTensorboard }}
+            {{- if .Values.tfjob.isLocalLogging }}
             - hostPath:
-                path: "{{ .Values.submittfjobargs.hostLogPath }}"
+                path: "{{ .Values.tfjob.hostLogPath }}"
               name: training-logs-volume
             {{- end}}
             {{- end}}
-            {{- if .Values.submittfjobargs.syncMode }}
+            {{- if .Values.tfjob.syncMode }}
             - name: code-sync
               emptyDir: {}
             {{- end}}
             {{- if gt (int $gpuCount) 0}}
-            {{- if .Values.submittfjobargs.nvidiaPath }}
+            {{- if .Values.tfjob.nvidiaPath }}
             - hostPath:
-                path: "{{ .Values.submittfjobargs.nvidiaPath }}"
+                path: "{{ .Values.tfjob.nvidiaPath }}"
               name: nvidia
             {{- end }}
             {{- end }}
-            {{- if .Values.submittfjobargs.dataset }}
-            {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+            {{- if .Values.tfjob.dataset }}
+            {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
             - name: "{{ $pvcName }}"
               persistentVolumeClaim:
                 claimName: "{{ $pvcName }}"
@@ -782,48 +782,48 @@ spec:
               name: {{ .name }}
             {{- end }}
             {{- end }}
-          {{- if .Values.submittfjobargs.syncMode }}
+          {{- if .Values.tfjob.syncMode }}
           initContainers:
           - name: init-code
-            {{- if .Values.submittfjobargs.syncImage }}
-            image: "{{ .Values.submittfjobargs.syncImage }}"
+            {{- if .Values.tfjob.syncImage }}
+            image: "{{ .Values.tfjob.syncImage }}"
             {{- else }}
-            {{- if eq .Values.submittfjobargs.syncMode "rsync" }}
-            image: "{{ .Values.submittfjobargs.rsyncImage }}"
+            {{- if eq .Values.tfjob.syncMode "rsync" }}
+            image: "{{ .Values.tfjob.rsyncImage }}"
             {{- end }}
-            {{- if eq .Values.submittfjobargs.syncMode "git" }}
-            image: "{{ .Values.submittfjobargs.gitImage }}"
+            {{- if eq .Values.tfjob.syncMode "git" }}
+            image: "{{ .Values.tfjob.gitImage }}"
             {{- end }}
             {{- end }}
-            imagePullPolicy: {{ .Values.submittfjobargs.imagePullPolicy }}
+            imagePullPolicy: {{ .Values.tfjob.imagePullPolicy }}
             {{- if eq "rsync" $syncMode }}
-            command: ["rsync", "-avP", "{{ .Values.submittfjobargs.syncSource}}", "/code"]
+            command: ["rsync", "-avP", "{{ .Values.tfjob.syncSource}}", "/code"]
             {{- end }}
             resources:
               requests:
-                  {{- if .Values.submittfjobargs.chiefCPU }}
-                  cpu: {{ .Values.submittfjobargs.chiefCPU | quote }}
+                  {{- if .Values.tfjob.chiefCPU }}
+                  cpu: {{ .Values.tfjob.chiefCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.chiefMemory }}
-                  memory: {{ .Values.submittfjobargs.chiefMemory | quote }}
+                  {{- if .Values.tfjob.chiefMemory }}
+                  memory: {{ .Values.tfjob.chiefMemory | quote }}
                   {{- end}}
               limits:
-                  {{- if .Values.submittfjobargs.chiefCPU }}
-                  cpu: {{ .Values.submittfjobargs.chiefCPU | quote }}
+                  {{- if .Values.tfjob.chiefCPU }}
+                  cpu: {{ .Values.tfjob.chiefCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.chiefMemory }}
-                  memory: {{ .Values.submittfjobargs.chiefMemory | quote }}
+                  {{- if .Values.tfjob.chiefMemory }}
+                  memory: {{ .Values.tfjob.chiefMemory | quote }}
                   {{- end}}
             env:
-            {{- range $key, $value := .Values.submittfjobargs.envs }}
+            {{- range $key, $value := .Values.tfjob.envs }}
               - name: "{{ $key }}"
                 value: "{{ $value }}"
             {{- end }}
             {{- if eq "git" $syncMode }}
               - name: GIT_SYNC_REPO
-                value: {{ .Values.submittfjobargs.syncSource}}
+                value: {{ .Values.tfjob.syncSource}}
               - name: GIT_SYNC_DEST
-                value: {{ .Values.submittfjobargs.syncGitProjectName}}
+                value: {{ .Values.tfjob.syncGitProjectName}}
               - name: GIT_SYNC_ROOT
                 value: /code
               - name: GIT_SYNC_ONE_TIME
@@ -833,23 +833,23 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
-          {{- if ne (len .Values.submittfjobargs.imagePullSecrets) 0 }}
+          {{- if ne (len .Values.tfjob.imagePullSecrets) 0 }}
           imagePullSecrets:
-          {{- range $imagePullSecret := .Values.submittfjobargs.imagePullSecrets }}
+          {{- range $imagePullSecret := .Values.tfjob.imagePullSecrets }}
             - name: "{{ $imagePullSecret }}"
           {{- end }}
           {{- end }}
           containers:
             - name: tensorflow
-              image: {{ .Values.submittfjobargs.workerImage }}
-              imagePullPolicy: {{ .Values.submittfjobargs.imagePullPolicy }}
-              {{- if .Values.submittfjobargs.workingDir }}
-              workingDir: {{ .Values.submittfjobargs.workingDir }}
+              image: {{ .Values.tfjob.workerImage }}
+              imagePullPolicy: {{ .Values.tfjob.imagePullPolicy }}
+              {{- if .Values.tfjob.workingDir }}
+              workingDir: {{ .Values.tfjob.workingDir }}
               {{- end }}
-              {{- if .Values.submittfjobargs.privileged }}
+              {{- if .Values.tfjob.privileged }}
               securityContext:
                 privileged: true
-              {{- else if .Values.submittfjobargs.enableRDMA }}
+              {{- else if .Values.tfjob.enableRDMA }}
               securityContext:
                 capabilities:
                   add:
@@ -858,56 +858,56 @@ spec:
               resources:
                 requests:
                   {{- if gt (int $gpuCount) 0}}
-                  {{- if .Values.submittfjobargs.nvidiaPath }}
+                  {{- if .Values.tfjob.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
                   {{- else}}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.chiefCPU }}
-                  cpu: {{ .Values.submittfjobargs.chiefCPU | quote }}
+                  {{- if .Values.tfjob.chiefCPU }}
+                  cpu: {{ .Values.tfjob.chiefCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.chiefMemory }}
-                  memory: {{ .Values.submittfjobargs.chiefMemory | quote }}
+                  {{- if .Values.tfjob.chiefMemory }}
+                  memory: {{ .Values.tfjob.chiefMemory | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.enableRDMA }}
+                  {{- if .Values.tfjob.enableRDMA }}
                   rdma/hca: "1"
                   {{- end}}
                 limits:
                   {{- if gt (int $gpuCount) 0}}
-                  {{- if .Values.submittfjobargs.nvidiaPath }}
+                  {{- if .Values.tfjob.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
                   {{- else}}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.chiefCPU }}
-                  cpu: {{ .Values.submittfjobargs.chiefCPU | quote }}
+                  {{- if .Values.tfjob.chiefCPU }}
+                  cpu: {{ .Values.tfjob.chiefCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.chiefMemory }}
-                  memory: {{ .Values.submittfjobargs.chiefMemory | quote }}
+                  {{- if .Values.tfjob.chiefMemory }}
+                  memory: {{ .Values.tfjob.chiefMemory | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.enableRDMA }}
+                  {{- if .Values.tfjob.enableRDMA }}
                   rdma/hca: "1"
                   {{- end}}
-              {{- if .Values.submittfjobargs.chiefPort }}
+              {{- if .Values.tfjob.chiefPort }}
               ports:
-                - containerPort: {{ .Values.submittfjobargs.chiefPort }}
+                - containerPort: {{ .Values.tfjob.chiefPort }}
                   name: tfjob-port
               {{- end}}
               command:
                 - "sh"
                 - "-c"
-                - {{ .Values.submittfjobargs.command }}
+                - {{ .Values.tfjob.command }}
               env:
-              {{- range $key, $value := .Values.submittfjobargs.envs }}
+              {{- range $key, $value := .Values.tfjob.envs }}
                 - name: "{{ $key }}"
                   value: "{{ $value }}"
               {{- end }}
               volumeMounts:
-                {{- if ne (len .Values.submittfjobargs.configFiles) 0 }}
+                {{- if ne (len .Values.tfjob.configFiles) 0 }}
                 {{- $releaseName := .Release.Name }}
-                {{- range $containerPathKey,$configFileInfos := .Values.submittfjobargs.configFiles }}
+                {{- range $containerPathKey,$configFileInfos := .Values.tfjob.configFiles }}
                 {{- $visit := "false" }}
                 {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
                 {{- if eq  "false" $visit }}
@@ -918,29 +918,29 @@ spec:
                 {{- end }}
                 {{- end }}
                 {{- end }}
-                {{- if .Values.submittfjobargs.useTensorboard }}
-                {{- if .Values.submittfjobargs.isLocalLogging }}
-                - mountPath: {{ .Values.submittfjobargs.trainingLogdir }}
+                {{- if .Values.tfjob.useTensorboard }}
+                {{- if .Values.tfjob.isLocalLogging }}
+                - mountPath: {{ .Values.tfjob.trainingLogdir }}
                   name: training-logs-volume
                 {{- end}}
                 {{- end}}
-                {{- if .Values.submittfjobargs.syncMode }}
-                {{- if .Values.submittfjobargs.workingDir }}
+                {{- if .Values.tfjob.syncMode }}
+                {{- if .Values.tfjob.workingDir }}
                 - name: code-sync
-                  mountPath: {{ .Values.submittfjobargs.workingDir }}/code
+                  mountPath: {{ .Values.tfjob.workingDir }}/code
                 {{- else }}
                 - name: code-sync
                   mountPath: /code
                 {{- end}}
                 {{- end}}
-                {{- if .Values.submittfjobargs.dataset }}
-                {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+                {{- if .Values.tfjob.dataset }}
+                {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
                 - name: "{{ $pvcName }}"
                   mountPath: "{{ $destPath }}"
                 {{- end }}
                 {{- end }}
                 {{- if gt (int $gpuCount) 0}}
-                {{- if .Values.submittfjobargs.nvidiaPath }}
+                {{- if .Values.tfjob.nvidiaPath }}
                 - mountPath: /usr/local/nvidia
                   name: nvidia
                 {{- end }}
@@ -952,7 +952,7 @@ spec:
                 {{- end }}
                 {{- end }}
 {{- end }}
-{{- if .Values.submittfjobargs.evaluator }}
+{{- if .Values.tfjob.evaluator }}
     Evaluator:
       restartPolicy: Never
       replicas: 1
@@ -965,7 +965,7 @@ spec:
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
           annotations:
-          {{- range $key, $value := .Values.submittfjobargs.annotations }}
+          {{- range $key, $value := .Values.tfjob.annotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
         spec:
@@ -975,9 +975,9 @@ spec:
             {{ $nodeKey }}: "{{ $nodeVal }}"
           {{- end }}
           {{- end }}
-          {{- if ne (len .Values.submittfjobargs.tolerations) 0 }}
+          {{- if ne (len .Values.tfjob.tolerations) 0 }}
           tolerations:
-          {{- range $tolerationKey := .Values.submittfjobargs.tolerations }}
+          {{- range $tolerationKey := .Values.tfjob.tolerations }}
             {{- if eq $tolerationKey "all" }}
             - operator: "Exists"
             {{- else }}
@@ -986,69 +986,69 @@ spec:
             {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.priorityClassName }}
-          priorityClassName: {{ .Values.submittfjobargs.priorityClassName }}
+          {{- if .Values.tfjob.priorityClassName }}
+          priorityClassName: {{ .Values.tfjob.priorityClassName }}
           {{- end }}
-          {{- if .Values.submittfjobargs.ps }}
-          {{- if .Values.submittfjobargs.hasGangScheduler }}
-          {{- if .Values.submittfjobargs.enableGangScheduler }}
-          schedulerName: {{ .Values.submittfjobargs.schedulerName }}
+          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.hasGangScheduler }}
+          {{- if .Values.tfjob.enableGangScheduler }}
+          schedulerName: {{ .Values.tfjob.schedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostNetwork }}
-          {{- if not .Values.submittfjobargs.useENI }}
-          hostNetwork: {{ .Values.submittfjobargs.useHostNetwork }}
+          {{- if .Values.tfjob.useHostNetwork }}
+          {{- if not .Values.tfjob.useENI }}
+          hostNetwork: {{ .Values.tfjob.useHostNetwork }}
           dnsPolicy: ClusterFirstWithHostNet
           {{- end }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostPID }}
-          hostPID: {{ .Values.submittfjobargs.useHostPID }}
+          {{- if .Values.tfjob.useHostPID }}
+          hostPID: {{ .Values.tfjob.useHostPID }}
           {{- end }}
-          {{- if .Values.submittfjobargs.useHostIPC }}
-          hostIPC: {{ .Values.submittfjobargs.useHostIPC }}
+          {{- if .Values.tfjob.useHostIPC }}
+          hostIPC: {{ .Values.tfjob.useHostIPC }}
           {{- end }}
-          {{- if .Values.submittfjobargs.enablePodSecurityContext }}
-          {{- if .Values.submittfjobargs.isNonRoot}}
+          {{- if .Values.tfjob.enablePodSecurityContext }}
+          {{- if .Values.tfjob.isNonRoot}}
           securityContext:
-            runAsUser: {{ .Values.submittfjobargs.podSecurityContext.runAsUser }}
-            runAsGroup: {{ .Values.submittfjobargs.podSecurityContext.runAsGroup }}
-            runAsNonRoot: {{ .Values.submittfjobargs.podSecurityContext.runAsNonRoot }}
+            runAsUser: {{ .Values.tfjob.podSecurityContext.runAsUser }}
+            runAsGroup: {{ .Values.tfjob.podSecurityContext.runAsGroup }}
+            runAsNonRoot: {{ .Values.tfjob.podSecurityContext.runAsNonRoot }}
             supplementalGroups:
-              {{- range $group := .Values.submittfjobargs.podSecurityContext.supplementalGroups }}
+              {{- range $group := .Values.tfjob.podSecurityContext.supplementalGroups }}
               - {{ $group -}}
               {{ end }}
           {{- end }}
           {{- end }}
           volumes:
-            {{- if ne (len .Values.submittfjobargs.configFiles) 0 }}
+            {{- if ne (len .Values.tfjob.configFiles) 0 }}
             {{- $releaseName := .Release.Name }}
-            {{- range $containerPathKey,$configFileInfos := .Values.submittfjobargs.configFiles }}
+            {{- range $containerPathKey,$configFileInfos := .Values.tfjob.configFiles }}
             - name: {{ $containerPathKey }}
               configMap:
                 name: {{ $releaseName }}-{{ $containerPathKey }}
             {{- end }}
             {{- end }}
-            {{- if .Values.submittfjobargs.useTensorboard }}
-            {{- if .Values.submittfjobargs.isLocalLogging }}
+            {{- if .Values.tfjob.useTensorboard }}
+            {{- if .Values.tfjob.isLocalLogging }}
             - hostPath:
-                path: "{{ .Values.submittfjobargs.hostLogPath }}"
+                path: "{{ .Values.tfjob.hostLogPath }}"
               name: training-logs-volume
             {{- end}}
             {{- end}}
-            {{- if .Values.submittfjobargs.syncMode }}
+            {{- if .Values.tfjob.syncMode }}
             - name: code-sync
               emptyDir: {}
             {{- end}}
             {{- if gt (int $gpuCount) 0}}  
-            {{- if .Values.submittfjobargs.nvidiaPath }}
+            {{- if .Values.tfjob.nvidiaPath }}
             - hostPath:
-                path: "{{ .Values.submittfjobargs.nvidiaPath }}"
+                path: "{{ .Values.tfjob.nvidiaPath }}"
               name: nvidia
             {{- end }}
             {{- end }}
-            {{- if .Values.submittfjobargs.dataset }}   
-            {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+            {{- if .Values.tfjob.dataset }}   
+            {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
             - name: "{{ $pvcName }}"
               persistentVolumeClaim:
                 claimName: "{{ $pvcName }}"
@@ -1061,48 +1061,48 @@ spec:
               name: {{ .name }}
             {{- end }}
             {{- end }}
-          {{- if .Values.submittfjobargs.syncMode }}
+          {{- if .Values.tfjob.syncMode }}
           initContainers:
           - name: init-code
-            {{- if .Values.submittfjobargs.syncImage }}
-            image: "{{ .Values.submittfjobargs.syncImage }}"
+            {{- if .Values.tfjob.syncImage }}
+            image: "{{ .Values.tfjob.syncImage }}"
             {{- else }}
-            {{- if eq .Values.submittfjobargs.syncMode "rsync" }}
-            image: "{{ .Values.submittfjobargs.rsyncImage }}"
+            {{- if eq .Values.tfjob.syncMode "rsync" }}
+            image: "{{ .Values.tfjob.rsyncImage }}"
             {{- end }}
-            {{- if eq .Values.submittfjobargs.syncMode "git" }}
-            image: "{{ .Values.submittfjobargs.gitImage }}"
+            {{- if eq .Values.tfjob.syncMode "git" }}
+            image: "{{ .Values.tfjob.gitImage }}"
             {{- end }}
             {{- end }}
-            imagePullPolicy: {{ .Values.submittfjobargs.imagePullPolicy }}
+            imagePullPolicy: {{ .Values.tfjob.imagePullPolicy }}
             {{- if eq "rsync" $syncMode }}
-            command: ["rsync", "-avP", "{{ .Values.submittfjobargs.syncSource}}", "/code"]
+            command: ["rsync", "-avP", "{{ .Values.tfjob.syncSource}}", "/code"]
             {{- end }}
             resources:
               requests:
-                  {{- if .Values.submittfjobargs.evaluatorCPU }}
-                  cpu: {{ .Values.submittfjobargs.evaluatorCPU | quote }}
+                  {{- if .Values.tfjob.evaluatorCPU }}
+                  cpu: {{ .Values.tfjob.evaluatorCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.evaluatorMemory }}
-                  memory: {{ .Values.submittfjobargs.evaluatorMemory | quote }}
+                  {{- if .Values.tfjob.evaluatorMemory }}
+                  memory: {{ .Values.tfjob.evaluatorMemory | quote }}
                   {{- end}}
               limits:
-                  {{- if .Values.submittfjobargs.evaluatorCPU }}
-                  cpu: {{ .Values.submittfjobargs.evaluatorCPU | quote }}
+                  {{- if .Values.tfjob.evaluatorCPU }}
+                  cpu: {{ .Values.tfjob.evaluatorCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.evaluatorMemory }}
-                  memory: {{ .Values.submittfjobargs.evaluatorMemory | quote }}
+                  {{- if .Values.tfjob.evaluatorMemory }}
+                  memory: {{ .Values.tfjob.evaluatorMemory | quote }}
                   {{- end}}
             env:
-            {{- range $key, $value := .Values.submittfjobargs.envs }}
+            {{- range $key, $value := .Values.tfjob.envs }}
               - name: "{{ $key }}"
                 value: "{{ $value }}"
             {{- end }}
             {{- if eq "git" $syncMode }}
               - name: GIT_SYNC_REPO
-                value: {{ .Values.submittfjobargs.syncSource}}
+                value: {{ .Values.tfjob.syncSource}}
               - name: GIT_SYNC_DEST
-                value: {{ .Values.submittfjobargs.syncGitProjectName}}
+                value: {{ .Values.tfjob.syncGitProjectName}}
               - name: GIT_SYNC_ROOT
                 value: /code
               - name: GIT_SYNC_ONE_TIME
@@ -1112,65 +1112,65 @@ spec:
               - name: code-sync
                 mountPath: /code
           {{- end}}
-          {{- if ne (len .Values.submittfjobargs.imagePullSecrets) 0 }}
+          {{- if ne (len .Values.tfjob.imagePullSecrets) 0 }}
           imagePullSecrets:
-          {{- range $imagePullSecret := .Values.submittfjobargs.imagePullSecrets }}
+          {{- range $imagePullSecret := .Values.tfjob.imagePullSecrets }}
             - name: "{{ $imagePullSecret }}"
           {{- end }}
           {{- end }}
           containers:
             - name: tensorflow
-              image: {{ .Values.submittfjobargs.workerImage }}
-              imagePullPolicy: {{ .Values.submittfjobargs.imagePullPolicy }}
-              {{- if .Values.submittfjobargs.workingDir }}
-              workingDir: {{ .Values.submittfjobargs.workingDir }}
+              image: {{ .Values.tfjob.workerImage }}
+              imagePullPolicy: {{ .Values.tfjob.imagePullPolicy }}
+              {{- if .Values.tfjob.workingDir }}
+              workingDir: {{ .Values.tfjob.workingDir }}
               {{- end }}
-              {{- if .Values.submittfjobargs.privileged }}
+              {{- if .Values.tfjob.privileged }}
               securityContext:
                 privileged: true
               {{- end }}
               resources:             
                 requests:
                   {{- if gt (int $gpuCount) 0}}   
-                  {{- if .Values.submittfjobargs.nvidiaPath }}
+                  {{- if .Values.tfjob.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
                   {{- else}}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.evaluatorCPU }}
-                  cpu: {{ .Values.submittfjobargs.evaluatorCPU | quote }}
+                  {{- if .Values.tfjob.evaluatorCPU }}
+                  cpu: {{ .Values.tfjob.evaluatorCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.evaluatorMemory }}
-                  memory: {{ .Values.submittfjobargs.evaluatorMemory | quote }}
+                  {{- if .Values.tfjob.evaluatorMemory }}
+                  memory: {{ .Values.tfjob.evaluatorMemory | quote }}
                   {{- end}}
                 limits:
                   {{- if gt (int $gpuCount) 0}}   
-                  {{- if .Values.submittfjobargs.nvidiaPath }}
+                  {{- if .Values.tfjob.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
                   {{- else}}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.evaluatorCPU }}
-                  cpu: {{ .Values.submittfjobargs.evaluatorCPU | quote }}
+                  {{- if .Values.tfjob.evaluatorCPU }}
+                  cpu: {{ .Values.tfjob.evaluatorCPU | quote }}
                   {{- end}}
-                  {{- if .Values.submittfjobargs.evaluatorMemory }}
-                  memory: {{ .Values.submittfjobargs.evaluatorMemory | quote }}
+                  {{- if .Values.tfjob.evaluatorMemory }}
+                  memory: {{ .Values.tfjob.evaluatorMemory | quote }}
                   {{- end}}
               command:
                 - "sh"
                 - "-c"
-                - {{ .Values.submittfjobargs.command }}
+                - {{ .Values.tfjob.command }}
               env:        
-              {{- range $key, $value := .Values.submittfjobargs.envs }}
+              {{- range $key, $value := .Values.tfjob.envs }}
                 - name: "{{ $key }}"
                   value: "{{ $value }}"
               {{- end }}
               volumeMounts:
-                {{- if ne (len .Values.submittfjobargs.configFiles) 0 }}
+                {{- if ne (len .Values.tfjob.configFiles) 0 }}
                 {{- $releaseName := .Release.Name }}
-                {{- range $containerPathKey,$configFileInfos := .Values.submittfjobargs.configFiles }}
+                {{- range $containerPathKey,$configFileInfos := .Values.tfjob.configFiles }}
                 {{- $visit := "false" }}
                 {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
                 {{- if eq  "false" $visit }}
@@ -1181,23 +1181,23 @@ spec:
                 {{- end }}
                 {{- end }}
                 {{- end }}
-                {{- if .Values.submittfjobargs.syncMode }}
-                {{- if .Values.submittfjobargs.workingDir }}
+                {{- if .Values.tfjob.syncMode }}
+                {{- if .Values.tfjob.workingDir }}
                 - name: code-sync
-                  mountPath: {{ .Values.submittfjobargs.workingDir }}/code
+                  mountPath: {{ .Values.tfjob.workingDir }}/code
                 {{- else }}
                 - name: code-sync
                   mountPath: /code
                 {{- end}}
                 {{- end}}
-                {{- if .Values.submittfjobargs.dataset }}   
-                {{- range $pvcName, $destPath := .Values.submittfjobargs.dataset }}
+                {{- if .Values.tfjob.dataset }}   
+                {{- range $pvcName, $destPath := .Values.tfjob.dataset }}
                 - name: "{{ $pvcName }}"
                   mountPath: "{{ $destPath }}"
                 {{- end }}
                 {{- end }}
                 {{- if gt (int $gpuCount) 0}}  
-                {{- if .Values.submittfjobargs.nvidiaPath }}
+                {{- if .Values.tfjob.nvidiaPath }}
                 - mountPath: /usr/local/nvidia
                   name: nvidia
                 {{- end }}

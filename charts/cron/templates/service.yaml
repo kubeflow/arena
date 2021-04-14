@@ -1,5 +1,5 @@
-{{- if (not .Values.submittfjobargs.enableGangScheduler) -}}
-{{- if .Values.submittfjobargs.useTensorboard }}
+{{- if (not .Values.tfjob.enableGangScheduler) -}}
+{{- if .Values.tfjob.useTensorboard }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,7 +12,7 @@ metadata:
     role: tensorboard
     createdBy: "TFJob"
 spec:
-  type: {{ .Values.submittfjobargs.tensorboardServiceType }}
+  type: {{ .Values.tfjob.tensorboardServiceType }}
   ports:
     - port: 6006
       targetPort: 6006

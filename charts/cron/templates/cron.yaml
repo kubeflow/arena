@@ -3,9 +3,9 @@ kind: "Cron"
 metadata:
   name: {{ .Release.Name }}
 spec:
-  schedule: {{ .Values.commoncronargs.schedule }}
-  concurrencyPolicy: {{ .Values.commoncronargs.concurrencyPolicy }}
-  deadline: {{ .Values.commoncronargs.deadline }}
-  historyLimit: {{ .Values.commoncronargs.historyLimit }}
+  schedule: {{ .Values.cron.schedule }}
+  concurrencyPolicy: {{ .Values.cron.concurrencyPolicy }}
+  deadline: {{ .Values.cron.deadline }}
+  historyLimit: {{ .Values.cron.historyLimit }}
   template:
     {{- include "arena.tfjob" . | nindent 6 }}

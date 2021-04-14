@@ -43,7 +43,7 @@ func (c *CronTaskClient) Namespace(namespace string) *CronTaskClient {
 }
 
 // List return all cron task
-func (c *CronTaskClient) List(allNamespaces bool) ([]*types.CronTaskInfo, error) {
+func (c *CronTaskClient) List(allNamespaces bool) ([]*types.CronInfo, error) {
 	return cron.ListCronTask(c.namespace, allNamespaces)
 }
 
@@ -60,7 +60,7 @@ func (c *CronTaskClient) ListAndPrint(allNamespaces bool, format string) error {
 	return nil
 }
 
-func (c *CronTaskClient) Get(name string) (*types.CronTaskInfo, error) {
+func (c *CronTaskClient) Get(name string) (*types.CronInfo, error) {
 	return cron.GetCronTask(name, c.namespace)
 }
 

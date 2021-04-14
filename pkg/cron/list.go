@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-func ListCronTask(namespace string, allNamespaces bool) ([]*types.CronTaskInfo, error) {
+func ListCronTask(namespace string, allNamespaces bool) ([]*types.CronInfo, error) {
 	config := config.GetArenaConfiger().GetRestConfig()
 
 	dynamicClient, err := dynamic.NewForConfig(config)
@@ -33,6 +33,6 @@ func ListCronTask(namespace string, allNamespaces bool) ([]*types.CronTaskInfo, 
 	return nil, nil
 }
 
-func DisplayAllCronTasks(tasks []*types.CronTaskInfo, allNamespace bool, format types.FormatStyle) {
+func DisplayAllCronTasks(tasks []*types.CronInfo, allNamespace bool, format types.FormatStyle) {
 	//TODO
 }
