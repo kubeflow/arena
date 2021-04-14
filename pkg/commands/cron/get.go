@@ -24,7 +24,7 @@ import (
 )
 
 func NewCronGetCommand() *cobra.Command {
-	var allNamespaces bool
+	var format string
 	var command = &cobra.Command{
 		Use:   "get",
 		Short: "get cron job by name.",
@@ -43,9 +43,9 @@ func NewCronGetCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			return client.Cron().GetAndPrint(name)
+			return client.Cron().GetAndPrint(name, format)
 		},
 	}
-	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+	command.Flags().StringVarP(&format, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	return command
 }

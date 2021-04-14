@@ -1,7 +1,6 @@
 package arenaclient
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/config"
 	apiscron "github.com/kubeflow/arena/pkg/apis/cron"
@@ -10,21 +9,21 @@ import (
 	"github.com/kubeflow/arena/pkg/cron"
 )
 
-type CronTaskClient struct {
+type CronClient struct {
 	namespace string
 	configer  *config.ArenaConfiger
 }
 
-// NewCronTaskClient creates a CronTaskClient
-func NewCronTaskClient(namespace string, configer *config.ArenaConfiger) *CronTaskClient {
-	return &CronTaskClient{
+// NewCronClient creates a CronClient
+func NewCronClient(namespace string, configer *config.ArenaConfiger) *CronClient {
+	return &CronClient{
 		namespace: namespace,
 		configer:  configer,
 	}
 }
 
 // Submit submits a training job
-func (c *CronTaskClient) SubmitCronTrainingJob(job *apiscron.Job) error {
+func (c *CronClient) SubmitCronTrainingJob(job *apiscron.Job) error {
 	switch job.Type() {
 	case types.CronTFTrainingJob:
 		args := job.Args().(*types.CronTFJobArgs)
@@ -34,49 +33,56 @@ func (c *CronTaskClient) SubmitCronTrainingJob(job *apiscron.Job) error {
 }
 
 // Namespace sets the namespace,this operation does not change the default namespace
-func (c *CronTaskClient) Namespace(namespace string) *CronTaskClient {
-	copyCronTaskClient := &CronTaskClient{
+func (c *CronClient) Namespace(namespace string) *CronClient {
+	copyCronClient := &CronClient{
 		namespace: namespace,
 		configer:  c.configer,
 	}
-	return copyCronTaskClient
+	return copyCronClient
 }
 
 // List return all cron task
-func (c *CronTaskClient) List(allNamespaces bool) ([]*types.CronInfo, error) {
-	return cron.ListCronTask(c.namespace, allNamespaces)
+func (c *CronClient) List(allNamespaces bool) ([]*types.CronInfo, error) {
+	return cron.ListCrons(c.namespace, allNamespaces)
 }
 
 // ListAndPrint lists and prints the job informations
-func (c *CronTaskClient) ListAndPrint(allNamespaces bool, format string) error {
-	if utils.TransferPrintFormat(format) == types.UnknownFormat {
+func (c *CronClient) ListAndPrint(allNamespaces bool, format string) error {
+	outputFormat := utils.TransferPrintFormat(format)
+	if outputFormat == types.UnknownFormat {
 		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
 	}
-	tasks, err := cron.ListCronTask(c.namespace, allNamespaces)
+	cronInfos, err := cron.ListCrons(c.namespace, allNamespaces)
 	if err != nil {
 		return err
 	}
-	cron.DisplayAllCronTasks(tasks, allNamespaces, utils.TransferPrintFormat(format))
+	cron.DisplayAllCrons(cronInfos, allNamespaces, outputFormat)
 	return nil
 }
 
-func (c *CronTaskClient) Get(name string) (*types.CronInfo, error) {
-	return cron.GetCronTask(name, c.namespace)
+func (c *CronClient) Get(name string) (*types.CronInfo, error) {
+	return cron.GetCronInfo(name, c.namespace)
 }
 
-func (c *CronTaskClient) GetAndPrint(name string) error {
-	fmt.Println(name)
-	info, err := cron.GetCronTask(name, c.namespace)
+func (c *CronClient) GetAndPrint(name string, format string) error {
+	outputFormat := utils.TransferPrintFormat(format)
+	if outputFormat == types.UnknownFormat {
+		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+	}
+
+	cronInfo, err := cron.GetCronInfo(name, c.namespace)
 	if err != nil {
 		return err
 	}
 
-	b, _ := json.Marshal(info)
-	fmt.Println(string(b))
+	cron.DisplayCron(cronInfo, outputFormat)
 	return nil
 }
 
-func (c *CronTaskClient) Delete(names ...string) error {
-	fmt.Println("====== delete cron ")
+func (c *CronClient) Delete(names ...string) error {
+	for _, name := range names {
+		cron.DeleteCron(name, c.namespace)
+	}
+
 	return nil
 }

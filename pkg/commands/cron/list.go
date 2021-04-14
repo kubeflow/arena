@@ -25,6 +25,7 @@ import (
 
 func NewCronListCommand() *cobra.Command {
 	var allNamespaces bool
+	var format string
 	var command = &cobra.Command{
 		Use:   "list",
 		Short: "list all the cron job.",
@@ -42,9 +43,10 @@ func NewCronListCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			return client.Cron().ListAndPrint(allNamespaces, "yaml")
+			return client.Cron().ListAndPrint(allNamespaces, format)
 		},
 	}
 	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+	command.Flags().StringVarP(&format, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	return command
 }
