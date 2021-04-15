@@ -81,7 +81,12 @@ func (c *CronClient) GetAndPrint(name string, format string) error {
 
 func (c *CronClient) Delete(names ...string) error {
 	for _, name := range names {
-		cron.DeleteCron(name, c.namespace)
+		cronInfo, err := cron.GetCronInfo(name, c.namespace)
+		if err != nil {
+			continue
+		}
+
+		cron.DeleteCron(name, c.namespace, cronInfo.Type)
 	}
 
 	return nil

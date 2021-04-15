@@ -3,9 +3,12 @@ kind: "Cron"
 metadata:
   name: {{ .Release.Name }}
 spec:
-  schedule: {{ .Values.cron.schedule }}
+  schedule: "{{ .Values.cron.schedule }}"
   concurrencyPolicy: {{ .Values.cron.concurrencyPolicy }}
   deadline: {{ .Values.cron.deadline }}
   historyLimit: {{ .Values.cron.historyLimit }}
   template:
-    {{- include "arena.tfjob" . | nindent 6 }}
+    apiVersion: "kubeflow.org/v1"
+    kind: "TFJob"
+    workload:
+      {{- include "arena.tfjob" . | nindent 6 }}

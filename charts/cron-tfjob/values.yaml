@@ -2,7 +2,7 @@
 cron:
   schedule: "0 0 22 * * ?"
   concurrencyPolicy: Allow
-  deadline: "2021-05-01T13:00:12Z"
+  deadline: "2021-06-01T13:00:12Z"
   historyLimit: 10
 
 # Default values for tfjob.

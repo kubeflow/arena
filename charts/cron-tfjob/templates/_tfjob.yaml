@@ -8,13 +8,12 @@
 apiVersion: "kubeflow.org/v1"
 kind: "TFJob"
 metadata:
-  name: {{ .Release.Name }}
   labels:
-    app: {{ template "tfjob.name" . }}
+    app: "tfjob"
     chart: {{ template "tfjob.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    createdBy: "TFJob"
+    createdBy: "Cron"
 spec:
 {{- if .Values.tfjob.cleanPodPolicy }}
 {{- if eq "None" $cleanPodPolicy }}
@@ -32,11 +31,11 @@ spec:
       template:
         metadata:
           labels:
-            app: {{ template "tfjob.name" . }}
+            app: "tfjob"
             chart: {{ template "tfjob.chart" . }}
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
-            createdBy: "TFJob"
+            createdBy: "Cron"
           annotations:
           {{- range $key, $value := .Values.tfjob.annotations }}
             {{ $key }}: {{ $value | quote }}
@@ -322,11 +321,11 @@ spec:
       template:
         metadata:
           labels:
-            app: {{ template "tfjob.name" . }}
+            app: "tfjob"
             chart: {{ template "tfjob.chart" . }}
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
-            createdBy: "TFJob"
+            createdBy: "Cron"
           annotations:
           {{- range $key, $value := .Values.tfjob.annotations }}
             {{ $key }}: {{ $value | quote }}
@@ -642,11 +641,11 @@ spec:
       template:
         metadata:
           labels:
-            app: {{ template "tfjob.name" . }}
+            app: "tfjob"
             chart: {{ template "tfjob.chart" . }}
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
-            createdBy: "TFJob"
+            createdBy: "Cron"
           annotations:
           {{- range $key, $value := .Values.tfjob.annotations }}
             {{ $key }}: {{ $value | quote }}
@@ -959,11 +958,11 @@ spec:
       template:
         metadata:
           labels:
-            app: {{ template "tfjob.name" . }}
+            app: "tfjob"
             chart: {{ template "tfjob.chart" . }}
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
-            createdBy: "TFJob"
+            createdBy: "Cron"
           annotations:
           {{- range $key, $value := .Values.tfjob.annotations }}
             {{ $key }}: {{ $value | quote }}

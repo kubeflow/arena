@@ -1,5 +1,5 @@
 ### 0.1.0
 
-* support cron tfjob
+* support cron task
 
 
