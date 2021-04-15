@@ -15,6 +15,7 @@
 package training
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
@@ -235,7 +236,7 @@ func NewMPIJobTrainer() Trainer {
 	mpijobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	enable := false
 	// this step is used to check operator is installed or not
-	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(k8saccesser.MPICRDName, metav1.GetOptions{})
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), k8saccesser.MPICRDName, metav1.GetOptions{})
 	if err == nil {
 		log.Debugf("MPIJobTrainer is enabled")
 		enable = true

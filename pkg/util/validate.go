@@ -15,6 +15,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -55,7 +56,7 @@ func ValidateJobName(value string) error {
 // Check if PriorityClassName exists
 func ValidatePriorityClassName(client *kubernetes.Clientset, name string) error {
 	// client.SchedulingV1alpha1()
-	_, err := client.SchedulingV1().PriorityClasses().Get(name, metav1.GetOptions{})
+	_, err := client.SchedulingV1().PriorityClasses().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		err = fmt.Errorf("The priority %s doesn't exist. Please check with `kubectl get pc` to get a valid priority.", name)
 	}

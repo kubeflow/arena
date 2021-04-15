@@ -15,6 +15,7 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -255,7 +256,7 @@ type VolcanoJobTrainer struct {
 func NewVolcanoJobTrainer() Trainer {
 	volcanoClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 	enable := false
-	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(k8saccesser.VolcanoCRDName, metav1.GetOptions{})
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), k8saccesser.VolcanoCRDName, metav1.GetOptions{})
 	if err == nil {
 		log.Debugf("VolcanoJobTrainer is enabled")
 		enable = true

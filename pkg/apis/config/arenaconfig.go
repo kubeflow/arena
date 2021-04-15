@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -187,7 +188,7 @@ func updateNamespace(namespace string, arenaConfigs map[string]string, clientCon
 func getClusterInstalledCRDs(client *extclientset.Clientset) ([]string, error) {
 	selectorListOpts := metav1.ListOptions{}
 
-	list, err := client.ApiextensionsV1().CustomResourceDefinitions().List(selectorListOpts)
+	list, err := client.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), selectorListOpts)
 	if err != nil {
 		return nil, err
 	}

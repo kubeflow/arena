@@ -1,7 +1,9 @@
 package util
 
 import (
-	"k8s.io/api/core/v1"
+	"context"
+
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
 	log "github.com/sirupsen/logrus"
@@ -18,7 +20,7 @@ func AcquireAllPods(namespace string, client *kubernetes.Clientset) ([]v1.Pod, e
 		return podsCache, nil
 	}
 	pods := []v1.Pod{}
-	podList, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	podList, err := client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return pods, err
 	}
@@ -34,7 +36,7 @@ func AcquireServingServices(namespace string, client *kubernetes.Clientset) ([]v
 	if serviceCache, ok := allServices[namespace]; ok {
 		return serviceCache, nil
 	}
-	serviceList, err := client.CoreV1().Services(namespace).List(metav1.ListOptions{
+	serviceList, err := client.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "servingName",
 	})
 	if err != nil {

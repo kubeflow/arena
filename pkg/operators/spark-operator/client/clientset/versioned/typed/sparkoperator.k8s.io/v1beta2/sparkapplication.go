@@ -21,6 +21,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"context"
 	"time"
 
 	v1beta2 "github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta2"
@@ -73,7 +74,7 @@ func (c *sparkApplications) Get(name string, options v1.GetOptions) (result *v1b
 		Resource("sparkapplications").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -90,7 +91,7 @@ func (c *sparkApplications) List(opts v1.ListOptions) (result *v1beta2.SparkAppl
 		Resource("sparkapplications").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -107,7 +108,7 @@ func (c *sparkApplications) Watch(opts v1.ListOptions) (watch.Interface, error) 
 		Resource("sparkapplications").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.TODO())
 }
 
 // Create takes the representation of a sparkApplication and creates it.  Returns the server's representation of the sparkApplication, and an error, if there is any.
@@ -117,7 +118,7 @@ func (c *sparkApplications) Create(sparkApplication *v1beta2.SparkApplication) (
 		Namespace(c.ns).
 		Resource("sparkapplications").
 		Body(sparkApplication).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -130,7 +131,7 @@ func (c *sparkApplications) Update(sparkApplication *v1beta2.SparkApplication) (
 		Resource("sparkapplications").
 		Name(sparkApplication.Name).
 		Body(sparkApplication).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -146,7 +147,7 @@ func (c *sparkApplications) UpdateStatus(sparkApplication *v1beta2.SparkApplicat
 		Name(sparkApplication.Name).
 		SubResource("status").
 		Body(sparkApplication).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -158,7 +159,7 @@ func (c *sparkApplications) Delete(name string, options *v1.DeleteOptions) error
 		Resource("sparkapplications").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -174,7 +175,7 @@ func (c *sparkApplications) DeleteCollection(options *v1.DeleteOptions, listOpti
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -187,7 +188,7 @@ func (c *sparkApplications) Patch(name string, pt types.PatchType, data []byte, 
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
