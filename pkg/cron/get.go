@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/config"
@@ -35,7 +36,7 @@ func GetCronInfo(name, namespace string) (*types.CronInfo, error) {
 		return nil, err
 	}
 
-	result, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(name, metav1.GetOptions{})
+	result, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/config"
@@ -25,7 +26,7 @@ func ListCrons(namespace string, allNamespaces bool) ([]*types.CronInfo, error) 
 		return nil, err
 	}
 
-	list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(metav1.ListOptions{})
+	list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

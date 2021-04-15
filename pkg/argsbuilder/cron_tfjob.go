@@ -1,6 +1,7 @@
 package argsbuilder
 
 import (
+	"context"
 	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -217,7 +218,7 @@ func (c *CronTFJobArgsBuilder) transform() error {
 func (c *CronTFJobArgsBuilder) checkGangCapablitiesInCluster() error {
 	c.args.HasGangScheduler = false
 	arenaConfiger := config.GetArenaConfiger()
-	podList, err := arenaConfiger.GetClientSet().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+	podList, err := arenaConfiger.GetClientSet().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%v", gangSchdName),
 	})
 	if err != nil {
