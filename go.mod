@@ -8,9 +8,9 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.4.2
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/prometheus/client_golang v1.0.0
-	github.com/prometheus/common v0.4.1
-	github.com/sirupsen/logrus v1.4.2
+	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/common v0.20.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.4.0
@@ -53,5 +53,5 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.18.5
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.18.5
 	k8s.io/sample-controller => k8s.io/sample-controller v0.18.5
-    sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.6.5
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.6.5
 )
