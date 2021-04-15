@@ -86,7 +86,7 @@ func NewK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset
 			log.Errorf("failed to create cacheClient, reason: %v", err)
 			return nil, err
 		}
-		cacheClient.IndexField(&v1.Pod{}, "spec.nodeName", func(o runtime.Object) []string {
+		cacheClient.IndexField(context.TODO(), &v1.Pod{}, "spec.nodeName", func(o runtime.Object) []string {
 			if pod, ok := o.(*v1.Pod); ok {
 				return []string{pod.Spec.NodeName}
 			}
@@ -140,7 +140,7 @@ func (k *k8sResourceAccesser) ListPods(namespace string, filterLabels string, fi
 			},
 		)
 	} else {
-		podList, err = k.clientset.CoreV1().Pods(namespace).List(metav1.ListOptions{
+		podList, err = k.clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
@@ -178,7 +178,7 @@ func (k *k8sResourceAccesser) ListStatefulSets(namespace string, filterLabels st
 				LabelSelector: labelSelector,
 			})
 	} else {
-		stsList, err = k.clientset.AppsV1().StatefulSets(namespace).List(metav1.ListOptions{
+		stsList, err = k.clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
@@ -211,7 +211,7 @@ func (k *k8sResourceAccesser) ListDeployments(namespace string, filterLabels str
 				LabelSelector: labelSelector,
 			})
 	} else {
-		deployList, err = k.clientset.AppsV1().Deployments(namespace).List(metav1.ListOptions{
+		deployList, err = k.clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
@@ -244,7 +244,7 @@ func (k *k8sResourceAccesser) ListBatchJobs(namespace string, filterLabels strin
 				LabelSelector: labelSelector,
 			})
 	} else {
-		jobList, err = k.clientset.BatchV1().Jobs(namespace).List(metav1.ListOptions{
+		jobList, err = k.clientset.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
@@ -277,7 +277,7 @@ func (k *k8sResourceAccesser) ListServices(namespace string, filterLabels string
 				LabelSelector: labelSelector,
 			})
 	} else {
-		serviceList, err = k.clientset.CoreV1().Services(namespace).List(metav1.ListOptions{
+		serviceList, err = k.clientset.CoreV1().Services(namespace).List(context.TODO(), metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
@@ -310,7 +310,7 @@ func (k *k8sResourceAccesser) ListConfigMaps(namespace string, filterLabels stri
 				LabelSelector: labelSelector,
 			})
 	} else {
-		configmapList, err = k.clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{
+		configmapList, err = k.clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
@@ -342,7 +342,7 @@ func (k *k8sResourceAccesser) ListNodes(filterLabels string) ([]*v1.Node, error)
 				LabelSelector: labelSelector,
 			})
 	} else {
-		nodeList, err = k.clientset.CoreV1().Nodes().List(metav1.ListOptions{
+		nodeList, err = k.clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ListOptions",
 				APIVersion: "v1",
@@ -687,7 +687,7 @@ func (k *k8sResourceAccesser) GetService(namespace, name string) (*v1.Service, e
 	if k.cacheEnabled {
 		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, service)
 	} else {
-		service, err = k.clientset.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
+		service, err = k.clientset.CoreV1().Services(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	}
 	if err != nil {
 		return nil, err
@@ -701,7 +701,7 @@ func (k *k8sResourceAccesser) GetEndpoints(namespace, name string) (*v1.Endpoint
 	if k.cacheEnabled {
 		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, endpoints)
 	} else {
-		endpoints, err = k.clientset.CoreV1().Endpoints(namespace).Get(name, metav1.GetOptions{})
+		endpoints, err = k.clientset.CoreV1().Endpoints(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	}
 	if err != nil {
 		return nil, err

@@ -15,6 +15,7 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -251,7 +252,7 @@ func NewPyTorchJobTrainer() Trainer {
 	// get pytorch operator client call pytorch operator api
 	enable := false
 	pytorchjobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
-	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(k8saccesser.PytorchCRDName, metav1.GetOptions{})
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), k8saccesser.PytorchCRDName, metav1.GetOptions{})
 	if err == nil {
 		log.Debugf("PytorchJobTrainer is enabled")
 		enable = true

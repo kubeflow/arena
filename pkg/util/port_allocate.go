@@ -1,7 +1,9 @@
 package util
 
 import (
+	"context"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,7 +58,7 @@ func initK8sClusterUsedPort(client *kubernetes.Clientset) ([]int, error) {
 // 2. NodePort / Loadbalancer Service's NodePort
 
 func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
-	pods, err := client.CoreV1().Pods("").List(meta_v1.ListOptions{})
+	pods, err := client.CoreV1().Pods("").List(context.TODO(), meta_v1.ListOptions{})
 	if err != nil {
 		return k8sClusterUsedPorts, err
 	}
@@ -77,7 +79,7 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 		}
 	}
 
-	services, err := client.CoreV1().Services("").List(meta_v1.ListOptions{})
+	services, err := client.CoreV1().Services("").List(context.TODO(), meta_v1.ListOptions{})
 	if err != nil {
 		return k8sClusterUsedPorts, err
 	}

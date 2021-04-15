@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -188,7 +189,7 @@ func AcquireAllActivePods(client *kubernetes.Clientset) ([]*v1.Pod, error) {
 	if err != nil {
 		return allPods, err
 	}
-	nodeNonTerminatedPodsList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{FieldSelector: fieldSelector.String()})
+	nodeNonTerminatedPodsList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{FieldSelector: fieldSelector.String()})
 	if err != nil {
 		return allPods, err
 	}
@@ -207,7 +208,7 @@ func AcquireAllActivePodsOfNode(client *kubernetes.Clientset, nodeName string) (
 	if err != nil {
 		return allPods, err
 	}
-	nodeNonTerminatedPodsList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{FieldSelector: fieldSelector.String()})
+	nodeNonTerminatedPodsList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{FieldSelector: fieldSelector.String()})
 	if err != nil {
 		return allPods, err
 	}

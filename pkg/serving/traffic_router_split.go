@@ -15,6 +15,7 @@
 package serving
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
@@ -138,7 +139,7 @@ func createOrUpdateDestinationRule(istioClient *rest.RESTClient, preprocessObjec
 	request.SetHeader("Accept", "application/json")
 	request.SetHeader("Content-Type", "application/json")
 	log.Debugf("request URL: %s", request.URL())
-	result2, err := request.Do().Raw()
+	result2, err := request.Do(context.TODO()).Raw()
 	if err != nil {
 		log.Debugf("will create new destinationrule \"%s\"", destinationRuleName)
 		convertedjson, err := json.Marshal(preprocessObject.DestinationRule)
@@ -148,7 +149,7 @@ func createOrUpdateDestinationRule(istioClient *rest.RESTClient, preprocessObjec
 		log.Debugf("create destinationrule: %s", (convertedjson))
 		postRequest := istioClient.Post().Namespace(preprocessObject.Namespace).Resource("destinationrules")
 		log.Debugf("postRequest URL: %s", postRequest.URL())
-		newbody, err := postRequest.Body(convertedjson).Do().Raw()
+		newbody, err := postRequest.Body(convertedjson).Do(context.TODO()).Raw()
 		if err != nil {
 			return err
 		}
@@ -169,7 +170,7 @@ func createOrUpdateDestinationRule(istioClient *rest.RESTClient, preprocessObjec
 	log.Debugf("updated destinationrule: %s", updatedjson)
 	updateRequest := istioClient.Put().Namespace(preprocessObject.Namespace).Resource("destinationrules").Name(destinationRuleName)
 	log.Debugf("updateRequest URL: %s", updateRequest.URL())
-	newbody, err := updateRequest.Body(updatedjson).Do().Raw()
+	newbody, err := updateRequest.Body(updatedjson).Do(context.TODO()).Raw()
 	if err != nil {
 		log.Error(err)
 		return err
@@ -183,7 +184,7 @@ func createOrUpdateVirtualService(namespace string, istioClient *rest.RESTClient
 	request.SetHeader("Accept", "application/json")
 	request.SetHeader("Content-Type", "application/json")
 	log.Debugf("request URL: %s", request.URL())
-	result2, err := request.Do().Raw()
+	result2, err := request.Do(context.TODO()).Raw()
 	if err != nil {
 		log.Debugf("will create new virtualservice \"%s\"", virtualServiceName)
 		convertedjson, err := json.Marshal(preprocessObject.VirtualService)
@@ -191,7 +192,7 @@ func createOrUpdateVirtualService(namespace string, istioClient *rest.RESTClient
 			return err
 		}
 		log.Debugf("create virtualservice: %s", (convertedjson))
-		newbody, err := istioClient.Post().Namespace(namespace).Resource("virtualservices").Body(convertedjson).Do().Raw()
+		newbody, err := istioClient.Post().Namespace(namespace).Resource("virtualservices").Body(convertedjson).Do(context.TODO()).Raw()
 		if err != nil {
 			return err
 		}
@@ -210,7 +211,7 @@ func createOrUpdateVirtualService(namespace string, istioClient *rest.RESTClient
 		return err
 	}
 	log.Debugf("updated virtualservice: %s", updatedjson)
-	newbody, err := istioClient.Put().Namespace(namespace).Resource("virtualservices").Name(virtualServiceName).Body(updatedjson).Do().Raw()
+	newbody, err := istioClient.Put().Namespace(namespace).Resource("virtualservices").Name(virtualServiceName).Body(updatedjson).Do(context.TODO()).Raw()
 	if err != nil {
 		log.Error(err)
 		return err

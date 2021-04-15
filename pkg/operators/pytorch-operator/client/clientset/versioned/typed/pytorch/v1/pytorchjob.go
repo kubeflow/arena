@@ -17,6 +17,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	v1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
@@ -69,7 +70,7 @@ func (c *pyTorchJobs) Get(name string, options metav1.GetOptions) (result *v1.Py
 		Resource("pytorchjobs").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -86,7 +87,7 @@ func (c *pyTorchJobs) List(opts metav1.ListOptions) (result *v1.PyTorchJobList, 
 		Resource("pytorchjobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -103,7 +104,7 @@ func (c *pyTorchJobs) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("pytorchjobs").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(context.TODO())
 }
 
 // Create takes the representation of a pyTorchJob and creates it.  Returns the server's representation of the pyTorchJob, and an error, if there is any.
@@ -113,7 +114,7 @@ func (c *pyTorchJobs) Create(pyTorchJob *v1.PyTorchJob) (result *v1.PyTorchJob, 
 		Namespace(c.ns).
 		Resource("pytorchjobs").
 		Body(pyTorchJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -126,7 +127,7 @@ func (c *pyTorchJobs) Update(pyTorchJob *v1.PyTorchJob) (result *v1.PyTorchJob, 
 		Resource("pytorchjobs").
 		Name(pyTorchJob.Name).
 		Body(pyTorchJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -142,7 +143,7 @@ func (c *pyTorchJobs) UpdateStatus(pyTorchJob *v1.PyTorchJob) (result *v1.PyTorc
 		Name(pyTorchJob.Name).
 		SubResource("status").
 		Body(pyTorchJob).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }
@@ -154,7 +155,7 @@ func (c *pyTorchJobs) Delete(name string, options *metav1.DeleteOptions) error {
 		Resource("pytorchjobs").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -170,7 +171,7 @@ func (c *pyTorchJobs) DeleteCollection(options *metav1.DeleteOptions, listOption
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Timeout(timeout).
 		Body(options).
-		Do().
+		Do(context.TODO()).
 		Error()
 }
 
@@ -183,7 +184,7 @@ func (c *pyTorchJobs) Patch(name string, pt types.PatchType, data []byte, subres
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.TODO()).
 		Into(result)
 	return
 }

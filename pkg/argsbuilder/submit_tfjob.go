@@ -14,6 +14,7 @@
 package argsbuilder
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -282,7 +283,7 @@ func (s *SubmitTFJobArgsBuilder) transform() error {
 func (s *SubmitTFJobArgsBuilder) checkGangCapablitiesInCluster() error {
 	s.args.HasGangScheduler = false
 	arenaConfiger := config.GetArenaConfiger()
-	podList, err := arenaConfiger.GetClientSet().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+	podList, err := arenaConfiger.GetClientSet().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=%v", gangSchdName),
 	})
 	if err != nil {

@@ -15,6 +15,7 @@
 package training
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -243,7 +244,7 @@ type ETJobTrainer struct {
 func NewETJobTrainer() Trainer {
 	enable := false
 	jobClient := versioned.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
-	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(k8saccesser.ETCRDName, metav1.GetOptions{})
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), k8saccesser.ETCRDName, metav1.GetOptions{})
 	if err == nil {
 		log.Debugf("ETJobTrainer is enabled")
 		enable = true

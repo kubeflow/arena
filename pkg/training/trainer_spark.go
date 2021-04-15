@@ -1,6 +1,7 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -239,7 +240,7 @@ type SparkJobTrainer struct {
 func NewSparkJobTrainer() Trainer {
 	// TODO: disable the spark trainer,because there is some bugs to fix
 	enable := false
-	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(k8saccesser.SparkCRDName, metav1.GetOptions{})
+	_, err := config.GetArenaConfiger().GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), k8saccesser.SparkCRDName, metav1.GetOptions{})
 	if err == nil {
 		log.Debugf("SparkJobTrainer is enabled")
 		enable = true

@@ -141,7 +141,7 @@ func queryPrometheusMetricsProxyByAPIServer(client *kubernetes.Clientset, query 
 		"time":  strconv.FormatInt(time.Now().Unix(), 10),
 	})
 	log.Debugf("Query prometheus for by %s in ns %s", query, server.Service.Namespace)
-	metric, err := req.DoRaw()
+	metric, err := req.DoRaw(context.TODO())
 	if err != nil {
 		log.Debugf("Query prometheus failed due to err %v", err)
 		log.Debugf("Query prometheus failed due to result %s", string(metric))

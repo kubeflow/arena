@@ -14,6 +14,7 @@
 package argsbuilder
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -322,7 +323,7 @@ func (s *ServingArgsBuilder) validateIstioEnablement() error {
 // checkServiceExists is used to check services,must execute after function checkNamespace
 func (s *ServingArgsBuilder) checkServiceExists() error {
 	client := config.GetArenaConfiger().GetClientSet()
-	_, err := client.CoreV1().Services(s.args.Namespace).Get(s.args.Name, metav1.GetOptions{})
+	_, err := client.CoreV1().Services(s.args.Namespace).Get(context.TODO(), s.args.Name, metav1.GetOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err

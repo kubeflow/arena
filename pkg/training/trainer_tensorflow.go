@@ -15,6 +15,7 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -254,7 +255,7 @@ func NewTensorFlowJobTrainer() Trainer {
 	arenaConfiger := config.GetArenaConfiger()
 	tfjobClient := versioned.NewForConfigOrDie(arenaConfiger.GetRestConfig())
 	enable := false
-	_, err := arenaConfiger.GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(k8saccesser.TensorflowCRDName, metav1.GetOptions{})
+	_, err := arenaConfiger.GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), k8saccesser.TensorflowCRDName, metav1.GetOptions{})
 	if err == nil {
 		log.Debugf("TensorflowJobTrainer is enabled")
 		enable = true

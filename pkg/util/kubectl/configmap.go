@@ -15,6 +15,7 @@
 package kubectl
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -33,7 +34,7 @@ const JOB_CONFIG_LABEL = "createdBy=arena"
 func ListAppConfigMaps(clientset *kubernetes.Clientset, namespace string, trainingTypes []string) (jobs []types.TrainingJobInfo, err error) {
 
 	jobs = []types.TrainingJobInfo{}
-	cmList, err := clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{LabelSelector: JOB_CONFIG_LABEL})
+	cmList, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: JOB_CONFIG_LABEL})
 	if err != nil {
 		return nil, err
 	}
