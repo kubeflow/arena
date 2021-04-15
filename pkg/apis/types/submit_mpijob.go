@@ -11,4 +11,8 @@ type SubmitMPIJobArgs struct {
 
 	// for sync up source code
 	SubmitSyncCodeArgs `yaml:",inline"`
+
+	// enable gpu topology scheduling
+	GPUTopology        bool   `yaml:"gputopology"`
+	GPUTopologyReplica string `yaml:"gputopologyreplica"`
 }

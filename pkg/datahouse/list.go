@@ -15,6 +15,7 @@
 package datahouse
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -39,7 +40,7 @@ func DisplayDataVolumes(namespace string, allNamespaces bool) error {
 	if allNamespaces {
 		namespace = metav1.NamespaceAll
 	}
-	pvcList, err := client.CoreV1().PersistentVolumeClaims(namespace).List(metav1.ListOptions{})
+	pvcList, err := client.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("Failed to list data volume due to %v", err)
 	}

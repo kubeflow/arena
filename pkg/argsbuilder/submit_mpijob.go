@@ -16,6 +16,7 @@ package argsbuilder
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -69,6 +70,7 @@ func (s *SubmitMPIJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	}
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
+	command.Flags().BoolVar(&s.args.GPUTopology, "gputopology", false, "enable gpu topology scheduling")
 }
 
 func (s *SubmitMPIJobArgsBuilder) PreBuild() error {
@@ -87,6 +89,9 @@ func (s *SubmitMPIJobArgsBuilder) Build() error {
 			return err
 		}
 	}
+	if err := s.setGPUTopologyReplica(); err != nil {
+		return err
+	}
 	if err := s.check(); err != nil {
 		return err
 	}
@@ -96,6 +101,13 @@ func (s *SubmitMPIJobArgsBuilder) Build() error {
 func (s *SubmitMPIJobArgsBuilder) check() error {
 	if s.args.Image == "" {
 		return fmt.Errorf("--image must be set ")
+	}
+	return nil
+}
+
+func (s *SubmitMPIJobArgsBuilder) setGPUTopologyReplica() error {
+	if s.args.GPUTopology {
+		s.args.GPUTopologyReplica = strconv.Itoa(s.args.WorkerCount)
 	}
 	return nil
 }

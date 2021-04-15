@@ -15,6 +15,7 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -34,7 +35,7 @@ func acquireAllActivePods(client *kubernetes.Clientset) ([]v1.Pod, error) {
 	if err != nil {
 		return allPods, err
 	}
-	nodeNonTerminatedPodsList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{FieldSelector: fieldSelector.String()})
+	nodeNonTerminatedPodsList, err := client.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{FieldSelector: fieldSelector.String()})
 	if err != nil {
 		return allPods, err
 	}
@@ -51,7 +52,7 @@ func acquireAllPods(client *kubernetes.Clientset, namespace string, allNamespace
 	if allNamespaces {
 		ns = metav1.NamespaceAll
 	}
-	podList, err := client.CoreV1().Pods(ns).List(metav1.ListOptions{})
+	podList, err := client.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return allPods, err
 	}
@@ -67,7 +68,7 @@ func acquireAllJobs(client *kubernetes.Clientset, namespace string, allNamespace
 	if allNamespaces {
 		ns = metav1.NamespaceAll
 	}
-	jobList, err := client.BatchV1().Jobs(ns).List(metav1.ListOptions{})
+	jobList, err := client.BatchV1().Jobs(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return allJobs, err
 	}
@@ -153,7 +154,7 @@ func getPodFromJob(client kubernetes.Interface, jobName, namespace, releaseName 
 
 // List all the pods which associate to the arena jobs, including the pods in the statefulset and the job
 func listAllPodsForJob(client kubernetes.Interface, jobName, namespace string, releaseName string) (pods []v1.Pod, err error) {
-	podList, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+	podList, err := client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
 			APIVersion: "v1",
@@ -189,7 +190,7 @@ func listAllPodsForJob(client kubernetes.Interface, jobName, namespace string, r
 }
 
 func jobPods(client kubernetes.Interface, namespace string, releaseName string) ([]v1.Pod, error) {
-	podList, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{
+	podList, err := client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ListOptions",
 			APIVersion: "v1",

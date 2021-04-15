@@ -15,6 +15,7 @@ package argsbuilder
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"reflect"
@@ -183,7 +184,7 @@ func (s *TensorflowServingArgsBuilder) preprocess() (err error) {
 
 func (s *TensorflowServingArgsBuilder) checkServiceExists() error {
 	client := config.GetArenaConfiger().GetClientSet()
-	_, err := client.CoreV1().Services(s.args.Namespace).Get(s.args.Name, metav1.GetOptions{})
+	_, err := client.CoreV1().Services(s.args.Namespace).Get(context.TODO(), s.args.Name, metav1.GetOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err

@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"os"
@@ -101,7 +102,7 @@ func WaitJobComplete(client *kubernetes.Clientset, namespace string, jobName str
 	log.Infof("Duration %v, tick %v", duration, tick)
 
 	return util.RetryDuring(duration, tick, func() (err error) {
-		job, err := client.BatchV1().Jobs(namespace).Get(jobName, metav1.GetOptions{})
+		job, err := client.BatchV1().Jobs(namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				log.Infof("Job %s doesn't exist, need to wait.", jobName)
@@ -138,7 +139,7 @@ func WaitJobComplete(client *kubernetes.Clientset, namespace string, jobName str
 }
 
 func DeleteStatefulSet(client *kubernetes.Clientset, namespace string, stsName string) error {
-	sts, err := client.AppsV1beta1().StatefulSets(namespace).Get(stsName, metav1.GetOptions{})
+	sts, err := client.AppsV1beta1().StatefulSets(namespace).Get(context.TODO(), stsName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Infof("The statefulset %s in namespace %s is not found, it has been deleted.", stsName, namespace)
@@ -151,7 +152,7 @@ func DeleteStatefulSet(client *kubernetes.Clientset, namespace string, stsName s
 	// Delete statefulset when the job is completed.
 	deletePolicy := metav1.DeletePropagationForeground
 	svcName := sts.Spec.ServiceName
-	err = client.CoreV1().Services(namespace).Delete(svcName, &metav1.DeleteOptions{
+	err = client.CoreV1().Services(namespace).Delete(context.TODO(), svcName, metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	})
 	if err != nil {
@@ -163,7 +164,7 @@ func DeleteStatefulSet(client *kubernetes.Clientset, namespace string, stsName s
 		}
 	}
 
-	err = client.AppsV1beta1().StatefulSets(namespace).Delete(stsName, &metav1.DeleteOptions{
+	err = client.AppsV1beta1().StatefulSets(namespace).Delete(context.TODO(), stsName, metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	})
 	if err != nil {
@@ -171,7 +172,7 @@ func DeleteStatefulSet(client *kubernetes.Clientset, namespace string, stsName s
 	}
 
 	return util.RetryDuring(10*time.Minute, 10*time.Second, func() (err error) {
-		sts, err = client.AppsV1beta1().StatefulSets(namespace).Get(stsName, metav1.GetOptions{})
+		sts, err = client.AppsV1beta1().StatefulSets(namespace).Get(context.TODO(), stsName, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				log.Infof("The statefulset %s in namespace %s has been deleted.", stsName, namespace)
