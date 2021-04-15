@@ -27,7 +27,7 @@ func NewCronGetCommand() *cobra.Command {
 	var format string
 	var command = &cobra.Command{
 		Use:   "get",
-		Short: "get cron job by name.",
+		Short: "get cron by name.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

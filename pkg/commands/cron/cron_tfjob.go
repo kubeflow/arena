@@ -14,7 +14,7 @@ func NewCronTFJobCommand() *cobra.Command {
 	builder := cron.NewCronTFJobBuilder()
 	var command = &cobra.Command{
 		Use:     "tfjob",
-		Short:   "Submit a cron TFJob.",
+		Short:   "Submit a cron tfjob.",
 		Aliases: []string{"tf"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())

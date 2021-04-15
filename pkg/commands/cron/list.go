@@ -28,7 +28,7 @@ func NewCronListCommand() *cobra.Command {
 	var format string
 	var command = &cobra.Command{
 		Use:   "list",
-		Short: "list all the cron job.",
+		Short: "list all the crons.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},
