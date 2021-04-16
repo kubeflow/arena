@@ -36,9 +36,11 @@ func buildCronInfo(bytes []byte) (*types.CronInfo, error) {
 		}
 	*/
 
+	namespace := r.Get("metadata").Get("namespace").String()
+
 	c := &types.CronInfo{
+		Namespace:         namespace,
 		Name:              r.Get("metadata").Get("name").String(),
-		Namespace:         r.Get("metadata").Get("namespace").String(),
 		CreationTimestamp: r.Get("metadata").Get("creationTimestamp").String(),
 		Type:              r.Get("spec").Get("template").Get("kind").String(),
 		Schedule:          r.Get("spec").Get("schedule").String(),
@@ -53,6 +55,7 @@ func buildCronInfo(bytes []byte) (*types.CronInfo, error) {
 	historyList := r.Get("status").Get("history").Array()
 	for _, item := range historyList {
 		history := types.CronHistoryInfo{
+			Namespace:  namespace,
 			Name:       item.Get("object").Get("name").String(),
 			Group:      item.Get("object").Get("apiGroup").String(),
 			Kind:       item.Get("object").Get("kind").String(),

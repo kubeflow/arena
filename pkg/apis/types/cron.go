@@ -95,6 +95,7 @@ type CronInfo struct {
 
 type CronHistoryInfo struct {
 	Name       string `json:"name,omitempty"`
+	Namespace  string `json:"namespace, omitempty"`
 	Group      string `json:"group,omitempty"`
 	Kind       string `json:"kind,omitempty"`
 	Status     string `json:"status,omitempty"`
