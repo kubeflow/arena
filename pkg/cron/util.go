@@ -49,5 +49,22 @@ func buildCronInfo(bytes []byte) (*types.CronInfo, error) {
 		LastScheduleTime:  r.Get("status").Get("lastScheduleTime").String(),
 	}
 
+	var histories []types.CronHistoryInfo
+	historyList := r.Get("status").Get("history").Array()
+	for _, item := range historyList {
+		history := types.CronHistoryInfo{
+			Name:       item.Get("object").Get("name").String(),
+			Group:      item.Get("object").Get("apiGroup").String(),
+			Kind:       item.Get("object").Get("kind").String(),
+			Status:     item.Get("status").String(),
+			CreateTime: item.Get("created").String(),
+			FinishTime: item.Get("finished").String(),
+		}
+
+		histories = append(histories, history)
+	}
+
+	c.History = histories
+
 	return c, nil
 }

@@ -1,7 +1,5 @@
 package types
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 // CronType defines the supporting job type
 type CronType string
 
@@ -96,15 +94,12 @@ type CronInfo struct {
 }
 
 type CronHistoryInfo struct {
-	// Name is the job name
-	Name string `json:"name"`
-
-	// Status is the final status when job finished.
-	Status JobConditionType `json:"status"`
-	// Created is the creation timestamp of job.
-	Created *metav1.Time `json:"created,omitempty"`
-	// Finished is the failed or succeeded timestamp of job.
-	Finished *metav1.Time `json:"finished,omitempty"`
+	Name       string `json:"name,omitempty"`
+	Group      string `json:"group,omitempty"`
+	Kind       string `json:"kind,omitempty"`
+	Status     string `json:"status,omitempty"`
+	CreateTime string `json:"createTime,omitempty"`
+	FinishTime string `json:"finishTime,omitempty"`
 }
 
 type CommonCronArgs struct {

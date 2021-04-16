@@ -62,8 +62,33 @@ func DisplayCron(cron *types.CronInfo, format types.FormatStyle) {
 	case "", "wide":
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-		lines := []string{"\nHistory:", "NAME\tSTATUS\tTRAINER\tDURATION\tGPU(Requested)\tGPU(Allocated)\tNODE"}
-		lines = append(lines, "----\t------\t-------\t--------\t--------------\t--------------\t----")
+		/*
+			lines := []string{"\nHistory:", "NAME\tSTATUS\tTRAINER\tDURATION\tGPU(Requested)\tGPU(Allocated)\tNODE"}
+			lines = append(lines, "----\t------\t-------\t--------\t--------------\t--------------\t----")
+
+			printLine(w, fmt.Sprintf(strings.Trim(getCronTemplate, "\n"),
+				cron.Name,
+				cron.Namespace,
+				cron.Type,
+				cron.Schedule,
+				strconv.FormatBool(cron.Suspend),
+				cron.ConcurrencyPolicy,
+				cron.CreationTimestamp,
+				cron.LastScheduleTime,
+				cron.Deadline,
+				strings.Join(lines, "\n"),
+			))
+		*/
+
+		lines := []string{"\nHistory:", "NAME\tSTATUS\tTYPE\tCREATETIME\tFINISHTIME"}
+		lines = append(lines, "----\t------\t----\t----------\t----------")
+
+		if len(cron.History) > 0 {
+			for _, item := range cron.History {
+				lines = append(lines, fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
+					item.Name, item.Status, item.Kind, item.CreateTime, item.FinishTime))
+			}
+		}
 
 		printLine(w, fmt.Sprintf(strings.Trim(getCronTemplate, "\n"),
 			cron.Name,
