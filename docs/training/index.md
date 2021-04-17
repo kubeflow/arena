@@ -32,6 +32,7 @@ If you want to use arena to manage training jobs, this guide is for you. we have
 ## MPI Training Job Guide
 
 * I want to [submit a distributed MPI training job](mpijob/distributed.md).
+* I want to [submit a distributed MPI training with gpu topology scheduling](mpijob/gputopology.md).
 * I want to [preempt the MPI training job](mpijob/preempted.md).
 * I want to [submit a MPI training job with specified tolerations](mpijob/toleration.md).
 * I want to [submit a MPI training job with specified node selectors](mpijob/selector.md).
