@@ -23,11 +23,15 @@ spec:
       volumes:
       - hostPath:
           path: /var/run/docker.sock
-          type: File
+          type: FileOrCreate
         name: docker-sock
+      - hostPath:
+          path: /run/containerd/containerd.sock
+          type: FileOrCreate
+        name: containerd-sock
       containers:
       - name: node-gpu-exporter
-        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:0.1-b4ae190
+        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:0.1-0e21b28
         imagePullPolicy: Always
         ports:
         - containerPort: 9445
@@ -41,6 +45,8 @@ spec:
         volumeMounts:
         - mountPath: /var/run/docker.sock
           name: docker-sock
+        - mountPath: /run/containerd/containerd.sock
+          name: containerd-sock
 
 ---
 apiVersion: v1
