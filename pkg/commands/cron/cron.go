@@ -26,6 +26,8 @@ Available Commands:
   list,ls              List the crons.
   get                  Get cron by name.
   delete,del           Delete cron by name.
+  suspend              Suspend a cron.
+  resume               Resume the suspend cron.
     `
 )
 
@@ -44,6 +46,8 @@ func NewCronCommand() *cobra.Command {
 	command.AddCommand(NewCronGetCommand())
 	command.AddCommand(NewCronListCommand())
 	command.AddCommand(NewCronDeleteCommand())
+	command.AddCommand(NewCronSuspendCommand())
+	command.AddCommand(NewCronResumeCommand())
 
 	return command
 }

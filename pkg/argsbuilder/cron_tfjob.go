@@ -360,7 +360,7 @@ func (c *CronTFJobArgsBuilder) check() error {
 	case "None", "Running":
 		log.Debugf("Supported cleanTaskPolicy: %s", c.args.CleanPodPolicy)
 	default:
-		return fmt.Errorf("Unsupported cleanTaskPolicy %s", c.args.CleanPodPolicy)
+		return fmt.Errorf("Unsupported CleanTaskPolicy %s", c.args.CleanPodPolicy)
 	}
 	if c.args.WorkerCount == 0 && !c.args.UseChief {
 		return fmt.Errorf("--workers must be greater than 0 in distributed training")

@@ -79,6 +79,14 @@ func (c *CronClient) GetAndPrint(name string, format string) error {
 	return nil
 }
 
+func (c *CronClient) Suspend(name string) error {
+	return cron.SuspendCron(name, c.namespace, true)
+}
+
+func (c *CronClient) Resume(name string) error {
+	return cron.SuspendCron(name, c.namespace, false)
+}
+
 func (c *CronClient) Delete(names ...string) error {
 	for _, name := range names {
 		cronInfo, err := cron.GetCronInfo(name, c.namespace)
