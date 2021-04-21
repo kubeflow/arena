@@ -1,0 +1,12 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kubedl.fullname" . }}
+spec:
+  endpoints:
+  - interval: 15s
+    port: "8080"
+    scheme: http
+  selector:
+    matchLabels:
+      {{- include "kubedl.selectorLabels" . | nindent 6 }}
