@@ -35,6 +35,7 @@ Options:
     --loadbalancer                   Specify k8s service type with loadbalancer
     --prometheus                     Install prometheus
     --platform string                Specify the platform(eg: ack)
+    --rdma                           Enable rdma feature
 "
 
 }
@@ -107,12 +108,16 @@ function custom_charts() {
 
     if [[ ${REGISTRY_REPO_NAMESPACE} != "" ]]; then
         logger "debug" "custom the docker registry repo namespace with ${REGISTRY_REPO_NAMESPACE}"
-        find /charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${REGISTRY_REPO_NAMESPACE}/g"
+        find $SCRIPT_DIR/charts/ -name *.yaml | xargs sed -i "s/tensorflow-samples/${REGISTRY_REPO_NAMESPACE}/g"
     fi
 
     if [ "$USE_LOADBALANCER" == "true" ]; then
         logger "debug" "specify service with loadbalancer type"
-        find /charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+        find $SCRIPT_DIR/charts/ -name *.yaml | xargs sed -i "s/NodePort/LoadBalancer/g"
+    fi
+
+    if [[ $USE_RDMA == "true" ]];then
+        find $SCRIPT_DIR/charts/ -name *.yaml | xargs sed -i "/enableRDMA/s/false/true/g" 
     fi
 }
 
@@ -224,7 +229,7 @@ function apply_mpi() {
 
 function apply_et() { 
     if ! arena-kubectl get serviceaccount --all-namespaces | grep et-operator; then
-        arena-kubectl create -f $SCRIPT_DIR/kubernetes-artifacts/et-operator/et-operator.yaml
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/et-operator/et-operator.yaml
         return 
     fi    
 }
@@ -239,6 +244,14 @@ function apply_prometheus() {
         arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/prometheus/grafana.yaml
         return 
     fi
+}
+
+function apply_rdma() {
+    if [[ $USE_RDMA != "true" ]];then
+        return 
+    fi
+    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/rdma/rdma-config.yaml   
+    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/rdma/device-plugin.yaml   
 }
 
 function create_namespace() {
@@ -265,13 +278,15 @@ function operators() {
         logger "debug" "skip to install operators,because --only-binary is enabled"
         return 
     fi
-    custom_manifests  
+    custom_manifests
+    create_namespace  
     apply_tf
     apply_pytorch
     apply_mpi
     apply_et
     apply_prometheus
     apply_jobmon
+    apply_rdma
 }
 
 
@@ -286,6 +301,9 @@ function parse_args() {
 			;;
         --host-network)
             export USE_HOSTNETWORK="true"
+			;;
+        --rdma)
+            export USE_RDMA="true"
 			;;
         --loadbalancer)
             export USE_LOADBALANCER="true"
