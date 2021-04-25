@@ -14,6 +14,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.4.0
+	github.com/tidwall/gjson v1.7.4
 	//github.com/stretchr/testify v1.4.0
 	gopkg.in/yaml.v2 v2.3.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
@@ -53,5 +54,5 @@ replace (
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.18.5
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.18.5
 	k8s.io/sample-controller => k8s.io/sample-controller v0.18.5
-    sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.6.5
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.6.5
 )

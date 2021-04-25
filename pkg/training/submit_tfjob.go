@@ -15,6 +15,7 @@
 package training
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -24,6 +25,12 @@ import (
 )
 
 func SubmitTFJob(namespace string, submitArgs *types.SubmitTFJobArgs) (err error) {
+	b, err := json.Marshal(submitArgs)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(b))
+
 	submitArgs.Namespace = namespace
 	trainers := GetAllTrainers()
 	trainer, ok := trainers[submitArgs.TrainingType]
