@@ -207,7 +207,7 @@ function apply_tf() {
 # TODO: the pytorch-operator update
 function apply_pytorch() {
     if arena-kubectl get serviceaccount --all-namespaces | grep kubedl; then
-        logger "warning" "KubeDL has been detected, will skip install tf-operator"
+        logger "warning" "KubeDL has been detected, will skip install pytorch-operator"
         return
     fi
     if ! arena-kubectl get serviceaccount --all-namespaces | grep pytorch-operator; then
@@ -218,7 +218,7 @@ function apply_pytorch() {
 
 function apply_mpi() {
     if arena-kubectl get serviceaccount --all-namespaces | grep kubedl; then
-        logger "warning" "KubeDL has been detected, will skip install tf-operator"
+        logger "warning" "KubeDL has been detected, will skip install mpi-operator"
         return 
     fi
     if ! arena-kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
@@ -254,6 +254,14 @@ function apply_rdma() {
     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/rdma/device-plugin.yaml   
 }
 
+function apply_kubedl() {
+  if ! arena-kubectl get serviceaccount --all-namespaces | grep kubedl-operator; then
+    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/kubedl/kubedl-crd.yaml
+    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/kubedl/kubedl-operator.yaml
+    return
+  fi
+}
+
 function create_namespace() {
     namespace="arena-system"
     if [[ "${NAMESPACE}" != "" ]]; then
@@ -287,6 +295,7 @@ function operators() {
     apply_prometheus
     apply_jobmon
     apply_rdma
+    apply_kubedl
 }
 
 

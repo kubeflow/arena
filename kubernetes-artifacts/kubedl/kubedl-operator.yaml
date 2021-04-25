@@ -1,0 +1,366 @@
+---
+# Source: kubedl/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubedl-operator
+  namespace: arena-system
+  labels:
+    helm.sh/chart: kubedl-0.1.0
+    app.kubernetes.io/name: kubedl
+    app.kubernetes.io/instance: kubedl-operator
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: kubedl/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: kubedl-operator-role
+  namespace: arena-system
+rules:
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - tfjobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - tfjobs/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - pytorchjobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - pytorchjobs/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - xdl.kubedl.io
+    resources:
+      - xdljobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - xdl.kubedl.io
+    resources:
+      - xdljobs/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - xgboostjob.kubeflow.org
+    resources:
+      - xgboostjobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - xgboostjob.kubeflow.org
+    resources:
+      - xgboostjobs/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - apps
+    resources:
+      - controllerrevisions
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - "apps.kubedl.io"
+    resources:
+      - crons
+      - crons/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+# Source: kubedl/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: kubedl-operator-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubedl-operator-role
+subjects:
+  - kind: ServiceAccount
+    name: kubedl-operator
+    namespace: arena-system
+---
+# Source: kubedl/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubedl-operator
+  namespace: arena-system
+  labels:
+    helm.sh/chart: kubedl-0.1.0
+    app.kubernetes.io/name: kubedl
+    app.kubernetes.io/instance: kubedl-operator
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: kubedl
+    app.kubernetes.io/instance: kubedl-operator
+---
+# Source: kubedl/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubedl-operator
+  namespace: arena-system
+  labels:
+    helm.sh/chart: kubedl-0.1.0
+    app.kubernetes.io/name: kubedl
+    app.kubernetes.io/instance: kubedl-operator
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubedl
+      app.kubernetes.io/instance: kubedl-operator
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      namespace: arena-system
+      labels:
+        app.kubernetes.io/name: kubedl
+        app.kubernetes.io/instance: kubedl-operator
+    spec:
+      serviceAccountName: kubedl-operator
+      containers:
+        - name: kubedl
+          image: registry.cn-beijing.aliyuncs.com/yukong/kubedl:v0.1.0
+          imagePullPolicy: Always
+          args: [--workloads=Cron]
+          ports:
+            - containerPort: 8443
+              name: metrics
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1
+              memory: 2Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+---
+# Source: kubedl/templates/monitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubedl-operator
+  namespace: arena-system
+spec:
+  endpoints:
+    - interval: 15s
+      port: "8080"
+      scheme: http
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubedl
+      app.kubernetes.io/instance: kubedl-operator
