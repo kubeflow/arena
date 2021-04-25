@@ -1,0 +1,14 @@
+apiVersion: "apps.kubedl.io/v1alpha1"
+kind: "Cron"
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  schedule: "{{ .Values.cron.schedule }}"
+  concurrencyPolicy: {{ .Values.cron.concurrencyPolicy }}
+  deadline: {{ .Values.cron.deadline }}
+  historyLimit: {{ .Values.cron.historyLimit }}
+  template:
+    apiVersion: "kubeflow.org/v1"
+    kind: "TFJob"
+    workload:
+      {{- include "arena.tfjob" . | nindent 6 }}
