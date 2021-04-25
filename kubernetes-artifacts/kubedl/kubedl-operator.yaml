@@ -334,7 +334,7 @@ spec:
       serviceAccountName: kubedl-operator
       containers:
         - name: kubedl
-          image: registry.cn-beijing.aliyuncs.com/yukong/kubedl:v0.1.0
+          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/kubedl:v0.1.0
           imagePullPolicy: Always
           args: [--workloads=Cron]
           ports:
