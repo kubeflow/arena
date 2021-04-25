@@ -109,21 +109,26 @@ func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes 
 		})
 	}
 
-	return &types.TrainingJobInfo{
+	trainingJobInfo := &types.TrainingJobInfo{
 		Name:      job.Name(),
 		Namespace: job.Namespace(),
 		Status:    types.TrainingJobStatus(GetJobRealStatus(job)),
 		//Duration:     util.ShortHumanDuration(job.Duration()),
-		Duration:          fmt.Sprintf("%vs", int(job.Duration().Seconds())),
-		Trainer:           types.TrainingJobType(job.Trainer()),
-		Priority:          getPriorityClass(job),
-		Tensorboard:       tensorboard,
-		ChiefName:         chiefPodName,
-		Instances:         instances,
-		RequestGPU:        job.RequestedGPU(),
-		AllocatedGPU:      job.AllocatedGPU(),
-		CreationTimestamp: job.StartTime().Unix(),
+		Duration:     fmt.Sprintf("%vs", int(job.Duration().Seconds())),
+		Trainer:      types.TrainingJobType(job.Trainer()),
+		Priority:     getPriorityClass(job),
+		Tensorboard:  tensorboard,
+		ChiefName:    chiefPodName,
+		Instances:    instances,
+		RequestGPU:   job.RequestedGPU(),
+		AllocatedGPU: job.AllocatedGPU(),
 	}
+
+	if job.StartTime() != nil {
+		trainingJobInfo.CreationTimestamp = job.StartTime().Unix()
+	}
+
+	return trainingJobInfo
 }
 
 /**
