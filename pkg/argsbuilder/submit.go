@@ -452,25 +452,26 @@ func (s *SubmitArgsBuilder) setTolerations() error {
 func (s *SubmitArgsBuilder) setImagePullSecrets() error {
 	s.args.ImagePullSecrets = []string{}
 	argKey := "image-pull-secret"
-	var imagePullSecrets *[]string
+	var imagePullSecrets []string
 	value, ok := s.argValues[argKey]
 	if !ok {
 		return nil
 	}
-	imagePullSecrets = value.(*[]string)
+	imagePullSecrets = value.([]string)
 
-	if len(*imagePullSecrets) == 0 {
+	if len(imagePullSecrets) == 0 {
 		arenaConfig := config.GetArenaConfiger().GetConfigsFromConfigFile()
 		if temp, found := arenaConfig["imagePullSecrets"]; found {
 			log.Debugf("imagePullSecrets load from arenaConfigs: %v", temp)
 			s.args.ImagePullSecrets = strings.Split(temp, ",")
 		}
 	} else {
-		s.args.ImagePullSecrets = *imagePullSecrets
+		s.args.ImagePullSecrets = imagePullSecrets
 	}
 	log.Debugf("imagePullSecrets: %v", s.args.ImagePullSecrets)
 	return nil
 }
+
 func (s *SubmitArgsBuilder) setEnvs() error {
 	argKey := "env"
 	var envs *[]string
