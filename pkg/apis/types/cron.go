@@ -52,15 +52,15 @@ const (
 )
 
 type CronInfo struct {
-	Name string `yaml:"name"`
+	Name string `json:"name" yaml:"name"`
 
-	Namespace string `yaml:"namespace"`
+	Namespace string `json:"namespace" yaml:"namespace"`
 
 	// Type is the job type, like TFjob、PyTorchJob
-	Type string `json:"type"`
+	Type string `json:"type" yaml:"type"`
 
 	// The schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
-	Schedule string `yaml:"schedule"` // --schedule
+	Schedule string `json:"schedule" yaml:"schedule"`
 
 	// Specifies how to treat concurrent executions of a Job.
 	// Valid values are:
@@ -68,24 +68,24 @@ type CronInfo struct {
 	// - "Forbid": forbids concurrent runs, skipping next run if previous run hasn't finished yet;
 	// - "Replace": cancels currently running job and replaces it with a new one
 	// +optional
-	ConcurrencyPolicy string `yaml:"concurrencyPolicy"` // --concurrency-policy
+	ConcurrencyPolicy string `json:"concurrencyPolicy" yaml:"concurrencyPolicy"` // --concurrency-policy
 
 	// This flag tells the controller to suspend subsequent executions, it does
 	// not apply to already started executions.  Defaults to false.
 	// +optional
-	Suspend bool `yaml:"suspend"` // --suspend
+	Suspend bool `json:"suspend" yaml:"suspend"` // --suspend
 
 	// Deadline is the timestamp that a cron job can keep scheduling util then.
-	Deadline string `yaml:"deadline"` // --deadline
+	Deadline string `json:"deadline" yaml:"deadline"` // --deadline
 
 	// The number of finished job history to retain.
 	// This is a pointer to distinguish between explicit zero and not specified.
 	// +optional
-	HistoryLimit int64 `yaml:"historyLimit"` // --history-limit
+	HistoryLimit int64 `json:"historyLimit" yaml:"historyLimit"` // --history-limit
 
 	// Information when was the last time the job was successfully scheduled.
 	// +optional
-	LastScheduleTime string `json:"lastScheduleTime,omitempty"`
+	LastScheduleTime string `json:"lastScheduleTime" yaml:"lastScheduleTime"`
 
 	// CreationTimestamp stores the creation timestamp of job
 	CreationTimestamp string `json:"creationTimestamp" yaml:"creationTimestamp"`
@@ -94,13 +94,13 @@ type CronInfo struct {
 }
 
 type CronHistoryInfo struct {
-	Name       string `json:"name,omitempty"`
-	Namespace  string `json:"namespace, omitempty"`
-	Group      string `json:"group,omitempty"`
-	Kind       string `json:"kind,omitempty"`
-	Status     string `json:"status,omitempty"`
-	CreateTime string `json:"createTime,omitempty"`
-	FinishTime string `json:"finishTime,omitempty"`
+	Name       string `json:"name" yaml:"name"`
+	Namespace  string `json:"namespace" yaml:"namespace"`
+	Group      string `json:"group" yaml:"group"`
+	Kind       string `json:"kind" yaml:"kind"`
+	Status     string `json:"status" yaml:"status"`
+	CreateTime string `json:"createTime" yaml:"createTime"`
+	FinishTime string `json:"finishTime" yaml:"finishTime"`
 }
 
 type CommonCronArgs struct {
