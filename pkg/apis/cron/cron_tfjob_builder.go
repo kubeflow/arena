@@ -361,7 +361,7 @@ func (c *CronCronTFJobBuilder) WorkerCount(count int) *CronCronTFJobBuilder {
 }
 func (c *CronCronTFJobBuilder) ImagePullSecrets(secrets []string) *CronCronTFJobBuilder {
 	if secrets != nil {
-		c.argValues["image-pull-secret"] = secrets
+		c.argValues["image-pull-secret"] = &secrets
 	}
 	return c
 }

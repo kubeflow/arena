@@ -1,8 +1,6 @@
 package cron
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
@@ -10,11 +8,6 @@ import (
 )
 
 func SubmitCronTFJob(namespace string, submitArgs *types.CronTFJobArgs) (err error) {
-	b, err := json.Marshal(submitArgs)
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(b))
 	cronTFJobChart := util.GetChartsFolder() + "/cron-tfjob"
 
 	err = workflow.SubmitJob(submitArgs.Name, string(types.CronTFTrainingJob), namespace, submitArgs, cronTFJobChart, submitArgs.HelmOptions...)
