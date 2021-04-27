@@ -6,11 +6,11 @@ require (
 	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
 	github.com/go-openapi/spec v0.19.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.4.3
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/prometheus/client_golang v1.0.0
-	github.com/prometheus/common v0.4.1
-	github.com/sirupsen/logrus v1.4.2
+	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/common v0.18.0
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.4.0
