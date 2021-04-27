@@ -7,6 +7,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/cron"
+	log "github.com/sirupsen/logrus"
 )
 
 type CronClient struct {
@@ -91,6 +92,7 @@ func (c *CronClient) Delete(names ...string) error {
 	for _, name := range names {
 		cronInfo, err := cron.GetCronInfo(name, c.namespace)
 		if err != nil {
+			log.Errorf("failed to get cron info of %s, reason: %v", name, err)
 			continue
 		}
 

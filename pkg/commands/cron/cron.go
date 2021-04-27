@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	dataLong = `manage data volumes.
+	dataLong = `manage cron tasks.
 
 Available Commands:
   tfjob                Submit a cron tfjob.
