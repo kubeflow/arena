@@ -342,7 +342,7 @@ func (b *TFJobBuilder) WorkerCount(count int) *TFJobBuilder {
 }
 func (b *TFJobBuilder) ImagePullSecrets(secrets []string) *TFJobBuilder {
 	if secrets != nil {
-		b.argValues["image-pull-secret"] = secrets
+		b.argValues["image-pull-secret"] = &secrets
 	}
 	return b
 }

@@ -471,6 +471,7 @@ func (s *SubmitArgsBuilder) setImagePullSecrets() error {
 	log.Debugf("imagePullSecrets: %v", s.args.ImagePullSecrets)
 	return nil
 }
+
 func (s *SubmitArgsBuilder) setEnvs() error {
 	argKey := "env"
 	var envs *[]string
