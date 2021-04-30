@@ -113,6 +113,8 @@ func queryPrometheusMetricsByAddress(query string) ([]types.GpuMetricInfo, error
 					gpuMetric.GPUUID = string(labelVal)
 				case "minor_number":
 					gpuMetric.Id = string(labelVal)
+				case "allocate_mode":
+					gpuMetric.AllocateMode = string(labelVal)
 				}
 			}
 			gpuMetrics = append(gpuMetrics, gpuMetric)
@@ -170,6 +172,7 @@ func queryPrometheusMetricsProxyByAPIServer(client *kubernetes.Clientset, query 
 			ContainerName: m.Metric["container_name"],
 			GPUUID:        m.Metric["uuid"],
 			Id:            m.Metric["minor_number"],
+			AllocateMode:  m.Metric["allocate_mode"],
 			Value:         m.Value[1].(string),
 			Time:          m.Value[0].(float64),
 		})
