@@ -93,6 +93,7 @@ type GpuMetricInfo struct {
 	NodeName      string
 	GPUUID        string
 	Id            string
+	AllocateMode  string
 }
 
 type JobGpuMetric map[string]PodGpuMetric

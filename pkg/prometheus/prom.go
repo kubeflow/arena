@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -33,6 +34,7 @@ func (m *JobGpuMetric) SetPodMetric(metric types.GpuMetricInfo) {
 	case "nvidia_gpu_memory_used_bytes":
 		podGPUMetric.GpuMemoryUsed = v
 	case "nvidia_gpu_memory_total_bytes":
+		v = math.Trunc(v/(1024*1024*1024)) * (1024 * 1024 * 1024)
 		podGPUMetric.GpuMemoryTotal = v
 	}
 }
@@ -92,7 +94,11 @@ func GetNodeGPUMetrics(client *kubernetes.Clientset, nodeNames []string) (map[st
 
 func generateNodeGPUMetrics(metrics []types.GpuMetricInfo) map[string]types.NodeGpuMetric {
 	nodeMetrics := map[string]types.NodeGpuMetric{}
+	shareModeUsedGPUMemory := map[string]map[string][]float64{}
 	for _, metric := range metrics {
+		if metric.PodNamespace == "" {
+			continue
+		}
 		v, err := strconv.ParseFloat(metric.Value, 64)
 		if err != nil {
 			log.Debugf("failed to parse gpu duty cycle,reason: %v", err)
@@ -109,17 +115,38 @@ func generateNodeGPUMetrics(metrics []types.GpuMetricInfo) map[string]types.Node
 				PodNames: []string{},
 			}
 		}
+		if shareModeUsedGPUMemory[metric.NodeName] == nil {
+			shareModeUsedGPUMemory[metric.NodeName] = map[string][]float64{}
+		}
+		if shareModeUsedGPUMemory[metric.NodeName][metric.Id] == nil {
+			shareModeUsedGPUMemory[metric.NodeName][metric.Id] = []float64{}
+		}
 		switch metric.MetricName {
 		case "nvidia_gpu_duty_cycle":
 			nodeMetrics[metric.NodeName][metric.Id].GpuDutyCycle = v
 		case "nvidia_gpu_memory_used_bytes":
 			nodeMetrics[metric.NodeName][metric.Id].GpuMemoryUsed = v
+			if metric.AllocateMode == "share" {
+				shareModeUsedGPUMemory[metric.NodeName][metric.Id] = append(shareModeUsedGPUMemory[metric.NodeName][metric.Id], v)
+			}
 		case "nvidia_gpu_memory_total_bytes":
+			v = math.Trunc(v/(1024*1024*1024)) * (1024 * 1024 * 1024)
 			nodeMetrics[metric.NodeName][metric.Id].GpuMemoryTotal = v
 		}
 		if metric.PodName != "" {
 			podName := fmt.Sprintf("%v/%v", metric.PodNamespace, metric.PodName)
 			nodeMetrics[metric.NodeName][metric.Id].PodNames = append(nodeMetrics[metric.NodeName][metric.Id].PodNames, podName)
+		}
+	}
+	for nodeName, allUsedGPUMemory := range shareModeUsedGPUMemory {
+		for gpuId, usedGPUMemory := range allUsedGPUMemory {
+			if len(usedGPUMemory) > 0 {
+				total := float64(0)
+				for _, v := range usedGPUMemory {
+					total += v
+				}
+				nodeMetrics[nodeName][gpuId].GpuMemoryUsed = total
+			}
 		}
 	}
 	return nodeMetrics
