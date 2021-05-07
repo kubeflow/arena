@@ -63,18 +63,18 @@ func (g *gpuexclusive) gpuMetricsIsEnabled() bool {
 	return len(g.gpuMetrics) != 0
 }
 
-func (g *gpuexclusive) getTotalGPUs() int {
+func (g *gpuexclusive) getTotalGPUs() float64 {
 	if len(g.gpuMetrics) != 0 {
-		return len(g.gpuMetrics)
+		return float64(len(g.gpuMetrics))
 	}
 	val, ok := g.node.Status.Capacity[v1.ResourceName(types.NvidiaGPUResourceName)]
 	if !ok {
 		return 0
 	}
-	return int(val.Value())
+	return float64(val.Value())
 }
 
-func (g *gpuexclusive) getAllocatedGPUs() int {
+func (g *gpuexclusive) getAllocatedGPUs() float64 {
 	allocatedGPUs := 0
 	for _, pod := range g.pods {
 		if utils.IsCompletedPod(pod) {
@@ -83,7 +83,7 @@ func (g *gpuexclusive) getAllocatedGPUs() int {
 		allocation := utils.GPUCountInPod(pod)
 		allocatedGPUs += allocation
 	}
-	return allocatedGPUs
+	return float64(allocatedGPUs)
 }
 
 func (g *gpuexclusive) getTotalGPUMemory() float64 {
@@ -145,7 +145,7 @@ func (g *gpuexclusive) getDutyCycle() float64 {
 	return dutyCycle / totalGPUs
 }
 
-func (g *gpuexclusive) getUnhealthyGPUs() int {
+func (g *gpuexclusive) getUnhealthyGPUs() float64 {
 	totalGPUs := g.getTotalGPUs()
 	allocatableGPUs, ok := g.node.Status.Allocatable[v1.ResourceName(types.NvidiaGPUResourceName)]
 	if !ok {
@@ -154,7 +154,7 @@ func (g *gpuexclusive) getUnhealthyGPUs() int {
 	if totalGPUs <= 0 {
 		return 0
 	}
-	return totalGPUs - int(allocatableGPUs.Value())
+	return totalGPUs - float64(allocatableGPUs.Value())
 }
 
 func (g *gpuexclusive) getTotalGPUMemoryOfDevice(id string) float64 {
@@ -180,8 +180,8 @@ func (g *gpuexclusive) convert2NodeInfo() types.GPUExclusiveNodeInfo {
 		},
 		CommonGPUNodeInfo: types.CommonGPUNodeInfo{
 			TotalGPUs:     g.getTotalGPUs(),
-			AllocatedGPUs: g.getAllocatedGPUs(),
 			UnhealthyGPUs: g.getUnhealthyGPUs(),
+			AllocatedGPUs: g.getAllocatedGPUs(),
 			GPUMetrics:    metrics,
 		},
 	}
@@ -306,7 +306,7 @@ func (g *gpuexclusive) displayDeviceInfoUnderMetrics(lines []string, nodeInfo ty
 	totalGPUMemory := float64(0)
 	totalAllocatedGPUMemory := g.getAllocatedGPUMemory()
 	totalUsedGPUMemory := float64(0)
-	for i := 0; i < nodeInfo.TotalGPUs; i++ {
+	for i := 0; i < int(nodeInfo.TotalGPUs); i++ {
 		gpuId := fmt.Sprintf("%v", i)
 		devInfo, ok := deviceMap[gpuId]
 		if !ok {
@@ -390,9 +390,9 @@ func displayGPUExclusiveNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	totalGPUs := 0
-	totalUnhealthyGPUs := 0
-	totalAllocatedGPUs := 0
+	totalGPUs := float64(0)
+	totalUnhealthyGPUs := float64(0)
+	totalAllocatedGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUExclusiveNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
@@ -402,10 +402,10 @@ func displayGPUExclusiveNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	}
 }
 
-func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int) {
-	totalGPUs := 0
-	allocatedGPUs := 0
-	unhealthyGPUs := 0
+func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (float64, float64, float64) {
+	totalGPUs := float64(0)
+	allocatedGPUs := float64(0)
+	unhealthyGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUExclusiveNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
@@ -434,7 +434,7 @@ func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealt
 		}
 		PrintLine(w, items...)
 	}
-	return totalGPUs, allocatedGPUs, unhealthyGPUs
+	return totalGPUs, float64(allocatedGPUs), unhealthyGPUs
 }
 
 func displayGPUExclusiveNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
@@ -452,9 +452,9 @@ func displayGPUExclusiveNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		header = append(header, "UNHEALTHY")
 	}
 	PrintLine(w, header...)
-	totalGPUs := 0
-	allocatedGPUs := 0
-	unhealthyGPUs := 0
+	totalGPUs := float64(0)
+	allocatedGPUs := float64(0)
+	unhealthyGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUExclusiveNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
