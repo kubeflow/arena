@@ -299,7 +299,14 @@ func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (Training
 	if err != nil {
 		return nil, err
 	}
-	allPods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("release=%v,app=%v", name, tt.Type()), "", nil)
+	var filterLabels string
+	createdBy := tfjob.Labels["createdBy"]
+	if createdBy != "" && createdBy == "Cron" {
+		filterLabels = fmt.Sprintf("tf-job-name=%v,app=%v", name, tt.Type())
+	} else {
+		filterLabels = fmt.Sprintf("release=%v,app=%v", name, tt.Type())
+	}
+	allPods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, filterLabels, "", nil)
 	// Sort tfjob status conditions and make the newest condition at first
 	if err != nil {
 		return nil, err
