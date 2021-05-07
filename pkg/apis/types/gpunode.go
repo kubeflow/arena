@@ -65,9 +65,9 @@ type CommonGPUNodeInfo struct {
 */
 
 type CommonGPUNodeInfo struct {
-	TotalGPUs     int                  `json:"totalGPUs" yaml:"totalGPUs"`
-	AllocatedGPUs int                  `json:"allocatedGPUs" yaml:"allocatedGPUs"`
-	UnhealthyGPUs int                  `json:"unhealthyGPUs" yaml:"unhealthyGPUs"`
+	TotalGPUs     float64              `json:"totalGPUs" yaml:"totalGPUs"`
+	AllocatedGPUs float64              `json:"allocatedGPUs" yaml:"allocatedGPUs"`
+	UnhealthyGPUs float64              `json:"unhealthyGPUs" yaml:"unhealthyGPUs"`
 	GPUMetrics    []*AdvancedGpuMetric `json:"gpuMetrics" yaml:"gpuMetrics"`
 }
 

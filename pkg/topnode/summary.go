@@ -23,9 +23,9 @@ cn-shanghai.192.168.7.186  192.168.7.186  <none>  Ready   4           0         
 cn-shanghai.192.168.7.183  192.168.7.183  <none>  Ready   4           2.1             share
 */
 func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, format types.FormatStyle, showMetric bool) error {
-	totalGPUs := 0
-	allocatedGPUs := 0
-	unhealthyGPUs := 0
+	totalGPUs := float64(0)
+	allocatedGPUs := float64(0)
+	unhealthyGPUs := float64(0)
 	nodes, err := BuildNodes(nodeNames, targetNodeType, showMetric)
 	if err != nil {
 		return err

@@ -2,6 +2,7 @@ package topnode
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"text/tabwriter"
 
@@ -63,29 +64,34 @@ func (g *gpushare) gpuMetricsIsEnabled() bool {
 	return len(g.gpuMetrics) != 0
 }
 
-func (g *gpushare) getTotalGPUs() int {
+func (g *gpushare) getTotalGPUs() float64 {
 	if len(g.gpuMetrics) != 0 {
-		return len(g.gpuMetrics)
+		return float64(len(g.gpuMetrics))
 	}
 	val, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareCountName)]
 	if !ok {
 		return 0
 	}
-	return int(val.Value())
+	return float64(val.Value())
 }
 
-func (g *gpushare) getAllocatedGPUs() int {
-	allocatedGPUs := map[string]bool{}
+func (g *gpushare) getAllocatedGPUs() float64 {
+	total := float64(0)
 	for _, pod := range g.pods {
 		if utils.IsCompletedPod(pod) {
 			continue
 		}
 		allocation := utils.GetPodAllocation(pod)
-		for key := range allocation {
-			allocatedGPUs[key] = true
+		for key, allocatedGPUMemory := range allocation {
+			totalGPUMemory := g.getTotalGPUMemoryOfDevice(key)
+			if totalGPUMemory == 0 {
+				continue
+			}
+			totalGPUMemory = utils.DataUnitTransfer("bytes", "GiB", totalGPUMemory)
+			total += float64(allocatedGPUMemory) / totalGPUMemory
 		}
 	}
-	return len(allocatedGPUs)
+	return math.Round(total*10) / 10
 }
 
 func (g *gpushare) getTotalGPUMemory() float64 {
@@ -145,7 +151,7 @@ func (g *gpushare) getDutyCycle() float64 {
 	return dutyCycle / totalGPUs
 }
 
-func (g *gpushare) getUnhealthyGPUs() int {
+func (g *gpushare) getUnhealthyGPUs() float64 {
 	totalGPUs := g.getTotalGPUs()
 	totalGPUMemory, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareResourceName)]
 	if !ok {
@@ -162,7 +168,7 @@ func (g *gpushare) getUnhealthyGPUs() int {
 		return totalGPUs
 	}
 	unhealthyGPUMemory := totalGPUMemory.Value() - allocatableGPUMemory.Value()
-	return int(int64(totalGPUs) * unhealthyGPUMemory / totalGPUMemory.Value())
+	return float64(int64(totalGPUs) * unhealthyGPUMemory / totalGPUMemory.Value())
 }
 
 func (g *gpushare) getTotalGPUMemoryOfDevice(id string) float64 {
@@ -198,15 +204,15 @@ func (g *gpushare) convert2NodeInfo() types.GPUShareNodeInfo {
 		TotalGPUMemory:     g.getTotalGPUMemory(),
 		AllocatedGPUMemory: g.getAllocatedGPUMemory(),
 		CommonGPUNodeInfo: types.CommonGPUNodeInfo{
-			TotalGPUs:     g.getTotalGPUs(),
 			AllocatedGPUs: g.getAllocatedGPUs(),
+			TotalGPUs:     g.getTotalGPUs(),
 			UnhealthyGPUs: g.getUnhealthyGPUs(),
 			GPUMetrics:    metrics,
 		},
 	}
 	// build devices
 	deviceMap := map[string]types.GPUShareNodeDevice{}
-	for i := 0; i < g.getTotalGPUs(); i++ {
+	for i := 0; i < int(g.getTotalGPUs()); i++ {
 		gpuId := fmt.Sprintf("%v", i)
 		deviceMap[gpuId] = types.GPUShareNodeDevice{
 			Id:             gpuId,
@@ -290,7 +296,7 @@ func (g *gpushare) displayPodInfos(lines []string, nodeInfo types.GPUShareNodeIn
 	}
 	for _, podInfo := range nodeInfo.PodInfos {
 		items := []string{}
-		for i := 0; i < nodeInfo.TotalGPUs; i++ {
+		for i := 0; i < int(nodeInfo.TotalGPUs); i++ {
 			gpuId := fmt.Sprintf("%v", i)
 			count, ok := podInfo.Allocation[gpuId]
 			if !ok {
@@ -321,7 +327,7 @@ func (g *gpushare) displayDeviceUnderNoGPUMetric(lines []string, nodeInfo types.
 	for _, dev := range nodeInfo.Devices {
 		deviceMap[dev.Id] = dev
 	}
-	for i := 0; i < nodeInfo.TotalGPUs; i++ {
+	for i := 0; i < int(nodeInfo.TotalGPUs); i++ {
 		percent := float64(0)
 		gpuId := fmt.Sprintf("%v", i)
 		devInfo, ok := deviceMap[gpuId]
@@ -359,7 +365,7 @@ func (g *gpushare) displayDeviceUnderGPUMetric(lines []string, nodeInfo types.GP
 	for _, dev := range g.gpuMetrics {
 		deviceMap[dev.Id] = dev
 	}
-	for i := 0; i < nodeInfo.TotalGPUs; i++ {
+	for i := 0; i < int(nodeInfo.TotalGPUs); i++ {
 		gpuId := fmt.Sprintf("%v", i)
 		devInfo, ok := deviceMap[gpuId]
 		if !ok {
@@ -442,10 +448,10 @@ func displayGPUShareNodeDetails(w *tabwriter.Writer, nodes []Node) {
 		return
 	}
 	totalGPUMemory := float64(0)
-	totalGPUs := int(0)
-	allocatedGPUs := int(0)
+	totalGPUs := float64(0)
+	allocatedGPUs := float64(0)
 	allocatedGPUMemory := float64(0)
-	unhealthyGPUs := int(0)
+	unhealthyGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUShareNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
@@ -457,10 +463,10 @@ func displayGPUShareNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	}
 }
 
-func displayGPUShareNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int) {
-	totalGPUs := 0
-	allocatedGPUs := 0
-	unhealthyGPUs := 0
+func displayGPUShareNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (float64, float64, float64) {
+	totalGPUs := float64(0)
+	allocatedGPUs := float64(0)
+	unhealthyGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUShareNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
@@ -507,11 +513,11 @@ func displayGPUShareNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		header = append(header, "UNHEALTHY")
 	}
 	PrintLine(w, header...)
-	totalGPUs := 0
+	totalGPUs := float64(0)
 	totalGPUMemory := float64(0)
 	allocatedGPUMemory := float64(0)
-	allocatedGPUs := 0
-	unhealthyGPUs := 0
+	allocatedGPUs := float64(0)
+	unhealthyGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUShareNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs

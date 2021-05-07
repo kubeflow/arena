@@ -33,7 +33,7 @@ type NodeProcesser interface {
 	// DisplayNodesDetails display nodes which the processer knowns
 	DisplayNodesDetails(w *tabwriter.Writer, nodes []Node)
 	// DisplayNodesSummary display nodes summary
-	DisplayNodesSummary(w *tabwriter.Writer, nodes []Node, showNodeType, isUnhealthy bool) (int, int, int)
+	DisplayNodesSummary(w *tabwriter.Writer, nodes []Node, showNodeType, isUnhealthy bool) (float64, float64, float64)
 	// DisplayNodesCustomSummary display custom format of target type nodes
 	DisplayNodesCustomSummary(w *tabwriter.Writer, nodes []Node)
 	// SupportedNodeType Type returns the supported node type
@@ -146,7 +146,7 @@ type nodeProcesser struct {
 	builder                   func(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error)
 	canBuildNode              func(node *v1.Node) bool
 	displayNodesDetails       func(w *tabwriter.Writer, nodes []Node)
-	displayNodesSummary       func(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int)
+	displayNodesSummary       func(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (float64, float64, float64)
 	displayNodesCustomSummary func(w *tabwriter.Writer, nodes []Node)
 }
 
@@ -190,10 +190,10 @@ func (n *nodeProcesser) DisplayNodesDetails(w *tabwriter.Writer, nodes []Node) {
 	n.displayNodesDetails(w, myNodes)
 }
 
-func (n *nodeProcesser) DisplayNodesSummary(w *tabwriter.Writer, nodes []Node, showNodeType, isUnhealthy bool) (int, int, int) {
-	totalGPUs := 0
-	allocatedGPUs := 0
-	unhealthyGPUs := 0
+func (n *nodeProcesser) DisplayNodesSummary(w *tabwriter.Writer, nodes []Node, showNodeType, isUnhealthy bool) (float64, float64, float64) {
+	totalGPUs := float64(0)
+	allocatedGPUs := float64(0)
+	unhealthyGPUs := float64(0)
 	myNodes := []Node{}
 	for _, node := range nodes {
 		if node.Type() != n.nodeType {

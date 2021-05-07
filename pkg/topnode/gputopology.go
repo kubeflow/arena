@@ -76,18 +76,18 @@ func (g *gputopo) gpuMetricsIsEnabled() bool {
 	return len(g.gpuMetrics) != 0
 }
 
-func (g *gputopo) getTotalGPUs() int {
+func (g *gputopo) getTotalGPUs() float64 {
 	if len(g.gpuMetrics) != 0 {
-		return len(g.gpuMetrics)
+		return float64(len(g.gpuMetrics))
 	}
 	val, ok := g.node.Status.Capacity[v1.ResourceName(types.AliyunGPUResourceName)]
 	if !ok {
 		return 0
 	}
-	return int(val.Value())
+	return float64(val.Value())
 }
 
-func (g *gputopo) getAllocatedGPUs() int {
+func (g *gputopo) getAllocatedGPUs() float64 {
 	allocatedGPUs := 0
 	for _, pod := range g.pods {
 		if utils.IsCompletedPod(pod) {
@@ -96,7 +96,7 @@ func (g *gputopo) getAllocatedGPUs() int {
 		allocation := utils.AliyunGPUCountInPod(pod)
 		allocatedGPUs += allocation
 	}
-	return allocatedGPUs
+	return float64(allocatedGPUs)
 }
 
 func (g *gputopo) getTotalGPUMemory() float64 {
@@ -161,7 +161,7 @@ func (g *gputopo) getDutyCycle() float64 {
 	return dutyCycle / totalGPUs
 }
 
-func (g *gputopo) getUnhealthyGPUs() int {
+func (g *gputopo) getUnhealthyGPUs() float64 {
 	totalGPUs := g.getTotalGPUs()
 	allocatableGPUs, ok := g.node.Status.Allocatable[v1.ResourceName(types.AliyunGPUResourceName)]
 	if !ok {
@@ -170,7 +170,7 @@ func (g *gputopo) getUnhealthyGPUs() int {
 	if totalGPUs <= 0 {
 		return 0
 	}
-	return totalGPUs - int(allocatableGPUs.Value())
+	return totalGPUs - float64(allocatableGPUs.Value())
 }
 
 func (g *gputopo) getTotalGPUMemoryOfDevice(id string) float64 {
@@ -192,8 +192,8 @@ func (g *gputopo) convert2NodeInfo() types.GPUTopologyNodeInfo {
 			Description: GPUTopologyNodeDescription,
 		},
 		CommonGPUNodeInfo: types.CommonGPUNodeInfo{
-			TotalGPUs:     g.getTotalGPUs(),
 			AllocatedGPUs: g.getAllocatedGPUs(),
+			TotalGPUs:     g.getTotalGPUs(),
 			UnhealthyGPUs: g.getUnhealthyGPUs(),
 		},
 	}
@@ -390,7 +390,7 @@ func (g *gputopo) displayDeviceInfoUnderMetrics(lines []string, nodeInfo types.G
 	totalGPUMemory := float64(0)
 	totalAllocatedGPUMemory := float64(0)
 	totalUsedGPUMemory := float64(0)
-	for i := 0; i < nodeInfo.TotalGPUs; i++ {
+	for i := 0; i < int(nodeInfo.TotalGPUs); i++ {
 		gpuId := fmt.Sprintf("%v", i)
 		devInfo, ok := deviceMap[gpuId]
 		if !ok {
@@ -499,9 +499,9 @@ func displayGPUTopologyNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	if len(nodes) == 0 {
 		return
 	}
-	totalGPUs := 0
-	totalUnhealthyGPUs := 0
-	totalAllocatedGPUs := 0
+	totalGPUs := float64(0)
+	totalUnhealthyGPUs := float64(0)
+	totalAllocatedGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUTopologyNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
@@ -511,10 +511,10 @@ func displayGPUTopologyNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	}
 }
 
-func displayGPUTopologyNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (int, int, int) {
-	totalGPUs := 0
-	allocatedGPUs := 0
-	unhealthyGPUs := 0
+func displayGPUTopologyNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (float64, float64, float64) {
+	totalGPUs := float64(0)
+	allocatedGPUs := float64(0)
+	unhealthyGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUTopologyNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs
@@ -561,9 +561,9 @@ func displayGPUTopologyNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		header = append(header, "UNHEALTHY")
 	}
 	PrintLine(w, header...)
-	totalGPUs := 0
-	allocatedGPUs := 0
-	unhealthyGPUs := 0
+	totalGPUs := float64(0)
+	allocatedGPUs := float64(0)
+	unhealthyGPUs := float64(0)
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.GPUTopologyNodeInfo)
 		totalGPUs += nodeInfo.TotalGPUs

@@ -104,7 +104,7 @@ func displayNormalNodeDetails(w *tabwriter.Writer, nodes []Node) {
 	}
 }
 
-func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showMode bool) (int, int, int) {
+func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, showMode bool) (float64, float64, float64) {
 	for _, node := range nodes {
 		nodeInfo := node.Convert2NodeInfo().(types.NormalNodeInfo)
 		items := []string{}
