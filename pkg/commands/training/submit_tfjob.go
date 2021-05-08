@@ -11,7 +11,7 @@ import (
 )
 
 func NewSubmitTFJobCommand() *cobra.Command {
-	builder := training.NewTFJobBuilder()
+	builder := training.NewTFJobBuilder(nil)
 	var command = &cobra.Command{
 		Use:     "tfjob",
 		Short:   "Submit a TFJob as training job.",

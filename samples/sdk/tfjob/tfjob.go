@@ -35,7 +35,7 @@ func main() {
 	        --tensorboard \
 	        "python /app/main.py"
 	*/
-	submitJob, err := training.NewTFJobBuilder().
+	submitJob, err := training.NewTFJobBuilder(nil).
 		Name(jobName).
 		GPUCount(1).
 		WorkerCount(1).

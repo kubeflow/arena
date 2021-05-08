@@ -16,8 +16,8 @@ type HorovodJobBuilder struct {
 
 func NewHorovodJobBuilder() *HorovodJobBuilder {
 	args := &types.SubmitHorovodJobArgs{
-		CommonSubmitArgs:      defaultCommonSubmitArgs,
-		SubmitTensorboardArgs: defaultSubmitTensorboardArgs,
+		CommonSubmitArgs:      DefaultCommonSubmitArgs,
+		SubmitTensorboardArgs: DefaultSubmitTensorboardArgs,
 	}
 	return &HorovodJobBuilder{
 		args:        args,
