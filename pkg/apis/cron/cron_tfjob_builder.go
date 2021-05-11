@@ -1,394 +1,291 @@
 package cron
 
 import (
-	"fmt"
+	"github.com/kubeflow/arena/pkg/apis/training"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/argsbuilder"
 	"strings"
 )
 
-type CronCronTFJobBuilder struct {
+type CronTFJobBuilder struct {
 	args      *types.CronTFJobArgs
 	argValues map[string]interface{}
 	argsbuilder.ArgsBuilder
+	*training.TFJobBuilder
 }
 
-func NewCronTFJobBuilder() *CronCronTFJobBuilder {
-	args := &types.CronTFJobArgs{}
-	return &CronCronTFJobBuilder{
+func NewCronTFJobBuilder() *CronTFJobBuilder {
+	args := &types.CronTFJobArgs{
+		SubmitTFJobArgs: types.SubmitTFJobArgs{
+			CleanPodPolicy:        "Running",
+			CommonSubmitArgs:      training.DefaultCommonSubmitArgs,
+			SubmitTensorboardArgs: training.DefaultSubmitTensorboardArgs,
+		},
+	}
+	return &CronTFJobBuilder{
 		args:        args,
 		argValues:   map[string]interface{}{},
 		ArgsBuilder: argsbuilder.NewCronTFJobArgsBuilder(args),
+		TFJobBuilder: training.NewTFJobBuilder(&args.SubmitTFJobArgs),
 	}
 }
 
-func (c *CronCronTFJobBuilder) Name(name string) *CronCronTFJobBuilder {
-	if name != "" {
-		c.args.Name = name
-	}
+func (c *CronTFJobBuilder) Name(name string) *CronTFJobBuilder {
+	c.TFJobBuilder.Name(name)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Schedule(schedule string) *CronCronTFJobBuilder {
+func (c *CronTFJobBuilder) Schedule(schedule string) *CronTFJobBuilder {
 	if schedule != "" {
 		c.args.Schedule = schedule
 	}
 	return c
 }
 
-func (c *CronCronTFJobBuilder) ConcurrencyPolicy(concurrencyPolicy string) *CronCronTFJobBuilder {
+func (c *CronTFJobBuilder) ConcurrencyPolicy(concurrencyPolicy string) *CronTFJobBuilder {
 	if concurrencyPolicy != "" {
 		c.args.ConcurrencyPolicy = concurrencyPolicy
 	}
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Deadline(deadline string) *CronCronTFJobBuilder {
+func (c *CronTFJobBuilder) Deadline(deadline string) *CronTFJobBuilder {
 	if deadline != "" {
 		c.args.Deadline = deadline
 	}
 	return c
 }
 
-func (c *CronCronTFJobBuilder) HistoryLimit(historyLimit int) *CronCronTFJobBuilder {
+func (c *CronTFJobBuilder) HistoryLimit(historyLimit int) *CronTFJobBuilder {
 	if historyLimit > 0 {
 		c.args.HistoryLimit = historyLimit
 	}
 	return c
 }
 
-func (c *CronCronTFJobBuilder) WorkingDir(dir string) *CronCronTFJobBuilder {
-	if dir != "" {
-		c.args.WorkingDir = dir
-	}
+func (c *CronTFJobBuilder) WorkingDir(dir string) *CronTFJobBuilder {
+	c.TFJobBuilder.WorkingDir(dir)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Envs(envs map[string]string) *CronCronTFJobBuilder {
-	if envs != nil && len(envs) != 0 {
-		envSlice := []string{}
-		for key, value := range envs {
-			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
-		}
-		c.argValues["env"] = &envSlice
-	}
+func (c *CronTFJobBuilder) Envs(envs map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.Envs(envs)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) GPUCount(count int) *CronCronTFJobBuilder {
-	if count > 0 {
-		c.args.GPUCount = count
-	}
+func (c *CronTFJobBuilder) GPUCount(count int) *CronTFJobBuilder {
+	c.TFJobBuilder.GPUCount(count)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Image(image string) *CronCronTFJobBuilder {
-	if image != "" {
-		c.args.Image = image
-	}
+func (c *CronTFJobBuilder) Image(image string) *CronTFJobBuilder {
+	c.TFJobBuilder.Image(image)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Tolerations(tolerations []string) *CronCronTFJobBuilder {
-	c.argValues["toleration"] = &tolerations
+func (c *CronTFJobBuilder) Tolerations(tolerations []string) *CronTFJobBuilder {
+	c.TFJobBuilder.Tolerations(tolerations)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) ConfigFiles(files map[string]string) *CronCronTFJobBuilder {
-	if files != nil && len(files) != 0 {
-		filesSlice := []string{}
-		for localPath, containerPath := range files {
-			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
-		}
-		c.argValues["config-file"] = &filesSlice
-	}
+func (c *CronTFJobBuilder) ConfigFiles(files map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.ConfigFiles(files)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) NodeSelectors(selectors map[string]string) *CronCronTFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
-		selectorsSlice := []string{}
-		for key, value := range selectors {
-			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
-		}
-		c.argValues["selector"] = &selectorsSlice
-	}
+func (c *CronTFJobBuilder) NodeSelectors(selectors map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.NodeSelectors(selectors)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Annotations(annotations map[string]string) *CronCronTFJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
-		s := []string{}
-		for key, value := range annotations {
-			s = append(s, fmt.Sprintf("%v=%v", key, value))
-		}
-		c.argValues["annotation"] = &s
-	}
+func (c *CronTFJobBuilder) Annotations(annotations map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.Annotations(annotations)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) EnableChief() *CronCronTFJobBuilder {
-	c.args.UseChief = true
+func (c *CronTFJobBuilder) EnableChief() *CronTFJobBuilder {
+	c.TFJobBuilder.EnableChief()
 	return c
 }
 
-func (c *CronCronTFJobBuilder) ChiefCPU(cpu string) *CronCronTFJobBuilder {
-	if cpu != "" {
-		c.args.ChiefCpu = cpu
-	}
+func (c *CronTFJobBuilder) ChiefCPU(cpu string) *CronTFJobBuilder {
+	c.TFJobBuilder.ChiefCPU(cpu)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) ChiefMemory(mem string) *CronCronTFJobBuilder {
-	if mem != "" {
-		c.args.ChiefMemory = mem
-	}
+func (c *CronTFJobBuilder) ChiefMemory(mem string) *CronTFJobBuilder {
+	c.TFJobBuilder.ChiefMemory(mem)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) ChiefPort(port int) *CronCronTFJobBuilder {
-	if port > 0 {
-		c.args.ChiefPort = port
-	}
+func (c *CronTFJobBuilder) ChiefPort(port int) *CronTFJobBuilder {
+	c.TFJobBuilder.ChiefPort(port)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) ChiefSelectors(selectors map[string]string) *CronCronTFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
-		s := []string{}
-		for key, value := range selectors {
-			s = append(s, fmt.Sprintf("%v=%v", key, value))
-		}
-		c.argValues["chief-selector"] = &s
-	}
+func (c *CronTFJobBuilder) ChiefSelectors(selectors map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.ChiefSelectors(selectors)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Datas(volumes map[string]string) *CronCronTFJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
-		s := []string{}
-		for key, value := range volumes {
-			s = append(s, fmt.Sprintf("%v:%v", key, value))
-		}
-		c.argValues["data"] = &s
-	}
+func (c *CronTFJobBuilder) Datas(volumes map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.Datas(volumes)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) DataDirs(volumes map[string]string) *CronCronTFJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
-		s := []string{}
-		for key, value := range volumes {
-			s = append(s, fmt.Sprintf("%v:%v", key, value))
-		}
-		c.argValues["data-dir"] = &s
-	}
+func (c *CronTFJobBuilder) DataDirs(volumes map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.DataDirs(volumes)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) EnableEvaluator() *CronCronTFJobBuilder {
-	c.args.UseEvaluator = true
+func (c *CronTFJobBuilder) EnableEvaluator() *CronTFJobBuilder {
+	c.TFJobBuilder.EnableEvaluator()
 	return c
 }
 
-func (c *CronCronTFJobBuilder) EvaluatorCPU(cpu string) *CronCronTFJobBuilder {
-	if cpu != "" {
-		c.args.EvaluatorCpu = cpu
-	}
+func (c *CronTFJobBuilder) EvaluatorCPU(cpu string) *CronTFJobBuilder {
+	c.TFJobBuilder.EvaluatorCPU(cpu)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) EvaluatorMemory(mem string) *CronCronTFJobBuilder {
-	if mem != "" {
-		c.args.EvaluatorMemory = mem
-	}
+func (c *CronTFJobBuilder) EvaluatorMemory(mem string) *CronTFJobBuilder {
+	c.TFJobBuilder.EvaluatorMemory(mem)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) EvaluatorSelectors(selectors map[string]string) *CronCronTFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
-		s := []string{}
-		for key, value := range selectors {
-			s = append(s, fmt.Sprintf("%v=%v", key, value))
-		}
-		c.argValues["evaluator-selector"] = &s
-	}
+func (c *CronTFJobBuilder) EvaluatorSelectors(selectors map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.EvaluatorSelectors(selectors)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) LogDir(dir string) *CronCronTFJobBuilder {
-	if dir != "" {
-		c.args.TrainingLogdir = dir
-	}
+func (c *CronTFJobBuilder) LogDir(dir string) *CronTFJobBuilder {
+	c.TFJobBuilder.LogDir(dir)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Priority(priority string) *CronCronTFJobBuilder {
-	if priority != "" {
-		c.args.PriorityClassName = priority
-	}
+func (c *CronTFJobBuilder) Priority(priority string) *CronTFJobBuilder {
+	c.TFJobBuilder.Priority(priority)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) PsCount(count int) *CronCronTFJobBuilder {
-	if count > 0 {
-		c.args.PSCount = count
-	}
+func (c *CronTFJobBuilder) PsCount(count int) *CronTFJobBuilder {
+	c.TFJobBuilder.PsCount(count)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) PsCPU(cpu string) *CronCronTFJobBuilder {
-	if cpu != "" {
-		c.args.PSCpu = cpu
-	}
+func (c *CronTFJobBuilder) PsCPU(cpu string) *CronTFJobBuilder {
+	c.TFJobBuilder.PsCPU(cpu)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) PsImage(image string) *CronCronTFJobBuilder {
-	if image != "" {
-		c.args.PSImage = image
-	}
+func (c *CronTFJobBuilder) PsImage(image string) *CronTFJobBuilder {
+	c.TFJobBuilder.PsImage(image)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) PsMemory(mem string) *CronCronTFJobBuilder {
-	if mem != "" {
-		c.args.PSMemory = mem
-	}
+func (c *CronTFJobBuilder) PsMemory(mem string) *CronTFJobBuilder {
+	c.TFJobBuilder.PsMemory(mem)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) PsPort(port int) *CronCronTFJobBuilder {
-	if port > 0 {
-		c.args.PSPort = port
-	}
+func (c *CronTFJobBuilder) PsPort(port int) *CronTFJobBuilder {
+	c.TFJobBuilder.PsPort(port)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) PsSelectors(selectors map[string]string) *CronCronTFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
-		s := []string{}
-		for key, value := range selectors {
-			s = append(s, fmt.Sprintf("%v=%v", key, value))
-		}
-		c.argValues["ps-selector"] = &s
-	}
+func (c *CronTFJobBuilder) PsSelectors(selectors map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.PsSelectors(selectors)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) EnableRDMA() *CronCronTFJobBuilder {
-	c.args.EnableRDMA = true
+func (c *CronTFJobBuilder) EnableRDMA() *CronTFJobBuilder {
+	c.TFJobBuilder.EnableRDMA()
 	return c
 }
 
-func (c *CronCronTFJobBuilder) SyncImage(image string) *CronCronTFJobBuilder {
-	if image != "" {
-		c.args.SyncImage = image
-	}
+func (c *CronTFJobBuilder) SyncImage(image string) *CronTFJobBuilder {
+	c.TFJobBuilder.SyncImage(image)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) SyncMode(mode string) *CronCronTFJobBuilder {
-	if mode != "" {
-		c.args.SyncMode = mode
-	}
+func (c *CronTFJobBuilder) SyncMode(mode string) *CronTFJobBuilder {
+	c.TFJobBuilder.SyncMode(mode)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) SyncSource(source string) *CronCronTFJobBuilder {
-	if source != "" {
-		c.args.SyncSource = source
-	}
+func (c *CronTFJobBuilder) SyncSource(source string) *CronTFJobBuilder {
+	c.TFJobBuilder.SyncSource(source)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) EnableTensorboard() *CronCronTFJobBuilder {
-	c.args.UseTensorboard = true
+func (c *CronTFJobBuilder) EnableTensorboard() *CronTFJobBuilder {
+	c.TFJobBuilder.EnableTensorboard()
 	return c
 }
 
-func (c *CronCronTFJobBuilder) TensorboardImage(image string) *CronCronTFJobBuilder {
-	if image != "" {
-		c.args.TensorboardImage = image
-	}
+func (c *CronTFJobBuilder) TensorboardImage(image string) *CronTFJobBuilder {
+	c.TFJobBuilder.TensorboardImage(image)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) WorkerCPU(cpu string) *CronCronTFJobBuilder {
-	if cpu != "" {
-		c.args.WorkerCpu = cpu
-	}
+func (c *CronTFJobBuilder) WorkerCPU(cpu string) *CronTFJobBuilder {
+	c.TFJobBuilder.WorkerCPU(cpu)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) WorkerImage(image string) *CronCronTFJobBuilder {
-	if image != "" {
-		c.args.WorkerImage = image
-	}
+func (c *CronTFJobBuilder) WorkerImage(image string) *CronTFJobBuilder {
+	c.TFJobBuilder.WorkerImage(image)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) WorkerMemory(mem string) *CronCronTFJobBuilder {
-	if mem != "" {
-		c.args.WorkerMemory = mem
-	}
+func (c *CronTFJobBuilder) WorkerMemory(mem string) *CronTFJobBuilder {
+	c.TFJobBuilder.WorkerMemory(mem)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) WorkerPort(port int) *CronCronTFJobBuilder {
-	if port > 0 {
-		c.args.WorkerPort = port
-	}
+func (c *CronTFJobBuilder) WorkerPort(port int) *CronTFJobBuilder {
+	c.TFJobBuilder.WorkerPort(port)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) WorkerSelectors(selectors map[string]string) *CronCronTFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
-		s := []string{}
-		for key, value := range selectors {
-			s = append(s, fmt.Sprintf("%v=%v", key, value))
-		}
-		c.argValues["worker-selector"] = &s
-	}
+func (c *CronTFJobBuilder) WorkerSelectors(selectors map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.WorkerSelectors(selectors)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) WorkerCount(count int) *CronCronTFJobBuilder {
-	if count > 0 {
-		c.args.WorkerCount = count
-	}
+func (c *CronTFJobBuilder) WorkerCount(count int) *CronTFJobBuilder {
+	c.TFJobBuilder.WorkerCount(count)
 	return c
 }
-func (c *CronCronTFJobBuilder) ImagePullSecrets(secrets []string) *CronCronTFJobBuilder {
-	if secrets != nil {
-		c.argValues["image-pull-secret"] = &secrets
-	}
+func (c *CronTFJobBuilder) ImagePullSecrets(secrets []string) *CronTFJobBuilder {
+	c.TFJobBuilder.ImagePullSecrets(secrets)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) CleanPodPolicy(policy string) *CronCronTFJobBuilder {
-	if policy != "" {
-		c.args.CleanPodPolicy = policy
-	}
+func (c *CronTFJobBuilder) CleanPodPolicy(policy string) *CronTFJobBuilder {
+	c.TFJobBuilder.CleanPodPolicy(policy)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) RoleSequence(roles []string) *CronCronTFJobBuilder {
-	if roles != nil && len(roles) != 0 {
-		c.argValues["role-sequence"] = strings.Join(roles, ",")
-	}
+func (c *CronTFJobBuilder) RoleSequence(roles []string) *CronTFJobBuilder {
+	c.TFJobBuilder.RoleSequence(roles)
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Command(args []string) *CronCronTFJobBuilder {
+func (c *CronTFJobBuilder) Command(args []string) *CronTFJobBuilder {
 	c.args.Command = strings.Join(args, " ")
 	return c
 }
 
-func (c *CronCronTFJobBuilder) Build() (*Job, error) {
+func (c *CronTFJobBuilder) Build() (*Job, error) {
 	for key, value := range c.argValues {
 		c.AddArgValue(key, value)
 	}
+
+	for key, value := range c.TFJobBuilder.GetArgValues() {
+		c.AddArgValue(key, value)
+	}
+
 	if err := c.PreBuild(); err != nil {
 		return nil, err
 	}

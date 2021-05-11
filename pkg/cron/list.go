@@ -1,52 +1,17 @@
 package cron
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"gopkg.in/yaml.v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic"
 	"os"
 	"strconv"
 	"text/tabwriter"
 )
 
 func ListCrons(namespace string, allNamespaces bool) ([]*types.CronInfo, error) {
-	if allNamespaces {
-		namespace = metav1.NamespaceAll
-	}
-
-	config := config.GetArenaConfiger().GetRestConfig()
-
-	dynamicClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	list, err := dynamicClient.Resource(gvr).Namespace(namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	var cronInfos []*types.CronInfo
-
-	for _, item := range list.Items {
-		b, err := item.MarshalJSON()
-		if err != nil {
-			continue
-		}
-
-		c, err := buildCronInfo(b)
-		if err != nil {
-			continue
-		}
-
-		cronInfos = append(cronInfos, c)
-	}
-	return cronInfos, nil
+	return GetCronHandler().ListCrons(namespace, allNamespaces)
 }
 
 func DisplayAllCrons(crons []*types.CronInfo, allNamespaces bool, format types.FormatStyle) {

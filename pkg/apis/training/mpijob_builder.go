@@ -16,8 +16,8 @@ type MPIJobBuilder struct {
 
 func NewMPIJobBuilder() *MPIJobBuilder {
 	args := &types.SubmitMPIJobArgs{
-		CommonSubmitArgs:      defaultCommonSubmitArgs,
-		SubmitTensorboardArgs: defaultSubmitTensorboardArgs,
+		CommonSubmitArgs:      DefaultCommonSubmitArgs,
+		SubmitTensorboardArgs: DefaultSubmitTensorboardArgs,
 	}
 	return &MPIJobBuilder{
 		args:        args,

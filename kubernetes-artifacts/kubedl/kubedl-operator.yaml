@@ -349,18 +349,3 @@ spec:
               cpu: 250m
               memory: 256Mi
 ---
-# Source: kubedl/templates/monitor.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: kubedl-operator
-  namespace: arena-system
-spec:
-  endpoints:
-    - interval: 15s
-      port: "8080"
-      scheme: http
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: kubedl
-      app.kubernetes.io/instance: kubedl-operator

@@ -26,6 +26,8 @@ import (
 
 	v1alpha12 "github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
 	etversioned "github.com/kubeflow/arena/pkg/operators/et-operator/client/clientset/versioned"
+	cron_v1alpha1 "github.com/kubeflow/arena/pkg/operators/kubedl-operator/apis/apps/v1alpha1"
+	cronversioned "github.com/kubeflow/arena/pkg/operators/kubedl-operator/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
 	mpiversioned "github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
 	pytorch_v1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
@@ -48,6 +50,7 @@ func init() {
 	pytorch_v1.AddToScheme(scheme.Scheme)
 	spark_v1beta2.AddToScheme(scheme.Scheme)
 	volcano_v1alpha1.AddToScheme(scheme.Scheme)
+	cron_v1alpha1.AddToScheme(scheme.Scheme)
 }
 
 func InitK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset, isDaemonMode bool) error {
@@ -359,6 +362,30 @@ func (k *k8sResourceAccesser) ListNodes(filterLabels string) ([]*v1.Node, error)
 	return nodes, nil
 }
 
+func (k *k8sResourceAccesser) ListCrons(cronClient *cronversioned.Clientset, namespace string) ([]*cron_v1alpha1.Cron, error) {
+	var crons []*cron_v1alpha1.Cron
+	cronList := &cron_v1alpha1.CronList{}
+	var err error
+	if k.cacheEnabled {
+		err = k.cacheClient.List(
+			context.Background(),
+			cronList,
+			client.InNamespace(namespace),
+			&client.ListOptions{},
+		)
+	} else {
+		cronList, err = cronClient.AppsV1alpha1().Crons(namespace).List(context.Background(), metav1.ListOptions{})
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	for _, cron := range cronList.Items {
+		crons = append(crons, cron.DeepCopy())
+	}
+	return crons, nil
+}
+
 func (k *k8sResourceAccesser) ListTensorflowJobs(tfjobClient *tfversioned.Clientset, namespace string) ([]*tfv1.TFJob, error) {
 	jobs := []*tfv1.TFJob{}
 	jobList := &tfv1.TFJobList{}
@@ -539,6 +566,23 @@ func (k *k8sResourceAccesser) ListSparkJobs(sparkjobClient *sparkversioned.Clien
 		jobs = append(jobs, job.DeepCopy())
 	}
 	return jobs, nil
+}
+
+func (k *k8sResourceAccesser) GetCron(cronClient *cronversioned.Clientset, namespace string, name string) (*cron_v1alpha1.Cron, error) {
+	cron := &cron_v1alpha1.Cron{}
+	var err error
+	if k.cacheEnabled {
+		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, cron)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find cron %v from cache, reason: %v", name, err)
+		}
+	} else {
+		cron, err = cronClient.AppsV1alpha1().Crons(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to find cron %v from api server, reason: %v", name, err)
+		}
+	}
+	return cron, nil
 }
 
 func (k *k8sResourceAccesser) GetTensorflowJob(tfjobClient *tfversioned.Clientset, namespace string, name string) (*tfv1.TFJob, error) {

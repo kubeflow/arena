@@ -18,8 +18,8 @@ func NewETJobBuilder() *ETJobBuilder {
 	args := &types.SubmitETJobArgs{
 		MaxWorkers:            1000,
 		MinWorkers:            1,
-		CommonSubmitArgs:      defaultCommonSubmitArgs,
-		SubmitTensorboardArgs: defaultSubmitTensorboardArgs,
+		CommonSubmitArgs:      DefaultCommonSubmitArgs,
+		SubmitTensorboardArgs: DefaultSubmitTensorboardArgs,
 	}
 	return &ETJobBuilder{
 		args:        args,

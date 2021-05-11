@@ -14,18 +14,26 @@ type TFJobBuilder struct {
 	argsbuilder.ArgsBuilder
 }
 
-func NewTFJobBuilder() *TFJobBuilder {
-	args := &types.SubmitTFJobArgs{
-		CleanPodPolicy:        "Running",
-		CommonSubmitArgs:      defaultCommonSubmitArgs,
-		SubmitTensorboardArgs: defaultSubmitTensorboardArgs,
+func NewTFJobBuilder(args *types.SubmitTFJobArgs) *TFJobBuilder {
+	if args == nil {
+		args = &types.SubmitTFJobArgs{
+			CleanPodPolicy:        "Running",
+			CommonSubmitArgs:      DefaultCommonSubmitArgs,
+			SubmitTensorboardArgs: DefaultSubmitTensorboardArgs,
+		}
 	}
+
 	return &TFJobBuilder{
 		args:        args,
 		argValues:   map[string]interface{}{},
 		ArgsBuilder: argsbuilder.NewSubmitTFJobArgsBuilder(args),
 	}
 }
+
+func (b *TFJobBuilder) GetArgValues() map[string]interface{} {
+	return b.argValues
+}
+
 func (b *TFJobBuilder) Name(name string) *TFJobBuilder {
 	if name != "" {
 		b.args.Name = name

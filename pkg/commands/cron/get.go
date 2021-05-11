@@ -32,6 +32,10 @@ func NewCronGetCommand() *cobra.Command {
 			viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				cmd.HelpFunc()(cmd, args)
+				return fmt.Errorf("not set cron name, please set it")
+			}
 			name := args[0]
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
