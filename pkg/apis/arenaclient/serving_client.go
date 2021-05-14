@@ -53,6 +53,9 @@ func (t *ServingJobClient) Submit(job *apiserving.Job) error {
 	case types.SeldonServingJob:
 		args := job.Args().(*types.SeldonServingArgs)
 		return serving.SubmitSeldonServingJob(args.Namespace, args)
+	case types.TritonServingJob:
+		args := job.Args().(*types.TritonServingArgs)
+		return serving.SubmitTritonServingJob(args.Namespace, args)
 	}
 	return nil
 }

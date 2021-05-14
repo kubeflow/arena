@@ -13,6 +13,8 @@ const (
 	KFServingJob ServingJobType = "kf-serving"
 	// SeldonServingJob defines the seldon core job
 	SeldonServingJob ServingJobType = "seldon-serving"
+	// TritonServingJob defines the nvidia triton server job
+	TritonServingJob ServingJobType = "triton-serving"
 	// CustomServingJob defines the custom serving job
 	CustomServingJob ServingJobType = "custom-serving"
 	// AllServingJob represents all serving job type
@@ -49,9 +51,14 @@ var ServingTypeMap = map[ServingJobType]ServingTypeInfo{
 		Alias:     "Tensorrt",
 		Shorthand: "trt",
 	},
+	TritonServingJob: {
+		Name:      TritonServingJob,
+		Alias:     "Triton",
+		Shorthand: "Triton",
+	},
 	SeldonServingJob: {
-		Name: SeldonServingJob,
-		Alias: "Seldon",
+		Name:      SeldonServingJob,
+		Alias:     "Seldon",
 		Shorthand: "seldon",
 	},
 }
@@ -180,7 +187,16 @@ type KFServingArgs struct {
 }
 
 type SeldonServingArgs struct {
-	Implementation    	string `yaml:"implementation"`	// --implementation
-	ModelUri        	string `yaml:"modelUri"`    	// --modelUri
+	Implementation    string `yaml:"implementation"` // --implementation
+	ModelUri          string `yaml:"modelUri"`       // --modelUri
+	CommonServingArgs `yaml:",inline"`
+}
+
+type TritonServingArgs struct {
+	ModelRepository   string `yaml:"modelRepository"` // --modelRepository
+	MetricsPort       int    `yaml:"metricsPort"`     // --metricsPort
+	HttpPort          int    `yaml:"httpPort"`        // --httpPort
+	GrpcPort          int    `yaml:"grpcPort"`        // --grpcPort
+	AllowMetrics      bool   `yaml:"allowMetrics"`    // --allowMetrics
 	CommonServingArgs `yaml:",inline"`
 }

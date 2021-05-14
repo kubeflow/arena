@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "nvidia-triton-server.fullname" . }}
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "nvidia-triton-server.chart" . }}
+    app: {{ template "nvidia-triton-server.name" . }}
+    servingName: {{ .Values.servingName }}
+    servingType: "triton-serving"
+    servingVersion: "{{ .Values.servingVersion }}"
+spec:
+  type: {{ .Values.serviceType }}
+  ports:
+    - name: restful-serving
+      port: {{ .Values.httpPort }}
+      targetPort: http
+    - name: grpc-serving
+      port: {{ .Values.grpcPort }}
+      targetPort: grpc
+    - name: metrics-inference-server
+      port: {{ .Values.metricsPort }}
+      targetPort: metrics
+  selector:
+    release: {{ .Release.Name | quote }}
+    app: {{ template "nvidia-triton-server.name" . }}
