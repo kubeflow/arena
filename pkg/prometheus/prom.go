@@ -96,9 +96,9 @@ func generateNodeGPUMetrics(metrics []types.GpuMetricInfo) map[string]types.Node
 	nodeMetrics := map[string]types.NodeGpuMetric{}
 	shareModeUsedGPUMemory := map[string]map[string][]float64{}
 	for _, metric := range metrics {
-		if metric.PodNamespace == "" {
-			continue
-		}
+		//if metric.PodNamespace == "" {
+		//	continue
+		//}
 		v, err := strconv.ParseFloat(metric.Value, 64)
 		if err != nil {
 			log.Debugf("failed to parse gpu duty cycle,reason: %v", err)
@@ -133,7 +133,7 @@ func generateNodeGPUMetrics(metrics []types.GpuMetricInfo) map[string]types.Node
 			v = math.Trunc(v/(1024*1024*1024)) * (1024 * 1024 * 1024)
 			nodeMetrics[metric.NodeName][metric.Id].GpuMemoryTotal = v
 		}
-		if metric.PodName != "" {
+		if metric.PodNamespace != "" && metric.PodName != "" {
 			podName := fmt.Sprintf("%v/%v", metric.PodNamespace, metric.PodName)
 			nodeMetrics[metric.NodeName][metric.Id].PodNames = append(nodeMetrics[metric.NodeName][metric.Id].PodNames, podName)
 		}
