@@ -18,7 +18,7 @@ $ tar -xvf arena-installer.tar.gz
 $ chmod +x bin/*
 $ cp bin/helm /usr/local/bin/arena-helm
 $ cp bin/kubectl /usr/local/bin/arena-kubectl
-$ cp /bin/arena /usr/local/bin/arena
+$ cp bin/arena /usr/local/bin/arena
 ```
 
 5\. copy the `charts` directory to the home directory of current user.
