@@ -80,6 +80,19 @@ rules:
     - jobs
     verbs:
     - '*'
+  - apiGroups:
+    - "apps.kubedl.io"
+    resources:
+    - crons
+    - crons/status
+    verbs:
+    - get
+    - list
+    - watch
+    - create
+    - update
+    - patch
+    - delete
 {{- with .Values.roles }}
 {{- toYaml . | nindent 2 }}
 {{- end }}
