@@ -15,13 +15,13 @@ spec:
   ports:
     - name: restful-serving
       port: {{ .Values.httpPort }}
-      targetPort: http
+      targetPort: {{ .Values.httpPort }}
     - name: grpc-serving
       port: {{ .Values.grpcPort }}
-      targetPort: grpc
+      targetPort: {{ .Values.grpcPort }}
     - name: metrics-inference-server
       port: {{ .Values.metricsPort }}
-      targetPort: metrics
+      targetPort: {{ .Values.metricsPort }}
   selector:
     release: {{ .Release.Name | quote }}
     app: {{ template "nvidia-triton-server.name" . }}

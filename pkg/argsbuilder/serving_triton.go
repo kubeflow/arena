@@ -33,7 +33,7 @@ type TritonServingArgsBuilder struct {
 }
 
 func NewTritonServingArgsBuilder(args *types.TritonServingArgs) ArgsBuilder {
-	args.Type = types.TRTServingJob
+	args.Type = types.TritonServingJob
 	s := &TritonServingArgsBuilder{
 		args:        args,
 		argValues:   map[string]interface{}{},
@@ -73,7 +73,7 @@ func (s *TritonServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.ModelRepository, "model-repository", "", "the path of triton model path")
 	command.Flags().IntVar(&s.args.HttpPort, "http-port", 8000, "the port of http serving server")
 	command.Flags().IntVar(&s.args.GrpcPort, "grpc-port", 8001, "the port of grpc serving server")
-	command.Flags().IntVar(&s.args.MetricsPort, "metric-port", 8002, "the port of metrics server")
+	command.Flags().IntVar(&s.args.MetricsPort, "metrics-port", 8002, "the port of metrics server")
 	command.Flags().BoolVar(&s.args.AllowMetrics, "allow-metrics", false, "Open Metric")
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
 }

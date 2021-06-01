@@ -193,10 +193,10 @@ type SeldonServingArgs struct {
 }
 
 type TritonServingArgs struct {
-	ModelRepository   string `yaml:"modelRepository"` // --modelRepository
-	MetricsPort       int    `yaml:"metricsPort"`     // --metricsPort
-	HttpPort          int    `yaml:"httpPort"`        // --httpPort
-	GrpcPort          int    `yaml:"grpcPort"`        // --grpcPort
-	AllowMetrics      bool   `yaml:"allowMetrics"`    // --allowMetrics
+	ModelRepository   string `yaml:"modelRepository"` // --model-repository
+	MetricsPort       int    `yaml:"metricsPort"`     // --metrics-port
+	HttpPort          int    `yaml:"httpPort"`        // --http-port
+	GrpcPort          int    `yaml:"grpcPort"`        // --grpc-port
+	AllowMetrics      bool   `yaml:"allowMetrics"`    // --allow-metrics
 	CommonServingArgs `yaml:",inline"`
 }
