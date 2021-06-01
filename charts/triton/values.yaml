@@ -1,0 +1,32 @@
+# Default values for triton-inference-server.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+## Kubernetes configuration
+## support NodePort, LoadBalancer
+##
+serviceType: ClusterIP
+
+## serving name
+servingName:
+servingVersion:
+
+image: "nvcr.io/nvidia/tritonserver:20.12-py3"
+
+imagePullPolicy: "IfNotPresent"
+
+cpu: 1.0
+memory: 1024Mi
+gpuCount: 1
+
+## expose the service to the grpc client
+httpPort: 8000
+grpcPort: 8001
+metricsPort: 8002
+allowMetrics: true
+
+## the pvc and mount path inside the container
+modelDirs:
+  triton-pvc: /mnt/models
+
+modelRepository: /mnt/models/ai/triton/model_repository

@@ -6,8 +6,9 @@ var (
 	serveLong = `serve a job.
 
 Available Commands:
-  tensorflow,tf  Submit a TensorFlow Serving Job.
+  tensorflow,tf  Submit a TensorFlow Serving Job
   tensorrt,trt   Submit a TensorRT Serving Job
+  triton         Submit a Nvidia Triton Serving Job
   custom         Submit a Custom Serving Job  
   kfserving,kfs  Submit a kubeflow Serving Job
   seldon         Submit a Seldon Serving Job`
@@ -27,6 +28,7 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewSubmitCustomServingJobCommand())
 	command.AddCommand(NewSubmitKFServingJobCommand())
 	command.AddCommand(NewSubmitSeldonServingJobCommand())
+	command.AddCommand(NewSubmitTritonServingJobCommand())
 	command.AddCommand(NewListCommand())
 	command.AddCommand(NewDeleteCommand())
 	command.AddCommand(NewGetCommand())
