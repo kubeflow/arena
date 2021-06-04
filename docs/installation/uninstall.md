@@ -11,9 +11,9 @@ The following resources will be deleted:
 * the directories include ~/charts and /charts on you computer
 * the arena binary file which is hosted on /usr/local/bin/arena  
 
-## Arena Version >= 0.8.4
+## Arena Version >= 0.8.5
 
-If your arena version >= 0.8.4,the `arena-uninstall` already exists on your computer and you can run `arena-uninstall -h` to get the usage.
+If your arena version >= 0.8.5,the `arena-uninstall` already exists on your computer and you can run `arena-uninstall -h` to get the usage.
 
 ```
 $  arena-uninstall -h
@@ -47,9 +47,9 @@ $ arena-uninstall --force
 $ arena-uninstall --quiet
 ```
 
-## Arena Version < 0.8.4
+## Arena Version < 0.8.5
 
-Firstly, you should download the arena package from [releases](https://github.com/kubeflow/arena/releases) and its' version must large than 0.8.4
+Firstly, you should download the arena package from [releases](https://github.com/kubeflow/arena/releases) and its' version must large than 0.8.5
 
 Then,execute the following commands to delete arena:
 
