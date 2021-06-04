@@ -72,6 +72,8 @@ RUN mkdir -p $ARENA_HOME/bin
 
 COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena $ARENA_HOME/bin/arena
 
+COPY --from=build /go/src/github.com/kubeflow/arena/bin/arena-uninstall $ARENA_HOME/bin/arena-uninstall
+
 COPY --from=build /go/src/github.com/kubeflow/arena/install.sh $ARENA_HOME/install.sh
 
 COPY --from=build /go/src/github.com/kubeflow/arena/arena-gen-kubeconfig.sh $ARENA_HOME/bin/arena-gen-kubeconfig.sh

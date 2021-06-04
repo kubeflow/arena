@@ -3,6 +3,7 @@ CURRENT_DIR=$(shell pwd)
 DIST_DIR=${CURRENT_DIR}/bin
 ARENA_CLI_NAME=arena
 JOB_MONITOR=jobmon
+ARENA_UNINSTALL=arena-uninstall
 OS_ARCH?=linux-amd64
 
 VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
@@ -78,16 +79,19 @@ cli-linux-amd64:
 	mkdir -p bin
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=off go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} cmd/job-monitor/*.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=off go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_UNINSTALL} cmd/uninstall/*.go
 
 .PHONY: cli-darwin-amd64
 cli-darwin-amd64:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=darwin GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
+	CGO_ENABLED=0 GOOS=darwin GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME}  ./cmd/arena/*.go
+	CGO_ENABLED=0 GOOS=darwin GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_UNINSTALL} ./cmd/uninstall/*.go
 
 .PHONY: cli-windows
 cli-windows:
 	mkdir -p bin
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_UNINSTALL} ./cmd/uninstall/*.go
 
 
 .PHONY: install-image
