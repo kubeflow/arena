@@ -71,16 +71,28 @@ function set_sudo() {
     fi  
 }
 
+function get_md5sum() {
+    res="$(md5sum $1 | awk '{print $1}')"
+    echo "$res"
+}
+
 # install kubectl and rename arena-kubectl
-# install helm and rename arena-helm 
+# install helm and rename arena-helm
 function install_kubectl_and_helm() {
     logger "debug" "start to install arena-kubectl and arena-helm"
-    ${sudo_prefix} rm -rf /usr/local/bin/arena-kubectl
-    ${sudo_prefix} rm -rf /usr/local/bin/arena-helm
-
-    ${sudo_prefix} cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/arena-kubectl
-    ${sudo_prefix} cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
-
+    local_arena_kubectl="/usr/local/bin/arena-kubectl"
+    if [ -f "$local_arena_kubectl" ]; then
+        logger "debug" "local $local_arena_kubectl exist"
+        md5sum_arena_kubectl=$(get_md5sum $SCRIPT_DIR/bin/kubectl)
+        md5sum_local_arena_kubectl=$(get_md5sum $local_arena_kubectl)
+        if [[ "$md5sum_arena_kubectl" != "$md5sum_local_arena_kubectl" ]]; then
+           ${sudo_prefix} cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/arena-kubectl
+        else
+           logger "debug" "skip install kubectl md5:$md5sum_arena_kubectl local:$md5sum_local_arena_kubectl"
+        fi
+    else
+        ${sudo_prefix} cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/arena-kubectl
+    fi
     if ! ${sudo_prefix} arena-kubectl cluster-info >/dev/null 2>&1; then
         logger "error" "failed to execute 'arena-kubectl cluster-info'"
         logger "error" "Please setup kubeconfig correctly before installing arena"
