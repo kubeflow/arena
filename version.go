@@ -95,7 +95,7 @@ func getChartsInfo() ChartsInfo {
 		fmt.Println(err)
 	} else {
 		for _, c := range chartFolder {
-			if c.IsDir() {
+			if c.IsDir() && c.Name() != "kubernetes-artifacts" {
 				if !util.StringInSlice(c.Name(), charts) {
 					charts = append(charts, c.Name())
 				}

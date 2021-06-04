@@ -156,7 +156,13 @@ function install_arena_and_charts() {
         ${sudo_prefix} cp /usr/local/bin/arena /usr/local/bin/arena-$now
     fi
     ${sudo_prefix} cp $SCRIPT_DIR/bin/arena /usr/local/bin/arena
-    
+    if [ -f /usr/local/bin/arena-uninstall ];then
+        ${sudo_prefix} rm -rf /usr/local/bin/arena-uninstall
+    fi
+    ${sudo_prefix} cp $SCRIPT_DIR/bin/arena-uninstall /usr/local/bin
+    if [ ! -d $SCRIPT_DIR/charts/kubernetes-artifacts ];then 
+        cp -a $SCRIPT_DIR/kubernetes-artifacts $SCRIPT_DIR/charts
+    fi 
     # For non-root user, put the charts dir to the home directory
     if [ `id -u` -eq 0 ];then  
         if [ -d "/charts" ]; then

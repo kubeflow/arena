@@ -1,11 +1,4 @@
 ---
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: arena-system
-  labels:
-    name: arena-system
----
 apiVersion: v1
 kind: ServiceAccount
 metadata:
