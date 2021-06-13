@@ -82,6 +82,8 @@ func (s *TensorflowServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	}
 	command.Flags().IntVar(&s.args.Port, "port", 8500, "the port of tensorflow gRPC listening port")
 	command.Flags().IntVar(&s.args.RestfulPort, "restfulPort", 8501, "the port of tensorflow RESTful listening port")
+	command.Flags().MarkDeprecated("restfulPort", "please use --restful-port instead")
+	command.Flags().StringVar(&s.args.RestfulPort, "restful-port", 8501, "the port of tensorflow RESTful listening port")
 
 	command.Flags().StringVar(&s.args.ModelName, "modelName", "", "the model name for serving")
 	command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
