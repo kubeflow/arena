@@ -38,7 +38,7 @@ public class TensorflowServingJobBuilder extends JobBuilder {
     }
 
     public JobBuilder restfulPort(int port) {
-        this.options.add(new StringField("--restfulPort",String.valueOf(port)));
+        this.options.add(new StringField("--restful-port",String.valueOf(port)));
         return this;
     }
 
