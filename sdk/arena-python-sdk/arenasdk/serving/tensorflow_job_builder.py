@@ -9,7 +9,7 @@ class TFServingJobBuilder(JobBuilder):
         super().__init__(ServingJobType.TFServingJob)
 
     def with_restful_port(self,port: int) -> TFServingJobBuilder:
-        self._options.append(StringField("--restfulPort",str(port)))
+        self._options.append(StringField("--restful-port",str(port)))
         return self
     
     def with_port(self,port: int) -> TFServingJobBuilder:
