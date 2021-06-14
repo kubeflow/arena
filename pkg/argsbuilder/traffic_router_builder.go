@@ -117,8 +117,13 @@ func (s *TrafficRouterArgsBuilder) setVersionWeights() error {
 	}
 	total := 0
 	versions := obj.(*[]string)
+	exist := map[string]bool{}
 	for _, vw := range *versions {
 		item := strings.Split(vw, ":")
+		if exist[item[0]] == true {
+			return fmt.Errorf("the version %v has duplicate weight", item[0])
+		}
+		exist[item[0]] = true
 		versionWeight := types.ServingVersionWeight{
 			Version: item[0],
 			Weight:  100,
