@@ -262,7 +262,7 @@ func getVirtualServiceWeight(istioClient *rest.RESTClient, namespace string, vir
 	log.Debugf("request URL: %s", request.URL())
 	object, err := request.Do(context.TODO()).Raw()
 	if err != nil {
-		log.Debugf("failed to get virtual service %v,reason: %v", err)
+		log.Debugf("failed to get virtual service %v,reason: %v", virtualServiceName, err)
 		return weights, nil
 	}
 	log.Debugf("original virtualservice: %s", object)
