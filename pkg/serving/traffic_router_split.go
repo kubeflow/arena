@@ -17,6 +17,7 @@ package serving
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -55,8 +56,15 @@ func RunTrafficRouterSplit(namespace string, args *types.TrafficRouterSplitArgs)
 	destinationRuleName := preprocessObject.ServiceName
 	log.Debugf("destinationRuleName:%s", virtualServiceName)
 	err = createOrUpdateDestinationRule(istioClient, preprocessObject, destinationRuleName)
+	if err != nil {
+		return err
+	}
 	err = createOrUpdateVirtualService(namespace, istioClient, preprocessObject, virtualServiceName)
-	return err
+	if err != nil {
+		return err
+	}
+	log.Infof("Succeed to split the traffic for serving job %v", args.ServingName)
+	return nil
 }
 
 func generateDestinationRule(namespace string, serviceName string, versionWeights []types.ServingVersionWeight) types.DestinationRuleCRD {
@@ -244,4 +252,41 @@ func initIstioClient() (*rest.RESTClient, error) {
 	// create the clientset
 
 	return rest.RESTClientFor(restConfig)
+}
+
+func getVirtualServiceWeight(istioClient *rest.RESTClient, namespace string, virtualServiceName string) (map[string]int32, error) {
+	weights := map[string]int32{}
+	request := istioClient.Get().Namespace(namespace).Resource("virtualservices").Name(virtualServiceName)
+	request.SetHeader("Accept", "application/json")
+	request.SetHeader("Content-Type", "application/json")
+	log.Debugf("request URL: %s", request.URL())
+	object, err := request.Do(context.TODO()).Raw()
+	if err != nil {
+		log.Debugf("failed to get virtual service %v,reason: %v", err)
+		return weights, nil
+	}
+	log.Debugf("original virtualservice: %s", object)
+	var virtualService types.VirtualServiceCRD
+	err = json.Unmarshal(object, &virtualService)
+	if err != nil {
+		return nil, err
+	}
+	httpInfos := virtualService.Spec.Http
+	for _, h := range httpInfos {
+		for _, route := range h.Route {
+			weight := route.Weight
+			subnet := route.Destination.Subset
+			if !strings.Contains(subnet, "subset-") {
+				log.Debugf("subnet %v is invalid,it not start with 'subset-'", subnet)
+				continue
+			}
+			items := strings.Split(subnet, "subset-")
+			if len(items) != 2 {
+				continue
+			}
+			version := items[1]
+			weights[version] = weight
+		}
+	}
+	return weights, nil
 }

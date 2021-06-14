@@ -88,7 +88,13 @@ func DisplayAllServingJobs(jobs []ServingJob, allNamespace bool, format types.Fo
 	fields := []string{"NAME", "TYPE", "VERSION", "DESIRED", "AVAILABLE", "ADDRESS", "PORTS"}
 	header = append(header, fields...)
 	PrintLine(w, header...)
+	jobInfosMap := addTrafficWeight(jobInfos)
 	for _, jobInfo := range jobInfos {
+		jobInfo, ok := jobInfosMap[genServingJobKey(jobInfo)]
+		if !ok {
+			log.Debugf("not found job in job map,skip to print it")
+			continue
+		}
 		line := []string{}
 		if allNamespace {
 			line = append(line, jobInfo.Namespace)
@@ -120,4 +126,96 @@ func DisplayAllServingJobs(jobs []ServingJob, allNamespace bool, format types.Fo
 		PrintLine(w, line...)
 	}
 	_ = w.Flush()
+}
+
+type ServingJobGroup struct {
+	Id        string
+	Namespace string
+	JobType   types.ServingJobType
+	JobName   string
+}
+
+func addTrafficWeight(allJobInfos []types.ServingJobInfo) map[string]types.ServingJobInfo {
+	type ServingJobGroup struct {
+		id        string
+		namespace string
+		jobType   types.ServingJobType
+		jobName   string
+		ip        string
+		endpoints []types.Endpoint
+		items     []types.ServingJobInfo
+	}
+	servingJobsGroup := map[string]*ServingJobGroup{}
+	servingJobMap := map[string]types.ServingJobInfo{}
+	for _, jobInfo := range allJobInfos {
+		key := genServingJobGroupKey(jobInfo)
+		if servingJobsGroup[key] == nil {
+			servingJobsGroup[key] = &ServingJobGroup{
+				id:        key,
+				namespace: jobInfo.Namespace,
+				jobName:   jobInfo.Name,
+				jobType:   types.ServingJobType(jobInfo.Type),
+				items:     []types.ServingJobInfo{},
+			}
+		}
+		servingJobMap[genServingJobKey(jobInfo)] = jobInfo
+		if jobInfo.IPAddress != "" && jobInfo.IPAddress != "N/A" {
+			servingJobsGroup[key].ip = jobInfo.IPAddress
+		}
+		if jobInfo.Endpoints != nil && len(jobInfo.Endpoints) != 0 {
+			servingJobsGroup[key].endpoints = jobInfo.Endpoints
+		}
+		servingJobsGroup[key].items = append(servingJobsGroup[key].items, jobInfo)
+	}
+	if len(servingJobsGroup) == len(allJobInfos) {
+		return servingJobMap
+	}
+	istioClient, err := initIstioClient()
+	if err != nil {
+		log.Debugf("failed to get istio client when querying traffic weight,reason: %v", err)
+		return servingJobMap
+	}
+	for key, group := range servingJobsGroup {
+		if len(group.items) == 1 {
+			continue
+		}
+		weights, err := getVirtualServiceWeight(istioClient, group.namespace, group.jobName)
+		if err != nil {
+			log.Debugf("failed to get virtual service weight,reason: %v", err)
+			continue
+		}
+		if len(weights) == 1 {
+			for version, weight := range weights {
+				if weight == int32(0) {
+					weights[version] = 100
+				}
+			}
+		}
+		for version, weight := range weights {
+			for _, j := range group.items {
+				jobKey := genServingJobKey(j)
+				j = servingJobMap[jobKey]
+				if j.IPAddress == "" || j.IPAddress == "N/A" {
+					j.IPAddress = group.ip
+				}
+				if j.Endpoints == nil || len(j.Endpoints) == 0 {
+					j.Endpoints = group.endpoints
+				}
+				servingJobMap[jobKey] = j
+			}
+			completeName := fmt.Sprintf("%v/%v", key, version)
+			target := servingJobMap[completeName]
+			target.IPAddress = fmt.Sprintf("%v(%v%%)", target.IPAddress, weight)
+			servingJobMap[completeName] = target
+		}
+	}
+	return servingJobMap
+}
+
+func genServingJobKey(jobInfo types.ServingJobInfo) string {
+	return fmt.Sprintf("%v/%v", genServingJobGroupKey(jobInfo), jobInfo.Version)
+}
+
+func genServingJobGroupKey(jobInfo types.ServingJobInfo) string {
+	return fmt.Sprintf("%v/%v/%v", jobInfo.Namespace, jobInfo.Type, jobInfo.Name)
 }
