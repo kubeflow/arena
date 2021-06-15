@@ -20,7 +20,7 @@ func NewTensorflowServingProcesser() Processer {
 		processerType:   types.TFServingJob,
 		client:          config.GetArenaConfiger().GetClientSet(),
 		enable:          true,
-		useIstioGateway: false,
+		useIstioGateway: true,
 	}
 	return &TensorflowServingProcesser{
 		processer: p,
