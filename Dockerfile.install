@@ -13,7 +13,7 @@ RUN wget https://storage.googleapis.com/kubernetes-helm/helm-v2.14.1-linux-amd64
     mv linux-amd64/helm /usr/local/bin/helm && \
     chmod u+x /usr/local/bin/helm
 
-ENV K8S_VERSION v1.11.2
+ENV K8S_VERSION v1.13.6
 RUN curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/amd64/kubectl && chmod +x /usr/local/bin/kubectl
 
 

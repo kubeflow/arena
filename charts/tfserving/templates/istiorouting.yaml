@@ -6,11 +6,13 @@ metadata:
   name: "{{ .Values.servingName }}"
 spec:
   hosts:
-  - "{{ .Values.servingName }}"
   {{- if eq .Values.exposeService true }}
+  - '*'
   gateways:
     - "{{ .Values.servingName }}-gateway"
     - "mesh"
+  {{- else}}
+  - "{{ .Values.servingName }}"
   {{- end }}
   http:
   - route:
@@ -39,7 +41,7 @@ spec:
     istio: ingressgateway # use istio default controller
   servers:
   - port:
-      number: 80
+      number: {{ .Values.restApiPort }}
       name: http
       protocol: HTTP
     hosts:
