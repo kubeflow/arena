@@ -124,7 +124,7 @@ func generateVirtualService(namespace string, serviceName string, versionWeights
 		Spec: types.VirtualService{
 			VirtualService: &istiov1alpha3.VirtualService{
 				Gateways: []string{serviceName + "-gateway"},
-				Hosts:    []string{"'*'"},
+				Hosts:    []string{"*"},
 			},
 			Http: []*types.HTTPRoute{
 				{
