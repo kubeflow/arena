@@ -10,7 +10,6 @@ spec:
   - '*'
   gateways:
     - "{{ .Values.servingName }}-gateway"
-    - "mesh"
   {{- else}}
   - "{{ .Values.servingName }}"
   {{- end }}

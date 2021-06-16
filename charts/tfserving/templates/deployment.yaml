@@ -77,11 +77,6 @@ spec:
               protocol: TCP
             - containerPort: {{ .Values.restApiPort }}
               name: http-serving
-          readinessProbe:
-            tcpSocket:
-              port: serving
-            initialDelaySeconds: 15
-            timeoutSeconds: 1
           resources:
             limits:
               {{- if .Values.cpu }}
