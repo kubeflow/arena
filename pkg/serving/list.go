@@ -184,6 +184,7 @@ func addTrafficWeight(allJobInfos []types.ServingJobInfo) map[string]types.Servi
 			log.Debugf("failed to get virtual service weight,reason: %v", err)
 			continue
 		}
+		// if the weight is 0,fix it with 100
 		if len(weights) == 1 {
 			for version, weight := range weights {
 				if weight == int32(0) {
@@ -191,22 +192,33 @@ func addTrafficWeight(allJobInfos []types.ServingJobInfo) map[string]types.Servi
 				}
 			}
 		}
+		jobHasBeenChanged := map[string]bool{}
 		for version, weight := range weights {
-			for _, j := range group.items {
-				jobKey := genServingJobKey(j)
-				j = servingJobMap[jobKey]
-				if j.IPAddress == "" || j.IPAddress == "N/A" {
-					j.IPAddress = group.ip
-				}
-				if j.Endpoints == nil || len(j.Endpoints) == 0 {
-					j.Endpoints = group.endpoints
-				}
-				servingJobMap[jobKey] = j
-			}
 			completeName := fmt.Sprintf("%v/%v", key, version)
 			target := servingJobMap[completeName]
-			target.IPAddress = fmt.Sprintf("%v(%v%%)", target.IPAddress, weight)
+			switch weight {
+			case int32(0):
+				target.IPAddress = "N/A"
+				target.Endpoints = []types.Endpoint{}
+			case int32(100):
+				target.IPAddress = fmt.Sprintf("%v", target.IPAddress)
+				target.Endpoints = group.endpoints
+			default:
+				target.IPAddress = fmt.Sprintf("%v(%v%%)", target.IPAddress, weight)
+				target.Endpoints = group.endpoints
+			}
+			jobHasBeenChanged[completeName] = true
 			servingJobMap[completeName] = target
+		}
+		for _, item := range group.items {
+			jobKey := genServingJobKey(item)
+			if jobHasBeenChanged[jobKey] {
+				continue
+			}
+			t := servingJobMap[jobKey]
+			t.IPAddress = "N/A"
+			t.Endpoints = []types.Endpoint{}
+			servingJobMap[jobKey] = t
 		}
 	}
 	return servingJobMap
