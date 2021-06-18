@@ -14,14 +14,13 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.4.0
-	github.com/tidwall/gjson v1.7.4
 	//github.com/stretchr/testify v1.4.0
 	gopkg.in/yaml.v2 v2.3.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f
 	k8s.io/api v0.18.6
 	k8s.io/apiextensions-apiserver v0.18.6
 	k8s.io/apimachinery v0.18.6
-	k8s.io/cli-runtime v0.18.5
+	k8s.io/cli-runtime v0.21.2
 	k8s.io/client-go v0.18.6
 	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 	k8s.io/kubectl v0.0.0

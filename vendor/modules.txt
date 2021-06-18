@@ -148,12 +148,6 @@ github.com/spf13/viper
 github.com/stretchr/testify/assert
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/tidwall/gjson v1.7.4
-github.com/tidwall/gjson
-# github.com/tidwall/match v1.0.3
-github.com/tidwall/match
-# github.com/tidwall/pretty v1.1.0
-github.com/tidwall/pretty
 # golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
@@ -342,7 +336,7 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/cli-runtime v0.18.5 => k8s.io/cli-runtime v0.18.5
+# k8s.io/cli-runtime v0.21.2 => k8s.io/cli-runtime v0.18.5
 k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/kustomize
 k8s.io/cli-runtime/pkg/kustomize/k8sdeps
