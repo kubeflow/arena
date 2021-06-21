@@ -65,6 +65,8 @@ var ServingTypeMap = map[ServingJobType]ServingTypeInfo{
 
 // ServingJobInfo display serving job information
 type ServingJobInfo struct {
+	// UUID specifies the unique identity of the serving job
+	UUID string `json:"uuid" yaml:"uuid"`
 	// Name specifies serving job name
 	Name string `json:"name" yaml:"name"`
 	// Namespace specifies serving job namespace

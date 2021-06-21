@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	seldonApp = "seldon-app"
-	seldonGrpcServingPortName = "grpc"
+	seldonApp                    = "seldon-app"
+	seldonGrpcServingPortName    = "grpc"
 	seldonRestfulServingPortName = "http"
 )
 
@@ -63,6 +63,7 @@ func (p *SeldonServingProcesser) ListServingJobs(namespace string, allNamespace 
 func (s *seldonServingJob) Convert2JobInfo() types.ServingJobInfo {
 	servingType := types.ServingTypeMap[s.servingType].Alias
 	servingJobInfo := types.ServingJobInfo{
+		UUID:              s.Uid(),
 		Name:              s.name,
 		Namespace:         s.namespace,
 		Version:           s.version,

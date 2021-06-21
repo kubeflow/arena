@@ -52,6 +52,8 @@ const (
 )
 
 type CronInfo struct {
+	UUID string `json:"uuid" yaml:"uuid"`
+
 	Name string `json:"name" yaml:"name"`
 
 	Namespace string `json:"namespace" yaml:"namespace"`

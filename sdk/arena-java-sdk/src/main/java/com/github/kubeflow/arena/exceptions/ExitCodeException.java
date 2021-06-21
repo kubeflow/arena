@@ -5,8 +5,7 @@ import java.io.IOException;
 /**
  * This is an IOException with exit code added.
  */
-public  class ExitCodeException extends IOException {
-
+public class ExitCodeException extends IOException {
 
     private final int mExitCode;
 
@@ -14,7 +13,7 @@ public  class ExitCodeException extends IOException {
      * Constructs an ExitCodeException.
      *
      * @param exitCode the exit code returns by shell
-     * @param message the exception message
+     * @param message  the exception message
      */
     public ExitCodeException(int exitCode, String message) {
         super(message);

@@ -95,6 +95,7 @@ func (ch *CronHandler) UpdateCron(namespace string, name string, suspend bool) e
 
 func (ch *CronHandler) buildCronInfo(cron *v1alpha1.Cron) *types.CronInfo {
 	cronInfo := &types.CronInfo{
+		UUID:              string(cron.UID),
 		Name:              cron.Name,
 		Namespace:         cron.Namespace,
 		Type:              cron.Spec.CronTemplate.Kind,

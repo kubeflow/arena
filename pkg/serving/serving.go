@@ -84,6 +84,10 @@ func (s *servingJob) Name() string {
 	return s.name
 }
 
+func (s *servingJob) Uid() string {
+	return string(s.deployment.UID)
+}
+
 func (s *servingJob) Namespace() string {
 	return s.namespace
 }
@@ -253,6 +257,7 @@ func (s *servingJob) Instances() []types.ServingInstance {
 func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 	servingType := types.ServingTypeMap[s.servingType].Alias
 	servingJobInfo := types.ServingJobInfo{
+		UUID:              s.Uid(),
 		Name:              s.name,
 		Namespace:         s.namespace,
 		Version:           s.version,

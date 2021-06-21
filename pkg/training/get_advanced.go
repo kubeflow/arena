@@ -111,6 +111,7 @@ func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes 
 
 	trainingJobInfo := &types.TrainingJobInfo{
 		Name:      job.Name(),
+		UUID:      job.Uid(),
 		Namespace: job.Namespace(),
 		Status:    types.TrainingJobStatus(GetJobRealStatus(job)),
 		//Duration:     util.ShortHumanDuration(job.Duration()),

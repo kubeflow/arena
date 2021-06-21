@@ -68,9 +68,6 @@ public class Command {
         }
     }
 
-
-
-
     /**
      * Static method to execute a shell command.
      *

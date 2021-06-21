@@ -2,25 +2,22 @@ package com.github.kubeflow.arena.enums;
 
 public enum ServingJobType {
 
-    TFServingJob("tf","Tensorflow"),
+    TFServingJob("tf", "Tensorflow"),
 
-    TRTServingJob("trt","Tensorrt"),
+    TRTServingJob("trt", "Tensorrt"),
 
-    KFServingJob("kf","KFServing"),
+    KFServingJob("kf", "KFServing"),
 
-    CustomServingJob("custom","Custom"),
+    CustomServingJob("custom", "Custom"),
 
-    AllServingJob("",""),
+    AllServingJob("", ""),
 
-    UnknownServingJob("unknown","unknown"),
-
-    ;
+    UnknownServingJob("unknown", "unknown");
 
     private final String shortHand;
     private final String alias;
 
-
-    ServingJobType(final String shortHand,final String alias) {
+    ServingJobType(final String shortHand, final String alias) {
         this.shortHand = shortHand;
         this.alias = alias;
     }

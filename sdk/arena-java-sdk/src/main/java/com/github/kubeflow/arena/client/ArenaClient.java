@@ -14,12 +14,12 @@ public class ArenaClient {
     private ApiClient apiClient = null;
     private String loglevel;
     private String arenaNamespace;
-    private static String  DefaultKubeConfig = "";
-    private static String  DefaultArenaNamespace = "arena-system";
-    private static String  DefaultLogLevel = "info";
-    private static String  DefaultNamespace = "default";
+    private static String DefaultKubeConfig = "";
+    private static String DefaultArenaNamespace = "arena-system";
+    private static String DefaultLogLevel = "info";
+    private static String DefaultNamespace = "default";
 
-    public ArenaClient(String kubeConfig, String namespace,String loglevel,String arenaNamespace) throws ArenaException  {
+    public ArenaClient(String kubeConfig, String namespace, String loglevel, String arenaNamespace) throws ArenaException {
         if (kubeConfig == null || kubeConfig.length() == 0) {
             String defaultKubeconfigPath = System.getProperty("user.home") + "/.kube/config";
             File defaultKubeconfig = new File(defaultKubeconfigPath);
@@ -31,7 +31,7 @@ public class ArenaClient {
         if (namespace != null && namespace.length() != 0) {
             this.namespace = namespace;
         }
-        if(loglevel != null && loglevel.length() != 0) {
+        if (loglevel != null && loglevel.length() != 0) {
             this.loglevel = loglevel;
         }
         if (arenaNamespace != null && arenaNamespace.length() != 0) {
@@ -39,25 +39,25 @@ public class ArenaClient {
         }
         try {
             this.apiClient = new Utils().createK8sClient(this.kubeConfig);
-        }catch (IOException e) {
-            throw new ArenaException(ArenaErrorEnum.UNKNOWN,"create arena client failed, " + e.getMessage());
+        } catch (IOException e) {
+            throw new ArenaException(ArenaErrorEnum.UNKNOWN, "create arena client failed, " + e.getMessage());
         }
     }
 
     public ArenaClient() throws ArenaException {
-        this(DefaultKubeConfig,DefaultNamespace,DefaultLogLevel,DefaultArenaNamespace);
+        this(DefaultKubeConfig, DefaultNamespace, DefaultLogLevel, DefaultArenaNamespace);
     }
 
     public ArenaClient(String kubeConfig) throws ArenaException {
-        this(kubeConfig,DefaultNamespace,DefaultLogLevel,DefaultArenaNamespace);
+        this(kubeConfig, DefaultNamespace, DefaultLogLevel, DefaultArenaNamespace);
     }
 
-    public ArenaClient(String kubeConfig,String namespace) throws ArenaException {
-        this(kubeConfig,namespace,DefaultLogLevel,DefaultArenaNamespace);
+    public ArenaClient(String kubeConfig, String namespace) throws ArenaException {
+        this(kubeConfig, namespace, DefaultLogLevel, DefaultArenaNamespace);
     }
 
-    public ArenaClient(String kubeConfig,String namespace,String loglevel) throws ArenaException {
-        this(kubeConfig,namespace,loglevel,DefaultArenaNamespace);
+    public ArenaClient(String kubeConfig, String namespace, String loglevel) throws ArenaException {
+        this(kubeConfig, namespace, loglevel, DefaultArenaNamespace);
     }
 
     public ApiClient getApiClient() {
@@ -65,15 +65,15 @@ public class ArenaClient {
     }
 
     public TrainingClient training() {
-        return new TrainingClient(this.kubeConfig,this.namespace,this.loglevel,this.arenaNamespace);
+        return new TrainingClient(this.kubeConfig, this.namespace, this.loglevel, this.arenaNamespace);
     }
 
     public ServingClient serving() {
-        return new ServingClient(this.kubeConfig,this.namespace,this.loglevel,this.arenaNamespace);
+        return new ServingClient(this.kubeConfig, this.namespace, this.loglevel, this.arenaNamespace);
     }
 
     public NodeClient nodes() {
-        return new NodeClient(this.kubeConfig,this.namespace,this.loglevel,this.arenaNamespace);
+        return new NodeClient(this.kubeConfig, this.namespace, this.loglevel, this.arenaNamespace);
     }
 
 }

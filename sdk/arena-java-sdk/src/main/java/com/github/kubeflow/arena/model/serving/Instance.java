@@ -3,9 +3,7 @@ package com.github.kubeflow.arena.model.serving;
 import com.alibaba.fastjson.JSON;
 import com.github.kubeflow.arena.exceptions.ArenaException;
 import com.github.kubeflow.arena.model.common.*;
-
 import java.io.InputStream;
-
 import java.io.IOException;
 import com.github.kubeflow.arena.enums.ServingJobType;
 import com.github.kubeflow.arena.enums.ArenaErrorEnum;
@@ -38,14 +36,15 @@ public class Instance {
     public String getOwner() {
         return owner;
     }
+
     public void setOwner(String owner) {
         this.owner = owner;
     }
 
-
     public void setNamespace(String namespace) {
         this.namespace = namespace;
     }
+
     public String getNamespace() {
         return namespace;
     }
@@ -53,6 +52,7 @@ public class Instance {
     public void setOwnerType(ServingJobType ownerType) {
         this.ownerType = ownerType;
     }
+
     public ServingJobType getOwnerType() {
         return ownerType;
     }
@@ -60,34 +60,39 @@ public class Instance {
     public String getName() {
         return name;
     }
-    public void   setName(String name) {
+
+    public void setName(String name) {
         this.name = name;
     }
 
     public String getOwnerVersion() {
         return this.ownerVersion;
     }
+
     public void setOwnerVersion(String version) {
-       this.ownerVersion = version;
+        this.ownerVersion = version;
     }
 
     public String getAge() {
         return age;
     }
-    public void   setAge(String age) {
+
+    public void setAge(String age) {
         this.age = age;
     }
 
     public String getStatus() {
         return status;
     }
-    public void   setStatus(String status) {
+
+    public void setStatus(String status) {
         this.status = status;
     }
 
     public int getReadyContainers() {
         return readyContainers;
     }
+
     public void setReadyContainers(int count) {
         this.readyContainers = count;
     }
@@ -95,6 +100,7 @@ public class Instance {
     public int getTotalContainers() {
         return this.totalContainers;
     }
+
     public void setTotalContainers(int count) {
         this.totalContainers = count;
     }
@@ -102,6 +108,7 @@ public class Instance {
     public int getRestartCount() {
         return this.restartCount;
     }
+
     public void setRestartCount(int count) {
         this.restartCount = count;
     }
@@ -109,13 +116,15 @@ public class Instance {
     public String getNodeName() {
         return nodeName;
     }
-    public void   setNodeName(String node) {
+
+    public void setNodeName(String node) {
         this.nodeName = node;
     }
 
     public void setNodeIP(String nodeIP) {
         this.nodeIP = nodeIP;
     }
+
     public String getNodeIP() {
         return this.nodeIP;
     }
@@ -123,6 +132,7 @@ public class Instance {
     public String getIp() {
         return this.ip;
     }
+
     public void setIp(String ip) {
         this.ip = ip;
     }
@@ -130,6 +140,7 @@ public class Instance {
     public int getRequestGPUMemory() {
         return this.requestGPUMemory;
     }
+
     public void setRequestGPUMemory(int count) {
         this.requestGPUMemory = count;
     }
@@ -142,7 +153,7 @@ public class Instance {
         return this.requestGPUs;
     }
 
-    public InputStream getLog(Logger logger) throws ArenaException, IOException  {
+    public InputStream getLog(Logger logger) throws ArenaException, IOException {
         ApiClient apiClient = Configuration.getDefaultApiClient();
         int defaultTimeout = apiClient.getReadTimeout();
         if (logger.getFollowTimeout() != null && logger.getFollowTimeout() != 0) {
@@ -150,20 +161,20 @@ public class Instance {
         }
         CoreV1Api coreClient = new CoreV1Api(apiClient);
         V1Pod pod;
-        try{
+        try {
             //CoreV1Api api = new CoreV1Api(apiClient);
             pod = coreClient.readNamespacedPod(this.name, this.namespace, null, null, false);
-        }catch (ApiException e) {
+        } catch (ApiException e) {
             apiClient.setReadTimeout(defaultTimeout);
-            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS,e.getMessage());
+            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS, e.getMessage());
         }
         if (pod.getSpec() == null) {
             apiClient.setReadTimeout(defaultTimeout);
-            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS,"pod.spec is null and container isn't specified.");
+            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS, "pod.spec is null and container isn't specified.");
         }
         if (pod.getSpec().getContainers() == null || pod.getSpec().getContainers().size() < 1) {
             apiClient.setReadTimeout(defaultTimeout);
-            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS,"pod.spec.containers has no containers");
+            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS, "pod.spec.containers has no containers");
         }
         String container = pod.getSpec().getContainers().get(0).getName();
         String namespace = this.namespace;
@@ -191,21 +202,20 @@ public class Instance {
                     timestamps,
                     null);
             response = call.execute();
-        }catch (ApiException e) {
+        } catch (ApiException e) {
             apiClient.setReadTimeout(defaultTimeout);
-            throw  new ArenaException(ArenaErrorEnum.TRAINING_LOGS,e.getMessage());
+            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS, e.getMessage());
         }
         if (!response.isSuccessful()) {
             apiClient.setReadTimeout(defaultTimeout);
-            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS,"Logs request failed: " + response.code());
+            throw new ArenaException(ArenaErrorEnum.TRAINING_LOGS, "Logs request failed: " + response.code());
         }
         apiClient.setReadTimeout(defaultTimeout);
         return response.body().byteStream();
     }
 
-
     @Override
     public String toString() {
-       return JSON.toJSONString(this,true);
+        return JSON.toJSONString(this, true);
     }
 }
