@@ -114,32 +114,34 @@ func PrintServingJob(job ServingJob, format types.FormatStyle) {
 		}
 		ports = append(ports, port)
 	}
-	isGPUShare := false
-	title := "GPUs"
-	step := "----"
-	gpuAllocation := fmt.Sprintf("GPUs:       %v", jobInfo.RequestGPU)
-	if jobInfo.RequestGPUMemory != 0 {
-		isGPUShare = true
-		title = "GPU_MEMORY"
-		step = "----------"
-		gpuAllocation = fmt.Sprintf("GPU Memory: %vGiB", jobInfo.RequestGPUMemory)
-	}
-	lines := []string{gpuAllocation, "", "Instances:", fmt.Sprintf("  NAME\tSTATUS\tAGE\tREADY\tRESTARTS\t%v\tNODE", title)}
-	lines = append(lines, fmt.Sprintf("  ----\t------\t---\t-----\t--------\t%v\t----", step))
+	totalGPUs := float64(0)
 	for _, i := range jobInfo.Instances {
-		value := fmt.Sprintf("%v", i.RequestGPU)
-		if isGPUShare {
-			value = fmt.Sprintf("%vGiB", i.RequestGPUMemory)
-		}
+		totalGPUs += i.RequestGPUs
+	}
+	title := ""
+	step := ""
+	gpuLine := ""
+	if totalGPUs != 0 {
+		title = "\tGPUS"
+		step = "\t----"
+		gpuLine = fmt.Sprintf("GPUs:       %.1f", totalGPUs)
+	}
+
+	lines := []string{gpuLine, "", "Instances:", fmt.Sprintf("  NAME\tSTATUS\tAGE\tREADY\tRESTARTS%v\tNODE", title)}
+	lines = append(lines, fmt.Sprintf("  ----\t------\t---\t-----\t--------%v\t----", step))
+	for _, i := range jobInfo.Instances {
+		value := fmt.Sprintf("%.1f", i.RequestGPUs)
 		items := []string{
 			fmt.Sprintf("  %v", i.Name),
 			fmt.Sprintf("%v", i.Status),
 			fmt.Sprintf("%v", i.Age),
 			fmt.Sprintf("%v/%v", i.ReadyContainer, i.TotalContainer),
 			fmt.Sprintf("%v", i.RestartCount),
-			fmt.Sprintf("%v", value),
-			fmt.Sprintf("%v", i.NodeName),
 		}
+		if totalGPUs != 0 {
+			items = append(items, value)
+		}
+		items = append(items, i.NodeName)
 		lines = append(lines, strings.Join(items, "\t"))
 	}
 	lines = append(lines, "")
