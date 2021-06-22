@@ -3,6 +3,8 @@ package serving
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
@@ -11,12 +13,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 )
 
 const (
-	seldonApp = "seldon-app"
-	seldonGrpcServingPortName = "grpc"
+	seldonApp                    = "seldon-app"
+	seldonGrpcServingPortName    = "grpc"
 	seldonRestfulServingPortName = "http"
 )
 
@@ -71,7 +72,7 @@ func (s *seldonServingJob) Convert2JobInfo() types.ServingJobInfo {
 		Desired:           s.DesiredInstances(),
 		IPAddress:         s.IPAddress(),
 		Available:         s.AvailableInstances(),
-		RequestGPU:        s.RequestGPUs(),
+		RequestGPUs:       s.RequestGPUs(),
 		RequestGPUMemory:  s.RequestGPUMemory(),
 		Endpoints:         s.Endpoints(),
 		Instances:         s.Instances(),

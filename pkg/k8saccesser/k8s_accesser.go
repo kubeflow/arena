@@ -753,6 +753,20 @@ func (k *k8sResourceAccesser) GetEndpoints(namespace, name string) (*v1.Endpoint
 	return endpoints, nil
 }
 
+func (k *k8sResourceAccesser) GetNode(nodeName string) (*v1.Node, error) {
+	node := &v1.Node{}
+	var err error
+	if k.cacheEnabled {
+		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Name: nodeName}, node)
+	} else {
+		node, err = k.clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+	}
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
 func parseLabelSelector(item string) (labels.Selector, error) {
 	if item == "" {
 		return labels.Everything(), nil
