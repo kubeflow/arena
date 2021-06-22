@@ -30,6 +30,7 @@ public class Instance {
     private String nodeIP;
     private String nodeName;
     private String ip;
+    private float requestCPUs;
     private int requestGPUs;
     private int requestGPUMemory;
 
@@ -137,12 +138,12 @@ public class Instance {
         this.ip = ip;
     }
 
-    public int getRequestGPUMemory() {
-        return this.requestGPUMemory;
+    public float getRequestCPUs() {
+        return requestCPUs;
     }
 
-    public void setRequestGPUMemory(int count) {
-        this.requestGPUMemory = count;
+    public void setRequestCPUs(float requestCPUs) {
+        this.requestCPUs = requestCPUs;
     }
 
     public void setRequestGPUs(int requestGPUs) {
@@ -151,6 +152,14 @@ public class Instance {
 
     public int getRequestGPUs() {
         return this.requestGPUs;
+    }
+
+    public int getRequestGPUMemory() {
+        return this.requestGPUMemory;
+    }
+
+    public void setRequestGPUMemory(int count) {
+        this.requestGPUMemory = count;
     }
 
     public InputStream getLog(Logger logger) throws ArenaException, IOException {

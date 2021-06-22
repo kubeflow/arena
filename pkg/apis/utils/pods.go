@@ -17,10 +17,18 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+func CPUCountInPod(pod *v1.Pod) float64 {
+	total := 0.0
+	for _, count := range ResourceInContainers(pod, types.CPUResourceName) {
+		total += count.(float64)
+	}
+	return total
+}
+
 func GPUCountInPod(pod *v1.Pod) int {
 	total := 0
 	for _, count := range ResourceInContainers(pod, types.NvidiaGPUResourceName) {
-		total += count
+		total += count.(int)
 	}
 	return total
 }
@@ -28,17 +36,17 @@ func GPUCountInPod(pod *v1.Pod) int {
 func AliyunGPUCountInPod(pod *v1.Pod) int {
 	total := 0
 	for _, count := range ResourceInContainers(pod, types.AliyunGPUResourceName) {
-		total += count
+		total += count.(int)
 	}
 	return total
 }
 
-func ResourceInContainers(pod *v1.Pod, resourceName string) map[int]int {
-	total := map[int]int{}
+func ResourceInContainers(pod *v1.Pod, resourceName string) map[int]interface{} {
+	total := make(map[int]interface{})
 	containers := pod.Spec.Containers
 	for index, container := range containers {
 		if val, ok := container.Resources.Limits[v1.ResourceName(resourceName)]; ok && int(val.Value()) != 0 {
-			total[index] = int(val.Value())
+			total[index] = val.Value()
 		}
 	}
 	return total
@@ -133,7 +141,7 @@ func DefinePodPhaseStatus(pod v1.Pod) (string, int, int, int) {
 func GPUMemoryCountInPod(pod *v1.Pod) int {
 	total := 0
 	for _, count := range ResourceInContainers(pod, types.GPUShareResourceName) {
-		total += count
+		total += count.(int)
 	}
 	return total
 }

@@ -87,6 +87,8 @@ type ServingJobInfo struct {
 	IPAddress string `json:"ip" yaml:"ip"`
 	// Instances gives the instance informations
 	Instances []ServingInstance `json:"instances" yaml:"instances"`
+	// RequestCPU specifies the request cpus
+	RequestCPU float64 `json:"requestCPUs" yaml:"requestCPUs"`
 	// RequestGPU specifies the request gpus
 	RequestGPU int `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory specifies the request gpu memory,only for gpushare

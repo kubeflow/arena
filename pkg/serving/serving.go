@@ -205,6 +205,14 @@ func (s *servingJob) Endpoints() []types.Endpoint {
 	return endpoints
 }
 
+func (s *servingJob) RequestCPUs() float64 {
+	cpus := 0.0
+	for _, pod := range s.pods {
+		cpus += utils.CPUCountInPod(pod)
+	}
+	return cpus
+}
+
 func (s *servingJob) RequestGPUs() int {
 	gpus := 0
 	for _, pod := range s.pods {
@@ -266,6 +274,7 @@ func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 		Desired:           s.DesiredInstances(),
 		IPAddress:         s.IPAddress(),
 		Available:         s.AvailableInstances(),
+		RequestCPU:        s.RequestCPUs(),
 		RequestGPU:        s.RequestGPUs(),
 		RequestGPUMemory:  s.RequestGPUMemory(),
 		Endpoints:         s.Endpoints(),

@@ -13,6 +13,7 @@ public class ServingJobInfo {
     private String ip;
     private int desiredInstances;
     private int availableInstances;
+    private float requestCPUs;
     private int requestGPUs;
     private int requestGPUMemory;
     private Instance[] instances;
@@ -40,6 +41,10 @@ public class ServingJobInfo {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    public void setType(ServingJobType type) {
+        this.type = type;
     }
 
     public String getAge() {
@@ -88,6 +93,14 @@ public class ServingJobInfo {
 
     public int getDesiredInstances() {
         return desiredInstances;
+    }
+
+    public float getRequestCPUs() {
+        return requestCPUs;
+    }
+
+    public void setRequestCPUs(float requestCPUs) {
+        this.requestCPUs = requestCPUs;
     }
 
     public int getRequestGPUs() {
