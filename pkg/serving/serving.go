@@ -3,6 +3,7 @@ package serving
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -507,7 +508,7 @@ func getPodGPUs(pod *v1.Pod, gpuMemory int, index int) float64 {
 		if nodeGPUMemory == float64(0) {
 			return float64(0)
 		}
-		return float64(gpuMemory) / nodeGPUMemory
+		return math.Round(float64(gpuMemory)/nodeGPUMemory*10) / 10
 	}
 	return float64(utils.GPUCountInPod(pod) + utils.AliyunGPUCountInPod(pod))
 }
