@@ -94,7 +94,7 @@ func DisplayAllServingJobs(jobs []ServingJob, allNamespace bool, format types.Fo
 	fields := []string{"NAME", "TYPE", "VERSION", "DESIRED", "AVAILABLE", "ADDRESS", "PORTS"}
 	header = append(header, fields...)
 	if gpus != float64(0) {
-		header = append(header, "GPUS")
+		header = append(header, "GPU")
 	}
 	PrintLine(w, header...)
 	jobInfosMap := addTrafficWeight(jobInfos)
@@ -133,16 +133,12 @@ func DisplayAllServingJobs(jobs []ServingJob, allNamespace bool, format types.Fo
 			strings.Join(ports, ","),
 		}
 		if gpus != float64(0) {
-			if jobInfo.RequestGPUs == float64(0) && jobInfo.RequestGPUMemory == 0 {
-				items = append(items, "N/A")
-			} else {
-				jobGPUs := float64(0)
-				for _, instance := range jobInfo.Instances {
-					jobGPUs += instance.RequestGPUs
-				}
-				items = append(items, fmt.Sprintf("%.1f", jobGPUs))
-
+			jobGPUs := float64(0)
+			for _, instance := range jobInfo.Instances {
+				jobGPUs += instance.RequestGPUs
 			}
+			items = append(items, fmt.Sprintf("%v", jobGPUs))
+
 		}
 		line = append(line, items...)
 		PrintLine(w, line...)
