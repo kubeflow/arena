@@ -258,10 +258,10 @@ func (g *gpuexclusive) displayPodInfos(lines []string, nodeInfo types.GPUExclusi
 			if allocatedGPUs == "" {
 				allocatedGPUs = "N/A"
 			}
-			podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%v\t%v\t%v", podInfo.Namespace, podInfo.Name, podInfo.Status, podInfo.RequestGPU, allocatedGPUs))
+			podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%v\t%.1f\t%v", podInfo.Namespace, podInfo.Name, podInfo.Status, float64(podInfo.RequestGPU), allocatedGPUs))
 			continue
 		}
-		podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%v\t%v", podInfo.Namespace, podInfo.Name, podInfo.Status, podInfo.RequestGPU))
+		podLines = append(podLines, fmt.Sprintf("  %v\t%v\t%v\t%.1f", podInfo.Namespace, podInfo.Name, podInfo.Status, float64(podInfo.RequestGPU)))
 	}
 	if len(podLines) == 3 {
 		podLines = []string{}
@@ -279,9 +279,9 @@ func (g *gpuexclusive) displayDeviceInfos(lines []string, nodeInfo types.GPUExcl
 
 func (g *gpuexclusive) displayDeviceUnderNoGPUMetric(lines []string, nodeInfo types.GPUExclusiveNodeInfo) []string {
 	deviceLines := []string{"GPU Summary:"}
-	deviceLines = append(deviceLines, fmt.Sprintf("  Total GPUs:     %v", nodeInfo.TotalGPUs))
-	deviceLines = append(deviceLines, fmt.Sprintf("  Allocated GPUs: %v", nodeInfo.AllocatedGPUs))
-	deviceLines = append(deviceLines, fmt.Sprintf("  Unhealthy GPUs: %v", nodeInfo.UnhealthyGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Total GPUs:     %.1f", nodeInfo.TotalGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Allocated GPUs: %.1f", nodeInfo.AllocatedGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Unhealthy GPUs: %.1f", nodeInfo.UnhealthyGPUs))
 	lines = append(lines, deviceLines...)
 	return lines
 }
@@ -420,8 +420,8 @@ func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealt
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, fmt.Sprintf("%v", nodeInfo.TotalGPUs))
-		items = append(items, fmt.Sprintf("%v", nodeInfo.AllocatedGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.TotalGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.AllocatedGPUs))
 		if showNodeType {
 			for _, typeInfo := range types.NodeTypeSlice {
 				if typeInfo.Name == types.GPUExclusiveNode {
@@ -430,7 +430,7 @@ func displayGPUExclusiveNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealt
 			}
 		}
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
+			items = append(items, fmt.Sprintf("%.1f", nodeInfo.UnhealthyGPUs))
 		}
 		PrintLine(w, items...)
 	}
@@ -469,15 +469,15 @@ func displayGPUExclusiveNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, fmt.Sprintf("%v", nodeInfo.TotalGPUs))
-		items = append(items, fmt.Sprintf("%v", nodeInfo.AllocatedGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.TotalGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.AllocatedGPUs))
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
+			items = append(items, fmt.Sprintf("%.1f", nodeInfo.UnhealthyGPUs))
 		}
 		PrintLine(w, items...)
 	}
 	PrintLine(w, "---------------------------------------------------------------------------------------------------")
-	PrintLine(w, "Allocated/Total GPUs of nodes which own resource nvidia.com/gpu In Cluster:")
+	PrintLine(w, "Allocated/Total GPUs of nodes that own resource nvidia.com/gpu In Cluster:")
 	allocatedPercent := float64(0)
 	if totalGPUs != 0 {
 		allocatedPercent = float64(allocatedGPUs) / float64(totalGPUs) * 100
@@ -486,10 +486,10 @@ func displayGPUExclusiveNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 	if totalGPUs != 0 {
 		unhealthyPercent = float64(unhealthyGPUs) / float64(totalGPUs) * 100
 	}
-	PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
+	PrintLine(w, fmt.Sprintf("%.1f/%.1f (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
 	if unhealthyGPUs != 0 {
-		PrintLine(w, "Unhealthy/Total GPUs of nodes which own resource nvidia.com/gpu In Cluster:")
-		PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
+		PrintLine(w, "Unhealthy/Total GPUs of nodes that own resource nvidia.com/gpu In Cluster:")
+		PrintLine(w, fmt.Sprintf("%.1f/%.1f (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
 	}
 }
 

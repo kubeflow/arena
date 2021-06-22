@@ -373,9 +373,9 @@ func (g *gputopo) displayDeviceInfoUnderNoMetrics(lines []string, nodeInfo types
 		deviceLines = []string{}
 	}
 	deviceLines = append(deviceLines, "GPU Summary:")
-	deviceLines = append(deviceLines, fmt.Sprintf("  Total GPUs: %v", nodeInfo.TotalGPUs))
-	deviceLines = append(deviceLines, fmt.Sprintf("  Allocated GPUs: %v", nodeInfo.AllocatedGPUs))
-	deviceLines = append(deviceLines, fmt.Sprintf("  Unhealthy GPUs: %v", g.getUnhealthyGPUs()))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Total GPUs: %.1f", nodeInfo.TotalGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Allocated GPUs: %.1f", nodeInfo.AllocatedGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Unhealthy GPUs: %.1f", g.getUnhealthyGPUs()))
 	lines = append(lines, deviceLines...)
 	return lines
 }
@@ -529,8 +529,8 @@ func displayGPUTopologyNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealth
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, fmt.Sprintf("%v", nodeInfo.TotalGPUs))
-		items = append(items, fmt.Sprintf("%v", nodeInfo.AllocatedGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.TotalGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.AllocatedGPUs))
 		if showNodeType {
 			for _, typeInfo := range types.NodeTypeSlice {
 				if typeInfo.Name == types.GPUTopologyNode {
@@ -539,7 +539,7 @@ func displayGPUTopologyNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealth
 			}
 		}
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
+			items = append(items, fmt.Sprintf("%.1f", nodeInfo.UnhealthyGPUs))
 		}
 		PrintLine(w, items...)
 	}
@@ -578,15 +578,15 @@ func displayGPUTopologyNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, fmt.Sprintf("%v", nodeInfo.TotalGPUs))
-		items = append(items, fmt.Sprintf("%v", nodeInfo.AllocatedGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.TotalGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.AllocatedGPUs))
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
+			items = append(items, fmt.Sprintf("%.1f", nodeInfo.UnhealthyGPUs))
 		}
 		PrintLine(w, items...)
 	}
 	PrintLine(w, "---------------------------------------------------------------------------------------------------")
-	PrintLine(w, "Allocated/Total GPUs of nodes which own resource aliyun.com/gpu In Cluster:")
+	PrintLine(w, "Allocated/Total GPUs of nodes that own resource aliyun.com/gpu In Cluster:")
 	allocatedPercent := float64(0)
 	if totalGPUs != 0 {
 		allocatedPercent = float64(allocatedGPUs) / float64(totalGPUs) * 100
@@ -595,10 +595,10 @@ func displayGPUTopologyNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 	if totalGPUs != 0 {
 		unhealthyPercent = float64(unhealthyGPUs) / float64(totalGPUs) * 100
 	}
-	PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
+	PrintLine(w, fmt.Sprintf("%.1f/%.1f (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
 	if unhealthyGPUs != 0 {
-		PrintLine(w, "Unhealthy/Total GPUs of nodes which own resource aliyun.com/gpu In Cluster:")
-		PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
+		PrintLine(w, "Unhealthy/Total GPUs of nodes that own resource aliyun.com/gpu In Cluster:")
+		PrintLine(w, fmt.Sprintf("%.1f/%.1f (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
 	}
 }
 

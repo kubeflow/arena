@@ -100,10 +100,10 @@ func DisplayNodeSummary(nodeNames []string, targetNodeType types.NodeType, forma
 	if totalGPUs != 0 {
 		unhealthyPercent = float64(unhealthyGPUs) / float64(totalGPUs) * 100
 	}
-	PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
+	PrintLine(w, fmt.Sprintf("%.1f/%.1f (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
 	if unhealthyGPUs != 0 {
 		PrintLine(w, "Unhealthy/Total GPUs In Cluster:")
-		PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
+		PrintLine(w, fmt.Sprintf("%.1f/%.1f (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
 	}
 	_ = w.Flush()
 	return nil

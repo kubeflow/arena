@@ -122,9 +122,9 @@ func PrintServingJob(job ServingJob, format types.FormatStyle) {
 	step := ""
 	gpuLine := ""
 	if totalGPUs != 0 {
-		title = "\tGPUS"
-		step = "\t----"
-		gpuLine = fmt.Sprintf("GPUs:       %.1f", totalGPUs)
+		title = "\tGPU"
+		step = "\t---"
+		gpuLine = fmt.Sprintf("GPU:        %.1f", totalGPUs)
 	}
 
 	lines := []string{gpuLine, "", "Instances:", fmt.Sprintf("  NAME\tSTATUS\tAGE\tREADY\tRESTARTS%v\tNODE", title)}

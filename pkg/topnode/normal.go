@@ -116,8 +116,8 @@ func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, sh
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, "0")
-		items = append(items, "0")
+		items = append(items, "N/A")
+		items = append(items, "N/A")
 		if showMode {
 			for _, typeInfo := range types.NodeTypeSlice {
 				if typeInfo.Name == types.NormalNode {
@@ -126,7 +126,7 @@ func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, sh
 			}
 		}
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("0"))
+			items = append(items, fmt.Sprintf("N/A"))
 		}
 		PrintLine(w, items...)
 	}
@@ -150,8 +150,8 @@ func displayNormalNodeCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, "0")
-		items = append(items, "0")
+		items = append(items, "N/A")
+		items = append(items, "N/A")
 		PrintLine(w, items...)
 	}
 }

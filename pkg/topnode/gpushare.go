@@ -337,7 +337,7 @@ func (g *gpushare) displayDeviceUnderNoGPUMetric(lines []string, nodeInfo types.
 		if devInfo.TotalGPUMemory != 0 {
 			percent = float64(devInfo.AllocatedGPUMemory) / float64(devInfo.TotalGPUMemory) * 100
 		}
-		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%v GiB\t%v GiB\t%.1f%%",
+		deviceLines = append(deviceLines, fmt.Sprintf("  %v\t%.1f GiB\t%.1f GiB\t%.1f%%",
 			devInfo.Id,
 			utils.DataUnitTransfer("bytes", "GiB", devInfo.TotalGPUMemory),
 			utils.DataUnitTransfer("bytes", "GiB", devInfo.AllocatedGPUMemory),
@@ -348,9 +348,9 @@ func (g *gpushare) displayDeviceUnderNoGPUMetric(lines []string, nodeInfo types.
 		deviceLines = []string{}
 	}
 	deviceLines = append(deviceLines, "GPU Summary:")
-	deviceLines = append(deviceLines, fmt.Sprintf("  Total GPUs: %v", nodeInfo.TotalGPUs))
-	deviceLines = append(deviceLines, fmt.Sprintf("  Allocated GPUs: %v", nodeInfo.AllocatedGPUs))
-	deviceLines = append(deviceLines, fmt.Sprintf("  Unhealthy GPUs: %v", g.getUnhealthyGPUs()))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Total GPUs: %.1f", nodeInfo.TotalGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Allocated GPUs: %.1f", nodeInfo.AllocatedGPUs))
+	deviceLines = append(deviceLines, fmt.Sprintf("  Unhealthy GPUs: %.1f", g.getUnhealthyGPUs()))
 	deviceLines = append(deviceLines, fmt.Sprintf("  Total GPU Memory: %.1f GiB", utils.DataUnitTransfer("bytes", "GiB", nodeInfo.TotalGPUMemory)))
 	deviceLines = append(deviceLines, fmt.Sprintf("  Allocated GPU Memory: %.1f GiB", utils.DataUnitTransfer("bytes", "GiB", nodeInfo.AllocatedGPUMemory)))
 	lines = append(lines, deviceLines...)
@@ -481,8 +481,8 @@ func displayGPUShareNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, 
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, fmt.Sprintf("%v", nodeInfo.TotalGPUs))
-		items = append(items, fmt.Sprintf("%v", nodeInfo.AllocatedGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.TotalGPUs))
+		items = append(items, fmt.Sprintf("%.1f", nodeInfo.AllocatedGPUs))
 		if showNodeType {
 			for _, typeInfo := range types.NodeTypeSlice {
 				if typeInfo.Name == types.GPUShareNode {
@@ -491,7 +491,7 @@ func displayGPUShareNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, 
 			}
 		}
 		if isUnhealthy && nodeInfo.TotalGPUs != 0 {
-			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
+			items = append(items, fmt.Sprintf("%.1f", nodeInfo.UnhealthyGPUs))
 		}
 		PrintLine(w, items...)
 	}
@@ -534,25 +534,25 @@ func displayGPUShareNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		}
 		items = append(items, role)
 		items = append(items, node.Status())
-		items = append(items, fmt.Sprintf("%v/%v", nodeInfo.AllocatedGPUs, nodeInfo.TotalGPUs))
+		items = append(items, fmt.Sprintf("%.1f/%.1f", nodeInfo.AllocatedGPUs, nodeInfo.TotalGPUs))
 		items = append(items, fmt.Sprintf("%.1f/%.1f GiB",
 			utils.DataUnitTransfer("bytes", "GiB", nodeInfo.AllocatedGPUMemory),
 			utils.DataUnitTransfer("bytes", "GiB", nodeInfo.TotalGPUMemory)))
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
+			items = append(items, fmt.Sprintf("%.1f", nodeInfo.UnhealthyGPUs))
 		}
 		PrintLine(w, items...)
 	}
 	PrintLine(w, "-----------------------------------------------------------------------------------------------------------")
 	// 1. print the utilization of gpus
-	PrintLine(w, "Allocated/Total GPUs of nodes which own resource aliyun.com/gpu-mem In Cluster:")
+	PrintLine(w, "Allocated/Total GPUs of nodes that own resource aliyun.com/gpu-mem In Cluster:")
 	allocatedPercent := float64(0)
 	if totalGPUs != 0 {
 		allocatedPercent = float64(allocatedGPUs) / float64(totalGPUs) * 100
 	}
-	PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
+	PrintLine(w, fmt.Sprintf("%.1f/%.1f (%.1f%%)", allocatedGPUs, totalGPUs, allocatedPercent))
 	// 2. print the utilization of gpu memory
-	PrintLine(w, "Allocated/Total GPU Memory of nodes which own resource aliyun.com/gpu-mem In Cluster:")
+	PrintLine(w, "Allocated/Total GPU Memory of nodes that own resource aliyun.com/gpu-mem In Cluster:")
 	allocatedGPUMemoryPercent := float64(0)
 	if totalGPUMemory != 0 {
 		allocatedGPUMemoryPercent = allocatedGPUMemory / totalGPUMemory * 100
@@ -567,8 +567,8 @@ func displayGPUShareNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		unhealthyPercent = float64(unhealthyGPUs) / float64(totalGPUs) * 100
 	}
 	if unhealthyGPUs != 0 {
-		PrintLine(w, "Unhealthy/Total GPUs of nodes which own resource aliyun.com/gpu-mem In Cluster:")
-		PrintLine(w, fmt.Sprintf("%v/%v (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
+		PrintLine(w, "Unhealthy/Total GPUs of nodes that own resource aliyun.com/gpu-mem In Cluster:")
+		PrintLine(w, fmt.Sprintf("%.1f/%.1f (%.1f%%)", unhealthyGPUs, totalGPUs, unhealthyPercent))
 	}
 }
 
