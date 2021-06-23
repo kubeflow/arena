@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.github.kubeflow.arena.client.ArenaClient;
 import com.github.kubeflow.arena.enums.ServingJobType;
 import com.github.kubeflow.arena.exceptions.ArenaException;
+import com.github.kubeflow.arena.model.serving.Instance;
 import com.github.kubeflow.arena.model.serving.ServingJobInfo;
 import org.junit.Test;
 
@@ -18,6 +19,9 @@ public class ServingClientTest {
         List<ServingJobInfo> jobs = client.serving().list(ServingJobType.AllServingJob, true);
         for(ServingJobInfo info : jobs) {
             System.out.println(JSON.toJSONString(info));
+            for(Instance instance : info.getInstances()) {
+                System.out.println(JSON.toJSONString(instance));
+            }
         }
     }
 

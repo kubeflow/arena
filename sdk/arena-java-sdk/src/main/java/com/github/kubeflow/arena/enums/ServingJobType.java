@@ -23,7 +23,7 @@ public enum ServingJobType {
     }
 
     public String alias() {
-        return this.alias.toUpperCase();
+        return this.alias;
     }
 
     public String shortHand() {
@@ -35,7 +35,7 @@ public enum ServingJobType {
             return AllServingJob;
         }
         for (ServingJobType value : ServingJobType.values()) {
-            if (alias.toUpperCase().equals(value.alias().toUpperCase())) {
+            if (alias.equalsIgnoreCase(value.alias())) {
                 return value;
             }
         }

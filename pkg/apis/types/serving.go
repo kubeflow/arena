@@ -129,6 +129,8 @@ type ServingInstance struct {
 	RequestGPU int `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory returns the request gpu memory
 	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	// CreationTimestamp returns the creation timestamp of instance
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
 
 type CommonServingArgs struct {

@@ -1,8 +1,7 @@
 package com.github.kubeflow.arena.model.training;
 
 import com.alibaba.fastjson.JSON;
-import com.github.kubeflow.arena.enums.TrainingJobStatus;
-import com.github.kubeflow.arena.enums.TrainingJobType;
+import com.github.kubeflow.arena.enums.*;
 
 public class TrainingJobInfo {
     private String uuid;

@@ -18,6 +18,11 @@ public class TrainingClientTest {
         List<TrainingJobInfo> jobs = client.training().namespace("user1-ns").list(TrainingJobType.AllTrainingJob);
         for(TrainingJobInfo info : jobs) {
             System.out.println(JSON.toJSONString(info));
+
+            for(com.github.kubeflow.arena.model.training.Instance instance : info.getInstances()) {
+                System.out.println(JSON.toJSONString(instance));
+            }
+
         }
     }
 

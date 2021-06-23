@@ -31,6 +31,7 @@ public class Instance {
     private int requestGPUs;
     private boolean chief;
     private Map<String, GPUMetric> gpuMetrics;
+    private long creationTimestamp;
 
     public String getOwner() {
         return owner;
@@ -126,6 +127,14 @@ public class Instance {
 
     public Map<String, GPUMetric> getGpuMetrics() {
         return this.gpuMetrics;
+    }
+
+    public long getCreationTimestamp() {
+        return creationTimestamp;
+    }
+
+    public void setCreationTimestamp(long creationTimestamp) {
+        this.creationTimestamp = creationTimestamp;
     }
 
     public InputStream getLog(Logger logger) throws ArenaException, IOException {

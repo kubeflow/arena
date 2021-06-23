@@ -2,8 +2,10 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,7 +30,8 @@ func CPUCountInPod(pod *v1.Pod) float64 {
 func GPUCountInPod(pod *v1.Pod) int {
 	total := 0
 	for _, count := range ResourceInContainers(pod, types.NvidiaGPUResourceName) {
-		total += count.(int)
+		c, _ := parseInt(count)
+		total += c
 	}
 	return total
 }
@@ -36,7 +39,8 @@ func GPUCountInPod(pod *v1.Pod) int {
 func AliyunGPUCountInPod(pod *v1.Pod) int {
 	total := 0
 	for _, count := range ResourceInContainers(pod, types.AliyunGPUResourceName) {
-		total += count.(int)
+		c, _ := parseInt(count)
+		total += c
 	}
 	return total
 }
@@ -141,7 +145,8 @@ func DefinePodPhaseStatus(pod v1.Pod) (string, int, int, int) {
 func GPUMemoryCountInPod(pod *v1.Pod) int {
 	total := 0
 	for _, count := range ResourceInContainers(pod, types.GPUShareResourceName) {
-		total += count.(int)
+		c, _ := parseInt(count)
+		total += c
 	}
 	return total
 }
@@ -308,4 +313,12 @@ func GetDurationOfPod(pod *v1.Pod) time.Duration {
 		return GetPendingTimeOfPod(pod)
 	}
 	return GetRunningTimeOfPod(pod)
+}
+
+func parseInt(i interface{}) (int, error) {
+	s, ok := i.(string)
+	if !ok {
+		return 0, errors.New("invalid value")
+	}
+	return strconv.Atoi(s)
 }

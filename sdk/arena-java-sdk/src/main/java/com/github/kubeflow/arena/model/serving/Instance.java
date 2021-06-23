@@ -33,6 +33,7 @@ public class Instance {
     private float requestCPUs;
     private int requestGPUs;
     private int requestGPUMemory;
+    private long creationTimestamp;
 
     public String getOwner() {
         return owner;
@@ -160,6 +161,14 @@ public class Instance {
 
     public void setRequestGPUMemory(int count) {
         this.requestGPUMemory = count;
+    }
+
+    public long getCreationTimestamp() {
+        return creationTimestamp;
+    }
+
+    public void setCreationTimestamp(long creationTimestamp) {
+        this.creationTimestamp = creationTimestamp;
     }
 
     public InputStream getLog(Logger logger) throws ArenaException, IOException {

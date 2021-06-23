@@ -158,6 +158,8 @@ type TrainingJobInstance struct {
 	RequestGPUs int `json:"requestGPUs" yaml:"requestGPUs"`
 	// GpuDutyCycle stores the gpu metrics
 	GPUMetrics map[string]GpuMetric `json:"gpuMetrics" yaml:"gpuMetrics"`
+	// CreationTimestamp returns the creation timestamp of instance
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
 
 const (

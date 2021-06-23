@@ -97,15 +97,16 @@ func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes 
 		count := utils.GPUCountInPod(pod)
 		count += utils.AliyunGPUCountInPod(pod)
 		instances = append(instances, types.TrainingJobInstance{
-			Name:        pod.Name,
-			IP:          pod.Status.PodIP,
-			Status:      status,
-			Age:         fmt.Sprintf("%vs", int(utils.GetDurationOfPod(pod).Seconds())),
-			Node:        nodeName,
-			NodeIP:      nodeIP,
-			IsChief:     isChief,
-			RequestGPUs: count,
-			GPUMetrics:  gpuMetrics,
+			Name:              pod.Name,
+			IP:                pod.Status.PodIP,
+			Status:            status,
+			Age:               fmt.Sprintf("%vs", int(utils.GetDurationOfPod(pod).Seconds())),
+			Node:              nodeName,
+			NodeIP:            nodeIP,
+			IsChief:           isChief,
+			RequestGPUs:       count,
+			GPUMetrics:        gpuMetrics,
+			CreationTimestamp: pod.CreationTimestamp.Unix(),
 		})
 	}
 

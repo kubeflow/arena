@@ -1,12 +1,15 @@
 package com.github.kubeflow.arena.model.serving;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.github.kubeflow.arena.enums.ServingJobType;
+import com.github.kubeflow.arena.enums.ServingJobTypeCodec;
 
 public class ServingJobInfo {
     private String uuid;
     private String name;
     private String namespace;
+    @JSONField(serializeUsing = ServingJobTypeCodec.class, deserializeUsing = ServingJobTypeCodec.class)
     private ServingJobType type;
     private String version;
     private String age;
@@ -16,6 +19,7 @@ public class ServingJobInfo {
     private float requestCPUs;
     private int requestGPUs;
     private int requestGPUMemory;
+    private long creationTimestamp;
     private Instance[] instances;
     private Endpoint[] endpoints;
 
@@ -125,6 +129,14 @@ public class ServingJobInfo {
 
     public int getRequestGPUMemory() {
         return requestGPUMemory;
+    }
+
+    public long getCreationTimestamp() {
+        return creationTimestamp;
+    }
+
+    public void setCreationTimestamp(long creationTimestamp) {
+        this.creationTimestamp = creationTimestamp;
     }
 
     public Instance[] getInstances() {

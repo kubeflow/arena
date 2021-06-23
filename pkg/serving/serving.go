@@ -246,17 +246,18 @@ func (s *servingJob) Instances() []types.ServingInstance {
 		gpus := utils.GPUCountInPod(pod) + utils.AliyunGPUCountInPod(pod)
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
 		instances = append(instances, types.ServingInstance{
-			Name:             pod.Name,
-			Status:           status,
-			Age:              age,
-			NodeIP:           pod.Status.HostIP,
-			NodeName:         pod.Spec.NodeName,
-			IP:               pod.Status.PodIP,
-			ReadyContainer:   readyContainer,
-			TotalContainer:   totalContainers,
-			RestartCount:     restart,
-			RequestGPU:       gpus,
-			RequestGPUMemory: gpuMemory,
+			Name:              pod.Name,
+			Status:            status,
+			Age:               age,
+			NodeIP:            pod.Status.HostIP,
+			NodeName:          pod.Spec.NodeName,
+			IP:                pod.Status.PodIP,
+			ReadyContainer:    readyContainer,
+			TotalContainer:    totalContainers,
+			RestartCount:      restart,
+			RequestGPU:        gpus,
+			RequestGPUMemory:  gpuMemory,
+			CreationTimestamp: pod.CreationTimestamp.Unix(),
 		})
 	}
 	return instances
