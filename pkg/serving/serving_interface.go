@@ -33,7 +33,7 @@ type ServingJob interface {
 	// Endpoints return the endpoints
 	Endpoints() []types.Endpoint
 	// RequestGPUs returns the gpus which serving job owned
-	RequestGPUs() int
+	RequestGPUs() float64
 	// RequestGPUMemory returns the gpu memory,only for gpushare
 	RequestGPUMemory() int
 	// DesiredInstances return the desired instances count

@@ -65,8 +65,6 @@ var ServingTypeMap = map[ServingJobType]ServingTypeInfo{
 
 // ServingJobInfo display serving job information
 type ServingJobInfo struct {
-	// UUID specifies the unique identity of the serving job
-	UUID string `json:"uuid" yaml:"uuid"`
 	// Name specifies serving job name
 	Name string `json:"name" yaml:"name"`
 	// Namespace specifies serving job namespace
@@ -87,12 +85,10 @@ type ServingJobInfo struct {
 	IPAddress string `json:"ip" yaml:"ip"`
 	// Instances gives the instance informations
 	Instances []ServingInstance `json:"instances" yaml:"instances"`
-	// RequestCPU specifies the request cpus
-	RequestCPU float64 `json:"requestCPUs" yaml:"requestCPUs"`
 	// RequestGPU specifies the request gpus
-	RequestGPU int `json:"requestGPUs" yaml:"requestGPUs"`
+	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory specifies the request gpu memory,only for gpushare
-	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	RequestGPUMemory int `json:"requestGPUMemory,omitempty" yaml:"requestGPUMemory,omitempty"`
 	// CreationTimestamp stores the creation timestamp of job
 	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
@@ -126,11 +122,9 @@ type ServingInstance struct {
 	// IP returns the instance ip
 	IP string `json:"ip" yaml:"ip"`
 	// RequestGPU returns the request gpus
-	RequestGPU int `json:"requestGPUs" yaml:"requestGPUs"`
+	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory returns the request gpu memory
-	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
-	// CreationTimestamp returns the creation timestamp of instance
-	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
+	RequestGPUMemory int `json:"requestGPUMemory,omitempty" yaml:"requestGPUMemory,omitempty"`
 }
 
 type CommonServingArgs struct {

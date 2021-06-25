@@ -3,6 +3,7 @@ package serving
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -82,10 +83,6 @@ type servingJob struct {
 
 func (s *servingJob) Name() string {
 	return s.name
-}
-
-func (s *servingJob) Uid() string {
-	return string(s.deployment.UID)
 }
 
 func (s *servingJob) Namespace() string {
@@ -205,29 +202,29 @@ func (s *servingJob) Endpoints() []types.Endpoint {
 	return endpoints
 }
 
-func (s *servingJob) RequestCPUs() float64 {
-	cpus := 0.0
-	for _, pod := range s.pods {
-		cpus += utils.CPUCountInPod(pod)
+func (s *servingJob) RequestGPUs() float64 {
+	replicas := *s.deployment.Spec.Replicas
+	podGPUs := 0
+	for _, c := range s.deployment.Spec.Template.Spec.Containers {
+		if val, ok := c.Resources.Limits[v1.ResourceName(types.NvidiaGPUResourceName)]; ok {
+			podGPUs += int(val.Value())
+		}
+		if val, ok := c.Resources.Limits[v1.ResourceName(types.AliyunGPUResourceName)]; ok {
+			podGPUs += int(val.Value())
+		}
 	}
-	return cpus
-}
-
-func (s *servingJob) RequestGPUs() int {
-	gpus := 0
-	for _, pod := range s.pods {
-		gpus += utils.GPUCountInPod(pod)
-		gpus += utils.AliyunGPUCountInPod(pod)
-	}
-	return gpus
+	return float64(replicas * int32(podGPUs))
 }
 
 func (s *servingJob) RequestGPUMemory() int {
-	gpuMem := 0
-	for _, pod := range s.pods {
-		gpuMem += utils.GPUMemoryCountInPod(pod)
+	replicas := *s.deployment.Spec.Replicas
+	podGPUMemory := 0
+	for _, c := range s.deployment.Spec.Template.Spec.Containers {
+		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUShareResourceName)]; ok {
+			podGPUMemory += int(val.Value())
+		}
 	}
-	return gpuMem
+	return int(replicas * int32(podGPUMemory))
 }
 
 func (s *servingJob) AvailableInstances() int {
@@ -240,24 +237,23 @@ func (s *servingJob) DesiredInstances() int {
 
 func (s *servingJob) Instances() []types.ServingInstance {
 	instances := []types.ServingInstance{}
-	for _, pod := range s.pods {
+	for index, pod := range s.pods {
 		status, totalContainers, restart, readyContainer := utils.DefinePodPhaseStatus(*pod)
 		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
-		gpus := utils.GPUCountInPod(pod) + utils.AliyunGPUCountInPod(pod)
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
+		gpus := getPodGPUs(pod, gpuMemory, index)
 		instances = append(instances, types.ServingInstance{
-			Name:              pod.Name,
-			Status:            status,
-			Age:               age,
-			NodeIP:            pod.Status.HostIP,
-			NodeName:          pod.Spec.NodeName,
-			IP:                pod.Status.PodIP,
-			ReadyContainer:    readyContainer,
-			TotalContainer:    totalContainers,
-			RestartCount:      restart,
-			RequestGPU:        gpus,
-			RequestGPUMemory:  gpuMemory,
-			CreationTimestamp: pod.CreationTimestamp.Unix(),
+			Name:             pod.Name,
+			Status:           status,
+			Age:              age,
+			NodeIP:           pod.Status.HostIP,
+			NodeName:         pod.Spec.NodeName,
+			IP:               pod.Status.PodIP,
+			ReadyContainer:   readyContainer,
+			TotalContainer:   totalContainers,
+			RestartCount:     restart,
+			RequestGPUs:      gpus,
+			RequestGPUMemory: gpuMemory,
 		})
 	}
 	return instances
@@ -266,7 +262,6 @@ func (s *servingJob) Instances() []types.ServingInstance {
 func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 	servingType := types.ServingTypeMap[s.servingType].Alias
 	servingJobInfo := types.ServingJobInfo{
-		UUID:              s.Uid(),
 		Name:              s.name,
 		Namespace:         s.namespace,
 		Version:           s.version,
@@ -275,8 +270,7 @@ func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 		Desired:           s.DesiredInstances(),
 		IPAddress:         s.IPAddress(),
 		Available:         s.AvailableInstances(),
-		RequestCPU:        s.RequestCPUs(),
-		RequestGPU:        s.RequestGPUs(),
+		RequestGPUs:       s.RequestGPUs(),
 		RequestGPUMemory:  s.RequestGPUMemory(),
 		Endpoints:         s.Endpoints(),
 		Instances:         s.Instances(),
@@ -472,4 +466,49 @@ func (p *processer) IsKnownService(namespace, name, version string, service *v1.
 		return false
 	}
 	return true
+}
+
+func getNodeGPUMemory(nodeName string) float64 {
+	node, err := k8saccesser.GetK8sResourceAccesser().GetNode(nodeName)
+	if err != nil {
+		log.Debugf("failed to get node gpu memory,reason: %v", err)
+		return float64(0)
+	}
+	totalGPUs := getResourceOfGPUShareNode(node, types.GPUShareCountName)
+	totalGPUMemory := getResourceOfGPUShareNode(node, types.GPUShareResourceName)
+	if totalGPUs == 0 {
+		return float64(0)
+	}
+	return totalGPUMemory / totalGPUs
+}
+
+func getResourceOfGPUShareNode(node *v1.Node, resourceName string) float64 {
+	val, ok := node.Status.Capacity[v1.ResourceName(resourceName)]
+	if !ok {
+		return 0
+	}
+	return float64(val.Value())
+}
+
+func getPodGPUs(pod *v1.Pod, gpuMemory int, index int) float64 {
+	if utils.IsCompletedPod(pod) {
+		return float64(0)
+	}
+	if pod.Status.Phase != v1.PodRunning {
+		return float64(0)
+	}
+	if len(pod.Spec.NodeName) == 0 {
+		return float64(0)
+	}
+	if gpuMemory != 0 {
+		nodeGPUMemory := getNodeGPUMemory(pod.Spec.NodeName)
+		if index == 0 {
+			log.Debugf("node name: %v,single gpu memory: %vGiB\n", pod.Spec.NodeName, nodeGPUMemory)
+		}
+		if nodeGPUMemory == float64(0) {
+			return float64(0)
+		}
+		return math.Round(float64(gpuMemory)/nodeGPUMemory*10) / 10
+	}
+	return float64(utils.GPUCountInPod(pod) + utils.AliyunGPUCountInPod(pod))
 }
