@@ -81,6 +81,10 @@ type servingJob struct {
 	istioServices []*v1.Service
 }
 
+func (s *servingJob) Uid() string {
+	return string(s.deployment.UID)
+}
+
 func (s *servingJob) Name() string {
 	return s.name
 }
@@ -202,6 +206,24 @@ func (s *servingJob) Endpoints() []types.Endpoint {
 	return endpoints
 }
 
+func (s *servingJob) RequestCPUs() float64 {
+	//cpus := 0.0
+	//for _, pod := range s.pods {
+	//	cpus += utils.CPUCountInPod(pod)
+	//}
+	//return cpus
+
+	replicas := *s.deployment.Spec.Replicas
+	podCPUs := 0.0
+
+	for _, c := range s.deployment.Spec.Template.Spec.Containers {
+		if val, ok := c.Resources.Limits[v1.ResourceName(types.CPUResourceName)]; ok {
+			podCPUs += float64(val.Value())
+		}
+	}
+	return float64(replicas) * podCPUs
+}
+
 func (s *servingJob) RequestGPUs() float64 {
 	replicas := *s.deployment.Spec.Replicas
 	podGPUs := 0
@@ -254,6 +276,7 @@ func (s *servingJob) Instances() []types.ServingInstance {
 			RestartCount:     restart,
 			RequestGPUs:      gpus,
 			RequestGPUMemory: gpuMemory,
+			CreationTimestamp: pod.CreationTimestamp.Unix(),
 		})
 	}
 	return instances
@@ -262,6 +285,7 @@ func (s *servingJob) Instances() []types.ServingInstance {
 func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 	servingType := types.ServingTypeMap[s.servingType].Alias
 	servingJobInfo := types.ServingJobInfo{
+		UUID:              s.Uid(),
 		Name:              s.name,
 		Namespace:         s.namespace,
 		Version:           s.version,
@@ -270,6 +294,7 @@ func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 		Desired:           s.DesiredInstances(),
 		IPAddress:         s.IPAddress(),
 		Available:         s.AvailableInstances(),
+		RequestCPUs:       s.RequestCPUs(),
 		RequestGPUs:       s.RequestGPUs(),
 		RequestGPUMemory:  s.RequestGPUMemory(),
 		Endpoints:         s.Endpoints(),
