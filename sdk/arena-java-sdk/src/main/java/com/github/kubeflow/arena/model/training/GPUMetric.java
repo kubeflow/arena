@@ -30,6 +30,7 @@ public class GPUMetric {
     public void setUsedGPUMemory(double usedGPUMemory) {
         this.usedGPUMemory = usedGPUMemory;
     }
+
     @Override
     public String toString() {
         return JSON.toJSONString(this, true);

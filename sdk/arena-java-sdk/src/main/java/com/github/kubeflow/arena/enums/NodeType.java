@@ -2,23 +2,22 @@ package com.github.kubeflow.arena.enums;
 
 public enum NodeType {
 
-    GPUShareNodeType("s","GPUShare"),
+    GPUShareNodeType("s", "GPUShare"),
 
-    GPUExclusiveNodeType("e","GPUExclusive"),
+    GPUExclusiveNodeType("e", "GPUExclusive"),
 
-    GPUTopologyNodeType("t","GPUTopology"),
+    GPUTopologyNodeType("t", "GPUTopology"),
 
-    NormalNodeType("n","Normal"),
+    NormalNodeType("n", "Normal"),
 
-    AllNodeType("",""),
+    AllNodeType("", ""),
 
-    UnknownNodeType("unknown","unknown"),
-            ;
+    UnknownNodeType("unknown", "unknown");
+
     private final String shortHand;
     private final String alias;
 
-
-    NodeType(final String shortHand,final String alias) {
+    NodeType(final String shortHand, final String alias) {
         this.shortHand = shortHand;
         this.alias = alias;
     }

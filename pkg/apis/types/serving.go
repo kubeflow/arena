@@ -65,6 +65,8 @@ var ServingTypeMap = map[ServingJobType]ServingTypeInfo{
 
 // ServingJobInfo display serving job information
 type ServingJobInfo struct {
+	// UUID specifies the unique identity of the serving job
+	UUID string `json:"uuid" yaml:"uuid"`
 	// Name specifies serving job name
 	Name string `json:"name" yaml:"name"`
 	// Namespace specifies serving job namespace
@@ -85,7 +87,9 @@ type ServingJobInfo struct {
 	IPAddress string `json:"ip" yaml:"ip"`
 	// Instances gives the instance informations
 	Instances []ServingInstance `json:"instances" yaml:"instances"`
-	// RequestGPU specifies the request gpus
+	// RequestCPUs specifies the request cpus
+	RequestCPUs float64 `json:"requestCPUs" yaml:"requestCPUs"`
+	// RequestGPUs specifies the request gpus
 	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory specifies the request gpu memory,only for gpushare
 	RequestGPUMemory int `json:"requestGPUMemory,omitempty" yaml:"requestGPUMemory,omitempty"`
@@ -125,6 +129,8 @@ type ServingInstance struct {
 	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory returns the request gpu memory
 	RequestGPUMemory int `json:"requestGPUMemory,omitempty" yaml:"requestGPUMemory,omitempty"`
+	// CreationTimestamp returns the creation timestamp of instance
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
 
 type CommonServingArgs struct {

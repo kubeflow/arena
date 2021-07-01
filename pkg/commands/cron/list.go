@@ -47,6 +47,7 @@ func NewCronListCommand() *cobra.Command {
 		},
 	}
 	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
+	command.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "show all the namespaces")
 	command.Flags().StringVarP(&format, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	return command
 }

@@ -95,12 +95,12 @@ func (ch *CronHandler) UpdateCron(namespace string, name string, suspend bool) e
 
 func (ch *CronHandler) buildCronInfo(cron *v1alpha1.Cron) *types.CronInfo {
 	cronInfo := &types.CronInfo{
+		UUID:              string(cron.UID),
 		Name:              cron.Name,
 		Namespace:         cron.Namespace,
 		Type:              cron.Spec.CronTemplate.Kind,
 		Schedule:          cron.Spec.Schedule,
 		ConcurrencyPolicy: string(cron.Spec.ConcurrencyPolicy),
-		Deadline:          formatTime(cron.Spec.Deadline.Time),
 		HistoryLimit:      int64(*cron.Spec.HistoryLimit),
 		CreationTimestamp: formatTime(cron.CreationTimestamp.Time),
 	}
@@ -110,6 +110,10 @@ func (ch *CronHandler) buildCronInfo(cron *v1alpha1.Cron) *types.CronInfo {
 		suspend = *cron.Spec.Suspend
 	}
 	cronInfo.Suspend = suspend
+
+	if cron.Spec.Deadline != nil {
+		cronInfo.Deadline = formatTime(cron.Spec.Deadline.Time)
+	}
 
 	if cron.Status.LastScheduleTime != nil {
 		cronInfo.LastScheduleTime = formatTime(cron.Status.LastScheduleTime.Time)

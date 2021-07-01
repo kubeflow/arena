@@ -18,9 +18,7 @@ public enum TrainingJobType {
 
     AllTrainingJob(""),
 
-    UnknownTrainingJob("unknown"),
-
-    ;
+    UnknownTrainingJob("unknown");
 
     private final String otherName;
 

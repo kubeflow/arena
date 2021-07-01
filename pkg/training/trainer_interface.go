@@ -31,6 +31,9 @@ type TrainingJob interface {
 	// Get the name of the Training Job
 	Name() string
 
+	// Get the unique identity of the Training Job
+	Uid() string
+
 	// Get the namespace of the Training Job
 	Namespace() string
 

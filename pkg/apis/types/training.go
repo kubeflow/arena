@@ -89,6 +89,8 @@ var TrainingTypeMap = map[TrainingJobType]TrainingJobTypeInfo{
 
 // TrainingJobInfo stores training job information
 type TrainingJobInfo struct {
+	// The unique identity of the training job
+	UUID string `json:"uuid" yaml:"uuid"`
 	// The name of the training job
 	Name string `json:"name" yaml:"name"`
 	// The namespace of the training job
@@ -156,6 +158,8 @@ type TrainingJobInstance struct {
 	RequestGPUs int `json:"requestGPUs" yaml:"requestGPUs"`
 	// GpuDutyCycle stores the gpu metrics
 	GPUMetrics map[string]GpuMetric `json:"gpuMetrics" yaml:"gpuMetrics"`
+	// CreationTimestamp returns the creation timestamp of instance
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
 
 const (

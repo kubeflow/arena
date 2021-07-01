@@ -10,12 +10,9 @@ public enum TrainingJobStatus {
 
     TrainingJobFailed("FAILED"),
 
-    TrainingJobUnknownStatus(""),
-
-    ;
+    TrainingJobUnknownStatus("");
 
     public final String otherName;
-
 
     TrainingJobStatus(final String otherName) {
         this.otherName = otherName;

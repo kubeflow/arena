@@ -6,7 +6,7 @@
 
     <groupId>com.aliyun.ack</groupId>
     <artifactId>arena-java-sdk</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
@@ -14,6 +14,7 @@
             <artifactId>fastjson</artifactId>
             <version>1.2.61</version>
         </dependency>
+
         <dependency>
             <groupId>io.kubernetes</groupId>
             <artifactId>client-java</artifactId>
@@ -25,10 +26,18 @@
         		</exclusion>
     	    </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.21</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -59,5 +68,16 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <url>http://mvnrepo.alibaba-inc.com/mvn/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <url>http://mvnrepo.alibaba-inc.com/mvn/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>

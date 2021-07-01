@@ -10,17 +10,20 @@ import com.github.kubeflow.arena.model.training.Instance;
 import com.github.kubeflow.arena.model.training.MPIJobBuilder;
 import com.github.kubeflow.arena.model.training.TrainingJob;
 import com.github.kubeflow.arena.model.training.TrainingJobInfo;
+import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class MPIJobTest {
 
-    public static void main(String[] args) throws IOException,ArenaException,InterruptedException {
+    @Test
+    public void testMPIJobClient() throws IOException,ArenaException,InterruptedException {
         // 1.create arena client
         System.out.println("start to test arena-java-sdk.");
         ArenaClient client = new ArenaClient();
@@ -59,9 +62,9 @@ public class MPIJobTest {
                 throw  new ArenaException(ArenaErrorEnum.UNKNOWN,"time out for waiting mpi training job to be running.");
             }
             count++;
-            TrainingJobInfo[] jobInfos = client.training().list(TrainingJobType.AllTrainingJob,true);
-            for (int i = 0;i < jobInfos.length;i++) {
-                System.out.print(jobInfos[i]);
+            List<TrainingJobInfo> jobInfos = client.training().list(TrainingJobType.AllTrainingJob,true);
+            for (TrainingJobInfo jobInfo : jobInfos) {
+                System.out.print(jobInfo);
             }
             TrainingJobInfo jobInfo = client.training().get(jobName,jobType);
             if (jobInfo.getStatus().equals(TrainingJobStatus.TrainingJobPending)) {

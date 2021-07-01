@@ -9,17 +9,20 @@ import com.github.kubeflow.arena.model.serving.CustomServingJobBuilder;
 import com.github.kubeflow.arena.model.serving.Instance;
 import com.github.kubeflow.arena.model.serving.ServingJob;
 import com.github.kubeflow.arena.model.serving.ServingJobInfo;
+import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CustomServingJobTest {
 
-    public static void main(String[] args) throws IOException,ArenaException,InterruptedException {
+    @Test
+    public void testCustomServingJob() throws IOException,ArenaException,InterruptedException {
         // 1.create arena client
         System.out.println("start to test arena-java-sdk.");
         ArenaClient client = new ArenaClient();
@@ -58,9 +61,9 @@ public class CustomServingJobTest {
                 throw  new ArenaException(ArenaErrorEnum.UNKNOWN,"time out for waiting custom serving job to be running.");
             }
             count++;
-            ServingJobInfo[] jobInfos = client.serving().list(ServingJobType.AllServingJob);
-            for (int i = 0;i < jobInfos.length;i++) {
-                System.out.println(jobInfos[i]);
+            List<ServingJobInfo> jobInfos = client.serving().list(ServingJobType.AllServingJob);
+            for (int i = 0;i < jobInfos.size(); i++) {
+                System.out.println(jobInfos.get(i));
             }
             ServingJobInfo jobInfo = client.serving().get(jobName,jobType,jobVersion);
             if (jobInfo.getAvailableInstances() != jobInfo.getDesiredInstances()) {

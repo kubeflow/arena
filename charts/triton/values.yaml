@@ -26,7 +26,7 @@ metricsPort: 8002
 allowMetrics: true
 
 ## the pvc and mount path inside the container
-modelDirs:
-  triton-pvc: /mnt/models
-
-modelRepository: /mnt/models/ai/triton/model_repository
+#modelDirs:
+#  triton-pvc: /mnt/models
+#
+#modelRepository: /mnt/models/ai/triton/model_repository

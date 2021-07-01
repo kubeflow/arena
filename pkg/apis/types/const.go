@@ -1,6 +1,10 @@
 package types
 
 const (
+	CPUResourceName = "cpu"
+)
+
+const (
 	// defines the nvidia resource name
 	NvidiaGPUResourceName = "nvidia.com/gpu"
 )

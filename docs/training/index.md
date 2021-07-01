@@ -57,6 +57,10 @@ If you want to use arena to manage training jobs, this guide is for you. we have
 * I want to [submit a elastic training job(pytorch)](etjob/elastictraining-pytorch-synthetic.md).
 * I want to [submit a elastic training job(tensorflow)](etjob/elastictraining-tensorflow2-mnist.md).
 
+## Cron Training Job Guide
+
+* I want to [submit a cron training job(tensorflow)](cron/cron-tfjob.md).
+
 ## Spark Training Job Guide
 
 * I want to [submit a distributed spark training job](sparkjob/distributed.md).
