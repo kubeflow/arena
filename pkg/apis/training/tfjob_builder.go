@@ -233,6 +233,13 @@ func (b *TFJobBuilder) PsCPU(cpu string) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) PsGPU(gpu int) *TFJobBuilder {
+	if gpu > 0 {
+		b.args.PSGpu = gpu
+	}
+	return b
+}
+
 func (b *TFJobBuilder) PsImage(image string) *TFJobBuilder {
 	if image != "" {
 		b.args.PSImage = image

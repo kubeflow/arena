@@ -23,9 +23,9 @@ func NewCronTFJobBuilder() *CronTFJobBuilder {
 		},
 	}
 	return &CronTFJobBuilder{
-		args:        args,
-		argValues:   map[string]interface{}{},
-		ArgsBuilder: argsbuilder.NewCronTFJobArgsBuilder(args),
+		args:         args,
+		argValues:    map[string]interface{}{},
+		ArgsBuilder:  argsbuilder.NewCronTFJobArgsBuilder(args),
 		TFJobBuilder: training.NewTFJobBuilder(&args.SubmitTFJobArgs),
 	}
 }
@@ -170,6 +170,11 @@ func (c *CronTFJobBuilder) Priority(priority string) *CronTFJobBuilder {
 
 func (c *CronTFJobBuilder) PsCount(count int) *CronTFJobBuilder {
 	c.TFJobBuilder.PsCount(count)
+	return c
+}
+
+func (c *CronTFJobBuilder) PsGPU(gpu int) *CronTFJobBuilder {
+	c.TFJobBuilder.PsGPU(gpu)
 	return c
 }
 
