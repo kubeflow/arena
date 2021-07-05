@@ -92,7 +92,7 @@ type ServingJobInfo struct {
 	// RequestGPUs specifies the request gpus
 	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory specifies the request gpu memory,only for gpushare
-	RequestGPUMemory int `json:"requestGPUMemory,omitempty" yaml:"requestGPUMemory,omitempty"`
+	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
 	// CreationTimestamp stores the creation timestamp of job
 	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
@@ -128,7 +128,7 @@ type ServingInstance struct {
 	// RequestGPU returns the request gpus
 	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory returns the request gpu memory
-	RequestGPUMemory int `json:"requestGPUMemory,omitempty" yaml:"requestGPUMemory,omitempty"`
+	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
 	// CreationTimestamp returns the creation timestamp of instance
 	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
