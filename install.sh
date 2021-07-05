@@ -275,6 +275,9 @@ function apply_rdma() {
 }
 
 function apply_cron() {
+  if arena-kubectl get deployment -n arena-system | grep kubedl-operator; then
+    arena-kubectl delete deployment kubedl-operator -n arena-system
+  fi
   if ! arena-kubectl get serviceaccount --all-namespaces | grep cron-operator; then
     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-crd.yaml
     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-operator.yaml
