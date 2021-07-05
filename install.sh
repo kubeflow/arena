@@ -89,10 +89,12 @@ function install_kubectl_and_helm() {
     ${sudo_prefix} cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/arena-kubectl
     ${sudo_prefix} cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
 
-    if ! ${sudo_prefix} arena-kubectl cluster-info >/dev/null 2>&1; then
-        logger "error" "failed to execute 'arena-kubectl cluster-info'"
-        logger "error" "Please setup kubeconfig correctly before installing arena"
-        exit 1
+    if [[ $ONLY_BINARY != "true" ]];then 
+    	if ! ${sudo_prefix} arena-kubectl cluster-info >/dev/null 2>&1; then
+    	    logger "error" "failed to execute 'arena-kubectl cluster-info'"
+    	    logger "error" "Please setup kubeconfig correctly before installing arena"
+    	    exit 1
+    	fi
     fi
     logger "debug" "succeed to install arena-kubectl and arena-helm"
 }

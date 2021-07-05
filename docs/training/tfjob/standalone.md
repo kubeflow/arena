@@ -49,16 +49,19 @@ descriptions:
 * the source code will be downloaded and extracted to the directory ``code/`` of the working directory. The default working directory is ``/root``, you can also specify by using ``--workingDir``. Also, you may specify the branch you are pulling code from by addding ``--env GIT_SYNC_BRANCH=main`` to the paramasters while submitting the job.
 * If you are using the private git repo, you can use the following command:
 
+```
 
-    $ arena submit tf \
-        --name=tf-git \
-        --gpus=1 \
-        --image=tensorflow/tensorflow:1.5.0-devel-gpu \
-        --syncMode=git \
-        --syncSource=https://github.com/happy2048/tensorflow-sample-code.git \
-        --env=GIT_SYNC_USERNAME=yourname \
-        --env=GIT_SYNC_PASSWORD=yourpwd \
-        "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py"
+$ arena submit tf \
+--name=tf-git \
+--gpus=1 \
+--image=tensorflow/tensorflow:1.5.0-devel-gpu \
+--syncMode=git \
+--syncSource=https://github.com/happy2048/tensorflow-sample-code.git \
+--env=GIT_SYNC_USERNAME=yourname \
+--env=GIT_SYNC_PASSWORD=yourpwd \
+"python code/tensorflow-sample-code/tfjob/docker/mnist/main.py"
+
+```
 
 !!! note
 
