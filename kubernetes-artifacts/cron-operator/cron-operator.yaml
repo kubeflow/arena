@@ -1,23 +1,21 @@
 ---
-# Source: kubedl/templates/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: kubedl-operator
+  name: cron-operator
   namespace: arena-system
   labels:
-    helm.sh/chart: kubedl-0.1.0
-    app.kubernetes.io/name: kubedl
-    app.kubernetes.io/instance: kubedl-operator
+    helm.sh/chart: cron-0.1.0
+    app.kubernetes.io/name: cron
+    app.kubernetes.io/instance: cron-operator
     app.kubernetes.io/version: "0.1.0"
     app.kubernetes.io/managed-by: Helm
 ---
-# Source: kubedl/templates/rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: kubedl-operator-role
+  name: cron-operator-role
   namespace: arena-system
 rules:
   - apiGroups:
@@ -263,31 +261,29 @@ rules:
       - patch
       - delete
 ---
-# Source: kubedl/templates/rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   creationTimestamp: null
-  name: kubedl-operator-rolebinding
+  name: cron-operator-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: kubedl-operator-role
+  name: cron-operator-role
 subjects:
   - kind: ServiceAccount
-    name: kubedl-operator
+    name: cron-operator
     namespace: arena-system
 ---
-# Source: kubedl/templates/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: kubedl-operator
+  name: cron-operator
   namespace: arena-system
   labels:
-    helm.sh/chart: kubedl-0.1.0
-    app.kubernetes.io/name: kubedl
-    app.kubernetes.io/instance: kubedl-operator
+    helm.sh/chart: cron-0.1.0
+    app.kubernetes.io/name: cron
+    app.kubernetes.io/instance: cron-operator
     app.kubernetes.io/version: "0.1.0"
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -298,27 +294,26 @@ spec:
       protocol: TCP
       name: metrics
   selector:
-    app.kubernetes.io/name: kubedl
-    app.kubernetes.io/instance: kubedl-operator
+    app.kubernetes.io/name: cron
+    app.kubernetes.io/instance: cron-operator
 ---
-# Source: kubedl/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kubedl-operator
+  name: cron-operator
   namespace: arena-system
   labels:
-    helm.sh/chart: kubedl-0.1.0
-    app.kubernetes.io/name: kubedl
-    app.kubernetes.io/instance: kubedl-operator
+    helm.sh/chart: cron-0.1.0
+    app.kubernetes.io/name: cron
+    app.kubernetes.io/instance: cron-operator
     app.kubernetes.io/version: "0.1.0"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: kubedl
-      app.kubernetes.io/instance: kubedl-operator
+      app.kubernetes.io/name: cron
+      app.kubernetes.io/instance: cron-operator
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -328,13 +323,13 @@ spec:
     metadata:
       namespace: arena-system
       labels:
-        app.kubernetes.io/name: kubedl
-        app.kubernetes.io/instance: kubedl-operator
+        app.kubernetes.io/name: cron
+        app.kubernetes.io/instance: cron-operator
     spec:
-      serviceAccountName: kubedl-operator
+      serviceAccountName: cron-operator
       containers:
-        - name: kubedl
-          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/kubedl:v0.1.0
+        - name: cron
+          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/cron-operator:v0.1.1
           imagePullPolicy: Always
           args: [--workloads=Cron]
           ports:
