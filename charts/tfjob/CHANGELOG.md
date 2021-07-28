@@ -128,3 +128,7 @@
 ### 0.30.0
 
 * Support imagePullSecrets
+
+### 0.31.0
+
+* Support job level annotation

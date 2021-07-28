@@ -14,6 +14,10 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     createdBy: "TFJob"
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
 spec:
 {{- if .Values.cleanPodPolicy }}
 {{- if eq "None" $cleanPodPolicy }}
