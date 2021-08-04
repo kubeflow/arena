@@ -2,12 +2,19 @@
 apiVersion: serving.kubeflow.org/v1alpha2
 kind: InferenceService
 metadata:
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
   labels:
     controller-tools.k8s.io: "1.0"
     serviceName: "{{ .Values.servingName }}"
     servingType: "kf-serving"
     servingName: "{{ .Values.servingName }}"
     servingVersion: "{{ .Values.servingVersion }}"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}  
   name: {{ .Release.Name }}
 spec:
   default:

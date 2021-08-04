@@ -8,3 +8,7 @@
 * support nodeSelector
 * support tolerance
 * support annotations
+
+### 0.3.0
+
+* support job labels and annotations

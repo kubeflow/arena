@@ -299,6 +299,9 @@ func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (Training
 	if err != nil {
 		return nil, err
 	}
+	if err := CheckJobIsOwnedByTrainer(tfjob.Labels); err != nil {
+		return nil, err
+	}
 	var filterLabels string
 	createdBy := tfjob.Labels["createdBy"]
 	if createdBy != "" && createdBy == "Cron" {
@@ -386,12 +389,13 @@ func (tt *TensorFlowJobTrainer) ListTrainingJobs(namespace string, allNamespace 
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
+	jobLabels := GetTrainingJobLabels(tt.Type())
 	trainingJobs := []TrainingJob{}
-	tfjobs, err := k8saccesser.GetK8sResourceAccesser().ListTensorflowJobs(tt.tfjobClient, namespace)
+	tfjobs, err := k8saccesser.GetK8sResourceAccesser().ListTensorflowJobs(tt.tfjobClient, namespace, jobLabels)
 	if err != nil {
 		return trainingJobs, err
 	}
-	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("app=%v", tt.Type()), "", nil)
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, jobLabels, "", nil)
 	if err != nil {
 		return nil, err
 	}

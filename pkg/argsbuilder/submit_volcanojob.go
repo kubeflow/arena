@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/spf13/cobra"
 )
@@ -62,6 +63,10 @@ func (s *SubmitVolcanoJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
+	var (
+		annotations []string
+		labels      []string
+	)
 	command.Flags().StringVar(&s.args.Name, "name", "", "assign the job name")
 	command.MarkFlagRequired("name")
 	command.Flags().IntVar(&(s.args.MinAvailable), "minAvailable", 1, "The minimal available pods to run for this Job. default value is 1")
@@ -91,6 +96,9 @@ func (s *SubmitVolcanoJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().IntVar(&s.args.TaskPort, "taskPort", 2222, "the task port number. default value is 2222")
 	command.Flags().MarkDeprecated("taskPort", "please use --task-port instead")
 	command.Flags().IntVar(&s.args.TaskPort, "task-port", 2222, "the task port number. default value is 2222")
+	command.Flags().StringSliceVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringSliceVarP(&labels, "label", "l", []string{}, "specify the label")
+	s.AddArgValue("annotation", &annotations).AddArgValue("label", &labels)
 }
 
 func (s *SubmitVolcanoJobArgsBuilder) PreBuild() error {
@@ -108,6 +116,15 @@ func (s *SubmitVolcanoJobArgsBuilder) Build() error {
 			return err
 		}
 	}
+	if err := s.setAnnotations(); err != nil {
+		return err
+	}
+	if err := s.setLabels(); err != nil {
+		return err
+	}
+	if err := s.setUserNameAndUserId(); err != nil {
+		return err
+	}
 	if err := s.check(); err != nil {
 		return err
 	}
@@ -118,5 +135,67 @@ func (s *SubmitVolcanoJobArgsBuilder) check() error {
 	if len(s.args.TaskImages) == 0 {
 		return fmt.Errorf("TaskImages should be set")
 	}
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *SubmitVolcanoJobArgsBuilder) setAnnotations() error {
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	argKey := "annotation"
+	var annotations *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	annotations = item.(*[]string)
+	if len(*annotations) <= 0 {
+		return nil
+	}
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	for key, val := range transformSliceToMap(*annotations, "=") {
+		s.args.Annotations[key] = val
+	}
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *SubmitVolcanoJobArgsBuilder) setLabels() error {
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	argKey := "label"
+	var labels *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	labels = item.(*[]string)
+	if len(*labels) <= 0 {
+		return nil
+	}
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	for key, val := range transformSliceToMap(*labels, "=") {
+		s.args.Labels[key] = val
+	}
+	return nil
+}
+
+func (s *SubmitVolcanoJobArgsBuilder) setUserNameAndUserId() error {
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	arenaConfiger := config.GetArenaConfiger()
+	user := arenaConfiger.GetUser()
+	s.args.Labels[types.UserNameIdLabel] = user.GetId()
+	s.args.Annotations[types.UserNameNameLabel] = user.GetName()
 	return nil
 }

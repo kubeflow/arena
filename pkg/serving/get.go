@@ -46,11 +46,8 @@ func SearchServingJob(namespace, name, version string, servingType types.Serving
 		if err != nil {
 			return nil, err
 		}
-		if len(servingJobs) == 0 {
-			return nil, fmt.Errorf(errNotFoundServingJobMessage, name, name)
-		}
-		if len(servingJobs) > 1 {
-			return nil, fmt.Errorf("%v", moreThanOneJobHelpInfo(servingJobs))
+		if err := validateJobs(servingJobs, name); err != nil {
+			return nil, err
 		}
 		return servingJobs[0], nil
 	}
@@ -82,13 +79,33 @@ func SearchServingJob(namespace, name, version string, servingType types.Serving
 	if noPrivileges {
 		return nil, fmt.Errorf("the user has no privileges to get the serving job in namespace %v", namespace)
 	}
-	if len(jobs) == 0 {
-		return nil, fmt.Errorf(errNotFoundServingJobMessage, name, name)
-	}
-	if len(jobs) > 1 {
-		return nil, fmt.Errorf("%v", moreThanOneJobHelpInfo(jobs))
+	if err := validateJobs(jobs, name); err != nil {
+		return nil, err
 	}
 	return jobs[0], nil
+}
+
+func validateJobs(jobs []ServingJob, name string) error {
+	if len(jobs) == 0 {
+		return fmt.Errorf(errNotFoundServingJobMessage, name, name)
+	}
+	knownJobs := []ServingJob{}
+	unknownJobs := []ServingJob{}
+	for _, s := range jobs {
+		if CheckJobIsOwnedByProcesser(s.Deployment().Labels) {
+			knownJobs = append(knownJobs, s)
+		} else {
+			unknownJobs = append(unknownJobs, s)
+		}
+	}
+	log.Debugf("total known jobs: %v,total unknown jobs: %v", len(knownJobs), len(unknownJobs))
+	if len(knownJobs) > 1 {
+		return fmt.Errorf("%v", moreThanOneJobHelpInfo(jobs))
+	}
+	if len(unknownJobs) > 0 {
+		return types.ErrNoPrivilegesToOperateJob
+	}
+	return nil
 }
 
 func PrintServingJob(job ServingJob, format types.FormatStyle) {

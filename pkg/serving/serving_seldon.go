@@ -43,22 +43,23 @@ func NewSeldonServingProcesser() Processer {
 }
 
 func (p *SeldonServingProcesser) GetServingJobs(namespace, name, version string) ([]ServingJob, error) {
-	selector := fmt.Sprintf("%v=%v,%v=%v", servingNameLabelKey, name, servingTypeLabelKey, p.processerType)
-	if version != "" {
-		selector = fmt.Sprintf("%v=%v,%v=%v,%v=%v",
-			servingNameLabelKey,
-			name,
-			servingTypeLabelKey,
-			p.processerType,
-			servingVersionLabelKey,
-			version,
-		)
+	selector := []string{
+		fmt.Sprintf("%v=%v", servingNameLabelKey, name),
+		fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType),
 	}
-	return p.FilterServingJobs(namespace, false, selector)
+	if version != "" {
+		selector = append(selector, fmt.Sprintf("%v=%v", servingVersionLabelKey, version))
+	}
+	return p.FilterServingJobs(namespace, false, strings.Join(selector, ","))
 }
 
 func (p *SeldonServingProcesser) ListServingJobs(namespace string, allNamespace bool) ([]ServingJob, error) {
-	return p.FilterServingJobs(namespace, allNamespace, fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType))
+	selector := fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType)
+	arenaConfiger := config.GetArenaConfiger()
+	if arenaConfiger.IsIsolateUserInNamespace() {
+		selector = fmt.Sprintf("%v,%v=%v", selector, types.UserNameIdLabel, arenaConfiger.GetUser().GetId())
+	}
+	return p.FilterServingJobs(namespace, allNamespace, selector)
 }
 
 func (s *seldonServingJob) Convert2JobInfo() types.ServingJobInfo {
@@ -238,9 +239,8 @@ func SubmitSeldonServingJob(namespace string, args *types.SeldonServingArgs) (er
 	if err != nil {
 		return err
 	}
-	// if job has been existed,skip to create it and return an error
-	if len(jobs) != 0 {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena serve delete %s -n seldon'", args.Name, args.Name)
+	if err := ValidateJobsBeforeSubmiting(jobs, args.Name); err != nil {
+		return err
 	}
 	// the master is also considered as a worker
 	chart := util.GetChartsFolder() + "/seldon-core"

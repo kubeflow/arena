@@ -101,3 +101,7 @@
 ### 0.24.0
 
 * support gpu topology scheduling
+
+### 0.25.0
+
+* support job labels and annotations

@@ -297,6 +297,9 @@ func (st *SparkJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, 
 	if err != nil {
 		return nil, err
 	}
+	if err := CheckJobIsOwnedByTrainer(sparkJob.Labels); err != nil {
+		return nil, err
+	}
 	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("release=%v,app=%v", name, st.Type()), "", nil)
 	if err != nil {
 		return nil, err
@@ -318,12 +321,13 @@ func (st *SparkJobTrainer) ListTrainingJobs(namespace string, allNamespace bool)
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
-	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("app=%v", st.Type()), "", nil)
+	trainingJobs := []TrainingJob{}
+	jobLabels := GetTrainingJobLabels(st.Type())
+	sparkjobs, err := k8saccesser.GetK8sResourceAccesser().ListSparkJobs(st.sparkjobClient, namespace, jobLabels)
 	if err != nil {
 		return nil, err
 	}
-	trainingJobs := []TrainingJob{}
-	sparkjobs, err := k8saccesser.GetK8sResourceAccesser().ListSparkJobs(st.sparkjobClient, namespace)
+	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("app=%v", st.Type()), "", nil)
 	if err != nil {
 		return nil, err
 	}

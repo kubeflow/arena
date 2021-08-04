@@ -12,3 +12,7 @@
 ### 0.3.0
 
 * add serving type to pod label
+
+### 0.3.1
+
+* support job labels

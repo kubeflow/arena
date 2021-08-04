@@ -37,6 +37,9 @@ func SubmitMPIJob(namespace string, submitArgs *types.SubmitMPIJobArgs) (err err
 	}
 	// if error is unknown,return an error
 	if err != types.ErrTrainingJobNotFound {
+		if err == types.ErrNoPrivilegesToOperateJob {
+			return fmt.Errorf("the job %s is already exist and it owned by other user,you have no privileges to operate it", submitArgs.Name)
+		}
 		return err
 	}
 	// the master is also considered as a worker

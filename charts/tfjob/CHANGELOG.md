@@ -132,3 +132,7 @@
 ### 0.31.0
 
 * Support job level annotation
+
+### 0.32.0
+
+* Support job level labels

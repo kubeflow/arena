@@ -11,6 +11,7 @@ nav:
     - Serving Job Guide: serving/index.md
     - Display Resource Usage Guide: top/index.md
     - Supports Multiple Users Guide: multiple-users.md
+    - Isolate Users In Namespace: isolate-users-in-namespace.md
   - SDK:
     - Golang: sdk/go/index.md
   - Release Notes:

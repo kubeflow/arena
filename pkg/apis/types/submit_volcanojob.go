@@ -27,4 +27,9 @@ type SubmitVolcanoJobArgs struct {
 	TaskMemory string `yaml:"taskMemory"`
 	// TaskPort specifies the task port
 	TaskPort int `yaml:"taskPort"`
+	// Annotations defines pod annotations of job,match option --annotation
+	Annotations map[string]string `yaml:"annotations"`
+
+	// Labels specify the job labels and it is work for pods
+	Labels map[string]string `yaml:"labels"`
 }

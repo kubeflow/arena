@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -107,30 +108,48 @@ func UninstallApps(fileName, namespace string) (err error) {
 * Delete kubernetes config to uninstall app
 * Exec /usr/local/bin/kubectl, [delete -f /tmp/values313606961 --namespace default]
 **/
-func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) (output string, err error) {
+func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) error {
 	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	if _, err = os.Stat(appInfoFile); err != nil {
-		return "", err
-	}
-
-	args := []string{"cat", appInfoFile, "|", "xargs",
-		binary, "delete", "--namespace", namespace}
-
-	log.Debugf("Exec bash -c %v", args)
-
-	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
-	out, err := cmd.Output()
-	log.Debugf("%s", string(out))
-
+	data, err := ioutil.ReadFile(appInfoFile)
 	if err != nil {
-		log.Debugf("Failed to execute %s, %v with %v", "bash -c", args, err)
+		return err
 	}
+	resources := strings.Split(string(data), "\n")
+	// Error from server (NotFound): tfjobs.kubeflow.org "tf-standalone-test-3" not found
 
-	return string(out), err
+	var wg sync.WaitGroup
+	locker := new(sync.RWMutex)
+	errs := []string{}
+	for _, r := range resources {
+		wg.Add(1)
+		resource := r
+		go func() {
+			defer wg.Done()
+			args := []string{binary, "delete", resource, "--namespace", namespace}
+			log.Debugf("Exec bash -c %v", args)
+			cmd := exec.Command("bash", "-c", strings.Join(args, " "))
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				if !strings.Contains(string(out), "Error from server (NotFound): ") {
+					locker.Lock()
+					errs = append(errs, string(out))
+					locker.Unlock()
+				}
+				return
+			}
+			log.Debugf("%v", out)
+		}()
+	}
+	wg.Wait()
+	if len(errs) != 0 {
+		log.Debugf("Failed to uninstall app with app file,reason: %v", errs)
+		return fmt.Errorf("%v", strings.Join(errs, "\n"))
+	}
+	return nil
 }
 
 /**

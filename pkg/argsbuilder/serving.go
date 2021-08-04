@@ -75,6 +75,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		datadir     []string
 		annotations []string
 		tolerations []string
+		labels      []string
 		selectors   []string
 	)
 	defaultImage := ""
@@ -115,12 +116,14 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&datadir, "data-dir", "", []string{}, "specify the trained models datasource on host to mount for serving, like <host_path>:<mount_point_on_job>")
 	command.MarkFlagRequired("name")
 
-	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "specify the annotations")
+	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
 	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 
 	s.AddArgValue("annotation", &annotations).
 		AddArgValue("toleration", &tolerations).
+		AddArgValue("label", &labels).
 		AddArgValue("selector", &selectors).
 		AddArgValue("data", &dataset).
 		AddArgValue("data-dir", &datadir).
@@ -151,6 +154,9 @@ func (s *ServingArgsBuilder) PreBuild() error {
 	if err := s.setAnnotations(); err != nil {
 		return err
 	}
+	if err := s.setLabels(); err != nil {
+		return err
+	}
 	if err := s.setNodeSelectors(); err != nil {
 		return err
 	}
@@ -158,6 +164,9 @@ func (s *ServingArgsBuilder) PreBuild() error {
 		return err
 	}
 	if err := s.setServingVersion(); err != nil {
+		return err
+	}
+	if err := s.setUserNameAndUserId(); err != nil {
 		return err
 	}
 	if err := s.check(); err != nil {
@@ -243,6 +252,37 @@ func (s *ServingArgsBuilder) setAnnotations() error {
 		return nil
 	}
 	s.args.Annotations = transformSliceToMap(*annotations, "=")
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *ServingArgsBuilder) setLabels() error {
+	s.args.Labels = map[string]string{}
+	argKey := "label"
+	var labels *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	labels = item.(*[]string)
+	if len(*labels) <= 0 {
+		return nil
+	}
+	s.args.Labels = transformSliceToMap(*labels, "=")
+	return nil
+}
+
+func (s *ServingArgsBuilder) setUserNameAndUserId() error {
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	arenaConfiger := config.GetArenaConfiger()
+	user := arenaConfiger.GetUser()
+	s.args.Labels[types.UserNameIdLabel] = user.GetId()
+	s.args.Annotations[types.UserNameNameLabel] = user.GetName()
 	return nil
 }
 

@@ -39,9 +39,8 @@ func SubmitTensorRTServingJob(namespace string, args *types.TensorRTServingArgs)
 	if err != nil {
 		return err
 	}
-	// if job has been existed,skip to create it and return an error
-	if len(jobs) != 0 {
-		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena serve delete %s -n tensorrt'", args.Name, args.Name)
+	if err := ValidateJobsBeforeSubmiting(jobs, args.Name); err != nil {
+		return err
 	}
 	// the master is also considered as a worker
 	chart := util.GetChartsFolder() + "/trtserving"

@@ -121,6 +121,18 @@ func (b *ETJobBuilder) Annotations(annotations map[string]string) *ETJobBuilder 
 	return b
 }
 
+// Labels is used to add labels for job
+func (b *ETJobBuilder) Labels(labels map[string]string) *ETJobBuilder {
+	if labels != nil && len(labels) != 0 {
+		s := []string{}
+		for key, value := range labels {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["label"] = &s
+	}
+	return b
+}
+
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (b *ETJobBuilder) Datas(volumes map[string]string) *ETJobBuilder {
 	if volumes != nil && len(volumes) != 0 {

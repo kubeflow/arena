@@ -23,3 +23,9 @@ const (
 	GPUTopologyVisibleGPULabel = "topology.kubernetes.io/gpu-visible"
 	GPUTopologyNodeLabels      = "ack.node.gpu.schedule=topology"
 )
+
+const (
+	MultiTenantIsolationLabel = "arena.kubeflow.org/isolate-user"
+	UserNameIdLabel           = "arena.kubeflow.org/uid"
+	UserNameNameLabel         = "arena.kubeflow.org/username"
+)

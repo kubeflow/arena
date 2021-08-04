@@ -46,7 +46,10 @@ type TrainingJobTypeInfo struct {
 	Shorthand string
 }
 
-var ErrTrainingJobNotFound = errors.New("training job not found,please use 'arena list' to make sure job is existed.")
+var (
+	ErrTrainingJobNotFound      = errors.New("training job not found,please use 'arena list' to make sure job is existed.")
+	ErrNoPrivilegesToOperateJob = errors.New("you have no privileges to operate the job,because the owner of job is not you")
+)
 
 // ServingTypeMap collects serving job type and their alias
 var TrainingTypeMap = map[TrainingJobType]TrainingJobTypeInfo{

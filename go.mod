@@ -14,7 +14,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.4.0
-	github.com/tidwall/gjson v1.7.4
+	github.com/tidwall/gjson v1.7.4 // indirect
 	//github.com/stretchr/testify v1.4.0
 	gopkg.in/yaml.v2 v2.3.0
 	istio.io/api v0.0.0-20180824201241-76349c53b87f

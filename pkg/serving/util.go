@@ -5,7 +5,9 @@ import (
 	"io"
 	"strings"
 
+	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	log "github.com/sirupsen/logrus"
 )
 
 func PrintLine(w io.Writer, fields ...string) {
@@ -40,4 +42,36 @@ func moreThanOneInstanceHelpInfo(instances []types.ServingInstance) string {
 	}
 	return fmt.Sprintf("%s\n\n%s\n\n%s\n", header, strings.Join(lines, "\n"), footer)
 
+}
+
+func CheckJobIsOwnedByProcesser(labels map[string]string) bool {
+	arenaConfiger := config.GetArenaConfiger()
+	if arenaConfiger.IsIsolateUserInNamespace() && labels[types.UserNameIdLabel] != arenaConfiger.GetUser().GetId() {
+		return false
+	}
+	return true
+}
+
+func ValidateJobsBeforeSubmiting(jobs []ServingJob, name string) error {
+	if len(jobs) == 0 {
+		log.Debugf("not found serving job %v,we will submit it", name)
+		return nil
+	}
+	knownJobs := []ServingJob{}
+	unknownJobs := []ServingJob{}
+	for _, s := range jobs {
+		if CheckJobIsOwnedByProcesser(s.Deployment().Labels) {
+			knownJobs = append(knownJobs, s)
+		} else {
+			unknownJobs = append(unknownJobs, s)
+		}
+	}
+	log.Debugf("total known jobs: %v,total unknown jobs: %v", len(knownJobs), len(unknownJobs))
+	if len(knownJobs) != 0 {
+		return fmt.Errorf("the job %s is already exist, please delete it first. use 'arena serve delete %s'", name, name)
+	}
+	if len(unknownJobs) != 0 {
+		return fmt.Errorf("the job %v is already exist, but its' owner is not you", name)
+	}
+	return nil
 }

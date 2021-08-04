@@ -284,6 +284,9 @@ func (ejt *ETJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, er
 	if err != nil {
 		return nil, err
 	}
+	if err := CheckJobIsOwnedByTrainer(etjob.Labels); err != nil {
+		return nil, err
+	}
 	// 2. Find the pod list, and determine the pod of the job
 	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("release=%v,app=%v", name, ejt.Type()), "", nil)
 	if err != nil {
@@ -379,7 +382,8 @@ func (ejt *ETJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
-	etjobs, err := k8saccesser.GetK8sResourceAccesser().ListETJobs(ejt.jobClient, namespace)
+	jobLabels := GetTrainingJobLabels(ejt.Type())
+	etjobs, err := k8saccesser.GetK8sResourceAccesser().ListETJobs(ejt.jobClient, namespace, jobLabels)
 	if err != nil {
 		return trainingJobs, err
 	}
