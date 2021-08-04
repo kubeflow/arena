@@ -447,7 +447,7 @@ k8s.io/klog/v2
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
-# k8s.io/kubectl v0.0.0 => k8s.io/kubectl v0.18.5
+# k8s.io/kubectl v0.21.3 => k8s.io/kubectl v0.18.5
 k8s.io/kubectl/pkg/apps
 k8s.io/kubectl/pkg/cmd/util
 k8s.io/kubectl/pkg/describe
