@@ -15,9 +15,11 @@
 package training
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 
+	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
@@ -164,4 +166,22 @@ func CheckOperatorIsInstalled(crdName string) bool {
 		}
 	}
 	return false
+}
+
+func GetTrainingJobLabels(jobType types.TrainingJobType) string {
+	l := fmt.Sprintf("app=%v,release", jobType)
+	arenaConfiger := config.GetArenaConfiger()
+	if arenaConfiger.IsIsolateUserInNamespace() {
+		l = fmt.Sprintf("%v,%v=%v", l, types.UserNameIdLabel, arenaConfiger.GetUser().GetId())
+	}
+	log.Debugf("job label: %v", l)
+	return l
+}
+
+func CheckJobIsOwnedByTrainer(labels map[string]string) error {
+	arenaConfiger := config.GetArenaConfiger()
+	if arenaConfiger.IsIsolateUserInNamespace() && labels[types.UserNameIdLabel] != arenaConfiger.GetUser().GetId() {
+		return types.ErrNoPrivilegesToOperateJob
+	}
+	return nil
 }

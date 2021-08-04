@@ -12,8 +12,14 @@ metadata:
     servingName: "{{ .Values.servingName }}"
     servingVersion: "{{ .Values.servingVersion }}"
     servingType: "triton-serving"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
   annotations:
     "helm.sh/created": {{ .Release.Time.Seconds | quote }}
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}   
 spec:
   replicas: {{ .Values.replicas }}
   strategy:
@@ -31,6 +37,9 @@ spec:
         {{- range $key, $value := .Values.annotations }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
+        {{- range $key, $value := .Values.annotations }}
+          {{ $key }}: {{ $value | quote }}
+        {{- end }}  
       labels:
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name | quote }}
@@ -40,6 +49,9 @@ spec:
         servingName: "{{ .Values.servingName }}"
         servingVersion: "{{ .Values.servingVersion }}"
         servingType: "triton-serving"
+      {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
     spec:
       {{- if ne (len .Values.nodeSelectors) 0 }}
       nodeSelector:

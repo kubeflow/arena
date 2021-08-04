@@ -299,6 +299,9 @@ func (st *VolcanoJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 	if err != nil {
 		return nil, err
 	}
+	if err := CheckJobIsOwnedByTrainer(volcanoJob.Labels); err != nil {
+		return nil, err
+	}
 	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("release=%v,app=%v", name, st.Type()), "", nil)
 	if err != nil {
 		return nil, err
@@ -321,7 +324,8 @@ func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace boo
 	if allNamespace {
 		namespace = metav1.NamespaceAll
 	}
-	jobs, err := k8saccesser.GetK8sResourceAccesser().ListVolcanoJobs(st.volcanoJobClient, namespace)
+	jobLabels := GetTrainingJobLabels(st.Type())
+	jobs, err := k8saccesser.GetK8sResourceAccesser().ListVolcanoJobs(st.volcanoJobClient, namespace, jobLabels)
 	if err != nil {
 		return nil, err
 	}

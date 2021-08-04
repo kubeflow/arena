@@ -13,3 +13,7 @@
 ### 0.1.2
 
 * fix bug for supporting gang
+
+### 0.2.0
+
+* support job labels and annotations

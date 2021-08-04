@@ -70,9 +70,6 @@ func SearchTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 			if strings.Contains(err.Error(), "forbidden: User") {
 				return nil, fmt.Errorf("the user has no privileges to get the training job in namespace %v,reason: %v", namespace, err)
 			}
-			if isTrainingConfigExist(jobName, string(jobType), namespace) {
-				log.Warningf(errGetMsg, jobName, jobName, "--type "+string(jobType))
-			}
 			return nil, err
 		}
 		return job, nil
@@ -98,15 +95,11 @@ func getTrainingJobByType(name, namespace, trainingType string) (job TrainingJob
 			log.Debugf("the trainer %v is disabled,skip to use this trainer to get the training job", trainer.Type())
 			continue
 		}
-		if string(trainer.Type()) == trainingType {
-			return trainer.GetTrainingJob(name, namespace)
+		if string(trainer.Type()) != trainingType {
+			log.Debugf("the job %s with type %s in namespace %s is not expected type %v", name, trainer.Type(), namespace, trainingType)
+			continue
 		}
-		log.Debugf("the job %s with type %s in namespace %s is not expected type %v",
-			name,
-			trainer.Type(),
-			namespace,
-			trainingType,
-		)
+		return trainer.GetTrainingJob(name, namespace)
 	}
 	return nil, types.ErrTrainingJobNotFound
 }
@@ -117,6 +110,7 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 	var wg sync.WaitGroup
 	locker := new(sync.RWMutex)
 	noPrivileges := false
+	var errOwnerIsNotYou error
 	for _, trainer := range trainers {
 		wg.Add(1)
 		t := trainer
@@ -133,8 +127,11 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 					noPrivileges = true
 					return
 				}
-				log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, t.Type())
-				return
+				if err != types.ErrNoPrivilegesToOperateJob {
+					log.Debugf("the job %s in namespace %s is not supported by %v", name, namespace, t.Type())
+					return
+				}
+				errOwnerIsNotYou = err
 			}
 			locker.Lock()
 			jobs = append(jobs, job)
@@ -148,6 +145,9 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 	if len(jobs) == 0 {
 		log.Debugf("Failed to find the training job %s in namespace %s", name, namespace)
 		return nil, types.ErrTrainingJobNotFound
+	}
+	if errOwnerIsNotYou != nil {
+		return nil, errOwnerIsNotYou
 	}
 	return jobs, nil
 }

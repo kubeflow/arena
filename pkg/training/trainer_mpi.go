@@ -281,6 +281,9 @@ func (tt *MPIJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, er
 	if err != nil {
 		return nil, err
 	}
+	if err := CheckJobIsOwnedByTrainer(mpijob.Labels); err != nil {
+		return nil, err
+	}
 	// 1. get the batch job of the mpijob
 	batchJobs, err := k8saccesser.GetK8sResourceAccesser().ListBatchJobs(namespace, "mpi_job_name")
 	if err != nil {
@@ -418,7 +421,8 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
-	mpijobs, err := k8saccesser.GetK8sResourceAccesser().ListMPIJobs(tt.mpijobClient, namespace)
+	jobLabels := GetTrainingJobLabels(tt.Type())
+	mpijobs, err := k8saccesser.GetK8sResourceAccesser().ListMPIJobs(tt.mpijobClient, namespace, jobLabels)
 	if err != nil {
 		return trainingJobs, err
 	}

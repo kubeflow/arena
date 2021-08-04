@@ -2,6 +2,14 @@
 apiVersion: machinelearning.seldon.io/v1
 kind: SeldonDeployment
 metadata:
+  labels:
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }} 
   name: {{ .Values.servingName }}
   namespace: {{ .Values.namespace }}
 spec:
@@ -42,3 +50,10 @@ spec:
         serviceName: "{{ .Values.servingName }}"
         servingType: seldon-serving
         servingVersion: "{{ .Values.servingVersion }}"
+      {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      annotations:
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}  

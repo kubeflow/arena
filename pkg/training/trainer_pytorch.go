@@ -298,6 +298,9 @@ func (tt *PyTorchJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 	if err != nil {
 		return nil, err
 	}
+	if err := CheckJobIsOwnedByTrainer(pytorchjob.Labels); err != nil {
+		return nil, err
+	}
 	// 2. Find the pod list, and determine the pod of the job
 	allPods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("release=%v,app=%v", name, tt.Type()), "", nil)
 	if err != nil {
@@ -399,8 +402,9 @@ func (tt *PyTorchJobTrainer) ListTrainingJobs(namespace string, allNamespace boo
 		namespace = metav1.NamespaceAll
 	}
 	trainingJobs := []TrainingJob{}
+	jobLabels := GetTrainingJobLabels(tt.Type())
 	// list all jobs from k8s apiserver
-	pytorchjobs, err := k8saccesser.GetK8sResourceAccesser().ListPytorchJobs(tt.pytorchjobClient, namespace)
+	pytorchjobs, err := k8saccesser.GetK8sResourceAccesser().ListPytorchJobs(tt.pytorchjobClient, namespace, jobLabels)
 	if err != nil {
 		return trainingJobs, err
 	}

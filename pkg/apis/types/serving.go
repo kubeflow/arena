@@ -154,6 +154,7 @@ type CommonServingArgs struct {
 	NodeSelectors   map[string]string `yaml:"nodeSelectors"` // --selector
 	Tolerations     []string          `yaml:"tolerations"`   // --toleration
 	Annotations     map[string]string `yaml:"annotations"`
+	Labels          map[string]string `yaml:"labels"` // --label
 
 	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
 }

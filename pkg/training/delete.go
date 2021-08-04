@@ -20,6 +20,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/util/kubeclient"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
 )
@@ -38,23 +39,23 @@ func DeleteTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 	log.Debugf("%s wasn't deleted by helm due to %v", jobName, err)
 	// if the jobType is sure,delete the job
 	if jobType != types.AllTrainingJob {
-		if !isTrainingConfigExist(jobName, string(jobType), namespace) {
-			log.Infof("The training job '%v' does not exist,skip to delete it", jobName)
-			return types.ErrTrainingJobNotFound
+		canDelete, err := kubeclient.CheckJobIsOwnedByUser(namespace, jobName, jobType)
+		if err != nil {
+			if err == kubeclient.ErrConfigMapNotFound {
+				log.Errorf("The training job '%v' does not exist,skip to delete it", jobName)
+				return types.ErrTrainingJobNotFound
+			}
+			return err
+		}
+		if !canDelete {
+			return types.ErrNoPrivilegesToOperateJob
 		}
 		return workflow.DeleteJob(jobName, namespace, string(jobType))
 	}
 	// 2. Handle training jobs created by arena
-	trainingTypes = getTrainingTypes(jobName, namespace)
-	if len(trainingTypes) == 0 {
-		log.Infof("The training job '%v' does not exist,skip to delete it", jobName)
-		return types.ErrTrainingJobNotFound
-	}
-	if len(trainingTypes) > 1 {
-		return fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one.",
-			jobName,
-			jobName,
-			jobName)
+	trainingTypes, err = getTrainingTypes(jobName, namespace)
+	if err != nil {
+		return err
 	}
 	err = workflow.DeleteJob(jobName, namespace, trainingTypes[0])
 	if err != nil {

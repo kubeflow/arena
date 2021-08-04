@@ -72,6 +72,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		dataSet          []string
 		dataDir          []string
 		annotations      []string
+		labels           []string
 		tolerations      []string
 		nodeSelectors    []string
 		configFiles      []string
@@ -111,6 +112,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringSliceVar(&dataDir, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
 	// add option --annotation,its' value will be get from viper
 	command.Flags().StringSliceVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringSliceVarP(&labels, "label", "l", []string{}, "specify the label")
 	// enable RDMA or not, support hostnetwork for now
 	// add option --rdma
 	command.Flags().BoolVar(&s.args.EnableRDMA, "rdma", false, "enable RDMA")
@@ -134,6 +136,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("annotation", &annotations).
 		AddArgValue("data-dir", &dataDir).
 		AddArgValue("data", &dataSet).
+		AddArgValue("label", &labels).
 		AddArgValue("env", &envs)
 }
 
@@ -167,6 +170,12 @@ func (s *SubmitArgsBuilder) Build() error {
 	}
 	// set annotation
 	if err := s.setAnnotations(); err != nil {
+		return err
+	}
+	if err := s.setLabels(); err != nil {
+		return err
+	}
+	if err := s.setUserNameAndUserId(); err != nil {
 		return err
 	}
 	// set config files
@@ -283,7 +292,9 @@ func (s *SubmitArgsBuilder) setDataSet() error {
 
 // setAnnotations is used to handle option --annotation
 func (s *SubmitArgsBuilder) setAnnotations() error {
-	s.args.Annotations = map[string]string{}
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
 	argKey := "annotation"
 	var annotations *[]string
 	item, ok := s.argValues[argKey]
@@ -304,6 +315,44 @@ func (s *SubmitArgsBuilder) setAnnotations() error {
 	if value == "true" {
 		s.args.UseENI = true
 	}
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *SubmitArgsBuilder) setLabels() error {
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	argKey := "label"
+	var labels *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	labels = item.(*[]string)
+	if len(*labels) <= 0 {
+		return nil
+	}
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	for key, val := range transformSliceToMap(*labels, "=") {
+		s.args.Labels[key] = val
+	}
+	return nil
+}
+
+func (s *SubmitArgsBuilder) setUserNameAndUserId() error {
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	arenaConfiger := config.GetArenaConfiger()
+	user := arenaConfiger.GetUser()
+	s.args.Labels[types.UserNameIdLabel] = user.GetId()
+	s.args.Annotations[types.UserNameNameLabel] = user.GetName()
 	return nil
 }
 
@@ -338,7 +387,9 @@ func (s *SubmitArgsBuilder) setPodSecurityContext() error {
 
 // setNodeSelectors is used to handle option --selector
 func (s *SubmitArgsBuilder) setNodeSelectors() error {
-	s.args.NodeSelectors = map[string]string{}
+	if s.args.NodeSelectors == nil {
+		s.args.NodeSelectors = map[string]string{}
+	}
 	argKey := "selector"
 	var nodeSelectors *[]string
 	value, ok := s.argValues[argKey]
@@ -429,7 +480,9 @@ func (s *SubmitArgsBuilder) setConfigFiles() error {
 
 // setTolerations is used to handle option --toleration
 func (s *SubmitArgsBuilder) setTolerations() error {
-	s.args.Tolerations = []string{}
+	if s.args.Tolerations == nil {
+		s.args.Tolerations = []string{}
+	}
 	argKey := "toleration"
 	var tolerations *[]string
 	value, ok := s.argValues[argKey]

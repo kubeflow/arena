@@ -3,11 +3,14 @@ package config
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 	"sync"
 
 	"os"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/util"
 	config "github.com/kubeflow/arena/pkg/util/config"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -46,19 +49,50 @@ func GetArenaConfiger() *ArenaConfiger {
 	return arenaClient
 }
 
+type tokenRetriever struct {
+	rountTripper http.RoundTripper
+	token        string
+}
+
+func (t *tokenRetriever) RoundTrip(req *http.Request) (*http.Response, error) {
+	header := req.Header.Get("authorization")
+	switch {
+	case strings.HasPrefix(header, "Bearer "):
+		t.token = strings.ReplaceAll(header, "Bearer ", "")
+	}
+	return t.rountTripper.RoundTrip(req)
+}
+
+type User struct {
+	name string
+	id   string
+}
+
+func (u User) GetName() string {
+	return u.name
+}
+
+func (u User) GetId() string {
+	return u.id
+}
+
 type ArenaConfiger struct {
-	restConfig            *rest.Config
-	clientConfig          clientcmd.ClientConfig
-	clientset             *kubernetes.Clientset
-	apiExtensionClientset *extclientset.Clientset
-	namespace             string
-	arenaNamespace        string
-	configs               map[string]string
-	isDaemonMode          bool
-	clusterInstalledCRDs  []string
+	restConfig             *rest.Config
+	clientConfig           clientcmd.ClientConfig
+	clientset              *kubernetes.Clientset
+	apiExtensionClientset  *extclientset.Clientset
+	user                   User
+	namespace              string
+	arenaNamespace         string
+	configs                map[string]string
+	isDaemonMode           bool
+	clusterInstalledCRDs   []string
+	isolateUserInNamespace bool
+	tokenRetriever         *tokenRetriever
 }
 
 func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
+	tr := &tokenRetriever{}
 	arenaConfigs, err := loadArenaConifg()
 	if err != nil {
 		return nil, err
@@ -67,6 +101,10 @@ func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 	if err != nil {
 		return nil, err
 	}
+	restConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		tr.rountTripper = rt
+		return tr
+	})
 	apiExtensionClientSet, err := extclientset.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
@@ -79,17 +117,33 @@ func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 	*/
 	namespace := updateNamespace(args.Namespace, arenaConfigs, clientConfig)
 	log.Debugf("current namespace is %v", namespace)
+	userName, err := getUserName(namespace, clientConfig, restConfig, clientSet, tr)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("succeed to get user name: %v from client-go", *userName)
+	userId := util.Md5(*userName)
+	log.Debugf("the user id is %v", userId)
+	i, err := isolateUserInNamespace(namespace, clientSet)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("enable isolate user in namespace %v: %v", namespace, i)
 	return &ArenaConfiger{
-		restConfig:            restConfig,
-		clientConfig:          clientConfig,
-		clientset:             clientSet,
-		apiExtensionClientset: apiExtensionClientSet,
-		namespace:             namespace,
-		arenaNamespace:        args.ArenaNamespace,
-		configs:               arenaConfigs,
-		isDaemonMode:          args.IsDaemonMode,
-		clusterInstalledCRDs:  []string{},
+		restConfig:             restConfig,
+		clientConfig:           clientConfig,
+		clientset:              clientSet,
+		apiExtensionClientset:  apiExtensionClientSet,
+		namespace:              namespace,
+		arenaNamespace:         args.ArenaNamespace,
+		configs:                arenaConfigs,
+		isDaemonMode:           args.IsDaemonMode,
+		clusterInstalledCRDs:   []string{},
+		user:                   User{name: *userName, id: userId},
+		isolateUserInNamespace: i,
+		tokenRetriever:         tr,
 	}, nil
+
 }
 
 // GetClientConfig returns the kubernetes ClientConfig
@@ -134,10 +188,18 @@ func (a *ArenaConfiger) GetClusterInstalledCRDs() []string {
 	return a.clusterInstalledCRDs
 }
 
+func (a *ArenaConfiger) GetUser() User {
+	return a.user
+}
+
+func (a *ArenaConfiger) IsIsolateUserInNamespace() bool {
+	return a.isolateUserInNamespace
+}
+
 // loadArenaConifg returns configs in map
 func loadArenaConifg() (map[string]string, error) {
 	arenaConfigs := map[string]string{}
-	log.Debugf("init arena config")
+	log.Debugf("start to init arena config")
 	validateFile := func(file string) bool {
 		if file == "" {
 			return false
@@ -183,6 +245,14 @@ func updateNamespace(namespace string, arenaConfigs map[string]string, clientCon
 	}
 	log.Debugf("failed to read namespace from kubeconfig,we set the default namespace with 'default'")
 	return "default"
+}
+
+func isolateUserInNamespace(namespaceName string, clientSet *kubernetes.Clientset) (bool, error) {
+	namespace, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), namespaceName, metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
+	return namespace.Labels[types.MultiTenantIsolationLabel] == "true", nil
 }
 
 func getClusterInstalledCRDs(client *extclientset.Clientset) ([]string, error) {

@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"os"
 	"strings"
@@ -223,4 +225,22 @@ func DataUnitTransfer(from string, to string, value float64) float64 {
 		return value
 	}
 	return value * math.Pow(1024, float64(fromPosition-toPosition))
+}
+
+func ParseK8sObjectsFromYamlFile(filename string) ([]types.K8sObject, error) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	objects := []types.K8sObject{}
+	for _, content := range strings.Split(string(data), "---\n") {
+		object := types.K8sObject{}
+		err := json.Unmarshal([]byte(content), &object)
+		if err != nil {
+			log.Debugf("failed to parse k8s object from yaml file %v,reason: %v", filename, err)
+			return nil, err
+		}
+		objects = append(objects, object)
+	}
+	return objects, nil
 }

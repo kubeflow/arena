@@ -21,6 +21,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/prometheus"
+	"github.com/kubeflow/arena/pkg/util/kubeclient"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -30,16 +31,33 @@ import (
 /*
 * get App Configs by name, which is created by arena
  */
-func getTrainingTypes(name, namespace string) (cms []string) {
+func getTrainingTypes(name, namespace string) (cms []string, err error) {
 	cms = []string{}
+	var errNoPrivilege error
 	for _, trainingType := range utils.GetTrainingJobTypes() {
-		found := isTrainingConfigExist(name, string(trainingType), namespace)
-		if found {
-			cms = append(cms, string(trainingType))
+		canDelete, err := kubeclient.CheckJobIsOwnedByUser(namespace, name, trainingType)
+		if err != nil {
+			continue
 		}
+		if !canDelete {
+			errNoPrivilege = types.ErrNoPrivilegesToOperateJob
+		}
+		cms = append(cms, string(trainingType))
 	}
-
-	return cms
+	if len(cms) == 0 {
+		log.Infof("The training job '%v' does not exist,skip to delete it", name)
+		return nil, types.ErrTrainingJobNotFound
+	}
+	if len(cms) > 1 {
+		return nil, fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one.",
+			name,
+			name,
+			name)
+	}
+	if errNoPrivilege != nil {
+		return nil, errNoPrivilege
+	}
+	return cms, nil
 }
 
 /**

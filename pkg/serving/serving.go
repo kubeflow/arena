@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
@@ -265,17 +266,17 @@ func (s *servingJob) Instances() []types.ServingInstance {
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
 		gpus := getPodGPUs(pod, gpuMemory, index)
 		instances = append(instances, types.ServingInstance{
-			Name:             pod.Name,
-			Status:           status,
-			Age:              age,
-			NodeIP:           pod.Status.HostIP,
-			NodeName:         pod.Spec.NodeName,
-			IP:               pod.Status.PodIP,
-			ReadyContainer:   readyContainer,
-			TotalContainer:   totalContainers,
-			RestartCount:     restart,
-			RequestGPUs:      gpus,
-			RequestGPUMemory: gpuMemory,
+			Name:              pod.Name,
+			Status:            status,
+			Age:               age,
+			NodeIP:            pod.Status.HostIP,
+			NodeName:          pod.Spec.NodeName,
+			IP:                pod.Status.PodIP,
+			ReadyContainer:    readyContainer,
+			TotalContainer:    totalContainers,
+			RestartCount:      restart,
+			RequestGPUs:       gpus,
+			RequestGPUMemory:  gpuMemory,
 			CreationTimestamp: pod.CreationTimestamp.Unix(),
 		})
 	}
@@ -329,18 +330,15 @@ func (p *processer) IsSupported(namespace, name, version string) bool {
 }
 
 func (p *processer) GetServingJobs(namespace, name, version string) ([]ServingJob, error) {
-	selector := fmt.Sprintf("%v=%v,%v=%v", servingNameLabelKey, name, servingTypeLabelKey, p.processerType)
-	if version != "" {
-		selector = fmt.Sprintf("%v=%v,%v=%v,%v=%v",
-			servingNameLabelKey,
-			name,
-			servingTypeLabelKey,
-			p.processerType,
-			servingVersionLabelKey,
-			version,
-		)
+	selector := []string{
+		fmt.Sprintf("%v=%v", servingNameLabelKey, name),
+		fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType),
 	}
-	return p.FilterServingJobs(namespace, false, selector)
+	if version != "" {
+		selector = append(selector, fmt.Sprintf("%v=%v", servingVersionLabelKey, version))
+	}
+	log.Debugf("processer %v,filter jobs by labels: %v", p.processerType, selector)
+	return p.FilterServingJobs(namespace, false, strings.Join(selector, ","))
 }
 
 func (p *processer) FilterServingJobs(namespace string, allNamespace bool, label string) ([]ServingJob, error) {
@@ -352,6 +350,7 @@ func (p *processer) FilterServingJobs(namespace string, allNamespace bool, label
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("processer: %v,found target deployments: %v", p.processerType, len(deployments))
 	selector := fmt.Sprintf("%v,%v,%v=%v", servingNameLabelKey, servingVersionLabelKey, servingTypeLabelKey, p.processerType)
 	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, selector, "", nil)
 	if err != nil {
@@ -436,7 +435,13 @@ func (p *processer) getIstioGatewayService() []*v1.Service {
 }
 
 func (p *processer) ListServingJobs(namespace string, allNamespace bool) ([]ServingJob, error) {
-	return p.FilterServingJobs(namespace, allNamespace, fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType))
+	selector := fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType)
+	arenaConfiger := config.GetArenaConfiger()
+	if arenaConfiger.IsIsolateUserInNamespace() {
+		selector = fmt.Sprintf("%v,%v=%v", selector, types.UserNameIdLabel, arenaConfiger.GetUser().GetId())
+	}
+	log.Debugf("filter jobs by labels: %v", selector)
+	return p.FilterServingJobs(namespace, allNamespace, selector)
 }
 
 func (p *processer) IsDeploymentPod(deployment *appv1.Deployment, pod *v1.Pod) bool {

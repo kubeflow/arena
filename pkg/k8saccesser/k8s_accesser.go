@@ -386,11 +386,11 @@ func (k *k8sResourceAccesser) ListCrons(cronClient *cronversioned.Clientset, nam
 	return crons, nil
 }
 
-func (k *k8sResourceAccesser) ListTensorflowJobs(tfjobClient *tfversioned.Clientset, namespace string) ([]*tfv1.TFJob, error) {
+func (k *k8sResourceAccesser) ListTensorflowJobs(tfjobClient *tfversioned.Clientset, namespace string, tfjobLabel string) ([]*tfv1.TFJob, error) {
 	jobs := []*tfv1.TFJob{}
 	jobList := &tfv1.TFJobList{}
 	var err error
-	labelSelector, err := parseLabelSelector(fmt.Sprintf("app=%v,release", types.TFTrainingJob))
+	labelSelector, err := parseLabelSelector(tfjobLabel)
 	if err != nil {
 		return nil, err
 	}
@@ -418,11 +418,11 @@ func (k *k8sResourceAccesser) ListTensorflowJobs(tfjobClient *tfversioned.Client
 	return jobs, nil
 }
 
-func (k *k8sResourceAccesser) ListMPIJobs(mpijobClient *mpiversioned.Clientset, namespace string) ([]*v1alpha1.MPIJob, error) {
+func (k *k8sResourceAccesser) ListMPIJobs(mpijobClient *mpiversioned.Clientset, namespace string, labels string) ([]*v1alpha1.MPIJob, error) {
 	jobs := []*v1alpha1.MPIJob{}
 	jobList := &v1alpha1.MPIJobList{}
 	var err error
-	labelSelector, err := parseLabelSelector(fmt.Sprintf("app=%v,release", types.MPITrainingJob))
+	labelSelector, err := parseLabelSelector(labels)
 	if err != nil {
 		return nil, err
 	}
@@ -448,11 +448,11 @@ func (k *k8sResourceAccesser) ListMPIJobs(mpijobClient *mpiversioned.Clientset, 
 	return jobs, nil
 }
 
-func (k *k8sResourceAccesser) ListPytorchJobs(pytorchjobClient *pyversioned.Clientset, namespace string) ([]*pytorch_v1.PyTorchJob, error) {
+func (k *k8sResourceAccesser) ListPytorchJobs(pytorchjobClient *pyversioned.Clientset, namespace string, labels string) ([]*pytorch_v1.PyTorchJob, error) {
 	jobs := []*pytorch_v1.PyTorchJob{}
 	jobList := &pytorch_v1.PyTorchJobList{}
 	var err error
-	labelSelector, err := parseLabelSelector(fmt.Sprintf("app=%v,release", types.PytorchTrainingJob))
+	labelSelector, err := parseLabelSelector(labels)
 	if err != nil {
 		return nil, err
 	}
@@ -478,11 +478,11 @@ func (k *k8sResourceAccesser) ListPytorchJobs(pytorchjobClient *pyversioned.Clie
 	return jobs, nil
 }
 
-func (k *k8sResourceAccesser) ListETJobs(etjobClient *etversioned.Clientset, namespace string) ([]*v1alpha12.TrainingJob, error) {
+func (k *k8sResourceAccesser) ListETJobs(etjobClient *etversioned.Clientset, namespace string, labels string) ([]*v1alpha12.TrainingJob, error) {
 	jobs := []*v1alpha12.TrainingJob{}
 	jobList := &v1alpha12.TrainingJobList{}
 	var err error
-	labelSelector, err := parseLabelSelector(fmt.Sprintf("app=%v,release", types.ETTrainingJob))
+	labelSelector, err := parseLabelSelector(labels)
 	if err != nil {
 		return nil, err
 	}
@@ -508,11 +508,11 @@ func (k *k8sResourceAccesser) ListETJobs(etjobClient *etversioned.Clientset, nam
 	return jobs, nil
 }
 
-func (k *k8sResourceAccesser) ListVolcanoJobs(volcanojobClient *volcanovesioned.Clientset, namespace string) ([]*volcano_v1alpha1.Job, error) {
+func (k *k8sResourceAccesser) ListVolcanoJobs(volcanojobClient *volcanovesioned.Clientset, namespace string, labels string) ([]*volcano_v1alpha1.Job, error) {
 	jobs := []*volcano_v1alpha1.Job{}
 	jobList := &volcano_v1alpha1.JobList{}
 	var err error
-	labelSelector, err := parseLabelSelector(fmt.Sprintf("app=%v,release", types.VolcanoTrainingJob))
+	labelSelector, err := parseLabelSelector(labels)
 	if err != nil {
 		return nil, err
 	}
@@ -538,11 +538,11 @@ func (k *k8sResourceAccesser) ListVolcanoJobs(volcanojobClient *volcanovesioned.
 	return jobs, nil
 }
 
-func (k *k8sResourceAccesser) ListSparkJobs(sparkjobClient *sparkversioned.Clientset, namespace string) ([]*spark_v1beta2.SparkApplication, error) {
+func (k *k8sResourceAccesser) ListSparkJobs(sparkjobClient *sparkversioned.Clientset, namespace string, labels string) ([]*spark_v1beta2.SparkApplication, error) {
 	jobs := []*spark_v1beta2.SparkApplication{}
 	jobList := &spark_v1beta2.SparkApplicationList{}
 	var err error
-	labelSelector, err := parseLabelSelector(fmt.Sprintf("app=%v,release", types.SparkTrainingJob))
+	labelSelector, err := parseLabelSelector(labels)
 	if err != nil {
 		return nil, err
 	}

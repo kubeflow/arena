@@ -2,9 +2,10 @@ package serving
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/argsbuilder"
-	"strings"
 )
 
 type SeldonJobBuilder struct {
@@ -165,6 +166,18 @@ func (b *SeldonJobBuilder) Annotations(annotations map[string]string) *SeldonJob
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
 		}
 		b.argValues["annotation"] = &s
+	}
+	return b
+}
+
+// Labels is used to add labels for job
+func (b *SeldonJobBuilder) Labels(labels map[string]string) *SeldonJobBuilder {
+	if labels != nil && len(labels) != 0 {
+		s := []string{}
+		for key, value := range labels {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["label"] = &s
 	}
 	return b
 }

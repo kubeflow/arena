@@ -11,6 +11,13 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     createdBy: "VolcanoJob"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
 spec:
   schedulerName: {{ .Values.schedulerName | default "volcano" | quote }}
   minAvailable: {{ .Values.minAvailable }}
@@ -30,6 +37,13 @@ spec:
             volcano-role: "driver"
             {{- end}}
             createdBy: "VolcanoJob"
+            {{- range $key, $value := $dot.Values.labels }}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
+          annotations:
+            {{- range $key, $value := $dot.Values.annotations }}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
         spec:
             schedulerName: {{ $dot.Values.schedulerName | default "volcano" | quote }}
             restartPolicy: {{ $dot.Values.restartPolicy | default "Never" | quote }}

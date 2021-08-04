@@ -12,6 +12,13 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     createdBy: "PyTorchJob"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
 spec:
 {{- if .Values.cleanPodPolicy }}
   cleanPodPolicy: {{ .Values.cleanPodPolicy }}
@@ -34,6 +41,9 @@ spec:
             pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
             {{- end }}
             master-pod-name: {{ .Release.Name }}-master-0
+          {{- range $key, $value := .Values.labels }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}  
           annotations:
             {{- range $key, $value := .Values.annotations }}
               {{ $key }}: {{ $value | quote }}
@@ -314,6 +324,9 @@ spec:
             pod-group.scheduling.sigs.k8s.io/name: {{ .Values.podGroupName }}
             pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
             {{- end }}
+          {{- range $key, $value := .Values.labels }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}    
           annotations:
             {{- range $key, $value := .Values.annotations }}
               {{ $key }}: {{ $value | quote }}

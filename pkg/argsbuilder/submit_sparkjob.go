@@ -19,6 +19,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/spf13/cobra"
 )
@@ -63,6 +64,10 @@ func (s *SubmitSparkJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
+	var (
+		annotations []string
+		labels      []string
+	)
 	command.Flags().StringVar(&s.args.Name, "name", "", "override name")
 	command.MarkFlagRequired("name")
 
@@ -76,6 +81,9 @@ func (s *SubmitSparkJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Driver.MemoryRequest, "driver-memory-request", "500m", "memory request for driver pod (min is 500m)")
 	command.Flags().IntVar(&s.args.Executor.CPURequest, "executor-cpu-request", 1, "cpu request for executor pod")
 	command.Flags().StringVar(&s.args.Executor.MemoryRequest, "executor-memory-request", "500m", "memory request for executor pod (min is 500m)")
+	command.Flags().StringSliceVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringSliceVarP(&labels, "label", "l", []string{}, "specify the label")
+	s.AddArgValue("annotation", &annotations).AddArgValue("label", &labels)
 }
 
 func (s *SubmitSparkJobArgsBuilder) PreBuild() error {
@@ -93,6 +101,15 @@ func (s *SubmitSparkJobArgsBuilder) Build() error {
 			return err
 		}
 	}
+	if err := s.setAnnotations(); err != nil {
+		return err
+	}
+	if err := s.setLabels(); err != nil {
+		return err
+	}
+	if err := s.setUserNameAndUserId(); err != nil {
+		return err
+	}
 	if err := s.isValid(); err != nil {
 		return err
 	}
@@ -103,5 +120,67 @@ func (s *SubmitSparkJobArgsBuilder) isValid() error {
 	if s.args.Executor.Replicas == 0 {
 		return errors.New("WorkersMustMoreThanOne")
 	}
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *SubmitSparkJobArgsBuilder) setAnnotations() error {
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	argKey := "annotation"
+	var annotations *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	annotations = item.(*[]string)
+	if len(*annotations) <= 0 {
+		return nil
+	}
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	for key, val := range transformSliceToMap(*annotations, "=") {
+		s.args.Annotations[key] = val
+	}
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *SubmitSparkJobArgsBuilder) setLabels() error {
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	argKey := "label"
+	var labels *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	labels = item.(*[]string)
+	if len(*labels) <= 0 {
+		return nil
+	}
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	for key, val := range transformSliceToMap(*labels, "=") {
+		s.args.Labels[key] = val
+	}
+	return nil
+}
+
+func (s *SubmitSparkJobArgsBuilder) setUserNameAndUserId() error {
+	if s.args.Labels == nil {
+		s.args.Labels = map[string]string{}
+	}
+	if s.args.Annotations == nil {
+		s.args.Annotations = map[string]string{}
+	}
+	arenaConfiger := config.GetArenaConfiger()
+	user := arenaConfiger.GetUser()
+	s.args.Labels[types.UserNameIdLabel] = user.GetId()
+	s.args.Annotations[types.UserNameNameLabel] = user.GetName()
 	return nil
 }

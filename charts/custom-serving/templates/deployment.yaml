@@ -13,6 +13,9 @@ metadata:
     servingType: "custom-serving"
     serviceName: "{{ .Values.servingName }}"
     servingVersion: "{{ .Values.servingVersion }}"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }} 
   annotations:
     "helm.sh/created": {{ .Release.Time.Seconds | quote }}
 spec:
@@ -41,6 +44,9 @@ spec:
         servingName: "{{ .Values.servingName }}"
         servingVersion: "{{ .Values.servingVersion }}"
         servingType: "custom-serving"
+      {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}         
     spec:
       {{- if ne (len .Values.nodeSelectors) 0 }}
       nodeSelector:

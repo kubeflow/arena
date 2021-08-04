@@ -1,5 +1,9 @@
 package types
 
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 // PrintFormatStyle defines the format of output
 // it only used in cmd
 type FormatStyle string
@@ -21,4 +25,9 @@ type ArenaClientArgs struct {
 	ArenaNamespace string
 	IsDaemonMode   bool
 	LogLevel       string
+}
+
+type K8sObject struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 }

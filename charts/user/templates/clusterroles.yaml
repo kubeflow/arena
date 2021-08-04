@@ -24,6 +24,18 @@ rules:
     verbs:
     - list
     - get
+  - apiGroups:
+    - authentication.k8s.io
+    resources:
+    - tokenreviews
+    verbs:
+    - create
+  - apiGroups:
+    - ""
+    resources:
+    - namespaces
+    verbs:
+    - get 
 {{- with .Values.clusterRoles }}
 {{- toYaml . | nindent 2 }}
 {{- end }}

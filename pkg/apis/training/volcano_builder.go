@@ -1,6 +1,7 @@
 package training
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -105,6 +106,28 @@ func (b *VolcanoJobBuilder) TaskMemory(mem string) *VolcanoJobBuilder {
 func (b *VolcanoJobBuilder) TaskPort(port int) *VolcanoJobBuilder {
 	if port > 0 {
 		b.args.TaskPort = port
+	}
+	return b
+}
+
+func (b *VolcanoJobBuilder) Labels(labels map[string]string) *VolcanoJobBuilder {
+	if labels != nil && len(labels) != 0 {
+		s := []string{}
+		for key, value := range labels {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["label"] = &s
+	}
+	return b
+}
+
+func (b *VolcanoJobBuilder) Annotations(annotations map[string]string) *VolcanoJobBuilder {
+	if annotations != nil && len(annotations) != 0 {
+		s := []string{}
+		for key, value := range annotations {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["annotation"] = &s
 	}
 	return b
 }

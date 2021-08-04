@@ -116,6 +116,17 @@ func (b *TFJobBuilder) Annotations(annotations map[string]string) *TFJobBuilder 
 	return b
 }
 
+func (b *TFJobBuilder) Labels(labels map[string]string) *TFJobBuilder {
+	if labels != nil && len(labels) != 0 {
+		s := []string{}
+		for key, value := range labels {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["label"] = &s
+	}
+	return b
+}
+
 func (b *TFJobBuilder) EnableChief() *TFJobBuilder {
 	b.args.UseChief = true
 	return b

@@ -1,6 +1,8 @@
 package training
 
 import (
+	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/argsbuilder"
 )
@@ -93,6 +95,28 @@ func (b *SparkJobBuilder) ExecutorCPURequest(request int) *SparkJobBuilder {
 func (b *SparkJobBuilder) ExecutorMemoryRequest(memory string) *SparkJobBuilder {
 	if memory != "" {
 		b.args.Executor.MemoryRequest = memory
+	}
+	return b
+}
+
+func (b *SparkJobBuilder) Labels(labels map[string]string) *SparkJobBuilder {
+	if labels != nil && len(labels) != 0 {
+		s := []string{}
+		for key, value := range labels {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["label"] = &s
+	}
+	return b
+}
+
+func (b *SparkJobBuilder) Annotations(annotations map[string]string) *SparkJobBuilder {
+	if annotations != nil && len(annotations) != 0 {
+		s := []string{}
+		for key, value := range annotations {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["annotation"] = &s
 	}
 	return b
 }

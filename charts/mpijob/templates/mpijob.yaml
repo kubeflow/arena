@@ -12,6 +12,13 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     createdBy: "MPIJob"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}    
 spec:
   {{- if .Values.launcherOnMaster }}
   launcherOnMaster: {{ .Values.launcherOnMaster }}
@@ -38,6 +45,9 @@ spec:
         gpu-topology: {{ .Release.Name }}
         gpu-topology-replica: "{{ .Values.gputopologyreplica }}"
         {{- end}}
+      {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}  
       annotations:
           {{- range $key, $value := .Values.annotations }}
             {{ $key }}: {{ $value | quote }}

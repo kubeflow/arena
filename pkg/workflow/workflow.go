@@ -5,8 +5,10 @@ import (
 	"os"
 
 	"github.com/kubeflow/arena/pkg/util/helm"
+	"github.com/kubeflow/arena/pkg/util/kubeclient"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 /**
@@ -22,12 +24,11 @@ func DeleteJob(name, namespace, trainingType string) error {
 		return err
 	}
 
-	result, err := kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
 		log.Warnf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 		log.Warnln("manually delete the following resource:")
 	}
-	fmt.Printf("%s", result)
 
 	err = kubectl.DeleteAppConfigMap(jobName, namespace)
 	if err != nil {
@@ -67,7 +68,7 @@ func SubmitOps(name string, trainingType string, namespace string, values interf
 	}
 
 	// 4. Create Application
-	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
 		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 	}
@@ -107,11 +108,13 @@ func SubmitOps(name string, trainingType string, namespace string, values interf
 **/
 
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string, options ...string) error {
-	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
-	if found {
+	_, err := kubeclient.GetConfigMap(namespace, fmt.Sprintf("%v-%v", name, trainingType))
+	if err == nil {
 		return fmt.Errorf("the job configmap %v-%v is already exist, please delete it first.", name, trainingType)
 	}
-
+	if !k8serrors.IsNotFound(err) {
+		return err
+	}
 	// 1. Generate value file
 	valueFileName, err := helm.GenerateValueFile(values)
 	if err != nil {
@@ -136,7 +139,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		return err
 	}
-	err = kubectl.CreateAppConfigmap(name,
+	err = kubeclient.CreateAppConfigmap(name,
 		trainingType,
 		namespace,
 		valueFileName,
@@ -146,13 +149,8 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		return err
 	}
-	err = kubectl.LabelAppConfigmap(name, trainingType, namespace, kubectl.JOB_CONFIG_LABEL)
-	if err != nil {
-		return err
-	}
-
 	// 5. Create Application
-	_, err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
+	err = kubectl.UninstallAppsWithAppInfoFile(appInfoFileName, namespace)
 	if err != nil {
 		log.Debugf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 	}

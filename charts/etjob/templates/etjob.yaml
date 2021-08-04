@@ -6,12 +6,19 @@ apiVersion: kai.alibabacloud.com/v1alpha1
 kind: TrainingJob
 metadata:
   name: {{ .Release.Name }}
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
   labels:
     app: {{ template "etjob.name" . }}
     chart: {{ template "etjob.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     createdBy: "ETJob"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }} 
 spec:
   {{- if .Values.cleanPodPolicy }}
   cleanPodPolicy: {{ .Values.cleanPodPolicy }}
@@ -33,6 +40,9 @@ spec:
             pod-group.scheduling.sigs.k8s.io/name: {{ .Values.podGroupName }}
             pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
             {{- end }}
+          {{- range $key, $value := .Values.labels }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
           {{- if .Values.annotations }}
           annotations:
           {{- range $key, $value := .Values.annotations }}
