@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -28,21 +27,21 @@ func CPUCountInPod(pod *v1.Pod) float64 {
 }
 
 func GPUCountInPod(pod *v1.Pod) int {
-	total := 0
+	total := int64(0)
 	for _, count := range ResourceInContainers(pod, types.NvidiaGPUResourceName) {
-		c, _ := parseInt(count)
+		c := count.(int64)
 		total += c
 	}
-	return total
+	return int(total)
 }
 
 func AliyunGPUCountInPod(pod *v1.Pod) int {
-	total := 0
+	total := int64(0)
 	for _, count := range ResourceInContainers(pod, types.AliyunGPUResourceName) {
-		c, _ := parseInt(count)
+		c := count.(int64)
 		total += c
 	}
-	return total
+	return int(total)
 }
 
 func ResourceInContainers(pod *v1.Pod, resourceName string) map[int]interface{} {
@@ -143,12 +142,12 @@ func DefinePodPhaseStatus(pod v1.Pod) (string, int, int, int) {
 }
 
 func GPUMemoryCountInPod(pod *v1.Pod) int {
-	total := 0
+	total := int64(0)
 	for _, count := range ResourceInContainers(pod, types.GPUShareResourceName) {
-		c, _ := parseInt(count)
+		c := count.(int64)
 		total += c
 	}
-	return total
+	return int(total)
 }
 
 func GetContainerAllocation(pod *v1.Pod) map[int]map[string]int {
@@ -316,9 +315,9 @@ func GetDurationOfPod(pod *v1.Pod) time.Duration {
 }
 
 func parseInt(i interface{}) (int, error) {
-	s, ok := i.(string)
+	s, ok := i.(int64)
 	if !ok {
 		return 0, errors.New("invalid value")
 	}
-	return strconv.Atoi(s)
+	return int(s), nil
 }
