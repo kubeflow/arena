@@ -50,7 +50,7 @@ func AcceptJobLog(jobName string, trainingType types.TrainingJobType, args *type
 		podStatuses[pod.Name] = status
 	}
 	// 4.if the instance name is invalid,return error
-	_, ok := podStatuses[args.InstanceName]
+	status, ok := podStatuses[args.InstanceName]
 	if !ok {
 		return fmt.Errorf("invalid instance name %v in job %v,please use 'arena get %v' to make sure instance name.",
 			args.InstanceName,
@@ -58,13 +58,11 @@ func AcceptJobLog(jobName string, trainingType types.TrainingJobType, args *type
 			jobName,
 		)
 	}
-	// 5.if the instance status is not running,return error
-	//if status != "Running" {
-	//	return fmt.Errorf("failed to get logs of instance %v,because it is not running,please use 'arena get %v' to make sure instance status",
-	//		args.InstanceName,
-	//		jobName,
-	//	)
-	//}
+	if strings.Index(status, "Init:") == 0 || strings.Index(status, "PodInitializing") == 0 {
+		if args.ContainerName == "" {
+			args.ContainerName = "init-code"
+		}
+	}
 	logger := podlogs.NewPodLogger(args)
 	_, err = logger.AcceptLogs()
 	return err

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -96,6 +97,10 @@ func (p *PodLogger) ensureContainerStarted() error {
 		log.Debugf("pod:%s,pod phase: %v\n", p.InstanceName, pod.Status.Phase)
 		log.Debugf("pod print status: %s\n", status)
 		switch podPhase := pod.Status.Phase; {
+		case podPhase == v1.PodPending && strings.Index(status, "Init:") == 0:
+			return nil
+		case podPhase == v1.PodPending && strings.Index(status, "PodInitializing") == 0:
+			return nil
 		case podPhase == v1.PodRunning && status != "Unknown":
 			return nil
 		case podPhase == v1.PodFailed || podPhase == v1.PodSucceeded:
