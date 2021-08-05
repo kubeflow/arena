@@ -231,7 +231,7 @@ gopkg.in/ini.v1
 gopkg.in/yaml.v2
 # istio.io/api v0.0.0-20180824201241-76349c53b87f
 istio.io/api/networking/v1alpha3
-# k8s.io/api v0.18.6 => k8s.io/api v0.18.5
+# k8s.io/api v0.22.0 => k8s.io/api v0.18.5
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
 k8s.io/api/admissionregistration/v1
