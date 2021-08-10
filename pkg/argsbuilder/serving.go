@@ -255,7 +255,7 @@ func (s *ServingArgsBuilder) setAnnotations() error {
 	return nil
 }
 
-// setAnnotations is used to handle option --annotation
+// setLabels is used to handle option --label
 func (s *ServingArgsBuilder) setLabels() error {
 	s.args.Labels = map[string]string{}
 	argKey := "label"

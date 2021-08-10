@@ -77,3 +77,7 @@ func (a *ArenaClient) Node() *NodeClient {
 func (a *ArenaClient) Data() *DataClient {
 	return NewDataClient(a.namespace, a.arenaConfiger)
 }
+
+func (a *ArenaClient) Evaluate() *EvaluateClient {
+	return NewEvaluateClient(a.namespace, a.arenaConfiger)
+}

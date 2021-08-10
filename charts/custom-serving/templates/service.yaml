@@ -34,5 +34,5 @@ spec:
     {{- end }}
   selector:
     app: {{ template "custom-serving.name" . }}
-    servingVersion: "{{ .Values.servingVersion }}"
+    release: {{ .Release.Name | quote }}
 {{- end }}
