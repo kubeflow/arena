@@ -71,6 +71,7 @@ func (s *SubmitMPIJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	command.Flags().BoolVar(&s.args.GPUTopology, "gputopology", false, "enable gpu topology scheduling")
+	command.Flags().BoolVar(&s.args.MountsOnLauncher, "mounts-on-launcher", false, "launcher also mounts pvc")
 }
 
 func (s *SubmitMPIJobArgsBuilder) PreBuild() error {
