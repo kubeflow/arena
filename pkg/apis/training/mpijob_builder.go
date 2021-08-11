@@ -253,6 +253,12 @@ func (b *MPIJobBuilder) EnableGPUTopology() *MPIJobBuilder {
 	return b
 }
 
+// EnableMountPVCOnLauncher is used to enable mount pvcs on launcher
+func (b *MPIJobBuilder) EnableMountPVCOnLauncher() *MPIJobBuilder {
+	b.args.MountsOnLauncher = true
+	return b
+}
+
 // Build is used to build the job
 func (b *MPIJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {

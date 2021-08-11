@@ -27,7 +27,7 @@ spec:
 {{ toYaml .Values.launcherResources | indent 10 }}
   backoffLimit: {{ .Values.retry }}
   replicas: {{ .Values.workers }}
-  mountsOnLauncher: false
+  mountsOnLauncher: {{ .Values.mountsOnLauncher }}
   template:
     metadata:
       name: {{ .Release.Name }}

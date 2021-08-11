@@ -15,4 +15,5 @@ type SubmitMPIJobArgs struct {
 	// enable gpu topology scheduling
 	GPUTopology        bool   `yaml:"gputopology"`
 	GPUTopologyReplica string `yaml:"gputopologyreplica"`
+	MountsOnLauncher   bool   `yaml:"mountsOnLauncher"`
 }

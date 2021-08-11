@@ -105,3 +105,7 @@
 ### 0.25.0
 
 * support job labels and annotations
+
+### 0.26.0
+
+* support mounting pvcs on launcher
