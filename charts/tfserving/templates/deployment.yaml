@@ -32,15 +32,12 @@ spec:
   template:
     metadata:
       annotations:
-        {{- if eq .Values.enableIstio true }}
-          sidecar.istio.io/inject: "true"
-        {{- end }}
-        {{- range $key, $value := .Values.annotations }}
-          {{ $key }}: {{ $value | quote }}
-        {{- end }}
-        {{- range $key, $value := .Values.annotations }}
-          {{ $key }}: {{ $value | quote }}
-        {{- end }}    
+      {{- if eq .Values.enableIstio true }}
+        sidecar.istio.io/inject: "true"
+      {{- end }}
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
       labels:
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name | quote }}
@@ -109,6 +106,12 @@ spec:
               protocol: TCP
             - containerPort: {{ .Values.restApiPort }}
               name: http-serving
+          livenessProbe:
+            failureThreshold: 30
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            tcpSocket:
+              port: 8500
           resources:
             limits:
               {{- if .Values.cpu }}
