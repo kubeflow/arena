@@ -74,7 +74,7 @@ $ export USE_LOADBALANCER=true
 
 ```
 $ cd arena-installer
-$ sudo ./install.sh
+$ ./install.sh
 ```
 On Mac OS, exec ```sudo spctl --master-disable``` to fix blocking error "install app from unknown developer". see [FAQ: Failed To Install Arena on Mac](https://arena-docs.readthedocs.io/en/latest/faq/installation/failed-install-arena/) for more details.
 
