@@ -17,3 +17,7 @@
 
 * add liveness probe
 * fix annotations repeat bug
+
+### 0.5.0
+
+* support --monitoring-config-file

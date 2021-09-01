@@ -166,13 +166,14 @@ type CustomServingArgs struct {
 }
 
 type TensorFlowServingArgs struct {
-	VersionPolicy          string `yaml:"versionPolicy"`   // --versionPolicy
-	ModelConfigFile        string `yaml:"modelConfigFile"` // --modelConfigFile
+	VersionPolicy          string `yaml:"versionPolicy"`   // --version-policy
+	ModelConfigFile        string `yaml:"modelConfigFile"` // --model-config-file
 	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
-	ModelName              string `yaml:"modelName"`   // --modelName
-	ModelPath              string `yaml:"modelPath"`   // --modelPath
-	Port                   int    `yaml:"port"`        // --port
-	RestfulPort            int    `yaml:"restApiPort"` // --restfulPort
+	MonitoringConfigFile   string `yaml:"monitoringConfigFile"` // --monitoring-config-file
+	ModelName              string `yaml:"modelName"`            // --model-name
+	ModelPath              string `yaml:"modelPath"`            // --model-path
+	Port                   int    `yaml:"port"`                 // --port
+	RestfulPort            int    `yaml:"restApiPort"`          // --restful-port
 	CommonServingArgs      `yaml:",inline"`
 }
 

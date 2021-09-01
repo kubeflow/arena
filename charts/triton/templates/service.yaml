@@ -10,6 +10,9 @@ metadata:
     servingName: {{ .Values.servingName }}
     servingType: "triton-serving"
     servingVersion: "{{ .Values.servingVersion }}"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
 spec:
   type: {{ .Values.serviceType }}
   ports:
@@ -19,9 +22,11 @@ spec:
     - name: grpc-serving
       port: {{ .Values.grpcPort }}
       targetPort: {{ .Values.grpcPort }}
-    - name: metrics-inference-server
+    {{- if .Values.allowMetrics }}
+    - name: metrics
       port: {{ .Values.metricsPort }}
       targetPort: {{ .Values.metricsPort }}
+    {{- end }}
   selector:
     release: {{ .Release.Name | quote }}
     app: {{ template "nvidia-triton-server.name" . }}

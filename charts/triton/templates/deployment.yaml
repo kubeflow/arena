@@ -19,7 +19,7 @@ metadata:
     "helm.sh/created": {{ .Release.Time.Seconds | quote }}
   {{- range $key, $value := .Values.annotations }}
     {{ $key }}: {{ $value | quote }}
-  {{- end }}   
+  {{- end }}
 spec:
   replicas: {{ .Values.replicas }}
   strategy:
@@ -78,8 +78,8 @@ spec:
           env:
           {{- if .Values.envs }}
           {{- range $key, $value := .Values.envs }}
-            - name: "{{ $key }}"
-              value: "{{ $value }}"
+          - name: "{{ $key }}"
+            value: "{{ $value }}"
           {{- end }}
           {{- end }}
           {{- if ne .Values.command "" }}
@@ -92,29 +92,21 @@ spec:
             - "sh"
             - "-c"
           args:
-            - "tritonserver"
-            {{- if .Values.httpPort }}
-            - "--http-port={{ .Values.httpPort }}"
-            {{- end }}
-            {{- if .Values.grpcPort }}
-            - "--grpc-port={{ .Values.grpcPort }}"
-            {{- end }}
-            {{- if .Values.allowMetrics }}
-            - "--metrics-port={{ .Values.metricPort }}"
-            {{- end }}
-            {{- if ne .Values.modelRepository "" }}
-            - "--model-repository={{ .Values.modelRepository }}"
-            {{- end }}
-            - "--allow-metrics={{ .Values.allowMetrics }}"
-          {{ end }}
+            - |
+              tritonserver --http-port={{ .Values.httpPort }} --grpc-port={{ .Values.grpcPort }}
+            {{- if .Values.allowMetrics }} --metrics-port={{ .Values.metricsPort }} {{- end }} --allow-metrics={{ .Values.allowMetrics }}
+            {{- if ne .Values.modelRepository "" }} --model-repository={{ .Values.modelRepository }} {{- end }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.httpPort }}
               name: http
               protocol: TCP
             - containerPort: {{ .Values.grpcPort }}
               name: grpc
+            {{- if .Values.allowMetrics }}
             - containerPort: {{ .Values.metricsPort }}
               name: metrics
+            {{- end }}
           livenessProbe:
             failureThreshold: 30
             initialDelaySeconds: 100
