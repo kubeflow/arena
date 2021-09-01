@@ -31,15 +31,12 @@ spec:
   template:
     metadata:
       annotations:
-        {{- if eq .Values.enableIstio true }}
-          sidecar.istio.io/inject: "true"
-        {{- end }}
-        {{- range $key, $value := .Values.annotations }}
+      {{- if eq .Values.enableIstio true }}
+        sidecar.istio.io/inject: "true"
+      {{- end }}
+      {{- range $key, $value := .Values.annotations }}
         {{ $key }}: {{ $value | quote }}
-        {{- end }}
-        {{- range $key, $value := .Values.annotations }}
-          {{ $key }}: {{ $value | quote }}
-        {{- end }}  
+      {{- end }}
       labels:
         heritage: {{ .Release.Service | quote }}
         release: {{ .Release.Name | quote }}
@@ -85,6 +82,15 @@ spec:
               value: "{{ $value }}"
           {{- end }}
           {{- end }}
+          {{- if ne .Values.command "" }}
+          command:
+            - "sh"
+            - "-c"
+            - "{{ .Values.command }}"
+          {{- else }}
+          command:
+            - "sh"
+            - "-c"
           args:
             - "tritonserver"
             {{- if .Values.httpPort }}
@@ -100,6 +106,7 @@ spec:
             - "--model-repository={{ .Values.modelRepository }}"
             {{- end }}
             - "--allow-metrics={{ .Values.allowMetrics }}"
+          {{ end }}
           ports:
             - containerPort: {{ .Values.httpPort }}
               name: http

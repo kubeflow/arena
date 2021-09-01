@@ -12,3 +12,8 @@
 ### 0.3.0
 
 * support job labels and annotations
+
+### 0.4.0
+
+* add liveness probe
+* fix annotations repeat bug
