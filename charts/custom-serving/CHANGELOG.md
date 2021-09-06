@@ -16,3 +16,7 @@
 ### 0.4.0
 
 * support job labels
+
+### 0.5.0 
+
+* support metrics port

@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-serviceType: NodePort
+serviceType: ClusterIP
 
 ## serving name and version
 # servingName: 
@@ -11,6 +11,7 @@ serviceType: NodePort
 ## expose the service to the grpc client
 port: 8500
 restApiPort: 8501
+metricsPort: 0
 replicas: 1
 
 # repository: "cheyang/tf-model-server-gpu"

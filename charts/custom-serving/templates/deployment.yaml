@@ -97,6 +97,11 @@ spec:
               name: restful
               protocol: TCP
             {{- end }}
+            {{- if ne (int .Values.metricsPort) 0 }}
+            - containerPort: {{ .Values.metricsPort }}
+              name: metrics
+              protocol: TCP
+            {{- end }}
           #readinessProbe:
           #  tcpSocket:
           #    port: grpc

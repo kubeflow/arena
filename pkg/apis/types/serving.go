@@ -162,6 +162,7 @@ type CommonServingArgs struct {
 type CustomServingArgs struct {
 	Port              int `yaml:"port"`        // --port
 	RestfulPort       int `yaml:"restApiPort"` // --restfulPort
+	MetricsPort       int `yaml:"metricsPort"` // --metrics-port
 	CommonServingArgs `yaml:",inline"`
 }
 

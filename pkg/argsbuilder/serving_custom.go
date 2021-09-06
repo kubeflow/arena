@@ -65,8 +65,9 @@ func (s *CustomServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
-	command.Flags().IntVar(&s.args.Port, "port", 0, "the port of gRPC listening port,default is 0 represents that don't create service listening on this port")
-	command.Flags().IntVar(&s.args.RestfulPort, "restful-port", 0, "the port of RESTful listening port,default is 0 represents that don't create service listening on this port")
+	command.Flags().IntVar(&s.args.Port, "port", 0, "the port of gRPC listening port, default is 0 represents that don't create service listening on this port")
+	command.Flags().IntVar(&s.args.RestfulPort, "restful-port", 0, "the port of RESTful listening port, default is 0 represents that don't create service listening on this port")
+	command.Flags().IntVar(&s.args.MetricsPort, "metrics-port", 0, "the port of metrics, default is 0 represents that don't create service listening on this port")
 }
 
 func (s *CustomServingArgsBuilder) PreBuild() error {
