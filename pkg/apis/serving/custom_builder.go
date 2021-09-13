@@ -220,6 +220,14 @@ func (b *CustomServingJobBuilder) RestfulPort(port int) *CustomServingJobBuilder
 	return b
 }
 
+// MetricsPort is used to set metrics port,match the option --metrics-port
+func (b *CustomServingJobBuilder) MetricsPort(port int) *CustomServingJobBuilder {
+	if port > 0 {
+		b.args.MetricsPort = port
+	}
+	return b
+}
+
 // Build is used to build the job
 func (b *CustomServingJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {

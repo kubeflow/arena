@@ -93,7 +93,11 @@ func (s *TensorflowServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("modelPath", "please use --model-path instead")
 	command.Flags().StringVar(&s.args.ModelPath, "model-path", "", "the model path for serving in the container")
 
-	command.Flags().StringVar(&s.args.ModelConfigFile, "modelConfigFile", "", "Corresponding with --model_config_file in tensorflow serving")
+	command.Flags().StringVar(&s.args.ModelConfigFile, "modelConfigFile", "", "corresponding with --model_config_file in tensorflow serving")
+	command.Flags().MarkDeprecated("modelConfigFile", "please use --model-config-file instead")
+	command.Flags().StringVar(&s.args.ModelConfigFile, "model-config-file", "", "corresponding with --model_config_file in tensorflow serving")
+
+	command.Flags().StringVar(&s.args.MonitoringConfigFile, "monitoring-config-file", "", "corresponding with --monitoring_config_file in tensorflow serving")
 	command.Flags().StringVar(&s.args.VersionPolicy, "versionPolicy", "", "support latest, latest:N, specific:N, all")
 	command.Flags().MarkDeprecated("versionPolicy", "please use --version-policy instead")
 	command.Flags().StringVar(&s.args.VersionPolicy, "version-policy", "", "support latest, latest:N, specific:N, all")

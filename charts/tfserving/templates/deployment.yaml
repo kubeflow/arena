@@ -96,9 +96,11 @@ spec:
           - "-c"
           args:
             - |
-              /usr/bin/tensorflow_model_server --port={{ .Values.port }}{{- if .Values.restApiPort }} --rest_api_port={{ .Values.restApiPort }}
-            {{- end }}{{- if ne .Values.modelConfigFileContent "" }} --model_config_file=/tmp/config{{- end }}{{- if gt (int $gpuMemory) 0 }} --per_process_gpu_memory_fraction=$(awk 'BEGIN{printf "%.2f",'$ALIYUN_COM_GPU_MEM_CONTAINER'/'$ALIYUN_COM_GPU_MEM_DEV'}')
-            {{- end }}
+              /usr/bin/tensorflow_model_server --port={{ .Values.port }}
+            {{- if .Values.restApiPort }} --rest_api_port={{ .Values.restApiPort }} {{- end }}
+            {{- if ne .Values.modelConfigFileContent "" }} --model_config_file=/tmp/config {{- end }}
+            {{- if gt (int $gpuMemory) 0 }} --per_process_gpu_memory_fraction=$(awk 'BEGIN{printf "%.2f",'$ALIYUN_COM_GPU_MEM_CONTAINER'/'$ALIYUN_COM_GPU_MEM_DEV'}') {{- end }}
+            {{- if ne .Values.monitoringConfigFile "" }} --monitoring_config_file={{ .Values.monitoringConfigFile }} {{- end }}
           {{- end }}
           ports:
             - containerPort: {{ .Values.port }}

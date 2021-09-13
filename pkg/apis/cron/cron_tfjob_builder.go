@@ -103,6 +103,11 @@ func (c *CronTFJobBuilder) Annotations(annotations map[string]string) *CronTFJob
 	return c
 }
 
+func (c *CronTFJobBuilder) Labels(labels map[string]string) *CronTFJobBuilder {
+	c.TFJobBuilder.Labels(labels)
+	return c
+}
+
 func (c *CronTFJobBuilder) EnableChief() *CronTFJobBuilder {
 	c.TFJobBuilder.EnableChief()
 	return c

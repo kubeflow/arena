@@ -240,6 +240,14 @@ func (b *TFServingJobBuilder) ModelConfigFile(filePath string) *TFServingJobBuil
 	return b
 }
 
+// MonitoringConfigFile is used to set monitoring config file,match the option --monitoring-config-file
+func (b *TFServingJobBuilder) MonitoringConfigFile(filePath string) *TFServingJobBuilder {
+	if filePath != "" {
+		b.args.MonitoringConfigFile = filePath
+	}
+	return b
+}
+
 // ModelName is used to set model name,match the option --model-name
 func (b *TFServingJobBuilder) ModelName(name string) *TFServingJobBuilder {
 	if name != "" {

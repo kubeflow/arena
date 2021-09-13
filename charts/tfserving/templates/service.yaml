@@ -15,6 +15,9 @@ metadata:
     servingName: {{ .Values.servingName }}
     servingVersion: "{{ .Values.servingVersion }}"
     servingType: "tf-serving"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
 spec:
   type: {{ .Values.serviceType }}
   ports:
