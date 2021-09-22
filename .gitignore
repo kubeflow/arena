@@ -3,6 +3,7 @@ bin/
 **/.DS_Store
 .idea
 .kube
+.vscode
 Library
 
 sdk/arena-python-sdk/dist/
