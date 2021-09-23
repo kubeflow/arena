@@ -1,0 +1,20 @@
+# Default values for custom-serving.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# sync mode
+syncMode: git
+# rsync image
+rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
+# git sync image
+gitImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/git-sync:v3.1.1
+
+image: "registry.cn-beijing.aliyuncs.com/hzx-kubeflow/evaluate_test_tensorflow1.15:1.0.3"
+
+imagePullPolicy: Always
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

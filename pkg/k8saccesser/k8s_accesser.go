@@ -767,6 +767,65 @@ func (k *k8sResourceAccesser) GetNode(nodeName string) (*v1.Node, error) {
 	return node, nil
 }
 
+func (k *k8sResourceAccesser) GetJob(name, namespace string) (*batchv1.Job, error) {
+	job := &batchv1.Job{}
+	var err error
+	if k.cacheEnabled {
+		err = k.cacheClient.Get(context.TODO(), client.ObjectKey{Name: name, Namespace: namespace}, job)
+	} else {
+		job, err = k.clientset.BatchV1().Jobs(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return job, nil
+}
+
+func (k *k8sResourceAccesser) ListJobs(namespace string, filterLabels string, filterFields string, filterFunc func(*batchv1.Job) bool) ([]*batchv1.Job, error) {
+	jobs := []*batchv1.Job{}
+	jobList := &batchv1.JobList{}
+	labelSelector, err := parseLabelSelector(filterLabels)
+	if err != nil {
+		return nil, err
+	}
+	fieldSelector, err := parseFieldSelector(filterFields)
+	if err != nil {
+		return nil, err
+	}
+	if k.cacheEnabled {
+		err = k.cacheClient.List(
+			context.Background(),
+			jobList,
+			client.InNamespace(namespace),
+			&client.ListOptions{
+				LabelSelector: labelSelector,
+			},
+		)
+	} else {
+		jobList, err = k.clientset.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Job",
+				APIVersion: "batch/v1",
+			},
+			LabelSelector: labelSelector.String(),
+			FieldSelector: fieldSelector.String(),
+		})
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	for _, job := range jobList.Items {
+		copyJob := job.DeepCopy()
+		if filterFunc != nil && !filterFunc(copyJob) {
+			continue
+		}
+		jobs = append(jobs, copyJob)
+	}
+	return jobs, nil
+}
+
 func parseLabelSelector(item string) (labels.Selector, error) {
 	if item == "" {
 		return labels.Everything(), nil
