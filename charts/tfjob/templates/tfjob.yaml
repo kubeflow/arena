@@ -276,7 +276,7 @@ spec:
                   name: tfjob-port
               {{- end}}
               command:
-                - "sh"
+                - "{{ .Values.shell }}"
                 - "-c"
                 - {{ .Values.command }}
               env:        
@@ -588,7 +588,7 @@ spec:
                   name: tfjob-port
               {{- end}}
               command:
-                - "sh"
+                - "{{ .Values.shell }}"
                 - "-c"
                 - {{ .Values.command }}
               env:        
@@ -911,7 +911,7 @@ spec:
                   name: tfjob-port
               {{- end}}
               command:
-                - "sh"
+                - "{{ .Values.shell }}"
                 - "-c"
                 - {{ .Values.command }}
               env:        
@@ -1177,7 +1177,7 @@ spec:
                   memory: {{ .Values.evaluatorMemory | quote }}
                   {{- end}}
               command:
-                - "sh"
+                - "{{ .Values.shell }}"
                 - "-c"
                 - {{ .Values.command }}
               env:        

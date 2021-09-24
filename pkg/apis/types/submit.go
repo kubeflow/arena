@@ -48,6 +48,9 @@ type CommonSubmitArgs struct {
 	// WorkingDir stores the working directory of container in job,match option --working-dir
 	WorkingDir string `yaml:"workingDir"`
 
+	// Shell specify the linux shell type
+	Shell string `yaml:"shell"`
+
 	// Command stores the command of job
 	Command string `yaml:"command"`
 

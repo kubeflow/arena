@@ -212,7 +212,7 @@ spec:
         workingDir: {{ .Values.workingDir }}
         {{- end }}
         command:
-        - "sh"
+        - "{{ .Values.shell }}"
         - "-c"
         - "{{ .Values.command }}"
         resources:             

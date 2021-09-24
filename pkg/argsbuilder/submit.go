@@ -128,6 +128,8 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringSliceVar(&configFiles, "config-file", []string{}, `giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"`)
 	// add option --image-pull-secret its' value will be get from viper,Using a Private Registry
 	command.Flags().StringSliceVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
+	// add option --shell
+	command.Flags().StringVarP(&s.args.Shell, "shell", "", "sh", "specify the linux shell, usage: bash or sh")
 
 	s.AddArgValue("image-pull-secret", &imagePullSecrets).
 		AddArgValue("config-file", &configFiles).

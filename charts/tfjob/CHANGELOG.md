@@ -136,3 +136,7 @@
 ### 0.32.0
 
 * Support job level labels
+
+### 0.33.0
+
+* add --shell to specify bash or bash

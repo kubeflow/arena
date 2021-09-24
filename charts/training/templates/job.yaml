@@ -64,7 +64,7 @@ spec:
               memory: {{ .Values.memory | quote }}
               {{- end}}
           command:
-            - "sh"
+            - "{{ .Values.shell }}"
             - "-c"
             - {{ .Values.command }}
           env:        
