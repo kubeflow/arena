@@ -17,3 +17,7 @@
 ### 0.2.0
 
 * support job labels and annotations
+
+### 0.2.1
+
+* add --shell to specify bash or bash

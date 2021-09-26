@@ -140,3 +140,8 @@
 ### 0.33.0
 
 * Fix: disable nvidia env for none gpu request job 
+
+
+### 0.34.0
+
+* add --shell to specify bash or bash

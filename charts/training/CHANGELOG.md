@@ -1,3 +1,7 @@
+### 0.10.0
+
+* add --shell to specify bash or bash
+
 ### 0.9.0
 
 * Make Hostnetwork as false by default

@@ -109,3 +109,7 @@
 ### 0.26.0
 
 * support mounting pvcs on launcher
+
+### 0.27.0
+
+* add --shell to specify bash or bash
