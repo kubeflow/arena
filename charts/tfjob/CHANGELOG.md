@@ -136,3 +136,7 @@
 ### 0.32.0
 
 * Support job level labels
+
+### 0.33.0
+
+* Fix: disable nvidia env for none gpu request job 
