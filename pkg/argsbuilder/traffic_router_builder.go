@@ -67,7 +67,7 @@ func (s *TrafficRouterArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		versions []string
 	)
 	command.Flags().StringVar(&s.args.ServingName, "name", "", "the serving name")
-	command.Flags().StringSliceVarP(&versions, "version-weight", "v", []string{}, "set the version and weight,format is: version:weight, e.g. --version-weight version1:20 --version-weight version2:40")
+	command.Flags().StringArrayVarP(&versions, "version-weight", "v", []string{}, "set the version and weight,format is: version:weight, e.g. --version-weight version1:20 --version-weight version2:40")
 	//command.Flags().StringVar(&s.args.Versions, "versions", "", "Model versions which the traffic will be routed to, e.g. 1,2,3")
 	//command.Flags().StringVar(&s.args.Weights, "weights", "", "Weight percentage values for each model version which the traffic will be routed to,e.g. 70,20,10")
 	command.MarkFlagRequired("name")
