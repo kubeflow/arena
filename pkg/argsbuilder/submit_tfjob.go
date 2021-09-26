@@ -142,10 +142,10 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().IntVar(&s.args.ChiefPort, "chiefPort", 0, "the port of the chief.")
 	command.Flags().MarkDeprecated("chiefPort", "please use --chief-port instead")
 	command.Flags().IntVar(&s.args.ChiefPort, "chief-port", 0, "the port of the chief.")
-	command.Flags().StringSliceVar(&workerSelectors, "worker-selector", []string{}, `assigning jobs with "Worker" role to some k8s particular nodes(this option would cover --selector), usage: "--worker-selector=key=value"`)
-	command.Flags().StringSliceVar(&chiefSelectors, "chief-selector", []string{}, `assigning jobs with "Chief" role to some k8s particular nodes(this option would cover --selector), usage: "--chief-selector=key=value"`)
-	command.Flags().StringSliceVar(&evaluatorSelectors, "evaluator-selector", []string{}, `assigning jobs with "Evaluator" role to some k8s particular nodes(this option would cover --selector), usage: "--evaluator-selector=key=value"`)
-	command.Flags().StringSliceVar(&psSelectors, "ps-selector", []string{}, `assigning jobs with "PS" role to some k8s particular nodes(this option would cover --selector), usage: "--ps-selector=key=value"`)
+	command.Flags().StringArrayVar(&workerSelectors, "worker-selector", []string{}, `assigning jobs with "Worker" role to some k8s particular nodes(this option would cover --selector), usage: "--worker-selector=key=value"`)
+	command.Flags().StringArrayVar(&chiefSelectors, "chief-selector", []string{}, `assigning jobs with "Chief" role to some k8s particular nodes(this option would cover --selector), usage: "--chief-selector=key=value"`)
+	command.Flags().StringArrayVar(&evaluatorSelectors, "evaluator-selector", []string{}, `assigning jobs with "Evaluator" role to some k8s particular nodes(this option would cover --selector), usage: "--evaluator-selector=key=value"`)
+	command.Flags().StringArrayVar(&psSelectors, "ps-selector", []string{}, `assigning jobs with "PS" role to some k8s particular nodes(this option would cover --selector), usage: "--ps-selector=key=value"`)
 	command.Flags().StringVar(&roleSequence, "role-sequence", "", `specify the tfjob role sequence,like: "Worker,PS,Chief,Evaluator" or "w,p,c,e"`)
 
 	s.AddArgValue("worker-selector", &workerSelectors).
