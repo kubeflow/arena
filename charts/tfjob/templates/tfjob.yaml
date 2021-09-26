@@ -279,10 +279,16 @@ spec:
                 - "sh"
                 - "-c"
                 - {{ .Values.command }}
-              env:        
+              env:
+              {{- if eq (int $psGpuCount) 0}}
+                - name: NVIDIA_VISIBLE_DEVICES
+                  value: "void"
+              {{- end }}        
               {{- range $key, $value := .Values.envs }}
+              {{- if ne "NVIDIA_VISIBLE_DEVICES" $key }}
                 - name: "{{ $key }}"
                   value: "{{ $value }}"
+              {{- end }}
               {{- end }}
               volumeMounts:
                 {{- if ne (len .Values.configFiles) 0 }}

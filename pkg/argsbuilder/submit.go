@@ -103,16 +103,16 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	// command.MarkFlagRequired("workingDir")
 	// add option --env,its' value will be get from viper
-	command.Flags().StringSliceVarP(&envs, "env", "e", []string{}, "the environment variables")
+	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	// add option --data,its' value will be get from viper
-	command.Flags().StringSliceVarP(&dataSet, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
+	command.Flags().StringArrayVarP(&dataSet, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
 	// add option --data-dir,its' value will be get from viper
-	command.Flags().StringSliceVar(&dataDir, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
+	command.Flags().StringArrayVar(&dataDir, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
 	command.Flags().MarkDeprecated("dataDir", "please use --data-dir instead")
-	command.Flags().StringSliceVar(&dataDir, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
+	command.Flags().StringArrayVar(&dataDir, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
 	// add option --annotation,its' value will be get from viper
-	command.Flags().StringSliceVarP(&annotations, "annotation", "a", []string{}, "the annotations")
-	command.Flags().StringSliceVarP(&labels, "label", "l", []string{}, "specify the label")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the label")
 	// enable RDMA or not, support hostnetwork for now
 	// add option --rdma
 	command.Flags().BoolVar(&s.args.EnableRDMA, "rdma", false, "enable RDMA")
@@ -121,13 +121,13 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// use priority
 	command.Flags().StringVarP(&s.args.PriorityClassName, "priority", "p", "", "priority class name")
 	// add option --toleration,its' value will be get from viper
-	command.Flags().StringSliceVar(&tolerations, "toleration", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVar(&tolerations, "toleration", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
 	// add option --selector,its' value will be get from viper
-	command.Flags().StringSliceVar(&nodeSelectors, "selector", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
+	command.Flags().StringArrayVar(&nodeSelectors, "selector", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 	// add option --config-file its' value will be get from viper
-	command.Flags().StringSliceVar(&configFiles, "config-file", []string{}, `giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"`)
+	command.Flags().StringArrayVar(&configFiles, "config-file", []string{}, `giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"`)
 	// add option --image-pull-secret its' value will be get from viper,Using a Private Registry
-	command.Flags().StringSliceVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
+	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
 
 	s.AddArgValue("image-pull-secret", &imagePullSecrets).
 		AddArgValue("config-file", &configFiles).
@@ -209,6 +209,9 @@ func (s *SubmitArgsBuilder) Build() error {
 		return err
 	}
 	if err := s.addRequestGPUsToAnnotation(); err != nil {
+		return err
+	}
+	if err := s.disabledNvidiaENVWithNoneGPURequest(); err != nil {
 		return err
 	}
 	return nil
@@ -538,6 +541,16 @@ func (s *SubmitArgsBuilder) setEnvs() error {
 	}
 	for key, val := range transformSliceToMap(*envs, "=") {
 		s.args.Envs[key] = val
+	}
+	return nil
+}
+
+func (s *SubmitArgsBuilder) disabledNvidiaENVWithNoneGPURequest() error {
+	if s.args.Envs == nil {
+		s.args.Envs = map[string]string{}
+	}
+	if s.args.GPUCount == 0 {
+		s.args.Envs["NVIDIA_VISIBLE_DEVICES"] = "void"
 	}
 	return nil
 }
