@@ -21,3 +21,7 @@
 ### 0.2.1
 
 * add --shell to specify bash or bash
+
+### 0.3.0
+
+* change restartPolicy to OnFailure

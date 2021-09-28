@@ -82,7 +82,7 @@ func (s *SubmitVolcanoJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.TaskName, "task-name", "task", "the task name of volcano job, default value is task")
 	command.Flags().StringArrayVar(&s.args.TaskImages, "taskImages", []string{"ubuntu", "nginx", "busybox"}, "the docker images of different tasks of volcano job. default used 3 tasks with ubuntu,nginx and busybox images")
 	command.Flags().MarkDeprecated("taskImages", "please use --task-images instead")
-	command.Flags().StringArrayVar(&s.args.TaskImages, "task-images", []string{"ubuntu", "nginx", "busybox"}, "the docker images of different tasks of volcano job. default used 3 tasks with ubuntu,nginx and busybox images")
+	command.Flags().StringSliceVar(&s.args.TaskImages, "task-images", []string{"ubuntu", "nginx", "busybox"}, "the docker images of different tasks of volcano job. default used 3 tasks with ubuntu,nginx and busybox images")
 	command.Flags().IntVar(&s.args.TaskReplicas, "taskReplicas", 1, "the task replica's number to run the distributed tasks. default value is 1")
 	command.Flags().MarkDeprecated("taskReplicas", "please use --task-replicas instead")
 	command.Flags().IntVar(&s.args.TaskReplicas, "task-replicas", 1, "the task replica's number to run the distributed tasks. default value is 1")
