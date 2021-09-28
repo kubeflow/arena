@@ -48,27 +48,27 @@ function logger() {
 }
 
 function set_sed_option() {
-	if [[ $(uname -s) == "Darwin" ]];then
-		export SED_OPTION=".sed_backup"
-	else
-		export SED_OPTION=""
-	fi
+    if [[ $(uname -s) == "Darwin" ]];then
+        export SED_OPTION=".sed_backup"
+    else
+        export SED_OPTION=""
+    fi
 }
 
 # if pull images by aliyun vpc,change the image
 function support_image_regionalization(){
-	for file in $(ls $1);do
-		local path=$1"/"$file
-		if [ -d $path ];then
-			support_image_regionalization $path
-		else
-        	if [[ $PULL_IMAGE_BY_VPC_NETWORK == "true" ]];then
-				sed -i $SED_OPTION "s@registry\..*aliyuncs.com@registry-vpc.${REGION}.aliyuncs.com@g" $path
-			else
-				sed -i $SED_OPTION "s@registry\..*aliyuncs.com@registry.${REGION}.aliyuncs.com@g" $path
-			fi
-		fi
-	done
+    for file in $(ls $1);do
+        local path=$1"/"$file
+        if [ -d $path ];then
+            support_image_regionalization $path
+        else
+            if [[ $PULL_IMAGE_BY_VPC_NETWORK == "true" ]];then
+                sed -i $SED_OPTION "s@registry\..*aliyuncs.com@registry-vpc.${REGION}.aliyuncs.com@g" $path
+            else
+                sed -i $SED_OPTION "s@registry\..*aliyuncs.com@registry.${REGION}.aliyuncs.com@g" $path
+            fi
+        fi
+    done
 }
 
 # if execute the install.sh needs sudo,add sudo command to all command
@@ -90,11 +90,11 @@ function install_kubectl_and_helm() {
     ${sudo_prefix} cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
 
     if [[ $ONLY_BINARY != "true" ]];then 
-    	if ! ${sudo_prefix} arena-kubectl cluster-info >/dev/null 2>&1; then
-    	    logger "error" "failed to execute 'arena-kubectl cluster-info'"
-    	    logger "error" "Please setup kubeconfig correctly before installing arena"
-    	    exit 1
-    	fi
+        if ! ${sudo_prefix} arena-kubectl cluster-info >/dev/null 2>&1; then
+            logger "error" "failed to execute 'arena-kubectl cluster-info'"
+            logger "error" "Please setup kubeconfig correctly before installing arena"
+            exit 1
+        fi
     fi
     logger "debug" "succeed to install arena-kubectl and arena-helm"
 }
@@ -182,12 +182,12 @@ function install_arena_and_charts() {
     # For non-root user, put the charts dir to the home directory
     if [ `id -u` -eq 0 ];then
         if [ -d "/charts" ]; then
-           mv /charts /charts-$now
+            mv /charts /charts-$now
         fi
         cp -r $SCRIPT_DIR/charts /
     else
         if [ -d "~/charts" ]; then
-          mv ~/charts ~/charts-$now
+            mv ~/charts ~/charts-$now
         fi
         cp -r $SCRIPT_DIR/charts ~/
     fi
@@ -277,14 +277,18 @@ function apply_rdma() {
 }
 
 function apply_cron() {
-  if arena-kubectl get deployment -n arena-system | grep kubedl-operator; then
-    arena-kubectl delete deployment kubedl-operator -n arena-system
-  fi
-  if ! arena-kubectl get serviceaccount --all-namespaces | grep cron-operator; then
-    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-crd.yaml
-    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-operator.yaml
-    return
-  fi
+    if arena-kubectl get serviceaccount --all-namespaces | grep kubedl; then
+        logger "warning" "KubeDL has been installed, will skip install cronjob crd"
+        return
+    fi
+    if arena-kubectl get deployment -n arena-system | grep kubedl-operator; then
+        arena-kubectl delete deployment kubedl-operator -n arena-system
+    fi
+    if ! arena-kubectl get serviceaccount --all-namespaces | grep cron-operator; then
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-crd.yaml
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-operator.yaml
+        return
+    fi
 }
 
 function create_namespace() {
@@ -325,66 +329,64 @@ function operators() {
 
 
 function parse_args() {
-    while
-        [[ $# -gt 0 ]]
-    do
+    while [[ $# -gt 0 ]];do
         key="$1"
-		case $key in
+        case $key in
         --only-binary)
             export ONLY_BINARY="true"
-			;;
+        ;;
         --host-network)
             export USE_HOSTNETWORK="true"
-			;;
+        ;;
         --rdma)
             export USE_RDMA="true"
-			;;
+        ;;
         --loadbalancer)
             export USE_LOADBALANCER="true"
-			;;
+        ;;
         --prometheus)
             export USE_PROMETHEUS="true"
-			;;
+        ;;
         --kubeconfig)
             check_option_value "--kubeconfig" $2
             export KUBECONFIG=$2
             shift
-			;;
+        ;;
         --platform)
             check_option_value "--platform" $2
             export PLATFORM=$2
             shift
-			;;
+            ;;
         --region-id)
             check_option_value "--region-id" $2
             export REGION=$2
             shift
-			;;
+        ;;
         --docker-registry)
             check_option_value "--docker-registry" $2
             export DOCKER_REGISTRY=$2
             shift
-			;;
+        ;;
         --registry-repo-namespace)
             check_option_value "--registry-repo-namespace" $2
             export REGISTRY_REPO_NAMESPACE=$2
             shift
-			;;
+        ;;
         --namespace)
             check_option_value "--namespace" $2
             export NAMESPACE=$2
             shift
-			;;
+        ;;
         --help|-h)
             help
             exit 0
-            ;;
+        ;;
         *)
             # unknown option
             logger error "unkonw option [$key]"
             help
             exit 3
-            ;;
+        ;;
         esac
         shift
     done
