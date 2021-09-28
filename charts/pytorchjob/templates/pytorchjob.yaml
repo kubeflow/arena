@@ -310,7 +310,7 @@ spec:
   {{- if .Values.workers }}
     Worker:
       replicas: {{ .Values.workers }}
-      restartPolicy: Never
+      restartPolicy: OnFailure
       template:
         metadata:
           name: {{ .Release.Name }}

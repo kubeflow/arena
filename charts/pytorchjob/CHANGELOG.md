@@ -17,3 +17,7 @@
 ### 0.2.0
 
 * support job labels and annotations
+
+### 0.3.0
+
+* change restartPolicy to OnFailure
