@@ -282,6 +282,13 @@ func (c *CronTFJobBuilder) RoleSequence(roles []string) *CronTFJobBuilder {
 	return c
 }
 
+func (c *CronTFJobBuilder) Shell(shell string) *CronTFJobBuilder {
+	if shell != "" {
+		c.args.Shell = shell
+	}
+	return c
+}
+
 func (c *CronTFJobBuilder) Command(args []string) *CronTFJobBuilder {
 	c.args.Command = strings.Join(args, " ")
 	return c
