@@ -7,7 +7,7 @@ Here is an example how you can use ``Arena`` for the machine learning training. 
 1\. the first step is to check the available resources:
 
     $ arena top node
-
+    
     NAME                       IPADDRESS      ROLE    STATUS  GPU(Total)  GPU(Allocated)
     cn-hongkong.192.168.2.107  47.242.51.160  <none>  Ready   0           0
     cn-hongkong.192.168.2.108  192.168.2.108  <none>  Ready   1           0
@@ -33,7 +33,7 @@ There are 3 available nodes with GPU for running training jobs.
       --logdir=/training_logs \
       --image="registry.cn-beijing.aliyuncs.com/ai-samples/tensorflow:1.5.0-devel-gpu" \
       "'python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000'"
-
+    
     configmap/tf-git-tfjob created
     configmap/tf-git-tfjob labeled
     tfjob.kubeflow.org/tf-git created
@@ -46,6 +46,7 @@ There are 3 available nodes with GPU for running training jobs.
 
 descriptions:
 
+* tfjob will execute the entrypoint command with sh by default, if you want to use bash, please spefify the shell by using ``--shell=bash``。
 * the source code will be downloaded and extracted to the directory ``code/`` of the working directory. The default working directory is ``/root``, you can also specify by using ``--workingDir``. Also, you may specify the branch you are pulling code from by addding ``--env GIT_SYNC_BRANCH=main`` to the paramasters while submitting the job.
 * If you are using the private git repo, you can use the following command:
 
@@ -66,6 +67,7 @@ $ arena submit tf \
 !!! note
 
     ``arena`` is using [git-sync](https://github.com/kubernetes/git-sync/blob/master/cmd/git-sync/main.go) to sync up source code. You can set the environment variables defined in git-sync project.
+
 
 
 ## List all tensorflow jobs
@@ -96,7 +98,7 @@ If you want to get the job details, you can use ``arena get``:
     Priority:    N/A
     Trainer:     TFJOB
     Duration:    7m
-
+    
     Instances:
     NAME                                 STATUS    AGE  IS_CHIEF  GPU(Requested)  NODE
     ----                                 ------    ---  --------  --------------  ----
@@ -140,3 +142,4 @@ When the job is completed, use ``arena delete`` to delete the job:
     $ arena delete tf-standalone-test-with-git 
 
 Congratulations! You've run the first training job with ``arena`` successfully. 
+

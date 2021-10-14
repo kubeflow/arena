@@ -20,6 +20,7 @@ If you want to use arena to manage serving jobs, this guide is for you. we have 
 * I want to [submit a tensorflow serving job with enabled istio](tfserving/serving.md).
 * I want to [submit a tensorflow serving job with enabled gpushare mode](tfserving/gpushare.md).
 * I want to [submit a tensorflow serving job which uses gpus](tfserving/gpu.md).
+* I want to [submit a tensorflow serving job with prometheus](tfserving/monitor.md).
 
 ## Custom Serving Job Guide
 
