@@ -112,4 +112,4 @@
 
 ### 0.27.0
 
-* add --shell to specify bash or bash
+* add --shell to specify sh or bash

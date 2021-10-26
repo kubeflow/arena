@@ -21,3 +21,7 @@
 ### 0.5.0
 
 * support --monitoring-config-file
+
+### 0.6.0
+
+* fix no write permission of /tmp directory
