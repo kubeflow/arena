@@ -36,6 +36,14 @@ func (b *ETJobBuilder) Name(name string) *ETJobBuilder {
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *ETJobBuilder) Shell(shell string) *ETJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *ETJobBuilder) Command(args []string) *ETJobBuilder {
 	b.args.Command = strings.Join(args, " ")

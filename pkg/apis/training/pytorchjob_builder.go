@@ -35,6 +35,14 @@ func (b *PytorchJobBuilder) Name(name string) *PytorchJobBuilder {
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *PytorchJobBuilder) Shell(shell string) *PytorchJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *PytorchJobBuilder) Command(args []string) *PytorchJobBuilder {
 	b.args.Command = strings.Join(args, " ")

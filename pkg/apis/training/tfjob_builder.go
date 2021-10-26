@@ -41,6 +41,14 @@ func (b *TFJobBuilder) Name(name string) *TFJobBuilder {
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *TFJobBuilder) Shell(shell string) *TFJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 func (b *TFJobBuilder) Command(args []string) *TFJobBuilder {
 	b.args.Command = strings.Join(args, " ")
 	return b
