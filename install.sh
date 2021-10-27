@@ -205,6 +205,10 @@ function apply_jobmon() {
     fi
 }
 
+function apply_arena_configmap() {
+     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/arena-configmap/configmap.yaml
+}
+
 
 function apply_tf() {
     # if KubeDL has installed, will skip install some CRDs of framework operator
@@ -325,6 +329,7 @@ function operators() {
     apply_jobmon
     apply_rdma
     apply_cron
+    apply_arena_configmap
 }
 
 

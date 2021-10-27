@@ -171,17 +171,28 @@ func CheckOperatorIsInstalled(crdName string) bool {
 func GetTrainingJobLabels(jobType types.TrainingJobType) string {
 	l := fmt.Sprintf("app=%v,release", jobType)
 	arenaConfiger := config.GetArenaConfiger()
-	if arenaConfiger.IsIsolateUserInNamespace() {
-		l = fmt.Sprintf("%v,%v=%v", l, types.UserNameIdLabel, arenaConfiger.GetUser().GetId())
+	if arenaConfiger.IsAdminUser() || !arenaConfiger.IsIsolateUserInNamespace() {
+		log.Debugf("list training jobs by labels: %v", l)
+		return l
 	}
-	log.Debugf("job label: %v", l)
+	l = fmt.Sprintf("%v,%v=%v", l, types.UserNameIdLabel, arenaConfiger.GetUser().GetId())
+	log.Debugf("list training jobs by label: %v", l)
 	return l
 }
 
 func CheckJobIsOwnedByTrainer(labels map[string]string) error {
 	arenaConfiger := config.GetArenaConfiger()
-	if arenaConfiger.IsIsolateUserInNamespace() && labels[types.UserNameIdLabel] != arenaConfiger.GetUser().GetId() {
-		return types.ErrNoPrivilegesToOperateJob
+	// if not enabled isolate namespace feature,return nil
+	if !arenaConfiger.IsIsolateUserInNamespace() {
+		return nil
 	}
-	return nil
+	// if current user is admin user,return nil
+	if arenaConfiger.IsAdminUser() {
+		return nil
+	}
+	// if current user is matched the job user,return nil
+	if labels[types.UserNameIdLabel] == arenaConfiger.GetUser().GetId() {
+		return nil
+	}
+	return types.ErrNoPrivilegesToOperateJob
 }

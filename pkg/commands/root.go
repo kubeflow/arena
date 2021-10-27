@@ -51,5 +51,6 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(cron.NewCronCommand())
 	command.AddCommand(NewCompletionCommand())
 	command.AddCommand(evaluate.NewEvaluateCommand())
+	command.AddCommand(NewWhoamiCommand())
 	return command
 }
