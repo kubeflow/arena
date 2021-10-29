@@ -354,8 +354,8 @@ func (s *SubmitTFJobArgsBuilder) transformSelectorArrayToMap(selectorArray *[]st
 
 func (s *SubmitTFJobArgsBuilder) addRequestGPUsToAnnotation() error {
 	gpus := 0
-	gpus += s.args.ChiefCount
-	gpus += s.args.EvaluatorCount
+	gpus += s.args.ChiefCount * s.args.GPUCount
+	gpus += s.args.EvaluatorCount * s.args.GPUCount
 	gpus += s.args.WorkerCount * s.args.GPUCount
 	if s.args.Annotations == nil {
 		s.args.Annotations = map[string]string{}
