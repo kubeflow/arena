@@ -188,10 +188,11 @@ type TensorRTServingArgs struct {
 }
 
 type KFServingArgs struct {
-	Port              int    `yaml:"port"`          // --port
+	Port              uint    `yaml:"port"`          // --port
 	ModelType         string `yaml:"modelType"`     // --modelType
-	CanaryPercent     int    `yaml:"canaryPercent"` // --canaryTrafficPercent
+	CanaryPercent     uint    `yaml:"canaryPercent"` // --canaryTrafficPercent
 	StorageUri        string `yaml:"storageUri"`    // --storageUri
+	MinReplicas        uint `yaml:"minReplicas"`    // --minReplicas
 	CommonServingArgs `yaml:",inline"`
 }
 

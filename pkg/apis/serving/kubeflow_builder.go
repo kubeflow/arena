@@ -207,7 +207,7 @@ func (b *KFServingJobBuilder) DataDirs(volumes map[string]string) *KFServingJobB
 }
 
 // Port is used to set port,match the option --port
-func (b *KFServingJobBuilder) Port(port int) *KFServingJobBuilder {
+func (b *KFServingJobBuilder) Port(port uint) *KFServingJobBuilder {
 	if port > 0 {
 		b.args.Port = port
 	}
@@ -223,7 +223,7 @@ func (b *KFServingJobBuilder) ModelType(modeType string) *KFServingJobBuilder {
 }
 
 // CanaryPercent is used to set Canary percent,match the option --canary-percent
-func (b *KFServingJobBuilder) CanaryPercent(percent int) *KFServingJobBuilder {
+func (b *KFServingJobBuilder) CanaryPercent(percent uint) *KFServingJobBuilder {
 	if percent > 0 {
 		b.args.CanaryPercent = percent
 	}

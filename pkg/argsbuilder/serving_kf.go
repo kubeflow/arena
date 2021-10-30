@@ -67,8 +67,9 @@ func (s *KFServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	}
 	command.Flags().StringVar(&s.args.ModelType, "model-type", "custom", "the type of serving model,default to custom type")
 	command.Flags().StringVar(&s.args.StorageUri, "storage-uri", "", "the uri direct to the model file")
-	command.Flags().IntVar(&s.args.CanaryPercent, "canary-percent", 0, "the percent of the desired canary")
-	command.Flags().IntVar(&s.args.Port, "port", 0, "the port of the application listens in the custom image")
+	command.Flags().UintVar(&s.args.CanaryPercent, "canary-percent", 0, "the percent of the desired canary")
+	command.Flags().UintVar(&s.args.Port, "port", 0, "the port of the application listens in the custom image")
+	command.Flags().UintVar(&s.args.MinReplicas, "min-replicas", 1, "the minimal replica for the server")
 }
 
 func (s *KFServingArgsBuilder) PreBuild() error {

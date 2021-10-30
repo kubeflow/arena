@@ -27,7 +27,7 @@ If you want to use arena to manage serving jobs, this guide is for you. we have 
 
 ## KFServing Job Guide
 
-* I want to [submit a kfserving job whose type is custom](kfserving/custom.md).
+* I want to [submit a kfserving job](kfserving/kserve.md).
 
 ## Seldon Core Serving Job Guide
 

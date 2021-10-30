@@ -1,54 +1,9 @@
-{{- $gpuCount := .Values.gpuCount -}}
-apiVersion: serving.kubeflow.org/v1alpha2
-kind: InferenceService
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
 metadata:
-  annotations:
-  {{- range $key, $value := .Values.annotations }}
-    {{ $key }}: {{ $value | quote }}
-  {{- end }}
-  labels:
-    controller-tools.k8s.io: "1.0"
-    serviceName: "{{ .Values.servingName }}"
-    servingType: "kf-serving"
-    servingName: "{{ .Values.servingName }}"
-    servingVersion: "{{ .Values.servingVersion }}"
-  {{- range $key, $value := .Values.labels }}
-    {{ $key }}: {{ $value | quote }}
-  {{- end }}  
   name: {{ .Release.Name }}
 spec:
-  default:
-    predictor:
-      {{ .Values.modelType }}:
-        storageUri: {{ .Values.storageUri }}
-        container:
-          name: {{ .Release.Name }}
-          image: "{{ .Values.image }}"
-          imagePullPolicy: "{{ .Values.imagePullPolicy }}"
-          {{- if .Values.command }}
-          command: { .Values.command }}
-          {{- end }}
-          ports:
-            - containerPort: {{ .Values.port }}
-              protocol: "TCP"
-          resources:
-            limits:
-              {{- if .Values.cpu }}
-              cpu: {{ .Values.cpu }}
-              {{- end }}
-              {{- if .Values.memory }}
-              memory: {{ .Values.memory }}
-              {{- end }}
-              {{- if gt (int $gpuCount) 0}}
-              nvidia.com/gpu: {{ .Values.gpuCount }}
-              {{- end }}
-            requests:
-              {{- if .Values.cpu }}
-              cpu: {{ .Values.cpu }}
-              {{- end }}
-              {{- if .Values.memory }}
-              memory: {{ .Values.memory }}
-              {{- end }}
-              {{- if gt (int $gpuCount) 0}}
-              nvidia.com/gpu: {{ .Values.gpuCount }}
-              {{- end }}
+  predictor:
+    minReplicas: {{ .Values.minReplicas }}
+    {{ .Values.modelType }}:
+      storageUri: {{ .Values.storageUri }}
