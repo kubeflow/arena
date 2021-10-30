@@ -34,6 +34,14 @@ func (b *HorovodJobBuilder) Name(name string) *HorovodJobBuilder {
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *HorovodJobBuilder) Shell(shell string) *HorovodJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *HorovodJobBuilder) Command(args []string) *HorovodJobBuilder {
 	b.args.Command = strings.Join(args, " ")

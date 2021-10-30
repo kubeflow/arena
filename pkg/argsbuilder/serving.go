@@ -390,7 +390,7 @@ func (s *ServingArgsBuilder) disabledNvidiaENVWithNoneGPURequest() error {
 	if s.args.Envs == nil {
 		s.args.Envs = map[string]string{}
 	}
-	if s.args.GPUCount == 0 {
+	if s.args.GPUCount == 0 && s.args.GPUMemory == 0 {
 		s.args.Envs["NVIDIA_VISIBLE_DEVICES"] = "void"
 	}
 	return nil

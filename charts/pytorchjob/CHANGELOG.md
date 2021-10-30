@@ -20,7 +20,7 @@
 
 ### 0.2.1
 
-* add --shell to specify bash or bash
+* add --shell to specify sh or bash
 
 ### 0.3.0
 

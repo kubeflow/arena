@@ -34,6 +34,14 @@ func (b *MPIJobBuilder) Name(name string) *MPIJobBuilder {
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *MPIJobBuilder) Shell(shell string) *MPIJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *MPIJobBuilder) Command(args []string) *MPIJobBuilder {
 	b.args.Command = strings.Join(args, " ")
