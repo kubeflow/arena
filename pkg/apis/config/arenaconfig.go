@@ -24,6 +24,8 @@ import (
 const (
 	RecommendedConfigPathEnvVar = "ARENA_CONFIG"
 	DefaultArenaConfigPath      = "~/.arena/config"
+	GlobalConfigmapName         = "arena-config"
+	AdminUserKeyInConfigmap     = "adminUsers"
 )
 
 var arenaClient *ArenaConfiger
@@ -82,6 +84,7 @@ type ArenaConfiger struct {
 	clientset              *kubernetes.Clientset
 	apiExtensionClientset  *extclientset.Clientset
 	user                   User
+	adminUsers             []User
 	namespace              string
 	arenaNamespace         string
 	configs                map[string]string
@@ -124,6 +127,8 @@ func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 	log.Debugf("succeed to get user name: %v from client-go", *userName)
 	userId := util.Md5(*userName)
 	log.Debugf("the user id is %v", userId)
+	data := getGlobalConfigFromConfigmap(args.ArenaNamespace, clientSet)
+	adminUsers := getAdminUserFromConfigmap(data)
 	i, err := isolateUserInNamespace(namespace, clientSet)
 	if err != nil {
 		return nil, err
@@ -140,6 +145,7 @@ func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 		isDaemonMode:           args.IsDaemonMode,
 		clusterInstalledCRDs:   []string{},
 		user:                   User{name: *userName, id: userId},
+		adminUsers:             adminUsers,
 		isolateUserInNamespace: i,
 		tokenRetriever:         tr,
 	}, nil
@@ -194,6 +200,49 @@ func (a *ArenaConfiger) GetUser() User {
 
 func (a *ArenaConfiger) IsIsolateUserInNamespace() bool {
 	return a.isolateUserInNamespace
+}
+
+func (a *ArenaConfiger) GetAdminUsers() []User {
+	return a.adminUsers
+}
+
+func (a *ArenaConfiger) IsAdminUser() bool {
+	for _, admin := range a.adminUsers {
+		if a.user.GetId() == admin.GetId() {
+			return true
+		}
+	}
+	return false
+}
+
+func getGlobalConfigFromConfigmap(namespace string, client *kubernetes.Clientset) map[string]string {
+	data := map[string]string{}
+	configmap, err := client.CoreV1().ConfigMaps(namespace).Get(context.TODO(), GlobalConfigmapName, metav1.GetOptions{})
+	if err != nil {
+		log.Debugf("failed to get arena global configmap %v,reason: %v", GlobalConfigmapName, err)
+		return data
+	}
+	return configmap.Data
+}
+
+func getAdminUserFromConfigmap(data map[string]string) []User {
+	users := []User{}
+	val, ok := data[AdminUserKeyInConfigmap]
+	if !ok {
+		return users
+	}
+	userNames := strings.Split(val, ",")
+	for _, name := range userNames {
+		name = strings.Trim(name, " ")
+		if name == "" {
+			continue
+		}
+		userId := util.Md5(name)
+		u := User{name: name, id: userId}
+		log.Debugf("found admin user: %v", u)
+		users = append(users, u)
+	}
+	return users
 }
 
 // loadArenaConifg returns configs in map
