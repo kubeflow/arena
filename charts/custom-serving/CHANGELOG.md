@@ -25,3 +25,4 @@
 
 * support --config-file
 * support --shell
+* support arena serve update custom

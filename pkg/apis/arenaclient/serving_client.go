@@ -35,7 +35,7 @@ func (t *ServingJobClient) Namespace(namespace string) *ServingJobClient {
 	return copyServingJobClient
 }
 
-// Submit submits a training job
+// Submit submits a serving job
 func (t *ServingJobClient) Submit(job *apiserving.Job) error {
 	switch job.Type() {
 	case types.TFServingJob:
@@ -60,7 +60,7 @@ func (t *ServingJobClient) Submit(job *apiserving.Job) error {
 	return nil
 }
 
-// Get returns a training job information
+// Get returns a serving job information
 func (t *ServingJobClient) Get(jobName, version string, jobType types.ServingJobType) (*types.ServingJobInfo, error) {
 	job, err := serving.SearchServingJob(t.namespace, jobName, version, jobType)
 	if err != nil {
@@ -70,7 +70,7 @@ func (t *ServingJobClient) Get(jobName, version string, jobType types.ServingJob
 	return &jobInfo, nil
 }
 
-// GetAndPrint print training job information
+// GetAndPrint print serving job information
 func (t *ServingJobClient) GetAndPrint(jobName, version string, jobType types.ServingJobType, format string) error {
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
 		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
@@ -83,7 +83,7 @@ func (t *ServingJobClient) GetAndPrint(jobName, version string, jobType types.Se
 	return nil
 }
 
-// List returns all training jobs
+// List returns all serving jobs
 func (t *ServingJobClient) List(allNamespaces bool, servingType types.ServingJobType) ([]*types.ServingJobInfo, error) {
 	jobs, err := serving.ListServingJobs(t.namespace, allNamespaces, servingType)
 	if err != nil {
@@ -110,7 +110,7 @@ func (t *ServingJobClient) ListAndPrint(allNamespaces bool, servingType types.Se
 	return nil
 }
 
-// Logs returns the training job log
+// Logs returns the serving job log
 func (t *ServingJobClient) Logs(jobName, version string, jobType types.ServingJobType, args *types.LogArgs) error {
 	args.Namespace = t.namespace
 	args.JobName = jobName
@@ -123,7 +123,7 @@ func (t *ServingJobClient) Attach(jobName, version string, jobType types.Serving
 		return err
 	}
 	if len(job.Instances) == 0 {
-		return fmt.Errorf("can not attach the training job %v, because it has no instances", job.Name)
+		return fmt.Errorf("can not attach the serving job %v, because it has no instances", job.Name)
 	}
 	if args.Options.PodName == "" {
 		if len(job.Instances) > 1 {
@@ -145,13 +145,29 @@ func (t *ServingJobClient) Attach(jobName, version string, jobType types.Serving
 	return args.Options.Run()
 }
 
-// Delete deletes the target training job
+// Delete deletes the target serving job
 func (t *ServingJobClient) Delete(jobType types.ServingJobType, version string, jobNames ...string) error {
 	for _, jobName := range jobNames {
 		err := serving.DeleteServingJob(t.namespace, jobName, version, jobType)
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// Update update a serving job
+func (t *ServingJobClient) Update(job *apiserving.Job) error {
+	switch job.Type() {
+	case types.TFServingJob:
+		args := job.Args().(*types.UpdateTensorFlowServingArgs)
+		return serving.UpdateTensorflowServing(args)
+	case types.TritonServingJob:
+		args := job.Args().(*types.UpdateTritonServingArgs)
+		return serving.UpdateTritonServing(args)
+	case types.CustomServingJob:
+		args := job.Args().(*types.UpdateCustomServingArgs)
+		return serving.UpdateCustomServing(args)
 	}
 	return nil
 }
