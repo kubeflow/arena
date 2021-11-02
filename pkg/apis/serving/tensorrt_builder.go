@@ -49,6 +49,14 @@ func (b *TRTServingJobBuilder) Namespace(namespace string) *TRTServingJobBuilder
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *TRTServingJobBuilder) Shell(shell string) *TRTServingJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *TRTServingJobBuilder) Command(args []string) *TRTServingJobBuilder {
 	b.args.Command = strings.Join(args, " ")
@@ -244,6 +252,18 @@ func (b *TRTServingJobBuilder) ModelStore(store string) *TRTServingJobBuilder {
 // AllowMetrics is enable metric,match the option --allow-meetrics
 func (b *TRTServingJobBuilder) AllowMetrics() *TRTServingJobBuilder {
 	b.args.AllowMetrics = true
+	return b
+}
+
+// ConfigFiles is used to mapping config files form local to job containers,match option --config-file
+func (b *TRTServingJobBuilder) ConfigFiles(files map[string]string) *TRTServingJobBuilder {
+	if files != nil && len(files) != 0 {
+		filesSlice := []string{}
+		for localPath, containerPath := range files {
+			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
+		}
+		b.argValues["config-file"] = &filesSlice
+	}
 	return b
 }
 

@@ -44,7 +44,7 @@ func SubmitKFServingJob(namespace string, args *types.KFServingArgs) (err error)
 	}
 	// the master is also considered as a worker
 	chart := util.GetChartsFolder() + "/kfserving"
-	err = workflow.SubmitJob(nameWithVersion, string(types.KFServingJob), namespace, args, chart)
+	err = workflow.SubmitJob(nameWithVersion, string(types.KFServingJob), namespace, args, chart, args.HelmOptions...)
 	if err != nil {
 		return err
 	}

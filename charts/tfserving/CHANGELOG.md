@@ -25,3 +25,8 @@
 ### 0.6.0
 
 * fix no write permission of /tmp directory
+
+### 0.7.0
+
+* support --config-file
+* support --shell

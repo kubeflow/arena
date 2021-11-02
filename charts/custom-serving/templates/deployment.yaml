@@ -82,7 +82,7 @@ spec:
           {{- end }}
           {{- if ne .Values.command "" }}
           command:
-          - "sh"
+          - "{{ .Values.shell }}"
           - "-c"
           - "{{ .Values.command }}"
           {{- end }}
@@ -128,11 +128,32 @@ spec:
               mountPath: "{{ $destPath }}"
             {{- end }}
             {{- end }}
+            {{- if ne (len .Values.configFiles) 0 }}
+            {{- $releaseName := .Release.Name }}
+            {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+            {{- $visit := "false" }}
+            {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+            {{- if eq  "false" $visit }}
+            - name: {{ $containerPathKey }}
+              mountPath: {{ $configFileInfo.containerFilePath }}
+            {{- $visit = "true" }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
       volumes:
         {{- if .Values.modelDirs }}
         {{- range $pvcName, $destPath := .Values.modelDirs}}
         - name: "{{ $pvcName }}"
           persistentVolumeClaim:
             claimName: "{{ $pvcName }}"
+        {{- end }}
+        {{- end }}
+        {{- if ne (len .Values.configFiles) 0 }}
+        {{- $releaseName := .Release.Name }}
+        {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+        - name: {{ $containerPathKey }}
+          configMap:
+            name: {{ $releaseName }}-{{ $containerPathKey }}
         {{- end }}
         {{- end }}

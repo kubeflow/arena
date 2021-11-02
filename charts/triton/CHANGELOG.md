@@ -16,3 +16,8 @@
 ### 0.4.0
 
 * support custom command
+
+### 0.5.0
+
+* support --config-file
+* support --shell

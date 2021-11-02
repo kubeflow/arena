@@ -145,6 +145,7 @@ type CommonServingArgs struct {
 	Cpu             string            `yaml:"cpu"`             // --cpu
 	Memory          string            `yaml:"memory"`          // --memory
 	Envs            map[string]string `yaml:"envs"`            // --envs
+	Shell           string            `yaml:"shell"`           // --shell
 	Command         string            `yaml:"command"`         // --command
 	Replicas        int               `yaml:"replicas"`        // --replicas
 	EnableIstio     bool              `yaml:"enableIstio"`     // --enableIstio
@@ -155,6 +156,11 @@ type CommonServingArgs struct {
 	Tolerations     []string          `yaml:"tolerations"`   // --toleration
 	Annotations     map[string]string `yaml:"annotations"`
 	Labels          map[string]string `yaml:"labels"` // --label
+	// ConfigFiles stores the config file which is existed in client host node
+	// and map it to container,match option --config-file
+	ConfigFiles map[string]map[string]ConfigFileInfo `yaml:"configFiles"`
+	// HelmOptions stores the helm options
+	HelmOptions []string `yaml:"-"`
 
 	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
 }
@@ -167,15 +173,14 @@ type CustomServingArgs struct {
 }
 
 type TensorFlowServingArgs struct {
-	VersionPolicy          string `yaml:"versionPolicy"`   // --version-policy
-	ModelConfigFile        string `yaml:"modelConfigFile"` // --model-config-file
-	ModelConfigFileContent string `yaml:"modelConfigFileContent"`
-	MonitoringConfigFile   string `yaml:"monitoringConfigFile"` // --monitoring-config-file
-	ModelName              string `yaml:"modelName"`            // --model-name
-	ModelPath              string `yaml:"modelPath"`            // --model-path
-	Port                   int    `yaml:"port"`                 // --port
-	RestfulPort            int    `yaml:"restApiPort"`          // --restful-port
-	CommonServingArgs      `yaml:",inline"`
+	VersionPolicy        string `yaml:"versionPolicy"`        // --version-policy
+	ModelConfigFile      string `yaml:"modelConfigFile"`      // --model-config-file
+	MonitoringConfigFile string `yaml:"monitoringConfigFile"` // --monitoring-config-file
+	ModelName            string `yaml:"modelName"`            // --model-name
+	ModelPath            string `yaml:"modelPath"`            // --model-path
+	Port                 int    `yaml:"port"`                 // --port
+	RestfulPort          int    `yaml:"restApiPort"`          // --restful-port
+	CommonServingArgs    `yaml:",inline"`
 }
 
 type TensorRTServingArgs struct {

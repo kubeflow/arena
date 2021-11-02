@@ -44,7 +44,7 @@ func SubmitTensorRTServingJob(namespace string, args *types.TensorRTServingArgs)
 	}
 	// the master is also considered as a worker
 	chart := util.GetChartsFolder() + "/trtserving"
-	err = workflow.SubmitJob(nameWithVersion, string(types.TRTServingJob), namespace, args, chart)
+	err = workflow.SubmitJob(nameWithVersion, string(types.TRTServingJob), namespace, args, chart, args.HelmOptions...)
 	if err != nil {
 		return err
 	}

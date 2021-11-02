@@ -49,6 +49,14 @@ func (b *TritonServingJobBuilder) Namespace(namespace string) *TritonServingJobB
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *TritonServingJobBuilder) Shell(shell string) *TritonServingJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *TritonServingJobBuilder) Command(args []string) *TritonServingJobBuilder {
 	b.args.Command = strings.Join(args, " ")
@@ -244,6 +252,18 @@ func (b *TritonServingJobBuilder) ModelRepository(repository string) *TritonServ
 // AllowMetrics is enable metric,match the option --allow-metrics
 func (b *TritonServingJobBuilder) AllowMetrics() *TritonServingJobBuilder {
 	b.args.AllowMetrics = true
+	return b
+}
+
+// ConfigFiles is used to mapping config files form local to job containers,match option --config-file
+func (b *TritonServingJobBuilder) ConfigFiles(files map[string]string) *TritonServingJobBuilder {
+	if files != nil && len(files) != 0 {
+		filesSlice := []string{}
+		for localPath, containerPath := range files {
+			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
+		}
+		b.argValues["config-file"] = &filesSlice
+	}
 	return b
 }
 

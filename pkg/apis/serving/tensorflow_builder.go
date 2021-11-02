@@ -48,6 +48,14 @@ func (b *TFServingJobBuilder) Namespace(namespace string) *TFServingJobBuilder {
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *TFServingJobBuilder) Shell(shell string) *TFServingJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *TFServingJobBuilder) Command(args []string) *TFServingJobBuilder {
 	b.args.Command = strings.Join(args, " ")
@@ -260,6 +268,18 @@ func (b *TFServingJobBuilder) ModelName(name string) *TFServingJobBuilder {
 func (b *TFServingJobBuilder) ModelPath(path string) *TFServingJobBuilder {
 	if path != "" {
 		b.args.ModelPath = path
+	}
+	return b
+}
+
+// ConfigFiles is used to mapping config files form local to job containers,match option --config-file
+func (b *TFServingJobBuilder) ConfigFiles(files map[string]string) *TFServingJobBuilder {
+	if files != nil && len(files) != 0 {
+		filesSlice := []string{}
+		for localPath, containerPath := range files {
+			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
+		}
+		b.argValues["config-file"] = &filesSlice
 	}
 	return b
 }

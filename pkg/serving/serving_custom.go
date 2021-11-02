@@ -44,7 +44,7 @@ func SubmitCustomServingJob(namespace string, args *types.CustomServingArgs) (er
 	}
 	// the master is also considered as a worker
 	customChart := util.GetChartsFolder() + "/custom-serving"
-	err = workflow.SubmitJob(nameWithVersion, string(types.CustomServingJob), namespace, args, customChart)
+	err = workflow.SubmitJob(nameWithVersion, string(types.CustomServingJob), namespace, args, customChart, args.HelmOptions...)
 	if err != nil {
 		return err
 	}

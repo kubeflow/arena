@@ -44,6 +44,14 @@ func (b *CustomServingJobBuilder) Namespace(namespace string) *CustomServingJobB
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *CustomServingJobBuilder) Shell(shell string) *CustomServingJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *CustomServingJobBuilder) Command(args []string) *CustomServingJobBuilder {
 	b.args.Command = strings.Join(args, " ")

@@ -46,6 +46,14 @@ func (b *KFServingJobBuilder) Namespace(namespace string) *KFServingJobBuilder {
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *KFServingJobBuilder) Shell(shell string) *KFServingJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *KFServingJobBuilder) Command(args []string) *KFServingJobBuilder {
 	b.args.Command = strings.Join(args, " ")
@@ -234,6 +242,18 @@ func (b *KFServingJobBuilder) CanaryPercent(percent int) *KFServingJobBuilder {
 func (b *KFServingJobBuilder) StorageUri(uri string) *KFServingJobBuilder {
 	if uri != "" {
 		b.args.StorageUri = uri
+	}
+	return b
+}
+
+// ConfigFiles is used to mapping config files form local to job containers,match option --config-file
+func (b *KFServingJobBuilder) ConfigFiles(files map[string]string) *KFServingJobBuilder {
+	if files != nil && len(files) != 0 {
+		filesSlice := []string{}
+		for localPath, containerPath := range files {
+			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
+		}
+		b.argValues["config-file"] = &filesSlice
 	}
 	return b
 }
