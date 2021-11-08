@@ -141,7 +141,10 @@
 
 * Fix: disable nvidia env for none gpu request job 
 
-
 ### 0.34.0
 
 * add --shell to specify sh or bash
+
+### 0.35.0
+
+* Support gang scheduling
