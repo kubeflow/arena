@@ -91,8 +91,8 @@ type CommonSubmitArgs struct {
 	// PriorityClassName defines the priority class
 	PriorityClassName string `yaml:"priorityClassName"`
 
-	// Conscheduling defines using Conscheduling
-	Conscheduling bool
+	// Coscheduling defines using Coscheduling
+	Coscheduling bool
 
 	// PodGroupName stores pod group name
 	PodGroupName string `yaml:"podGroupName"`
