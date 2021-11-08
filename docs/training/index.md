@@ -22,7 +22,7 @@ If you want to use arena to manage training jobs, this guide is for you. we have
 * I want to [submit a tensorflow training job with specified a tensorboard](tfjob/tensorboard.md).
 * I want to [submit a distributed tensorflow training job](tfjob/distributed.md).
 * I want to [submit a tensorflow training job with specified datasets](tfjob/dataset.md).
-* I want to [submit a tensorflow training job with enabled gang scheduling](tfjob/gangschd.md).
+* I want to [submit a tensorflow training job with gang scheduling enabled](tfjob/gangschd.md).
 * I want to [submit a tensorflow training job with specified estimator](tfjob/estimator.md).
 * I want to [submit a tensorflow training job with specified node selectors](tfjob/selector.md).
 * I want to [submit a tensorflow training job with specified taint nodes](tfjob/toleration.md).
