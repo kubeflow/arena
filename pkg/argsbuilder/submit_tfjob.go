@@ -192,6 +192,9 @@ func (s *SubmitTFJobArgsBuilder) Build() error {
 	if err := s.addRequestGPUsToAnnotation(); err != nil {
 		return err
 	}
+	if err := s.addPodGroupLabel(); err != nil {
+		return err
+	}
 	if err := s.check(); err != nil {
 		return err
 	}
@@ -409,5 +412,13 @@ func (s *SubmitTFJobArgsBuilder) checkRoleSequence() error {
 		s.args.Annotations = map[string]string{}
 	}
 	s.args.Annotations["job-role-sequence"] = strings.Join(roles, ",")
+	return nil
+}
+
+func (s *SubmitTFJobArgsBuilder) addPodGroupLabel() error {
+	if s.args.Coscheduling {
+		s.args.PodGroupName = fmt.Sprintf("%v_%v", s.args.TrainingType, s.args.Name)
+		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount+s.args.PSCount+s.args.ChiefCount)
+	}
 	return nil
 }

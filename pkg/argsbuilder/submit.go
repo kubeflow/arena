@@ -116,8 +116,8 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// enable RDMA or not, support hostnetwork for now
 	// add option --rdma
 	command.Flags().BoolVar(&s.args.EnableRDMA, "rdma", false, "enable RDMA")
-	// enable Conscheduling
-	command.Flags().BoolVar(&s.args.Conscheduling, "gang", false, "enable gang scheduling")
+	// enable Coscheduling
+	command.Flags().BoolVar(&s.args.Coscheduling, "gang", false, "enable gang scheduling")
 	// use priority
 	command.Flags().StringVarP(&s.args.PriorityClassName, "priority", "p", "", "priority class name")
 	// add option --toleration,its' value will be get from viper
@@ -567,7 +567,7 @@ func (s *SubmitArgsBuilder) setJobInfoToEnv() error {
 }
 
 func (s *SubmitArgsBuilder) addPodGroupLabel() error {
-	if s.args.Conscheduling {
+	if s.args.Coscheduling {
 		s.args.PodGroupName = fmt.Sprintf("%v_%v", s.args.TrainingType, s.args.Name)
 		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount)
 	}
