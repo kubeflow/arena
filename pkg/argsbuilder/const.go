@@ -7,4 +7,6 @@ const (
 	gangSchdName = "kube-batch"
 
 	aliyunENIAnnotation = "k8s.aliyun.com/eni"
+
+	jobSuspend = "scheduling.x-k8s.io/suspend"
 )

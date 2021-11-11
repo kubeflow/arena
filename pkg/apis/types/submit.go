@@ -73,6 +73,9 @@ type CommonSubmitArgs struct {
 	// EnableRDMA enable rdma or not,match option --rdma
 	EnableRDMA bool `yaml:"enableRDMA"`
 
+	// EnableQueue enables the feature to queue jobs after they are scheduled.
+	EnableQueue bool `yaml:"enableQueue"`
+
 	// UseENI defines using eni or not
 	UseENI bool `yaml:"useENI"`
 

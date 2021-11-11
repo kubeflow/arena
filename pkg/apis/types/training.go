@@ -131,6 +131,8 @@ type TrainingJobInfo struct {
 type TrainingJobStatus string
 
 const (
+	// TrainingJobQueuing means the job is queuing
+	TrainingJobQueuing TrainingJobStatus = "QUEUING"
 	// TrainingJobPending means the job is pending
 	TrainingJobPending TrainingJobStatus = "PENDING"
 	// TrainingJobRunning means the job is running
