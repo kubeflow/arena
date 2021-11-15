@@ -44,7 +44,7 @@ func SubmitTritonServingJob(namespace string, args *types.TritonServingArgs) (er
 	}
 	// the master is also considered as a worker
 	chart := util.GetChartsFolder() + "/triton"
-	err = workflow.SubmitJob(nameWithVersion, string(types.TritonServingJob), namespace, args, chart)
+	err = workflow.SubmitJob(nameWithVersion, string(types.TritonServingJob), namespace, args, chart, args.HelmOptions...)
 	if err != nil {
 		return err
 	}

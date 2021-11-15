@@ -21,10 +21,12 @@ If you want to use arena to manage serving jobs, this guide is for you. we have 
 * I want to [submit a tensorflow serving job with enabled gpushare mode](tfserving/gpushare.md).
 * I want to [submit a tensorflow serving job which uses gpus](tfserving/gpu.md).
 * I want to [submit a tensorflow serving job with prometheus](tfserving/monitor.md).
+* I want to [update a tensorflow serving job after deployed](tfserving/update-serving.md).
 
 ## Custom Serving Job Guide
 
 * I want to [submit a custom serving job which uses gpus](customserving/gpu.md). 
+* I want to [update a custom serving job after deployed](customserving/update-serving.md).
 
 ## KFServing Job Guide
 
@@ -37,3 +39,4 @@ If you want to use arena to manage serving jobs, this guide is for you. we have 
 ## Nvidia Triton Serving Job Guide
 
 * I want to [submit a nvidia triton serving job which use gpus](triton/serving.md).
+* I want to [update a nvidia triton serving job after deployed](triton/update-serving.md).

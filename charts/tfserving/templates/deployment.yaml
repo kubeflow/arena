@@ -87,20 +87,22 @@ spec:
           {{- end }}
           {{- if ne .Values.command "" }}
           command:
-          - "sh"
+          - "{{ .Values.shell }}"
           - "-c"
           - "{{ .Values.command }}"
           {{- else }}
           command:
-          - "sh"
+          - "{{ .Values.shell }}"
           - "-c"
           args:
             - |
               /usr/bin/tensorflow_model_server --port={{ .Values.port }}
             {{- if .Values.restApiPort }} --rest_api_port={{ .Values.restApiPort }} {{- end }}
-            {{- if ne .Values.modelConfigFileContent "" }} --model_config_file=/tfserving/config {{- end }}
-            {{- if gt (int $gpuMemory) 0 }} --per_process_gpu_memory_fraction=$(awk 'BEGIN{printf "%.2f",'$ALIYUN_COM_GPU_MEM_CONTAINER'/'$ALIYUN_COM_GPU_MEM_DEV'}') {{- end }}
+            {{- if ne .Values.modelName "" }} --model_name={{ .Values.modelName }} {{- end }}
+            {{- if ne .Values.modelPath "" }} --model_base_path={{ .Values.modelPath }} {{- end }}
+            {{- if ne .Values.modelConfigFile "" }} --model_config_file={{ .Values.modelConfigFile }} {{- end }}
             {{- if ne .Values.monitoringConfigFile "" }} --monitoring_config_file={{ .Values.monitoringConfigFile }} {{- end }}
+            {{- if gt (int $gpuMemory) 0 }} --per_process_gpu_memory_fraction=$(awk 'BEGIN{printf "%.2f",'$ALIYUN_COM_GPU_MEM_CONTAINER'/'$ALIYUN_COM_GPU_MEM_DEV'}') {{- end }}
           {{- end }}
           ports:
             - containerPort: {{ .Values.port }}
@@ -135,9 +137,18 @@ spec:
               mountPath: "{{ $destPath }}"
             {{- end }}
             {{- end }}
-            {{- if ne .Values.modelConfigFileContent "" }}
-            - name: config
-              mountPath: /tfserving
+            {{- if ne (len .Values.configFiles) 0 }}
+            {{- $releaseName := .Release.Name }}
+            {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+            {{- $visit := "false" }}
+            {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+            {{- if eq  "false" $visit }}
+            - name: {{ $containerPathKey }}
+              mountPath: {{ $configFileInfo.containerFilePath }}
+            {{- $visit = "true" }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
             {{- end }}
       volumes:
         {{- if .Values.modelDirs }}
@@ -147,9 +158,11 @@ spec:
             claimName: "{{ $pvcName }}"
         {{- end }}
         {{- end }}
-        - name: config
+        {{- if ne (len .Values.configFiles) 0 }}
+        {{- $releaseName := .Release.Name }}
+        {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+        - name: {{ $containerPathKey }}
           configMap:
-            name: {{ template "tensorflow-serving.fullname" . }}-cm
-            items:
-            - key: modelConfigFileContent
-              path: config
+            name: {{ $releaseName }}-{{ $containerPathKey }}
+        {{- end }}
+        {{- end }}

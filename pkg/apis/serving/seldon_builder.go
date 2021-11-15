@@ -46,6 +46,14 @@ func (b *SeldonJobBuilder) Namespace(namespace string) *SeldonJobBuilder {
 	return b
 }
 
+// Shell is used to set bash or sh
+func (b *SeldonJobBuilder) Shell(shell string) *SeldonJobBuilder {
+	if shell != "" {
+		b.args.Shell = shell
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *SeldonJobBuilder) Command(args []string) *SeldonJobBuilder {
 	b.args.Command = strings.Join(args, " ")
@@ -218,6 +226,18 @@ func (b *SeldonJobBuilder) Implementation(implementation string) *SeldonJobBuild
 func (b *SeldonJobBuilder) ModelUri(modelUri string) *SeldonJobBuilder {
 	if modelUri != "" {
 		b.args.ModelUri = modelUri
+	}
+	return b
+}
+
+// ConfigFiles is used to mapping config files form local to job containers,match option --config-file
+func (b *SeldonJobBuilder) ConfigFiles(files map[string]string) *SeldonJobBuilder {
+	if files != nil && len(files) != 0 {
+		filesSlice := []string{}
+		for localPath, containerPath := range files {
+			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
+		}
+		b.argValues["config-file"] = &filesSlice
 	}
 	return b
 }

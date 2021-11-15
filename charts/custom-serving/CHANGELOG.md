@@ -20,3 +20,9 @@
 ### 0.5.0 
 
 * support metrics port
+
+### 0.6.0
+
+* support --config-file
+* support --shell
+* support arena serve update custom

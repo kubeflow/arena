@@ -7,7 +7,6 @@ var (
 
 Available Commands:
   tensorflow,tf  Submit a TensorFlow Serving Job
-  tensorrt,trt   Submit a TensorRT Serving Job
   triton         Submit a Nvidia Triton Serving Job
   custom         Submit a Custom Serving Job  
   kfserving,kfs  Submit a kubeflow Serving Job
@@ -24,7 +23,7 @@ func NewServeCommand() *cobra.Command {
 		},
 	}
 	command.AddCommand(NewSubmitTFServingJobCommand())
-	command.AddCommand(NewSubmitTRTServingJobCommand())
+	//command.AddCommand(NewSubmitTRTServingJobCommand())
 	command.AddCommand(NewSubmitCustomServingJobCommand())
 	command.AddCommand(NewSubmitKFServingJobCommand())
 	command.AddCommand(NewSubmitSeldonServingJobCommand())
@@ -35,5 +34,7 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewAttachCommand())
 	command.AddCommand(NewLogsCommand())
 	command.AddCommand(NewTrafficRouterSplitCommand())
+	command.AddCommand(NewUpdateCommand())
+
 	return command
 }

@@ -44,7 +44,7 @@ func SubmitTensorflowServingJob(namespace string, args *types.TensorFlowServingA
 	}
 	// the master is also considered as a worker
 	chart := util.GetChartsFolder() + "/tfserving"
-	err = workflow.SubmitJob(nameWithVersion, string(types.TFServingJob), namespace, args, chart)
+	err = workflow.SubmitJob(nameWithVersion, string(types.TFServingJob), namespace, args, chart, args.HelmOptions...)
 	if err != nil {
 		return err
 	}

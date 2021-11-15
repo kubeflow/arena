@@ -15,10 +15,18 @@
 package kubectl
 
 import (
+	"context"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -26,6 +34,7 @@ import (
 )
 
 var kubectlCmd = []string{"arena-kubectl"}
+var kubeClient *kubernetes.Clientset
 
 /**
 * dry-run creating kubernetes App Info for delete in future
@@ -332,4 +341,45 @@ func GetCrdNames() ([]string, error) {
 		crdNames = append(crdNames, strings.Trim(strings.Split(item, " ")[0], " "))
 	}
 	return crdNames, nil
+}
+
+func getKubeClient() (*kubernetes.Clientset, error) {
+	if kubeClient == nil {
+		var kubeconfig *string
+		if home := homedir.HomeDir(); home != "" {
+			kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+		} else {
+			kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+		}
+		flag.Parse()
+
+		config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+		if err != nil {
+			panic(err)
+		}
+		kubeClient, err = kubernetes.NewForConfig(config)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return kubeClient, nil
+}
+
+func GetDeployment(name, namespace string) (*v1.Deployment, error) {
+	client, err := getKubeClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+}
+
+func UpdateDeployment(deploy *v1.Deployment) error {
+	client, err := getKubeClient()
+	if err != nil {
+		return err
+	}
+	_, err = client.AppsV1().Deployments(deploy.Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
+	return err
 }

@@ -16,6 +16,9 @@ package argsbuilder
 import (
 	"context"
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -77,6 +80,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		tolerations []string
 		labels      []string
 		selectors   []string
+		configFiles []string
 	)
 	defaultImage := ""
 	item, ok := s.argValues["default-image"]
@@ -121,13 +125,20 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 
+	// add option --config-file its' value will be get from viper
+	command.Flags().StringArrayVar(&configFiles, "config-file", []string{}, `giving configuration files when serving model, usage:"--config-file <host_path_file>:<container_path_file>"`)
+
+	// add option --shell
+	command.Flags().StringVarP(&s.args.Shell, "shell", "", "sh", "specify the linux shell, usage: bash or sh")
+
 	s.AddArgValue("annotation", &annotations).
 		AddArgValue("toleration", &tolerations).
 		AddArgValue("label", &labels).
 		AddArgValue("selector", &selectors).
 		AddArgValue("data", &dataset).
 		AddArgValue("data-dir", &datadir).
-		AddArgValue("env", &envs)
+		AddArgValue("env", &envs).
+		AddArgValue("config-file", &configFiles)
 }
 
 func (s *ServingArgsBuilder) PreBuild() error {
@@ -169,6 +180,10 @@ func (s *ServingArgsBuilder) PreBuild() error {
 	if err := s.setUserNameAndUserId(); err != nil {
 		return err
 	}
+	// set config files
+	if err := s.setConfigFiles(); err != nil {
+		return err
+	}
 	if err := s.disabledNvidiaENVWithNoneGPURequest(); err != nil {
 		return err
 	}
@@ -184,9 +199,7 @@ func (s *ServingArgsBuilder) Build() error {
 			return err
 		}
 	}
-	if err := s.check(); err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -341,6 +354,84 @@ func (s *ServingArgsBuilder) setServingVersion() error {
 	if s.args.Version == "" {
 		t := time.Now()
 		s.args.Version = fmt.Sprint(t.Format("200601021504"))
+	}
+	return nil
+}
+
+// setConfigFiles is used to handle option --config-file
+func (s *ServingArgsBuilder) setConfigFiles() error {
+	s.args.ConfigFiles = map[string]map[string]types.ConfigFileInfo{}
+	if s.args.HelmOptions == nil {
+		s.args.HelmOptions = []string{}
+	}
+	argKey := "config-file"
+	var configFiles *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	configFiles = value.(*[]string)
+	exists := map[string]bool{}
+	for ind, val := range *configFiles {
+		var (
+			containerFile string
+			err           error
+		)
+		// use md5 rather than index,the reason is that if user gives a option twice,index can't filter it
+		configFileKey := fmt.Sprintf("config-%v", ind)
+		files := strings.Split(val, ":")
+		hostFile := files[0]
+		// change ~ to user home directory
+		if strings.Index(hostFile, "~/") == 0 {
+			hostFile = strings.Replace(hostFile, "~", os.Getenv("HOME"), -1)
+		}
+		// change relative path to absolute path
+		hostFile, err = filepath.Abs(hostFile)
+		if err != nil {
+			return err
+		}
+		// the option gives container path or not,if not, we see the container path is same as host path
+		switch len(files) {
+		case 1:
+			containerFile = hostFile
+		case 2:
+			containerFile = files[1]
+		default:
+			return fmt.Errorf("invalid format for assigning config file,it should be '--config-file <host_path_file>:<container_path_file>'")
+		}
+		if _, ok := exists[fmt.Sprintf("%v:%v", hostFile, containerFile)]; ok {
+			continue
+		}
+		exists[fmt.Sprintf("%v:%v", hostFile, containerFile)] = true
+		// if the container path is not absolute path,return error
+		if !path.IsAbs(containerFile) {
+			return fmt.Errorf("the path of file in container must be absolute path")
+		}
+		// check the host path file is exist or not
+		_, err = os.Stat(hostFile)
+		if os.IsNotExist(err) {
+			return err
+		}
+		info := types.ConfigFileInfo{
+			Key:               configFileKey,
+			ContainerFileName: path.Base(containerFile),
+			ContainerFilePath: path.Dir(containerFile),
+			HostFile:          hostFile,
+		}
+		// classify the files by container path
+		containerPathKey := util.Md5(path.Dir(containerFile))[0:15]
+		if _, ok := s.args.ConfigFiles[containerPathKey]; !ok {
+			s.args.ConfigFiles[containerPathKey] = map[string]types.ConfigFileInfo{}
+		}
+		s.args.ConfigFiles[containerPathKey][configFileKey] = info
+	}
+	for containerPathKey, val := range s.args.ConfigFiles {
+		for configFileKey, info := range val {
+			s.args.HelmOptions = append(s.args.HelmOptions,
+				fmt.Sprintf("--set-file configFiles.%v.%v.content=%v", containerPathKey, configFileKey, info.HostFile))
+			tmp := fmt.Sprintf("--set-file configFiles.%v.%v.content=%v", containerPathKey, configFileKey, info.HostFile)
+			fmt.Println(tmp)
+		}
 	}
 	return nil
 }

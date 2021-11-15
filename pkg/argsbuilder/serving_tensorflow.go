@@ -14,10 +14,8 @@
 package argsbuilder
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"reflect"
 	"regexp"
 	"strings"
@@ -32,7 +30,6 @@ import (
 
 const (
 	DefaultTfServingImage = "tensorflow/serving:latest"
-	modelPathSeparator    = ":"
 	regexp4serviceName    = "^[a-z0-9A-Z_-]+$"
 )
 
@@ -87,11 +84,11 @@ func (s *TensorflowServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	command.Flags().StringVar(&s.args.ModelName, "modelName", "", "the model name for serving")
 	command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
-	command.Flags().StringVar(&s.args.ModelName, "model-name", "", "the model name for serving")
+	command.Flags().StringVar(&s.args.ModelName, "model-name", "", "the model name for serving, ignored if --model-config-file flag is set")
 
 	command.Flags().StringVar(&s.args.ModelPath, "modelPath", "", "the model path for serving in the container")
 	command.Flags().MarkDeprecated("modelPath", "please use --model-path instead")
-	command.Flags().StringVar(&s.args.ModelPath, "model-path", "", "the model path for serving in the container")
+	command.Flags().StringVar(&s.args.ModelPath, "model-path", "", "the model path for serving in the container, ignored if --model-config-file flag is set, otherwise required")
 
 	command.Flags().StringVar(&s.args.ModelConfigFile, "modelConfigFile", "", "corresponding with --model_config_file in tensorflow serving")
 	command.Flags().MarkDeprecated("modelConfigFile", "please use --model-config-file instead")
@@ -101,6 +98,8 @@ func (s *TensorflowServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.VersionPolicy, "versionPolicy", "", "support latest, latest:N, specific:N, all")
 	command.Flags().MarkDeprecated("versionPolicy", "please use --version-policy instead")
 	command.Flags().StringVar(&s.args.VersionPolicy, "version-policy", "", "support latest, latest:N, specific:N, all")
+	command.Flags().MarkDeprecated("version-policy", "please use --model-config-file instead")
+
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
 }
 
@@ -149,7 +148,7 @@ func (s *TensorflowServingArgsBuilder) preprocess() (err error) {
 		return fmt.Errorf("image must be specified.")
 	}
 	if s.args.ModelConfigFile == "" {
-		// need to validate modelName, modelPath and versionPolicy if not specify modelConfigFile
+		// need to validate modelName, modelPath if not specify modelConfigFile
 		// 1. validate modelName
 		err := s.validateModelName()
 		if err != nil {
@@ -159,31 +158,14 @@ func (s *TensorflowServingArgsBuilder) preprocess() (err error) {
 		if s.args.ModelPath == "" {
 			return fmt.Errorf("modelPath should be specified if no modelConfigFile is specified")
 		}
-
-		//3. validate versionPolicy
-		err = s.validateVersionPolicy()
-		if err != nil {
-			return err
-		}
-		//populate content according to CLI parameters
-		s.args.ModelConfigFileContent = s.generateModelConfigFileContent()
-
 	} else {
 		//populate content from modelConfigFile
 		if s.args.ModelName != "" {
-			return fmt.Errorf("modelConfigFile=%s is specified, so --model-name cannot be used", s.args.ModelConfigFile)
+			log.Infof("modelConfigFile=%s is specified, so --model-name will be ingored", s.args.ModelConfigFile)
 		}
 		if s.args.ModelPath != "" {
-			return fmt.Errorf("modelConfigFile=%s is specified, so --model-path cannot be used", s.args.ModelConfigFile)
+			log.Infof("modelConfigFile=%s is specified, so --model-path will be ignored", s.args.ModelConfigFile)
 		}
-
-		modelConfigFileContentBytes, err := ioutil.ReadFile(s.args.ModelConfigFile)
-		if err != nil {
-			return fmt.Errorf("cannot read the modelConfigFile[%s]: %s", s.args.ModelConfigFile, err)
-		}
-		modelConfigString := string(modelConfigFileContentBytes)
-		log.Debugf("The content of modelConfigFile[%s] is: %s", s.args.ModelConfigFile, modelConfigString)
-		s.args.ModelConfigFileContent = modelConfigString
 	}
 	return nil
 }
@@ -200,57 +182,6 @@ func (s *TensorflowServingArgsBuilder) checkServiceExists() error {
 		s.args.ModelServiceExists = true
 	}
 	return nil
-}
-
-func (s *TensorflowServingArgsBuilder) validateVersionPolicy() error {
-	// validate version policy
-	if s.args.VersionPolicy == "" {
-		s.args.VersionPolicy = "latest"
-	}
-	versionPolicyName := strings.Split(s.args.VersionPolicy, ":")
-	switch versionPolicyName[0] {
-	case "latest", "specific", "all":
-		log.Debug("Support TensorFlow Serving Version Policy: latest, specific, all.")
-	default:
-		return fmt.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
-	}
-	return nil
-}
-
-func (s *TensorflowServingArgsBuilder) generateModelConfigFileContent() string {
-	modelName := s.args.ModelName
-	versionPolicy := s.args.VersionPolicy
-	mountPath := s.args.ModelPath
-	versionPolicyName := strings.Split(versionPolicy, ":")
-
-	var buffer bytes.Buffer
-	buffer.WriteString("model_config_list: { config: { name: ")
-	buffer.WriteString("\"" + modelName + "\" base_path: \"")
-	buffer.WriteString(mountPath + "\" model_platform: \"")
-	buffer.WriteString("tensorflow\" model_version_policy: { ")
-	switch versionPolicyName[0] {
-	case "all":
-		buffer.WriteString(versionPolicyName[0] + ": {} } } }")
-	case "specific":
-		if len(versionPolicyName) > 1 {
-			buffer.WriteString(versionPolicyName[0] + ": { " + "versions: " + versionPolicyName[1] + " } } } }")
-		} else {
-			log.Errorf("[specific] version policy scheme should be specific:N")
-		}
-	case "latest":
-		if len(versionPolicyName) > 1 {
-			buffer.WriteString(versionPolicyName[0] + ": { " + "num_versions: " + versionPolicyName[1] + " } } } }")
-		} else {
-			buffer.WriteString(versionPolicyName[0] + ": { " + "num_versions: 1 } } } }")
-		}
-	default:
-		log.Errorf("UnSupport TensorFlow Serving Version Policy: %s", versionPolicyName[0])
-		buffer.Reset()
-	}
-
-	result := buffer.String()
-	log.Debugf("generateModelConfigFileContent: \n%s", result)
-	return result
 }
 
 func (s *TensorflowServingArgsBuilder) checkPortsIsOk() error {
