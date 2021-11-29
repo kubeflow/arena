@@ -145,6 +145,11 @@ public class MPIJobBuilder extends JobBuilder {
         return this;
     }
 
+    public MPIJobBuilder shell(String shell) {
+        super.shell(shell);
+        return this;
+    }
+
     public MPIJobBuilder command(String command) {
         this.command = command;
         return this;

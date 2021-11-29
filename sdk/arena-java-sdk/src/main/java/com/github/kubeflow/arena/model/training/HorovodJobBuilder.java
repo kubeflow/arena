@@ -92,7 +92,7 @@ public class HorovodJobBuilder extends JobBuilder {
 
     public HorovodJobBuilder dataDirs(Map<String, String> dataDirs) {
         super.dataDirs(dataDirs);
-        return  this;
+        return this;
     }
 
     public HorovodJobBuilder logDir(String dir) {
@@ -102,27 +102,27 @@ public class HorovodJobBuilder extends JobBuilder {
 
     public HorovodJobBuilder priority(String priority) {
         super.priority(priority);
-        return  this;
+        return this;
     }
 
     public HorovodJobBuilder enableRDMA() {
         super.enableRDMA();
-        return  this;
+        return this;
     }
 
     public HorovodJobBuilder syncImage(String image) {
         super.syncImage(image);
-        return  this;
+        return this;
     }
 
     public HorovodJobBuilder syncMode(String mode) {
         super.syncMode(mode);
-        return  this;
+        return this;
     }
 
     public HorovodJobBuilder syncSource(String source) {
         super.syncSource(source);
-        return  this;
+        return this;
     }
 
     public HorovodJobBuilder enableTensorboard() {
@@ -147,6 +147,11 @@ public class HorovodJobBuilder extends JobBuilder {
 
     public HorovodJobBuilder enableCoscheduling() {
         super.enableCoscheduling();
+        return this;
+    }
+
+    public HorovodJobBuilder shell(String shell) {
+        super.shell(shell);
         return this;
     }
 

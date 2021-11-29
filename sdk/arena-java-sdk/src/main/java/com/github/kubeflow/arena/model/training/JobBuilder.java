@@ -151,6 +151,11 @@ public abstract class JobBuilder {
        return this;
     }
 
+    public JobBuilder shell(String shell) {
+        this.options.add(new StringField("--shell",String.valueOf(shell)));
+        return this;
+    }
+
     public JobBuilder command(String command) {
         this.command = command;
         return this;

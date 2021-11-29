@@ -12,7 +12,6 @@ public class KFServingJobBuilder  extends JobBuilder {
         super(ServingJobType.KFServingJob);
     }
 
-
     public KFServingJobBuilder modelType(String modelType) {
         this.options.add(new StringField("--model-type",modelType));
         return  this;
@@ -28,6 +27,11 @@ public class KFServingJobBuilder  extends JobBuilder {
         return  this;
     }
 
+    public KFServingJobBuilder port(int port) {
+        this.options.add(new StringField("--port", String.valueOf(port)));
+        return this;
+    }
+
     /**
      * following functions invoke base class' functions
      *
@@ -35,6 +39,11 @@ public class KFServingJobBuilder  extends JobBuilder {
      * **/
     public KFServingJobBuilder name(String name) {
         super.name(name);
+        return this;
+    }
+
+    public KFServingJobBuilder namespace(String namespace) {
+        super.namespace(namespace);
         return this;
     }
 
@@ -78,8 +87,13 @@ public class KFServingJobBuilder  extends JobBuilder {
         return this;
     }
 
-    public KFServingJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public KFServingJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
+        return this;
+    }
+
+    public KFServingJobBuilder labels(Map<String, String> labels) {
+        super.labels(labels);
         return this;
     }
 
@@ -98,15 +112,14 @@ public class KFServingJobBuilder  extends JobBuilder {
         return this;
     }
 
-
     public KFServingJobBuilder cpu(String c) {
         super.cpu(c);
-        return  this;
+        return this;
     }
 
     public KFServingJobBuilder memory(String m) {
         super.memory(m);
-        return  this;
+        return this;
     }
 
     public KFServingJobBuilder enableIstio() {
@@ -114,13 +127,8 @@ public class KFServingJobBuilder  extends JobBuilder {
         return this;
     }
 
-    public KFServingJobBuilder port(int port) {
-        super.port(port);
-        return this;
-    }
-
-    public KFServingJobBuilder restfulPort(int port) {
-        super.restfulPort(port);
+    public KFServingJobBuilder shell(String shell) {
+        super.shell(shell);
         return this;
     }
 

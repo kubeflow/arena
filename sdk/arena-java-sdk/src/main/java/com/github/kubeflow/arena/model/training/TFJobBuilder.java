@@ -241,6 +241,11 @@ public class TFJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TFJobBuilder shell(String shell) {
+        super.shell(shell);
+        return this;
+    }
+
     public TFJobBuilder command(String command) {
         this.command = command;
         return this;

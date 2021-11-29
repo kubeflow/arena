@@ -14,6 +14,7 @@ public class ServingJob {
     public ServingJob(String name,ServingJobType jobType,String version,ArrayList<String> args,String command) {
         this.name = name;
         this.jobType = jobType;
+        this.version = version;
         this.args = args;
         this.command = command;
     }

@@ -6,6 +6,8 @@ public enum ServingJobType {
 
     TRTServingJob("trt", "Tensorrt"),
 
+    TritonServingJob("triton", "Triton"),
+
     KFServingJob("kf", "KFServing"),
 
     CustomServingJob("custom", "Custom"),

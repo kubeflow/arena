@@ -12,33 +12,39 @@ public class TensorflowServingJobBuilder extends JobBuilder {
         super(ServingJobType.TFServingJob);
     }
 
-    public JobBuilder modelName(String modelName) {
+    public TensorflowServingJobBuilder modelName(String modelName) {
         this.options.add(new StringField("--model-name",String.valueOf(modelName)));
         return this;
     }
 
-    public JobBuilder modelPath(String modelPath) {
+    public TensorflowServingJobBuilder modelPath(String modelPath) {
         this.options.add(new StringField("--model-path",String.valueOf(modelPath)));
         return this;
     }
 
-    public JobBuilder modelConfigFile(String modelConfigFile) {
-        this.options.add(new StringField("--modelConfigFile",String.valueOf(modelConfigFile)));
+    public TensorflowServingJobBuilder modelConfigFile(String modelConfigFile) {
+        this.options.add(new StringField("--model-config-file",String.valueOf(modelConfigFile)));
         return this;
     }
 
-    public JobBuilder versionPolicy(String policy) {
+    public TensorflowServingJobBuilder monitoringConfigFile(String monitoringConfigFile) {
+        this.options.add(new StringField("--monitoring-config-file",String.valueOf(monitoringConfigFile)));
+        return this;
+    }
+
+    public TensorflowServingJobBuilder port(int port) {
+        this.options.add(new StringField("--port", String.valueOf(port)));
+        return this;
+    }
+
+    public TensorflowServingJobBuilder restfulPort(int port) {
+        this.options.add(new StringField("--restful-port", String.valueOf(port)));
+        return this;
+    }
+
+    @Deprecated
+    public TensorflowServingJobBuilder versionPolicy(String policy) {
         this.options.add(new StringField("--version-policy",String.valueOf(policy)));
-        return this;
-    }
-
-    public JobBuilder port(int port) {
-        this.options.add(new StringField("--port",String.valueOf(port)));
-        return this;
-    }
-
-    public JobBuilder restfulPort(int port) {
-        this.options.add(new StringField("--restful-port",String.valueOf(port)));
         return this;
     }
 
@@ -49,6 +55,11 @@ public class TensorflowServingJobBuilder extends JobBuilder {
      * **/
     public TensorflowServingJobBuilder name(String name) {
         super.name(name);
+        return this;
+    }
+
+    public TensorflowServingJobBuilder namespace(String namespace) {
+        super.namespace(namespace);
         return this;
     }
 
@@ -92,8 +103,13 @@ public class TensorflowServingJobBuilder extends JobBuilder {
         return this;
     }
 
-    public TensorflowServingJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public TensorflowServingJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
+        return this;
+    }
+
+    public TensorflowServingJobBuilder labels(Map<String, String> labels) {
+        super.labels(labels);
         return this;
     }
 
@@ -112,19 +128,23 @@ public class TensorflowServingJobBuilder extends JobBuilder {
         return this;
     }
 
-
     public TensorflowServingJobBuilder cpu(String c) {
         super.cpu(c);
-        return  this;
+        return this;
     }
 
     public TensorflowServingJobBuilder memory(String m) {
         super.memory(m);
-        return  this;
+        return this;
     }
 
     public TensorflowServingJobBuilder enableIstio() {
         super.enableIstio();
+        return this;
+    }
+
+    public TensorflowServingJobBuilder shell(String shell) {
+        super.shell(shell);
         return this;
     }
 
