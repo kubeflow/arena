@@ -43,7 +43,7 @@ tfjob:
   # rsync image
   rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
   # git sync image
-  gitImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/git-sync:v3.1.1
+  gitImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/git-sync:v3.3.5
 
   imagePullPolicy: Always
 
