@@ -13,25 +13,23 @@ public class PytorchJobBuilder extends JobBuilder {
     }
 
     public PytorchJobBuilder cpu(String c) {
-        this.options.add(new StringField("--cpu",c));
+        this.options.add(new StringField("--cpu", c));
         return this;
     }
 
     public PytorchJobBuilder memory(String m) {
-        this.options.add(new StringField("--memory",m));
+        this.options.add(new StringField("--memory", m));
         return this;
     }
 
     public PytorchJobBuilder cleanPodPolicy(String policy) {
-        this.options.add(new StringField("--clean-task-policy",policy));
+        this.options.add(new StringField("--clean-task-policy", policy));
         return this;
     }
 
     /**
      * following functions invoke JobBuilder functions
-     *
-     *
-     * **/
+     **/
 
 
     public PytorchJobBuilder name(String name) {
@@ -91,7 +89,7 @@ public class PytorchJobBuilder extends JobBuilder {
 
     public PytorchJobBuilder dataDirs(Map<String, String> dataDirs) {
         super.dataDirs(dataDirs);
-        return  this;
+        return this;
     }
 
     public PytorchJobBuilder logDir(String dir) {
@@ -101,27 +99,27 @@ public class PytorchJobBuilder extends JobBuilder {
 
     public PytorchJobBuilder priority(String priority) {
         super.priority(priority);
-        return  this;
+        return this;
     }
 
     public PytorchJobBuilder enableRDMA() {
         super.enableRDMA();
-        return  this;
+        return this;
     }
 
     public PytorchJobBuilder syncImage(String image) {
         super.syncImage(image);
-        return  this;
+        return this;
     }
 
     public PytorchJobBuilder syncMode(String mode) {
         super.syncMode(mode);
-        return  this;
+        return this;
     }
 
     public PytorchJobBuilder syncSource(String source) {
         super.syncSource(source);
-        return  this;
+        return this;
     }
 
     public PytorchJobBuilder enableTensorboard() {
@@ -146,6 +144,11 @@ public class PytorchJobBuilder extends JobBuilder {
 
     public PytorchJobBuilder enableCoscheduling() {
         super.enableCoscheduling();
+        return this;
+    }
+
+    public PytorchJobBuilder shell(String shell) {
+        super.shell(shell);
         return this;
     }
 

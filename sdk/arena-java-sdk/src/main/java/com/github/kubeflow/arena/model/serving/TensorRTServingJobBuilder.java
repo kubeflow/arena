@@ -7,6 +7,10 @@ import com.github.kubeflow.arena.model.fields.StringField;
 import java.util.ArrayList;
 import java.util.Map;
 
+/**
+ * Deprecated. Please use TritonJobBuilder instead
+ */
+@Deprecated
 public class TensorRTServingJobBuilder extends JobBuilder {
 
     public TensorRTServingJobBuilder() {
@@ -88,8 +92,8 @@ public class TensorRTServingJobBuilder extends JobBuilder {
         return this;
     }
 
-    public TensorRTServingJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public TensorRTServingJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
         return this;
     }
 
@@ -124,6 +128,10 @@ public class TensorRTServingJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TensorRTServingJobBuilder shell(String shell) {
+        super.shell(shell);
+        return this;
+    }
 
     public TensorRTServingJobBuilder command(String command) {
         this.command = command;

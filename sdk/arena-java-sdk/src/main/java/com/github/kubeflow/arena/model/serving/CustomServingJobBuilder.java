@@ -15,14 +15,31 @@ public class CustomServingJobBuilder extends JobBuilder {
         super(ServingJobType.CustomServingJob);
     }
 
+    public CustomServingJobBuilder port(int port) {
+        this.options.add(new StringField("--port", String.valueOf(port)));
+        return this;
+    }
+
+    public CustomServingJobBuilder restfulPort(int port) {
+        this.options.add(new StringField("--restful-port", String.valueOf(port)));
+        return this;
+    }
+
+    public CustomServingJobBuilder metricsPort(int metricsPort) {
+        this.options.add(new StringField("--metrics-port", String.valueOf(metricsPort)));
+        return this;
+    }
 
     /**
      * following functions invoke base class' functions
-     *
-     *
-     * **/
+     */
     public CustomServingJobBuilder name(String name) {
         super.name(name);
+        return this;
+    }
+
+    public CustomServingJobBuilder namespace(String namespace) {
+        super.namespace(namespace);
         return this;
     }
 
@@ -71,6 +88,11 @@ public class CustomServingJobBuilder extends JobBuilder {
         return this;
     }
 
+    public CustomServingJobBuilder labels(Map<String, String> labels) {
+        super.labels(labels);
+        return this;
+    }
+
     public CustomServingJobBuilder datas(Map<String, String> datas) {
         super.datas(datas);
         return this;
@@ -102,13 +124,8 @@ public class CustomServingJobBuilder extends JobBuilder {
         return this;
     }
 
-    public CustomServingJobBuilder port(int port) {
-        super.port(port);
-        return this;
-    }
-
-    public CustomServingJobBuilder restfulPort(int port) {
-        super.restfulPort(port);
+    public CustomServingJobBuilder shell(String shell) {
+        super.shell(shell);
         return this;
     }
 

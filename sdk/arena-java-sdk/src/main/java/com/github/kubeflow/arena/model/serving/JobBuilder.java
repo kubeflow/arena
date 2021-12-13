@@ -10,6 +10,8 @@ import com.github.kubeflow.arena.model.fields.*;
 
 public abstract class JobBuilder {
 
+    protected String namespace;
+
     protected String jobName;
 
     protected ServingJobType jobType;
@@ -20,99 +22,109 @@ public abstract class JobBuilder {
 
     protected String version = "";
 
-    public JobBuilder(ServingJobType jobType){
+    public JobBuilder(ServingJobType jobType) {
         this.jobType = jobType;
-        this.options =  new ArrayList<Field>();
+        this.options = new ArrayList<>();
     }
 
     public ServingJob build() throws ArenaException {
-        ArrayList<String> args = new ArrayList<String>();
-        for (int i = 0;i < this.options.size();i++) {
+        ArrayList<String> args = new ArrayList<>();
+        for (int i = 0; i < this.options.size(); i++) {
             Field f = this.options.get(i);
             f.validate();
-            for(int j = 0;j < f.options().size();j++) {
+            for (int j = 0; j < f.options().size(); j++) {
                 args.add(f.options().get(j));
             }
         }
-        return new ServingJob(this.jobName,this.jobType,this.version,args,this.command);
+        return new ServingJob(this.jobName, this.jobType, this.version, args, this.command);
     }
 
     public JobBuilder name(String name) {
         this.jobName = name;
-        this.options.add(new StringField("--name",name));
+        this.options.add(new StringField("--name", name));
+        return this;
+    }
+
+    public JobBuilder namespace(String namespace) {
+        this.namespace = namespace;
+        this.options.add(new StringField("--namespace", namespace));
         return this;
     }
 
     public JobBuilder version(String version) {
         this.version = version;
-        this.options.add(new StringField("--version",version));
+        this.options.add(new StringField("--version", version));
         return this;
     }
 
     public JobBuilder image(String image) {
-        this.options.add(new StringField("--image",image));
+        this.options.add(new StringField("--image", image));
         return this;
     }
 
     public JobBuilder replicas(int count) {
-        this.options.add(new StringField("--replicas",String.valueOf(count)));
+        this.options.add(new StringField("--replicas", String.valueOf(count)));
         return this;
     }
 
     public JobBuilder imagePullSecrets(ArrayList<String> secrets) {
-        this.options.add(new StringListField("--image-pull-secret",secrets));
+        this.options.add(new StringListField("--image-pull-secret", secrets));
         return this;
     }
 
     public JobBuilder gpus(int count) {
-        this.options.add(new StringField("--gpus",String.valueOf(count)));
+        this.options.add(new StringField("--gpus", String.valueOf(count)));
         return this;
     }
 
     public JobBuilder envs(Map<String, String> envs) {
-        this.options.add(new StringMapField("--env",envs,"="));
+        this.options.add(new StringMapField("--env", envs, "="));
         return this;
     }
 
     public JobBuilder nodeSelectors(Map<String, String> selectors) {
-        this.options.add(new StringMapField("--selector",selectors,"="));
+        this.options.add(new StringMapField("--selector", selectors, "="));
         return this;
     }
 
     public JobBuilder tolerations(ArrayList<String> tolerations) {
-        this.options.add(new StringListField("--toleration",tolerations));
+        this.options.add(new StringListField("--toleration", tolerations));
         return this;
     }
 
-    public JobBuilder annotations(Map<String, String> annotions) {
-        this.options.add(new StringMapField("--annotation",annotions,"="));
+    public JobBuilder annotations(Map<String, String> annotations) {
+        this.options.add(new StringMapField("--annotation", annotations, "="));
+        return this;
+    }
+
+    public JobBuilder labels(Map<String, String> labels) {
+        this.options.add(new StringMapField("--label", labels, "="));
         return this;
     }
 
     public JobBuilder datas(Map<String, String> datas) {
-        this.options.add(new StringMapField("--data",datas,":"));
+        this.options.add(new StringMapField("--data", datas, ":"));
         return this;
     }
 
     public JobBuilder dataDirs(Map<String, String> dataDirs) {
-        this.options.add(new StringMapField("--data-dir",dataDirs,":"));
-        return  this;
-    }
-
-    public JobBuilder gpuMemory(int count) {
-        this.options.add(new StringField("--gpumemory",String.valueOf(count)));
+        this.options.add(new StringMapField("--data-dir", dataDirs, ":"));
         return this;
     }
 
+    public JobBuilder gpuMemory(int count) {
+        this.options.add(new StringField("--gpumemory", String.valueOf(count)));
+        return this;
+    }
 
     public JobBuilder cpu(String c) {
-        this.options.add(new StringField("--cpu",c));
-        return  this;
+        this.options.add(new StringField("--cpu", c));
+        return this;
     }
 
     public JobBuilder memory(String m) {
-        this.options.add(new StringField("--memory",m));
-        return  this;
+        this.options.add(new StringField("--memory", m));
+        return this;
     }
 
     public JobBuilder enableIstio() {
@@ -120,13 +132,8 @@ public abstract class JobBuilder {
         return this;
     }
 
-    public JobBuilder port(int port) {
-        this.options.add(new StringField("--port",String.valueOf(port)));
-        return this;
-    }
-
-    public JobBuilder restfulPort(int port) {
-        this.options.add(new StringField("--restful-port",String.valueOf(port)));
+    public JobBuilder shell(String shell) {
+        this.options.add(new StringField("--shell", String.valueOf(shell)));
         return this;
     }
 
