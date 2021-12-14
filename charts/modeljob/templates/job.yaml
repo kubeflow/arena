@@ -1,0 +1,106 @@
+{{- $gpuCount := .Values.gpuCount -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "modeljob.chart" . }}
+    app: {{ template "modeljob.name" . }}
+    type: {{ .Values.type }}
+    createdBy: "ModelJob"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+    "helm.sh/created": {{ .Release.Time.Seconds | quote }}
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+spec:
+  manualSelector: true
+  selector:
+    matchLabels:
+      release: {{ .Release.Name | quote }}
+      app: {{ template "modeljob.name" . }}
+      type: {{ .Values.type }}
+  template:
+    metadata:
+      annotations:
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      labels:
+        heritage: {{ .Release.Service | quote }}
+        release: {{ .Release.Name | quote }}
+        chart: {{ template "modeljob.chart" . }}
+        app: {{ template "modeljob.name" . }}
+        type: {{ .Values.type }}
+      {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+    spec:
+      restartPolicy: Never
+      {{- if ne (len .Values.nodeSelectors) 0 }}
+      nodeSelector:
+      {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+        {{ $nodeKey }}: "{{ $nodeVal }}"
+      {{- end }}
+      {{- end }}
+      {{- if ne (len .Values.tolerations) 0 }}
+      tolerations:
+      {{- range $tolerationKey := .Values.tolerations }}
+        {{- if eq $tolerationKey "all" }}
+        - operator: "Exists"
+        {{- else }}
+        - key: "{{ $tolerationKey }}"
+          operator: "Exists"
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      containers:
+        - name: modeljob
+          {{- if .Values.image }}
+          image: "{{ .Values.image }}"
+          {{- end }}
+          {{- if .Values.imagePullPolicy }}
+          imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+          {{- end }}
+          env:
+          {{- if .Values.envs }}
+          {{- range $key, $value := .Values.envs }}
+          - name: "{{ $key }}"
+            value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          command:
+            - "{{ .Values.shell }}"
+            - "-c"
+            - "{{ .Values.command }}"
+          resources:
+            limits:
+              {{- if .Values.cpu }}
+              cpu: {{ .Values.cpu }}
+              {{- end }}
+              {{- if .Values.memory }}
+              memory: {{ .Values.memory }}
+              {{- end }}
+              {{- if gt (int $gpuCount) 0}}
+              nvidia.com/gpu: {{ .Values.gpuCount }}
+              {{- end }}
+          volumeMounts:
+            {{- if .Values.dataset }}
+            {{- range $pvcName, $mntPath := .Values.dataset}}
+            - name: "{{ $pvcName }}"
+              mountPath: "{{ $mntPath }}"
+            {{- end }}
+            {{- end }}
+      volumes:
+        {{- if .Values.dataset }}
+        {{- range $pvcName, $mntPath := .Values.dataset}}
+        - name: "{{ $pvcName }}"
+          persistentVolumeClaim:
+            claimName: "{{ $pvcName }}"
+        {{- end }}
+        {{- end }}

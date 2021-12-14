@@ -1,0 +1,187 @@
+package types
+
+// ModelJobType defines the supporting model job type
+type ModelJobType string
+
+const (
+	// ModelProfileJob defines the model profile job
+	ModelProfileJob ModelJobType = "profile"
+	// ModelOptimizeJob defines the model optimize job
+	ModelOptimizeJob ModelJobType = "optimize"
+	// ModelBenchmarkJob defines the model benchmark job
+	ModelBenchmarkJob ModelJobType = "benchmark"
+	// ModelEvaluateJob defines the model evaluate job
+	ModelEvaluateJob ModelJobType = "evaluate"
+	// AllModelJob defines all model job
+	AllModelJob ModelJobType = ""
+	// UnknownModelJob defines the unknown model job
+	UnknownModelJob ModelJobType = "unknown"
+)
+
+type ModelTypeInfo struct {
+	Name      ModelJobType
+	Alias     string
+	Shorthand string
+}
+
+// ModelTypeMap collects model job type and their alias
+var ModelTypeMap = map[ModelJobType]ModelTypeInfo{
+	ModelProfileJob: {
+		Name:      ModelProfileJob,
+		Alias:     "Profile",
+		Shorthand: "profile",
+	},
+	ModelOptimizeJob: {
+		Name:      ModelOptimizeJob,
+		Alias:     "Optimize",
+		Shorthand: "optimize",
+	},
+	ModelBenchmarkJob: {
+		Name:      ModelBenchmarkJob,
+		Alias:     "Benchmark",
+		Shorthand: "benchmark",
+	},
+}
+
+// ModelJobStatus defines all the kinds of JobStatus
+type ModelJobStatus string
+
+const (
+	// ModelJobPending means the job is pending
+	ModelJobPending ModelJobStatus = "PENDING"
+	// ModelJobRunning means the job is running
+	ModelJobRunning ModelJobStatus = "RUNNING"
+	// ModelJobComplete means the job is complete
+	ModelJobComplete ModelJobStatus = "COMPLETE"
+	// ModelJobFailed means the job is failed
+	ModelJobFailed ModelJobStatus = "FAILED"
+	// ModelJobUnknown means the job status is unknown
+	ModelJobUnknown ModelJobStatus = "UNKNOWN"
+)
+
+type ModelJobInfo struct {
+	// The unique identity of the model job
+	UUID string `json:"uuid" yaml:"uuid"`
+
+	// The name of the model job
+	Name string `json:"name" yaml:"name"`
+
+	// The namespace of the model job
+	Namespace string `json:"namespace" yaml:"namespace"`
+
+	// The time of the model job
+	Duration string `json:"duration" yaml:"duration"`
+
+	// Age specifies the model job age
+	Age string `json:"age" yaml:"age"`
+
+	// The status of the model Job
+	Status string `json:"status" yaml:"status"`
+
+	// The model type of the model job
+	Type string `json:"type" yaml:"type"`
+
+	// The instances under the model job
+	Instances []ModelJobInstance `json:"instances" yaml:"instances"`
+
+	// RequestCPUs GPU count of the Job
+	RequestCPUs int64 `json:"requestCPUs" yaml:"requestCPUs"`
+
+	// RequestGPUs stores the request gpus
+	RequestGPUs int64 `json:"requestGPUs" yaml:"requestGPUs"`
+
+	// RequestGPUMemory stores the request gpus
+	RequestGPUMemory int64 `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+
+	// CreationTimestamp stores the creation timestamp of job
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
+
+	// CreationTimestamp stores the job parameters
+	Params map[string]string `json:"params" yaml:"params"`
+}
+
+type ModelJobInstance struct {
+	// Name gives the instance name
+	Name string `json:"name" yaml:"name"`
+	// Status gives the instance status
+	Status string `json:"status" yaml:"status"`
+	// Age gives the instance ge
+	Age string `json:"age" yaml:"age"`
+	// ReadyContainer represents the count of ready containers
+	ReadyContainer int `json:"readyContainers" yaml:"readyContainers"`
+	// TotalContainer represents the count of  total containers
+	TotalContainer int `json:"totalContainers" yaml:"totalContainers"`
+	// RestartCount represents the count of instance restarts
+	RestartCount int `json:"restartCount" yaml:"restartCount"`
+	// HostIP specifies host ip of instance
+	NodeIP string `json:"nodeIP" yaml:"nodeIP"`
+	// NodeName returns the node name
+	NodeName string `json:"nodeName" yaml:"nodeName"`
+	// IP returns the instance ip
+	IP string `json:"ip" yaml:"ip"`
+	// RequestGPU returns the request gpus
+	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
+	// RequestGPUMemory returns the request gpu memory
+	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	// CreationTimestamp returns the creation timestamp of instance
+	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
+}
+
+type CommonModelArgs struct {
+	Name            string `yaml:"name"`            // --name
+	Namespace       string `yaml:"namespace"`       // --namespace
+	ModelConfigFile string `yaml:"modelConfigFile"` // --model-config-file
+	ModelName       string `yaml:"modelName"`       // --model-name
+	ModelPath       string `yaml:"modelPath"`       // --model-path
+	Inputs          string `yaml:"inputs"`          // --inputs
+	Outputs         string `yaml:"outputs"`         // --outputs
+
+	Image           string `yaml:"image"`           // --image
+	ImagePullPolicy string `yaml:"imagePullPolicy"` // --image-pull-policy
+
+	GPUCount  int    `yaml:"gpuCount"`  // --gpus
+	GPUMemory int    `yaml:"gpuMemory"` // --gpumemory
+	Cpu       string `yaml:"cpu"`       // --cpu
+	Memory    string `yaml:"memory"`    // --memory
+
+	// DataSet stores the kubernetes pvc names
+	DataSet map[string]string `yaml:"dataset"` // --data
+	// DataDirs stores the files(or directories) in k8s node which will map to containers
+	DataDirs []DataDirVolume `yaml:"dataDirs"` // --data-dir
+
+	Envs          map[string]string `yaml:"envs"`          // --env
+	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
+	Tolerations   []string          `yaml:"tolerations"`   // --toleration
+	Annotations   map[string]string `yaml:"annotations"`   // --annotation
+	Labels        map[string]string `yaml:"labels"`        // --label
+
+	Shell   string `yaml:"shell"` // --shell
+	Command string `yaml:"command"`
+
+	Type ModelJobType `yaml:"type"`
+	// HelmOptions stores the helm options
+	HelmOptions []string `yaml:"-"`
+}
+
+type ModelProfileArgs struct {
+	ReportPath       string `yaml:"reportPath"`       // --report-path
+	UseTensorboard   bool   `yaml:"useTensorboard"`   // --tensorboard
+	TensorboardImage string `yaml:"tensorboardImage"` // --tensorboardImage
+
+	CommonModelArgs `yaml:",inline"`
+}
+
+type ModelOptimizeArgs struct {
+	Optimizer       string `yaml:"optimizer"`    // --optimizer
+	TargetDevice    string `yaml:"targetDevice"` // --target-device
+	ExportPath      string `yaml:"exportPath"`   // --export-path
+	CommonModelArgs `yaml:",inline"`
+}
+
+type ModelBenchmarkArgs struct {
+	Concurrency     int    `yaml:"concurrency"` // --concurrency
+	Requests        int    `yaml:"requests"`    // --requests
+	Duration        int    `yaml:"duration"`    // --duration (seconds)
+	ReportPath      string `yaml:"reportPath"`  // --report-path
+	CommonModelArgs `yaml:",inline"`
+}

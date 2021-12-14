@@ -244,3 +244,30 @@ func ParseK8sObjectsFromYamlFile(filename string) ([]types.K8sObject, error) {
 	}
 	return objects, nil
 }
+
+func GetSupportModelJobTypesInfo() string {
+	var modelJobTypes []string
+	for _, typeInfo := range types.ModelTypeMap {
+		item := fmt.Sprintf("%v(%v)", typeInfo.Shorthand, typeInfo.Alias)
+		modelJobTypes = append(modelJobTypes, item)
+	}
+	return strings.Join(modelJobTypes, ",")
+}
+
+func TransferModelJobType(jobType string) types.ModelJobType {
+	if jobType == "" {
+		return types.AllModelJob
+	}
+	for modelJobType, typeInfo := range types.ModelTypeMap {
+		if strings.ToLower(string(typeInfo.Name)) == strings.ToLower(jobType) {
+			return modelJobType
+		}
+		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
+			return modelJobType
+		}
+		if strings.ToLower(typeInfo.Shorthand) == strings.ToLower(jobType) {
+			return modelJobType
+		}
+	}
+	return types.UnknownModelJob
+}

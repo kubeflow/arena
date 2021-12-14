@@ -20,7 +20,7 @@ Available Commands:
 func NewEvaluateCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "evaluate",
-		Short: "manage evaluate job.",
+		Short: "Manage evaluate job.",
 		Long:  dataLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)

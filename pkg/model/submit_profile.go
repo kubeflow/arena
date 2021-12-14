@@ -1,0 +1,36 @@
+package model
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/workflow"
+	log "github.com/sirupsen/logrus"
+)
+
+func SubmitModelProfileJob(namespace string, args *types.ModelProfileArgs) error {
+	args.Namespace = namespace
+
+	b, _ := json.Marshal(args)
+	log.Debugf("args: %s", string(b))
+
+	if args.Command == "" {
+		if args.ModelConfigFile != "" {
+			args.Command = fmt.Sprintf("python easy_inference/main.py profile --model-config-file=%s --report-path=%s",
+				args.ModelConfigFile, args.ReportPath)
+		} else {
+			args.Command = fmt.Sprintf("python easy_inference/main.py profile --model-name=%s --model-path=%s "+
+				"--inputs=%s --outputs=%s --report-path=%s", args.ModelName, args.ModelPath, args.Inputs, args.Outputs, args.ReportPath)
+		}
+	}
+
+	modelJobChart := util.GetChartsFolder() + "/modeljob"
+	err := workflow.SubmitJob(args.Name, string(types.ModelProfileJob), namespace, args, modelJobChart, args.HelmOptions...)
+	if err != nil {
+		return err
+	}
+	log.Infof("The model profile job %s has been submitted successfully", args.Name)
+	log.Infof("You can run `arena model get %s` to check the job status", args.Name)
+	return nil
+}
