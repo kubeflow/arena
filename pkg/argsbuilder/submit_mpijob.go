@@ -15,6 +15,7 @@ package argsbuilder
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"reflect"
 	"strconv"
 	"strings"
@@ -72,6 +73,7 @@ func (s *SubmitMPIJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	command.Flags().BoolVar(&s.args.GPUTopology, "gputopology", false, "enable gpu topology scheduling")
 	command.Flags().BoolVar(&s.args.MountsOnLauncher, "mounts-on-launcher", false, "launcher also mounts pvc")
+	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "None", "How to clean tasks after Training is done, support None, Running, All.")
 }
 
 func (s *SubmitMPIJobArgsBuilder) PreBuild() error {
@@ -103,6 +105,15 @@ func (s *SubmitMPIJobArgsBuilder) check() error {
 	if s.args.Image == "" {
 		return fmt.Errorf("--image must be set ")
 	}
+
+	// check clean-task-policy
+	switch s.args.CleanPodPolicy {
+	case "None", "Running", "All":
+		log.Debugf("Supported cleanTaskPolicy: %s", s.args.CleanPodPolicy)
+	default:
+		return fmt.Errorf("Unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
+	}
+
 	return nil
 }
 

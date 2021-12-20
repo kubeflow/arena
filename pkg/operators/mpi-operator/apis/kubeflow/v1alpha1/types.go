@@ -25,8 +25,8 @@ import (
 type MPIJob struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              MPIJobSpec   `json:"spec,omitempty"`
-	Status            MPIJobStatus `json:"status,omitempty"`
+	Spec              MPIJobSpec `json:"spec,omitempty"`
+	Status            JobStatus  `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -61,26 +61,4 @@ type MPIJobSpec struct {
 
 	// Describes the pod that will be created when executing an MPIJob.
 	Template corev1.PodTemplateSpec `json:"template,omitempty"`
-}
-
-type MPIJobLauncherStatusType string
-
-// These are valid launcher statuses of an MPIJob.
-const (
-	// LauncherActive means the MPIJob launcher is actively running.
-	LauncherActive MPIJobLauncherStatusType = "Active"
-	// LauncherSucceeded means the MPIJob launcher has succeeded.
-	LauncherSucceeded MPIJobLauncherStatusType = "Succeeded"
-	// LauncherFailed means the MPIJob launcher has failed its execution.
-	LauncherFailed MPIJobLauncherStatusType = "Failed"
-)
-
-type MPIJobStatus struct {
-	// Current status of the launcher job.
-	// +optional
-	LauncherStatus MPIJobLauncherStatusType `json:"launcherStatus,omitempty"`
-
-	// The number of available worker replicas.
-	// +optional
-	WorkerReplicas int32 `json:"workerReplicas,omitempty"`
 }

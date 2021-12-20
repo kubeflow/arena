@@ -26,6 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	appv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -197,7 +198,7 @@ func (mj *MPIJob) RequestedGPU() int64 {
 	return mj.requestedGPU
 }
 
-// Requested GPU count of the Job
+// AllocatedGPU allocated GPU count of the Job
 func (mj *MPIJob) AllocatedGPU() int64 {
 	if mj.allocatedGPU > 0 {
 		return mj.allocatedGPU
@@ -430,6 +431,7 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 	if err != nil {
 		return nil, err
 	}
+
 	batchJobs, err := k8saccesser.GetK8sResourceAccesser().ListBatchJobs(namespace, "mpi_job_name")
 	if err != nil {
 		return nil, err
@@ -453,13 +455,21 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 	return trainingJobs, nil
 }
 
-func (mj *MPIJob) isSucceeded() bool {
-	// status.MPIJobLauncherStatusType
-	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherSucceeded
+func (mj *MPIJob) isFailed() bool {
+	return mj.hasJobCondition(mj.chiefjob, batchv1.JobFailed)
 }
 
-func (mj *MPIJob) isFailed() bool {
-	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherFailed
+func (mj *MPIJob) isSucceeded() bool {
+	return mj.hasJobCondition(mj.chiefjob, batchv1.JobComplete)
+}
+
+func (mj *MPIJob) hasJobCondition(j *batchv1.Job, condType batchv1.JobConditionType) bool {
+	for _, condition := range j.Status.Conditions {
+		if condition.Type == condType && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }
 
 func (mj *MPIJob) isPending() bool {

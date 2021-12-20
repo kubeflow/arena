@@ -267,6 +267,14 @@ func (b *MPIJobBuilder) EnableMountPVCOnLauncher() *MPIJobBuilder {
 	return b
 }
 
+// CleanPodPolicy is used to set cleaning pod policy,match option --clean-task-policy
+func (b *MPIJobBuilder) CleanPodPolicy(policy string) *MPIJobBuilder {
+	if policy != "" {
+		b.args.CleanPodPolicy = policy
+	}
+	return b
+}
+
 // Build is used to build the job
 func (b *MPIJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {

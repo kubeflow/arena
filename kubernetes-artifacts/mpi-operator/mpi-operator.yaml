@@ -118,6 +118,8 @@ rules:
   - kubeflow.org
   resources:
   - mpijobs
+  - mpijobs/finalizers
+  - mpijobs/status
   verbs:
   - "*"
 ---
@@ -161,7 +163,7 @@ spec:
       serviceAccountName: mpi-operator
       containers:
       - name: mpi-operator
-        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/mpi-operator:v20200814-c1c986e
+        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/mpi-operator:v20211221-a7b0e8c
         args: [
           "--gpus-per-node", "8",
           "--kubectl-delivery-image",
