@@ -61,6 +61,10 @@ type MPIJobSpec struct {
 
 	// Describes the pod that will be created when executing an MPIJob.
 	Template corev1.PodTemplateSpec `json:"template,omitempty"`
+
+	// CleanPodPolicy defines the policy that whether to kill pods after the job completes.
+	// Defaults to None.
+	CleanPodPolicy *CleanPodPolicy `json:"cleanPodPolicy,omitempty"`
 }
 
 type MPIJobLauncherStatusType string
@@ -84,3 +88,14 @@ type MPIJobStatus struct {
 	// +optional
 	WorkerReplicas int32 `json:"workerReplicas,omitempty"`
 }
+
+// CleanPodPolicy describes how to deal with pods when the job is finished.
+type CleanPodPolicy string
+
+// Possible values for CleanPodPolicy
+const (
+	CleanPodPolicyUndefined CleanPodPolicy = ""
+	CleanPodPolicyAll       CleanPodPolicy = "All"
+	CleanPodPolicyRunning   CleanPodPolicy = "Running"
+	CleanPodPolicyNone      CleanPodPolicy = "None"
+)
