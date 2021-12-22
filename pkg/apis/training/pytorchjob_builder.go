@@ -227,7 +227,7 @@ func (b *PytorchJobBuilder) TensorboardImage(image string) *PytorchJobBuilder {
 // ImagePullSecrets is used to set image pull secrests,match option --image-pull-secret
 func (b *PytorchJobBuilder) ImagePullSecrets(secrets []string) *PytorchJobBuilder {
 	if secrets != nil {
-		b.argValues["image-pull-secret"] = secrets
+		b.argValues["image-pull-secret"] = &secrets
 	}
 	return b
 }

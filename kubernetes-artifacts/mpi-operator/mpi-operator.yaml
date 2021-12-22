@@ -118,8 +118,6 @@ rules:
   - kubeflow.org
   resources:
   - mpijobs
-  - mpijobs/finalizers
-  - mpijobs/status
   verbs:
   - "*"
 ---

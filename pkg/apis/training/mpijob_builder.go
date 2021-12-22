@@ -226,7 +226,7 @@ func (b *MPIJobBuilder) TensorboardImage(image string) *MPIJobBuilder {
 // ImagePullSecrets is used to set image pull secrests,match option --image-pull-secret
 func (b *MPIJobBuilder) ImagePullSecrets(secrets []string) *MPIJobBuilder {
 	if secrets != nil {
-		b.argValues["image-pull-secret"] = secrets
+		b.argValues["image-pull-secret"] = &secrets
 	}
 	return b
 }
