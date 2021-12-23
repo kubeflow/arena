@@ -19,8 +19,8 @@ ModelName:          %v
 ModelPath:          %v
 ModelVersion:       %v
 DatasetPath:        %v
+Status:             %v
 CreationTimestamp:  %v
-LastScheduleTime:   %v
 `
 
 func GetEvaluateJob(name, namespace string) (*types.EvaluateJobInfo, error) {
@@ -52,8 +52,8 @@ func DisplayEvaluateJob(job *types.EvaluateJobInfo, format types.FormatStyle) {
 			job.ModelPath,
 			job.ModelVersion,
 			job.DatasetPath,
+			job.Status,
 			job.CreationTimestamp,
-			job.LastScheduleTime,
 		))
 
 		_ = w.Flush()

@@ -51,7 +51,7 @@ func DisplayAllEvaluateJobs(jobs []*types.EvaluateJobInfo, allNamespaces bool, f
 		if allNamespaces {
 			header = append(header, "NAMESPACE")
 		}
-		header = append(header, []string{"NAME", "MODEL_NAME", "MODEL_VERSION", "CREATE_TIME"}...)
+		header = append(header, []string{"NAME", "MODEL_NAME", "MODEL_VERSION", "STATUS", "CREATE_TIME"}...)
 		printLine(w, header...)
 
 		for _, job := range jobs {
@@ -64,6 +64,7 @@ func DisplayAllEvaluateJobs(jobs []*types.EvaluateJobInfo, allNamespaces bool, f
 				job.Name,
 				job.ModelName,
 				job.ModelVersion,
+				job.Status,
 				job.CreationTimestamp,
 			}...)
 			printLine(w, items...)

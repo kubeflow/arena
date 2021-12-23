@@ -91,10 +91,7 @@ type EvaluateJobInfo struct {
 
 	DatasetPath string `json:"datasetPath" yaml:"datasetPath"`
 
-	// Information when was the last time the job was successfully scheduled.
-	// +optional
-	LastScheduleTime string `json:"lastScheduleTime" yaml:"lastScheduleTime"`
+	Status string `json:"status" yaml:"status"`
 
-	// CreationTimestamp stores the creation timestamp of job
 	CreationTimestamp string `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
