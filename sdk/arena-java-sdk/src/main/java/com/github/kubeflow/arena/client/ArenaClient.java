@@ -72,6 +72,10 @@ public class ArenaClient {
         return new ServingClient(this.kubeConfig, this.namespace, this.loglevel, this.arenaNamespace);
     }
 
+    public EvaluateClient evaluate() {
+        return new EvaluateClient(this.kubeConfig, this.namespace, this.loglevel, this.arenaNamespace);
+    }
+
     public NodeClient nodes() {
         return new NodeClient(this.kubeConfig, this.namespace, this.loglevel, this.arenaNamespace);
     }

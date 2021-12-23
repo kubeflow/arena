@@ -34,16 +34,12 @@ func ListEvaluateJobs(namespace string, allNamespaces bool) ([]*types.EvaluateJo
 func DisplayAllEvaluateJobs(jobs []*types.EvaluateJobInfo, allNamespaces bool, format types.FormatStyle) {
 	switch format {
 	case "json":
-		for _, job := range jobs {
-			data, _ := json.MarshalIndent(job, "", "    ")
-			fmt.Printf("%v", string(data))
-		}
+		data, _ := json.MarshalIndent(jobs, "", "    ")
+		fmt.Printf("%v", string(data))
 		return
 	case "yaml":
-		for _, job := range jobs {
-			data, _ := yaml.Marshal(job)
-			fmt.Printf("%v", string(data))
-		}
+		data, _ := yaml.Marshal(jobs)
+		fmt.Printf("%v", string(data))
 		return
 	case "", "wide":
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)

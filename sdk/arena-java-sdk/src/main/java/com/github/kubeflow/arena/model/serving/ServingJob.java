@@ -2,16 +2,17 @@ package com.github.kubeflow.arena.model.serving;
 
 import com.github.kubeflow.arena.enums.ServingJobType;
 
-import java.util.ArrayList;
+import java.util.List;
+
 
 public class ServingJob {
     private String name;
     private ServingJobType jobType;
     private String version;
-    private ArrayList<String> args;
+    private List<String> args;
     private String command;
 
-    public ServingJob(String name,ServingJobType jobType,String version,ArrayList<String> args,String command) {
+    public ServingJob(String name, ServingJobType jobType, String version, List<String> args, String command) {
         this.name = name;
         this.jobType = jobType;
         this.version = version;
@@ -24,11 +25,11 @@ public class ServingJob {
     }
 
     public ServingJobType getType() {
-        return  this.jobType;
+        return this.jobType;
     }
 
-    public ArrayList<String> getArgs() {
-        return  this.args;
+    public List<String> getArgs() {
+        return this.args;
     }
 
     public String version() {

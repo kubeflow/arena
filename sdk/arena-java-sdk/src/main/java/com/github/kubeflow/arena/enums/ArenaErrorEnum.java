@@ -38,13 +38,24 @@ public enum ArenaErrorEnum {
 
     SERVING_JOB_EXISTS("serving_job_exists", "serving job is existed"),
 
-    SERVING_JOB_NOT_FOUND("serving_job_exists", "serving job is existed"),
+    SERVING_JOB_NOT_FOUND("serving_job_not_found", "serving job is not found"),
 
     TRAINING_JOB_EXISTS("training_job_exists", "training job is existed"),
 
     TRAINING_JOB_NOT_FOUND("training_job_not_found", "not found training job"),
 
-    INVALID_TRAINING_JOB_TYPE("training_job_type_is_invalid", "training job is invalid");
+    INVALID_TRAINING_JOB_TYPE("training_job_type_is_invalid", "training job is invalid"),
+
+    EVALUATE_JOB_EXISTS("evaluate_job_exists", "evaluate job is existed"),
+
+    EVALUATE_SUBMIT_FAILED("evaluate_submit_exception", "failed to submit evaluate job"),
+
+    EVALUATE_GET_FAILED("evaluate_get_exception", "failed to get evaluate job"),
+
+    EVALUATE_LIST_FAILED("evaluate_list_exception", "failed to list evaluate jobs"),
+
+    EVALUATE_DELETE_FAILED("evaluate_delete_exception", "failed to delete evaluate job");
+
 
     public final String code;
 
