@@ -228,7 +228,7 @@ func (b *ETJobBuilder) TensorboardImage(image string) *ETJobBuilder {
 // ImagePullSecrets is used to set image pull secrests,match option --image-pull-secret
 func (b *ETJobBuilder) ImagePullSecrets(secrets []string) *ETJobBuilder {
 	if secrets != nil {
-		b.argValues["image-pull-secret"] = secrets
+		b.argValues["image-pull-secret"] = &secrets
 	}
 	return b
 }

@@ -214,7 +214,7 @@ func (b *HorovodJobBuilder) TensorboardImage(image string) *HorovodJobBuilder {
 // ImagePullSecrets is used to set image pull secrests,match option --image-pull-secret
 func (b *HorovodJobBuilder) ImagePullSecrets(secrets []string) *HorovodJobBuilder {
 	if secrets != nil {
-		b.argValues["image-pull-secret"] = secrets
+		b.argValues["image-pull-secret"] = &secrets
 	}
 	return b
 }

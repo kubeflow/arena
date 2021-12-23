@@ -226,7 +226,7 @@ func (b *MPIJobBuilder) TensorboardImage(image string) *MPIJobBuilder {
 // ImagePullSecrets is used to set image pull secrests,match option --image-pull-secret
 func (b *MPIJobBuilder) ImagePullSecrets(secrets []string) *MPIJobBuilder {
 	if secrets != nil {
-		b.argValues["image-pull-secret"] = secrets
+		b.argValues["image-pull-secret"] = &secrets
 	}
 	return b
 }
@@ -264,6 +264,14 @@ func (b *MPIJobBuilder) EnableGPUTopology() *MPIJobBuilder {
 // EnableMountPVCOnLauncher is used to enable mount pvcs on launcher
 func (b *MPIJobBuilder) EnableMountPVCOnLauncher() *MPIJobBuilder {
 	b.args.MountsOnLauncher = true
+	return b
+}
+
+// CleanPodPolicy is used to set cleaning pod policy,match option --clean-task-policy
+func (b *MPIJobBuilder) CleanPodPolicy(policy string) *MPIJobBuilder {
+	if policy != "" {
+		b.args.CleanPodPolicy = policy
+	}
 	return b
 }
 

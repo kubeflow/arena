@@ -161,7 +161,7 @@ spec:
       serviceAccountName: mpi-operator
       containers:
       - name: mpi-operator
-        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/mpi-operator:v20200814-c1c986e
+        image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/mpi-operator:v20211222-5dc4192
         args: [
           "--gpus-per-node", "8",
           "--kubectl-delivery-image",

@@ -20,6 +20,9 @@ metadata:
     {{ $key }}: {{ $value | quote }}
   {{- end }}    
 spec:
+  {{- if .Values.cleanPodPolicy }}
+  cleanPodPolicy: {{ .Values.cleanPodPolicy }}
+  {{- end }}
   {{- if .Values.launcherOnMaster }}
   launcherOnMaster: {{ .Values.launcherOnMaster }}
   {{- end }}
