@@ -1,0 +1,37 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pytorch-operator
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "arena.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: pytorch-operator
+      {{- include "arena.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        name: pytorch-operator
+        {{- include "arena.labels" . | nindent 8 }}
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      nodeSelector:
+        {{- include "arena.nodeSelector" . | nindent 9 }}
+      containers:
+        - command:
+            - /pytorch-operator.v1
+            - --alsologtostderr
+            - -v=1
+            - --monitoring-port=8443
+          # image: gcr.io/kubeflow-images-public/pytorch-operator:v0.6.0-18-g5e36a57
+          image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          name: pytorch-operator
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      serviceAccountName: pytorch-operator

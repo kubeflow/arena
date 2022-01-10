@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arena-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubeflow.org: arena
+    {{- include "arena.labels" . | nindent 4 }}
+data:
+  adminUsers: ""

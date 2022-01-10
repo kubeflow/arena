@@ -82,8 +82,12 @@ COPY --from=build /usr/local/bin/helm $ARENA_HOME/bin/helm
 
 COPY --from=build /go/src/github.com/kubeflow/arena/kubernetes-artifacts $ARENA_HOME/kubernetes-artifacts
 
+COPY --from=build /go/src/github.com/kubeflow/arena/arena-artifacts $ARENA_HOME/arena-artifacts
+
 COPY --from=build /usr/local/bin/kubectl $ARENA_HOME/bin/kubectl
 
 COPY --from=build /go/src/github.com/kubeflow/arena/charts $ARENA_HOME/charts
 
-RUN tar -zcvf $ARENA_TARFILE $ARENA_HOME
+RUN sed -i "s@^version: \(.*\)@version: $VERSION-$COMMIT@g" $ARENA_HOME/arena-artifacts/Chart.yaml && \
+    sed -i "s@^appVersion: \(.*\)@appVersion: $VERSION-$COMMIT@g" $ARENA_HOME/arena-artifacts/Chart.yaml && \
+    tar -zcvf $ARENA_TARFILE $ARENA_HOME

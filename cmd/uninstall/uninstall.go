@@ -13,10 +13,20 @@ import (
 )
 
 var (
-	forceDelete = flag.Bool("force", false, "force delete the Custom Resource Instances")
-	quiet       = flag.Bool("quiet", false, "quiet for all choices")
-	manifest    = flag.String("manifest-dir", "", "specify the kubernetes-artifacts directory")
+	forceDelete    = flag.Bool("force", false, "force delete the Custom Resource Instances")
+	quiet          = flag.Bool("quiet", false, "quiet for all choices")
+	manifest       = flag.String("manifest-dir", "", "specify the kubernetes-artifacts directory")
+	arenaNamespace = flag.String("namespace", "arena-system", "specify the namespace")
 )
+
+var deleteScript = `
+#!/bin/bash
+set -e
+namespace=%v
+if helm list -n $namespace | grep arena-artifacts &> /dev/null;then
+	helm del arena-artifacts -n $namespace
+fi 
+`
 
 func main() {
 	flag.Parse()
@@ -24,6 +34,7 @@ func main() {
 	if !force && !*quiet {
 		force = getAnswer()
 	}
+	deleteWithHelm()
 	manifest, err := detectManifests(manifest)
 	if err != nil {
 		fmt.Printf("Error: failed to detect manifest directory,reason: %v\n", err)
@@ -35,12 +46,12 @@ func main() {
 		os.Exit(3)
 	}
 	deleteK8sResources(fileNames)
-	_, stderr, err := execCommand([]string{"arena-kubectl", "delete", "ns", "arena-system"})
-	if err != nil && !strings.Contains(stderr, `namespaces "arena-system" not found`) {
-		fmt.Printf("Error: failed to delete namespace arena-system,reason: %v,%v", err, stderr)
+	_, stderr, err := execCommand([]string{"arena-kubectl", "delete", "ns", *arenaNamespace})
+	if err != nil && !strings.Contains(stderr, fmt.Sprintf(`namespaces "%v" not found`, *arenaNamespace)) {
+		fmt.Printf("Error: failed to delete namespace %v,reason: %v,%v", *arenaNamespace, err, stderr)
 		os.Exit(1)
 	} else {
-		fmt.Printf("Debug: succeed to delete namespace arena-system\n")
+		fmt.Printf("Debug: succeed to delete namespace %v\n", *arenaNamespace)
 	}
 	execCommand([]string{"rm", "-rf", "/charts"})
 	execCommand([]string{"rm", "-rf", "~/charts"})
@@ -49,7 +60,17 @@ func main() {
 		fmt.Printf("Error: failed to remove line 'source <(arena completion bash)' from ~/bashrc or ~/.zshrc\n")
 		os.Exit(4)
 	}
-	return
+}
+
+func deleteWithHelm() bool {
+	stdout, stderr, err := execCommand([]string{fmt.Sprintf(deleteScript, *arenaNamespace)})
+	if err != nil {
+		fmt.Printf("Error: failed to delete arena-artifacts,reason: %v,%v\n", stdout, stderr)
+		return false
+	}
+	fmt.Printf("%v\n%v\n", stdout, stderr)
+	fmt.Printf("Debug: succeed to delete arena-artifacts\n")
+	return true
 }
 
 func getAnswer() bool {

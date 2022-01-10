@@ -17,6 +17,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$(readlink "$0" || echo "$0")")"; pwd)"
+HELM_OPTIONS=""
+CRD_DIRS=""
 
 function help() {
     echo -e "
@@ -36,6 +38,10 @@ Options:
     --prometheus                     Install prometheus
     --platform string                Specify the platform(eg: ack)
     --rdma                           Enable rdma feature
+    --deploy-with-helm               Install operator with helm
+    --install-binary-on-master       Install binary on master
+    --chart-value-file               Specify the chart value file
+    --update-existed-artifacts       Update the existed artifacts or not
 "
 
 }
@@ -62,11 +68,7 @@ function support_image_regionalization(){
         if [ -d $path ];then
             support_image_regionalization $path
         else
-            if [[ $PULL_IMAGE_BY_VPC_NETWORK == "true" ]];then
-                sed -i $SED_OPTION "s@registry\..*aliyuncs.com@registry-vpc.${REGION}.aliyuncs.com@g" $path
-            else
-                sed -i $SED_OPTION "s@registry\..*aliyuncs.com@registry.${REGION}.aliyuncs.com@g" $path
-            fi
+            sed -i $SED_OPTION "s@registry\..*aliyuncs.com@${REGION}@g" $path
         fi
     done
 }
@@ -179,6 +181,9 @@ function install_arena_and_charts() {
     if [ ! -d $SCRIPT_DIR/charts/kubernetes-artifacts ];then
         cp -a $SCRIPT_DIR/kubernetes-artifacts $SCRIPT_DIR/charts
     fi
+    if [ ! -d $SCRIPT_DIR/charts/arena-artifacts ];then
+        cp -a $SCRIPT_DIR/arena-artifacts $SCRIPT_DIR/charts
+    fi
     # For non-root user, put the charts dir to the home directory
     if [ `id -u` -eq 0 ];then
         if [ -d "/charts" ]; then
@@ -198,113 +203,111 @@ function install_arena_gen_kubeconfig() {
     ${sudo_prefix} cp $SCRIPT_DIR/bin/arena-gen-kubeconfig.sh /usr/local/bin/arena-gen-kubeconfig.sh
 }
 
-
-function apply_jobmon() {
-    if ! arena-kubectl get serviceaccount --all-namespaces | grep jobmon; then
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/jobmon/jobmon-role.yaml
+function check_addons() {
+    addon_name=$1
+    check_kubedl=$2
+    sa=$3
+    option=$4
+    if $check_kubedl;then
+        # if KubeDL has installed, will skip install some CRDs of framework operator
+        if arena-kubectl get serviceaccount --all-namespaces | grep kubedl &> /dev/null; then
+            logger "warning" "KubeDL has been detected, will skip install $addon_name"
+            export HELM_OPTIONS="$HELM_OPTIONS --set $option"
+            return
+        fi
     fi
-}
-
-function apply_arena_configmap() {
-     arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/arena-configmap/configmap.yaml
+    # if service account has been existed and it is managed by helm chart
+    if (arena-kubectl get serviceaccount --all-namespaces -l helm.sh/chart=arena-artifacts | grep $sa  2>1) &> /dev/null; then
+        logger debug "service account $sa has been existed,and it is managed by helm,skip to reinstall $addon_name"
+        return 
+    fi    
+    # if service account has been existed and it is not managed by helm chart
+    if arena-kubectl get serviceaccount --all-namespaces | grep $sa &> /dev/null; then
+        logger debug "service account $sa has been existed,and it is not managed by helm,skip to reinstall $addon_name"
+        export HELM_OPTIONS="$HELM_OPTIONS --set $option"
+        return 
+    fi    
 }
 
 
 function apply_tf() {
-    # if KubeDL has installed, will skip install some CRDs of framework operator
-    if arena-kubectl get serviceaccount --all-namespaces | grep kubedl; then
-        logger "warning" "KubeDL has been detected, will skip install tf-operator"
-        return
+    check_addons tf-operator true tf-job-operator tf.enabled=false
+    # update the crd version
+    if (arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2' 2>1) &> /dev/null; then
+        arena-kubectl delete crd tfjobs.kubeflow.org    
+        arena-kubectl create -f ${SCRIPT_DIR}/arena-artifacts/charts/tf-operator/crds
     fi
-    if ! arena-kubectl get serviceaccount --all-namespaces | grep tf-job-operator; then
-        arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-crd.yaml
-        arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-operator.yaml
-        return
-    fi
-    if arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2'; then
-        arena-kubectl delete -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-operator-v1alpha2.yaml
-        arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-crd.yaml
-        arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-operator.yaml
-        return
-    fi
-
 }
 
 # TODO: the pytorch-operator update
 function apply_pytorch() {
-    if arena-kubectl get serviceaccount --all-namespaces | grep kubedl; then
-        logger "warning" "KubeDL has been detected, will skip install pytorch-operator"
-        return
-    fi
-    if ! arena-kubectl get serviceaccount --all-namespaces | grep pytorch-operator; then
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/pytorch-operator/pytorch-operator.yaml
-        return
-    fi
+     check_addons pytorch-operator true pytorch-operator pytorch.enabled=false
 }
 
 function apply_mpi() {
-    if arena-kubectl get serviceaccount --all-namespaces | grep kubedl; then
-        logger "warning" "KubeDL has been detected, will skip install mpi-operator"
-        return
-    fi
-    if ! arena-kubectl get serviceaccount --all-namespaces | grep mpi-operator; then
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
-        return
-    fi
+    check_addons mpi-operator true mpi-operator mpi.enabled=false
 }
 
 function apply_et() {
-    if ! arena-kubectl get serviceaccount --all-namespaces | grep et-operator; then
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/et-operator/et-operator.yaml
-        return
-    fi
+    check_addons et-operator true et-operator et.enabled=false
 }
 
-function apply_prometheus() {
-    if [[ "$USE_PROMETHEUS" != "true" ]];then
-        return
+function apply_cron() {
+    # remove the old kubedl-operator
+    if arena-kubectl get deployment -n $NAMESPACE | grep kubedl-operator &> /dev/null; then
+        arena-kubectl delete deployment kubedl-operator -n $NAMESPACE
+        arena-kubectl delete crd crons.apps.kubedl.io
+        arena-kubectl delete svc cron-operator -n $NAMESPACE
+        arena-kubectl delete ClusterRoleBinding cron-operator-rolebinding
+        arena-kubectl delete ClusterRole cron-operator-role -n $NAMESPACE
+        arena-kubectl delete ServiceAccount cron-operator -n $NAMESPACE
     fi
-    if ! arena-kubectl get serviceaccount --all-namespaces | grep prometheus; then
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/prometheus/gpu-exporter.yaml
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/prometheus/prometheus.yaml
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/prometheus/grafana.yaml
-        return
-    fi
+    check_addons cron-operator true cron-operator cron.enabled=false
+}
+
+function apply_tf_dashboard() {
+    check_addons tf-dashboard false tf-job-dashboard tfdashboard.enabled=false
 }
 
 function apply_rdma() {
     if [[ $USE_RDMA != "true" ]];then
-        return
+        return 
+    fi  
+    # if service account has been existed and it is managed by helm chart
+    if (arena-kubectl get ds --all-namespaces -l helm.sh/chart=arena-artifacts | grep rdma-sriov-dp-ds 2>1) &> /dev/null; then
+        export HELM_OPTIONS="$HELM_OPTIONS --set rdma.enabled=true" 
+        logger debug "daemonset rdma-sriov-dp-ds has been existed,and it is managed by helm,skip to reinstall it"
+        return 
+    fi   
+    if arena-kubectl get ds --all-namespaces | grep rdma-sriov-dp-ds &> /dev/null; then
+        logger debug "daemonset rdma-sriov-dp-ds has been existed,and it is not managed by helm,skip to reinstall it"
+        export HELM_OPTIONS="$HELM_OPTIONS --set rdma.enabled=false"
+        return 
     fi
-    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/rdma/rdma-config.yaml
-    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/rdma/device-plugin.yaml
 }
 
-function apply_cron() {
-    if arena-kubectl get serviceaccount --all-namespaces | grep kubedl; then
-        logger "warning" "KubeDL has been installed, will skip install cronjob crd"
-        return
-    fi
-    if arena-kubectl get deployment -n arena-system | grep kubedl-operator; then
-        arena-kubectl delete deployment kubedl-operator -n arena-system
-    fi
-    if ! arena-kubectl get serviceaccount --all-namespaces | grep cron-operator; then
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-crd.yaml
-        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-operator.yaml
-        return
-    fi
-}
 
 function create_namespace() {
-    namespace="arena-system"
-    if [[ "${NAMESPACE}" != "" ]]; then
-        namespace=${NAMESPACE}
+    if [[ "${NAMESPACE}" == "" ]]; then
+        export NAMESPACE="arena-system"
     fi
+    namespace=${NAMESPACE}
     if arena-kubectl get ns | grep -E "\<$namespace\>" &> /dev/null;then
         logger "debug" "namespace $namespace has been existed,skip to create it"
         return
     fi
     arena-kubectl create ns $namespace
+}
+
+function install_binary_on_master() {
+    if [[ $INSTALL_BINARY_ON_MASTER != "true" ]];then
+        return 
+    fi
+    master_count=$(arena-kubectl get nodes -l node-role.kubernetes.io/master | grep -v NAME  | wc -l)
+    master_count=$(echo $master_count)
+    if [ $master_count -gt 0 ];then
+        export HELM_OPTIONS="$HELM_OPTIONS --set binary.enabled=true --set binary.masterCount=$master_count"
+    fi  
 }
 
 function binary() {
@@ -319,17 +322,74 @@ function operators() {
         logger "debug" "skip to install operators,because --only-binary is enabled"
         return
     fi
-    custom_manifests
     create_namespace
+    if [[ $DEPLOY_WITH_HELM == "true" ]];then
+        if ! helm version &> /dev/null;then
+            logger error "not found helm binary,can not install arena by helm"
+            exit 2
+        fi    
+    fi  
     apply_tf
     apply_pytorch
     apply_mpi
     apply_et
-    apply_prometheus
-    apply_jobmon
     apply_rdma
     apply_cron
-    apply_arena_configmap
+    apply_tf_dashboard
+    install_binary_on_master
+    if [[ $DEPLOY_WITH_HELM != "true" ]];then
+        deploy_witout_helm
+    else
+        deploy_with_helm
+    fi 
+
+}
+
+function deploy_witout_helm() {
+    # if detect service account with label  helm.sh/chart=arena-artifacts,we see helm chart arena-artifacts has been installed
+    sas=$(arena-kubectl get serviceaccount --all-namespaces -l helm.sh/chart=arena-artifacts 2>1)
+    if [[ $sas != "" ]];then
+        logger debug "helm chart arena-artifacts has been installed,skip to deploy operators retry"
+        return 
+    fi  
+    if ! echo $HELM_OPTIONS | grep "tf.enabled=false" &> /dev/null;then
+        arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-crd.yaml
+        arena-kubectl apply -f ${SCRIPT_DIR}/kubernetes-artifacts/tf-operator/tf-operator.yaml
+    fi
+    if ! echo $HELM_OPTIONS | grep "mpi.enabled=false" &> /dev/null;then
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/mpi-operator/mpi-operator.yaml
+    fi
+    if ! echo $HELM_OPTIONS | grep "pytorch.enabled=false" &> /dev/null;then
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/pytorch-operator/pytorch-operator.yaml
+    fi
+    if ! echo $HELM_OPTIONS | grep "et.enabled=false" &> /dev/null;then
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/et-operator/et-operator.yaml
+    fi
+    if ! echo $HELM_OPTIONS | grep "cron.enabled=false" &> /dev/null;then
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-crd.yaml
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/cron-operator/cron-operator.yaml
+    fi
+    if echo $HELM_OPTIONS | grep "rdma.enabled=true" &> /dev/null;then
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/rdma/rdma-config.yaml
+        arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/rdma/device-plugin.yaml
+    fi
+    arena-kubectl apply -f $SCRIPT_DIR/kubernetes-artifacts/arena-configmap/configmap.yaml             
+}
+
+function deploy_with_helm() {
+    if [[ $CHART_VALUE_FILE != "" ]];then
+        export HELM_OPTIONS="$HELM_OPTIONS -f $CHART_VALUE_FILE"
+    fi  
+    if helm list -n $NAMESPACE | grep "arena-artifacts" &> /dev/null;then
+        if [[ $UPDATE_EXISTED_ARTIFACTS != "true" ]];then 
+            echo "user not want to update artifacts,skip"
+            return 
+        fi 
+        logger debug "arena-artifacts has been installed,start to upgrade it"
+        helm upgrade arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts 
+        return 
+    fi  
+    helm install arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts 
 }
 
 
@@ -342,6 +402,15 @@ function parse_args() {
         ;;
         --host-network)
             export USE_HOSTNETWORK="true"
+        ;;
+        --deploy-with-helm)
+            export DEPLOY_WITH_HELM="true"
+        ;;
+        --install-binary-on-master)
+            export INSTALL_BINARY_ON_MASTER="true"
+        ;;
+        --update-existed-artifacts)
+            export UPDATE_EXISTED_ARTIFACTS="true"
         ;;
         --rdma)
             export USE_RDMA="true"
@@ -380,6 +449,11 @@ function parse_args() {
         --namespace)
             check_option_value "--namespace" $2
             export NAMESPACE=$2
+            shift
+        ;;
+        --chart-value-file)
+            check_option_value "--chart-value-file" $2
+            export CHART_VALUE_FILE=$2
             shift
         ;;
         --help|-h)

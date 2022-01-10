@@ -1,0 +1,80 @@
+{{- if .Values.binary.enabled }}
+{{- if gt (int .Values.binary.masterCount) 0 }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: binary-installer-{{ include "arena.version" . }}
+  labels:
+    app: binary-installer
+    name: binary-installer-{{ include "arena.version" . }}
+    {{- include "arena.labels" . | nindent 4 }}
+spec:
+  parallelism: {{ .Values.binary.masterCount }}
+  backoffLimit: {{ .Values.binary.retry }}
+  template:
+    metadata:
+      labels:
+        app: binary-installer 
+        name: binary-installer-{{ include "arena.version" . }}
+        {{- include "arena.labels" . | nindent 8 }}
+    spec:
+      hostNetwork: true
+      hostPID: true
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+        key: node-role.kubernetes.io/master
+      - effect: NoSchedule
+        operator: Exists
+        key: node.cloudprovider.kubernetes.io/uninitialized
+      nodeSelector:
+         node-role.kubernetes.io/master: ""
+      restartPolicy: Never
+      containers:
+      - name: installer
+        image: {{ include "arena.imagePrefix" . }}/{{ .Values.binary.image }}:{{ .Values.binary.tag }}
+        imagePullPolicy: {{ .Values.binary.imagePullPolicy }}
+        securityContext:
+          privileged: true
+        command: 
+        - sh
+        - -c
+        - |
+          rm -rf /usr/local/arena-installer/arena-installer
+          cp -a /root/arena-installer /usr/local/arena-installer
+          options='--only-binary --region-id {{ include "arena.imagePrefix" . }}'
+          {{- if .Values.binary.hostNetwork }}
+          options="$options --host-network"
+          {{- end }}
+          {{- if .Values.binary.rdma }}
+          options="$options --rdma"
+          {{- end }}
+          nsenter -t 1 -i -p -n -u -m -- /usr/local/arena-installer/arena-installer/install.sh $options 
+        env:
+        volumeMounts:
+        - name: arena-installer
+          mountPath: /usr/local/arena-installer
+        - name: kube
+          mountPath: /root/.kube
+      volumes:
+      - hostPath:
+          path: /usr/local/arena-installer
+          type: DirectoryOrCreate
+        name: arena-installer
+      - hostPath:
+          path: /root/.kube
+          type: Directory
+        name: kube
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: name
+                    operator: In
+                    values:
+                       - binary-installer-{{ include "arena.version" . }}
+              topologyKey: "kubernetes.io/hostname"
+{{- end }}
+{{- end }}

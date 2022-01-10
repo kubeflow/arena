@@ -1,0 +1,37 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mpi-operator
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: mpi-operator
+    {{- include "arena.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mpi-operator
+      {{- include "arena.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: mpi-operator
+        {{- include "arena.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: mpi-operator
+      nodeSelector:
+        {{- include "arena.nodeSelector" . | nindent 9 }}
+      containers:
+      - name: mpi-operator
+        image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        args:
+        - --gpus-per-node
+        - "8"
+        - --kubectl-delivery-image
+        - {{ include "arena.imagePrefix" . }}/{{ .Values.kubectlDelivery.image }}:{{ .Values.kubectlDelivery.tag }}
+        - --alsologtostderr
+        - --v=5
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}

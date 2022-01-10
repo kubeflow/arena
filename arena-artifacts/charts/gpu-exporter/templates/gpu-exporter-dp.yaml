@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ack-prometheus-gpu-exporter
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "arena.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "arena.labels" . | nindent 6 }}
+      k8s-app: ack-prometheus-gpu-exporter
+  template:
+    metadata:
+      labels:
+        {{- include "arena.labels" . | nindent 8 }}
+        k8s-app: ack-prometheus-gpu-exporter
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: aliyun.accelerator/nvidia_name
+                operator: Exists
+      containers:
+      - env:
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        securityContext:
+          privileged: true
+        name: node-gpu-exporter
+        ports:
+        - containerPort: 9445
+          name: http-metrics
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 300m
+            memory: 300Mi
+          requests:
+            cpu: 200m
+            memory: 50Mi
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-sock
+      hostPID: true
+      restartPolicy: Always
+      volumes:
+      - hostPath:
+          path: /var/run/docker.sock
+          type: File
+        name: docker-sock
