@@ -1,0 +1,66 @@
+apiVersion: v2
+name: arena-artifacts
+description: A Helm chart for installing arena dependencies 
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.2.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "0.8.10"
+
+dependencies:
+  - name: tf-operator
+    alias: tf
+    version: 0.1.0
+    repository: "@tf-operator"
+    condition: tf.enabled,global.tf.enabled
+  - name: tf-dashboard
+    alias: tfdashboard
+    version: 0.1.0
+    repository: "@tf-dashbard"
+    condition: tfdashboard.enabled,global.tfdashboard.enabled
+  - name: cron-operator
+    alias: cron
+    version: 0.1.0
+    repository: "@cron-operator"
+    condition: cron.enabled,global.cron.enabled
+  - name: et-operator
+    alias: et
+    version: 0.1.0
+    repository: "@et-operator"
+    condition: et.enabled,global.et.enabled
+  - name: mpi-operator
+    alias: mpi
+    version: 0.1.0
+    repository: "@mpi-operator"
+    condition: mpi.enabled,global.mpi.enabled
+  - name: pytorch-operator
+    alias: pytorch
+    version: 0.1.0
+    repository: "@pytorch-operator"
+    condition: pytorch.enabled,global.pytorch.enabled
+  - name: rdma
+    alias: rdma
+    version: 0.1.0
+    repository: "@rdma"
+    condition: rdma.enabled,global.rdma.enabled
+  - name: gpu-exporter
+    alias: exporter
+    version: 0.1.0
+    repository: "@gpu-exporter"
+    condition: exporter.enabled,global.exporter.enabled

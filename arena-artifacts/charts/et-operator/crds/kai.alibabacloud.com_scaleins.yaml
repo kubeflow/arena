@@ -1,0 +1,185 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.0
+    git-repo: https://github.com/AliyunContainerService/et-operator.git
+    git-branch: master
+    git-commit: "1499985"
+  creationTimestamp: null
+  name: scaleins.kai.alibabacloud.com
+spec:
+  group: kai.alibabacloud.com
+  names:
+    kind: ScaleIn
+    listKind: ScaleInList
+    plural: scaleins
+    singular: scalein
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[-1:].type
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ScaleIn is the Schema for the scaleins API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ScaleInSpec defines the desired state of ScaleIn
+            properties:
+              backoffLimit:
+                description: Optional number of retries to execute script.
+                format: int32
+                type: integer
+              env:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
+              script:
+                type: string
+              selector:
+                properties:
+                  name:
+                    type: string
+                type: object
+              timeout:
+                description: Optional number of timeout to execute script.
+                format: int32
+                type: integer
+              toDelete:
+                properties:
+                  count:
+                    type: integer
+                  podNames:
+                    items:
+                      type: string
+                    type: array
+                type: object
+            type: object
+          status:
+            description: Most recently observed status of the PyTorchJob. Read-only
+              (modified by the system).
+            properties:
+              completionTime:
+                description: Represents time when the job was completed. It is not
+                  guaranteed to be set in happens-before order across separate operations.
+                  It is represented in RFC3339 form and is in UTC.
+                format: date-time
+                type: string
+              conditions:
+                description: Conditions is an array of current observed job conditions.
+                items:
+                  description: JobCondition describes the state of the job at a certain
+                    point.
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    lastUpdateTime:
+                      description: The last time this condition was updated.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type of job condition.
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              currentScaler:
+                description: record scaleout/scalein name when scaling. e.g. (default/scaleout-sample)
+                type: string
+              lastReconcileTime:
+                description: Represents last time when the job was reconciled. It
+                  is not guaranteed to be set in happens-before order across separate
+                  operations. It is represented in RFC3339 form and is in UTC.
+                format: date-time
+                type: string
+              phase:
+                description: record trainingjob current phase
+                type: string
+              replicaStatuses:
+                additionalProperties:
+                  description: ReplicaStatus represents the current observed state
+                    of the replica.
+                  properties:
+                    active:
+                      description: The number of actively running pods.
+                      format: int32
+                      type: integer
+                    failed:
+                      description: The number of pods which reached phase Failed.
+                      format: int32
+                      type: integer
+                    succeeded:
+                      description: The number of pods which reached phase Succeeded.
+                      format: int32
+                      type: integer
+                  type: object
+                description: ReplicaStatuses is map of ReplicaType and ReplicaStatus,
+                  specifies the status of each replica.
+                type: object
+              startTime:
+                description: Represents time when the job was acknowledged by the
+                  job controller. It is not guaranteed to be set in happens-before
+                  order across separate operations. It is represented in RFC3339 form
+                  and is in UTC.
+                format: date-time
+                type: string
+              toDeletePods:
+                description: record delete pods for scalein
+                items:
+                  type: string
+                type: array
+            required:
+            - conditions
+            - replicaStatuses
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -1,0 +1,135 @@
+# Default values for arena-artifacts.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# global configuration for all subcharts
+global:
+  # pull image by aliyun vpc network
+  pullImageByVPCNetwork: false
+  # the prefix of all image
+  imagePrefix: registry.cn-beijing.aliyuncs.com
+  # the cluster type 
+  clusterProfile: "Default"
+  # specfiy the nodeSelector for all operator pods
+  nodeSelector: {}
+  namespace: "arena-system"
+
+# arena binary installer
+binary:
+  enabled: false
+  masterCount: 3
+  retry: 3
+  hostNetwork: true
+  rdma: true
+  image: happy366/arena-deploy-manager
+  tag: latest
+  imagePullPolicy: IfNotPresent
+
+# tf-operator
+tf:
+  enabled: true
+  image: kube-ai/tf_operator
+  tag: v1.0-aliyun-fef8fc8
+  imagePullPolicy: IfNotPresent
+  resources: 
+    limits:
+      cpu: 1
+      memory: 3Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  nodeSelector: {}
+
+# tf-dashboard
+tfdashboard:
+  enabled: true
+  image: kube-ai/tf_operator
+  tag: v1.0.0-rc.0-d746bde
+  imagePullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  nodeSelector: {}
+
+# mpi-operator
+mpi:
+  enabled: true
+  image: kube-ai/mpi-operator
+  tag: v20211222-5dc4192
+  kubectlDelivery:
+    image: kube-ai/kubectl-delivery
+    tag: latest
+  imagePullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 1
+      memory: 3Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  nodeSelector: {}
+
+# pytorch-operator
+pytorch:
+  enabled: true
+  image: kube-ai/pytorch-operator
+  tag: vmaster-g667e2d2a
+  imagePullPolicy: IfNotPresent
+  resources: 
+    limits:
+      cpu: 1
+      memory: 3Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  nodeSelector: {}
+
+# et-operator
+et:
+  enabled: true
+  image: kube-ai/et-controller
+  tag: "1499985"
+  imagePullPolicy: IfNotPresent
+  resources: 
+    limits:
+      cpu: 1
+      memory: 3Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  nodeSelector: {}
+
+# cron-operator
+cron:
+  enabled: true
+  image: kube-ai/cron-operator
+  tag: v0.1.1
+  imagePullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 1
+      memory: 3Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  nodeSelector: {}
+
+# rdma device plugin
+rdma:
+  enabled: true
+  image: acs/k8s-rdma-sriov-dev-plugin
+  tag: latest
+  imagePullPolicy: IfNotPresent
+  resources: {}
+
+# gpu-exporter
+exporter:
+  enabled: false
+  image: acs/gpu-prometheus-exporter
+  tag: v1.0.1-b2c2f9b
+  imagePullPolicy: IfNotPresent
+  resources: {}

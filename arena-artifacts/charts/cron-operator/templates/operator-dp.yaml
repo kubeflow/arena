@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cron-operator
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cron-operator
+    {{- include "arena.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cron-operator
+      {{- include "arena.labels" . | nindent 6 }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      labels:
+        app: cron-operator
+        {{- include "arena.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: cron-operator
+      nodeSelector:
+        {{- include "arena.nodeSelector" . | nindent 9 }}
+      containers:
+        - name: cron
+          image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          args: 
+          - --workloads=Cron
+          ports:
+            - containerPort: 8443
+              name: metrics
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

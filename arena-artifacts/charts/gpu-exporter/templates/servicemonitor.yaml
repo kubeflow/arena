@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-gpu-exporter
+  labels:
+    k8s-app: ack-prometheus-gpu-exporter
+    {{- include "arena.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      k8s-app: ack-prometheus-gpu-exporter
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+    # any: true
+  endpoints:
+  - port: http-metrics
+    interval: "45s"
+    path: /metrics

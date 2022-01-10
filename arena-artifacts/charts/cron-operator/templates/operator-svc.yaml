@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cron-operator
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cron-operator
+    {{- include "arena.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app: cron-operator
+    {{- include "arena.labels" . | nindent 4 }}
