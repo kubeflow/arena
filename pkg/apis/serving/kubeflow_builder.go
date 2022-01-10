@@ -21,6 +21,7 @@ func NewKFServingJobBuilder() *KFServingJobBuilder {
 			ImagePullPolicy: "IfNotPresent",
 			Replicas:        1,
 			Namespace:       "default",
+			Shell:           "sh",
 		},
 	}
 	return &KFServingJobBuilder{

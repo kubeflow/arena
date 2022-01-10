@@ -5,6 +5,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"io"
 	batchv1 "k8s.io/api/batch/v1"
+	v1 "k8s.io/api/core/v1"
 	"strings"
 	"time"
 )
@@ -58,16 +59,48 @@ func buildEvaluateJob(job *batchv1.Job) *types.EvaluateJobInfo {
 		}
 	}
 
+	jobStatus := getJobStatus(job.Status)
+
 	return &types.EvaluateJobInfo{
-		UUID: string(job.UID),
-		JobID: jobId,
-		Name: job.Name,
-		Namespace: job.Namespace,
-		ModelName: modelName,
-		ModelPath: modelPath,
-		ModelVersion: modelVersion,
-		DatasetPath: datasetPath,
-		MetricsPath: metricsPath,
+		UUID:              string(job.UID),
+		JobID:             jobId,
+		Name:              job.Name,
+		Namespace:         job.Namespace,
+		ModelName:         modelName,
+		ModelPath:         modelPath,
+		ModelVersion:      modelVersion,
+		DatasetPath:       datasetPath,
+		MetricsPath:       metricsPath,
+		Status:            jobStatus,
 		CreationTimestamp: formatTime(job.CreationTimestamp.Time),
 	}
+}
+
+func getJobStatus(status batchv1.JobStatus) string {
+	if isComplete(status) {
+		return string(batchv1.JobComplete)
+	}
+
+	if isFailed(status) {
+		return string(batchv1.JobFailed)
+	}
+
+	return "Running"
+}
+
+func isComplete(status batchv1.JobStatus) bool {
+	return hasCondition(status, batchv1.JobComplete)
+}
+
+func isFailed(status batchv1.JobStatus) bool {
+	return hasCondition(status, batchv1.JobFailed)
+}
+
+func hasCondition(status batchv1.JobStatus, condType batchv1.JobConditionType) bool {
+	for _, condition := range status.Conditions {
+		if condition.Type == condType && condition.Status == v1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }

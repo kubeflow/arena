@@ -24,9 +24,11 @@ public class ServingClient extends BaseClient {
 
     public String submit(ServingJob job) throws ArenaException, IOException {
         List<String> cmds = this.generateCommands("serve", job.getType().shortHand());
+
         for (int i = 0; i < job.getArgs().size(); i++) {
             cmds.add(job.getArgs().get(i));
         }
+
         cmds.add(job.getCommand());
         String[] arenaCommand = cmds.toArray(new String[cmds.size()]);
         try {

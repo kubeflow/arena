@@ -7,6 +7,7 @@ import (
 var DefaultCommonSubmitArgs = types.CommonSubmitArgs{
 	WorkingDir:  "/root",
 	WorkerCount: 1,
+	Shell:       "sh",
 }
 
 var DefaultSubmitTensorboardArgs = types.SubmitTensorboardArgs{

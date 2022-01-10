@@ -19,6 +19,7 @@ func NewCustomServingJobBuilder() *CustomServingJobBuilder {
 		CommonServingArgs: types.CommonServingArgs{
 			ImagePullPolicy: "IfNotPresent",
 			Replicas:        1,
+			Shell:           "sh",
 		},
 	}
 	return &CustomServingJobBuilder{
