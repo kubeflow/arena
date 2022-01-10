@@ -23,6 +23,7 @@ func NewTFServingJobBuilder() *TFServingJobBuilder {
 			ImagePullPolicy: "IfNotPresent",
 			Replicas:        1,
 			Namespace:       "default",
+			Shell:           "sh",
 		},
 	}
 	return &TFServingJobBuilder{

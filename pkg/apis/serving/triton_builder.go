@@ -24,6 +24,7 @@ func NewTritonServingJobBuilder() *TritonServingJobBuilder {
 			ImagePullPolicy: "IfNotPresent",
 			Replicas:        1,
 			Namespace:       "default",
+			Shell:           "sh",
 		},
 	}
 	return &TritonServingJobBuilder{

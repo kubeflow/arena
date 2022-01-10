@@ -24,6 +24,7 @@ func NewTRTServingJobBuilder() *TRTServingJobBuilder {
 			ImagePullPolicy: "IfNotPresent",
 			Replicas:        1,
 			Namespace:       "default",
+			Shell:           "sh",
 		},
 	}
 	return &TRTServingJobBuilder{
