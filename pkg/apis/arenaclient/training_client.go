@@ -92,13 +92,13 @@ func (t *TrainingJobClient) ScaleOut(job *apistraining.Job) error {
 }
 
 // Get returns a training job information
-func (t *TrainingJobClient) Get(jobName string, jobType types.TrainingJobType) (*types.TrainingJobInfo, error) {
+func (t *TrainingJobClient) Get(jobName string, jobType types.TrainingJobType, showPrometheusMetric bool) (*types.TrainingJobInfo, error) {
 	job, err := training.SearchTrainingJob(jobName, t.namespace, jobType)
 	if err != nil {
 		return nil, err
 	}
 	services, nodes := training.PrepareServicesAndNodesForTensorboard([]training.TrainingJob{job}, false)
-	jobInfo := training.BuildJobInfo(job, true, services, nodes)
+	jobInfo := training.BuildJobInfo(job, showPrometheusMetric, services, nodes)
 	return jobInfo, nil
 }
 
@@ -119,7 +119,7 @@ func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJo
 }
 
 // List returns all training jobs
-func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.TrainingJobType) ([]*types.TrainingJobInfo, error) {
+func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.TrainingJobType, showPrometheusMetric bool) ([]*types.TrainingJobInfo, error) {
 	jobs, err := training.ListTrainingJobs(t.namespace, allNamespaces, trainingType)
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.Training
 	jobInfos := []*types.TrainingJobInfo{}
 	services, nodes := training.PrepareServicesAndNodesForTensorboard(jobs, allNamespaces)
 	for _, job := range jobs {
-		jobInfos = append(jobInfos, training.BuildJobInfo(job, true, services, nodes))
+		jobInfos = append(jobInfos, training.BuildJobInfo(job, showPrometheusMetric, services, nodes))
 	}
 	return jobInfos, nil
 }
@@ -153,7 +153,7 @@ func (t *TrainingJobClient) Logs(jobName string, jobType types.TrainingJobType, 
 }
 
 func (t *TrainingJobClient) Attach(jobName string, jobType types.TrainingJobType, args *podexec.AttachPodArgs) error {
-	job, err := t.Get(jobName, jobType)
+	job, err := t.Get(jobName, jobType, false)
 	if err != nil {
 		return err
 	}

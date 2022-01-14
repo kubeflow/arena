@@ -7,7 +7,7 @@ global:
   # pull image by aliyun vpc network
   pullImageByVPCNetwork: false
   # the prefix of all image
-  imagePrefix: registry.cn-beijing.aliyuncs.com
+  imagePrefix: registry.cn-zhangjiakou.aliyuncs.com
   # the cluster type 
   clusterProfile: "Default"
   # specfiy the nodeSelector for all operator pods
@@ -21,7 +21,7 @@ binary:
   retry: 3
   hostNetwork: true
   rdma: true
-  image: happy366/arena-deploy-manager
+  image: acs/arena-deploy-manager
   tag: latest
   imagePullPolicy: IfNotPresent
 
@@ -33,10 +33,10 @@ tf:
   imagePullPolicy: IfNotPresent
   resources: 
     limits:
-      cpu: 1
-      memory: 3Gi
+      cpu: 200m
+      memory: 2Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 256Mi
   nodeSelector: {}
 
@@ -48,10 +48,10 @@ tfdashboard:
   imagePullPolicy: IfNotPresent
   resources:
     limits:
-      cpu: 1
+      cpu: 200m
       memory: 2Gi
     requests:
-      cpu: 250m
+      cpu: 50m
       memory: 256Mi
   nodeSelector: {}
 
@@ -59,17 +59,17 @@ tfdashboard:
 mpi:
   enabled: true
   image: kube-ai/mpi-operator
-  tag: v20211222-5dc4192
+  tag: v20220114-2423bdc
   kubectlDelivery:
     image: kube-ai/kubectl-delivery
     tag: latest
   imagePullPolicy: IfNotPresent
   resources:
     limits:
-      cpu: 1
-      memory: 3Gi
+      cpu: 200m
+      memory: 2Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 256Mi
   nodeSelector: {}
 
@@ -81,10 +81,10 @@ pytorch:
   imagePullPolicy: IfNotPresent
   resources: 
     limits:
-      cpu: 1
-      memory: 3Gi
+      cpu: 200m
+      memory: 2Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 256Mi
   nodeSelector: {}
 
@@ -96,10 +96,10 @@ et:
   imagePullPolicy: IfNotPresent
   resources: 
     limits:
-      cpu: 1
-      memory: 3Gi
+      cpu: 200m
+      memory: 2Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 256Mi
   nodeSelector: {}
 
@@ -111,10 +111,10 @@ cron:
   imagePullPolicy: IfNotPresent
   resources:
     limits:
-      cpu: 1
-      memory: 3Gi
+      cpu: 200m
+      memory: 2Gi
     requests:
-      cpu: 250m
+      cpu: 100m
       memory: 256Mi
   nodeSelector: {}
 

@@ -1,4 +1,4 @@
-
+{{- if eq (include "crd.api" .) "v1" -}}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -9,14 +9,14 @@ metadata:
     git-branch: master
     git-commit: "1499985"
   creationTimestamp: null
-  name: scaleouts.kai.alibabacloud.com
+  name: scaleins.kai.alibabacloud.com
 spec:
   group: kai.alibabacloud.com
   names:
-    kind: ScaleOut
-    listKind: ScaleOutList
-    plural: scaleouts
-    singular: scaleout
+    kind: ScaleIn
+    listKind: ScaleInList
+    plural: scaleins
+    singular: scalein
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -29,7 +29,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ScaleOut is the Schema for the scaleouts API
+        description: ScaleIn is the Schema for the scaleins API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -44,7 +44,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ScaleOutSpec defines the desired state of ScaleOut
+            description: ScaleInSpec defines the desired state of ScaleIn
             properties:
               backoffLimit:
                 description: Optional number of retries to execute script.
@@ -70,21 +70,20 @@ spec:
                 description: Optional number of timeout to execute script.
                 format: int32
                 type: integer
-              toAdd:
+              toDelete:
                 properties:
                   count:
-                    format: int32
                     type: integer
+                  podNames:
+                    items:
+                      type: string
+                    type: array
                 type: object
             type: object
           status:
             description: Most recently observed status of the PyTorchJob. Read-only
               (modified by the system).
             properties:
-              addPods:
-                items:
-                  type: string
-                type: array
               completionTime:
                 description: Represents time when the job was completed. It is not
                   guaranteed to be set in happens-before order across separate operations.
@@ -164,6 +163,11 @@ spec:
                   and is in UTC.
                 format: date-time
                 type: string
+              toDeletePods:
+                description: record delete pods for scalein
+                items:
+                  type: string
+                type: array
             required:
             - conditions
             - replicaStatuses
@@ -179,3 +183,4 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
+{{- end }}

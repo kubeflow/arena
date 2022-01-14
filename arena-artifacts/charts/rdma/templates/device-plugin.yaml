@@ -24,7 +24,10 @@ spec:
       hostNetwork: true
       nodeSelector:
         accelerator/rdma: "true"
+        {{- include "arena.nodeSelector" . | nindent 8 }}
+        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
       tolerations:
+      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       # Allow this pod to be rescheduled while the node is in "critical add-ons only" mode.
       # This, along with the annotation above marks this pod as a critical add-on.
       - key: CriticalAddonsOnly

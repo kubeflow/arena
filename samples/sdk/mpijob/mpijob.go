@@ -47,7 +47,7 @@ func main() {
 		return
 	}
 	// list all jobs
-	jobInfos, err := client.Training().List(true, types.AllTrainingJob)
+	jobInfos, err := client.Training().List(true, types.AllTrainingJob, false)
 	if err != nil {
 		fmt.Printf("failed to list all jobs in namespace,reason: %v\n", err)
 		return
@@ -58,7 +58,7 @@ func main() {
 	// get the job information and wait it to be running,timeout: 500s
 	for i := 250; i >= 0; i-- {
 		time.Sleep(2 * time.Second)
-		job, err := client.Training().Get(jobName, jobType)
+		job, err := client.Training().Get(jobName, jobType, false)
 		if err != nil {
 			fmt.Printf("failed to get job,reason: %v\n", err)
 			return

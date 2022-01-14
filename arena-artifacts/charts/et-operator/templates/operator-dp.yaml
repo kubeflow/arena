@@ -20,7 +20,10 @@ spec:
         app: et-operator
     spec:
       nodeSelector:
-        {{- include "arena.nodeSelector" . | nindent 9 }}
+        {{- include "arena.nodeSelector" . | nindent 8 }}
+        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
+      tolerations:
+      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       containers:
         - args:
             - --enable-leader-election

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"flag"
 	"fmt"
@@ -14,122 +13,53 @@ import (
 
 var (
 	forceDelete    = flag.Bool("force", false, "force delete the Custom Resource Instances")
-	quiet          = flag.Bool("quiet", false, "quiet for all choices")
 	manifest       = flag.String("manifest-dir", "", "specify the kubernetes-artifacts directory")
 	arenaNamespace = flag.String("namespace", "arena-system", "specify the namespace")
+	allCRDNames    = []string{
+		"crons.apps.kubedl.io",
+		"mpijobs.kubeflow.org",
+		"pytorchjobs.kubeflow.org",
+		"scaleins.kai.alibabacloud.com",
+		"scaleouts.kai.alibabacloud.com",
+		"tfjobs.kubeflow.org",
+		"trainingjobs.kai.alibabacloud.com",
+	}
 )
-
-var deleteScript = `
-#!/bin/bash
-set -e
-namespace=%v
-if helm list -n $namespace | grep arena-artifacts &> /dev/null;then
-	helm del arena-artifacts -n $namespace
-fi 
-`
 
 func main() {
 	flag.Parse()
 	force := *forceDelete
-	if !force && !*quiet {
-		force = getAnswer()
-	}
-	deleteWithHelm()
-	manifest, err := detectManifests(manifest)
-	if err != nil {
-		fmt.Printf("Error: failed to detect manifest directory,reason: %v\n", err)
-		os.Exit(2)
-	}
-	resources, fileNames := detectK8SResources(manifest, []string{"CustomResourceDefinition"})
-	if err := deleteCRDs(resources["CustomResourceDefinition"], force); err != nil {
-		fmt.Printf("Error: failed to delete CRDs,reason: %v\n", err)
-		os.Exit(3)
-	}
-	deleteK8sResources(fileNames)
-	_, stderr, err := execCommand([]string{"arena-kubectl", "delete", "ns", *arenaNamespace})
-	if err != nil && !strings.Contains(stderr, fmt.Sprintf(`namespaces "%v" not found`, *arenaNamespace)) {
-		fmt.Printf("Error: failed to delete namespace %v,reason: %v,%v", *arenaNamespace, err, stderr)
-		os.Exit(1)
-	} else {
-		fmt.Printf("Debug: succeed to delete namespace %v\n", *arenaNamespace)
-	}
-	execCommand([]string{"rm", "-rf", "/charts"})
-	execCommand([]string{"rm", "-rf", "~/charts"})
-	execCommand([]string{"rm", "-rf", "/usr/local/bin/arena"})
-	if err := removeLines([]string{"source <(arena completion bash)"}); err != nil {
-		fmt.Printf("Error: failed to remove line 'source <(arena completion bash)' from ~/bashrc or ~/.zshrc\n")
-		os.Exit(4)
-	}
-}
-
-func deleteWithHelm() bool {
-	stdout, stderr, err := execCommand([]string{fmt.Sprintf(deleteScript, *arenaNamespace)})
-	if err != nil {
-		fmt.Printf("Error: failed to delete arena-artifacts,reason: %v,%v\n", stdout, stderr)
-		return false
-	}
-	fmt.Printf("%v\n%v\n", stdout, stderr)
-	fmt.Printf("Debug: succeed to delete arena-artifacts\n")
-	return true
-}
-
-func getAnswer() bool {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Please confirm whether to delete the running Custom Resource Instances(eg: tfjob,mpijob)[Y/N]: ")
-	text, _ := reader.ReadString('\n')
-	text = strings.Trim(strings.Trim(text, "\n"), " ")
-	t := strings.ToLower(text)
-	if t != "y" && t != "n" {
-		fmt.Printf("Error: Unknown option %v,please input [Y/N]\n", text)
+	if err := deleteArenaArtifacts(force); err != nil {
+		fmt.Printf("Error: failed to delete arena artifacts,reason: %v\n", err)
 		os.Exit(1)
 	}
-	if t == "n" {
-		return false
-	}
-	return true
+	deleteClientFiles()
 }
 
-func deleteCRDs(crdContents []string, force bool) error {
-	readyToDelelte := []string{}
-	crdNames, err := getInstallCRDs()
-	if err != nil {
-		return err
-	}
-	for _, crdName := range crdNames {
-		found := false
-		for _, content := range crdContents {
-			if strings.Contains(content, fmt.Sprintf("name: %v", crdName)) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			continue
-		}
-		if force {
-			readyToDelelte = append(readyToDelelte, crdName)
-			continue
-		}
-		crs, err := getCR(crdName)
+func deleteArenaArtifacts(force bool) error {
+	if !force {
+		crdNames, err := getInstalledCRDs(allCRDNames)
 		if err != nil {
 			return err
 		}
-		if len(crs) != 0 {
-			return fmt.Errorf("there is some custom resource instances for %v,please use 'arena-kubectl get %v --all-namespaces' to check it", crdName, crdName)
+		if err := CheckRunningJobs(crdNames); err != nil {
+			return err
 		}
-		readyToDelelte = append(readyToDelelte, crdName)
 	}
-	if len(readyToDelelte) == 0 {
-		fmt.Printf("Debug: not found CRDs,skip to delete them\n")
-		return nil
-	}
-	stdout, stderr, err := execCommand([]string{"arena-kubectl", "delete", "crd", strings.Join(readyToDelelte, " ")})
+	execCommand([]string{"helm", "del", "arena-artifacts", "-n", *arenaNamespace})
+	manifest, err := detectManifests(manifest)
 	if err != nil {
-		return fmt.Errorf("%v,%v\n", stderr, err)
+		return fmt.Errorf("failed to detect manifest directory,reason: %v", err)
 	}
-	fmt.Println(stdout)
+	_, fileNames := detectK8SResources(manifest, []string{"CustomResourceDefinition"})
+	execCommand([]string{"arena-kubectl", "delete", "crd", strings.Join(allCRDNames, " ")})
+	deleteK8sResources(fileNames)
+	_, stderr, err := execCommand([]string{"arena-kubectl", "delete", "ns", *arenaNamespace})
+	if err != nil && !strings.Contains(stderr, fmt.Sprintf(`namespaces "%v" not found`, *arenaNamespace)) {
+		return fmt.Errorf("failed to delete namespace %v,reason: %v,%v", *arenaNamespace, err, stderr)
+	}
+	fmt.Printf("Debug: succeed to delete namespace %v\n", *arenaNamespace)
 	return nil
-
 }
 
 func deleteK8sResources(files []string) {
@@ -146,7 +76,23 @@ func deleteK8sResources(files []string) {
 	}
 }
 
-func getCR(crdName string) ([]string, error) {
+func CheckRunningJobs(crdNames []string) error {
+	// check some job are existed managed by CRD
+	jobs := []string{}
+	for _, crdName := range crdNames {
+		crs, err := getCRs(crdName)
+		if err != nil {
+			return err
+		}
+		jobs = append(jobs, crs...)
+	}
+	if len(jobs) != 0 {
+		return fmt.Errorf("failed to delete arena,because some jobs are existed,please delete them and retry:\n%v", strings.Join(jobs, "\n"))
+	}
+	return nil
+}
+
+func getCRs(crdName string) ([]string, error) {
 	stdout, stderr, err := execCommand([]string{"arena-kubectl", "get", crdName, "--all-namespaces"})
 	if err != nil {
 		return nil, fmt.Errorf("failed to exec command: [arena-kubectl get %v --all-namespaces],reason: %v,%v", crdName, err, stderr)
@@ -160,7 +106,19 @@ func getCR(crdName string) ([]string, error) {
 		if strings.Contains(items[0], "NAME") || strings.Contains(items[0], "No resources found.") {
 			continue
 		}
-		crs = append(crs, items[0])
+		t := []string{}
+		for _, item := range items {
+			item = strings.Trim(item, " ")
+			if item == "" {
+				continue
+			}
+			t = append(t, item)
+		}
+		if len(t) < 2 {
+			continue
+		}
+		jobName := fmt.Sprintf("%v/%v/%v", crdName, t[0], t[1])
+		crs = append(crs, jobName)
 	}
 	return crs, nil
 }
@@ -202,13 +160,9 @@ func detectK8SResources(dir string, kinds []string) (map[string][]string, []stri
 				if resourceFiles[key] == nil {
 					resourceFiles[key] = []string{}
 				}
-				for _, content := range contents {
-					resourceFiles[key] = append(resourceFiles[key], content)
-				}
+				resourceFiles[key] = append(resourceFiles[key], contents...)
 			}
-			for _, name := range names {
-				fileNames = append(fileNames, name)
-			}
+			fileNames = append(fileNames, names...)
 			continue
 		}
 		suffix := path.Ext(realPathFile)
@@ -237,7 +191,24 @@ func detectK8SResources(dir string, kinds []string) (map[string][]string, []stri
 	return resourceFiles, fileNames
 }
 
-func getInstallCRDs() ([]string, error) {
+func getInstalledCRDs(crdNames []string) ([]string, error) {
+	allCrdsInK8s, err := getAllCRDsInK8s()
+	if err != nil {
+		return nil, err
+	}
+	// check crd is installed or not
+	installedCrds := []string{}
+	for _, k8sCrdName := range allCrdsInK8s {
+		for _, crdName := range crdNames {
+			if crdName == k8sCrdName {
+				installedCrds = append(installedCrds, crdName)
+			}
+		}
+	}
+	return installedCrds, nil
+}
+
+func getAllCRDsInK8s() ([]string, error) {
 	stdout, stderr, err := execCommand([]string{"arena-kubectl", "get", "crd"})
 	if err != nil {
 		return nil, fmt.Errorf("exit status: %v,readon: %v", err, stderr)
@@ -257,6 +228,18 @@ func getInstallCRDs() ([]string, error) {
 	return crds, nil
 }
 
+func deleteClientFiles() {
+	execCommand([]string{"rm", "-rf", "/charts"})
+	execCommand([]string{"rm", "-rf", "~/charts"})
+	execCommand([]string{"rm", "-rf", "/usr/local/bin/arena"})
+	execCommand([]string{"rm", "-rf", "/usr/local/bin/arena-kubectl"})
+	execCommand([]string{"rm", "-rf", "/usr/local/bin/arena-helm"})
+	if err := removeLines([]string{"source <(arena completion bash)"}); err != nil {
+		fmt.Printf("Error: failed to remove line 'source <(arena completion bash)' from ~/bashrc or ~/.zshrc\n")
+		os.Exit(4)
+	}
+}
+
 func removeLines(lines []string) error {
 	homeDir := os.Getenv("HOME")
 	bashFile := path.Join(homeDir, ".bashrc")
@@ -271,7 +254,6 @@ func removeLines(lines []string) error {
 			content = strings.ReplaceAll(content, line, "")
 		}
 		return ioutil.WriteFile(f, []byte(content), 0744)
-
 	}
 	if CheckFileExist(zshFile) {
 		if err := updateFile(zshFile); err != nil {

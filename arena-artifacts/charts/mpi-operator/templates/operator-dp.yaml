@@ -21,7 +21,10 @@ spec:
     spec:
       serviceAccountName: mpi-operator
       nodeSelector:
-        {{- include "arena.nodeSelector" . | nindent 9 }}
+        {{- include "arena.nodeSelector" . | nindent 8 }}
+        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
+      tolerations:
+      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       containers:
       - name: mpi-operator
         image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}

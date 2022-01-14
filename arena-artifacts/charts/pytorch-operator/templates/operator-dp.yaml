@@ -21,7 +21,10 @@ spec:
         sidecar.istio.io/inject: "false"
     spec:
       nodeSelector:
-        {{- include "arena.nodeSelector" . | nindent 9 }}
+        {{- include "arena.nodeSelector" . | nindent 8 }}
+        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
+      tolerations:
+      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       containers:
         - command:
             - /pytorch-operator.v1
