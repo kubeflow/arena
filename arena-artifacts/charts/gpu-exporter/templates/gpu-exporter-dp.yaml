@@ -23,6 +23,11 @@ spec:
             - matchExpressions:
               - key: aliyun.accelerator/nvidia_name
                 operator: Exists
+      nodeSelector:
+        {{- include "arena.nodeSelector" . | nindent 8 }}
+        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
+      tolerations:
+      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       containers:
       - env:
         - name: MY_NODE_NAME

@@ -28,6 +28,9 @@ spec:
       - effect: NoSchedule
         operator: Exists
         key: node.cloudprovider.kubernetes.io/uninitialized
+      - key: node-role.alibabacloud.com/addon
+        operator: Exists
+        effect: NoSchedule
       nodeSelector:
          node-role.kubernetes.io/master: ""
       restartPolicy: Never

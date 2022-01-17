@@ -19,7 +19,10 @@ spec:
         {{- include "arena.labels" . | nindent 8 }}
     spec:
       nodeSelector:
-        {{- include "arena.nodeSelector" . | nindent 9 }}
+        {{- include "arena.nodeSelector" . | nindent 8 }}
+        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
+      tolerations:
+      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       containers:
         - command:
             - /opt/tensorflow_k8s/dashboard/backend

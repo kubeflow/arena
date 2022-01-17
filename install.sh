@@ -305,9 +305,7 @@ function install_binary_on_master() {
     fi
     master_count=$(arena-kubectl get nodes -l node-role.kubernetes.io/master | grep -v NAME  | wc -l)
     master_count=$(echo $master_count)
-    if [ $master_count -gt 0 ];then
-        export HELM_OPTIONS="$HELM_OPTIONS --set binary.enabled=true --set binary.masterCount=$master_count"
-    fi  
+    export HELM_OPTIONS="$HELM_OPTIONS --set binary.enabled=true --set binary.masterCount=$master_count"
 }
 
 function binary() {
