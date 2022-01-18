@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"reflect"
 	"sync"
@@ -27,6 +28,18 @@ import (
 var globalPrometheusClient promv1.API
 var prometheusOnce sync.Once
 
+type arenaTripper struct {
+	token string
+	tr    http.RoundTripper
+}
+
+// RoundTrip implements http.RoundTripper interface.
+func (t *arenaTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Authorization", "Bearer "+t.token)
+	resp, err := t.tr.RoundTrip(req)
+	return resp, err
+}
+
 func GetPrometheusClient() promv1.API {
 	prometheusOnce.Do(func() {
 		globalPrometheusClient = getPrometheusClient(config.GetArenaConfiger().GetConfigsFromConfigFile())
@@ -47,15 +60,35 @@ func getPrometheusAddress(configs map[string]string) string {
 	return ""
 }
 
+func getPrometheusToken(configs map[string]string) string {
+	if os.Getenv("PROMETHEUS_TOKEN") != "" {
+		return os.Getenv("PROMETHEUS_TOKEN")
+	}
+	for name, value := range configs {
+		if name == "prometheus_token" {
+			return value
+		}
+	}
+	return ""
+}
+
 func getPrometheusClient(configs map[string]string) promv1.API {
 	address := getPrometheusAddress(configs)
 	if address == "" {
 		log.Debugf("not set prometheus address at env PROMETHEUS_ADDRESS or the arena configuration file,skip to create client")
 		return nil
 	}
-	client, err := api.NewClient(api.Config{
+	promeConfig := api.Config{
 		Address: address,
-	})
+	}
+	token := getPrometheusToken(configs)
+	if token != "" {
+		promeConfig.RoundTripper = &arenaTripper{
+			token: token,
+			tr:    &http.Transport{},
+		}
+	}
+	client, err := api.NewClient(promeConfig)
 	if err != nil {
 		log.Debugf("failed to create prometheus client,reason: %v", err)
 		return nil
