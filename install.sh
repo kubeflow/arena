@@ -232,11 +232,6 @@ function check_addons() {
 
 function apply_tf() {
     check_addons tf-operator true tf-job-operator tf.enabled=false
-    # update the crd version
-    if (arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2' 2>1) &> /dev/null; then
-        arena-kubectl delete crd tfjobs.kubeflow.org    
-        arena-kubectl create -f ${SCRIPT_DIR}/arena-artifacts/charts/tf-operator/crds
-    fi
 }
 
 # TODO: the pytorch-operator update
@@ -252,16 +247,26 @@ function apply_et() {
     check_addons et-operator true et-operator et.enabled=false
 }
 
-function apply_cron() {
-    # remove the old kubedl-operator
-    if arena-kubectl get deployment -n $NAMESPACE | grep kubedl-operator &> /dev/null; then
-        arena-kubectl delete deployment kubedl-operator -n $NAMESPACE
-        arena-kubectl delete crd crons.apps.kubedl.io
-        arena-kubectl delete svc cron-operator -n $NAMESPACE
-        arena-kubectl delete ClusterRoleBinding cron-operator-rolebinding
-        arena-kubectl delete ClusterRole cron-operator-role -n $NAMESPACE
-        arena-kubectl delete ServiceAccount cron-operator -n $NAMESPACE
+function clean_old_env() {
+    set +e 
+    # update the crd version
+    if (arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2' 2>1) &> /dev/null; then
+        arena-kubectl delete crd tfjobs.kubeflow.org    
+        arena-kubectl create -f ${SCRIPT_DIR}/arena-artifacts/charts/tf-operator/crds
     fi
+    # remove the old kubedl-operator
+    if arena-kubectl get deployment,Service,ServiceAccount -n $NAMESPACE | grep kubedl-operator &> /dev/null;then 
+        arena-kubectl delete deployment kubedl-operator -n $NAMESPACE
+        arena-kubectl delete ServiceAccount kubedl-operator -n $NAMESPACE
+        arena-kubectl delete crd crons.apps.kubedl.io
+        arena-kubectl delete ClusterRole kubedl-operator-role -n $NAMESPACE
+        arena-kubectl delete ClusterRoleBinding kubedl-operator-rolebinding -n $NAMESPACE
+        arena-kubectl delete Service kubedl-operator -n $NAMESPACE
+        arena-kubectl delete ServiceMonitor kubedl-operator -n $NAMESPACE
+    fi
+    set -e    
+}
+function apply_cron() {
     check_addons cron-operator true cron-operator cron.enabled=false
 }
 
@@ -327,6 +332,7 @@ function operators() {
             exit 2
         fi    
     fi  
+    clean_old_env
     apply_tf
     apply_pytorch
     apply_mpi
