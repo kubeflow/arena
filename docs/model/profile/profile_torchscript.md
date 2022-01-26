@@ -68,7 +68,7 @@ Then give a profile configuration file named config.json like below.
 $ arena model profile \
     --name=resnet18-profile \
     --namespace=default \
-    --image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.4-test \
+    --image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.0 \
     --image-pull-policy=Always \
     --gpus=1 \
     --loglevel=debug \
@@ -76,7 +76,7 @@ $ arena model profile \
     --model-config-file=/data/models/resnet18/config.json \
     --report-path=/data/models/resnet18/log \
     --tensorboard \
-    --tensorboard-image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.4-test
+    --tensorboard-image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.0
     
 service/resnet18-profile-tensorboard created
 deployment.apps/resnet18-profile-tensorboard created

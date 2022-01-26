@@ -68,7 +68,7 @@ Then give a profile configuration file named config.json like below.
 $ arena model benchmark \
   --name=resnet18-benchmark \
   --namespace=default \
-  --image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.4-test \
+  --image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.0 \
   --image-pull-policy=Always \
   --gpus=1 \
   --data=model-pvc:/data \
