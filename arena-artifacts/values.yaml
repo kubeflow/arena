@@ -59,7 +59,7 @@ tfdashboard:
 mpi:
   enabled: true
   image: kube-ai/mpi-operator
-  tag: v20220114-2423bdc
+  tag: v20220125-05bf745
   kubectlDelivery:
     image: kube-ai/kubectl-delivery
     tag: latest
