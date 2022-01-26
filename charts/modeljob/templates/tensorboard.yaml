@@ -1,0 +1,50 @@
+{{- if .Values.useTensorboard }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-tensorboard
+  labels:
+    app: {{ template "modeljob.name" . }}
+    chart: {{ template "modeljob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "ModelJob"
+    role: tensorboard
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "modeljob.name" . }}
+      chart: {{ template "modeljob.chart" . }}
+      release: {{ .Release.Name }}
+      role: tensorboard
+  template:
+    metadata:
+      labels:
+        app: {{ template "modeljob.name" . }}
+        chart: {{ template "modeljob.chart" . }}
+        release: {{ .Release.Name }}
+        role: tensorboard
+    spec:
+      volumes:
+        {{- if .Values.dataset }}
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          persistentVolumeClaim:
+            claimName: "{{ $pvcName }}"
+        {{- end }}
+        {{- end }}
+      containers:
+      - name: tensorboard
+        command: ["tensorboard", "--logdir", "{{ .Values.reportPath }}"]
+        image: "{{ .Values.tensorboardImage }}"
+        imagePullPolicy: {{ .Values.tensorboardImagePullpolicy }}
+        ports:
+        - containerPort: 6006
+        volumeMounts:
+        {{- if .Values.dataset }}
+        {{- range $pvcName, $destPath := .Values.dataset }}
+        - name: "{{ $pvcName }}"
+          mountPath: "{{ $destPath }}"
+        {{- end }}
+        {{- end }}
+{{- end }}

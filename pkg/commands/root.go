@@ -4,6 +4,7 @@ import (
 	"github.com/kubeflow/arena/pkg/commands/cron"
 	datacommand "github.com/kubeflow/arena/pkg/commands/data"
 	"github.com/kubeflow/arena/pkg/commands/evaluate"
+	"github.com/kubeflow/arena/pkg/commands/model"
 	"github.com/kubeflow/arena/pkg/commands/serving"
 	topcommand "github.com/kubeflow/arena/pkg/commands/top"
 	"github.com/kubeflow/arena/pkg/commands/training"
@@ -52,5 +53,6 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewCompletionCommand())
 	command.AddCommand(evaluate.NewEvaluateCommand())
 	command.AddCommand(NewWhoamiCommand())
+	command.AddCommand(model.NewModelCommand())
 	return command
 }
