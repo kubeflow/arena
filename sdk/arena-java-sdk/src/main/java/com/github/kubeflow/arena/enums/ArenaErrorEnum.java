@@ -32,6 +32,8 @@ public enum ArenaErrorEnum {
 
     SERVING_DELETE("serving_delete_exception", "failed to delete serving jobs"),
 
+    SERVING_UPDATE("serving_update_exception", "failed to update serving jobs"),
+
     TOP_NODE("top_node_exception", "failed to get node information"),
 
     TOP_JOB("top_job_exception", "failed to top job"),

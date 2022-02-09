@@ -37,4 +37,17 @@ public class TensorflowServingJobTest {
         client.serving().submit(job);
     }
 
+    @Test
+    public void testUpdate() throws ArenaException, IOException {
+        ServingJob job = new TensorflowServingJobBuilder()
+                .name("cartoongan")
+                .namespace("default-group")
+                .version("202202091103")
+                .replicas(2)
+                .build();
+
+        ArenaClient client = new ArenaClient();
+        client.serving().namespace("default-group").update(job);
+    }
+
 }

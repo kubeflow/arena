@@ -112,4 +112,25 @@ public class ServingClient extends BaseClient {
         }
     }
 
+    public String update(ServingJob job) throws IOException, ArenaException {
+        ServingJobInfo jobInfo = get(job.name(), job.getType(), job.version());
+        if(jobInfo == null) {
+            throw new ArenaException(ArenaErrorEnum.SERVING_JOB_NOT_FOUND);
+        }
+
+        List<String> cmds = this.generateCommands("serve", "update", job.getType().alias().toLowerCase());
+
+        for (int i = 0; i < job.getArgs().size(); i++) {
+            cmds.add(job.getArgs().get(i));
+        }
+
+        cmds.add(job.getCommand());
+        String[] arenaCommand = cmds.toArray(new String[cmds.size()]);
+        try {
+            String output = Command.execCommand(arenaCommand);
+            return output;
+        } catch (ExitCodeException e) {
+            throw new ArenaException(ArenaErrorEnum.SERVING_UPDATE, e.getMessage());
+        }
+    }
 }
