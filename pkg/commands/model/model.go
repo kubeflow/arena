@@ -6,7 +6,8 @@ var (
 	serveLong = `submit a model analyze job.
 
 Available Commands:
-  profile          Submit a model profile job
+  profile          Submit a model profile job.
+  evaluate         Submit a model evaluate job.
   optimize         Submit a model optimize job.
   benchmark        Submit a model benchmark job`
 )
@@ -23,6 +24,7 @@ func NewModelCommand() *cobra.Command {
 	command.AddCommand(NewSubmitModelProfileJobCommand())
 	command.AddCommand(NewSubmitModelOptimizeJobCommand())
 	command.AddCommand(NewSubmitModelBenchmarkJobCommand())
+	command.AddCommand(NewSubmitModelEvaluateJobCommand())
 	command.AddCommand(NewGetModelJobCommand())
 	command.AddCommand(NewListModelJobsCommand())
 	command.AddCommand(NewDeleteModelJobCommand())

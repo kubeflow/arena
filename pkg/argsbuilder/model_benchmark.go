@@ -53,10 +53,18 @@ func (m *ModelBenchmarkArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range m.subBuilders {
 		m.subBuilders[name].AddCommandFlags(command)
 	}
+
+	var (
+		imagePullSecrets []string
+	)
 	command.Flags().IntVar(&m.args.Concurrency, "concurrency", 0, "number of benchmark concurrently")
 	command.Flags().IntVar(&m.args.Requests, "requests", 0, "number of requests to run")
 	command.Flags().IntVar(&m.args.Duration, "duration", 0, "benchmark duration")
 	command.Flags().StringVar(&m.args.ReportPath, "report-path", "", "benchmark result saved path")
+
+	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
+
+	m.AddArgValue("image-pull-secret", &imagePullSecrets)
 }
 
 func (m *ModelBenchmarkArgsBuilder) PreBuild() error {
@@ -85,34 +93,14 @@ func (m *ModelBenchmarkArgsBuilder) preprocess() (err error) {
 	if m.args.Image == "" {
 		return fmt.Errorf("image must be specified")
 	}
+
 	if m.args.ModelConfigFile == "" {
-		// need to validate modelName, modelPath if not specify modelConfigFile
-		if m.args.ModelName == "" {
-			return fmt.Errorf("model name must be specified")
-		}
-		if m.args.ModelPath == "" {
-			return fmt.Errorf("model path must be specified")
-		}
-		if m.args.Inputs == "" {
-			return fmt.Errorf("model inputs must be specified")
-		}
-		if m.args.Outputs == "" {
-			return fmt.Errorf("model outputs must be specified")
-		}
-	} else {
-		//populate content from modelConfigFile
-		if m.args.ModelName != "" {
-			log.Infof("modelConfigFile=%s is specified, so --model-name will be ingored", m.args.ModelConfigFile)
-		}
-		if m.args.ModelPath != "" {
-			log.Infof("modelConfigFile=%s is specified, so --model-path will be ignored", m.args.ModelConfigFile)
-		}
-		if m.args.Inputs != "" {
-			log.Infof("modelConfigFile=%s is specified, so --inputs will be ignored", m.args.ModelConfigFile)
-		}
-		if m.args.Inputs != "" {
-			log.Infof("modelConfigFile=%s is specified, so --outputs will be ignored", m.args.ModelConfigFile)
-		}
+		return fmt.Errorf("--model-config-file must be specified")
 	}
+
+	if m.args.ReportPath == "" {
+		return fmt.Errorf("--report-path must be specified")
+	}
+
 	return nil
 }

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util"
@@ -12,17 +11,9 @@ import (
 func SubmitModelOptimizeJob(namespace string, args *types.ModelOptimizeArgs) error {
 	args.Namespace = namespace
 
-	b, _ := json.Marshal(args)
-	log.Debugf("args: %s", string(b))
-
 	if args.Command == "" {
-		if args.ModelConfigFile != "" {
-			args.Command = fmt.Sprintf("python easy_inference/main.py optimize --optimizer=%s --model-config-file=%s --export-path=%s",
-				args.Optimizer, args.ModelConfigFile, args.ExportPath)
-		} else {
-			args.Command = fmt.Sprintf("python easy_inference/main.py optimize --optimizer=%s --model-name=%s --model-path=%s "+
-				"--inputs=%s --outputs=%s --export-path=%s", args.Optimizer, args.ModelName, args.ModelPath, args.Inputs, args.Outputs, args.ExportPath)
-		}
+		args.Command = fmt.Sprintf("python easy_inference/main.py optimize --optimizer=%s --model-config-file=%s --export-path=%s",
+			args.Optimizer, args.ModelConfigFile, args.ExportPath)
 	}
 
 	modelJobChart := util.GetChartsFolder() + "/modeljob"

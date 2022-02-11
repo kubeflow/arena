@@ -41,6 +41,9 @@ func (m *ModelClient) Submit(job *apismodel.Job) error {
 	case types.ModelBenchmarkJob:
 		args := job.Args().(*types.ModelBenchmarkArgs)
 		return model.SubmitModelBenchmarkJob(args.Namespace, args)
+	case types.ModelEvaluateJob:
+		args := job.Args().(*types.ModelEvaluateArgs)
+		return model.SubmitModelEvaluateJob(args.Namespace, args)
 	}
 	return nil
 }

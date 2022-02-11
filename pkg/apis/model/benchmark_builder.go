@@ -73,6 +73,14 @@ func (m *ModelBenchmarkArgsBuilder) ImagePullPolicy(policy string) *ModelBenchma
 	return m
 }
 
+// ImagePullSecrets is used to set image pull secrests,match option --image-pull-secret
+func (m *ModelBenchmarkArgsBuilder) ImagePullSecrets(secrets []string) *ModelBenchmarkArgsBuilder {
+	if secrets != nil {
+		m.argValues["image-pull-secret"] = &secrets
+	}
+	return m
+}
+
 // GPUCount is used to set count of gpu for the job,match the option --gpus
 func (m *ModelBenchmarkArgsBuilder) GPUCount(count int) *ModelBenchmarkArgsBuilder {
 	if count > 0 {

@@ -41,6 +41,11 @@ var ModelTypeMap = map[ModelJobType]ModelTypeInfo{
 		Alias:     "Benchmark",
 		Shorthand: "benchmark",
 	},
+	ModelEvaluateJob: {
+		Name:      ModelEvaluateJob,
+		Alias:     "Evaluate",
+		Shorthand: "evaluate",
+	},
 }
 
 // ModelJobStatus defines all the kinds of JobStatus
@@ -138,6 +143,8 @@ type CommonModelArgs struct {
 
 	Image           string `yaml:"image"`           // --image
 	ImagePullPolicy string `yaml:"imagePullPolicy"` // --image-pull-policy
+	// ImagePullSecrets stores image pull secrets,match option --image-pull-secrets
+	ImagePullSecrets []string `yaml:"imagePullSecrets"`
 
 	GPUCount  int    `yaml:"gpuCount"`  // --gpus
 	GPUMemory int    `yaml:"gpuMemory"` // --gpumemory
@@ -184,4 +191,14 @@ type ModelBenchmarkArgs struct {
 	Duration        int    `yaml:"duration"`    // --duration (seconds)
 	ReportPath      string `yaml:"reportPath"`  // --report-path
 	CommonModelArgs `yaml:",inline"`
+}
+
+type ModelEvaluateArgs struct {
+	ModelPlatform   string `yaml:"modelPlatform"` // --model-platform
+	DatasetPath     string `yaml:"datasetPath"`   // --dataset-path
+	ReportPath      string `yaml:"reportPath"`    // --report-path
+	BatchSize       int    `yaml:"batchSize"`     // --batch-size
+	CommonModelArgs `yaml:",inline"`
+	// for sync up source code
+	SubmitSyncCodeArgs `yaml:",inline"`
 }

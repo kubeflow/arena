@@ -288,18 +288,18 @@ func (m *ModelArgsBuilder) preprocess() (err error) {
 	}
 	if m.args.ModelConfigFile == "" {
 		// need to validate modelName, modelPath if not specify modelConfigFile
-		if m.args.ModelName == "" {
-			return fmt.Errorf("model name must be specified")
-		}
-		if m.args.ModelPath == "" {
-			return fmt.Errorf("model path must be specified")
-		}
-		if m.args.Inputs == "" {
-			return fmt.Errorf("model inputs must be specified")
-		}
-		if m.args.Outputs == "" {
-			return fmt.Errorf("model outputs must be specified")
-		}
+		//if m.args.ModelName == "" {
+		//	return fmt.Errorf("model name must be specified")
+		//}
+		//if m.args.ModelPath == "" {
+		//	return fmt.Errorf("model path must be specified")
+		//}
+		//if m.args.Inputs == "" {
+		//	return fmt.Errorf("model inputs must be specified")
+		//}
+		//if m.args.Outputs == "" {
+		//	return fmt.Errorf("model outputs must be specified")
+		//}
 	} else {
 		//populate content from modelConfigFile
 		if m.args.ModelName != "" {
