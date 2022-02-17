@@ -15,12 +15,11 @@ Available Commands:
 `
 )
 
-
 // NewEvaluateCommand manage evaluate job
 func NewEvaluateCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "evaluate",
-		Short: "Manage evaluate job.",
+		Short: "Manage evaluate job. (deprecated)",
 		Long:  dataLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)

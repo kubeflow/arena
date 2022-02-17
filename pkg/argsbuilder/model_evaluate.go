@@ -96,12 +96,5 @@ func (m *ModelEvaluateArgsBuilder) preprocess() (err error) {
 		return fmt.Errorf("image must be specified")
 	}
 
-	if m.args.ModelPath == "" {
-		return fmt.Errorf("model path must be specified")
-	}
-	if m.args.ReportPath == "" {
-		return fmt.Errorf("report path must be specified")
-	}
-
 	return nil
 }

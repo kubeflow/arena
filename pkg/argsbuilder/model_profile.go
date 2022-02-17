@@ -60,7 +60,7 @@ func (m *ModelProfileArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	command.Flags().StringVar(&m.args.ReportPath, "report-path", "", "profile result path")
 	command.Flags().BoolVar(&m.args.UseTensorboard, "tensorboard", false, "enable tensorboard")
-	command.Flags().StringVar(&m.args.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", "the docker image for tensorboard")
+	command.Flags().StringVar(&m.args.TensorboardImage, "tensorboard-image", "", "the docker image for tensorboard")
 
 	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
 
