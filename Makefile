@@ -112,8 +112,8 @@ notebook-image:
 .PHONY: build-pkg
 build-pkg:
 	docker rm -f arena-pkg || true
-	docker build --build-arg "KUBE_VERSION=v1.13.6" \
-				 --build-arg "HELM_VERSION=v2.14.1" \
+	docker build --build-arg "KUBE_VERSION=v1.23.0" \
+				 --build-arg "HELM_VERSION=v3.7.2" \
 				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
 				 --build-arg "VERSION=${VERSION}" \
 				 --build-arg "OS_ARCH=${OS_ARCH}" \

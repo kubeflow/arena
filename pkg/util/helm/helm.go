@@ -62,7 +62,7 @@ func InstallRelease(name string, namespace string, values interface{}, chartName
 	}
 
 	// 4. prepare the arguments
-	args := []string{"install", "-f", valueFile.Name(), "--namespace", namespace, "--name", name, chartName}
+	args := []string{"install", "-f", valueFile.Name(), "--namespace", namespace, name, chartName}
 	log.Debugf("Exec %s, %v", binary, args)
 
 	env := os.Environ()

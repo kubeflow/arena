@@ -26,3 +26,7 @@
 * support --config-file
 * support --shell
 * support arena serve update custom
+
+### 0.7.0
+
+* support helm v3

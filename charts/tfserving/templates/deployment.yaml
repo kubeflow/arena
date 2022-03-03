@@ -17,7 +17,7 @@ metadata:
     {{ $key }}: {{ $value | quote }}
   {{- end }}
   annotations:
-    "helm.sh/created": {{ .Release.Time.Seconds | quote }}
+    "helm.sh/created": {{ now | unixEpoch | quote }}
   {{- range $key, $value := .Values.annotations }}
     {{ $key }}: {{ $value | quote }}
   {{- end }}    
