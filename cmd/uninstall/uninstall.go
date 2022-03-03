@@ -9,22 +9,26 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 var (
+	arenaChartName = "arena-artifacts"
 	forceDelete    = flag.Bool("force", false, "force delete the Custom Resource Instances")
 	manifest       = flag.String("manifest-dir", "", "specify the kubernetes-artifacts directory")
 	arenaNamespace = flag.String("namespace", "arena-system", "specify the namespace")
-	allCRDNames    = []string{
-		"crons.apps.kubedl.io",
-		"mpijobs.kubeflow.org",
-		"pytorchjobs.kubeflow.org",
-		"scaleins.kai.alibabacloud.com",
-		"scaleouts.kai.alibabacloud.com",
-		"tfjobs.kubeflow.org",
-		"trainingjobs.kai.alibabacloud.com",
-	}
 )
+
+var deleteCommandString = `
+$ rm -rf /charts
+$ rm -rf ~/charts
+$ rm -rf /usr/local/bin/arena
+$ rm -rf /usr/local/bin/arena-kubectl
+$ rm -rf /usr/local/bin/arena-helm
+
+and delete the line 'source <(arena completion bash)' in ~/.bashrc or ~/.zshrc
+`
 
 func main() {
 	flag.Parse()
@@ -33,11 +37,30 @@ func main() {
 		fmt.Printf("Error: failed to delete arena artifacts,reason: %v\n", err)
 		os.Exit(1)
 	}
+	fmt.Printf("Debug: skip to remove the arena binaries,if you want to delete them,please execute following commands:\n%v", deleteCommandString)
 	//deleteClientFiles()
 }
 
 func deleteArenaArtifacts(force bool) error {
+	tmpFile := "/tmp/arena-artifacts.yaml"
+	manifestDir, err := detectManifests(manifest)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Debug: get chart directory: %v\n", manifestDir)
+	fields, err := parseFields(path.Join(manifestDir, "values.yaml"))
+	if err != nil {
+		return err
+	}
+	stdout, stderr, err := execCommand([]string{"arena-helm", "template", arenaChartName, "-n", *arenaNamespace, manifestDir, strings.Join(fields, " "), ">", tmpFile})
+	if err != nil {
+		return fmt.Errorf("failed to template yaml,reason: %v,%v,%v", stdout, stderr, err)
+	}
 	if !force {
+		allCRDNames, err := detectCRDs(tmpFile)
+		if err != nil {
+			return err
+		}
 		crdNames, err := getInstalledCRDs(allCRDNames)
 		if err != nil {
 			return err
@@ -46,34 +69,32 @@ func deleteArenaArtifacts(force bool) error {
 			return err
 		}
 	}
-	execCommand([]string{"helm", "del", "arena-artifacts", "-n", *arenaNamespace})
-	manifest, err := detectManifests(manifest)
+	execCommand([]string{"arena-helm", "del", "arena-artifacts", "-n", *arenaNamespace})
+	stdout, stderr, err = execCommand([]string{"arena-kubectl", "delete", "-f", tmpFile})
+	fmt.Printf("%v,%v\n", stdout, stderr)
+	stdout, stderr, err = execCommand([]string{"arena-kubectl", "delete", "ns", *arenaNamespace})
 	if err != nil {
-		return fmt.Errorf("failed to detect manifest directory,reason: %v", err)
-	}
-	_, fileNames := detectK8SResources(manifest, []string{"CustomResourceDefinition"})
-	execCommand([]string{"arena-kubectl", "delete", "crd", strings.Join(allCRDNames, " ")})
-	deleteK8sResources(fileNames)
-	_, stderr, err := execCommand([]string{"arena-kubectl", "delete", "ns", *arenaNamespace})
-	if err != nil && !strings.Contains(stderr, fmt.Sprintf(`namespaces "%v" not found`, *arenaNamespace)) {
-		return fmt.Errorf("failed to delete namespace %v,reason: %v,%v", *arenaNamespace, err, stderr)
+		return fmt.Errorf("failed to delete namespace %v,reason: %v,%v,%v", *arenaNamespace, stdout, stderr, err)
 	}
 	fmt.Printf("Debug: succeed to delete namespace %v\n", *arenaNamespace)
 	return nil
 }
 
-func deleteK8sResources(files []string) {
-	for _, f := range files {
-		stdout, stderr, err := execCommand([]string{"arena-kubectl", "delete", "-f", f})
-		if err != nil {
-			if strings.Contains(stderr, "Error from server (NotFound)") {
-				continue
-			}
-			fmt.Printf("Error: %v\n", stderr)
-			continue
-		}
-		fmt.Println(stdout)
+func parseFields(fileName string) ([]string, error) {
+	contentBytes, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file %v,reason: %v", fileName, err)
 	}
+	fields := map[string]interface{}{}
+	err = yaml.Unmarshal(contentBytes, &fields)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse fields from file %v,reason: %v", fileName, err)
+	}
+	options := []string{}
+	for f := range fields {
+		options = append(options, fmt.Sprintf("--set %v.enabled=true", f))
+	}
+	return options, nil
 }
 
 func CheckRunningJobs(crdNames []string) error {
@@ -117,7 +138,7 @@ func getCRs(crdName string) ([]string, error) {
 		if len(t) < 2 {
 			continue
 		}
-		jobName := fmt.Sprintf("%v/%v/%v", crdName, t[0], t[1])
+		jobName := fmt.Sprintf("%v %v/%v", t[0], crdName, t[1])
 		crs = append(crs, jobName)
 	}
 	return crs, nil
@@ -132,63 +153,46 @@ func detectManifests(manifestDir *string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if CheckFileExist(path.Join(currentPath, "kubernetes-artifacts")) {
-		return path.Join(currentPath, "kubernetes-artifacts"), nil
+	if CheckFileExist(path.Join(currentPath, arenaChartName)) {
+		return path.Join(currentPath, arenaChartName), nil
 	}
 	homeDir := os.Getenv("HOME")
-	if CheckFileExist(path.Join(homeDir, "kubernetes-artifacts")) {
-		return path.Join(homeDir, "kubernetes-artifacts"), nil
+	if CheckFileExist(path.Join(homeDir, "charts", arenaChartName)) {
+		return path.Join(homeDir, "charts", arenaChartName), nil
 	}
-	if CheckFileExist("/charts/kubernetes-artifacts") {
-		return "/charts/kubernetes-artifacts", nil
+	if CheckFileExist(path.Join("/charts", arenaChartName)) {
+		return path.Join("/charts", arenaChartName), nil
 	}
-	return "", fmt.Errorf("not found kubernetes-artifacts directory,please download it from https://github.com/kubeflow/arena/tree/master/kubernetes-artifacts")
+	return "", fmt.Errorf("not found arena-artifacts directory,please download it from https://github.com/kubeflow/arena/tree/master/arena-artifacts")
 }
 
-func detectK8SResources(dir string, kinds []string) (map[string][]string, []string) {
-	resourceFiles := map[string][]string{}
-	fileNames := []string{}
-	files, _ := ioutil.ReadDir(dir)
-	for _, f := range files {
-		realPathFile := path.Join(dir, f.Name())
-		if f.IsDir() {
-			if CheckFileExist(path.Join(realPathFile, "Chart.yaml")) {
-				continue
-			}
-			resources, names := detectK8SResources(realPathFile, kinds)
-			for key, contents := range resources {
-				if resourceFiles[key] == nil {
-					resourceFiles[key] = []string{}
-				}
-				resourceFiles[key] = append(resourceFiles[key], contents...)
-			}
-			fileNames = append(fileNames, names...)
-			continue
-		}
-		suffix := path.Ext(realPathFile)
-		if suffix != ".json" && suffix != ".yaml" && suffix != ".yml" {
-			continue
-		}
-		fileNames = append(fileNames, realPathFile)
-		contentBytes, err := ioutil.ReadFile(realPathFile)
-		if err != nil {
-			fmt.Printf("Error: failed to read file %v,reason: %v\n", realPathFile, err)
-			continue
-		}
-		for _, c := range strings.Split(string(contentBytes), "---\n") {
-			for _, kind := range kinds {
-				if resourceFiles[kind] == nil {
-					resourceFiles[kind] = []string{}
-				}
-				if strings.Contains(c, fmt.Sprintf("kind: %v", kind)) {
-					resourceFiles[kind] = append(resourceFiles[kind], strings.Trim(c, " "))
-					break
-				}
-			}
-		}
-
+func detectCRDs(fileName string) ([]string, error) {
+	contentBytes, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file %v,reason: %v", fileName, err)
 	}
-	return resourceFiles, fileNames
+	type MetaInfo struct {
+		Name *string `yaml:"name"`
+	}
+	crdNames := []string{}
+	for _, c := range strings.Split(string(contentBytes), "---\n") {
+		if !strings.Contains(c, "kind: CustomResourceDefinition") {
+			continue
+		}
+		crdName := ""
+
+		err := yaml.Unmarshal([]byte(c), &struct {
+			Metadata *MetaInfo `yaml:"metadata"`
+		}{
+			Metadata: &MetaInfo{Name: &crdName},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse CRD name for yaml file,reason: %v", err)
+		}
+		fmt.Printf("Debug: succeed to parse CRD name %v from yaml file %v\n", crdName, fileName)
+		crdNames = append(crdNames, crdName)
+	}
+	return crdNames, nil
 }
 
 func getInstalledCRDs(crdNames []string) ([]string, error) {
@@ -211,7 +215,7 @@ func getInstalledCRDs(crdNames []string) ([]string, error) {
 func getAllCRDsInK8s() ([]string, error) {
 	stdout, stderr, err := execCommand([]string{"arena-kubectl", "get", "crd"})
 	if err != nil {
-		return nil, fmt.Errorf("exit status: %v,readon: %v", err, stderr)
+		return nil, fmt.Errorf("exit status: %v,reason: %v", err, stderr)
 	}
 	crds := []string{}
 	for _, line := range strings.Split(stdout, "\n") {
