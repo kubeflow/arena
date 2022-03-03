@@ -13,7 +13,7 @@ metadata:
     servingVersion: "{{ .Values.servingVersion }}"
     servingType: "trt-serving"
   annotations:
-    "helm.sh/created": {{ .Release.Time.Seconds | quote }}
+    "helm.sh/created": {{ now | unixEpoch | quote }} 
 spec:
   replicas: {{ .Values.replicas }}
   strategy:

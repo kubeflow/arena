@@ -19,16 +19,17 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	v1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -46,7 +47,7 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 		return "", err
 	}
 
-	args := []string{"create", "--dry-run", "--namespace", namespace, "-f", fileName}
+	args := []string{"create", "--dry-run=client", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 	output := string(out)
 	result := []string{}

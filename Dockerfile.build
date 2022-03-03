@@ -4,8 +4,8 @@
 # Create a go runtime for building arena
 
 ARG GOLANG_VERSION=1.14
-ARG KUBE_VERSION=v1.13.6
-ARG HELM_VERSION=v2.14.1
+ARG KUBE_VERSION=v1.23.0
+ARG HELM_VERSION=v3.7.2
 ARG VERSION=v0.3.0-rc
 ARG OS_ARCH=linux-amd64
 ARG COMMIT=stable
@@ -42,7 +42,8 @@ RUN wget http://kubeflow-hk.oss-cn-hongkong.aliyuncs.com/helm-$HELM_VERSION-$OS_
 
 RUN OS=$(echo $OS_ARCH | cut -f1 -d-) && \
     ARCH=$(echo $OS_ARCH | cut -f2 -d-) && \
-    curl -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/${OS}/${ARCH}/kubectl && \
+    cd /usr/local/bin && \
+    curl -LO https://dl.k8s.io/release/${KUBE_VERSION}/bin/${OS}/${ARCH}/kubectl && \
     chmod +x /usr/local/bin/kubectl
 
 

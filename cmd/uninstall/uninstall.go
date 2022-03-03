@@ -33,7 +33,7 @@ func main() {
 		fmt.Printf("Error: failed to delete arena artifacts,reason: %v\n", err)
 		os.Exit(1)
 	}
-	deleteClientFiles()
+	//deleteClientFiles()
 }
 
 func deleteArenaArtifacts(force bool) error {
