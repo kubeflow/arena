@@ -22,3 +22,7 @@
 * support --config-file
 * support --shell
 * support arena serve update triton
+
+### 0.6.0
+
+* support helm v3

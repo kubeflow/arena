@@ -31,3 +31,6 @@
 * support --config-file
 * support --shell
 * support arena serve update tensorflow
+
+### 0.8.0
+* support helm v3

@@ -16,12 +16,13 @@ package helm
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 /*
@@ -71,7 +72,7 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, c
 	// 4. prepare the arguments
 	args := []string{binary, "template", "-f", valueFileName,
 		"--namespace", namespace,
-		"--name", name,
+		name,
 	}
 	if len(options) != 0 {
 		args = append(args, options...)

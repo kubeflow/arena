@@ -43,7 +43,7 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 		return "", err
 	}
 
-	args := []string{"create", "--dry-run", "--namespace", namespace, "-f", fileName}
+	args := []string{"create", "--dry-run=client", "--namespace", namespace, "-f", fileName}
 	out, err := kubectl(args)
 	output := string(out)
 	result := []string{}
