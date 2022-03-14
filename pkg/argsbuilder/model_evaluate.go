@@ -9,39 +9,40 @@ import (
 	"strings"
 )
 
-type ModelOptimizeArgsBuilder struct {
-	args        *types.ModelOptimizeArgs
+type ModelEvaluateArgsBuilder struct {
+	args        *types.ModelEvaluateArgs
 	argValues   map[string]interface{}
 	subBuilders map[string]ArgsBuilder
 }
 
-func NewModelOptimizeArgsBuilder(args *types.ModelOptimizeArgs) ArgsBuilder {
-	args.Type = types.ModelOptimizeJob
-	m := &ModelOptimizeArgsBuilder{
+func NewModelEvaluateArgsBuilder(args *types.ModelEvaluateArgs) ArgsBuilder {
+	args.Type = types.ModelEvaluateJob
+	m := &ModelEvaluateArgsBuilder{
 		args:        args,
 		argValues:   map[string]interface{}{},
 		subBuilders: map[string]ArgsBuilder{},
 	}
 	m.AddSubBuilder(
 		NewModelArgsBuilder(&m.args.CommonModelArgs),
+		NewSubmitSyncCodeArgsBuilder(&m.args.SubmitSyncCodeArgs),
 	)
 	m.AddArgValue("default-image", DefaultModelJobImage)
 	return m
 }
 
-func (m *ModelOptimizeArgsBuilder) GetName() string {
+func (m *ModelEvaluateArgsBuilder) GetName() string {
 	items := strings.Split(fmt.Sprintf("%v", reflect.TypeOf(*m)), ".")
 	return items[len(items)-1]
 }
 
-func (m *ModelOptimizeArgsBuilder) AddSubBuilder(builders ...ArgsBuilder) ArgsBuilder {
+func (m *ModelEvaluateArgsBuilder) AddSubBuilder(builders ...ArgsBuilder) ArgsBuilder {
 	for _, b := range builders {
 		m.subBuilders[b.GetName()] = b
 	}
 	return m
 }
 
-func (m *ModelOptimizeArgsBuilder) AddArgValue(key string, value interface{}) ArgsBuilder {
+func (m *ModelEvaluateArgsBuilder) AddArgValue(key string, value interface{}) ArgsBuilder {
 	for name := range m.subBuilders {
 		m.subBuilders[name].AddArgValue(key, value)
 	}
@@ -49,7 +50,7 @@ func (m *ModelOptimizeArgsBuilder) AddArgValue(key string, value interface{}) Ar
 	return m
 }
 
-func (m *ModelOptimizeArgsBuilder) AddCommandFlags(command *cobra.Command) {
+func (m *ModelEvaluateArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range m.subBuilders {
 		m.subBuilders[name].AddCommandFlags(command)
 	}
@@ -58,16 +59,17 @@ func (m *ModelOptimizeArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		imagePullSecrets []string
 	)
 
-	command.Flags().StringVar(&m.args.Optimizer, "optimizer", "tensorrt", "optimize toolkit, only support tensorrt currently")
-	command.Flags().StringVar(&m.args.TargetDevice, "target-device", "gpu", "model deploy device, cpu or gpu")
-	command.Flags().StringVar(&m.args.ExportPath, "export-path", "", "optimized model save path")
+	command.Flags().StringVar(&m.args.ModelPlatform, "model-platform", "", "model platform")
+	command.Flags().StringVar(&m.args.DatasetPath, "dataset-path", "", "evaluate dataset path")
+	command.Flags().IntVar(&m.args.BatchSize, "batch-size", 1, "evaluate dataset path")
+	command.Flags().StringVar(&m.args.ReportPath, "report-path", "", "evaluate result path")
 
 	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
 
 	m.AddArgValue("image-pull-secret", &imagePullSecrets)
 }
 
-func (m *ModelOptimizeArgsBuilder) PreBuild() error {
+func (m *ModelEvaluateArgsBuilder) PreBuild() error {
 	for name := range m.subBuilders {
 		if err := m.subBuilders[name].PreBuild(); err != nil {
 			return err
@@ -76,7 +78,7 @@ func (m *ModelOptimizeArgsBuilder) PreBuild() error {
 	return nil
 }
 
-func (m *ModelOptimizeArgsBuilder) Build() error {
+func (m *ModelEvaluateArgsBuilder) Build() error {
 	for name := range m.subBuilders {
 		if err := m.subBuilders[name].Build(); err != nil {
 			return err
@@ -88,18 +90,11 @@ func (m *ModelOptimizeArgsBuilder) Build() error {
 	return nil
 }
 
-func (m *ModelOptimizeArgsBuilder) preprocess() (err error) {
+func (m *ModelEvaluateArgsBuilder) preprocess() (err error) {
 	log.Debugf("command: %s", m.args.Command)
 	if m.args.Image == "" {
 		return fmt.Errorf("image must be specified")
 	}
 
-	if m.args.ModelConfigFile == "" {
-		return fmt.Errorf("--model-config-file must be specified")
-	}
-
-	if m.args.ExportPath == "" {
-		return fmt.Errorf("--export-path must be specified")
-	}
 	return nil
 }

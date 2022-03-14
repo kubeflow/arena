@@ -53,9 +53,18 @@ func (m *ModelProfileArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range m.subBuilders {
 		m.subBuilders[name].AddCommandFlags(command)
 	}
+
+	var (
+		imagePullSecrets []string
+	)
+
 	command.Flags().StringVar(&m.args.ReportPath, "report-path", "", "profile result path")
 	command.Flags().BoolVar(&m.args.UseTensorboard, "tensorboard", false, "enable tensorboard")
-	command.Flags().StringVar(&m.args.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel", "the docker image for tensorboard")
+	command.Flags().StringVar(&m.args.TensorboardImage, "tensorboard-image", "", "the docker image for tensorboard")
+
+	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
+
+	m.AddArgValue("image-pull-secret", &imagePullSecrets)
 }
 
 func (m *ModelProfileArgsBuilder) PreBuild() error {
@@ -84,34 +93,14 @@ func (m *ModelProfileArgsBuilder) preprocess() (err error) {
 	if m.args.Image == "" {
 		return fmt.Errorf("image must be specified")
 	}
+
 	if m.args.ModelConfigFile == "" {
-		// need to validate modelName, modelPath if not specify modelConfigFile
-		if m.args.ModelName == "" {
-			return fmt.Errorf("model name must be specified")
-		}
-		if m.args.ModelPath == "" {
-			return fmt.Errorf("model path must be specified")
-		}
-		if m.args.Inputs == "" {
-			return fmt.Errorf("model inputs must be specified")
-		}
-		if m.args.Outputs == "" {
-			return fmt.Errorf("model outputs must be specified")
-		}
-	} else {
-		//populate content from modelConfigFile
-		if m.args.ModelName != "" {
-			log.Infof("modelConfigFile=%s is specified, so --model-name will be ingored", m.args.ModelConfigFile)
-		}
-		if m.args.ModelPath != "" {
-			log.Infof("modelConfigFile=%s is specified, so --model-path will be ignored", m.args.ModelConfigFile)
-		}
-		if m.args.Inputs != "" {
-			log.Infof("modelConfigFile=%s is specified, so --inputs will be ignored", m.args.ModelConfigFile)
-		}
-		if m.args.Inputs != "" {
-			log.Infof("modelConfigFile=%s is specified, so --outputs will be ignored", m.args.ModelConfigFile)
-		}
+		return fmt.Errorf("--model-config-file must be specified")
 	}
+
+	if m.args.ReportPath == "" {
+		return fmt.Errorf("--report-path must be specified")
+	}
+
 	return nil
 }

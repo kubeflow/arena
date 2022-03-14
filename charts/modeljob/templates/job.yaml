@@ -1,4 +1,5 @@
 {{- $gpuCount := .Values.gpuCount -}}
+{{- $syncMode := .Values.syncMode -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -59,6 +60,63 @@ spec:
         {{- end }}
       {{- end }}
       {{- end }}
+      {{- if .Values.syncMode }}
+      initContainers:
+        - name: init-code
+          {{- if .Values.syncImage }}
+          image: "{{ .Values.syncImage }}"
+          {{- else }}
+          {{- if eq .Values.syncMode "rsync" }}
+          image: "{{ .Values.rsyncImage }}"
+          {{- end }}
+          {{- if eq .Values.syncMode "git" }}
+          image: "{{ .Values.gitImage }}"
+          {{- end }}
+          {{- end }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- if eq "rsync" $syncMode }}
+          command: [ "rsync", "-avP", "{{ .Values.syncSource}}", "/code" ]
+          {{- end }}
+          resources:
+            requests:
+              {{- if .Values.cpu }}
+              cpu: {{ .Values.cpu | quote }}
+              {{- end }}
+              {{- if .Values.memory }}
+              memory: {{ .Values.memory | quote }}
+              {{- end }}
+            limits:
+              {{- if .Values.cpu }}
+              cpu: {{ .Values.cpu | quote }}
+              {{- end }}
+              {{- if .Values.memory }}
+              memory: {{ .Values.memory | quote }}
+              {{- end }}
+          env:
+          {{- range $key, $value := .Values.envs }}
+          - name: "{{ $key }}"
+            value: "{{ $value }}"
+          {{- end }}
+          {{- if eq "git" $syncMode }}
+          - name: GIT_SYNC_REPO
+            value: {{ .Values.syncSource }}
+          - name: GIT_SYNC_DEST
+            value: {{ .Values.syncGitProjectName }}
+          - name: GIT_SYNC_ROOT
+            value: /code
+          - name: GIT_SYNC_ONE_TIME
+            value: "true"
+          {{- end }}
+          volumeMounts:
+            - name: code-sync
+              mountPath: /code
+        {{- end }}
+        {{- if ne (len .Values.imagePullSecrets) 0 }}
+        imagePullSecrets:
+        {{- range $imagePullSecret := .Values.imagePullSecrets }}
+        - name: "{{ $imagePullSecret }}"
+        {{- end }}
+        {{- end }}
       containers:
         - name: modeljob
           {{- if .Values.image }}
@@ -96,6 +154,10 @@ spec:
               mountPath: "{{ $mntPath }}"
             {{- end }}
             {{- end }}
+            {{ if .Values.syncMode }}
+            - name: code-sync
+              mountPath: /code
+            {{- end }}
       volumes:
         {{- if .Values.dataset }}
         {{- range $pvcName, $mntPath := .Values.dataset}}
@@ -104,3 +166,7 @@ spec:
             claimName: "{{ $pvcName }}"
         {{- end }}
         {{- end }}
+        {{ if .Values.syncMode }}
+        - name: code-sync
+          emptyDir: {}
+        {{ end }}

@@ -7,28 +7,28 @@ import (
 	"strings"
 )
 
-type ModelOptimizeJobBuilder struct {
-	args      *types.ModelOptimizeArgs
+type ModelEvaluateJobBuilder struct {
+	args      *types.ModelEvaluateArgs
 	argValues map[string]interface{}
 	argsbuilder.ArgsBuilder
 }
 
-func NewModelOptimizeJobBuilder() *ModelOptimizeJobBuilder {
-	args := &types.ModelOptimizeArgs{
+func NewModelEvaluateJobBuilder() *ModelEvaluateJobBuilder {
+	args := &types.ModelEvaluateArgs{
 		CommonModelArgs: types.CommonModelArgs{
 			Image:     argsbuilder.DefaultModelJobImage,
 			Namespace: "default",
 		},
 	}
-	return &ModelOptimizeJobBuilder{
+	return &ModelEvaluateJobBuilder{
 		args:        args,
 		argValues:   map[string]interface{}{},
-		ArgsBuilder: argsbuilder.NewModelOptimizeArgsBuilder(args),
+		ArgsBuilder: argsbuilder.NewModelEvaluateArgsBuilder(args),
 	}
 }
 
 // Name is used to set job name,match option --name
-func (m *ModelOptimizeJobBuilder) Name(name string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Name(name string) *ModelEvaluateJobBuilder {
 	if name != "" {
 		m.args.Name = name
 	}
@@ -36,7 +36,7 @@ func (m *ModelOptimizeJobBuilder) Name(name string) *ModelOptimizeJobBuilder {
 }
 
 // Namespace is used to set job namespace,match option --namespace
-func (m *ModelOptimizeJobBuilder) Namespace(namespace string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Namespace(namespace string) *ModelEvaluateJobBuilder {
 	if namespace != "" {
 		m.args.Namespace = namespace
 	}
@@ -44,7 +44,7 @@ func (m *ModelOptimizeJobBuilder) Namespace(namespace string) *ModelOptimizeJobB
 }
 
 // Shell is used to specify linux shell type
-func (m *ModelOptimizeJobBuilder) Shell(shell string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Shell(shell string) *ModelEvaluateJobBuilder {
 	if shell != "" {
 		m.args.Shell = shell
 	}
@@ -52,13 +52,13 @@ func (m *ModelOptimizeJobBuilder) Shell(shell string) *ModelOptimizeJobBuilder {
 }
 
 // Command is used to set job command
-func (m *ModelOptimizeJobBuilder) Command(args []string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Command(args []string) *ModelEvaluateJobBuilder {
 	m.args.Command = strings.Join(args, " ")
 	return m
 }
 
 // Image is used to set job image,match the option --image
-func (m *ModelOptimizeJobBuilder) Image(image string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Image(image string) *ModelEvaluateJobBuilder {
 	if image != "" {
 		m.args.Image = image
 	}
@@ -66,7 +66,7 @@ func (m *ModelOptimizeJobBuilder) Image(image string) *ModelOptimizeJobBuilder {
 }
 
 // ImagePullPolicy is used to set image pull policy,match the option --image-pull-policy
-func (m *ModelOptimizeJobBuilder) ImagePullPolicy(policy string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) ImagePullPolicy(policy string) *ModelEvaluateJobBuilder {
 	if policy != "" {
 		m.args.ImagePullPolicy = policy
 	}
@@ -74,7 +74,7 @@ func (m *ModelOptimizeJobBuilder) ImagePullPolicy(policy string) *ModelOptimizeJ
 }
 
 // ImagePullSecrets is used to set image pull secrests,match option --image-pull-secret
-func (m *ModelOptimizeJobBuilder) ImagePullSecrets(secrets []string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) ImagePullSecrets(secrets []string) *ModelEvaluateJobBuilder {
 	if secrets != nil {
 		m.argValues["image-pull-secret"] = &secrets
 	}
@@ -82,7 +82,7 @@ func (m *ModelOptimizeJobBuilder) ImagePullSecrets(secrets []string) *ModelOptim
 }
 
 // GPUCount is used to set count of gpu for the job,match the option --gpus
-func (m *ModelOptimizeJobBuilder) GPUCount(count int) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) GPUCount(count int) *ModelEvaluateJobBuilder {
 	if count > 0 {
 		m.args.GPUCount = count
 	}
@@ -90,7 +90,7 @@ func (m *ModelOptimizeJobBuilder) GPUCount(count int) *ModelOptimizeJobBuilder {
 }
 
 // GPUMemory is used to set gpu memory for the job,match the option --gpumemory
-func (m *ModelOptimizeJobBuilder) GPUMemory(memory int) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) GPUMemory(memory int) *ModelEvaluateJobBuilder {
 	if memory > 0 {
 		m.args.GPUMemory = memory
 	}
@@ -98,7 +98,7 @@ func (m *ModelOptimizeJobBuilder) GPUMemory(memory int) *ModelOptimizeJobBuilder
 }
 
 // CPU assign cpu limits,match the option --cpu
-func (m *ModelOptimizeJobBuilder) CPU(cpu string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) CPU(cpu string) *ModelEvaluateJobBuilder {
 	if cpu != "" {
 		m.args.Cpu = cpu
 	}
@@ -106,7 +106,7 @@ func (m *ModelOptimizeJobBuilder) CPU(cpu string) *ModelOptimizeJobBuilder {
 }
 
 // Memory assign memory limits,match option --memory
-func (m *ModelOptimizeJobBuilder) Memory(memory string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Memory(memory string) *ModelEvaluateJobBuilder {
 	if memory != "" {
 		m.args.Memory = memory
 	}
@@ -114,7 +114,7 @@ func (m *ModelOptimizeJobBuilder) Memory(memory string) *ModelOptimizeJobBuilder
 }
 
 // Envs is used to set env of job containers,match option --env
-func (m *ModelOptimizeJobBuilder) Envs(envs map[string]string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Envs(envs map[string]string) *ModelEvaluateJobBuilder {
 	if envs != nil && len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
@@ -126,13 +126,13 @@ func (m *ModelOptimizeJobBuilder) Envs(envs map[string]string) *ModelOptimizeJob
 }
 
 // Tolerations is used to set tolerations for tolerate nodes,match option --toleration
-func (m *ModelOptimizeJobBuilder) Tolerations(tolerations []string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Tolerations(tolerations []string) *ModelEvaluateJobBuilder {
 	m.argValues["toleration"] = &tolerations
 	return m
 }
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
-func (m *ModelOptimizeJobBuilder) NodeSelectors(selectors map[string]string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) NodeSelectors(selectors map[string]string) *ModelEvaluateJobBuilder {
 	if selectors != nil && len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
@@ -144,7 +144,7 @@ func (m *ModelOptimizeJobBuilder) NodeSelectors(selectors map[string]string) *Mo
 }
 
 // Annotations is used to add annotations for job pods,match option --annotation
-func (m *ModelOptimizeJobBuilder) Annotations(annotations map[string]string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Annotations(annotations map[string]string) *ModelEvaluateJobBuilder {
 	if annotations != nil && len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
@@ -156,7 +156,7 @@ func (m *ModelOptimizeJobBuilder) Annotations(annotations map[string]string) *Mo
 }
 
 // Labels is used to add labels for job
-func (m *ModelOptimizeJobBuilder) Labels(labels map[string]string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Labels(labels map[string]string) *ModelEvaluateJobBuilder {
 	if labels != nil && len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
@@ -168,7 +168,7 @@ func (m *ModelOptimizeJobBuilder) Labels(labels map[string]string) *ModelOptimiz
 }
 
 // Datas is used to mount k8s pvc to job pods,match option --data
-func (m *ModelOptimizeJobBuilder) Datas(volumes map[string]string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) Datas(volumes map[string]string) *ModelEvaluateJobBuilder {
 	if volumes != nil && len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
@@ -180,7 +180,7 @@ func (m *ModelOptimizeJobBuilder) Datas(volumes map[string]string) *ModelOptimiz
 }
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
-func (m *ModelOptimizeJobBuilder) DataDirs(volumes map[string]string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) DataDirs(volumes map[string]string) *ModelEvaluateJobBuilder {
 	if volumes != nil && len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
@@ -191,72 +191,72 @@ func (m *ModelOptimizeJobBuilder) DataDirs(volumes map[string]string) *ModelOpti
 	return m
 }
 
-// ModelConfigFile is used to set model config file,match the option --model-config-file
-func (m *ModelOptimizeJobBuilder) ModelConfigFile(filePath string) *ModelOptimizeJobBuilder {
-	if filePath != "" {
-		m.args.ModelConfigFile = filePath
+// SyncImage is used to set syncing image,match option --sync-image
+func (m *ModelEvaluateJobBuilder) SyncImage(image string) *ModelEvaluateJobBuilder {
+	if image != "" {
+		m.args.SyncImage = image
 	}
 	return m
 }
 
-// ModelName is used to set model name,match the option --model-name
-func (m *ModelOptimizeJobBuilder) ModelName(name string) *ModelOptimizeJobBuilder {
-	if name != "" {
-		m.args.ModelName = name
+// SyncMode is used to set syncing mode,match option --sync-mode
+func (m *ModelEvaluateJobBuilder) SyncMode(mode string) *ModelEvaluateJobBuilder {
+	if mode != "" {
+		m.args.SyncMode = mode
+	}
+	return m
+}
+
+// SyncSource is used to set syncing source,match option --sync-source
+func (m *ModelEvaluateJobBuilder) SyncSource(source string) *ModelEvaluateJobBuilder {
+	if source != "" {
+		m.args.SyncSource = source
 	}
 	return m
 }
 
 // ModelPath is used to set model path,match the option --model-path
-func (m *ModelOptimizeJobBuilder) ModelPath(path string) *ModelOptimizeJobBuilder {
+func (m *ModelEvaluateJobBuilder) ModelPath(path string) *ModelEvaluateJobBuilder {
 	if path != "" {
 		m.args.ModelPath = path
 	}
 	return m
 }
 
-// Inputs is used to specify model inputs
-func (m *ModelOptimizeJobBuilder) Inputs(inputs string) *ModelOptimizeJobBuilder {
-	if inputs != "" {
-		m.args.Inputs = inputs
+// ModelPlatform specify the model platform, such as torchscript/tensorflow
+func (m *ModelEvaluateJobBuilder) ModelPlatform(modelPlatform string) *ModelEvaluateJobBuilder {
+	if modelPlatform != "" {
+		m.args.ModelPlatform = modelPlatform
 	}
 	return m
 }
 
-// Outputs is used to specify model outputs
-func (m *ModelOptimizeJobBuilder) Outputs(outputs string) *ModelOptimizeJobBuilder {
-	if outputs != "" {
-		m.args.Outputs = outputs
+// DatasetPath is the dataset to evaluate model
+func (m *ModelEvaluateJobBuilder) DatasetPath(datasetPath string) *ModelEvaluateJobBuilder {
+	if datasetPath != "" {
+		m.args.DatasetPath = datasetPath
 	}
 	return m
 }
 
-// Optimizer is used to specify optimized model save path
-func (m *ModelOptimizeJobBuilder) Optimizer(optimizer string) *ModelOptimizeJobBuilder {
-	if optimizer != "" {
-		m.args.Optimizer = optimizer
+// BatchSize is the batch size of evaluate
+func (m *ModelEvaluateJobBuilder) BatchSize(batchSize int) *ModelEvaluateJobBuilder {
+	if batchSize > 0 {
+		m.args.BatchSize = batchSize
 	}
 	return m
 }
 
-// TargetDevice is used to specify model deploy device
-func (m *ModelOptimizeJobBuilder) TargetDevice(targetDevice string) *ModelOptimizeJobBuilder {
-	if targetDevice != "" {
-		m.args.TargetDevice = targetDevice
-	}
-	return m
-}
-
-// ExportPath is used to specify optimized model save path
-func (m *ModelOptimizeJobBuilder) ExportPath(exportPath string) *ModelOptimizeJobBuilder {
-	if exportPath != "" {
-		m.args.ExportPath = exportPath
+// ReportPath is used to specify evaluate result path
+func (m *ModelEvaluateJobBuilder) ReportPath(reportPath string) *ModelEvaluateJobBuilder {
+	if reportPath != "" {
+		m.args.ReportPath = reportPath
 	}
 	return m
 }
 
 // Build is used to build the job
-func (m *ModelOptimizeJobBuilder) Build() (*Job, error) {
+func (m *ModelEvaluateJobBuilder) Build() (*Job, error) {
 	for key, value := range m.argValues {
 		m.AddArgValue(key, value)
 	}
@@ -266,5 +266,5 @@ func (m *ModelOptimizeJobBuilder) Build() (*Job, error) {
 	if err := m.ArgsBuilder.Build(); err != nil {
 		return nil, err
 	}
-	return NewJob(m.args.Name, types.ModelOptimizeJob, m.args), nil
+	return NewJob(m.args.Name, types.ModelEvaluateJob, m.args), nil
 }

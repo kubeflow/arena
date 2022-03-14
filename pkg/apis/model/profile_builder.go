@@ -73,6 +73,14 @@ func (m *ModelProfileJobBuilder) ImagePullPolicy(policy string) *ModelProfileJob
 	return m
 }
 
+// ImagePullSecrets is used to set image pull secrests,match option --image-pull-secret
+func (m *ModelProfileJobBuilder) ImagePullSecrets(secrets []string) *ModelProfileJobBuilder {
+	if secrets != nil {
+		m.argValues["image-pull-secret"] = &secrets
+	}
+	return m
+}
+
 // GPUCount is used to set count of gpu for the job,match the option --gpus
 func (m *ModelProfileJobBuilder) GPUCount(count int) *ModelProfileJobBuilder {
 	if count > 0 {
