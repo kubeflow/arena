@@ -15,9 +15,6 @@
 {{- range $nodeKey,$nodeVal := .Values.global.nodeSelector }}
 {{ $nodeKey }}: "{{ $nodeVal }}"
 {{- end }}
-{{- if eq .Values.global.clusterProfile "Edge" }}
-alibabacloud.com/is-edge-worker: "false"
-{{- end }}
 {{- end }}
 
 {{- define "arena.nonEdgeNodeSelector" }}
