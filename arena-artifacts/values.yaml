@@ -77,7 +77,7 @@ mpi:
 pytorch:
   enabled: true
   image: kube-ai/pytorch-operator
-  tag: vmaster-g667e2d2a
+  tag: ad27324d
   imagePullPolicy: IfNotPresent
   resources: 
     limits:

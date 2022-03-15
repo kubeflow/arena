@@ -120,7 +120,7 @@ spec:
             - -v=1
             - --monitoring-port=8443
           # image: gcr.io/kubeflow-images-public/pytorch-operator:v0.6.0-18-g5e36a57
-          image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/pytorch-operator:vmaster-g667e2d2a
+          image: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/pytorch-operator:ad27324d
           name: pytorch-operator
       serviceAccountName: pytorch-operator
 ---

@@ -92,6 +92,9 @@ func (s *SubmitPytorchJobArgsBuilder) Build() error {
 	if err := s.check(); err != nil {
 		return err
 	}
+	if err := s.addMasterAddr(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -105,6 +108,16 @@ func (s *SubmitPytorchJobArgsBuilder) check() error {
 		log.Debugf("Supported cleanTaskPolicy: %s", s.args.CleanPodPolicy)
 	default:
 		return fmt.Errorf("Unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
+	}
+	return nil
+}
+
+func (s *SubmitPytorchJobArgsBuilder) addMasterAddr() error {
+	if s.args.EnableRDMA {
+		if s.args.Envs == nil {
+			s.args.Envs = map[string]string{}
+		}
+		s.args.Envs["MASTER_ADDR"] = fmt.Sprintf("%v-master-0", s.args.Name)
 	}
 	return nil
 }
