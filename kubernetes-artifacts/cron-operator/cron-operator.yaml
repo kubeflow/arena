@@ -329,7 +329,7 @@ spec:
       serviceAccountName: cron-operator
       containers:
         - name: cron
-          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/cron-operator:v0.1.1
+          image: registry.cn-hangzhou.aliyuncs.com/kube-ai/cron-operator:v0.1.2
           imagePullPolicy: Always
           args: [--workloads=Cron]
           ports:
