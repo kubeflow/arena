@@ -87,6 +87,12 @@ cli-darwin-amd64:
 	CGO_ENABLED=0 GOOS=darwin GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME}  ./cmd/arena/*.go
 	CGO_ENABLED=0 GOOS=darwin GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_UNINSTALL} ./cmd/uninstall/*.go
 
+.PHONY: cli-darwin-arm64
+cli-darwin-arm64:
+	mkdir -p bin
+	CGO_ENABLED=0 GOOS=darwin GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME}  ./cmd/arena/*.go
+	CGO_ENABLED=0 GOOS=darwin GO111MODULE=off go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_UNINSTALL} ./cmd/uninstall/*.go
+
 .PHONY: cli-windows
 cli-windows:
 	mkdir -p bin

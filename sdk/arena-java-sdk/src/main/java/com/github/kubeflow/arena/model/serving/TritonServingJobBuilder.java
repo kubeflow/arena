@@ -28,8 +28,13 @@ public class TritonServingJobBuilder extends JobBuilder {
         return this;
     }
 
-    public TritonServingJobBuilder metricPort(int port) {
-        this.options.add(new StringField("--metric-port",String.valueOf(port)));
+    public TritonServingJobBuilder allowMetrics() {
+        this.options.add(new BoolField("--allow-metrics"));
+        return this;
+    }
+
+    public TritonServingJobBuilder metricsPort(int port) {
+        this.options.add(new StringField("--metrics-port",String.valueOf(port)));
         return this;
     }
 
