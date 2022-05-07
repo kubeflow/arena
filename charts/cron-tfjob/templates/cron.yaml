@@ -2,6 +2,14 @@ apiVersion: "apps.kubedl.io/v1alpha1"
 kind: "Cron"
 metadata:
   name: {{ .Release.Name }}
+  labels:
+  {{- range $key, $value := .Values.tfjob.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+  {{- range $key, $value := .Values.tfjob.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
 spec:
   schedule: "{{ .Values.cron.schedule }}"
   concurrencyPolicy: {{ .Values.cron.concurrencyPolicy }}
