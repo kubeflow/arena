@@ -65,6 +65,20 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 		}
 	}
 
+	if args.Annotations != nil && len(args.Annotations) > 0 {
+		for k, v := range args.Annotations {
+			deploy.Annotations[k] = v
+			deploy.Spec.Template.Annotations[k] = v
+		}
+	}
+
+	if args.Labels != nil && len(args.Labels) > 0 {
+		for k, v := range args.Labels {
+			deploy.Labels[k] = v
+			deploy.Spec.Template.Labels[k] = v
+		}
+	}
+
 	return updateDeployment(args.Name, args.Version, deploy)
 }
 
@@ -102,6 +116,20 @@ func UpdateTritonServing(args *types.UpdateTritonServingArgs) error {
 		deploy.Spec.Template.Spec.Containers[0].Args = []string{strings.Join(newArgs, " ")}
 	}
 
+	if args.Annotations != nil && len(args.Annotations) > 0 {
+		for k, v := range args.Annotations {
+			deploy.Annotations[k] = v
+			deploy.Spec.Template.Annotations[k] = v
+		}
+	}
+
+	if args.Labels != nil && len(args.Labels) > 0 {
+		for k, v := range args.Labels {
+			deploy.Labels[k] = v
+			deploy.Spec.Template.Labels[k] = v
+		}
+	}
+
 	return updateDeployment(args.Name, args.Version, deploy)
 }
 
@@ -109,6 +137,20 @@ func UpdateCustomServing(args *types.UpdateCustomServingArgs) error {
 	deploy, err := findAndBuildDeployment(&args.CommonUpdateServingArgs)
 	if err != nil {
 		return err
+	}
+
+	if args.Annotations != nil && len(args.Annotations) > 0 {
+		for k, v := range args.Annotations {
+			deploy.Annotations[k] = v
+			deploy.Spec.Template.Annotations[k] = v
+		}
+	}
+
+	if args.Labels != nil && len(args.Labels) > 0 {
+		for k, v := range args.Labels {
+			deploy.Labels[k] = v
+			deploy.Spec.Template.Labels[k] = v
+		}
 	}
 
 	return updateDeployment(args.Name, args.Version, deploy)

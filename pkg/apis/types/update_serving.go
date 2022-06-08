@@ -1,19 +1,21 @@
 package types
 
 type CommonUpdateServingArgs struct {
-	Name      string            `yaml:"servingName"`
-	Version   string            `yaml:"servingVersion"`
-	Namespace string            `yaml:"-"`
-	Type      ServingJobType    `yaml:"-"`
-	Image     string            `yaml:"image"`
-	GPUCount  int               `yaml:"gpuCount"`  // --gpus
-	GPUMemory int               `yaml:"gpuMemory"` // --gpumemory
-	Cpu       string            `yaml:"cpu"`       // --cpu
-	Memory    string            `yaml:"memory"`    // --memory
-	Replicas  int               `yaml:"replicas"`  // --replicas
-	Envs      map[string]string `yaml:"envs"`      // --envs
-	Shell     string            `yaml:"shell"`     // --shell
-	Command   string            `yaml:"command"`   // --command
+	Name        string            `yaml:"servingName"`
+	Version     string            `yaml:"servingVersion"`
+	Namespace   string            `yaml:"-"`
+	Type        ServingJobType    `yaml:"-"`
+	Image       string            `yaml:"image"`
+	GPUCount    int               `yaml:"gpuCount"`    // --gpus
+	GPUMemory   int               `yaml:"gpuMemory"`   // --gpumemory
+	Cpu         string            `yaml:"cpu"`         // --cpu
+	Memory      string            `yaml:"memory"`      // --memory
+	Replicas    int               `yaml:"replicas"`    // --replicas
+	Envs        map[string]string `yaml:"envs"`        // --envs
+	Annotations map[string]string `yaml:"annotations"` // --annotation
+	Labels      map[string]string `yaml:"labels"`      // --label
+	Shell       string            `yaml:"shell"`       // --shell
+	Command     string            `yaml:"command"`     // --command
 }
 
 type UpdateTensorFlowServingArgs struct {
