@@ -69,6 +69,30 @@ func (b *UpdateCustomServingJobBuilder) Envs(envs map[string]string) *UpdateCust
 	return b
 }
 
+// Annotations is used to add annotations for job pods,match option --annotation
+func (b *UpdateCustomServingJobBuilder) Annotations(annotations map[string]string) *UpdateCustomServingJobBuilder {
+	if annotations != nil && len(annotations) != 0 {
+		s := []string{}
+		for key, value := range annotations {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["annotation"] = &s
+	}
+	return b
+}
+
+// Labels is used to add labels for job
+func (b *UpdateCustomServingJobBuilder) Labels(labels map[string]string) *UpdateCustomServingJobBuilder {
+	if labels != nil && len(labels) != 0 {
+		s := []string{}
+		for key, value := range labels {
+			s = append(s, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["label"] = &s
+	}
+	return b
+}
+
 // Replicas is used to set serving job replicas,match the option --replicas
 func (b *UpdateCustomServingJobBuilder) Replicas(count int) *UpdateCustomServingJobBuilder {
 	if count > 0 {

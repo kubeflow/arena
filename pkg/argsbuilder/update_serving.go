@@ -62,7 +62,9 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 	var (
-		envs []string
+		annotations []string
+		labels      []string
+		envs        []string
 	)
 
 	command.Flags().StringVar(&s.args.Name, "name", "", "the serving name")
@@ -74,9 +76,13 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.Replicas, "replicas", 0, "the replicas number of the serve job.")
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "specify the annotations")
+	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
 
-	s.AddArgValue("env", &envs)
+	s.AddArgValue("env", &envs).
+		AddArgValue("annotation", &annotations).
+		AddArgValue("label", &labels)
 }
 
 func (s *UpdateServingArgsBuilder) PreBuild() error {
@@ -93,15 +99,19 @@ func (s *UpdateServingArgsBuilder) PreBuild() error {
 		return err
 	}
 
-	//if err := s.checkVersion(); err != nil {
-	//	return err
-	//}
-
 	if err := s.checkReplicas(); err != nil {
 		return err
 	}
 
 	if err := s.setEnvs(); err != nil {
+		return err
+	}
+
+	if err := s.setAnnotations(); err != nil {
+		return err
+	}
+
+	if err := s.setLabels(); err != nil {
 		return err
 	}
 
@@ -127,6 +137,40 @@ func (s *UpdateServingArgsBuilder) setEnvs() error {
 	}
 	envs = value.(*[]string)
 	s.args.Envs = transformSliceToMap(*envs, "=")
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *UpdateServingArgsBuilder) setAnnotations() error {
+	s.args.Annotations = map[string]string{}
+	argKey := "annotation"
+	var annotations *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	annotations = item.(*[]string)
+	if len(*annotations) <= 0 {
+		return nil
+	}
+	s.args.Annotations = transformSliceToMap(*annotations, "=")
+	return nil
+}
+
+// setLabels is used to handle option --label
+func (s *UpdateServingArgsBuilder) setLabels() error {
+	s.args.Labels = map[string]string{}
+	argKey := "label"
+	var labels *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	labels = item.(*[]string)
+	if len(*labels) <= 0 {
+		return nil
+	}
+	s.args.Labels = transformSliceToMap(*labels, "=")
 	return nil
 }
 

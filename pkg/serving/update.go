@@ -25,39 +25,58 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 
 	if args.Command == "" {
 		containerArgs := deploy.Spec.Template.Spec.Containers[0].Args
+		if len(containerArgs) > 0 {
+			servingArgs := containerArgs[0]
 
-		servingArgs := containerArgs[0]
-		if strings.HasSuffix(servingArgs, "\n") {
-			servingArgs = servingArgs[:len(servingArgs)-2]
-		}
-		arr := strings.Split(servingArgs, " ")
+			if strings.HasSuffix(servingArgs, "\n") {
+				servingArgs = servingArgs[:len(servingArgs)-2]
+			}
+			arr := strings.Split(servingArgs, " ")
 
-		params := make(map[string]string)
-		for i := 1; i < len(arr); i++ {
-			pair := strings.Split(arr[i], "=")
-			params[pair[0]] = pair[1]
-		}
+			params := make(map[string]string)
+			for i := 1; i < len(arr); i++ {
+				pair := strings.Split(arr[i], "=")
+				if len(pair) == 0 {
+					continue
+				}
+				params[pair[0]] = pair[1]
+			}
 
-		if args.ModelName != "" {
-			params["--model_name"] = args.ModelName
-		}
-		if args.ModelPath != "" {
-			params["--model_base_path"] = args.ModelPath
-		}
-		if args.ModelConfigFile != "" {
-			params["--model_config_file"] = args.ModelConfigFile
-		}
-		if args.MonitoringConfigFile != "" {
-			params["--monitoring_config_file"] = args.MonitoringConfigFile
-		}
+			if args.ModelName != "" {
+				params["--model_name"] = args.ModelName
+			}
+			if args.ModelPath != "" {
+				params["--model_base_path"] = args.ModelPath
+			}
+			if args.ModelConfigFile != "" {
+				params["--model_config_file"] = args.ModelConfigFile
+			}
+			if args.MonitoringConfigFile != "" {
+				params["--monitoring_config_file"] = args.MonitoringConfigFile
+			}
 
-		var newArgs []string
-		newArgs = append(newArgs, "/usr/bin/tensorflow_model_server")
-		for k, v := range params {
-			newArgs = append(newArgs, fmt.Sprintf("%s=%s", k, v))
-		}
+			var newArgs []string
+			newArgs = append(newArgs, "/usr/bin/tensorflow_model_server")
+			for k, v := range params {
+				newArgs = append(newArgs, fmt.Sprintf("%s=%s", k, v))
+			}
 
-		deploy.Spec.Template.Spec.Containers[0].Args = []string{strings.Join(newArgs, " ")}
+			deploy.Spec.Template.Spec.Containers[0].Args = []string{strings.Join(newArgs, " ")}
+		}
+	}
+
+	if args.Annotations != nil && len(args.Annotations) > 0 {
+		for k, v := range args.Annotations {
+			deploy.Annotations[k] = v
+			deploy.Spec.Template.Annotations[k] = v
+		}
+	}
+
+	if args.Labels != nil && len(args.Labels) > 0 {
+		for k, v := range args.Labels {
+			deploy.Labels[k] = v
+			deploy.Spec.Template.Labels[k] = v
+		}
 	}
 
 	return updateDeployment(args.Name, args.Version, deploy)
@@ -97,6 +116,20 @@ func UpdateTritonServing(args *types.UpdateTritonServingArgs) error {
 		deploy.Spec.Template.Spec.Containers[0].Args = []string{strings.Join(newArgs, " ")}
 	}
 
+	if args.Annotations != nil && len(args.Annotations) > 0 {
+		for k, v := range args.Annotations {
+			deploy.Annotations[k] = v
+			deploy.Spec.Template.Annotations[k] = v
+		}
+	}
+
+	if args.Labels != nil && len(args.Labels) > 0 {
+		for k, v := range args.Labels {
+			deploy.Labels[k] = v
+			deploy.Spec.Template.Labels[k] = v
+		}
+	}
+
 	return updateDeployment(args.Name, args.Version, deploy)
 }
 
@@ -104,6 +137,20 @@ func UpdateCustomServing(args *types.UpdateCustomServingArgs) error {
 	deploy, err := findAndBuildDeployment(&args.CommonUpdateServingArgs)
 	if err != nil {
 		return err
+	}
+
+	if args.Annotations != nil && len(args.Annotations) > 0 {
+		for k, v := range args.Annotations {
+			deploy.Annotations[k] = v
+			deploy.Spec.Template.Annotations[k] = v
+		}
+	}
+
+	if args.Labels != nil && len(args.Labels) > 0 {
+		for k, v := range args.Labels {
+			deploy.Labels[k] = v
+			deploy.Spec.Template.Labels[k] = v
+		}
 	}
 
 	return updateDeployment(args.Name, args.Version, deploy)
