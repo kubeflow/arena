@@ -4,6 +4,7 @@ import com.github.kubeflow.arena.enums.TrainingJobType;
 import com.github.kubeflow.arena.exceptions.ArenaException;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.github.kubeflow.arena.model.fields.*;
@@ -24,7 +25,7 @@ public abstract class JobBuilder {
     }
 
     public TrainingJob build() throws ArenaException {
-        ArrayList<String> args = new ArrayList<String>();
+        List<String> args = new ArrayList<>();
         for (int i = 0;i < this.options.size();i++) {
             Field f = this.options.get(i);
             f.validate();
@@ -78,6 +79,11 @@ public abstract class JobBuilder {
 
     public JobBuilder configFiles(Map<String, String> files) {
         this.options.add(new StringMapField("--config-file",files,":"));
+        return this;
+    }
+
+    public JobBuilder labels(Map<String, String> labels) {
+        this.options.add(new StringMapField("--label", labels,"="));
         return this;
     }
 
