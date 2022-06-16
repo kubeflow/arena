@@ -10,7 +10,9 @@ import com.github.kubeflow.arena.model.training.TrainingJobInfo;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TrainingClientTest {
 
@@ -18,11 +20,15 @@ public class TrainingClientTest {
     public void testSubmit() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
 
+        Map<String, String> labels = new HashMap<>();
+        labels.put("arena.kubeflow.org/console-user", "1138391584567121");
+
         String command = "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000";
 
         TrainingJob job = new TFJobBuilder()
                 .name("test-tfjob")
                 .gpus(1)
+                .labels(labels)
                 .syncMode("git")
                 .syncSource("https://github.com/happy2048/tensorflow-sample-code.git")
                 .logDir("/training_logs")
