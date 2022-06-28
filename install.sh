@@ -67,7 +67,11 @@ function support_image_regionalization(){
         if [ -d $path ];then
             support_image_regionalization $path
         else
-            sed -i $SED_OPTION "s@registry\..*aliyuncs.com@${REGION}@g" $path
+            if [[ $REGISTRY_REPO_NAMESPACE != ""  ]];then
+                sed -i $SED_OPTION "s@registry\..*aliyuncs.com/.*/@${REGION}/${REGISTRY_REPO_NAMESPACE}/@g" $path
+            else
+                sed -i $SED_OPTION "s@registry\..*aliyuncs.com@${REGION}@g" $path
+            fi
         fi
     done
 }
