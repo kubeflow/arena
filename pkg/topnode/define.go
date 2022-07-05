@@ -133,6 +133,7 @@ func (b *baseNode) Type() types.NodeType {
 // NewNormalNodeProcesser must be placed at last,it will match all unknown nodes
 func GetSupportedNodePorcessers() []NodeProcesser {
 	return []NodeProcesser{
+		NewQGPUNodeProcesser(),
 		NewGPUShareNodeProcesser(),
 		NewGPUTopologyNodeProcesser(),
 		NewGPUExclusiveNodeProcesser(),

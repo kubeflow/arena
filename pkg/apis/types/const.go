@@ -29,3 +29,11 @@ const (
 	UserNameIdLabel           = "arena.kubeflow.org/uid"
 	UserNameNameLabel         = "arena.kubeflow.org/username"
 )
+
+const (
+	QGPUCoreResourceName   = "tke.cloud.tencent.com/qgpu-core"
+	QGPUMemoryResourceName = "tke.cloud.tencent.com/qgpu-memory"
+	QGPUAllocationLabel    = "tke.cloud.tencent.com/qgpu"
+	QGPUNodeLabels         = "qgpu-device-enable=enable"
+	QGPUIndexPrefix        = "tke.cloud.tencent.com/qgpu-pgpu-"
+)

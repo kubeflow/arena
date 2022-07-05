@@ -4,6 +4,7 @@ type NodeType string
 
 const (
 	GPUShareNode     NodeType = "GPUShare"
+	QGPUNode         NodeType = "QGPU"
 	GPUExclusiveNode NodeType = "GPUExclusive"
 	GPUTopologyNode  NodeType = "GPUTopology"
 	NormalNode       NodeType = "Normal"
@@ -37,6 +38,11 @@ var NodeTypeSlice = []NodeTypeInfo{
 		Name:      GPUShareNode,
 		Alias:     "share",
 		Shorthand: "s",
+	},
+	{
+		Name:      QGPUNode,
+		Alias:     "qgpu",
+		Shorthand: "q",
 	},
 }
 
@@ -147,4 +153,27 @@ type GPUTopologyNodeDevice struct {
 	Id      string `json:"id" yaml:"id"`
 	Healthy bool   `json:"healthy" yaml:"healthy"`
 	Status  string `json:"status" yaml:"status"`
+}
+
+type QGPUNodeInfo struct {
+	PodInfos           []QGPUPodInfo    `json:"instances" yaml:"instances"`
+	TotalGPUMemory     float64          `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+	AllocatedGPUMemory float64          `json:"allocatedGPUMemory" yaml:"allocatedGPUMemory"`
+	Devices            []QGPUNodeDevice `json:"devices" yaml:"devices"`
+	CommonGPUNodeInfo  `yaml:",inline" json:",inline"`
+	CommonNodeInfo     `yaml:",inline" json:",inline"`
+}
+
+type QGPUPodInfo struct {
+	Name          string             `json:"name" yaml:"name"`
+	Namespace     string             `json:"namespace" yaml:"namespace"`
+	Status        string             `json:"status" yaml:"status"`
+	RequestMemory float64            `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	Allocation    map[string]float64 `json:"allocation" yaml:"allocation"`
+}
+
+type QGPUNodeDevice struct {
+	Id                 string  `json:"id" yaml:"id"`
+	TotalGPUMemory     float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`
+	AllocatedGPUMemory float64 `json:"allocatedGPUMemory" yaml:"allocatedGPUMemory"`
 }
