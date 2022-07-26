@@ -6,6 +6,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strings"
 )
@@ -148,6 +149,32 @@ func (m *ModelArgsBuilder) Build() error {
 
 	if err := m.preprocess(); err != nil {
 		return err
+	}
+	// check resource
+	if err := m.check(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *ModelArgsBuilder) check() error {
+	if m.args.GPUCount < 0 {
+		return fmt.Errorf("--gpus is invalid")
+	}
+	if m.args.GPUMemory < 0 {
+		return fmt.Errorf("--gpumemory is invalid")
+	}
+	if m.args.Cpu != "" {
+		_, err := resource.ParseQuantity(m.args.Cpu)
+		if err != nil {
+			return fmt.Errorf("--cpu is invalid")
+		}
+	}
+	if m.args.Memory != "" {
+		_, err := resource.ParseQuantity(m.args.Memory)
+		if err != nil {
+			return fmt.Errorf("--memory is invalid")
+		}
 	}
 	return nil
 }
