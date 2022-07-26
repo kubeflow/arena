@@ -33,6 +33,8 @@ type ModelJob interface {
 	RequestGPUs() int64
 	// RequestGPUMemory return the gpu memory,only for gpushare
 	RequestGPUMemory() int64
+	// RequestGPUCore return the gpu core,only for gpushare
+	RequestGPUCore() int64
 	// Params return the job parameters
 	Params() map[string]string
 	// Convert2JobInfo convert to ModelJobInfo

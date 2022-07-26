@@ -8,6 +8,7 @@ type CommonUpdateServingArgs struct {
 	Image       string            `yaml:"image"`
 	GPUCount    int               `yaml:"gpuCount"`    // --gpus
 	GPUMemory   int               `yaml:"gpuMemory"`   // --gpumemory
+	GPUCore     int               `yaml:"gpuCore"`     // --gpucore
 	Cpu         string            `yaml:"cpu"`         // --cpu
 	Memory      string            `yaml:"memory"`      // --memory
 	Replicas    int               `yaml:"replicas"`    // --replicas

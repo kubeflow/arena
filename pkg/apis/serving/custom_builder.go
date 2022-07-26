@@ -75,6 +75,14 @@ func (b *CustomServingJobBuilder) GPUMemory(memory int) *CustomServingJobBuilder
 	return b
 }
 
+// GPUCore is used to set gpu core for the job, match the option --gpucore
+func (b *CustomServingJobBuilder) GPUCore(core int) *CustomServingJobBuilder {
+	if core > 0 {
+		b.args.GPUCore = core
+	}
+	return b
+}
+
 // Image is used to set job image,match the option --image
 func (b *CustomServingJobBuilder) Image(image string) *CustomServingJobBuilder {
 	if image != "" {

@@ -218,12 +218,23 @@ func (m *modelJob) RequestGPUMemory() int64 {
 	return podGPUMemory
 }
 
+func (m *modelJob) RequestGPUCore() int64 {
+	var podGPUCore int64
+	for _, c := range m.job.Spec.Template.Spec.Containers {
+		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUCoreShareResourceName)]; ok {
+			podGPUCore += val.Value()
+		}
+	}
+	return podGPUCore
+}
+
 func (m *modelJob) Instances() []types.ModelJobInstance {
 	var instances []types.ModelJobInstance
 	for index, pod := range m.pods {
 		status, totalContainers, restart, readyContainer := utils.DefinePodPhaseStatus(*pod)
 		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
+		gpuCore := utils.GPUCoreCountInPod(pod)
 		gpus := getPodGPUs(pod, gpuMemory, index)
 		instances = append(instances, types.ModelJobInstance{
 			Name:              pod.Name,
@@ -237,6 +248,7 @@ func (m *modelJob) Instances() []types.ModelJobInstance {
 			RestartCount:      restart,
 			RequestGPUs:       gpus,
 			RequestGPUMemory:  gpuMemory,
+			RequestGPUCore:    gpuCore,
 			CreationTimestamp: pod.CreationTimestamp.Unix(),
 		})
 	}
@@ -271,6 +283,7 @@ func (m *modelJob) Convert2JobInfo() types.ModelJobInfo {
 		RequestCPUs:       m.RequestCPUs(),
 		RequestGPUs:       m.RequestGPUs(),
 		RequestGPUMemory:  m.RequestGPUMemory(),
+		RequestGPUCore:    m.RequestGPUCore(),
 		Instances:         m.Instances(),
 		CreationTimestamp: m.StartTime().Unix(),
 		Params:            m.Params(),
@@ -314,6 +327,21 @@ func getNodeGPUMemory(nodeName string) float64 {
 	}
 	return totalGPUMemory / totalGPUs
 }
+
+//
+//func getNodeGPUCore(nodeName string) int64 {
+//	node, err := k8saccesser.GetK8sResourceAccesser().GetNode(nodeName)
+//	if err != nil {
+//		log.Debugf("failed to get node gpu core,reason: %v", err)
+//		return int64(0)
+//	}
+//	totalGPUs := getResourceOfGPUShareNode(node, types.GPUShareCountName)
+//	totalGPUMemory := getResourceOfGPUShareNode(node, types.GPUCoreShareResourceName)
+//	if totalGPUs == 0 {
+//		return int64(0)
+//	}
+//	return totalGPUMemory / totalGPUs
+//}
 
 func getResourceOfGPUShareNode(node *v1.Node, resourceName string) float64 {
 	val, ok := node.Status.Capacity[v1.ResourceName(resourceName)]
