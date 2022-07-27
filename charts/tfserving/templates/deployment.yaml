@@ -71,7 +71,7 @@ spec:
       initContainers:
 
       containers:
-        - name: serving
+        - name: serving        
           {{- if .Values.image }}
           image: "{{ .Values.image }}"
           {{- end }}
@@ -85,6 +85,22 @@ spec:
               value: "{{ $value }}"
           {{- end }}
           {{- end }}
+            - name: ARENA_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName   
+            - name: ARENA_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace              
+            - name: ARENA_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ARENA_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP           
           {{- if ne .Values.command "" }}
           command:
           - "{{ .Values.shell }}"
