@@ -73,6 +73,7 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Image, "image", "", "the docker image name of serving job")
 	command.Flags().IntVar(&s.args.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.GPUMemory, "gpumemory", 0, "the limit GPU memory of each replica to run the serve.")
+	command.Flags().IntVar(&s.args.GPUCore, "gpucore", 0, "the limit GPU core of each replica to run the serve.")
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.Replicas, "replicas", 0, "the replicas number of the serve job.")

@@ -80,6 +80,14 @@ func (b *TritonServingJobBuilder) GPUMemory(memory int) *TritonServingJobBuilder
 	return b
 }
 
+// GPUCore is used to set gpu core for the job,match the option --gpucore
+func (b *TritonServingJobBuilder) GPUCore(core int) *TritonServingJobBuilder {
+	if core > 0 {
+		b.args.GPUCore = core
+	}
+	return b
+}
+
 // Image is used to set job image,match the option --image
 func (b *TritonServingJobBuilder) Image(image string) *TritonServingJobBuilder {
 	if image != "" {

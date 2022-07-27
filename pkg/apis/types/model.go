@@ -98,6 +98,9 @@ type ModelJobInfo struct {
 	// RequestGPUMemory stores the request gpus
 	RequestGPUMemory int64 `json:"requestGPUMemory" yaml:"requestGPUMemory"`
 
+	// RequestGPUCore stores the request gpus core
+	RequestGPUCore int64 `json:"requestGPUCore" yaml:"requestGPUCore"`
+
 	// CreationTimestamp stores the creation timestamp of job
 	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 
@@ -128,6 +131,8 @@ type ModelJobInstance struct {
 	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory returns the request gpu memory
 	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	// RequestGPUCore returns the request gpu core
+	RequestGPUCore int `json:"requestGPUCore" yaml:"requestGPUCore"`
 	// CreationTimestamp returns the creation timestamp of instance
 	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
@@ -148,6 +153,7 @@ type CommonModelArgs struct {
 
 	GPUCount  int    `yaml:"gpuCount"`  // --gpus
 	GPUMemory int    `yaml:"gpuMemory"` // --gpumemory
+	GPUCore   int    `yaml:"gpuCore"`   // --gpucore
 	Cpu       string `yaml:"cpu"`       // --cpu
 	Memory    string `yaml:"memory"`    // --memory
 

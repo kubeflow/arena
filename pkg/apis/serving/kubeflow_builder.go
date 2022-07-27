@@ -77,6 +77,14 @@ func (b *KFServingJobBuilder) GPUMemory(memory int) *KFServingJobBuilder {
 	return b
 }
 
+// GPUCore is used to set gpu core for the job, match the option --gpucore
+func (b *KFServingJobBuilder) GPUCore(core int) *KFServingJobBuilder {
+	if core > 0 {
+		b.args.GPUCore = core
+	}
+	return b
+}
+
 // Image is used to set job image,match the option --image
 func (b *KFServingJobBuilder) Image(image string) *KFServingJobBuilder {
 	if image != "" {

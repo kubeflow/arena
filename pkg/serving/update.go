@@ -15,6 +15,7 @@ import (
 const (
 	ResourceGPU       v1.ResourceName = "nvidia.com/gpu"
 	ResourceGPUMemory v1.ResourceName = "aliyun.com/gpu-mem"
+	ResourceGPUCore   v1.ResourceName = "aliyun.com/gpu-core.percentage"
 )
 
 func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
@@ -206,6 +207,13 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 
 	if args.GPUMemory > 0 {
 		resourceLimits[ResourceGPUMemory] = resource.MustParse(strconv.Itoa(args.GPUMemory))
+		if _, ok := resourceLimits[ResourceGPU]; ok {
+			delete(resourceLimits, ResourceGPU)
+		}
+	}
+
+	if args.GPUCore > 0 && args.GPUCore%5 == 0 {
+		resourceLimits[ResourceGPUCore] = resource.MustParse(strconv.Itoa(args.GPUCore))
 		if _, ok := resourceLimits[ResourceGPU]; ok {
 			delete(resourceLimits, ResourceGPU)
 		}
