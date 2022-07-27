@@ -1,5 +1,6 @@
 {{- $gpuCount := .Values.gpuCount -}}
 {{- $gpuMemory := .Values.gpuMemory -}}
+{{- $gpuCore := .Values.gpuCore -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -135,6 +136,9 @@ spec:
               {{- if gt (int $gpuMemory) 0}}
               aliyun.com/gpu-mem: {{ .Values.gpuMemory }}
               {{- end }}
+              {{ - if gt (int $gpuCore) 0 }}
+              aliyun.com/gpu-core.percentage: {{ .Values.gpuCore }}
+              {{ - end }}
           volumeMounts:
             {{- if .Values.modelDirs }}
             {{- range $pvcName, $destPath := .Values.modelDirs}}

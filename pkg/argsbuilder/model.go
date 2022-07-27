@@ -79,6 +79,7 @@ func (m *ModelArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	command.Flags().IntVar(&m.args.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().IntVar(&m.args.GPUMemory, "gpumemory", 0, "the limit GPU memory of each replica to run the serve.")
+	command.Flags().IntVar(&m.args.GPUCore, "gpucore", 0, "the limit GPU core of each replica to run the serve.")
 	command.Flags().StringVar(&m.args.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&m.args.Memory, "memory", "", "the request memory of each replica to run the serve.")
 
@@ -147,6 +148,10 @@ func (m *ModelArgsBuilder) Build() error {
 	}
 
 	if err := m.preprocess(); err != nil {
+		return err
+	}
+
+	if err := m.checkGPUCore(); err != nil {
 		return err
 	}
 	return nil
@@ -314,6 +319,13 @@ func (m *ModelArgsBuilder) preprocess() (err error) {
 		if m.args.Inputs != "" {
 			log.Infof("modelConfigFile=%s is specified, so --outputs will be ignored", m.args.ModelConfigFile)
 		}
+	}
+	return nil
+}
+
+func (m *ModelArgsBuilder) checkGPUCore() error {
+	if m.args.GPUCore%5 != 0 {
+		return fmt.Errorf("GPUCore should be the multiple of 5")
 	}
 	return nil
 }

@@ -79,6 +79,14 @@ func (b *TFServingJobBuilder) GPUMemory(memory int) *TFServingJobBuilder {
 	return b
 }
 
+// GPUCore is used to set gpu core for the job, match the option --gpucore
+func (b *TFServingJobBuilder) GPUCore(core int) *TFServingJobBuilder {
+	if core > 0 {
+		b.args.GPUCore = core
+	}
+	return b
+}
+
 // Image is used to set job image,match the option --image
 func (b *TFServingJobBuilder) Image(image string) *TFServingJobBuilder {
 	if image != "" {
