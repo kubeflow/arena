@@ -10,12 +10,13 @@ const (
 )
 
 const (
-	GPUShareResourceName     = "aliyun.com/gpu-mem"
-	GPUCoreShareResourceName = "aliyun.com/gpu-core.percentage"
-	GPUShareCountName        = "aliyun.com/gpu-count"
-	GPUShareEnvGPUID         = "ALIYUN_COM_GPU_MEM_IDX"
-	GPUShareAllocationLabel  = "scheduler.framework.gpushare.allocation"
-	GPUShareNodeLabels       = "gpushare=true,cgpu=true,ack.node.gpu.schedule=share,ack.node.gpu.schedule=cgpu"
+	GPUShareResourceName        = "aliyun.com/gpu-mem"
+	GPUCoreShareResourceName    = "aliyun.com/gpu-core.percentage"
+	GPUShareCountName           = "aliyun.com/gpu-count"
+	GPUShareEnvGPUID            = "ALIYUN_COM_GPU_MEM_IDX"
+	GPUShareAllocationLabel     = "scheduler.framework.gpushare.allocation"
+	GPUCoreShareAllocationLabel = "gpushare.alibabacloud.com/core-percentage"
+	GPUShareNodeLabels          = "gpushare=true,cgpu=true,ack.node.gpu.schedule=share,ack.node.gpu.schedule=cgpu"
 )
 
 const (
