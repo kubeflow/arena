@@ -17,6 +17,12 @@ var GPUShareNodeDescription = `
   2.Pods can request resource 'aliyun.com/gpu-mem' to use gpu sharing feature on this node 
 `
 
+var GPUCoreShareNodeDescription = `
+  1.This node is enabled gpu sharing mode.
+  2.Pods can request resource 'aliyun.com/gpu-mem' to use gpu sharing feature on this node
+  3.Pods can request resource 'aliyun.com/gpu-core.percentage' to use gpu sharing feature on this node
+`
+
 var gpushareTemplate = `
 Name:    %v
 Status:  %v
@@ -236,10 +242,17 @@ func (g *gpushare) convert2NodeInfo() types.GPUShareNodeInfo {
 	for _, metric := range g.gpuMetrics {
 		metrics = append(metrics, metric)
 	}
+	var description string
+	if g.getTotalGPUCore() != 0 {
+		description = GPUCoreShareNodeDescription
+	} else {
+		description = GPUShareNodeDescription
+	}
+
 	gpushareInfo := types.GPUShareNodeInfo{
 		CommonNodeInfo: types.CommonNodeInfo{
 			Name:        g.Name(),
-			Description: GPUShareNodeDescription,
+			Description: description,
 			IP:          g.IP(),
 			Status:      g.Status(),
 			Type:        types.GPUShareNode,
@@ -662,6 +675,8 @@ func displayGPUShareNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 			utils.DataUnitTransfer("bytes", "GiB", nodeInfo.TotalGPUMemory)))
 		if nodeInfo.TotalGPUCore > 0 {
 			items = append(items, fmt.Sprintf("%d/%d", nodeInfo.AllocatedGPUCore, nodeInfo.TotalGPUCore))
+		} else {
+			items = append(items, fmt.Sprintf("__"))
 		}
 		if isUnhealthy {
 			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
