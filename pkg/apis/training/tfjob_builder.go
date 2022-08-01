@@ -147,9 +147,23 @@ func (b *TFJobBuilder) ChiefCPU(cpu string) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) ChiefCPULimit(cpu string) *TFJobBuilder {
+	if cpu != "" {
+		b.args.ChiefCpuLimit = cpu
+	}
+	return b
+}
+
 func (b *TFJobBuilder) ChiefMemory(mem string) *TFJobBuilder {
 	if mem != "" {
 		b.args.ChiefMemory = mem
+	}
+	return b
+}
+
+func (b *TFJobBuilder) ChiefMemoryLimit(mem string) *TFJobBuilder {
+	if mem != "" {
+		b.args.ChiefMemoryLimit = mem
 	}
 	return b
 }
@@ -206,9 +220,23 @@ func (b *TFJobBuilder) EvaluatorCPU(cpu string) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) EvaluatorCPULimit(cpu string) *TFJobBuilder {
+	if cpu != "" {
+		b.args.EvaluatorCpuLimit = cpu
+	}
+	return b
+}
+
 func (b *TFJobBuilder) EvaluatorMemory(mem string) *TFJobBuilder {
 	if mem != "" {
 		b.args.EvaluatorMemory = mem
+	}
+	return b
+}
+
+func (b *TFJobBuilder) EvaluatorMemoryLimit(mem string) *TFJobBuilder {
+	if mem != "" {
+		b.args.EvaluatorMemoryLimit = mem
 	}
 	return b
 }
@@ -252,6 +280,13 @@ func (b *TFJobBuilder) PsCPU(cpu string) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) PsCPULimit(cpu string) *TFJobBuilder {
+	if cpu != "" {
+		b.args.PSCpuLimit = cpu
+	}
+	return b
+}
+
 func (b *TFJobBuilder) PsGPU(gpu int) *TFJobBuilder {
 	if gpu > 0 {
 		b.args.PSGpu = gpu
@@ -269,6 +304,13 @@ func (b *TFJobBuilder) PsImage(image string) *TFJobBuilder {
 func (b *TFJobBuilder) PsMemory(mem string) *TFJobBuilder {
 	if mem != "" {
 		b.args.PSMemory = mem
+	}
+	return b
+}
+
+func (b *TFJobBuilder) PsMemoryLimit(mem string) *TFJobBuilder {
+	if mem != "" {
+		b.args.PSMemoryLimit = mem
 	}
 	return b
 }
@@ -336,6 +378,13 @@ func (b *TFJobBuilder) WorkerCPU(cpu string) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) WorkerCPULimit(cpu string) *TFJobBuilder {
+	if cpu != "" {
+		b.args.WorkerCpuLimit = cpu
+	}
+	return b
+}
+
 func (b *TFJobBuilder) WorkerImage(image string) *TFJobBuilder {
 	if image != "" {
 		b.args.WorkerImage = image
@@ -346,6 +395,13 @@ func (b *TFJobBuilder) WorkerImage(image string) *TFJobBuilder {
 func (b *TFJobBuilder) WorkerMemory(mem string) *TFJobBuilder {
 	if mem != "" {
 		b.args.WorkerMemory = mem
+	}
+	return b
+}
+
+func (b *TFJobBuilder) WorkerMemoryLimit(mem string) *TFJobBuilder {
+	if mem != "" {
+		b.args.WorkerMemoryLimit = mem
 	}
 	return b
 }

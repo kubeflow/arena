@@ -30,15 +30,23 @@ type SubmitTFJobArgs struct {
 	PSImage string `yaml:"psImage"`
 	// WorkerCpu stores the cpu of job worker,match option --worker-cpu
 	WorkerCpu string `yaml:"workerCPU"`
+	// WorkerCpuLimit stores the cpu limit of job worker,match option --worker-cpu-limit
+	WorkerCpuLimit string `yaml:"workerCPULimit"`
 	//WorkerNodeSelectors map[string]string `yaml:"workerNodeSelectors"` // --worker-selector
 	// WorkerMemory stores woker memory,match option --worker-memory
 	WorkerMemory string `yaml:"workerMemory"`
+	// WorkerMemoryLimit stores woker memory limit,match option --worker-memory-limit
+	WorkerMemoryLimit string `yaml:"workerMemoryLimit"`
 	// PSCpu stores ps cpu,match option --ps-cpu
 	PSCpu string `yaml:"psCPU"`
+	// PSCpuLimit stores ps cpu limit,match option --ps-cpu-limit
+	PSCpuLimit string `yaml:"psCPULimit"`
 	// PSGpu stores ps gpu,match option --ps-gpus
 	PSGpu int `yaml:"psGPU"` // --ps-gpus
 	// PSMemory stores the ps memory,match option --ps-memory
 	PSMemory string `yaml:"psMemory"`
+	// PSMemoryLimit stores the ps memory limit,match option --ps-memory-limit
+	PSMemoryLimit string `yaml:"psMemoryLimit"`
 	// CleanPodPolicy stores the cleaning pod policy,match option --clean-task-policy
 	CleanPodPolicy string `yaml:"cleanPodPolicy"`
 	// UseChief stores the using chief or not,match option --chief
@@ -52,13 +60,21 @@ type SubmitTFJobArgs struct {
 	//ChiefNodeSelectors map[string]string `yaml:"chiefNodeSelectors"` // --chief-selector
 	// ChiefCpu stores the chief pod cpu,match option --chief-cpu
 	ChiefCpu string `yaml:"chiefCPU"`
+	// ChiefCpuLimit stores the chief pod cpu limit,match option --chief-cpu-limit
+	ChiefCpuLimit string `yaml:"chiefCPULimit"`
 	// ChiefMemory stores the chief pod memory,match option --chief-memory
 	ChiefMemory string `yaml:"chiefMemory"`
+	// ChiefMemoryLimit stores the chief pod memory limit,match option --chief-memory-limit
+	ChiefMemoryLimit string `yaml:"chiefMemoryLimit"`
 	// EvaluatorCpu stores the evaluator pod cpu,match option --evaluator-cpu
 	EvaluatorCpu string `yaml:"evaluatorCPU"`
+	// EvaluatorCpuLimit stores the evaluator pod cpu limit,match option --evaluator-cpu-limit
+	EvaluatorCpuLimit string `yaml:"evaluatorCPULimit"`
 	//EvaluatorNodeSelectors map[string]string `yaml:"evaluatorNodeSelectors"` // --evaluator-selector
 	// EvaluatorMemory stores the evaluator pod memory,match option --evaluator-memory
 	EvaluatorMemory string `yaml:"evaluatorMemory"` // --evaluatorMemory
+	// EvaluatorMemoryLimit stores the evaluator pod memory limit,match option --evaluator-memory-limit
+	EvaluatorMemoryLimit string `yaml:"evaluatorMemoryLimit"` // --evaluatorMemoryLimit
 	// EvaluatorCount stores the evaluator pod count,match option --evaluator-count
 	EvaluatorCount int `yaml:"evaluator"`
 	// HasGangScheduler determines if it has gang scheduler

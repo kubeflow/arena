@@ -34,6 +34,11 @@ public class TFJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TFJobBuilder workerMemoryLimit(String memory) {
+        this.options.add(new StringField("--worker-memory-limit",memory));
+        return this;
+    }
+
     public TFJobBuilder workerImage(String image) {
         this.options.add(new StringField("--worker-image",image));
         return this;
@@ -41,6 +46,11 @@ public class TFJobBuilder extends JobBuilder {
 
     public TFJobBuilder workerCPU(String cpu) {
         this.options.add(new StringField("--worker-cpu",cpu));
+        return this;
+    }
+
+    public TFJobBuilder workerCPULimit(String cpu) {
+        this.options.add(new StringField("--worker-cpu-limit",cpu));
         return this;
     }
 
@@ -59,6 +69,11 @@ public class TFJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TFJobBuilder psMemoryLimit(String memory) {
+        this.options.add(new StringField("--ps-memory-limit",memory));
+        return this;
+    }
+
     public TFJobBuilder psImage(String image) {
         this.options.add(new StringField("--ps-image",image));
         return this;
@@ -66,6 +81,11 @@ public class TFJobBuilder extends JobBuilder {
 
     public TFJobBuilder psCPU(String cpu) {
         this.options.add(new StringField("--ps-cpu",cpu));
+        return this;
+    }
+
+    public TFJobBuilder psCPULimit(String cpu) {
+        this.options.add(new StringField("--ps-cpu-limit",cpu));
         return this;
     }
 
@@ -84,8 +104,18 @@ public class TFJobBuilder extends JobBuilder {
         return  this;
     }
 
+    public TFJobBuilder evaluatorMemoryLimit(String memory) {
+        this.options.add(new StringField("--evaluator-memory-limit",memory));
+        return  this;
+    }
+
     public TFJobBuilder evaluatorCPU(String cpu) {
         this.options.add(new StringField("--evaluator-cpu",cpu));
+        return this;
+    }
+
+    public TFJobBuilder evaluatorCPULimit(String cpu) {
+        this.options.add(new StringField("--evaluator-cpu-limit",cpu));
         return this;
     }
 
@@ -109,8 +139,18 @@ public class TFJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TFJobBuilder chiefMemoryLimit(String memory) {
+        this.options.add(new StringField("--chief-memory-limit",memory));
+        return this;
+    }
+
     public TFJobBuilder chiefCPU(String cpu) {
         this.options.add(new StringField("--chief-cpu",cpu));
+        return this;
+    }
+
+    public TFJobBuilder chiefCPULimit(String cpu) {
+        this.options.add(new StringField("--chief-cpu-limit",cpu));
         return this;
     }
 

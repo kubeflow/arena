@@ -265,10 +265,14 @@ spec:
                   {{- if gt (int $psGpuCount) 0}}
                   nvidia.com/gpu: {{ .Values.psGPU | quote }}
                   {{- end }}
-                  {{- if .Values.psCPU }}
+                  {{- if .Values.psCPULimit }}
+                  cpu: {{ .Values.psCPULimit | quote }}
+                  {{- else if .Values.psCPU }}
                   cpu: {{ .Values.psCPU | quote }}
                   {{- end}}
-                  {{- if .Values.psMemory }}
+                  {{- if .Values.psMemoryLimit }}
+                  memory: {{ .Values.psMemoryLimit | quote }}                  
+                  {{- else if .Values.psMemory }}
                   memory: {{ .Values.psMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
@@ -514,10 +518,14 @@ spec:
                   memory: {{ .Values.workerMemory | quote }}
                   {{- end}}
               limits:
-                  {{- if .Values.workerCPU }}
+                  {{- if .Values.workerCPULimit }}
+                  cpu: {{ .Values.workerCPULimit | quote }}
+                  {{- else if .Values.workerCPU }}
                   cpu: {{ .Values.workerCPU | quote }}
                   {{- end}}
-                  {{- if .Values.workerMemory }}
+                  {{- if .Values.workerMemoryLimit }}
+                  memory: {{ .Values.workerMemoryLimit | quote }}                  
+                  {{- else if .Values.workerMemory }}
                   memory: {{ .Values.workerMemory | quote }}
                   {{- end}}
             env:
@@ -587,10 +595,14 @@ spec:
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.workerCPU }}
+                  {{- if .Values.workerCPULimit }}
+                  cpu: {{ .Values.workerCPULimit | quote }}                  
+                  {{- else if .Values.workerCPU }}
                   cpu: {{ .Values.workerCPU | quote }}
                   {{- end}}
-                  {{- if .Values.workerMemory }}
+                  {{- if .Values.workerMemoryLimit }}
+                  memory: {{ .Values.workerMemoryLimit | quote }}                  
+                  {{- else if .Values.workerMemory }}
                   memory: {{ .Values.workerMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
@@ -841,10 +853,14 @@ spec:
                   memory: {{ .Values.chiefMemory | quote }}
                   {{- end}}
               limits:
-                  {{- if .Values.chiefCPU }}
+                  {{- if .Values.chiefCPULimit }}
+                  cpu: {{ .Values.chiefCPULimit | quote }}
+                  {{- else if .Values.chiefCPU }}
                   cpu: {{ .Values.chiefCPU | quote }}
                   {{- end}}
-                  {{- if .Values.chiefMemory }}
+                  {{- if .Values.chiefMemoryLimit }}
+                  memory: {{ .Values.chiefMemoryLimit | quote }}                  
+                  {{- else if .Values.chiefMemory }}
                   memory: {{ .Values.chiefMemory | quote }}
                   {{- end}}
             env:
@@ -914,10 +930,14 @@ spec:
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.chiefCPU }}
+                  {{- if .Values.chiefCPULimit }}
+                  cpu: {{ .Values.chiefCPULimit | quote }}                  
+                  {{- else if .Values.chiefCPU }}
                   cpu: {{ .Values.chiefCPU | quote }}
                   {{- end}}
-                  {{- if .Values.chiefMemory }}
+                  {{- if .Values.chiefMemoryLimit }}
+                  memory: {{ .Values.chiefMemoryLimit | quote }}                  
+                  {{- else if .Values.chiefMemory }}
                   memory: {{ .Values.chiefMemory | quote }}
                   {{- end}}
                   {{- if .Values.enableRDMA }}
@@ -1123,10 +1143,14 @@ spec:
                   memory: {{ .Values.evaluatorMemory | quote }}
                   {{- end}}
               limits:
-                  {{- if .Values.evaluatorCPU }}
+                  {{- if .Values.evaluatorCPULimit }}
+                  cpu: {{ .Values.evaluatorCPULimit | quote }}                
+                  {{- else if .Values.evaluatorCPU }}
                   cpu: {{ .Values.evaluatorCPU | quote }}
                   {{- end}}
-                  {{- if .Values.evaluatorMemory }}
+                  {{- if .Values.evaluatorMemoryLimit }}
+                  memory: {{ .Values.evaluatorMemoryLimit | quote }}                  
+                  {{- else if .Values.evaluatorMemory }}
                   memory: {{ .Values.evaluatorMemory | quote }}
                   {{- end}}
             env:
@@ -1188,10 +1212,14 @@ spec:
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
-                  {{- if .Values.evaluatorCPU }}
+                  {{- if .Values.evaluatorCPULimit }}
+                  cpu: {{ .Values.evaluatorCPULimit | quote }}                  
+                  {{- else if .Values.evaluatorCPU }}
                   cpu: {{ .Values.evaluatorCPU | quote }}
                   {{- end}}
-                  {{- if .Values.evaluatorMemory }}
+                  {{- if .Values.evaluatorMemoryLimit }}
+                  memory: {{ .Values.evaluatorMemoryLimit | quote }}                  
+                  {{- else if .Values.evaluatorMemory }}
                   memory: {{ .Values.evaluatorMemory | quote }}
                   {{- end}}
               command:
