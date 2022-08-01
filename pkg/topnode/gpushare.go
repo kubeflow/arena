@@ -52,7 +52,7 @@ GPU Summary:
   Total GPU Memory:     %.1f GiB
   Allocated GPU Memory: %.1f GiB
   Used GPU Memory:      %d
-  Total GPU Core:		%d
+  Total GPU Core:       %d
 `
 
 type gpushare struct {
