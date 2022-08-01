@@ -71,7 +71,7 @@ spec:
       initContainers:
 
       containers:
-        - name: serving
+        - name: serving        
           {{- if .Values.image }}
           image: "{{ .Values.image }}"
           {{- end }}
