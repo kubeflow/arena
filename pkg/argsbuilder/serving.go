@@ -16,6 +16,7 @@ package argsbuilder
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"os"
 	"path"
 	"path/filepath"
@@ -208,6 +209,25 @@ func (s *ServingArgsBuilder) Build() error {
 }
 
 func (s *ServingArgsBuilder) check() error {
+	if s.args.GPUCount < 0 {
+		return fmt.Errorf("--gpus is invalid")
+	}
+	if s.args.GPUMemory < 0 {
+		return fmt.Errorf("--gpumemory is invalid")
+	}
+	if s.args.Cpu != "" {
+		_, err := resource.ParseQuantity(s.args.Cpu)
+		if err != nil {
+			return fmt.Errorf("--cpu is invalid")
+		}
+	}
+	if s.args.Memory != "" {
+		_, err := resource.ParseQuantity(s.args.Memory)
+		if err != nil {
+			return fmt.Errorf("--memory is invalid")
+		}
+	}
+
 	return s.checkServiceExists()
 }
 

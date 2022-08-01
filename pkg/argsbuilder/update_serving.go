@@ -18,6 +18,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strings"
 )
@@ -116,6 +117,10 @@ func (s *UpdateServingArgsBuilder) PreBuild() error {
 		return err
 	}
 
+	if err := s.check(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -123,6 +128,29 @@ func (s *UpdateServingArgsBuilder) Build() error {
 	for name := range s.subBuilders {
 		if err := s.subBuilders[name].Build(); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *UpdateServingArgsBuilder) check() error {
+	if s.args.GPUCount < 0 {
+		return fmt.Errorf("--gpus is invalid")
+	}
+	if s.args.GPUMemory < 0 {
+		return fmt.Errorf("--gpumemory is invalid")
+	}
+	if s.args.Cpu != "" {
+		_, err := resource.ParseQuantity(s.args.Cpu)
+		if err != nil {
+			return fmt.Errorf("--cpu is invalid")
+		}
+	}
+	if s.args.Memory != "" {
+		_, err := resource.ParseQuantity(s.args.Memory)
+		if err != nil {
+			return fmt.Errorf("--memory is invalid")
 		}
 	}
 

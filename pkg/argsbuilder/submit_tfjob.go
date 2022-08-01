@@ -16,6 +16,7 @@ package argsbuilder
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strings"
 
@@ -230,6 +231,61 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 	if s.args.PSCount > 0 {
 		if s.args.PSImage == "" {
 			return fmt.Errorf("--image or --psImage must be set")
+		}
+	}
+
+	if s.args.GPUCount < 0 {
+		return fmt.Errorf("--gpus is invalid")
+	}
+	if s.args.ChiefCpu != "" {
+		_, err := resource.ParseQuantity(s.args.ChiefCpu)
+		if err != nil {
+			return fmt.Errorf("--chief-cpu is invalid")
+		}
+	}
+	if s.args.ChiefMemory != "" {
+		_, err := resource.ParseQuantity(s.args.ChiefMemory)
+		if err != nil {
+			return fmt.Errorf("--chief-memory is invalid")
+		}
+	}
+	if s.args.PSCpu != "" {
+		_, err := resource.ParseQuantity(s.args.PSCpu)
+		if err != nil {
+			return fmt.Errorf("--ps-cpu is invalid")
+		}
+	}
+	if s.args.PSMemory != "" {
+		_, err := resource.ParseQuantity(s.args.PSMemory)
+		if err != nil {
+			return fmt.Errorf("--ps-memory is invalid")
+		}
+	}
+	if s.args.PSGpu < 0 {
+		return fmt.Errorf("--ps-gpus is invalid")
+	}
+	if s.args.EvaluatorCpu != "" {
+		_, err := resource.ParseQuantity(s.args.EvaluatorCpu)
+		if err != nil {
+			return fmt.Errorf("--evaluator-cpu is invalid")
+		}
+	}
+	if s.args.EvaluatorMemory != "" {
+		_, err := resource.ParseQuantity(s.args.EvaluatorMemory)
+		if err != nil {
+			return fmt.Errorf("--evaluator-memory is invalid")
+		}
+	}
+	if s.args.WorkerCpu != "" {
+		_, err := resource.ParseQuantity(s.args.WorkerCpu)
+		if err != nil {
+			return fmt.Errorf("--worker-cpu is invalid")
+		}
+	}
+	if s.args.WorkerMemory != "" {
+		_, err := resource.ParseQuantity(s.args.WorkerMemory)
+		if err != nil {
+			return fmt.Errorf("--worker-memory is invalid")
 		}
 	}
 	return nil
