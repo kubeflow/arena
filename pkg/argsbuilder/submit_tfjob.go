@@ -474,7 +474,7 @@ func (s *SubmitTFJobArgsBuilder) checkRoleSequence() error {
 func (s *SubmitTFJobArgsBuilder) addPodGroupLabel() error {
 	if s.args.Coscheduling {
 		s.args.PodGroupName = fmt.Sprintf("%v_%v", s.args.TrainingType, s.args.Name)
-		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount+s.args.PSCount+s.args.ChiefCount)
+		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount+s.args.PSCount+s.args.ChiefCount+s.args.EvaluatorCount)
 	}
 	return nil
 }

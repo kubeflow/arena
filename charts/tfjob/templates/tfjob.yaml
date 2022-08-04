@@ -997,6 +997,10 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
+            {{- if .Values.podGroupName }}
+            pod-group.scheduling.sigs.k8s.io/name: {{ .Values.podGroupName }}
+            pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
+            {{- end }}
           {{- range $key, $value := .Values.labels }}
             {{ $key }}: {{ $value | quote }}
           {{- end }} 
