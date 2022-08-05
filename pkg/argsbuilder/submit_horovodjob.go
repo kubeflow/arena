@@ -15,6 +15,7 @@ package argsbuilder
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strings"
 
@@ -102,6 +103,22 @@ func (s *SubmitHorovodJobArgsBuilder) Build() error {
 func (s *SubmitHorovodJobArgsBuilder) check() error {
 	if s.args.Image == "" {
 		return fmt.Errorf("--image must be set ")
+	}
+
+	if s.args.GPUCount < 0 {
+		return fmt.Errorf("--gpus is invalid")
+	}
+	if s.args.Cpu != "" {
+		_, err := resource.ParseQuantity(s.args.Cpu)
+		if err != nil {
+			return fmt.Errorf("--cpu is invalid")
+		}
+	}
+	if s.args.Memory != "" {
+		_, err := resource.ParseQuantity(s.args.Memory)
+		if err != nil {
+			return fmt.Errorf("--memory is invalid")
+		}
 	}
 	return nil
 }

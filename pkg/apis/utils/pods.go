@@ -150,9 +150,31 @@ func GPUMemoryCountInPod(pod *v1.Pod) int {
 	return int(total)
 }
 
+func GPUCoreCountInPod(pod *v1.Pod) int {
+	total := int64(0)
+	for _, count := range ResourceInContainers(pod, types.GPUCoreShareResourceName) {
+		c := count.(int64)
+		total += c
+	}
+	return int(total)
+}
+
 func GetContainerAllocation(pod *v1.Pod) map[int]map[string]int {
 	allocation := map[int]map[string]int{}
 	alloc := getPodAnnotation(pod, types.GPUShareAllocationLabel)
+	if alloc == "" {
+		return allocation
+	}
+	err := json.Unmarshal([]byte(alloc), &allocation)
+	if err != nil {
+		return allocation
+	}
+	return allocation
+}
+
+func GetContainerGPUCoreAllocation(pod *v1.Pod) map[int]map[string]int {
+	allocation := map[int]map[string]int{}
+	alloc := getPodAnnotation(pod, types.GPUCoreShareAllocationLabel)
 	if alloc == "" {
 		return allocation
 	}
@@ -191,6 +213,20 @@ func GetPodAllocation(pod *v1.Pod) map[string]int {
 	}
 	count := GPUMemoryCountInPod(pod)
 	result[gpuIndex] = count
+	return result
+}
+
+func GetPodGPUCoreAllocation(pod *v1.Pod) map[string]int {
+	result := map[string]int{}
+	allocation := GetContainerGPUCoreAllocation(pod)
+	if len(allocation) != 0 {
+		for _, g := range allocation {
+			for gpuId, count := range g {
+				result[gpuId] = result[gpuId] + count
+			}
+		}
+		return result
+	}
 	return result
 }
 

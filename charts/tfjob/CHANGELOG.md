@@ -148,3 +148,7 @@
 ### 0.35.0
 
 * Support gang scheduling
+  
+### 0.35.1
+
+* add evaluator to pod group

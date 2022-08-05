@@ -93,6 +93,8 @@ type ServingJobInfo struct {
 	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory specifies the request gpu memory,only for gpushare
 	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	// RequestGPUMemory specifies the request gpu core,only for gpushare
+	RequestGPUCore int `json:"requestGPUCore" yaml:"requestGPUCore"`
 	// CreationTimestamp stores the creation timestamp of job
 	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
@@ -129,6 +131,8 @@ type ServingInstance struct {
 	RequestGPUs float64 `json:"requestGPUs" yaml:"requestGPUs"`
 	// RequestGPUMemory returns the request gpu memory
 	RequestGPUMemory int `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	// RequestGPUMemory specifies the request gpu core,only for gpushare
+	RequestGPUCore int `json:"requestGPUCore" yaml:"requestGPUCore"`
 	// CreationTimestamp returns the creation timestamp of instance
 	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
 }
@@ -142,6 +146,7 @@ type CommonServingArgs struct {
 	ImagePullPolicy string            `yaml:"imagePullPolicy"` // --imagePullPolicy
 	GPUCount        int               `yaml:"gpuCount"`        // --gpus
 	GPUMemory       int               `yaml:"gpuMemory"`       // --gpumemory
+	GPUCore         int               `yaml:"gpuCore"`         // --gpucore
 	Cpu             string            `yaml:"cpu"`             // --cpu
 	Memory          string            `yaml:"memory"`          // --memory
 	Envs            map[string]string `yaml:"envs"`            // --envs
