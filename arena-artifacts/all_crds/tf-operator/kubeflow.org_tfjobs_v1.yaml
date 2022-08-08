@@ -1,22 +1,21 @@
-{{- if eq (include "crd.api" .) "v1" -}}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.0
-    git-repo: https://github.com/kubeflow/pytorch-operator.git
-    git-branch: master
-    git-commit: 9bd2307
+    git-repo: github.com/AliyunContainerService/tf-operator.git
+    git-branch: v1.0-aliyun-branch
+    git-commit: fd3b5c48
   creationTimestamp: null
-  name: pytorchjobs.kubeflow.org
+  name: tfjobs.kubeflow.org
 spec:
   group: kubeflow.org
   names:
-    kind: PyTorchJob
-    listKind: PyTorchJobList
-    plural: pytorchjobs
-    singular: pytorchjob
+    kind: TFJob
+    listKind: TFJobList
+    plural: tfjobs
+    singular: tfjob
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -29,7 +28,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: Represents a PyTorchJob resource.
+        description: Represents a TFJob resource.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -44,7 +43,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: Specification of the desired state of the PyTorchJob.
+            description: Specification of the desired state of the TFJob.
             properties:
               activeDeadlineSeconds:
                 description: Specifies the duration (in seconds) since startTime during
@@ -58,26 +57,27 @@ spec:
                 format: int32
                 type: integer
               cleanPodPolicy:
-                description: Defines the policy for cleaning up pods after the PyTorchJob
-                  completes. Defaults to None.
+                description: Defines the policy for cleaning up pods after the TFJob
+                  completes. Defaults to Running.
                 type: string
-              pytorchReplicaSpecs:
+              tfReplicaSpecs:
                 additionalProperties:
-                  description: ReplicaSpec is a description of the replica
+                  description: ReplicaSpec is a description of the job replica.
                   properties:
                     replicas:
-                      description: Replicas is the desired number of replicas of the
-                        given template. If unspecified, defaults to 1.
+                      description: The desired number of replicas of the given template.
+                        If unspecified, defaults to 1.
                       format: int32
                       type: integer
                     restartPolicy:
                       description: Restart policy for all replicas within the job.
-                        One of Always, OnFailure, Never and ExitCode. Default to Never.
+                        One of Always, OnFailure, Never, or ExitCode. Defaults to
+                        Never.
                       type: string
                     template:
-                      description: Template is the object that describes the pod that
-                        will be created for this replica. RestartPolicy in PodTemplateSpec
-                        will be overide by RestartPolicy in ReplicaSpec
+                      description: Describes the pod that will be created for this
+                        replica. Note that RestartPolicy in PodTemplateSpec will be
+                        overidden by RestartPolicy in ReplicaSpec.
                       properties:
                         metadata:
                           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata'
@@ -893,7 +893,8 @@ spec:
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
-                                                    ConfigMap or its key must be defined
+                                                    ConfigMap or it's key must be
+                                                    defined
                                                   type: boolean
                                               required:
                                               - key
@@ -963,7 +964,7 @@ spec:
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
-                                                    Secret or its key must be defined
+                                                    Secret or it's key must be defined
                                                   type: boolean
                                               required:
                                               - key
@@ -1147,20 +1148,14 @@ spec:
                                         type: object
                                       preStop:
                                         description: 'PreStop is called immediately
-                                          before a container is terminated due to
-                                          an API request or management event such
-                                          as liveness probe failure, preemption, resource
-                                          contention, etc. The handler is not called
-                                          if the container crashes or exits. The reason
-                                          for termination is passed to the handler.
-                                          The Pod''s termination grace period countdown
-                                          begins before the PreStop hooked is executed.
-                                          Regardless of the outcome of the handler,
-                                          the container will eventually terminate
-                                          within the Pod''s termination grace period.
-                                          Other management of the container blocks
-                                          until the hook completes or until the termination
-                                          grace period is reached. More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks'
+                                          before a container is terminated. The container
+                                          is terminated after the handler completes.
+                                          The reason for termination is passed to
+                                          the handler. Regardless of the outcome of
+                                          the handler, the container is eventually
+                                          terminated. Other management of the container
+                                          blocks until the hook completes. More info:
+                                          https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks'
                                         properties:
                                           exec:
                                             description: One and only one of the following
@@ -1435,16 +1430,12 @@ spec:
                                         protocol:
                                           default: TCP
                                           description: Protocol for port. Must be
-                                            UDP, TCP, or SCTP. Defaults to "TCP".
+                                            UDP or TCP. Defaults to "TCP".
                                           type: string
                                       required:
                                       - containerPort
                                       type: object
                                     type: array
-                                    x-kubernetes-list-map-keys:
-                                    - containerPort
-                                    - protocol
-                                    x-kubernetes-list-type: map
                                   readinessProbe:
                                     description: 'Periodic probe of container service
                                       readiness. Container will be removed from service
@@ -1576,7 +1567,7 @@ spec:
                                     type: object
                                   resources:
                                     description: 'Compute Resources required by this
-                                      container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                                      container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources'
                                     properties:
                                       limits:
                                         additionalProperties:
@@ -1645,14 +1636,6 @@ spec:
                                           equivalent to root on the host. Defaults
                                           to false.
                                         type: boolean
-                                      procMount:
-                                        description: procMount denotes the type of
-                                          proc mount to use for the containers. The
-                                          default is DefaultProcMount which uses the
-                                          container runtime defaults for readonly
-                                          paths and masked paths. This requires the
-                                          ProcMountType feature flag to be enabled.
-                                        type: string
                                       readOnlyRootFilesystem:
                                         description: Whether this container has a
                                           read-only root filesystem. Default is false.
@@ -1714,26 +1697,6 @@ spec:
                                               that applies to the container.
                                             type: string
                                         type: object
-                                      windowsOptions:
-                                        description: Windows security options.
-                                        properties:
-                                          gmsaCredentialSpec:
-                                            description: GMSACredentialSpec is where
-                                              the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa)
-                                              inlines the contents of the GMSA credential
-                                              spec named by the GMSACredentialSpecName
-                                              field. This field is alpha-level and
-                                              is only honored by servers that enable
-                                              the WindowsGMSA feature flag.
-                                            type: string
-                                          gmsaCredentialSpecName:
-                                            description: GMSACredentialSpecName is
-                                              the name of the GMSA credential spec
-                                              to use. This field is alpha-level and
-                                              is only honored by servers that enable
-                                              the WindowsGMSA feature flag.
-                                            type: string
-                                        type: object
                                     type: object
                                   stdin:
                                     description: Whether this container should allocate
@@ -1788,7 +1751,7 @@ spec:
                                   volumeDevices:
                                     description: volumeDevices is the list of block
                                       devices to be used by the container. This is
-                                      a beta feature.
+                                      an alpha feature and may change in the future.
                                     items:
                                       description: volumeDevice describes a mapping
                                         of a raw block device within a container.
@@ -1839,16 +1802,6 @@ spec:
                                           description: Path within the volume from
                                             which the container's volume should be
                                             mounted. Defaults to "" (volume's root).
-                                          type: string
-                                        subPathExpr:
-                                          description: Expanded path within the volume
-                                            from which the container's volume should
-                                            be mounted. Behaves similarly to SubPath
-                                            but environment variable references $(VAR_NAME)
-                                            are expanded using the container's environment.
-                                            Defaults to "" (volume's root). SubPathExpr
-                                            and SubPath are mutually exclusive. This
-                                            field is beta in 1.15.
                                           type: string
                                       required:
                                       - mountPath
@@ -1913,12 +1866,6 @@ spec:
                                 with hostNetwork, you have to specify DNS policy explicitly
                                 to 'ClusterFirstWithHostNet'.
                               type: string
-                            enableServiceLinks:
-                              description: 'EnableServiceLinks indicates whether information
-                                about services should be injected into pod''s environment
-                                variables, matching the syntax of Docker links. Optional:
-                                Defaults to true.'
-                              type: boolean
                             hostAliases:
                               description: HostAliases is an optional list of hosts
                                 and IPs that will be injected into the pod's hosts
@@ -2072,7 +2019,8 @@ spec:
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
-                                                    ConfigMap or its key must be defined
+                                                    ConfigMap or it's key must be
+                                                    defined
                                                   type: boolean
                                               required:
                                               - key
@@ -2142,7 +2090,7 @@ spec:
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
-                                                    Secret or its key must be defined
+                                                    Secret or it's key must be defined
                                                   type: boolean
                                               required:
                                               - key
@@ -2326,20 +2274,14 @@ spec:
                                         type: object
                                       preStop:
                                         description: 'PreStop is called immediately
-                                          before a container is terminated due to
-                                          an API request or management event such
-                                          as liveness probe failure, preemption, resource
-                                          contention, etc. The handler is not called
-                                          if the container crashes or exits. The reason
-                                          for termination is passed to the handler.
-                                          The Pod''s termination grace period countdown
-                                          begins before the PreStop hooked is executed.
-                                          Regardless of the outcome of the handler,
-                                          the container will eventually terminate
-                                          within the Pod''s termination grace period.
-                                          Other management of the container blocks
-                                          until the hook completes or until the termination
-                                          grace period is reached. More info: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks'
+                                          before a container is terminated. The container
+                                          is terminated after the handler completes.
+                                          The reason for termination is passed to
+                                          the handler. Regardless of the outcome of
+                                          the handler, the container is eventually
+                                          terminated. Other management of the container
+                                          blocks until the hook completes. More info:
+                                          https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks'
                                         properties:
                                           exec:
                                             description: One and only one of the following
@@ -2614,16 +2556,12 @@ spec:
                                         protocol:
                                           default: TCP
                                           description: Protocol for port. Must be
-                                            UDP, TCP, or SCTP. Defaults to "TCP".
+                                            UDP or TCP. Defaults to "TCP".
                                           type: string
                                       required:
                                       - containerPort
                                       type: object
                                     type: array
-                                    x-kubernetes-list-map-keys:
-                                    - containerPort
-                                    - protocol
-                                    x-kubernetes-list-type: map
                                   readinessProbe:
                                     description: 'Periodic probe of container service
                                       readiness. Container will be removed from service
@@ -2755,7 +2693,7 @@ spec:
                                     type: object
                                   resources:
                                     description: 'Compute Resources required by this
-                                      container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                                      container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources'
                                     properties:
                                       limits:
                                         additionalProperties:
@@ -2824,14 +2762,6 @@ spec:
                                           equivalent to root on the host. Defaults
                                           to false.
                                         type: boolean
-                                      procMount:
-                                        description: procMount denotes the type of
-                                          proc mount to use for the containers. The
-                                          default is DefaultProcMount which uses the
-                                          container runtime defaults for readonly
-                                          paths and masked paths. This requires the
-                                          ProcMountType feature flag to be enabled.
-                                        type: string
                                       readOnlyRootFilesystem:
                                         description: Whether this container has a
                                           read-only root filesystem. Default is false.
@@ -2893,26 +2823,6 @@ spec:
                                               that applies to the container.
                                             type: string
                                         type: object
-                                      windowsOptions:
-                                        description: Windows security options.
-                                        properties:
-                                          gmsaCredentialSpec:
-                                            description: GMSACredentialSpec is where
-                                              the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa)
-                                              inlines the contents of the GMSA credential
-                                              spec named by the GMSACredentialSpecName
-                                              field. This field is alpha-level and
-                                              is only honored by servers that enable
-                                              the WindowsGMSA feature flag.
-                                            type: string
-                                          gmsaCredentialSpecName:
-                                            description: GMSACredentialSpecName is
-                                              the name of the GMSA credential spec
-                                              to use. This field is alpha-level and
-                                              is only honored by servers that enable
-                                              the WindowsGMSA feature flag.
-                                            type: string
-                                        type: object
                                     type: object
                                   stdin:
                                     description: Whether this container should allocate
@@ -2967,7 +2877,7 @@ spec:
                                   volumeDevices:
                                     description: volumeDevices is the list of block
                                       devices to be used by the container. This is
-                                      a beta feature.
+                                      an alpha feature and may change in the future.
                                     items:
                                       description: volumeDevice describes a mapping
                                         of a raw block device within a container.
@@ -3019,16 +2929,6 @@ spec:
                                             which the container's volume should be
                                             mounted. Defaults to "" (volume's root).
                                           type: string
-                                        subPathExpr:
-                                          description: Expanded path within the volume
-                                            from which the container's volume should
-                                            be mounted. Behaves similarly to SubPath
-                                            but environment variable references $(VAR_NAME)
-                                            are expanded using the container's environment.
-                                            Defaults to "" (volume's root). SubPathExpr
-                                            and SubPath are mutually exclusive. This
-                                            field is beta in 1.15.
-                                          type: string
                                       required:
                                       - mountPath
                                       - name
@@ -3058,13 +2958,6 @@ spec:
                                 must match a node''s labels for the pod to be scheduled
                                 on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
                               type: object
-                            preemptionPolicy:
-                              description: PreemptionPolicy is the Policy for preempting
-                                pods with lower priority. One of Never, PreemptLowerPriority.
-                                Defaults to PreemptLowerPriority if unset. This field
-                                is alpha-level and is only honored by servers that
-                                enable the NonPreemptingPriority feature.
-                              type: string
                             priority:
                               description: The priority value. Various system components
                                 use this field to find the priority of the pod. When
@@ -3088,7 +2981,7 @@ spec:
                                 be evaluated for pod readiness. A pod is ready when
                                 all its containers are ready AND all conditions specified
                                 in the readiness gates have status equal to "True"
-                                More info: https://git.k8s.io/enhancements/keps/sig-network/0007-pod-ready%2B%2B.md'
+                                More info: https://github.com/kubernetes/community/blob/master/keps/sig-network/0007-pod-ready%2B%2B.md'
                               items:
                                 description: PodReadinessGate contains the reference
                                   to a pod condition
@@ -3105,17 +2998,6 @@ spec:
                               description: 'Restart policy for all containers within
                                 the pod. One of Always, OnFailure, Never. Default
                                 to Always. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy'
-                              type: string
-                            runtimeClassName:
-                              description: 'RuntimeClassName refers to a RuntimeClass
-                                object in the node.k8s.io group, which should be used
-                                to run this pod.  If no RuntimeClass resource matches
-                                the named class, the pod will not be run. If unset
-                                or empty, the "legacy" RuntimeClass will be used,
-                                which is an implicit class with an empty definition
-                                that uses the default runtime handler. More info:
-                                https://git.k8s.io/enhancements/keps/sig-node/runtime-class.md
-                                This is a beta feature as of Kubernetes v1.14.'
                               type: string
                             schedulerName:
                               description: If specified, the pod will be dispatched
@@ -3223,25 +3105,6 @@ spec:
                                     - value
                                     type: object
                                   type: array
-                                windowsOptions:
-                                  description: Windows security options.
-                                  properties:
-                                    gmsaCredentialSpec:
-                                      description: GMSACredentialSpec is where the
-                                        GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa)
-                                        inlines the contents of the GMSA credential
-                                        spec named by the GMSACredentialSpecName field.
-                                        This field is alpha-level and is only honored
-                                        by servers that enable the WindowsGMSA feature
-                                        flag.
-                                      type: string
-                                    gmsaCredentialSpecName:
-                                      description: GMSACredentialSpecName is the name
-                                        of the GMSA credential spec to use. This field
-                                        is alpha-level and is only honored by servers
-                                        that enable the WindowsGMSA feature flag.
-                                      type: string
-                                  type: object
                               type: object
                             serviceAccount:
                               description: 'DeprecatedServiceAccount is a depreciated
@@ -3260,8 +3123,9 @@ spec:
                                 containers in the same pod, and the first process
                                 in each container will not be assigned PID 1. HostPID
                                 and ShareProcessNamespace cannot both be set. Optional:
-                                Default to false. This field is beta-level and may
-                                be disabled with the PodShareProcessNamespace feature.'
+                                Default to false. This field is alpha-level and is
+                                honored only by servers that enable the PodShareProcessNamespace
+                                feature.'
                               type: boolean
                             subdomain:
                               description: If specified, the fully qualified Pod hostname
@@ -3583,58 +3447,8 @@ spec:
                                         type: string
                                       optional:
                                         description: Specify whether the ConfigMap
-                                          or its keys must be defined
+                                          or it's keys must be defined
                                         type: boolean
-                                    type: object
-                                  csi:
-                                    description: CSI (Container Storage Interface)
-                                      represents storage that is handled by an external
-                                      CSI driver (Alpha feature).
-                                    properties:
-                                      driver:
-                                        description: Driver is the name of the CSI
-                                          driver that handles this volume. Consult
-                                          with your admin for the correct name as
-                                          registered in the cluster.
-                                        type: string
-                                      fsType:
-                                        description: Filesystem type to mount. Ex.
-                                          "ext4", "xfs", "ntfs". If not provided,
-                                          the empty value is passed to the associated
-                                          CSI driver which will determine the default
-                                          filesystem to apply.
-                                        type: string
-                                      nodePublishSecretRef:
-                                        description: NodePublishSecretRef is a reference
-                                          to the secret object containing sensitive
-                                          information to pass to the CSI driver to
-                                          complete the CSI NodePublishVolume and NodeUnpublishVolume
-                                          calls. This field is optional, and  may
-                                          be empty if no secret is required. If the
-                                          secret object contains more than one secret,
-                                          all secret references are passed.
-                                        properties:
-                                          name:
-                                            description: 'Name of the referent. More
-                                              info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                              TODO: Add other useful fields. apiVersion,
-                                              kind, uid?'
-                                            type: string
-                                        type: object
-                                      readOnly:
-                                        description: Specifies a read-only configuration
-                                          for the volume. Defaults to false (read/write).
-                                        type: boolean
-                                      volumeAttributes:
-                                        additionalProperties:
-                                          type: string
-                                        description: VolumeAttributes stores driver-specific
-                                          properties that are passed to the CSI driver.
-                                          Consult your driver's documentation for
-                                          supported values.
-                                        type: object
-                                    required:
-                                    - driver
                                     type: object
                                   downwardAPI:
                                     description: DownwardAPI represents downward API
@@ -4212,7 +4026,7 @@ spec:
                                                   type: string
                                                 optional:
                                                   description: Specify whether the
-                                                    ConfigMap or its keys must be
+                                                    ConfigMap or it's keys must be
                                                     defined
                                                   type: boolean
                                               type: object
@@ -4436,12 +4250,6 @@ spec:
                                           entries are separated with commas) which
                                           acts as the central registry for volumes
                                         type: string
-                                      tenant:
-                                        description: Tenant owning the given Quobyte
-                                          volume in the Backend Used with dynamically
-                                          provisioned Quobyte volumes, value is set
-                                          by the plugin
-                                        type: string
                                       user:
                                         description: User to map volume access to
                                           Defaults to serivceaccount user
@@ -4521,7 +4329,7 @@ spec:
                                         description: Filesystem type to mount. Must
                                           be a filesystem type supported by the host
                                           operating system. Ex. "ext4", "xfs", "ntfs".
-                                          Default is "xfs".
+                                          Implicitly inferred to be "ext4" if unspecified.
                                         type: string
                                       gateway:
                                         description: The host address of the ScaleIO
@@ -4556,7 +4364,7 @@ spec:
                                       storageMode:
                                         description: Indicates whether the storage
                                           for a volume should be ThickProvisioned
-                                          or ThinProvisioned. Default is ThinProvisioned.
+                                          or ThinProvisioned.
                                         type: string
                                       storagePool:
                                         description: The ScaleIO Storage Pool associated
@@ -4636,7 +4444,7 @@ spec:
                                         type: array
                                       optional:
                                         description: Specify whether the Secret or
-                                          its keys must be defined
+                                          it's keys must be defined
                                         type: boolean
                                       secretName:
                                         description: 'Name of the secret in the pod''s
@@ -4723,32 +4531,32 @@ spec:
                           type: object
                       type: object
                   type: object
-                description: 'A map of PyTorchReplicaType (type) to ReplicaSpec (value).
-                  Specifies the PyTorch cluster configuration. For example,   {     "Master":
-                  PyTorchReplicaSpec,     "Worker": PyTorchReplicaSpec,   }'
+                description: 'A map of TFReplicaType (type) to ReplicaSpec (value).
+                  Specifies the TF cluster configuration. For example,   {     "PS":
+                  ReplicaSpec,     "Worker": ReplicaSpec,   }'
                 type: object
               ttlSecondsAfterFinished:
-                description: Defines the TTL for cleaning up finished PyTorchJobs
-                  (temporary before Kubernetes adds the cleanup controller). It may
-                  take extra ReconcilePeriod seconds for the cleanup, since reconcile
-                  gets called periodically. Defaults to infinite.
+                description: Defines the TTL for cleaning up finished TFJobs (temporary
+                  before kubernetes adds the cleanup controller). It may take extra
+                  ReconcilePeriod seconds for the cleanup, since reconcile gets called
+                  periodically. Defaults to infinite.
                 format: int32
                 type: integer
             required:
-            - pytorchReplicaSpecs
+            - tfReplicaSpecs
             type: object
           status:
-            description: Most recently observed status of the PyTorchJob. Read-only
-              (modified by the system).
+            description: Most recently observed status of the TFJob. Read-only (modified
+              by the system).
             properties:
               completionTime:
-                description: Represents time when the job was completed. It is not
-                  guaranteed to be set in happens-before order across separate operations.
-                  It is represented in RFC3339 form and is in UTC.
+                description: Represents the time when the job was completed. It is
+                  not guaranteed to be set in happens-before order across separate
+                  operations. It is represented in RFC3339 form and is in UTC.
                 format: date-time
                 type: string
               conditions:
-                description: Conditions is an array of current observed job conditions.
+                description: An array of current observed job conditions.
                 items:
                   description: JobCondition describes the state of the job at a certain
                     point.
@@ -4763,14 +4571,15 @@ spec:
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition.
+                      description: A readable message indicating details about the
+                        transition.
                       type: string
                     reason:
                       description: The reason for the condition's last transition.
                       type: string
                     status:
-                      description: Status of the condition, one of True, False, Unknown.
+                      description: Status of the condition, one of True, False, or
+                        Unknown.
                       type: string
                     type:
                       description: Type of job condition.
@@ -4781,8 +4590,8 @@ spec:
                   type: object
                 type: array
               lastReconcileTime:
-                description: Represents last time when the job was reconciled. It
-                  is not guaranteed to be set in happens-before order across separate
+                description: Represents the last time when the job was reconciled.
+                  It is not guaranteed to be set in happens-before order across separate
                   operations. It is represented in RFC3339 form and is in UTC.
                 format: date-time
                 type: string
@@ -4804,12 +4613,12 @@ spec:
                       format: int32
                       type: integer
                   type: object
-                description: ReplicaStatuses is map of ReplicaType and ReplicaStatus,
-                  specifies the status of each replica.
+                description: A map from ReplicaType (key) to ReplicaStatus (value),
+                  specifying the status of each replica.
                 type: object
               startTime:
-                description: Represents time when the job was acknowledged by the
-                  job controller. It is not guaranteed to be set in happens-before
+                description: Represents the time when the job was acknowledged by
+                  the job controller. It is not guaranteed to be set in happens-before
                   order across separate operations. It is represented in RFC3339 form
                   and is in UTC.
                 format: date-time
@@ -4822,10 +4631,6 @@ spec:
     served: true
     storage: true
     subresources:
-      scale:
-        labelSelectorPath: .status.labelSelector
-        specReplicasPath: .spec.pytorchReplicaSpecs.Worker.replicas
-        statusReplicasPath: .status.replicaStatuses.Active
       status: {}
 status:
   acceptedNames:
@@ -4833,4 +4638,3 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
-{{- end }}

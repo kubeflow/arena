@@ -67,7 +67,11 @@ function support_image_regionalization(){
         if [ -d $path ];then
             support_image_regionalization $path
         else
-            sed -i $SED_OPTION "s@registry\..*aliyuncs.com@${REGION}@g" $path
+            if [[ $REGISTRY_REPO_NAMESPACE != ""  ]];then
+                sed -i $SED_OPTION "s@registry\..*aliyuncs.com/.*/@${REGION}/${REGISTRY_REPO_NAMESPACE}/@g" $path
+            else
+                sed -i $SED_OPTION "s@registry\..*aliyuncs.com@${REGION}@g" $path
+            fi
         fi
     done
 }
@@ -193,6 +197,31 @@ function check_addons() {
     fi    
 }
 
+function apply_crds() {
+    if [ -d $SCRIPT_DIR/arena-artifacts/crds ];then 
+        rm -rf $SCRIPT_DIR/arena-artifacts/crds
+    fi 
+    cp -a $SCRIPT_DIR/arena-artifacts/all_crds $SCRIPT_DIR/arena-artifacts/crds 
+    export REMOVED_CRD_VERSION="apiextensions.k8s.io/v1"
+    if arena-kubectl get apiservices v1beta1.apiextensions.k8s.io &> /dev/null;then
+        export REMOVED_CRD_VERSION="apiextensions.k8s.io/v1beta1"
+    fi
+    remove_unused_crds $SCRIPT_DIR/arena-artifacts/crds
+}
+
+function remove_unused_crds() {
+    for file in $(ls $1);do
+        local path=$1"/"$file
+        if [ -d $path ];then
+            remove_unused_crds $path
+        else
+            if ! grep "^apiVersion: ${REMOVED_CRD_VERSION}\b" $path &> /dev/null;then
+                rm -rf $path
+            fi  
+        fi
+    done
+}
+
 
 function apply_tf() {
     check_addons tf-operator true tf-job-operator tf.enabled=false
@@ -238,23 +267,6 @@ function apply_tf_dashboard() {
     check_addons tf-dashboard false tf-job-dashboard tfdashboard.enabled=false
 }
 
-function apply_rdma() {
-    if [[ $USE_RDMA != "true" ]];then
-        return 
-    fi  
-    # if service account has been existed and it is managed by helm chart
-    if (arena-kubectl get ds --all-namespaces -l helm.sh/chart=arena-artifacts | grep rdma-sriov-dp-ds 2>1) &> /dev/null; then
-        export HELM_OPTIONS="$HELM_OPTIONS --set rdma.enabled=true" 
-        logger debug "daemonset rdma-sriov-dp-ds has been existed,and it is managed by helm,skip to reinstall it"
-        return 
-    fi   
-    if arena-kubectl get ds --all-namespaces | grep rdma-sriov-dp-ds &> /dev/null; then
-        logger debug "daemonset rdma-sriov-dp-ds has been existed,and it is not managed by helm,skip to reinstall it"
-        export HELM_OPTIONS="$HELM_OPTIONS --set rdma.enabled=false"
-        return 
-    fi
-}
-
 
 function create_namespace() {
     if [[ "${NAMESPACE}" == "" ]]; then
@@ -297,11 +309,11 @@ function operators() {
         fi    
     fi  
     clean_old_env
+    apply_crds
     apply_tf
     apply_pytorch
     apply_mpi
     apply_et
-    apply_rdma
     apply_cron
     apply_tf_dashboard
     install_binary_on_master
@@ -319,12 +331,11 @@ function deploy_with_helm() {
             return 
         fi 
         logger debug "arena-artifacts has been installed,start to upgrade it"
-        arena-helm upgrade arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts 
-        return 
+        secret=$(arena-kubectl get secret -n arena-system  | grep "sh.*arena-artifacts" | awk '{print $1}')
+        arena-kubectl delete secret $secret
     fi  
     arena-helm install arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts 
 }
-
 
 function parse_args() {
     while [[ $# -gt 0 ]];do

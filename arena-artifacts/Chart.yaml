@@ -54,11 +54,6 @@ dependencies:
     version: 0.1.0
     repository: "@pytorch-operator"
     condition: pytorch.enabled,global.pytorch.enabled
-  - name: rdma
-    alias: rdma
-    version: 0.1.0
-    repository: "@rdma"
-    condition: rdma.enabled,global.rdma.enabled
   - name: gpu-exporter
     alias: exporter
     version: 0.1.0
