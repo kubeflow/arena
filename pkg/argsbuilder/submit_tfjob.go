@@ -102,20 +102,25 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.WorkerCpu, "workerCpu", "", "the cpu resource to use for the worker, like 1 for 1 core.")
 	command.Flags().MarkDeprecated("workerCpu", "please use --worker-cpu instead")
 	command.Flags().StringVar(&s.args.WorkerCpu, "worker-cpu", "", "the cpu resource to use for the worker, like 1 for 1 core.")
+	command.Flags().StringVar(&s.args.WorkerCpuLimit, "worker-cpu-limit", "", "the cpu resource limit to use for the worker, like 1 for 1 core.")
 
 	command.Flags().StringVar(&s.args.WorkerMemory, "workerMemory", "", "the memory resource to use for the worker, like 1Gi.")
 	command.Flags().MarkDeprecated("workerMemory", "please use --worker-memory instead")
 	command.Flags().StringVar(&s.args.WorkerMemory, "worker-memory", "", "the memory resource to use for the worker, like 1Gi.")
+	command.Flags().StringVar(&s.args.WorkerMemoryLimit, "worker-memory-limit", "", "the memory resource limit to use for the worker, like 1Gi.")
 
 	command.Flags().StringVar(&s.args.PSCpu, "psCpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
 	command.Flags().MarkDeprecated("psCpu", "please use --ps-cpu instead")
 	command.Flags().StringVar(&s.args.PSCpu, "ps-cpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
+	command.Flags().StringVar(&s.args.PSCpuLimit, "ps-cpu-limit", "", "the cpu resource limit to use for the parameter servers, like 1 for 1 core.")
 
 	command.Flags().IntVar(&s.args.PSGpu, "ps-gpus", 0, "the gpu resource to use for the parameter servers, like 1 for 1 gpu.")
 
 	command.Flags().StringVar(&s.args.PSMemory, "psMemory", "", "the memory resource to use for the parameter servers, like 1Gi.")
 	command.Flags().MarkDeprecated("psMemory", "please use --ps-memory instead")
 	command.Flags().StringVar(&s.args.PSMemory, "ps-memory", "", "the memory resource to use for the parameter servers, like 1Gi.")
+	command.Flags().StringVar(&s.args.PSMemoryLimit, "ps-memory-limit", "", "the memory resource limit to use for the parameter servers, like 1Gi.")
+
 	// How to clean up Task
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "cleanTaskPolicy", "Running", "How to clean tasks after Training is done, only support Running, None.")
 	command.Flags().MarkDeprecated("cleanTaskPolicy", "please use --clean-task-policy instead")
@@ -127,18 +132,22 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.ChiefCpu, "ChiefCpu", "", "the cpu resource to use for the Chief, like 1 for 1 core.")
 	command.Flags().MarkDeprecated("ChiefCpu", "please use --chief-cpu instead")
 	command.Flags().StringVar(&s.args.ChiefCpu, "chief-cpu", "", "the cpu resource to use for the Chief, like 1 for 1 core.")
+	command.Flags().StringVar(&s.args.ChiefCpuLimit, "chief-cpu-limit", "", "the cpu resource limit to use for the Chief, like 1 for 1 core.")
 
 	command.Flags().StringVar(&s.args.ChiefMemory, "ChiefMemory", "", "the memory resource to use for the Chief, like 1Gi.")
 	command.Flags().MarkDeprecated("ChiefMemory", "please use --chief-memory instead")
 	command.Flags().StringVar(&s.args.ChiefMemory, "chief-memory", "", "the memory resource to use for the Chief, like 1Gi.")
+	command.Flags().StringVar(&s.args.ChiefMemoryLimit, "chief-memory-limit", "", "the memory liit resource to use for the Chief, like 1Gi.")
 
 	command.Flags().StringVar(&s.args.EvaluatorCpu, "evaluatorCpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
 	command.Flags().MarkDeprecated("evaluatorCpu", "please use --evaluator-cpu instead")
 	command.Flags().StringVar(&s.args.EvaluatorCpu, "evaluator-cpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
+	command.Flags().StringVar(&s.args.EvaluatorCpuLimit, "evaluator-cpu-limit", "", "the cpu resource limit to use for the evaluator, like 1 for 1 core.")
 
 	command.Flags().StringVar(&s.args.EvaluatorMemory, "evaluatorMemory", "", "the memory resource to use for the evaluator, like 1Gi.")
 	command.Flags().MarkDeprecated("evaluatorMemory", "please use --evaluator-memory instead")
 	command.Flags().StringVar(&s.args.EvaluatorMemory, "evaluator-memory", "", "the memory resource to use for the evaluator, like 1Gi.")
+	command.Flags().StringVar(&s.args.EvaluatorMemoryLimit, "evaluator-memory-limit", "", "the memory resource limit to use for the evaluator, like 1Gi.")
 
 	command.Flags().IntVar(&s.args.ChiefPort, "chiefPort", 0, "the port of the chief.")
 	command.Flags().MarkDeprecated("chiefPort", "please use --chief-port instead")

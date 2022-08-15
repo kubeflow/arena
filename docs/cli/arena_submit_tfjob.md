@@ -16,7 +16,9 @@ arena submit tfjob [flags]
   -a, --annotation strings           the annotations
       --chief                        enable chief, which is required for estimator.
       --chief-cpu string             the cpu resource to use for the Chief, like 1 for 1 core.
+      --chief-cpu-limit string       the cpu resource limit to use for the Chief, like 1 for 1 core.      
       --chief-memory string          the memory resource to use for the Chief, like 1Gi.
+      --chief-memory-limit string    the memory resource limit to use for the Chief, like 1Gi.      
       --chief-port int               the port of the chief.
       --chief-selector strings       assigning jobs with "Chief" role to some k8s particular nodes(this option would cover --selector), usage: "--chief-selector=key=value"
       --clean-task-policy string     How to clean tasks after Training is done, only support Running, None. (default "Running")
@@ -26,7 +28,9 @@ arena submit tfjob [flags]
   -e, --env strings                  the environment variables
       --evaluator                    enable evaluator, which is optional for estimator.
       --evaluator-cpu string         the cpu resource to use for the evaluator, like 1 for 1 core.
+      --evaluator-cpu-limit string   the cpu resource limit to use for the evaluator, like 1 for 1 core.      
       --evaluator-memory string      the memory resource to use for the evaluator, like 1Gi.
+      --evaluator-memory-limit string the memory resource limit to use for the evaluator, like 1Gi.
       --evaluator-selector strings   assigning jobs with "Evaluator" role to some k8s particular nodes(this option would cover --selector), usage: "--evaluator-selector=key=value"
       --gang                         enable gang scheduling
       --gpus int                     the GPU count of each worker to run the training.
@@ -38,9 +42,11 @@ arena submit tfjob [flags]
   -p, --priority string              priority class name
       --ps int                       the number of the parameter servers.
       --ps-cpu string                the cpu resource to use for the parameter servers, like 1 for 1 core.
+      --ps-cpu-limit string          the cpu-limit resource to use for the parameter servers, like 1 for 1 core.
       --ps-gpus int                  the gpu resource to use for the parameter servers, like 1 for 1 gpu.
       --ps-image string              the docker image for tensorflow workers
       --ps-memory string             the memory resource to use for the parameter servers, like 1Gi.
+      --ps-memory-limit string       the memory limit resource to use for the parameter servers, like 1Gi.
       --ps-port int                  the port of the parameter server.
       --ps-selector strings          assigning jobs with "PS" role to some k8s particular nodes(this option would cover --selector), usage: "--ps-selector=key=value"
       --rdma                         enable RDMA
@@ -54,8 +60,10 @@ arena submit tfjob [flags]
       --tensorboard-image string     the docker image for tensorboard (default "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel")
       --toleration strings           tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" 
       --worker-cpu string            the cpu resource to use for the worker, like 1 for 1 core.
+      --worker-cpu-limit string      the cpu resource limit to use for the worker, like 1 for 1 core.      
       --worker-image string          the docker image for tensorflow workers
       --worker-memory string         the memory resource to use for the worker, like 1Gi.
+      --worker-memory-limit string   the memory resource limit to use for the worker, like 1Gi.
       --worker-port int              the port of the worker.
       --worker-selector strings      assigning jobs with "Worker" role to some k8s particular nodes(this option would cover --selector), usage: "--worker-selector=key=value"
       --workers int                  the worker number to run the distributed training. (default 1)
