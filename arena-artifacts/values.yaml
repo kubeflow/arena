@@ -118,14 +118,6 @@ cron:
       memory: 256Mi
   nodeSelector: {}
 
-# rdma device plugin
-rdma:
-  enabled: true
-  image: acs/k8s-rdma-sriov-dev-plugin
-  tag: latest
-  imagePullPolicy: IfNotPresent
-  resources: {}
-
 # gpu-exporter
 exporter:
   enabled: false

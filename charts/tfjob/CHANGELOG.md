@@ -22,7 +22,7 @@
 
 ### 0.6.0
 
-* support multiple dataDirs 
+* support multiple dataDirs
 
 
 ### 0.7.0
@@ -69,7 +69,7 @@
 
 ### 0.17.0
 
-* Support Tensorboard for Ingress 
+* Support Tensorboard for Ingress
 
 
 ### 0.18.0
@@ -139,7 +139,7 @@
 
 ### 0.33.0
 
-* Fix: disable nvidia env for none gpu request job 
+* Fix: disable nvidia env for none gpu request job
 
 ### 0.34.0
 
@@ -148,3 +148,11 @@
 ### 0.35.0
 
 * Support gang scheduling
+
+### 0.35.1
+
+* add evaluator to pod group
+
+### 0.36.0
+
+* add resource limit to pod

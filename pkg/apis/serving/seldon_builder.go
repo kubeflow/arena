@@ -77,6 +77,14 @@ func (b *SeldonJobBuilder) GPUMemory(memory int) *SeldonJobBuilder {
 	return b
 }
 
+// GPUCore is used to set gpu core for the job, match the option --gpucore
+func (b *SeldonJobBuilder) GPUCore(core int) *SeldonJobBuilder {
+	if core > 0 {
+		b.args.GPUCore = core
+	}
+	return b
+}
+
 // Image is used to set job image,match the option --image
 func (b *SeldonJobBuilder) Image(image string) *SeldonJobBuilder {
 	if image != "" {

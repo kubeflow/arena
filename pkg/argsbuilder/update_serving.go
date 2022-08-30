@@ -18,6 +18,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strings"
 )
@@ -72,6 +73,7 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Image, "image", "", "the docker image name of serving job")
 	command.Flags().IntVar(&s.args.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.GPUMemory, "gpumemory", 0, "the limit GPU memory of each replica to run the serve.")
+	command.Flags().IntVar(&s.args.GPUCore, "gpucore", 0, "the limit GPU core of each replica to run the serve.")
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.Replicas, "replicas", 0, "the replicas number of the serve job.")
@@ -115,6 +117,10 @@ func (s *UpdateServingArgsBuilder) PreBuild() error {
 		return err
 	}
 
+	if err := s.check(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -122,6 +128,29 @@ func (s *UpdateServingArgsBuilder) Build() error {
 	for name := range s.subBuilders {
 		if err := s.subBuilders[name].Build(); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *UpdateServingArgsBuilder) check() error {
+	if s.args.GPUCount < 0 {
+		return fmt.Errorf("--gpus is invalid")
+	}
+	if s.args.GPUMemory < 0 {
+		return fmt.Errorf("--gpumemory is invalid")
+	}
+	if s.args.Cpu != "" {
+		_, err := resource.ParseQuantity(s.args.Cpu)
+		if err != nil {
+			return fmt.Errorf("--cpu is invalid")
+		}
+	}
+	if s.args.Memory != "" {
+		_, err := resource.ParseQuantity(s.args.Memory)
+		if err != nil {
+			return fmt.Errorf("--memory is invalid")
 		}
 	}
 

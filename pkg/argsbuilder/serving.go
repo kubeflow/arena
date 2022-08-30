@@ -16,6 +16,7 @@ package argsbuilder
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"os"
 	"path"
 	"path/filepath"
@@ -94,6 +95,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	command.Flags().IntVar(&s.args.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.GPUMemory, "gpumemory", 0, "the limit GPU memory of each replica to run the serve.")
+	command.Flags().IntVar(&s.args.GPUCore, "gpucore", 0, "the limit GPU core of each replica to run the serve.")
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.Replicas, "replicas", 1, "the replicas number of the serve job.")
@@ -190,6 +192,9 @@ func (s *ServingArgsBuilder) PreBuild() error {
 	if err := s.check(); err != nil {
 		return err
 	}
+	if err := s.checkGPUCore(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -204,6 +209,25 @@ func (s *ServingArgsBuilder) Build() error {
 }
 
 func (s *ServingArgsBuilder) check() error {
+	if s.args.GPUCount < 0 {
+		return fmt.Errorf("--gpus is invalid")
+	}
+	if s.args.GPUMemory < 0 {
+		return fmt.Errorf("--gpumemory is invalid")
+	}
+	if s.args.Cpu != "" {
+		_, err := resource.ParseQuantity(s.args.Cpu)
+		if err != nil {
+			return fmt.Errorf("--cpu is invalid")
+		}
+	}
+	if s.args.Memory != "" {
+		_, err := resource.ParseQuantity(s.args.Memory)
+		if err != nil {
+			return fmt.Errorf("--memory is invalid")
+		}
+	}
+
 	return s.checkServiceExists()
 }
 
@@ -481,8 +505,15 @@ func (s *ServingArgsBuilder) disabledNvidiaENVWithNoneGPURequest() error {
 	if s.args.Envs == nil {
 		s.args.Envs = map[string]string{}
 	}
-	if s.args.GPUCount == 0 && s.args.GPUMemory == 0 {
+	if s.args.GPUCount == 0 && s.args.GPUMemory == 0 && s.args.GPUCore == 0 {
 		s.args.Envs["NVIDIA_VISIBLE_DEVICES"] = "void"
+	}
+	return nil
+}
+
+func (s *ServingArgsBuilder) checkGPUCore() error {
+	if s.args.GPUCore%5 != 0 {
+		return fmt.Errorf("GPUCore should be the multiple of 5")
 	}
 	return nil
 }

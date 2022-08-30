@@ -24,12 +24,20 @@ class TensorflowJobBuilder(JobBuilder):
         self._options.append(StringField("--worker-memory",memory))
         return self
 
+    def witch_worker_memory_limit(self,memory: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--worker-memory-limit",memory))
+        return self
+
     def witch_worker_image(self,image: str) -> TensorflowJobBuilder:
         self._options.append(StringField("--worker-image",image))
         return self
 
     def witch_worker_cpu(self,cpu: str) -> TensorflowJobBuilder:
         self._options.append(StringField("--worker-cpu",cpu))
+        return self
+
+    def witch_worker_cpu_limit(self,cpu: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--worker-cpu-limit",cpu))
         return self
 
     def witch_ps_selectors(self,selectors: Dict[str,str]) -> TensorflowJobBuilder:
@@ -44,12 +52,20 @@ class TensorflowJobBuilder(JobBuilder):
         self._options.append(StringField("--ps-memory",memory))
         return self
 
+    def witch_worker_memory_limit(self,memory: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--worker-memory-limit",memory))
+        return self
+
     def witch_ps_image(self,image: str) -> TensorflowJobBuilder:
         self._options.append(StringField("--ps-image",image))
         return self
 
     def witch_ps_cpu(self,cpu: str) -> TensorflowJobBuilder:
         self._options.append(StringField("--ps-cpu",cpu))
+        return self
+
+    def witch_ps_cpu_limit(self,cpu: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--ps-cpu-limit",cpu))
         return self
 
     def witch_ps_count(self,count: int) -> TensorflowJobBuilder:
@@ -64,8 +80,16 @@ class TensorflowJobBuilder(JobBuilder):
         self._options.append(StringField("--evaluator-memory",memory))
         return self
 
+    def witch_evaluator_memory_liit(self,memory: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--evaluator-memory-limit",memory))
+        return self
+
     def witch_evaluator_cpu(self,cpu: str) -> TensorflowJobBuilder:
         self._options.append(StringField("--evaluator-cpu",cpu))
+        return self
+
+    def witch_evaluator_cpu_limit(self,cpu: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--evaluator-cpu-limit",cpu))
         return self
 
     def witch_enable_evaluator(self) -> TensorflowJobBuilder:
@@ -84,10 +108,18 @@ class TensorflowJobBuilder(JobBuilder):
         self._options.append(StringField("--chief-memory",memory))
         return self 
 
+    def with_chief_memory_limit(self,memory: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--chief-memory-limit",memory))
+        return self 
+
     def with_chief_cpu(self,cpu: str) -> TensorflowJobBuilder:
         self._options.append(StringField("--chief-cpu",cpu))
         return self 
-    
+
+    def with_chief_cpu_limit(self,cpu: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--chief-cpu-limit",cpu))
+        return self
+
     def with_enable_chief(self) -> TensorflowJobBuilder:
         self._options.append(BoolField("--chief"))
         return self
@@ -99,7 +131,7 @@ class TensorflowJobBuilder(JobBuilder):
     def with_memory(self,memory: str) -> TensorflowJobBuilder:
         self._options.append(StringField("--memory",memory))
         return self
-    
+
     def with_name(self,name: str) -> TensorflowJobBuilder:
         super().with_name(name)
         return self 

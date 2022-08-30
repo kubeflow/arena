@@ -97,6 +97,14 @@ func (m *ModelProfileJobBuilder) GPUMemory(memory int) *ModelProfileJobBuilder {
 	return m
 }
 
+// GPUCore is used to set gpu core for the job,match the option --gpucore
+func (m *ModelProfileJobBuilder) GPUCore(core int) *ModelProfileJobBuilder {
+	if core > 0 {
+		m.args.GPUCore = core
+	}
+	return m
+}
+
 // CPU assign cpu limits,match the option --cpu
 func (m *ModelProfileJobBuilder) CPU(cpu string) *ModelProfileJobBuilder {
 	if cpu != "" {

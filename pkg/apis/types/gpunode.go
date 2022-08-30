@@ -83,23 +83,29 @@ type GPUShareNodeInfo struct {
 	PodInfos           []GPUSharePodInfo    `json:"instances" yaml:"instances"`
 	TotalGPUMemory     float64              `json:"totalGPUMemory" yaml:"totalGPUMemory"`
 	AllocatedGPUMemory float64              `json:"allocatedGPUMemory" yaml:"allocatedGPUMemory"`
+	TotalGPUCore       int64                `json:"totalGPUCore" yaml:"totalGPUCore"`
+	AllocatedGPUCore   int64                `json:"allocatedGPUCore" yaml:"allocatedGPUCore"`
 	Devices            []GPUShareNodeDevice `json:"devices" yaml:"devices"`
 	CommonGPUNodeInfo  `yaml:",inline" json:",inline"`
 	CommonNodeInfo     `yaml:",inline" json:",inline"`
 }
 
 type GPUSharePodInfo struct {
-	Name          string         `json:"name" yaml:"name"`
-	Namespace     string         `json:"namespace" yaml:"namespace"`
-	Status        string         `json:"status" yaml:"status"`
-	RequestMemory int            `json:"requestGPUMemory" yaml:"requestGPUMemory"`
-	Allocation    map[string]int `json:"allocation" yaml:"allocation"`
+	Name                string         `json:"name" yaml:"name"`
+	Namespace           string         `json:"namespace" yaml:"namespace"`
+	Status              string         `json:"status" yaml:"status"`
+	RequestMemory       int            `json:"requestGPUMemory" yaml:"requestGPUMemory"`
+	RequestCore         int            `json:"requestGPUCore" yaml:"requestGPUCore"`
+	GPUMemoryAllocation map[string]int `json:"gpuMemoryAllocation" yaml:"gpuMemoryAllocation"`
+	GPUCoreAllocation   map[string]int `json:"gpuCoreAllocation" yaml:"gpuCoreAllocation"`
 }
 
 type GPUShareNodeDevice struct {
 	Id                 string  `json:"id" yaml:"id"`
 	TotalGPUMemory     float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`
 	AllocatedGPUMemory float64 `json:"allocatedGPUMemory" yaml:"allocatedGPUMemory"`
+	TotalGPUCore       int64   `json:"totalGPUCore" yaml:"totalGPUCore"`
+	AllocatedGPUCore   int64   `json:"allocatedGPUCore" yaml:"allocatedGPUCore"`
 }
 
 type GPUExclusiveNodeInfo struct {

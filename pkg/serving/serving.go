@@ -24,6 +24,7 @@ const (
 	GPU_RESOURCE_NAME         = "nvidia.com/gpu"
 	ALIYUN_GPU_RESOURCE_NAME  = "aliyun.com/gpu"
 	GPU_MEM_RESOURCE_NAME     = "aliyun.com/gpu-mem"
+	GPU_CORE_RESOURCE_NAME    = "aliyun.com/gpu-core.percentage"
 	servingNameLabelKey       = "servingName"
 	servingTypeLabelKey       = "servingType"
 	servingVersionLabelKey    = "servingVersion"
@@ -250,6 +251,17 @@ func (s *servingJob) RequestGPUMemory() int {
 	return int(replicas * int32(podGPUMemory))
 }
 
+func (s *servingJob) RequestGPUCore() int {
+	replicas := *s.deployment.Spec.Replicas
+	podGPUCore := 0
+	for _, c := range s.deployment.Spec.Template.Spec.Containers {
+		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUCoreShareResourceName)]; ok {
+			podGPUCore += int(val.Value())
+		}
+	}
+	return int(replicas * int32(podGPUCore))
+}
+
 func (s *servingJob) AvailableInstances() int {
 	return int(s.deployment.Status.AvailableReplicas)
 }
@@ -264,6 +276,7 @@ func (s *servingJob) Instances() []types.ServingInstance {
 		status, totalContainers, restart, readyContainer := utils.DefinePodPhaseStatus(*pod)
 		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
+		gpuCore := utils.GPUCoreCountInPod(pod)
 		gpus := getPodGPUs(pod, gpuMemory, index)
 		instances = append(instances, types.ServingInstance{
 			Name:              pod.Name,
@@ -277,6 +290,7 @@ func (s *servingJob) Instances() []types.ServingInstance {
 			RestartCount:      restart,
 			RequestGPUs:       gpus,
 			RequestGPUMemory:  gpuMemory,
+			RequestGPUCore:    gpuCore,
 			CreationTimestamp: pod.CreationTimestamp.Unix(),
 		})
 	}
@@ -298,6 +312,7 @@ func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 		RequestCPUs:       s.RequestCPUs(),
 		RequestGPUs:       s.RequestGPUs(),
 		RequestGPUMemory:  s.RequestGPUMemory(),
+		RequestGPUCore:    s.RequestGPUCore(),
 		Endpoints:         s.Endpoints(),
 		Instances:         s.Instances(),
 		CreationTimestamp: s.StartTime().Unix(),
@@ -511,6 +526,21 @@ func getNodeGPUMemory(nodeName string) float64 {
 	}
 	return totalGPUMemory / totalGPUs
 }
+
+//
+//func getNodeGPUCore(nodeName string) int64 {
+//	node, err := k8saccesser.GetK8sResourceAccesser().GetNode(nodeName)
+//	if err != nil {
+//		log.Debugf("failed to get node gpu core,reason: %v", err)
+//		return int64(0)
+//	}
+//	totalGPUs := getResourceOfGPUShareNode(node, types.GPUShareCountName)
+//	totalGPUCores := getResourceOfGPUShareNode(node, types.GPUCoreShareResourceName)
+//	if totalGPUs == 0 {
+//		return int64(0)
+//	}
+//	return totalGPUCores / totalGPUs
+//}
 
 func getResourceOfGPUShareNode(node *v1.Node, resourceName string) float64 {
 	val, ok := node.Status.Capacity[v1.ResourceName(resourceName)]
