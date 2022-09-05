@@ -17,6 +17,7 @@ arena serve tensorflow [flags]
       --command string             the command will inject to container's command.
       --cpu string                 the request cpu of each replica to run the serve.
   -d, --data stringArray           specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>
+      --data-subpath-expr stringArray  specify the datasource subpath to mount to the job by expression, like <name_of_datasource>:<mount_subpath_expr>
       --data-dir stringArray       specify the trained models datasource on host to mount for serving, like <host_path>:<mount_point_on_job>
       --enable-istio               enable Istio for serving or not (disable Istio by default)
   -e, --env stringArray            the environment variables
@@ -34,8 +35,8 @@ arena serve tensorflow [flags]
       --port int                   the port of tensorflow gRPC listening port (default 8500)
       --replicas int               the replicas number of the serve job. (default 1)
       --restfulPort int            the port of tensorflow RESTful listening port (default 8501)
-      --selector stringArray       assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" 
-      --toleration stringArray     tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" 
+      --selector stringArray       assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value"
+      --toleration stringArray     tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all"
       --version string             the serving version
       --version-policy string      support latest, latest:N, specific:N, all
 ```

@@ -108,6 +108,11 @@ public class TritonServingJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TritonServingJobBuilder dataSubpathExprs(Map<String, String> exprs) {
+        super.dataSubpathExprs(exprs);
+        return this;
+    }
+
     public TritonServingJobBuilder dataDirs(Map<String, String> dataDirs) {
         super.dataDirs(dataDirs);
         return  this;

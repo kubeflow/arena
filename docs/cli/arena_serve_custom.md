@@ -16,6 +16,7 @@ arena serve custom [flags]
   -a, --annotation stringArray     the annotations
       --cpu string                 the request cpu of each replica to run the serve.
   -d, --data stringArray           specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>
+      --data-subpath-expr stringArray  specify the datasource subpath to mount to the job by expression, like <name_of_datasource>:<mount_subpath_expr>
       --data-dir stringArray       specify the trained models datasource on host to mount for serving, like <host_path>:<mount_point_on_job>
       --enable-istio               enable Istio for serving or not (disable Istio by default)
   -e, --env stringArray            the environment variables
@@ -30,8 +31,8 @@ arena serve custom [flags]
       --port int                   the port of gRPC listening port,default is 0 represents that don't create service listening on this port
       --replicas int               the replicas number of the serve job. (default 1)
       --restful-port int           the port of RESTful listening port,default is 0 represents that don't create service listening on this port
-      --selector stringArray       assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" 
-      --toleration stringArray     tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" 
+      --selector stringArray       assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value"
+      --toleration stringArray     tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all"
       --version string             the serving version
 ```
 

@@ -16,7 +16,6 @@ package argsbuilder
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"os"
 	"path"
 	"path/filepath"
@@ -24,6 +23,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -74,14 +75,15 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 	var (
-		envs        []string
-		dataset     []string
-		datadir     []string
-		annotations []string
-		tolerations []string
-		labels      []string
-		selectors   []string
-		configFiles []string
+		envs            []string
+		dataset         []string
+		datadir         []string
+		dataSubpathExpr []string
+		annotations     []string
+		tolerations     []string
+		labels          []string
+		selectors       []string
+		configFiles     []string
 	)
 	defaultImage := ""
 	item, ok := s.argValues["default-image"]
@@ -119,6 +121,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Version, "version", "", "the serving version")
 
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")
+	command.Flags().StringArrayVarP(&dataSubpathExpr, "data-subpath-expr", "", []string{}, "specify the datasource subpath to mount to the job by expression, like <name_of_datasource>:<mount_subpath_expr>")
 	command.Flags().StringArrayVarP(&datadir, "data-dir", "", []string{}, "specify the trained models datasource on host to mount for serving, like <host_path>:<mount_point_on_job>")
 	command.MarkFlagRequired("name")
 
@@ -138,6 +141,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("label", &labels).
 		AddArgValue("selector", &selectors).
 		AddArgValue("data", &dataset).
+		AddArgValue("data-subpath-expr", &dataSubpathExpr).
 		AddArgValue("data-dir", &datadir).
 		AddArgValue("env", &envs).
 		AddArgValue("config-file", &configFiles)
@@ -156,6 +160,9 @@ func (s *ServingArgsBuilder) PreBuild() error {
 		return err
 	}
 	if err := s.setDataSet(); err != nil {
+		return err
+	}
+	if err := s.setDataSubpathExprs(); err != nil {
 		return err
 	}
 	if err := s.setDataDirs(); err != nil {
@@ -250,6 +257,24 @@ func (s *ServingArgsBuilder) setDataSet() error {
 		return err
 	}
 	s.args.ModelDirs = transformSliceToMap(*dataSet, ":")
+	return nil
+}
+
+// setDataSets is used to handle option --data-subpath-expr
+func (s *ServingArgsBuilder) setDataSubpathExprs() error {
+	s.args.DataSubpathExprs = map[string]string{}
+	argKey := "data-subpath-expr"
+	var dataSubPathExprs *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	dataSubPathExprs = value.(*[]string)
+	log.Debugf("dataset: %v", *dataSubPathExprs)
+	if len(*dataSubPathExprs) <= 0 {
+		return nil
+	}
+	s.args.DataSubpathExprs = transformSliceToMap(*dataSubPathExprs, ":")
 	return nil
 }
 

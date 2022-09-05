@@ -98,6 +98,11 @@ public class CustomServingJobBuilder extends JobBuilder {
         return this;
     }
 
+    public CustomServingJobBuilder dataSubpathExprs(Map<String, String> exprs) {
+        super.dataSubpathExprs(exprs);
+        return this;
+    }
+
     public CustomServingJobBuilder dataDirs(Map<String, String> dataDirs) {
         super.dataDirs(dataDirs);
         return  this;

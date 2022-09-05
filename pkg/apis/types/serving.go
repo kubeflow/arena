@@ -138,29 +138,31 @@ type ServingInstance struct {
 }
 
 type CommonServingArgs struct {
-	Name            string            `yaml:"servingName"`
-	Version         string            `yaml:"servingVersion"`
-	Namespace       string            `yaml:"-"`
-	Type            ServingJobType    `yaml:"-"`
-	Image           string            `yaml:"image"`
-	ImagePullPolicy string            `yaml:"imagePullPolicy"` // --imagePullPolicy
-	GPUCount        int               `yaml:"gpuCount"`        // --gpus
-	GPUMemory       int               `yaml:"gpuMemory"`       // --gpumemory
-	GPUCore         int               `yaml:"gpuCore"`         // --gpucore
-	Cpu             string            `yaml:"cpu"`             // --cpu
-	Memory          string            `yaml:"memory"`          // --memory
-	Envs            map[string]string `yaml:"envs"`            // --envs
-	Shell           string            `yaml:"shell"`           // --shell
-	Command         string            `yaml:"command"`         // --command
-	Replicas        int               `yaml:"replicas"`        // --replicas
-	EnableIstio     bool              `yaml:"enableIstio"`     // --enableIstio
-	ExposeService   bool              `yaml:"exposeService"`   // --exposeService
-	ModelDirs       map[string]string `yaml:"modelDirs"`
-	HostVolumes     []DataDirVolume   `yaml:"hostVolumes"`   // --data-dir
-	NodeSelectors   map[string]string `yaml:"nodeSelectors"` // --selector
-	Tolerations     []string          `yaml:"tolerations"`   // --toleration
-	Annotations     map[string]string `yaml:"annotations"`
-	Labels          map[string]string `yaml:"labels"` // --label
+	Name             string            `yaml:"servingName"`
+	Version          string            `yaml:"servingVersion"`
+	Namespace        string            `yaml:"-"`
+	Type             ServingJobType    `yaml:"-"`
+	Image            string            `yaml:"image"`
+	ImagePullPolicy  string            `yaml:"imagePullPolicy"`  // --imagePullPolicy
+	GPUCount         int               `yaml:"gpuCount"`         // --gpus
+	GPUMemory        int               `yaml:"gpuMemory"`        // --gpumemory
+	GPUCore          int               `yaml:"gpuCore"`          // --gpucore
+	Cpu              string            `yaml:"cpu"`              // --cpu
+	Memory           string            `yaml:"memory"`           // --memory
+	Envs             map[string]string `yaml:"envs"`             // --envs
+	Shell            string            `yaml:"shell"`            // --shell
+	Command          string            `yaml:"command"`          // --command
+	Replicas         int               `yaml:"replicas"`         // --replicas
+	EnableIstio      bool              `yaml:"enableIstio"`      // --enableIstio
+	ExposeService    bool              `yaml:"exposeService"`    // --exposeService
+	ModelDirs        map[string]string `yaml:"modelDirs"`        // --data
+	DataSubpathExprs map[string]string `yaml:"dataSubPathExprs"` // --data-subpath-expr
+
+	HostVolumes   []DataDirVolume   `yaml:"hostVolumes"`   // --data-dir
+	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
+	Tolerations   []string          `yaml:"tolerations"`   // --toleration
+	Annotations   map[string]string `yaml:"annotations"`
+	Labels        map[string]string `yaml:"labels"` // --label
 	// ConfigFiles stores the config file which is existed in client host node
 	// and map it to container,match option --config-file
 	ConfigFiles map[string]map[string]ConfigFileInfo `yaml:"configFiles"`

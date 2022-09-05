@@ -209,6 +209,18 @@ func (b *CustomServingJobBuilder) Datas(volumes map[string]string) *CustomServin
 	return b
 }
 
+// DataSubPathExprs is used to mount k8s pvc subpath to job pods,match option data-subpath-expr
+func (b *CustomServingJobBuilder) DataSubPathExprs(exprs map[string]string) *CustomServingJobBuilder {
+	if exprs != nil && len(exprs) != 0 {
+		s := []string{}
+		for key, value := range exprs {
+			s = append(s, fmt.Sprintf("%v:%v", key, value))
+		}
+		b.argValues["data-subpath-expr"] = &s
+	}
+	return b
+}
+
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *CustomServingJobBuilder) DataDirs(volumes map[string]string) *CustomServingJobBuilder {
 	if volumes != nil && len(volumes) != 0 {
