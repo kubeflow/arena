@@ -30,3 +30,5 @@ allowMetrics: true
 #  triton-pvc: /mnt/models
 #
 #modelRepository: /mnt/models/ai/triton/model_repository
+dataSubPathExprs:
+ workdir1: $(POD_NAME)

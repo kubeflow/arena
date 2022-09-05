@@ -118,6 +118,11 @@ public class TensorflowServingJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TensorflowServingJobBuilder dataSubpathExprs(Map<String, String> exprs) {
+        super.dataSubpathExprs(exprs);
+        return this;
+    }
+
     public TensorflowServingJobBuilder dataDirs(Map<String, String> dataDirs) {
         super.dataDirs(dataDirs);
         return  this;

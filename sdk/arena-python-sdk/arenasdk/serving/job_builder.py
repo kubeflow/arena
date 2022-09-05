@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import annotations
-import abc 
+import abc
 from arenasdk.exceptions.arena_exception import ArenaException
 from arenasdk.fields.fields import *
 from arenasdk.enums.types import ArenaErrorType
@@ -11,7 +11,7 @@ from typing import Dict
 
 def process_items(items: List[str]):
     for item in items:
-        print(item) 
+        print(item)
 
 class JobBuilder(metaclass=abc.ABCMeta):
     def __init__(self,job_type: ServingJobType):
@@ -20,7 +20,7 @@ class JobBuilder(metaclass=abc.ABCMeta):
         self._version = ""
         self._options: List[Field] = list()
         self._command = ""
-        
+
     def build(self) -> ServingJob:
         args = list()
         try:
@@ -32,28 +32,28 @@ class JobBuilder(metaclass=abc.ABCMeta):
                     args.append(opt)
             return ServingJob(self._job_name,self._job_type,self._version,args,self._command)
         except ArenaException as e:
-            raise e 
-    
+            raise e
+
     def with_name(self,name: str) -> JobBuilder:
         self._job_name = name
         self._options.append(StringField("--name",name))
-        return self 
+        return self
 
     def with_image(self,image: str) -> JobBuilder:
         self._options.append(StringField("--image",image))
-        return self 
+        return self
 
     def with_version(self,version: str) -> JobBuilder:
         self._options.append(StringField("--version",version))
-        return self 
+        return self
 
     def with_cpu(self,cpu: str) -> JobBuilder:
         self._options.append(StringField("--cpu",cpu))
-        return self 
+        return self
 
     def with_memory(self,memory: str) -> JobBuilder:
         self._options.append(StringField("--memory",memory))
-        return self 
+        return self
 
     def with_replicas(self,count: int) -> JobBuilder:
         self._options.append(StringField("--replicas",str(count)))
@@ -62,11 +62,11 @@ class JobBuilder(metaclass=abc.ABCMeta):
     def with_image_pull_policy(self,policy: List[str]) -> JobBuilder:
         self._options.append(StringListField("--image-pull-policy",policy))
         return self
-    
+
     def with_gpus(self,count: int) -> JobBuilder:
         self._options.append(StringField("--gpus",str(count)))
         return self
-    
+
     def with_gpu_memory(self,count: int) -> JobBuilder:
         self._options.append(StringField("--gpumemory",str(count)))
         return self
@@ -82,15 +82,19 @@ class JobBuilder(metaclass=abc.ABCMeta):
     def with_tolerations(self,tolerations: List[str]) -> JobBuilder:
         self._options.append(StringListField("--toleration",tolerations))
         return self
-    
+
     def with_annotations(self,annotions: Dict[str, str]) -> JobBuilder:
         self._options.append(StringMapField("--annotation",annotions,"="))
         return self
 
     def with_datas(self,datas: Dict[str,str]) -> JobBuilder:
         self._options.append(StringMapField("--data",datas,":"))
-        return self 
-    
+        return self
+
+    def with_data_subpath_exprs(self,exprs: Dict[str,str]) -> JobBuilder:
+        self._options.append(StringMapField("--data-subpath-expr",exprs,":"))
+        return self
+
     def with_data_dirs(self,data_dirs: Dict[str, str]) -> JobBuilder:
         self._options.append(StringMapField("--data-dir",data_dirs,":"))
         return  self

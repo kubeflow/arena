@@ -107,6 +107,11 @@ public abstract class JobBuilder {
         return this;
     }
 
+    public JobBuilder dataSubpathExprs(Map<String, String> exprs) {
+        this.options.add(new StringMapField("--data-subpath-expr", exprs, ":"));
+        return this;
+    }
+
     public JobBuilder dataDirs(Map<String, String> dataDirs) {
         this.options.add(new StringMapField("--data-dir", dataDirs, ":"));
         return this;

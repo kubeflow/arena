@@ -5,7 +5,7 @@
 serviceType: ClusterIP
 
 ## serving name and version
-# servingName: 
+# servingName:
 # servingVersion:
 
 ## expose the service to the grpc client
@@ -24,3 +24,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+dataSubPathExprs:
+  a: b

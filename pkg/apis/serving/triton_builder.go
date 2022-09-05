@@ -214,6 +214,18 @@ func (b *TritonServingJobBuilder) Datas(volumes map[string]string) *TritonServin
 	return b
 }
 
+// DataSubPathExprs is used to mount k8s pvc subpath to job pods,match option data-subpath-expr
+func (b *TritonServingJobBuilder) DataSubPathExprs(exprs map[string]string) *TritonServingJobBuilder {
+	if exprs != nil && len(exprs) != 0 {
+		s := []string{}
+		for key, value := range exprs {
+			s = append(s, fmt.Sprintf("%v:%v", key, value))
+		}
+		b.argValues["data-subpath-expr"] = &s
+	}
+	return b
+}
+
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *TritonServingJobBuilder) DataDirs(volumes map[string]string) *TritonServingJobBuilder {
 	if volumes != nil && len(volumes) != 0 {

@@ -11,32 +11,32 @@ class CustomServingJobBuilder(JobBuilder):
     def with_restful_port(self,port: int) -> CustomServingJobBuilder:
         self._options.append(StringField("--restful-port",str(port)))
         return self
-    
+
     def with_port(self,port: int) -> CustomServingJobBuilder:
         self._options.append(StringField("--port",str(port)))
         return self
 
-    #         
+    #
     def with_name(self,name: str) -> CustomServingJobBuilder:
         self._job_name = name
         super().with_name(name)
-        return self 
+        return self
 
     def with_image(self,image: str) -> CustomServingJobBuilder:
         super().with_image(image)
-        return self 
+        return self
 
     def with_version(self,version: str) -> CustomServingJobBuilder:
         super().with_version(version)
-        return self 
+        return self
 
     def with_cpu(self,cpu: str) -> CustomServingJobBuilder:
         super().with_cpu(cpu)
-        return self 
+        return self
 
     def with_memory(self,memory: str) -> CustomServingJobBuilder:
         super().with_memory(memory)
-        return self 
+        return self
 
     def with_replicas(self,count: int) -> CustomServingJobBuilder:
         super().with_replicas(count)
@@ -45,11 +45,11 @@ class CustomServingJobBuilder(JobBuilder):
     def with_image_pull_policy(self,policy: List[str]) -> CustomServingJobBuilder:
         super().with_image_pull_policy(policy)
         return self
-    
+
     def with_gpus(self,count: int) -> CustomServingJobBuilder:
         super().with_gpus(count)
         return self
-    
+
     def with_gpu_memory(self,count: int) -> CustomServingJobBuilder:
         super().with_gpu_memory(count)
         return self
@@ -65,15 +65,19 @@ class CustomServingJobBuilder(JobBuilder):
     def with_tolerations(self,tolerations: List[str]) -> CustomServingJobBuilder:
         super().with_tolerations(tolerations)
         return self
-    
+
     def with_annotations(self,annotions: Dict[str, str]) -> CustomServingJobBuilder:
         super().with_annotations(annotions)
         return self
 
     def with_datas(self,datas: Dict[str,str]) -> CustomServingJobBuilder:
         super().with_datas(datas)
-        return self 
-    
+        return self
+
+    def with_data_subpath_exprs(self,exprs: Dict[str,str]) -> CustomServingJobBuilder:
+        super().with_data_subpath_exprs(exprs)
+        return self
+
     def with_data_dirs(self,data_dirs: Dict[str, str]) -> CustomServingJobBuilder:
         super().with_data_dirs(data_dirs)
         return  self
