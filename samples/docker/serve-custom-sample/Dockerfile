@@ -1,5 +1,5 @@
 FROM happy365/fast-style-transfer-build as builder
-FROM tensorflow/tensorflow:1.5.0-gpu
+FROM tensorflow/tensorflow:2.10.0-gpu
 RUN mv /etc/apt/sources.list.d /etc/apt/sources.list.d.bak && \
 	apt-get update
 RUN apt-get install apt-transport-https -y && \
