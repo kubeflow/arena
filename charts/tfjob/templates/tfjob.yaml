@@ -43,6 +43,7 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "TFJob"
+            role: "ps"
           {{- if .Values.podGroupName }}
             pod-group.scheduling.sigs.k8s.io/name: {{ .Values.podGroupName }}
             pod-group.scheduling.sigs.k8s.io/min-available: "{{ .Values.podGroupMinAvailable }}"
@@ -108,15 +109,30 @@ spec:
                         operator: In
                         values:
                           - worker
-              - weight: 30
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
                 podAffinityTerm:
                   topologyKey: kubernetes.io/hostname
                   labelSelector:
                     matchExpressions:
-                      - key: tf-replica-type
+                      - key: role
                         operator: In
                         values:
-                          - ps      
+                          - ps
+          {{- else }}
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    topologyKey: kubernetes.io/hostname
+                    labelSelector:
+                      matchExpressions:
+                        - key: role
+                          operator: In
+                          values:
+                            - ps
           {{- end }}
           {{- if .Values.useHostNetwork }}
           {{- if not .Values.useENI }}
