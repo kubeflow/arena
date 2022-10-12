@@ -30,7 +30,7 @@ const (
 	servingVersionLabelKey    = "servingVersion"
 	istioNamespace            = "istio-system"
 	grpcServingPortName       = "grpc-serving"
-	restfulServingPortName    = "restful-serving"
+	restfulServingPortName    = "http-serving"
 	istioGatewayHTTPPortName  = "http2"
 	istioGatewayHTTPsPortName = "https"
 )

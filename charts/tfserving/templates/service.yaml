@@ -24,7 +24,7 @@ spec:
     - name: grpc-serving
       port: {{ .Values.port }}
       targetPort: {{ .Values.port }}
-    - name: restful-serving
+    - name: http-serving
       port: {{ .Values.restApiPort }}
       targetPort: {{ .Values.restApiPort }}
   selector:

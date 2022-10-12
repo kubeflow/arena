@@ -16,14 +16,14 @@ metadata:
 spec:
   type: {{ .Values.serviceType }}
   ports:
-    - name: restful-serving
+    - name: http-serving
       port: {{ .Values.httpPort }}
       targetPort: {{ .Values.httpPort }}
     - name: grpc-serving
       port: {{ .Values.grpcPort }}
       targetPort: {{ .Values.grpcPort }}
     {{- if .Values.allowMetrics }}
-    - name: metrics
+    - name: http-metrics
       port: {{ .Values.metricsPort }}
       targetPort: {{ .Values.metricsPort }}
     {{- end }}
