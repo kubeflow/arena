@@ -28,7 +28,7 @@ spec:
       targetPort: {{ .Values.restApiPort }}
     {{- end }}
     {{- if ne (int .Values.metricsPort) 0 }}
-    - name: metrics
+    - name: http-metrics
       port: {{ .Values.metricsPort }}
       targetPort: {{ .Values.metricsPort }}
     {{- end }}
