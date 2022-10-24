@@ -28,8 +28,8 @@ binary:
 # tf-operator
 tf:
   enabled: true
-  image: kube-ai/tf_operator
-  tag: v1.0-aliyun-fef8fc8
+  image: acs/tf_operator
+  tag: v1.0-aliyun-84c8c66
   imagePullPolicy: IfNotPresent
   resources: 
     limits:
@@ -39,12 +39,11 @@ tf:
       cpu: 100m
       memory: 256Mi
   nodeSelector: {}
-
 # tf-dashboard
 tfdashboard:
   enabled: true
-  image: kube-ai/tf_operator
-  tag: v1.0.0-rc.0-d746bde
+  image: acs/tf_operator
+  tag: v1.0-aliyun-84c8c66
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -58,11 +57,11 @@ tfdashboard:
 # mpi-operator
 mpi:
   enabled: true
-  image: kube-ai/mpi-operator
-  tag: v20220125-05bf745
+  image: acs/mpi-operator
+  tag: v0.1.0-aliyun-cc4b2b5
   kubectlDelivery:
-    image: kube-ai/kubectl-delivery
-    tag: latest
+    image: acs/kubectl-delivery
+    tag: v0.1.0
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -76,8 +75,8 @@ mpi:
 # pytorch-operator
 pytorch:
   enabled: true
-  image: kube-ai/pytorch-operator
-  tag: ad27324d
+  image: acs/pytorch-operator
+  tag: v0.1.0-aliyun-352f8c9
   imagePullPolicy: IfNotPresent
   resources: 
     limits:
@@ -91,8 +90,8 @@ pytorch:
 # et-operator
 et:
   enabled: true
-  image: kube-ai/et-controller
-  tag: "1499985"
+  image: acs/et-operator
+  tag: v0.1.0-aliyun-1499985
   imagePullPolicy: IfNotPresent
   resources: 
     limits:
@@ -106,7 +105,7 @@ et:
 # cron-operator
 cron:
   enabled: true
-  image: kube-ai/cron-operator
+  image: acs/cron-operator
   tag: v0.1.1
   imagePullPolicy: IfNotPresent
   resources:

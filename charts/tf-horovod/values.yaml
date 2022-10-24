@@ -42,7 +42,7 @@ jobmon:
 
 ingress: false
 
-syncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
+syncImage: registry.cn-zhangjiakou.aliyuncs.com/acs/rsync:v3.1.0-aliyun
 # imagePullPolicy: Always
 
 # enable RDMA support

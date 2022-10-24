@@ -41,9 +41,9 @@ tfjob:
   evaluatorAnnotations: {}
 
   # rsync image
-  rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
+  rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/acs/rsync:v3.1.0-aliyun
   # git sync image
-  gitImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/git-sync:v3.3.5
+  gitImage: registry.cn-zhangjiakou.aliyuncs.com/acs/git-sync:v3.3.5
 
   imagePullPolicy: Always
 
