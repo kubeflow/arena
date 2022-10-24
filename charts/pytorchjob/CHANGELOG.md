@@ -25,3 +25,7 @@
 ### 0.3.0
 
 * change restartPolicy to OnFailure
+
+### 0.4.0
+
+* change image repo from kube-ai to acs

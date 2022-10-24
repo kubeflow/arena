@@ -113,3 +113,7 @@
 ### 0.27.0
 
 * add --shell to specify sh or bash
+
+### 0.28.0
+
+* change image repo from kube-ai to acs

@@ -8,15 +8,15 @@ useHostIPC: true
 gpuCount: 0 # user define
 
 # rsync image
-rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
+rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/acs/rsync:v3.1.0-aliyun
 # git sync image
-gitImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/git-sync:v3.3.5
+gitImage: registry.cn-zhangjiakou.aliyuncs.com/acs/git-sync:v3.3.5
 
 shmSize: 2Gi
 privileged: false
 
 useTensorboard: false
-tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/tensorflow:1.5.0-devel
+tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/acs/tensorflow:1.5.0-devel
 tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
 

@@ -22,7 +22,7 @@ workingDir: /root
 # syncMode: rsync
 # syncSource: 10.77.29.68::backup/data/logoRecoTrain.zip
 
-syncImage: registry.cn-zhangjiakou.aliyuncs.com/kube-ai/rsync
+syncImage: registry.cn-zhangjiakou.aliyuncs.com/acs/rsync:v3.1.0-aliyun
 # imagePullPolicy: Always
 
 

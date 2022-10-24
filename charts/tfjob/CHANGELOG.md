@@ -156,3 +156,7 @@
 ### 0.36.0
 
 * add resource limit to pod
+
+### 0.37.0
+
+* change image repo from kube-ai to acs

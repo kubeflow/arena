@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	DefaultTRTServingImage = "registry.cn-beijing.aliyuncs.com/kube-ai/tensorrt-serving:18.12-py3"
+	DefaultTRTServingImage = "registry.cn-beijing.aliyuncs.com/acs/tensorrt-serving:18.12-py3"
 )
 
 type TensorRTServingArgsBuilder struct {
