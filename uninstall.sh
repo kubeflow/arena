@@ -1,19 +1,26 @@
 #!/bin/bash
-set -e
+set -xe
 
 function help() {
     echo -e "
 Usage:
 
-    install.sh [OPTION1] [OPTION2] ...
+    arena-uninstall [OPTION1] [OPTION2] ...
 
 Options:
-    --kubeconfig string              Specify the kubeconfig file
+	--kubeconfig string              Specify the kubeconfig file
+	--namespace  string              Specify the namespace to delete arena
 	--delete-binary                  Clean the client env,include ~/charts and /usr/local/bin/arena
 	--delete-crds	                 Delete the CRDs,Warning: this option will delete the training jobs
 	--chart-dir                      Specify the chart dir
 "
 
+}
+
+function logger() {
+    timestr=$(date +"%Y-%m-%d/%H:%M:%S")
+    level=$(echo $1 | tr 'a-z' 'A-Z')
+    echo ${timestr}"  "${level}"  "$2
 }
 
 function run() {
@@ -29,12 +36,12 @@ function run() {
 
 function delete() {
 	set +e 
-	if arena-helm list -n arena-system | grep arena-artifacts &> /dev/null;then
-		arena-helm delete arena-artifacts -n arena-system
+	if arena-helm list -n $ARENA_NAMESPACE | grep arena-artifacts &> /dev/null;then
+		arena-helm delete arena-artifacts -n $ARENA_NAMESPACE
 	fi
-	arena-helm template arena-artifacts -n arena-system $ARTIFACTS_DIR > /tmp/arena-artifacts.yaml
+	arena-helm template arena-artifacts -n $ARENA_NAMESPACE $ARTIFACTS_DIR > /tmp/arena-artifacts.yaml
 	arena-kubectl delete -f /tmp/arena-artifacts.yaml
-	arena-kubectl delete ns arena-system
+	arena-kubectl delete ns $ARENA_NAMESPACE
 	set -e  
 }
 
@@ -81,10 +88,15 @@ function parse_args() {
         --delete-crds)
             export DELETE_CRDS="true"
         ;;
+        --namespace)
+			check_option_value "--namespace" $2
+            export ARENA_NAMESPACE=$2
+			shift
+        ;;
         --chart-dir)
 			check_option_value "--chart-dir" $2
             export CHART_DIR=$2
-			 shift
+			shift
         ;;
         --help|-h)
             help
@@ -111,6 +123,7 @@ function check_option_value() {
 }
 
 function main() {
+    export ARENA_NAMESPACE="arena-system"
 	parse_args $@
 	run 
 }

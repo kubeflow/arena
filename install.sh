@@ -185,12 +185,12 @@ function check_addons() {
         fi
     fi
     # if service account has been existed and it is managed by helm chart
-    if (arena-kubectl get serviceaccount --all-namespaces -l helm.sh/chart=arena-artifacts | grep $sa  2>1) &> /dev/null; then
+    if (arena-kubectl get serviceaccount --all-namespaces -l helm.sh/chart=arena-artifacts | grep " $sa "  2>1) &> /dev/null; then
         logger debug "service account $sa has been existed,and it is managed by helm,skip to reinstall $addon_name"
         return 
     fi    
     # if service account has been existed and it is not managed by helm chart
-    if arena-kubectl get serviceaccount --all-namespaces | grep $sa &> /dev/null; then
+    if arena-kubectl get serviceaccount --all-namespaces | grep " $sa " &> /dev/null; then
         logger debug "service account $sa has been existed,and it is not managed by helm,skip to reinstall $addon_name"
         export HELM_OPTIONS="$HELM_OPTIONS --set $option"
         return 
@@ -198,26 +198,30 @@ function check_addons() {
 }
 
 function apply_crds() {
+    export CRD_VERSION="v1"
+    if arena-kubectl get apiservices v1beta1.apiextensions.k8s.io &> /dev/null;then
+        export CRD_VERSION="v1beta1"
+    fi
     if [ -d $SCRIPT_DIR/arena-artifacts/crds ];then 
         rm -rf $SCRIPT_DIR/arena-artifacts/crds
     fi 
-    cp -a $SCRIPT_DIR/arena-artifacts/all_crds $SCRIPT_DIR/arena-artifacts/crds 
-    export REMOVED_CRD_VERSION="apiextensions.k8s.io/v1"
-    if arena-kubectl get apiservices v1beta1.apiextensions.k8s.io &> /dev/null;then
-        export REMOVED_CRD_VERSION="apiextensions.k8s.io/v1beta1"
-    fi
-    remove_unused_crds $SCRIPT_DIR/arena-artifacts/crds
+    cp -a $SCRIPT_DIR/arena-artifacts/all_crds/$CRD_VERSION $SCRIPT_DIR/arena-artifacts/crds 
 }
 
-function remove_unused_crds() {
+# annotate crds with annotation helm.sh/resource-policy=keep
+# fix bug that upgrade arena-artifacts but make crds missing
+function annotate_crds() {
     for file in $(ls $1);do
         local path=$1"/"$file
         if [ -d $path ];then
-            remove_unused_crds $path
+            annotate_crds $path
         else
-            if ! grep "^apiVersion: ${REMOVED_CRD_VERSION}\b" $path &> /dev/null;then
-                rm -rf $path
-            fi  
+            if ! grep "^kind: CustomResourceDefinition" $path &> /dev/null;then
+                continue
+            fi
+            if arena-kubectl  get -f $path &> /dev/null;then
+                arena-kubectl annotate -f $path --overwrite helm.sh/resource-policy=keep 
+            fi 
         fi
     done
 }
@@ -331,8 +335,9 @@ function deploy_with_helm() {
             return 
         fi 
         logger debug "arena-artifacts has been installed,start to upgrade it"
-        secret=$(arena-kubectl get secret -n arena-system  | grep "sh.*arena-artifacts" | awk '{print $1}')
-        arena-kubectl delete secret $secret
+        annotate_crds $SCRIPT_DIR/arena-artifacts/crds
+        arena-helm upgrade arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts 
+        return 
     fi  
     arena-helm install arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts 
 }
