@@ -29,7 +29,7 @@ binary:
 tf:
   enabled: true
   image: acs/tf_operator
-  tag: v1.0-aliyun-84c8c66
+  tag: v1.0-aliyun-05105a0
   imagePullPolicy: IfNotPresent
   resources: 
     limits:
@@ -76,7 +76,7 @@ mpi:
 pytorch:
   enabled: true
   image: acs/pytorch-operator
-  tag: v0.1.0-aliyun-352f8c9
+  tag: v1.0-aliyun-ecda76b
   imagePullPolicy: IfNotPresent
   resources: 
     limits:
