@@ -29,6 +29,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	disableTFConfigAnnotation = "arena.kubeflow.org/disable-tf-config"
+)
+
 type SubmitTFJobArgsBuilder struct {
 	args        *types.SubmitTFJobArgs
 	argValues   map[string]interface{}
@@ -42,6 +46,14 @@ func NewSubmitTFJobArgsBuilder(args *types.SubmitTFJobArgs) ArgsBuilder {
 		argValues:   map[string]interface{}{},
 		subBuilders: map[string]ArgsBuilder{},
 	}
+
+	if s.isTFJobStandAlone() {
+		if args.Annotations == nil {
+			args.Annotations = map[string]string{}
+		}
+		args.Annotations[disableTFConfigAnnotation] = "true"
+	}
+
 	s.AddSubBuilder(
 		NewSubmitArgsBuilder(&s.args.CommonSubmitArgs),
 		NewSubmitSyncCodeArgsBuilder(&s.args.SubmitSyncCodeArgs),
@@ -301,7 +313,7 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 }
 
 func (s *SubmitTFJobArgsBuilder) setStandaloneMode() error {
-	if s.args.PSCount < 1 && s.args.WorkerCount == 1 {
+	if s.isTFJobStandAlone() {
 		s.args.UseChief = true
 		s.args.WorkerCount = 0
 	}
@@ -486,4 +498,8 @@ func (s *SubmitTFJobArgsBuilder) addPodGroupLabel() error {
 		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount+s.args.PSCount+s.args.ChiefCount+s.args.EvaluatorCount)
 	}
 	return nil
+}
+
+func (s *SubmitTFJobArgsBuilder) isTFJobStandAlone() bool {
+	return s.args.PSCount < 1 && s.args.WorkerCount == 1
 }
