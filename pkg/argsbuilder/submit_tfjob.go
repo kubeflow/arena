@@ -46,14 +46,6 @@ func NewSubmitTFJobArgsBuilder(args *types.SubmitTFJobArgs) ArgsBuilder {
 		argValues:   map[string]interface{}{},
 		subBuilders: map[string]ArgsBuilder{},
 	}
-
-	if s.isTFJobStandAlone() {
-		if args.Annotations == nil {
-			args.Annotations = map[string]string{}
-		}
-		args.Annotations[disableTFConfigAnnotation] = "true"
-	}
-
 	s.AddSubBuilder(
 		NewSubmitArgsBuilder(&s.args.CommonSubmitArgs),
 		NewSubmitSyncCodeArgsBuilder(&s.args.SubmitSyncCodeArgs),
@@ -313,7 +305,11 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 }
 
 func (s *SubmitTFJobArgsBuilder) setStandaloneMode() error {
-	if s.isTFJobStandAlone() {
+	if s.args.PSCount < 1 && s.args.WorkerCount == 1 {
+		if s.args.Annotations == nil {
+			s.args.Annotations = map[string]string{}
+		}
+		s.args.Annotations[disableTFConfigAnnotation] = "true"
 		s.args.UseChief = true
 		s.args.WorkerCount = 0
 	}
@@ -498,8 +494,4 @@ func (s *SubmitTFJobArgsBuilder) addPodGroupLabel() error {
 		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount+s.args.PSCount+s.args.ChiefCount+s.args.EvaluatorCount)
 	}
 	return nil
-}
-
-func (s *SubmitTFJobArgsBuilder) isTFJobStandAlone() bool {
-	return s.args.PSCount < 1 && s.args.WorkerCount == 1
 }
