@@ -29,6 +29,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	disableTFConfigAnnotation = "arena.kubeflow.org/disable-tf-config"
+)
+
 type SubmitTFJobArgsBuilder struct {
 	args        *types.SubmitTFJobArgs
 	argValues   map[string]interface{}
@@ -302,6 +306,10 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 
 func (s *SubmitTFJobArgsBuilder) setStandaloneMode() error {
 	if s.args.PSCount < 1 && s.args.WorkerCount == 1 {
+		if s.args.Annotations == nil {
+			s.args.Annotations = map[string]string{}
+		}
+		s.args.Annotations[disableTFConfigAnnotation] = "true"
 		s.args.UseChief = true
 		s.args.WorkerCount = 0
 	}
