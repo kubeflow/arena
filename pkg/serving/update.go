@@ -192,7 +192,7 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 		deploy.Spec.Template.Spec.Containers[0].Image = args.Image
 	}
 
-	if args.Replicas > 0 {
+	if args.Replicas >= 0 {
 		replicas := int32(args.Replicas)
 		deploy.Spec.Replicas = &replicas
 	}
