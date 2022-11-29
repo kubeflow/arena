@@ -46,12 +46,14 @@ var (
 	errGetMsg             = "Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s %v'."
 )
 var getJobTemplate = `
-Name:      %v
-Status:    %v
-Namespace: %v
-Priority:  %v
-Trainer:   %v
-Duration:  %v
+Name:      	%v
+Status:    	%v
+Namespace: 	%v
+Priority:  	%v
+Trainer:   	%v
+Duration:  	%v
+CreateTime:	%v
+EndTime:	%v
 %v
 `
 
@@ -229,11 +231,15 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 	}
 	var duration int64
 	var err error
+	var endTime string
 	job.Duration = strings.Replace(job.Duration, "s", "", -1)
 	duration, err = strconv.ParseInt(job.Duration, 10, 64)
 	if err != nil {
 		log.Debugf("failed to parse duration: %v", err)
 
+	}
+	if job.Status == types.TrainingJobSucceeded || job.Status == types.TrainingJobFailed {
+		endTime = util.GetFormatTime(job.CreationTimestamp + duration)
 	}
 	//startTime := time.Unix(job.CreationTimestamp, 0).Format("2006-01-02/15:04:05")
 	PrintLine(w, fmt.Sprintf(strings.Trim(getJobTemplate, "\n"),
@@ -243,6 +249,8 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 		job.Priority,
 		strings.ToUpper(string(job.Trainer)),
 		util.ShortHumanDuration(time.Duration(duration)*time.Second),
+		util.GetFormatTime(job.CreationTimestamp),
+		endTime,
 		strings.Join(lines, "\n"),
 	))
 	PrintLine(w, "")
