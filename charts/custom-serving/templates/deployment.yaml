@@ -151,6 +151,15 @@ spec:
               {{- end }}
             {{- end }}
             {{- end }}
+            {{- if .Values.emptyDirs }}
+            {{- range $name, $destPath := .Values.emptyDirs}}
+            - name: "{{ $name }}"
+              mountPath: "{{ $destPath }}"
+              {{- if hasKey $.Values.emptyDirSubPathExprs $name }}
+              subPathExpr: {{ get $.Values.emptyDirSubPathExprs $name }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
             {{- if ne (len .Values.configFiles) 0 }}
             {{- $releaseName := .Release.Name }}
             {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
@@ -170,6 +179,12 @@ spec:
         - name: "{{ $pvcName }}"
           persistentVolumeClaim:
             claimName: "{{ $pvcName }}"
+        {{- end }}
+        {{- end }}
+        {{- if .Values.emptyDirs }}
+        {{- range $name, $destPath := .Values.emptyDirs}}
+        - name: "{{ $name }}"
+          emptyDir: {}
         {{- end }}
         {{- end }}
         {{- if ne (len .Values.configFiles) 0 }}

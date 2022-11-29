@@ -75,15 +75,17 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 	var (
-		envs            []string
-		dataset         []string
-		datadir         []string
-		dataSubpathExpr []string
-		annotations     []string
-		tolerations     []string
-		labels          []string
-		selectors       []string
-		configFiles     []string
+		envs                []string
+		dataset             []string
+		datadir             []string
+		dataSubpathExpr     []string
+		emptyDir            []string
+		emptyDirSubpathExpr []string
+		annotations         []string
+		tolerations         []string
+		labels              []string
+		selectors           []string
+		configFiles         []string
 	)
 	defaultImage := ""
 	item, ok := s.argValues["default-image"]
@@ -123,6 +125,8 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")
 	command.Flags().StringArrayVarP(&dataSubpathExpr, "data-subpath-expr", "", []string{}, "specify the datasource subpath to mount to the job by expression, like <name_of_datasource>:<mount_subpath_expr>")
 	command.Flags().StringArrayVarP(&datadir, "data-dir", "", []string{}, "specify the trained models datasource on host to mount for serving, like <host_path>:<mount_point_on_job>")
+	command.Flags().StringArrayVarP(&emptyDirSubpathExpr, "empty-dir-subpath-expr", "", []string{}, "specify the datasource subpath to mount to the pod by expression, like <empty_dir_name>:<mount_subpath_expr>")
+	command.Flags().StringArrayVarP(&emptyDir, "empty-dir", "", []string{}, "specify the deployment empty dir, like <empty_dir_name>:<mount_point_on_pod>")
 	command.MarkFlagRequired("name")
 
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "specify the annotations")
@@ -143,6 +147,8 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("data", &dataset).
 		AddArgValue("data-subpath-expr", &dataSubpathExpr).
 		AddArgValue("data-dir", &datadir).
+		AddArgValue("empty-dir-subpath-expr", &emptyDirSubpathExpr).
+		AddArgValue("empty-dir", &emptyDir).
 		AddArgValue("env", &envs).
 		AddArgValue("config-file", &configFiles)
 }
@@ -166,6 +172,12 @@ func (s *ServingArgsBuilder) PreBuild() error {
 		return err
 	}
 	if err := s.setDataDirs(); err != nil {
+		return err
+	}
+	if err := s.setEmptyDirSubpathExprs(); err != nil {
+		return err
+	}
+	if err := s.setEmptyDirs(); err != nil {
 		return err
 	}
 	if err := s.setEnvs(); err != nil {
@@ -260,7 +272,7 @@ func (s *ServingArgsBuilder) setDataSet() error {
 	return nil
 }
 
-// setDataSets is used to handle option --data-subpath-expr
+// setDataSubpathExprs is used to handle option --data-subpath-expr
 func (s *ServingArgsBuilder) setDataSubpathExprs() error {
 	s.args.DataSubpathExprs = map[string]string{}
 	argKey := "data-subpath-expr"
@@ -275,6 +287,24 @@ func (s *ServingArgsBuilder) setDataSubpathExprs() error {
 		return nil
 	}
 	s.args.DataSubpathExprs = transformSliceToMap(*dataSubPathExprs, ":")
+	return nil
+}
+
+// setDataSubpathExprs is used to handle option --data-subpath-expr
+func (s *ServingArgsBuilder) setEmptyDirSubpathExprs() error {
+	s.args.EmptyDirSubpathExprs = map[string]string{}
+	argKey := "empty-dir-subpath-expr"
+	var emptyDirSubPathExprs *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	emptyDirSubPathExprs = value.(*[]string)
+	log.Debugf("dataset: %v", *emptyDirSubPathExprs)
+	if len(*emptyDirSubPathExprs) <= 0 {
+		return nil
+	}
+	s.args.EmptyDirSubpathExprs = transformSliceToMap(*emptyDirSubPathExprs, ":")
 	return nil
 }
 
@@ -300,6 +330,25 @@ func (s *ServingArgsBuilder) setDataDirs() error {
 			ContainerPath: containerPath,
 		})
 	}
+	return nil
+}
+
+// setEmptyDirs is used to handle option --empty-dir
+// setDataSets is used to handle option --data
+func (s *ServingArgsBuilder) setEmptyDirs() error {
+	s.args.EmptyDirs = map[string]string{}
+	argKey := "empty-dir"
+	var emptyDirs *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	emptyDirs = value.(*[]string)
+	log.Debugf("emptyDirs: %v", *emptyDirs)
+	if len(*emptyDirs) <= 0 {
+		return nil
+	}
+	s.args.EmptyDirs = transformSliceToMap(*emptyDirs, ":")
 	return nil
 }
 

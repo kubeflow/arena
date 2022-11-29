@@ -112,7 +112,15 @@ public class TritonServingJobBuilder extends JobBuilder {
         super.dataSubpathExprs(exprs);
         return this;
     }
+    public TritonServingJobBuilder emptyDirs(Map<String, String> emptyDirs) {
+        super.emptyDirs(emptyDirs);
+        return this;
+    }
 
+    public TritonServingJobBuilder emptyDirSubpathExprs(Map<String, String> exprs) {
+        super.emptyDirSubpathExprs(exprs);
+        return this;
+    }
     public TritonServingJobBuilder dataDirs(Map<String, String> dataDirs) {
         super.dataDirs(dataDirs);
         return  this;

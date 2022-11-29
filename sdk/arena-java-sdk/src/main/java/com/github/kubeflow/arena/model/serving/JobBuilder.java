@@ -112,6 +112,16 @@ public abstract class JobBuilder {
         return this;
     }
 
+    public JobBuilder emptyDirs(Map<String, String> emptyDirs) {
+        this.options.add(new StringMapField("--empty-dir", emptyDirs, ":"));
+        return this;
+    }
+
+    public JobBuilder emptyDirSubpathExprs(Map<String, String> exprs) {
+        this.options.add(new StringMapField("--empty-dir-subpath-expr", exprs, ":"));
+        return this;
+    }
+
     public JobBuilder dataDirs(Map<String, String> dataDirs) {
         this.options.add(new StringMapField("--data-dir", dataDirs, ":"));
         return this;

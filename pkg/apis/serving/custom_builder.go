@@ -221,6 +221,28 @@ func (b *CustomServingJobBuilder) DataSubPathExprs(exprs map[string]string) *Cus
 	return b
 }
 
+func (b *CustomServingJobBuilder) EmptyDirs(volumes map[string]string) *CustomServingJobBuilder {
+	if volumes != nil && len(volumes) != 0 {
+		s := []string{}
+		for key, value := range volumes {
+			s = append(s, fmt.Sprintf("%v:%v", key, value))
+		}
+		b.argValues["empty-dir"] = &s
+	}
+	return b
+}
+
+func (b *CustomServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) *CustomServingJobBuilder {
+	if exprs != nil && len(exprs) != 0 {
+		s := []string{}
+		for key, value := range exprs {
+			s = append(s, fmt.Sprintf("%v:%v", key, value))
+		}
+		b.argValues["empty-dir-subpath-expr"] = &s
+	}
+	return b
+}
+
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *CustomServingJobBuilder) DataDirs(volumes map[string]string) *CustomServingJobBuilder {
 	if volumes != nil && len(volumes) != 0 {
