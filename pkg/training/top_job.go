@@ -33,12 +33,14 @@ import (
 )
 
 var topJobTemplate = `
-Name:      %v
-Status:    %v
-Namespace: %v
-Priority:  %v
-Trainer:   %v
-Duration:  %v
+Name:      	%v
+Status:    	%v
+Namespace: 	%v
+Priority:  	%v
+Trainer:   	%v
+Duration:  	%v
+CreateTime:	%v
+EndTime:	%v
 %v
 `
 
@@ -164,6 +166,7 @@ func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notSto
 		}
 		var duration int64
 		var err error
+		var endTime string
 		jobInfo.Duration = strings.Replace(jobInfo.Duration, "s", "", -1)
 		duration, err = strconv.ParseInt(jobInfo.Duration, 10, 64)
 		if err != nil {
@@ -172,6 +175,9 @@ func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notSto
 		}
 		lines = append(lines, "", "GPUs:")
 		lines = append(lines, fmt.Sprintf("  Allocated/Requested GPUs of Job: %v/%v", jobInfo.AllocatedGPU, jobInfo.RequestGPU))
+		if jobInfo.Status == types.TrainingJobSucceeded || jobInfo.Status == types.TrainingJobFailed {
+			endTime = util.GetFormatTime(jobInfo.CreationTimestamp + duration)
+		}
 		outputs = append(outputs, fmt.Sprintf(strings.Trim(topJobTemplate, "\n"),
 			jobInfo.Name,
 			jobInfo.Status,
@@ -179,6 +185,8 @@ func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notSto
 			jobInfo.Priority,
 			strings.ToUpper(fmt.Sprintf("%v", jobInfo.Trainer)),
 			util.ShortHumanDuration(time.Duration(duration)*time.Second),
+			util.GetFormatTime(jobInfo.CreationTimestamp),
+			endTime,
 			strings.Join(lines, "\n"),
 		))
 	}

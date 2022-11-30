@@ -19,6 +19,10 @@ import (
 	"time"
 )
 
+const (
+	timeLayout = "2006-01-02 15:04:05"
+)
+
 // ShortHumanDuration returns a succint representation of the provided duration
 // with limited precision for consumption by humans.
 func ShortHumanDuration(d time.Duration) string {
@@ -38,4 +42,8 @@ func ShortHumanDuration(d time.Duration) string {
 		return fmt.Sprintf("%dd", hours/24)
 	}
 	return fmt.Sprintf("%dy", int(d.Hours()/24/365))
+}
+
+func GetFormatTime(timestamp int64) string {
+	return time.Unix(timestamp, 0).Format(timeLayout)
 }
