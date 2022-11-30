@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class CustomServingJobTest {
@@ -34,11 +36,17 @@ public class CustomServingJobTest {
         String jobVersion = "alpha";
         ServingJobType jobType = ServingJobType.CustomServingJob;
         // 2.create mpi job
+        Map<String, String> emptyDirs = new HashMap<>();
+        emptyDirs.put("empty-0", "/opt/logs");
+        Map<String, String> exprs = new HashMap<>();
+        exprs.put("empty-0", "$(ARENA_POD_NAMESPACE)/$(ARENA_POD_NAME)");
         ServingJob job = new CustomServingJobBuilder()
                 .name(jobName)
                 .version(jobVersion)
                 .gpus(1)
                 .replicas(1)
+                .emptyDirs(emptyDirs)
+                .emptyDirSubpathExprs(exprs)
                 .restfulPort(5000)
                 .image("happy365/fast-style-transfer:latest")
                 .command("python app.py")
