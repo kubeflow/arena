@@ -20,8 +20,8 @@ public class TensorflowServingJobTest {
         Map<String, String> datas = new HashMap<>();
         datas.put("model-pvc", "/data");
 
-        Map<String, String> emptyDirs = new HashMap<>();
-        emptyDirs.put("empty-0", "/opt/logs");
+        Map<String, String> tempDirs = new HashMap<>();
+        tempDirs.put("empty-0", "/opt/logs");
         Map<String, String> exprs = new HashMap<>();
         exprs.put("empty-0", "$(ARENA_POD_NAMESPACE)/$(ARENA_POD_NAME)");
         ServingJob job = new TensorflowServingJobBuilder()
@@ -33,8 +33,8 @@ public class TensorflowServingJobTest {
                 .labels(labels)
                 .image("tensorflow/serving:1.15.0-gpu")
                 .datas(datas)
-                .emptyDirs(emptyDirs)
-                .emptyDirSubpathExprs(exprs)
+                .tempDirs(tempDirs)
+                .tempDirSubpathExprs(exprs)
                 .shell("bash")
                 .modelPath("/data/models/soul/saved_model/transformer")
                 .build();

@@ -221,13 +221,13 @@ func (b *CustomServingJobBuilder) DataSubPathExprs(exprs map[string]string) *Cus
 	return b
 }
 
-func (b *CustomServingJobBuilder) EmptyDirs(volumes map[string]string) *CustomServingJobBuilder {
+func (b *CustomServingJobBuilder) TempDirs(volumes map[string]string) *CustomServingJobBuilder {
 	if volumes != nil && len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
 		}
-		b.argValues["empty-dir"] = &s
+		b.argValues["temp-dir"] = &s
 	}
 	return b
 }
@@ -238,7 +238,7 @@ func (b *CustomServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) 
 		for key, value := range exprs {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
 		}
-		b.argValues["empty-dir-subpath-expr"] = &s
+		b.argValues["temp-dir-subpath-expr"] = &s
 	}
 	return b
 }

@@ -160,12 +160,12 @@ spec:
               {{- end }}
             {{- end }}
             {{- end }}
-            {{- if .Values.emptyDirs }}
-            {{- range $name, $destPath := .Values.emptyDirs}}
+            {{- if .Values.tempDirs }}
+            {{- range $name, $destPath := .Values.tempDirs }}
             - name: "{{ $name }}"
               mountPath: "{{ $destPath }}"
-              {{- if hasKey $.Values.emptyDirSubPathExprs $name }}
-              subPathExpr: {{ get $.Values.emptyDirSubPathExprs $name }}
+              {{- if hasKey $.Values.tempDirSubPathExprs $name }}
+              subPathExpr: {{ get $.Values.tempDirSubPathExprs $name }}
               {{- end }}
             {{- end }}
             {{- end }}
@@ -190,8 +190,8 @@ spec:
             claimName: "{{ $pvcName }}"
         {{- end }}
         {{- end }}
-        {{- if .Values.emptyDirs }}
-        {{- range $name, $destPath := .Values.emptyDirs}}
+        {{- if .Values.tempDirs }}
+        {{- range $name, $destPath := .Values.tempDirs}}
         - name: "{{ $name }}"
           emptyDir: {}
         {{- end }}

@@ -138,27 +138,27 @@ type ServingInstance struct {
 }
 
 type CommonServingArgs struct {
-	Name                 string            `yaml:"servingName"`
-	Version              string            `yaml:"servingVersion"`
-	Namespace            string            `yaml:"-"`
-	Type                 ServingJobType    `yaml:"-"`
-	Image                string            `yaml:"image"`
-	ImagePullPolicy      string            `yaml:"imagePullPolicy"`      // --imagePullPolicy
-	GPUCount             int               `yaml:"gpuCount"`             // --gpus
-	GPUMemory            int               `yaml:"gpuMemory"`            // --gpumemory
-	GPUCore              int               `yaml:"gpuCore"`              // --gpucore
-	Cpu                  string            `yaml:"cpu"`                  // --cpu
-	Memory               string            `yaml:"memory"`               // --memory
-	Envs                 map[string]string `yaml:"envs"`                 // --envs
-	Shell                string            `yaml:"shell"`                // --shell
-	Command              string            `yaml:"command"`              // --command
-	Replicas             int               `yaml:"replicas"`             // --replicas
-	EnableIstio          bool              `yaml:"enableIstio"`          // --enableIstio
-	ExposeService        bool              `yaml:"exposeService"`        // --exposeService
-	ModelDirs            map[string]string `yaml:"modelDirs"`            // --data
-	DataSubpathExprs     map[string]string `yaml:"dataSubPathExprs"`     // --data-subpath-expr
-	EmptyDirSubpathExprs map[string]string `yaml:"emptyDirSubPathExprs"` // --empty-dir-subpath-expr
-	EmptyDirs            map[string]string `yaml:"emptyDirs"`            // --empty-dir
+	Name               string            `yaml:"servingName"`
+	Version            string            `yaml:"servingVersion"`
+	Namespace          string            `yaml:"-"`
+	Type               ServingJobType    `yaml:"-"`
+	Image              string            `yaml:"image"`
+	ImagePullPolicy    string            `yaml:"imagePullPolicy"`     // --imagePullPolicy
+	GPUCount           int               `yaml:"gpuCount"`            // --gpus
+	GPUMemory          int               `yaml:"gpuMemory"`           // --gpumemory
+	GPUCore            int               `yaml:"gpuCore"`             // --gpucore
+	Cpu                string            `yaml:"cpu"`                 // --cpu
+	Memory             string            `yaml:"memory"`              // --memory
+	Envs               map[string]string `yaml:"envs"`                // --envs
+	Shell              string            `yaml:"shell"`               // --shell
+	Command            string            `yaml:"command"`             // --command
+	Replicas           int               `yaml:"replicas"`            // --replicas
+	EnableIstio        bool              `yaml:"enableIstio"`         // --enableIstio
+	ExposeService      bool              `yaml:"exposeService"`       // --exposeService
+	ModelDirs          map[string]string `yaml:"modelDirs"`           // --data
+	DataSubpathExprs   map[string]string `yaml:"dataSubPathExprs"`    // --data-subpath-expr
+	TempDirSubpathExpr map[string]string `yaml:"tempDirSubPathExprs"` // --temp-dir-subpath-expr
+	TempDirs           map[string]string `yaml:"tempDirs"`            // --temp-dir
 
 	HostVolumes   []DataDirVolume   `yaml:"hostVolumes"`   // --data-dir
 	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector

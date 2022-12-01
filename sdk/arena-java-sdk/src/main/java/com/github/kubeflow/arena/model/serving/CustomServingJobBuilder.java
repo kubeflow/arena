@@ -102,13 +102,13 @@ public class CustomServingJobBuilder extends JobBuilder {
         super.dataSubpathExprs(exprs);
         return this;
     }
-    public CustomServingJobBuilder emptyDirs(Map<String, String> emptyDirs) {
-        super.emptyDirs(emptyDirs);
+    public CustomServingJobBuilder tempDirs(Map<String, String> tempDirs) {
+        super.tempDirs(tempDirs);
         return this;
     }
 
-    public CustomServingJobBuilder emptyDirSubpathExprs(Map<String, String> exprs) {
-        super.emptyDirSubpathExprs(exprs);
+    public CustomServingJobBuilder tempDirSubpathExprs(Map<String, String> exprs) {
+        super.tempDirSubpathExprs(exprs);
         return this;
     }
     public CustomServingJobBuilder dataDirs(Map<String, String> dataDirs) {

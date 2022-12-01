@@ -36,8 +36,8 @@ public class CustomServingJobTest {
         String jobVersion = "alpha";
         ServingJobType jobType = ServingJobType.CustomServingJob;
         // 2.create mpi job
-        Map<String, String> emptyDirs = new HashMap<>();
-        emptyDirs.put("empty-0", "/opt/logs");
+        Map<String, String> tempDirs = new HashMap<>();
+        tempDirs.put("empty-0", "/opt/logs");
         Map<String, String> exprs = new HashMap<>();
         exprs.put("empty-0", "$(ARENA_POD_NAMESPACE)/$(ARENA_POD_NAME)");
         ServingJob job = new CustomServingJobBuilder()
@@ -45,8 +45,8 @@ public class CustomServingJobTest {
                 .version(jobVersion)
                 .gpus(1)
                 .replicas(1)
-                .emptyDirs(emptyDirs)
-                .emptyDirSubpathExprs(exprs)
+                .tempDirs(tempDirs)
+                .tempDirSubpathExprs(exprs)
                 .restfulPort(5000)
                 .image("happy365/fast-style-transfer:latest")
                 .command("python app.py")

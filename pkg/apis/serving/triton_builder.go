@@ -226,14 +226,14 @@ func (b *TritonServingJobBuilder) DataSubPathExprs(exprs map[string]string) *Tri
 	return b
 }
 
-// EmptyDirs specify the deployment empty dir
-func (b *TritonServingJobBuilder) EmptyDirs(volumes map[string]string) *TritonServingJobBuilder {
+// TempDirs specify the deployment empty dir
+func (b *TritonServingJobBuilder) TempDirs(volumes map[string]string) *TritonServingJobBuilder {
 	if volumes != nil && len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
 		}
-		b.argValues["empty-dir"] = &s
+		b.argValues["temp-dir"] = &s
 	}
 	return b
 }
@@ -245,7 +245,7 @@ func (b *TritonServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) 
 		for key, value := range exprs {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
 		}
-		b.argValues["empty-dir-subpath-expr"] = &s
+		b.argValues["temp-dir-subpath-expr"] = &s
 	}
 	return b
 }
