@@ -226,6 +226,30 @@ func (b *TritonServingJobBuilder) DataSubPathExprs(exprs map[string]string) *Tri
 	return b
 }
 
+// TempDirs specify the deployment empty dir
+func (b *TritonServingJobBuilder) TempDirs(volumes map[string]string) *TritonServingJobBuilder {
+	if volumes != nil && len(volumes) != 0 {
+		s := []string{}
+		for key, value := range volumes {
+			s = append(s, fmt.Sprintf("%v:%v", key, value))
+		}
+		b.argValues["temp-dir"] = &s
+	}
+	return b
+}
+
+// EmptyDirSubPathExprs specify the datasource subpath to mount to the pod by expression
+func (b *TritonServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) *TritonServingJobBuilder {
+	if exprs != nil && len(exprs) != 0 {
+		s := []string{}
+		for key, value := range exprs {
+			s = append(s, fmt.Sprintf("%v:%v", key, value))
+		}
+		b.argValues["temp-dir-subpath-expr"] = &s
+	}
+	return b
+}
+
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *TritonServingJobBuilder) DataDirs(volumes map[string]string) *TritonServingJobBuilder {
 	if volumes != nil && len(volumes) != 0 {

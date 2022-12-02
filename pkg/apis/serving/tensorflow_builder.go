@@ -241,6 +241,30 @@ func (b *TFServingJobBuilder) DataSubPathExprs(exprs map[string]string) *TFServi
 	return b
 }
 
+// TempDirs specify the deployment empty dir
+func (b *TFServingJobBuilder) TempDirs(volumes map[string]string) *TFServingJobBuilder {
+	if volumes != nil && len(volumes) != 0 {
+		s := []string{}
+		for key, value := range volumes {
+			s = append(s, fmt.Sprintf("%v:%v", key, value))
+		}
+		b.argValues["temp-dir"] = &s
+	}
+	return b
+}
+
+// EmptyDirSubPathExprs specify the datasource subpath to mount to the pod by expression
+func (b *TFServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) *TFServingJobBuilder {
+	if exprs != nil && len(exprs) != 0 {
+		s := []string{}
+		for key, value := range exprs {
+			s = append(s, fmt.Sprintf("%v:%v", key, value))
+		}
+		b.argValues["temp-dir-subpath-expr"] = &s
+	}
+	return b
+}
+
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *TFServingJobBuilder) DataDirs(volumes map[string]string) *TFServingJobBuilder {
 	if volumes != nil && len(volumes) != 0 {
