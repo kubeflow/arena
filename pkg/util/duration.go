@@ -30,16 +30,18 @@ func ShortHumanDuration(d time.Duration) string {
 	// inconsistence, it can be considered as almost now.
 	if seconds := int(d.Seconds()); seconds < -1 {
 		return fmt.Sprintf("<invalid>")
-	} else if seconds < 0 {
+	} else if seconds <= 0 {
 		return fmt.Sprintf("0s")
 	} else if seconds < 60 {
 		return fmt.Sprintf("%ds", seconds)
 	} else if minutes := int(d.Minutes()); minutes < 60 {
-		return fmt.Sprintf("%dm", minutes)
+		return fmt.Sprintf("%dm%ds", minutes, seconds%60)
 	} else if hours := int(d.Hours()); hours < 24 {
-		return fmt.Sprintf("%dh", hours)
+		minutes = (seconds - hours*3600) / 60
+		return fmt.Sprintf("%dh%dm%ds", hours, minutes, seconds%60)
 	} else if hours < 24*365 {
-		return fmt.Sprintf("%dd", hours/24)
+		minutes = (seconds - hours*3600) / 60
+		return fmt.Sprintf("%dd%dh%dm%ds", hours/24, hours%24, minutes, seconds%60)
 	}
 	return fmt.Sprintf("%dy", int(d.Hours()/24/365))
 }
