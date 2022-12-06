@@ -68,10 +68,12 @@ spec:
           {{- if .Values.tfjob.priorityClassName }}
           priorityClassName: {{ .Values.tfjob.priorityClassName }}
           {{- end }}
-          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.schedulerName }}
+          schedulerName: {{ .Values.tfjob.schedulerName }}
+          {{- else if .Values.tfjob.ps }}
           {{- if .Values.tfjob.hasGangScheduler }}
           {{- if .Values.tfjob.enableGangScheduler }}
-          schedulerName: {{ .Values.tfjob.schedulerName }}
+          schedulerName: {{ .Values.tfjob.gangSchedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
@@ -358,10 +360,12 @@ spec:
           {{- if .Values.tfjob.priorityClassName }}
           priorityClassName: {{ .Values.tfjob.priorityClassName }}
           {{- end }}
-          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.schedulerName }}
+          schedulerName: {{ .Values.tfjob.schedulerName }}
+          {{- else if .Values.tfjob.ps }}
           {{- if .Values.tfjob.hasGangScheduler }}
           {{- if .Values.tfjob.enableGangScheduler }}
-          schedulerName: {{ .Values.tfjob.schedulerName }}
+          schedulerName: {{ .Values.tfjob.gangSchedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
@@ -678,10 +682,12 @@ spec:
           {{- if .Values.tfjob.priorityClassName }}
           priorityClassName: {{ .Values.tfjob.priorityClassName }}
           {{- end }}
-          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.schedulerName }}
+          schedulerName: {{ .Values.tfjob.schedulerName }}
+          {{- else if .Values.tfjob.ps }}
           {{- if .Values.tfjob.hasGangScheduler }}
           {{- if .Values.tfjob.enableGangScheduler }}
-          schedulerName: {{ .Values.tfjob.schedulerName }}
+          schedulerName: {{ .Values.tfjob.gangSchedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
@@ -995,10 +1001,12 @@ spec:
           {{- if .Values.tfjob.priorityClassName }}
           priorityClassName: {{ .Values.tfjob.priorityClassName }}
           {{- end }}
-          {{- if .Values.tfjob.ps }}
+          {{- if .Values.tfjob.schedulerName }}
+          schedulerName: {{ .Values.tfjob.schedulerName }}
+          {{- else if .Values.tfjob.ps }}
           {{- if .Values.tfjob.hasGangScheduler }}
           {{- if .Values.tfjob.enableGangScheduler }}
-          schedulerName: {{ .Values.tfjob.schedulerName }}
+          schedulerName: {{ .Values.tfjob.gangSchedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
