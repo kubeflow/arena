@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -132,6 +132,8 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
 	// add option --shell
 	command.Flags().StringVarP(&s.args.Shell, "shell", "", "sh", "specify the linux shell, usage: bash or sh")
+	// add option --scheduler
+	command.Flags().StringVar(&s.args.SchedulerName, "scheduler", "", `specify the scheduler name, usage: "--scheduler default-scheduler"`)
 
 	s.AddArgValue("image-pull-secret", &imagePullSecrets).
 		AddArgValue("config-file", &configFiles).

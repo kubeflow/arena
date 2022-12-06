@@ -55,6 +55,9 @@ spec:
         {{ $nodeKey }}: "{{ $nodeVal }}"
       {{- end }}
       {{- end }}
+      {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName }}
+      {{- end }}
       {{- if ne (len .Values.tolerations) 0 }}
       tolerations:
       {{- range $tolerationKey := .Values.tolerations }}
