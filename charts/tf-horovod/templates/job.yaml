@@ -32,6 +32,9 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       {{- end }}
       {{- end }}
+      {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName }}
+      {{- end }}
       {{- if .Values.useHostPID }}
       hostPID: {{ .Values.useHostPID }}
       {{- end }}

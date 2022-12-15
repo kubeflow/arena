@@ -75,10 +75,12 @@ spec:
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if .Values.schedulerName }}
+          schedulerName: {{ .Values.schedulerName }}
+          {{- else if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
-          schedulerName: {{ .Values.schedulerName }}
+          schedulerName: {{ .Values.gangSchedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
@@ -382,10 +384,12 @@ spec:
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if .Values.schedulerName }}
+          schedulerName: {{ .Values.schedulerName }}
+          {{- else if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
-          schedulerName: {{ .Values.schedulerName }}
+          schedulerName: {{ .Values.gangSchedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
@@ -717,10 +721,12 @@ spec:
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if .Values.schedulerName }}
+          schedulerName: {{ .Values.schedulerName }}
+          {{- else if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
-          schedulerName: {{ .Values.schedulerName }}
+          schedulerName: {{ .Values.gangSchedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}
@@ -1049,10 +1055,12 @@ spec:
           {{- if .Values.priorityClassName }}
           priorityClassName: {{ .Values.priorityClassName }}
           {{- end }}
-          {{- if .Values.ps }}
+          {{- if .Values.schedulerName }}
+          schedulerName: {{ .Values.schedulerName }}
+          {{- else if .Values.ps }}
           {{- if .Values.hasGangScheduler }}
           {{- if .Values.enableGangScheduler }}
-          schedulerName: {{ .Values.schedulerName }}
+          schedulerName: {{ .Values.gangSchedulerName }}
           {{- end }}
           {{- end }}
           {{- end }}

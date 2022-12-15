@@ -59,7 +59,7 @@ binpack: false
 
 # enable gang scheduler
 enableGangScheduler: false
-schedulerName: kube-batchd
+gangSchedulerName: kube-batchd
 
 # enable RDMA support
 enableRDMA: false
