@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -66,6 +66,7 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		annotations []string
 		labels      []string
 		envs        []string
+		selectors   []string
 	)
 
 	command.Flags().StringVar(&s.args.Name, "name", "", "the serving name")
@@ -81,9 +82,11 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "specify the annotations")
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
+	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 
 	s.AddArgValue("env", &envs).
 		AddArgValue("annotation", &annotations).
+		AddArgValue("selector", &selectors).
 		AddArgValue("label", &labels)
 }
 
@@ -110,6 +113,10 @@ func (s *UpdateServingArgsBuilder) PreBuild() error {
 	}
 
 	if err := s.setAnnotations(); err != nil {
+		return err
+	}
+
+	if err := s.setNodeSelectors(); err != nil {
 		return err
 	}
 
@@ -166,6 +173,21 @@ func (s *UpdateServingArgsBuilder) setEnvs() error {
 	}
 	envs = value.(*[]string)
 	s.args.Envs = transformSliceToMap(*envs, "=")
+	return nil
+}
+
+// setNodeSelectors is used to handle option --selector
+func (s *UpdateServingArgsBuilder) setNodeSelectors() error {
+	s.args.NodeSelectors = map[string]string{}
+	argKey := "selector"
+	var nodeSelectors *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	nodeSelectors = value.(*[]string)
+	log.Debugf("node selectors: %v", *nodeSelectors)
+	s.args.NodeSelectors = transformSliceToMap(*nodeSelectors, "=")
 	return nil
 }
 
