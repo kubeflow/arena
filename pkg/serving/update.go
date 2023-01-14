@@ -80,6 +80,15 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 		}
 	}
 
+	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+		if deploy.Spec.Template.Spec.NodeSelector == nil {
+			deploy.Spec.Template.Spec.NodeSelector = map[string]string{}
+		}
+		for k, v := range args.NodeSelectors {
+			deploy.Spec.Template.Spec.NodeSelector[k] = v
+		}
+	}
+
 	return updateDeployment(args.Name, args.Version, deploy)
 }
 
@@ -131,6 +140,15 @@ func UpdateTritonServing(args *types.UpdateTritonServingArgs) error {
 		}
 	}
 
+	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+		if deploy.Spec.Template.Spec.NodeSelector == nil {
+			deploy.Spec.Template.Spec.NodeSelector = map[string]string{}
+		}
+		for k, v := range args.NodeSelectors {
+			deploy.Spec.Template.Spec.NodeSelector[k] = v
+		}
+	}
+
 	return updateDeployment(args.Name, args.Version, deploy)
 }
 
@@ -151,6 +169,15 @@ func UpdateCustomServing(args *types.UpdateCustomServingArgs) error {
 		for k, v := range args.Labels {
 			deploy.Labels[k] = v
 			deploy.Spec.Template.Labels[k] = v
+		}
+	}
+
+	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+		if deploy.Spec.Template.Spec.NodeSelector == nil {
+			deploy.Spec.Template.Spec.NodeSelector = map[string]string{}
+		}
+		for k, v := range args.NodeSelectors {
+			deploy.Spec.Template.Spec.NodeSelector[k] = v
 		}
 	}
 
