@@ -84,7 +84,7 @@ func (e *EvaluateJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
 	command.Flags().StringArrayVarP(&labels, "label", "", []string{}, "the labels")
-	command.Flags().StringArrayVar(&tolerations, "toleration", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVar(&tolerations, "toleration", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration key=value:effect,operator" or "--toleration all" `)
 	// add option --selector, it's value will be get from viper
 	command.Flags().StringArrayVar(&nodeSelectors, "selector", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 	// add option --image-pull-secret it's value will be get from viper,Using a Private Registry
@@ -278,7 +278,9 @@ func (e *EvaluateJobArgsBuilder) setNodeSelectors() error {
 
 // setTolerations is used to handle option --toleration
 func (e *EvaluateJobArgsBuilder) setTolerations() error {
-	e.args.Tolerations = []string{}
+	if e.args.Tolerations == nil {
+		e.args.Tolerations = []types.TolerationArgs{}
+	}
 	argKey := "toleration"
 	var tolerations *[]string
 	value, ok := e.argValues[argKey]
@@ -289,10 +291,17 @@ func (e *EvaluateJobArgsBuilder) setTolerations() error {
 	log.Debugf("tolerations: %v", *tolerations)
 	for _, taintKey := range *tolerations {
 		if taintKey == "all" {
-			e.args.Tolerations = []string{"all"}
+			e.args.Tolerations = append(e.args.Tolerations, types.TolerationArgs{
+				Operator: "Exists",
+			})
 			return nil
 		}
-		e.args.Tolerations = append(e.args.Tolerations, taintKey)
+		tolerationArg, err := parseTolerationString(taintKey)
+		if err != nil {
+			log.Debugf(err.Error())
+			continue
+		}
+		e.args.Tolerations = append(e.args.Tolerations, *tolerationArg)
 	}
 	return nil
 }

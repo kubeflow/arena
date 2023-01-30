@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -131,7 +131,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "specify the annotations")
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
-	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration key=value:effect,operator" or "--toleration all" `)
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 
 	// add option --config-file its' value will be get from viper
@@ -417,7 +417,9 @@ func (s *ServingArgsBuilder) setNodeSelectors() error {
 
 // setTolerations is used to handle option --toleration
 func (s *ServingArgsBuilder) setTolerations() error {
-	s.args.Tolerations = []string{}
+	if s.args.Tolerations == nil {
+		s.args.Tolerations = []types.TolerationArgs{}
+	}
 	argKey := "toleration"
 	var tolerations *[]string
 	value, ok := s.argValues[argKey]
@@ -428,10 +430,17 @@ func (s *ServingArgsBuilder) setTolerations() error {
 	log.Debugf("tolerations: %v", *tolerations)
 	for _, taintKey := range *tolerations {
 		if taintKey == "all" {
-			s.args.Tolerations = []string{"all"}
+			s.args.Tolerations = append(s.args.Tolerations, types.TolerationArgs{
+				Operator: "Exists",
+			})
 			return nil
 		}
-		s.args.Tolerations = append(s.args.Tolerations, taintKey)
+		tolerationArg, err := parseTolerationString(taintKey)
+		if err != nil {
+			log.Debugf(err.Error())
+			continue
+		}
+		s.args.Tolerations = append(s.args.Tolerations, *tolerationArg)
 	}
 	return nil
 }

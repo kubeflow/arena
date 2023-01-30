@@ -20,7 +20,7 @@ type EvaluateJobArgs struct {
 
 	// Tolerations defines the tolerations which tolerates node taints
 	// match option --toleration
-	Tolerations []string `yaml:"tolerations"`
+	Tolerations []TolerationArgs `yaml:"tolerations"`
 
 	// Image stores the docker image of job,match option --image
 	Image string `yaml:"image"`

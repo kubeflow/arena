@@ -34,7 +34,7 @@ type CommonSubmitArgs struct {
 
 	// Tolerations defines the tolerations which tolerates node taints
 	// match option --toleration
-	Tolerations []string `yaml:"tolerations"`
+	Tolerations []TolerationArgs `yaml:"tolerations"`
 
 	// Image stores the docker image of job,match option --image
 	Image string `yaml:"image"`
@@ -145,4 +145,11 @@ type SubmitSyncCodeArgs struct {
 	SyncImage  string `yaml:"syncImage,omitempty"` // --syncImage
 	// syncGitProjectName
 	SyncGitProjectName string `yaml:"syncGitProjectName,omitempty"` // --syncImage
+}
+
+type TolerationArgs struct {
+	Key      string `yaml:"key,omitempty"`
+	Value    string `yaml:"value,omitempty"`
+	Operator string `yaml:"operator,omitempty"`
+	Effect   string `yaml:"effect,omitempty"`
 }

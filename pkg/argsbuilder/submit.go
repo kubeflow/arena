@@ -123,7 +123,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// enable Queue
 	command.Flags().BoolVar(&s.args.EnableQueue, "queue", false, "enables the feature to queue jobs after they are scheduled (Kube-queue needs to be pre-installed https://github.com/kube-queue/kube-queue)")
 	// add option --toleration,its' value will be get from viper
-	command.Flags().StringArrayVar(&tolerations, "toleration", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVar(&tolerations, "toleration", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration key=value:effect,operator" or "--toleration all" `)
 	// add option --selector,its' value will be get from viper
 	command.Flags().StringArrayVar(&nodeSelectors, "selector", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 	// add option --config-file its' value will be get from viper
@@ -504,7 +504,7 @@ func (s *SubmitArgsBuilder) setConfigFiles() error {
 // setTolerations is used to handle option --toleration
 func (s *SubmitArgsBuilder) setTolerations() error {
 	if s.args.Tolerations == nil {
-		s.args.Tolerations = []string{}
+		s.args.Tolerations = []types.TolerationArgs{}
 	}
 	argKey := "toleration"
 	var tolerations *[]string
@@ -516,10 +516,17 @@ func (s *SubmitArgsBuilder) setTolerations() error {
 	log.Debugf("tolerations: %v", *tolerations)
 	for _, taintKey := range *tolerations {
 		if taintKey == "all" {
-			s.args.Tolerations = []string{"all"}
+			s.args.Tolerations = append(s.args.Tolerations, types.TolerationArgs{
+				Operator: "Exists",
+			})
 			return nil
 		}
-		s.args.Tolerations = append(s.args.Tolerations, taintKey)
+		tolerationArg, err := parseTolerationString(taintKey)
+		if err != nil {
+			log.Debugf(err.Error())
+			continue
+		}
+		s.args.Tolerations = append(s.args.Tolerations, *tolerationArg)
 	}
 	return nil
 }
