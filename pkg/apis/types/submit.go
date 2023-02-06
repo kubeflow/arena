@@ -111,6 +111,15 @@ type CommonSubmitArgs struct {
 
 	// SchedulerName stores the scheduler name,match option --scheduler
 	SchedulerName string `yaml:"schedulerName"`
+
+	// UseHostNetwork defines using useHostNetwork
+	UseHostNetwork bool `yaml:"useHostNetwork"`
+
+	// UseHostPID defines using useHostPID
+	UseHostPID bool `yaml:"useHostPID"`
+
+	// UseHostIPC defines using useHostIPC
+	UseHostIPC bool `yaml:"useHostIPC"`
 }
 
 // DataDirVolume defines the volume of kubernetes
