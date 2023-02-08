@@ -88,8 +88,8 @@ spec:
           env:
           {{- if .Values.envs }}
           {{- range $key, $value := .Values.envs }}
-          - name: "{{ $key }}"
-            value: "{{ $value }}"
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
           {{- end }}
           {{- end }}
             - name: ARENA_NODE_NAME
