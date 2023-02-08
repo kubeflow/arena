@@ -134,6 +134,12 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVarP(&s.args.Shell, "shell", "", "sh", "specify the linux shell, usage: bash or sh")
 	// add option --scheduler
 	command.Flags().StringVar(&s.args.SchedulerName, "scheduler", "", `specify the scheduler name, usage: "--scheduler default-scheduler"`)
+	// add option --scheduler
+	command.Flags().BoolVar(&s.args.UseHostNetwork, "hostNetwork", false, `enable hostNetwork, usage: "--hostNetwork true"`)
+	// add option --scheduler
+	command.Flags().BoolVar(&s.args.UseHostIPC, "hostIPC", false, `enable hostIPC, usage: "--hostIPC true"`)
+	// add option --scheduler
+	command.Flags().BoolVar(&s.args.UseHostPID, "hostPID", false, `enable hostPID, usage: "--hostPID true"`)
 
 	s.AddArgValue("image-pull-secret", &imagePullSecrets).
 		AddArgValue("config-file", &configFiles).
