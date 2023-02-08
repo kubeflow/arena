@@ -67,6 +67,7 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		labels      []string
 		envs        []string
 		selectors   []string
+		tolerations []string
 	)
 
 	command.Flags().StringVar(&s.args.Name, "name", "", "the serving name")
@@ -83,11 +84,12 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
-
+	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration key=value:effect,operator" or "--toleration all" `)
 	s.AddArgValue("env", &envs).
 		AddArgValue("annotation", &annotations).
 		AddArgValue("selector", &selectors).
-		AddArgValue("label", &labels)
+		AddArgValue("label", &labels).
+		AddArgValue("toleration", &tolerations)
 }
 
 func (s *UpdateServingArgsBuilder) PreBuild() error {
@@ -117,6 +119,10 @@ func (s *UpdateServingArgsBuilder) PreBuild() error {
 	}
 
 	if err := s.setNodeSelectors(); err != nil {
+		return err
+	}
+
+	if err := s.setTolerations(); err != nil {
 		return err
 	}
 
@@ -188,6 +194,35 @@ func (s *UpdateServingArgsBuilder) setNodeSelectors() error {
 	nodeSelectors = value.(*[]string)
 	log.Debugf("node selectors: %v", *nodeSelectors)
 	s.args.NodeSelectors = transformSliceToMap(*nodeSelectors, "=")
+	return nil
+}
+
+func (s *UpdateServingArgsBuilder) setTolerations() error {
+	if s.args.Tolerations == nil {
+		s.args.Tolerations = []types.TolerationArgs{}
+	}
+	argKey := "toleration"
+	var tolerations *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	tolerations = value.(*[]string)
+	log.Debugf("tolerations: %v", *tolerations)
+	for _, taintKey := range *tolerations {
+		if taintKey == "all" {
+			s.args.Tolerations = append(s.args.Tolerations, types.TolerationArgs{
+				Operator: "Exists",
+			})
+			return nil
+		}
+		tolerationArg, err := parseTolerationString(taintKey)
+		if err != nil {
+			log.Debugf(err.Error())
+			continue
+		}
+		s.args.Tolerations = append(s.args.Tolerations, *tolerationArg)
+	}
 	return nil
 }
 

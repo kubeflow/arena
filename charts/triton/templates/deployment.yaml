@@ -63,11 +63,17 @@ spec:
       {{- if ne (len .Values.tolerations) 0 }}
       tolerations:
       {{- range $tolerationKey := .Values.tolerations }}
-        {{- if eq $tolerationKey "all" }}
-        - operator: "Exists"
-        {{- else }}
-        - key: "{{ $tolerationKey }}"
-          operator: "Exists"
+      - {{- if $tolerationKey.key }}
+        key: "{{ $tolerationKey.key }}"
+        {{- end }}
+        {{- if $tolerationKey.value }}
+        value: "{{ $tolerationKey.value }}"
+        {{- end }}
+        {{- if $tolerationKey.effect }}
+        effect: "{{ $tolerationKey.effect }}"
+        {{- end }}
+        {{- if $tolerationKey.operator }}
+        operator: "{{ $tolerationKey.operator }}"
         {{- end }}
       {{- end }}
       {{- end }}

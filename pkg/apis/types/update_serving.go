@@ -15,7 +15,8 @@ type CommonUpdateServingArgs struct {
 	Envs          map[string]string `yaml:"envs"`          // --envs
 	Annotations   map[string]string `yaml:"annotations"`   // --annotation
 	Labels        map[string]string `yaml:"labels"`        // --label
-	NodeSelectors map[string]string `yaml:"nodeSelectors"` //--selector
+	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
+	Tolerations   []TolerationArgs  `yaml:"tolerations"`   // --toleration
 	Shell         string            `yaml:"shell"`         // --shell
 	Command       string            `yaml:"command"`       // --command
 }

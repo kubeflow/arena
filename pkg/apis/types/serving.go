@@ -162,7 +162,7 @@ type CommonServingArgs struct {
 
 	HostVolumes   []DataDirVolume   `yaml:"hostVolumes"`   // --data-dir
 	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
-	Tolerations   []string          `yaml:"tolerations"`   // --toleration
+	Tolerations   []TolerationArgs  `yaml:"tolerations"`   // --toleration
 	Annotations   map[string]string `yaml:"annotations"`
 	Labels        map[string]string `yaml:"labels"` // --label
 	// ConfigFiles stores the config file which is existed in client host node

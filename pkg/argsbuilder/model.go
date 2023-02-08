@@ -89,7 +89,7 @@ func (m *ModelArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "specify the annotations")
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
-	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" `)
+	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration key=value:effect,operator" or "--toleration all" `)
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 
 	m.AddArgValue("annotation", &annotations).
@@ -249,7 +249,9 @@ func (m *ModelArgsBuilder) setNodeSelectors() error {
 
 // setTolerations is used to handle option --toleration
 func (m *ModelArgsBuilder) setTolerations() error {
-	m.args.Tolerations = []string{}
+	if m.args.Tolerations == nil {
+		m.args.Tolerations = []types.TolerationArgs{}
+	}
 	argKey := "toleration"
 	var tolerations *[]string
 	value, ok := m.argValues[argKey]
@@ -260,10 +262,17 @@ func (m *ModelArgsBuilder) setTolerations() error {
 	log.Debugf("tolerations: %v", *tolerations)
 	for _, taintKey := range *tolerations {
 		if taintKey == "all" {
-			m.args.Tolerations = []string{"all"}
+			m.args.Tolerations = append(m.args.Tolerations, types.TolerationArgs{
+				Operator: "Exists",
+			})
 			return nil
 		}
-		m.args.Tolerations = append(m.args.Tolerations, taintKey)
+		tolerationArg, err := parseTolerationString(taintKey)
+		if err != nil {
+			log.Debugf(err.Error())
+			continue
+		}
+		m.args.Tolerations = append(m.args.Tolerations, *tolerationArg)
 	}
 	return nil
 }

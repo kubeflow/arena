@@ -164,7 +164,7 @@ type CommonModelArgs struct {
 
 	Envs          map[string]string `yaml:"envs"`          // --env
 	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
-	Tolerations   []string          `yaml:"tolerations"`   // --toleration
+	Tolerations   []TolerationArgs  `yaml:"tolerations"`   // --toleration
 	Annotations   map[string]string `yaml:"annotations"`   // --annotation
 	Labels        map[string]string `yaml:"labels"`        // --label
 

@@ -1,5 +1,8 @@
 package argsbuilder
-import(
+
+import (
+	"errors"
+	"github.com/kubeflow/arena/pkg/apis/types"
 	"strings"
 )
 
@@ -13,4 +16,25 @@ func transformSliceToMap(sets []string, split string) (valuesMap map[string]stri
 	}
 
 	return valuesMap
+}
+
+func parseTolerationString(toleration string) (*types.TolerationArgs, error) {
+	if strings.Contains(toleration, "=") && strings.Contains(toleration, ":") && strings.Contains(toleration, ",") {
+		key, toleration := split(toleration, "=")
+		value, toleration := split(toleration, ":")
+		effect, operator := split(toleration, ",")
+		return &types.TolerationArgs{
+			Key:      key,
+			Value:    value,
+			Effect:   effect,
+			Operator: operator,
+		}, nil
+	} else {
+		return nil, errors.New("invalid toleration format")
+	}
+}
+
+func split(value, sep string) (string, string) {
+	index := strings.Index(value, sep)
+	return value[:index], value[index+1:]
 }
