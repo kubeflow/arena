@@ -93,13 +93,26 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 		if deploy.Spec.Template.Spec.Tolerations == nil {
 			deploy.Spec.Template.Spec.Tolerations = []v1.Toleration{}
 		}
+		mapSet := make(map[string]interface{})
+		for _, toleration := range deploy.Spec.Template.Spec.Tolerations {
+			mapSet[fmt.Sprintf("%s=%s:%s,%s", toleration.Key,
+				toleration.Value,
+				toleration.Effect,
+				toleration.Operator)] = nil
+		}
 		for _, toleration := range args.Tolerations {
-			deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, v1.Toleration{
-				Key:      toleration.Key,
-				Value:    toleration.Value,
-				Effect:   v1.TaintEffect(toleration.Effect),
-				Operator: v1.TolerationOperator(toleration.Operator),
-			})
+			if _, ok := mapSet[fmt.Sprintf("%s=%s:%s,%s", toleration.Key,
+				toleration.Value,
+				toleration.Effect,
+				toleration.Operator)]; !ok {
+				deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, v1.Toleration{
+					Key:      toleration.Key,
+					Value:    toleration.Value,
+					Effect:   v1.TaintEffect(toleration.Effect),
+					Operator: v1.TolerationOperator(toleration.Operator),
+				})
+			}
+
 		}
 	}
 
