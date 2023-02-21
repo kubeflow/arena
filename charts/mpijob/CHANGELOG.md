@@ -117,3 +117,10 @@
 ### 0.28.0
 
 * change image repo from kube-ai to acs
+
+### 0.29.0
+
+change crd to training-operator:
+
+* change apiVersion kubeflow.org/v1alpha1 to kubeflow.org/v1
+* remove launcherOnMaster

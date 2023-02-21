@@ -2,19 +2,21 @@ package evaluate
 
 import (
 	"fmt"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/evaluate"
 	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func NewEvaluateModelCommand() *cobra.Command {
 	builder := evaluate.NewEvaluateJobBuilder()
 	var command = &cobra.Command{
-		Use:     "model",
-		Short:   "Submit a model evaluate job.",
+		Use:   "model",
+		Short: "Submit a model evaluate job.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

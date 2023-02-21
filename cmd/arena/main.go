@@ -21,9 +21,10 @@ import (
 	"runtime/trace"
 	"strconv"
 
-	"github.com/kubeflow/arena/pkg/commands"
-	"github.com/kubeflow/arena/pkg/apis/utils"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/commands"
 )
 
 func main() {

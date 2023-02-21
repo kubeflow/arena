@@ -2,10 +2,12 @@ package evaluate
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/arenaclient"
-	"github.com/kubeflow/arena/pkg/apis/types"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/kubeflow/arena/pkg/apis/arenaclient"
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 func NewEvaluateGetCommand() *cobra.Command {

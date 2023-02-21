@@ -160,3 +160,7 @@
 ### 0.37.0
 
 * change image repo from kube-ai to acs
+
+### 0.38.0
+
+* change crd to training-operator, add runPolicy.

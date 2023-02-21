@@ -17,12 +17,9 @@ package training
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/k8saccesser"
-	"github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
+	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
 	log "github.com/sirupsen/logrus"
 	appv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -30,15 +27,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"time"
-
-	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
+	mpiv1 "github.com/kubeflow/arena/pkg/operators/training-operator/apis/kubeflow.org/v1"
+	"github.com/kubeflow/arena/pkg/operators/training-operator/client/clientset/versioned"
 )
 
 // MPI Job Information
 type MPIJob struct {
 	*BasicJobInfo
-	mpijob       *v1alpha1.MPIJob
+	mpijob       *mpiv1.MPIJob
 	chiefjob     *batchv1.Job
 	pods         []*v1.Pod // all the pods including statefulset and job
 	chiefPod     *v1.Pod   // the chief pod
@@ -355,7 +355,7 @@ func (tt *MPIJobTrainer) isChiefPod(item *v1.Pod) bool {
 	return true
 }
 
-func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha1.MPIJob) bool {
+func (tt *MPIJobTrainer) isMPIJob(name, ns string, item mpiv1.MPIJob) bool {
 	if val, ok := item.Labels["release"]; ok && (val == name) {
 		log.Debugf("the mpijob %s with labels %s", item.Name, val)
 	} else {
@@ -454,12 +454,21 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 }
 
 func (mj *MPIJob) isSucceeded() bool {
-	// status.MPIJobLauncherStatusType
-	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherSucceeded
+	for _, condition := range mj.mpijob.Status.Conditions {
+		if condition.Type == commonv1.JobSucceeded {
+			return true
+		}
+	}
+	return false
 }
 
 func (mj *MPIJob) isFailed() bool {
-	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherFailed
+	for _, condition := range mj.mpijob.Status.Conditions {
+		if condition.Type == commonv1.JobFailed {
+			return true
+		}
+	}
+	return false
 }
 
 func (mj *MPIJob) isPending() bool {
@@ -480,11 +489,11 @@ func (mj *MPIJob) isPending() bool {
 // Get PriorityClass
 func (m *MPIJob) GetPriorityClass() string {
 	// return ""
-	return m.mpijob.Spec.Template.Spec.PriorityClassName
+	return m.mpijob.Spec.MPIReplicaSpecs[mpiv1.MPIJobReplicaTypeWorker].Template.Spec.PriorityClassName
 }
 
 // filter out all pods and chief pod (master pod) of mpijob from pods in current system
-func getPodsOfMPIJob(tt *MPIJobTrainer, mpijob *v1alpha1.MPIJob, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
+func getPodsOfMPIJob(tt *MPIJobTrainer, mpijob *mpiv1.MPIJob, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
 	return getPodsOfTrainingJob(mpijob.Name, mpijob.Namespace, podList, tt.isMPIPod, func(pod *v1.Pod) bool {
 		return tt.isChiefPod(pod)
 	})

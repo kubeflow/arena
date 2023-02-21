@@ -18,16 +18,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
-	commonv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
-
 	"time"
 
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/k8saccesser"
-	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
+	commonv1 "github.com/kubeflow/common/pkg/apis/common/v1"
 	log "github.com/sirupsen/logrus"
 	appv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -35,7 +28,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	pytorchv1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
+	pytorchv1 "github.com/kubeflow/arena/pkg/operators/training-operator/apis/kubeflow.org/v1"
+	"github.com/kubeflow/arena/pkg/operators/training-operator/client/clientset/versioned"
 )
 
 const (
