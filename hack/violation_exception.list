@@ -1,0 +1,6 @@
+API rule violation: list_type_missing,github.com/kubeflow/arena/pkg/operators/training-operator/apis/kubeflow.org/v1,ElasticPolicy,Metrics
+API rule violation: list_type_missing,github.com/kubeflow/arena/pkg/operators/training-operator/apis/kubeflow.org/v1,ElasticPolicy,RDZVConf
+API rule violation: list_type_missing,github.com/kubeflow/arena/pkg/operators/training-operator/apis/kubeflow.org/v1,PaddleElasticPolicy,Metrics
+API rule violation: list_type_missing,github.com/kubeflow/common/pkg/apis/common/v1,JobStatus,Conditions
+API rule violation: names_match,github.com/kubeflow/arena/pkg/operators/training-operator/apis/kubeflow.org/v1,ElasticPolicy,RDZVID
+API rule violation: names_match,github.com/kubeflow/arena/pkg/operators/training-operator/apis/kubeflow.org/v1,PyTorchJobSpec,PyTorchReplicaSpecs
