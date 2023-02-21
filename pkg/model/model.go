@@ -263,7 +263,7 @@ func (m *modelJob) Params() map[string]string {
 	for _, value := range arr {
 		if strings.HasPrefix(value, "--") {
 			kv := strings.Split(value, "=")
-			params[fmt.Sprintf("--%s", kv[0])] = value[len(kv[0])+1:]
+			params[kv[0]] = kv[1]
 		}
 	}
 	return params

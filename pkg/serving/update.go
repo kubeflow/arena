@@ -30,7 +30,7 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 			servingArgs := containerArgs[0]
 
 			if strings.HasSuffix(servingArgs, "\n") {
-				servingArgs = servingArgs[:len(servingArgs)-2]
+				servingArgs = strings.TrimSpace(servingArgs[:len(servingArgs)-1])
 			}
 			arr := strings.Split(servingArgs, "--")
 			params := make(map[string]string)
@@ -131,7 +131,7 @@ func UpdateTritonServing(args *types.UpdateTritonServingArgs) error {
 
 		servingArgs := containerArgs[0]
 		if strings.HasSuffix(servingArgs, "\n") {
-			servingArgs = servingArgs[:len(servingArgs)-2]
+			servingArgs = strings.TrimSpace(servingArgs[:len(servingArgs)-1])
 		}
 		arr := strings.Split(servingArgs, "--")
 
@@ -327,7 +327,7 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 			newEnvs = append(newEnvs, envVar)
 		}
 	}
-	deploy.Spec.Template.Spec.Containers[0].Env = newEnvs
+	deploy.Spec.Template.Spec.Containers[0].Env = append(deploy.Spec.Template.Spec.Containers[0].Env, newEnvs...)
 
 	if args.Command != "" {
 		// commands: sh -c xxx
