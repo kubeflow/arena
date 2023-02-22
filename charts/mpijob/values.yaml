@@ -20,7 +20,6 @@ tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/acs/tensorflow:1.5.0-deve
 tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
 
-launcherOnMaster: false
 mountsOnLauncher: false
 
 retry: 0

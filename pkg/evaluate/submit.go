@@ -1,10 +1,11 @@
 package evaluate
 
 import (
+	log "github.com/sirupsen/logrus"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
-	log "github.com/sirupsen/logrus"
 )
 
 func SubmitEvaluateJob(namespace string, submitArgs *types.EvaluateJobArgs) (err error) {

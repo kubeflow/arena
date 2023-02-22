@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -74,7 +74,7 @@ func (s *SubmitMPIJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	command.Flags().BoolVar(&s.args.GPUTopology, "gputopology", false, "enable gpu topology scheduling")
-	command.Flags().BoolVar(&s.args.MountsOnLauncher, "mounts-on-launcher", false, "launcher also mounts pvc")
+	command.Flags().BoolVar(&s.args.MountsOnLauncher, "mounts-on-launcher", false, "launcher also mounts pvc, default to false.")
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "All", "How to clean tasks after Training is done, support None, Running, All.")
 }
 

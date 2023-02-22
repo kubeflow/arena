@@ -21,7 +21,8 @@ metadata:
   {{- end }}
 spec:
 {{- if .Values.cleanPodPolicy }}
-  cleanPodPolicy: {{ .Values.cleanPodPolicy }}
+  runPolicy:
+    cleanPodPolicy: {{ .Values.cleanPodPolicy }}
 {{- end }}
   pytorchReplicaSpecs:
     Master:
