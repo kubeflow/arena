@@ -131,4 +131,11 @@ job-supervisor:
   image: acs/job-supervisor
   tag: v0.1.1-3e98633-aliyun
   imagePullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 300m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 300Mi
   nodeSelector: {}
