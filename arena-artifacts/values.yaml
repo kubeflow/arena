@@ -124,3 +124,11 @@ exporter:
   tag: v1.0.1-b2c2f9b
   imagePullPolicy: IfNotPresent
   resources: {}
+
+# job-supervisor
+job-supervisor:
+  enabled: true
+  image: acs/job-supervisor
+  tag: v0.1.1-3e98633-aliyun
+  imagePullPolicy: IfNotPresent
+  nodeSelector: {}
