@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
     - image: cimg/go:1.19.4
-    working_directory: /go/src/github.com/kubeflow/arena
+    working_directory: /home/circleci/go/src/github.com/kubeflow/arena
     steps:
     - checkout
     - setup_remote_docker:
