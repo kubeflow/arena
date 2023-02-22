@@ -156,16 +156,18 @@ spec:
                 description: ReplicaStatuses is map of ReplicaType and ReplicaStatus,
                   specifies the status of each replica.
                 type: object
+              restartCount:
+                description: The number of times the Job has been restarted
+                format: int32
+                type: integer
               startTime:
-                description: Represents time when the job was acknowledged by the
-                  job controller. It is not guaranteed to be set in happens-before
-                  order across separate operations. It is represented in RFC3339 form
-                  and is in UTC.
+                description: Represents time when the job was acknowledged by the job controller. It is not guaranteed to be set in happens-before order across separate operations. It is represented in RFC3339 form and is in UTC.
                 format: date-time
                 type: string
             required:
             - conditions
             - replicaStatuses
+            - restartCount
             type: object
         type: object
     served: true

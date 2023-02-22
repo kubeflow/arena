@@ -9,4 +9,8 @@ const (
 	aliyunENIAnnotation = "k8s.aliyun.com/eni"
 
 	jobSuspend = "scheduling.x-k8s.io/suspend"
+
+	spotInstanceAnnotation = "job-supervisor.kube-ai.io/spot-instance"
+
+	maxWaitTimeAnnotation = "job-supervisor.kube-ai.io/max-wait-time"
 )

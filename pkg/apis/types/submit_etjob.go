@@ -8,9 +8,14 @@ type SubmitETJobArgs struct {
 	// SubmitTensorboardArgs stores tensorboard information
 	SubmitTensorboardArgs `yaml:",inline"`
 	// SubmitSyncCodeArgs stores syncing code information
-	SubmitSyncCodeArgs `yaml:",inline"`
-	MaxWorkers         int `yaml:"maxWorkers"`
-	MinWorkers         int `yaml:"minWorkers"`
+	SubmitSyncCodeArgs  `yaml:",inline"`
+	MaxWorkers          int               `yaml:"maxWorkers"`
+	MinWorkers          int               `yaml:"minWorkers"`
+	LauncherSelectors   map[string]string `yaml:"launcherSelectors"`   // --launcher-selector
+	JobRestartPolicy    string            `yaml:"jobRestartPolicy"`    // --job-restart-policy
+	WorkerRestartPolicy string            `yaml:"workerRestartPolicy"` // --worker-restart-policy
+	JobBackoffLimit     int               `yaml:"jobBackoffLimit"`     // --job-backoff-limit
+
 }
 
 type ScaleETJobArgs struct {

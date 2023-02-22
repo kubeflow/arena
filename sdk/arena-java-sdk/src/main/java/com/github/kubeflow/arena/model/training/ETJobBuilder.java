@@ -1,6 +1,7 @@
 package com.github.kubeflow.arena.model.training;
 
 import com.github.kubeflow.arena.enums.TrainingJobType;
+import com.github.kubeflow.arena.model.fields.BoolField;
 import com.github.kubeflow.arena.model.fields.StringField;
 
 import java.util.ArrayList;
@@ -28,6 +29,16 @@ public class ETJobBuilder extends JobBuilder {
 
     public ETJobBuilder memory(String m) {
         this.options.add(new StringField("--memory",m));
+        return this;
+    }
+
+    public ETJobBuilder enableSpotInstance() {
+        this.options.add(new BoolField("--spot-instance"));
+        return this;
+    }
+
+    public ETJobBuilder maxWaitTime(int time) {
+        this.options.add(new StringField("--max-wait-time", String.valueOf(time)));
         return this;
     }
 

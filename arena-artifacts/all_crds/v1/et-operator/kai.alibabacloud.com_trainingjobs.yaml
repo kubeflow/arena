@@ -45,6 +45,12 @@ spec:
           spec:
             description: TrainingJobSpec defines the desired state of TrainingJob
             properties:
+              backoffLimit:
+                default: 6
+                description: Optional number of retries to execute script.
+                format: int32
+                minimum: 0
+                type: integer
               cleanPodPolicy:
                 description: CleanPodPolicy defines the policy that whether to kill
                   pods after the job completes. Defaults to None.
@@ -13170,6 +13176,14 @@ spec:
                 description: Specifies the mode when launcher attach to workers. available
                   option is ssh / kubexec Defaults is kubexec.
                 type: string
+              restartPolicy:
+                default: Never
+                description: Restart policy for training job One of OnFailure, Never.
+                  Default to Never.
+                enum:
+                - Never
+                - OnFailure
+                type: string
               slotsPerWorker:
                 description: Specifies the number of slots per worker used in hostfile.
                   Defaults to 1.
@@ -13258,6 +13272,10 @@ spec:
                 description: ReplicaStatuses is map of ReplicaType and ReplicaStatus,
                   specifies the status of each replica.
                 type: object
+              restartCount:
+                description: The number of times the Job has been restarted
+                format: int32
+                type: integer
               startTime:
                 description: Represents time when the job was acknowledged by the
                   job controller. It is not guaranteed to be set in happens-before
@@ -13272,6 +13290,7 @@ spec:
             required:
             - conditions
             - replicaStatuses
+            - restartCount
             type: object
         type: object
     served: true
