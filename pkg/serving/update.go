@@ -32,17 +32,18 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 			if strings.HasSuffix(servingArgs, "\n") {
 				servingArgs = servingArgs[:len(servingArgs)-2]
 			}
-			arr := strings.Split(servingArgs, " ")
-
+			arr := strings.Split(servingArgs, "--")
 			params := make(map[string]string)
-			for i := 1; i < len(arr); i++ {
-				pair := strings.Split(arr[i], "=")
-				if len(pair) == 0 {
+			for index, argItem := range arr {
+				if index == 0 {
 					continue
 				}
-				params[pair[0]] = pair[1]
+				pair := strings.Split(argItem, "=")
+				if len(pair) <= 1 {
+					continue
+				}
+				params[fmt.Sprintf("--%s", pair[0])] = argItem[len(pair[0])+1:]
 			}
-
 			if args.ModelName != "" {
 				params["--model_name"] = args.ModelName
 			}
@@ -93,13 +94,26 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 		if deploy.Spec.Template.Spec.Tolerations == nil {
 			deploy.Spec.Template.Spec.Tolerations = []v1.Toleration{}
 		}
+		mapSet := make(map[string]interface{})
+		for _, toleration := range deploy.Spec.Template.Spec.Tolerations {
+			mapSet[fmt.Sprintf("%s=%s:%s,%s", toleration.Key,
+				toleration.Value,
+				toleration.Effect,
+				toleration.Operator)] = nil
+		}
 		for _, toleration := range args.Tolerations {
-			deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, v1.Toleration{
-				Key:      toleration.Key,
-				Value:    toleration.Value,
-				Effect:   v1.TaintEffect(toleration.Effect),
-				Operator: v1.TolerationOperator(toleration.Operator),
-			})
+			if _, ok := mapSet[fmt.Sprintf("%s=%s:%s,%s", toleration.Key,
+				toleration.Value,
+				toleration.Effect,
+				toleration.Operator)]; !ok {
+				deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, v1.Toleration{
+					Key:      toleration.Key,
+					Value:    toleration.Value,
+					Effect:   v1.TaintEffect(toleration.Effect),
+					Operator: v1.TolerationOperator(toleration.Operator),
+				})
+			}
+
 		}
 	}
 
@@ -119,12 +133,18 @@ func UpdateTritonServing(args *types.UpdateTritonServingArgs) error {
 		if strings.HasSuffix(servingArgs, "\n") {
 			servingArgs = servingArgs[:len(servingArgs)-2]
 		}
-		arr := strings.Split(servingArgs, " ")
+		arr := strings.Split(servingArgs, "--")
 
 		params := make(map[string]string)
-		for i := 1; i < len(arr); i++ {
-			pair := strings.Split(arr[i], "=")
-			params[pair[0]] = pair[1]
+		for index, argItem := range arr {
+			if index == 0 {
+				continue
+			}
+			pair := strings.Split(argItem, "=")
+			if len(pair) <= 1 {
+				continue
+			}
+			params[fmt.Sprintf("--%s", pair[0])] = argItem[len(pair[0])+1:]
 		}
 
 		if args.ModelRepository != "" {

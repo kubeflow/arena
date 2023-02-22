@@ -109,6 +109,11 @@ type CommonSubmitArgs struct {
 	// HelmOptions stores the helm options
 	HelmOptions []string `yaml:"-"`
 
+	// EnableSpotInstance enables the feature of SuperVisor manage spot instance training.
+	EnableSpotInstance bool `yaml:"enableSpotInstance"`
+
+	// MaxWaitTime stores the maximum length of time a job waits for resources
+	MaxWaitTime int `yaml:"maxWaitTime"`
 	// SchedulerName stores the scheduler name,match option --scheduler
 	SchedulerName string `yaml:"schedulerName"`
 

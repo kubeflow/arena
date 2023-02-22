@@ -97,6 +97,8 @@ func (ej *ETJob) GetStatus() (status string) {
 		status = "PENDING"
 	} else if ej.isScaling() {
 		status = "SCALING"
+	} else if ej.isMaxWaitTimeExceeded() {
+		status = "MAX_WAIT_TIME_EXCEEDED"
 	} else {
 		status = "RUNNING"
 	}
@@ -214,7 +216,7 @@ func (ej *ETJob) isSucceeded() bool {
 }
 
 func (ej *ETJob) isFailed() bool {
-	return ej.trainingjob.Status.Phase == "Failed"
+	return ej.trainingjob.Status.Phase == "Failed" && !ej.hasMaxWaitTimeExceededAnnotation()
 }
 
 func (ej *ETJob) isScaling() bool {
@@ -229,6 +231,19 @@ func (ej *ETJob) isPending() bool {
 	}
 
 	return false
+}
+
+func (ej *ETJob) hasMaxWaitTimeExceededAnnotation() bool {
+	if val, ok := ej.trainingjob.Annotations[spotInstanceJobStatusAnnotation]; ok {
+		if val == "timeout" {
+			return true
+		}
+	}
+	return false
+}
+
+func (ej *ETJob) isMaxWaitTimeExceeded() bool {
+	return ej.trainingjob.Status.Phase == "Failed" && ej.hasMaxWaitTimeExceededAnnotation()
 }
 
 // ET Job trainer

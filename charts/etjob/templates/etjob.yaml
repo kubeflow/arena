@@ -18,8 +18,14 @@ metadata:
     createdBy: "ETJob"
   {{- range $key, $value := .Values.labels }}
     {{ $key }}: {{ $value | quote }}
-  {{- end }} 
+  {{- end }}
 spec:
+  {{- if .Values.jobBackoffLimit }}
+  backoffLimit: {{ .Values.jobBackoffLimit }}
+  {{- end }}
+  {{- if .Values.jobRestartPolicy }}
+  restartPolicy: {{ .Values.jobRestartPolicy }}
+  {{- end }}
   {{- if .Values.cleanPodPolicy }}
   cleanPodPolicy: {{ .Values.cleanPodPolicy }}
   {{- end }}
@@ -50,9 +56,9 @@ spec:
           {{- end }}
           {{- end }}
         spec:
-          {{- if ne (len .Values.nodeSelectors) 0 }}
+          {{- if ne (len .Values.launcherSelectors) 0 }}
           nodeSelector:
-          {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+          {{- range $nodeKey,$nodeVal := .Values.launcherSelectors }}
             {{ $nodeKey }}: "{{ $nodeVal }}"
           {{- end }}
           {{- end }}
@@ -300,6 +306,9 @@ spec:
 
     {{- if .Values.workers }}
     worker:
+      {{- if .Values.workerRestartPolicy }}
+      restartPolicy: {{ .Values.workerRestartPolicy }}
+      {{- end }}
       replicas: {{ .Values.workers }}
       {{- if .Values.maxWorkers }}
       maxReplicas: {{ .Values.maxWorkers }}
@@ -316,6 +325,9 @@ spec:
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
             createdBy: "ETJob"
+          {{- range $key, $value := .Values.labels }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
           {{- if .Values.annotations }}
           annotations:
           {{- range $key, $value := .Values.annotations }}
@@ -326,7 +338,7 @@ spec:
           {{- if ne (len .Values.nodeSelectors) 0 }}
           nodeSelector:
           {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
-          {{ $nodeKey }}: "{{ $nodeVal }}"
+            {{ $nodeKey }}: "{{ $nodeVal }}"
           {{- end }}
           {{- end }}
           {{- if ne (len .Values.tolerations) 0 }}

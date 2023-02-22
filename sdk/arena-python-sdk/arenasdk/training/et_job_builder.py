@@ -7,30 +7,38 @@ from arenasdk.training.job_builder import JobBuilder
 class ETJobBuilder(JobBuilder):
     def __init__(self):
         super().__init__(TrainingJobType.ETTrainingJob)
-        
+
     def with_min_workers(self,workers: int) -> ETJobBuilder:
         self._options.append(StringField("--min-workers",workers))
-        return self 
+        return self
 
     def with_max_workers(self,workers: int) -> ETJobBuilder:
         self._options.append(StringField("--max-workers",workers))
-        return self 
+        return self
 
     def with_cpu(self,cpu: str) -> ETJobBuilder:
         self._options.append(StringField("--cpu",cpu))
-        return self 
+        return self
 
     def with_memory(self,memory: str) -> ETJobBuilder:
         self._options.append(StringField("--memory",memory))
         return self
-    
+
+    def enable_spot_instance(self) -> ETJobBuilder:
+        self._options.append(BoolField("--spot-instance"))
+        return self
+
+    def with_max_wait_time(self,time: int) -> ETJobBuilder:
+        self._options.append(StringField("--max-wait-time",time))
+        return self
+
     def with_name(self,name: str) -> ETJobBuilder:
         super().with_name(name)
-        return self 
+        return self
 
     def with_image(self,image: str) -> ETJobBuilder:
         super().with_image(image)
-        return self 
+        return self
 
     def with_workers(self,count: int) -> ETJobBuilder:
         super().with_workers(count)
@@ -39,7 +47,7 @@ class ETJobBuilder(JobBuilder):
     def with_image_pull_secrets(self,secrets: List[str]) -> ETJobBuilder:
         super().with_image_pull_secrets(secrets)
         return self
-    
+
     def with_gpus(self,count: int) -> ETJobBuilder:
         super().with_gpus(count)
         return self
@@ -55,10 +63,10 @@ class ETJobBuilder(JobBuilder):
     def with_tolerations(self,tolerations: List[str]) -> ETJobBuilder:
         super().with_tolerations(tolerations)
         return self
-    
+
     def with_config_files(self,files: Dict[str, str]) -> ETJobBuilder:
         super().with_config_files(files)
-        return self 
+        return self
 
     def with_annotations(self,annotions: Dict[str, str]) -> ETJobBuilder:
         super().with_annotations(annotions)
@@ -66,8 +74,8 @@ class ETJobBuilder(JobBuilder):
 
     def with_datas(self,datas: Dict[str,str]) -> ETJobBuilder:
         super().with_datas(datas)
-        return self 
-    
+        return self
+
     def with_data_dirs(self,data_dirs: Dict[str, str]) -> ETJobBuilder:
         super().with_data_dirs(data_dirs)
         return  self
@@ -79,26 +87,26 @@ class ETJobBuilder(JobBuilder):
     def with_priority(self,priority: str) -> ETJobBuilder:
         super().with_priority(priority)
         return  self
-    
+
     def enable_rdma(self) -> ETJobBuilder:
         super().enable_rdma()
         return  self
-    
+
     def with_sync_image(self,image: str) -> ETJobBuilder:
         super().with_sync_image(image)
         return  self
 
     def with_sync_mode(self,mode: str) -> ETJobBuilder:
         super().with_sync_mode(mode)
-        return  self 
+        return  self
 
     def with_sync_source(self,source: str) -> ETJobBuilder:
         super().with_sync_source(source)
         return  self
-    
+
     def enable_tensorboard(self) -> ETJobBuilder:
         super().enable_tensorboard()
-        return self 
+        return self
 
     def with_tensorboard_image(self,image: str) -> ETJobBuilder:
         super().with_tensorboard_image(image)
@@ -110,7 +118,7 @@ class ETJobBuilder(JobBuilder):
 
     def with_retry_count(self,count: int) -> ETJobBuilder:
         super().with_retry_count(count)
-        return self 
+        return self
 
     def enable_coscheduling(self) -> ETJobBuilder:
         super().enable_coscheduling()

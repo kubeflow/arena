@@ -15,9 +15,13 @@ package argsbuilder
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
+	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/spf13/cobra"
@@ -68,10 +72,19 @@ func (s *SubmitETJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
+	var launcherSelectors []string
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	command.Flags().IntVar(&s.args.MaxWorkers, "max-workers", 1000, "the max worker number to run the distributed training.")
 	command.Flags().IntVar(&s.args.MinWorkers, "min-workers", 1, "the min worker number to run the distributed training.")
+	command.Flags().BoolVar(&s.args.EnableSpotInstance, "spot-instance", false, "EnableSpotInstance enables the feature of SuperVisor manager spot instance training")
+	command.Flags().IntVar(&s.args.MaxWaitTime, "max-wait-time", 0, "MaxWaitTime stores the maximum length of time a job waits for resources")
+	command.Flags().StringArrayVarP(&launcherSelectors, "launcher-selector", "", []string{}, `assigning launcher pod to some k8s particular nodes, usage: "--launcher-selector=key=value" or "--launcher-selector key=value" `)
+	command.Flags().StringVar(&s.args.JobRestartPolicy, "job-restart-policy", "", "training job restart policy, support: Never and OnFailure")
+	command.Flags().StringVar(&s.args.WorkerRestartPolicy, "worker-restart-policy", "", "training job worker restart policy, support: Never/OnFailure/Always/ExitCode")
+	command.Flags().IntVar(&s.args.JobBackoffLimit, "job-backoff-limit", 6, "the max restart count of trainingjob, default is six")
+
+	s.argValues["launcher-selector"] = &launcherSelectors
 }
 
 func (s *SubmitETJobArgsBuilder) PreBuild() error {
@@ -94,6 +107,15 @@ func (s *SubmitETJobArgsBuilder) Build() error {
 		return err
 	}
 	if err := s.addWorkerToEnv(); err != nil {
+		return nil
+	}
+	if err := s.setSpotInstance(); err != nil {
+		return nil
+	}
+	if err := s.setMaxWaitTime(); err != nil {
+		return nil
+	}
+	if err := s.setLauncherSelectors(); err != nil {
 		return nil
 	}
 	return nil
@@ -124,5 +146,42 @@ func (s *SubmitETJobArgsBuilder) check() error {
 func (s *SubmitETJobArgsBuilder) addWorkerToEnv() error {
 	s.args.Envs["maxWorkers"] = fmt.Sprintf("%v", s.args.MaxWorkers)
 	s.args.Envs["minWorkers"] = fmt.Sprintf("%v", s.args.MinWorkers)
+	return nil
+}
+
+// setSpotInstance is used to add annotation for spot instance training
+func (s *SubmitETJobArgsBuilder) setSpotInstance() error {
+	if s.args.EnableSpotInstance {
+		if s.args.Annotations == nil {
+			s.args.Annotations = map[string]string{}
+		}
+		s.args.Annotations[spotInstanceAnnotation] = "true"
+	}
+	return nil
+}
+
+func (s *SubmitETJobArgsBuilder) setMaxWaitTime() error {
+	if s.args.MaxWaitTime > 0 {
+		if s.args.Annotations == nil {
+			s.args.Annotations = map[string]string{}
+		}
+		s.args.Annotations[maxWaitTimeAnnotation] = strconv.Itoa(s.args.MaxWaitTime)
+	}
+	return nil
+}
+
+func (m *SubmitETJobArgsBuilder) setLauncherSelectors() error {
+	log.Debug("begin setLauncherSelector")
+	m.args.LauncherSelectors = map[string]string{}
+	argKey := "launcher-selector"
+	var LauncherSelectors *[]string
+	value, ok := m.argValues[argKey]
+	if !ok {
+		log.Warnf("Fail to get key: %s", argKey)
+		return nil
+	}
+	LauncherSelectors = value.(*[]string)
+	m.args.LauncherSelectors = transformSliceToMap(*LauncherSelectors, "=")
+	log.Debugf("success to transform launcher selector: %v", m.args.LauncherSelectors)
 	return nil
 }

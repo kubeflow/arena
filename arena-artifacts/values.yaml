@@ -8,7 +8,7 @@ global:
   pullImageByVPCNetwork: false
   # the prefix of all image
   imagePrefix: registry.cn-zhangjiakou.aliyuncs.com
-  # the cluster type 
+  # the cluster type
   clusterProfile: "Default"
   # specfiy the nodeSelector for all operator pods
   nodeSelector: {}
@@ -31,7 +31,7 @@ tf:
   image: acs/tf_operator
   tag: v1.0-aliyun-986e8d5
   imagePullPolicy: IfNotPresent
-  resources: 
+  resources:
     limits:
       cpu: 200m
       memory: 2Gi
@@ -78,7 +78,7 @@ pytorch:
   image: acs/pytorch-operator
   tag: v1.0-aliyun-6ebeb29
   imagePullPolicy: IfNotPresent
-  resources: 
+  resources:
     limits:
       cpu: 200m
       memory: 2Gi
@@ -91,9 +91,9 @@ pytorch:
 et:
   enabled: true
   image: acs/et-operator
-  tag: v0.1.0-aliyun-1499985
+  tag: v0.1.1-aliyun-0d6b825
   imagePullPolicy: IfNotPresent
-  resources: 
+  resources:
     limits:
       cpu: 200m
       memory: 2Gi

@@ -40,6 +40,8 @@ const (
 	aliyunENIAnnotation = "k8s.aliyun.com/eni"
 
 	requestGPUsOfJobAnnoKey = "requestGPUsOfJobOwner"
+
+	spotInstanceJobStatusAnnotation = "job-supervisor.kube-ai.io/job-status"
 )
 
 var (
