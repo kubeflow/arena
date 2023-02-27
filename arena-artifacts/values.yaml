@@ -91,7 +91,7 @@ pytorch:
 et:
   enabled: true
   image: acs/et-operator
-  tag: v0.1.1-aliyun-0d6b825
+  tag: v0.1.3-aliyun-0d6b825
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -129,7 +129,7 @@ exporter:
 job-supervisor:
   enabled: true
   image: acs/job-supervisor
-  tag: v0.1.1-3e98633-aliyun
+  tag: v0.1.1-71871cc-aliyun
   imagePullPolicy: IfNotPresent
   resources:
     limits:
