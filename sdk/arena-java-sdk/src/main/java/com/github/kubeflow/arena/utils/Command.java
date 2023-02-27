@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.github.kubeflow.arena.exceptions.ExitCodeException;
 import org.apache.commons.lang3.StringUtils;
 
@@ -77,7 +80,19 @@ public class Command {
     public static String execCommand(String... cmd) throws IOException {
         String cmdString = StringUtils.join(cmd, " ");
         System.out.printf("exec command: [%s]\n",cmdString);
-        return new Command(cmd).run();
+        return new Command(newCommandBuild(cmd)).run();
+    }
+
+    private static String[] newCommandBuild(String... cmd) {
+        List<String> newCommand = new ArrayList<String>();
+        for (String s : cmd) {
+            if (s.contains("--env") || s.contains("--annotation") || s.contains("--label")){
+                newCommand.add(s.replaceAll("\"",""));
+            } else {
+                newCommand.add(s);
+            }
+        }
+        return newCommand.toArray(new String[newCommand.size()]);
     }
 
 }
