@@ -18,4 +18,8 @@ type SubmitPyTorchJobArgs struct {
 
 	// clean-task-policy
 	CleanPodPolicy string `yaml:"cleanPodPolicy"`
+
+	// ActiveDeadlineSeconds Specifies the duration (in seconds) since startTime during which the job can remain active
+	// before it is terminated
+	ActiveDeadlineSeconds int64 `yaml:"activeDeadlineSeconds,omitempty"`
 }

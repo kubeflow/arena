@@ -16,7 +16,7 @@ type PytorchJobBuilder struct {
 
 func NewPytorchJobBuilder() *PytorchJobBuilder {
 	args := &types.SubmitPyTorchJobArgs{
-		CleanPodPolicy:        "None",
+		CleanPodPolicy:        "Running",
 		CommonSubmitArgs:      DefaultCommonSubmitArgs,
 		SubmitTensorboardArgs: DefaultSubmitTensorboardArgs,
 	}

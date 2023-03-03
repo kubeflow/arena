@@ -16,17 +16,19 @@ package argsbuilder
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strings"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/argsbuilder/runtime"
 	"github.com/kubeflow/arena/pkg/util"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -84,6 +86,7 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		psSelectors        []string
 		evaluatorSelectors []string
 		roleSequence       string
+		runningTimeout     time.Duration
 	)
 	command.Flags().StringVar(&s.args.WorkerImage, "workerImage", "", "the docker image for tensorflow workers")
 	command.Flags().MarkDeprecated("workerImage", "please use --worker-image instead")
@@ -130,6 +133,8 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("cleanTaskPolicy", "please use --clean-task-policy instead")
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "Running", "How to clean tasks after Training is done, support Running, None and All.")
 
+	command.Flags().DurationVar(&runningTimeout, "running-timeout", runningTimeout, "Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').")
+
 	// Estimator
 	command.Flags().BoolVar(&s.args.UseChief, "chief", false, "enable chief, which is required for estimator.")
 	command.Flags().BoolVar(&s.args.UseEvaluator, "evaluator", false, "enable evaluator, which is optional for estimator.")
@@ -166,7 +171,8 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("chief-selector", &chiefSelectors).
 		AddArgValue("evaluator-selector", &evaluatorSelectors).
 		AddArgValue("ps-selector", &psSelectors).
-		AddArgValue("role-sequence", &roleSequence)
+		AddArgValue("role-sequence", &roleSequence).
+		AddArgValue("running-timeout", &runningTimeout)
 }
 
 func (s *SubmitTFJobArgsBuilder) PreBuild() error {
@@ -200,6 +206,9 @@ func (s *SubmitTFJobArgsBuilder) Build() error {
 	if err := s.setRuntime(); err != nil {
 		return err
 	}
+	if err := s.setRunPolicy(); err != nil {
+		return err
+	}
 	if err := s.checkRoleSequence(); err != nil {
 		return err
 	}
@@ -226,6 +235,18 @@ func (s *SubmitTFJobArgsBuilder) setRuntime() error {
 	name := annotations["runtime"]
 	s.args.TFRuntime = runtime.GetTFRuntime(name)
 	return s.args.TFRuntime.Check(s.args)
+}
+
+func (s *SubmitTFJobArgsBuilder) setRunPolicy() error {
+	// Get active deadline
+	rt, ok := s.argValues["running-timeout"]
+	if !ok {
+		return nil
+	}
+
+	runningTimeout := rt.(*time.Duration)
+	s.args.ActiveDeadlineSeconds = int64(runningTimeout.Seconds())
+	return nil
 }
 
 func (s *SubmitTFJobArgsBuilder) check() error {
@@ -300,6 +321,9 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 		if err != nil {
 			return fmt.Errorf("--worker-memory is invalid")
 		}
+	}
+	if s.args.ActiveDeadlineSeconds <= 0 {
+		return fmt.Errorf("--running-timeout is invalid")
 	}
 	return nil
 }

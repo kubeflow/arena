@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,13 +15,15 @@ package argsbuilder
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strings"
+	"time"
 
-	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/resource"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 type SubmitPytorchJobArgsBuilder struct {
@@ -69,9 +71,15 @@ func (s *SubmitPytorchJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
-	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "None", "How to clean tasks after Training is done, support None, Running, All.")
+
+	var runningTimeout time.Duration
+
+	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "Running", "How to clean tasks after Training is done, support None, Running, All.")
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
+	command.Flags().DurationVar(&runningTimeout, "running-timeout", runningTimeout, "Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').")
+
+	s.AddArgValue("running-timeout", &runningTimeout)
 }
 
 func (s *SubmitPytorchJobArgsBuilder) PreBuild() error {
@@ -90,12 +98,27 @@ func (s *SubmitPytorchJobArgsBuilder) Build() error {
 			return err
 		}
 	}
+	if err := s.setRunPolicy(); err != nil {
+		return err
+	}
 	if err := s.check(); err != nil {
 		return err
 	}
 	if err := s.addMasterAddr(); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *SubmitPytorchJobArgsBuilder) setRunPolicy() error {
+	// Get active deadline
+	rt, ok := s.argValues["running-timeout"]
+	if !ok {
+		return nil
+	}
+
+	runningTimeout := rt.(*time.Duration)
+	s.args.ActiveDeadlineSeconds = int64(runningTimeout.Seconds())
 	return nil
 }
 
@@ -125,6 +148,9 @@ func (s *SubmitPytorchJobArgsBuilder) check() error {
 		if err != nil {
 			return fmt.Errorf("--memory is invalid")
 		}
+	}
+	if s.args.ActiveDeadlineSeconds <= 0 {
+		return fmt.Errorf("--running-timeout is invalid")
 	}
 	return nil
 }
