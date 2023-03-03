@@ -30,7 +30,7 @@ spec:
       {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       containers:
         - command:
-            - /elastic-job-supervisor
+            - /supervisor
           image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           name: elastic-job-supervisor
