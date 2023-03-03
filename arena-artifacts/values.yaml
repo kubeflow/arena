@@ -125,10 +125,10 @@ exporter:
   imagePullPolicy: IfNotPresent
   resources: {}
 
-# job-supervisor
-job-supervisor:
+# elastic-job-supervisor
+elastic-job-supervisor:
   enabled: true
-  image: acs/job-supervisor
+  image: acs/elastic-job-supervisor
   tag: v0.1.1-71871cc-aliyun
   imagePullPolicy: IfNotPresent
   resources:
