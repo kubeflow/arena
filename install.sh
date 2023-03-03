@@ -94,7 +94,7 @@ function install_kubectl_and_helm() {
     ${sudo_prefix} cp $SCRIPT_DIR/bin/kubectl /usr/local/bin/arena-kubectl
     ${sudo_prefix} cp $SCRIPT_DIR/bin/helm /usr/local/bin/arena-helm
 
-    if [[ $ONLY_BINARY != "true" ]];then 
+    if [[ $ONLY_BINARY != "true" ]];then
         if ! ${sudo_prefix} arena-kubectl cluster-info >/dev/null 2>&1; then
             logger "error" "failed to execute 'arena-kubectl cluster-info'"
             logger "error" "Please setup kubeconfig correctly before installing arena"
@@ -187,14 +187,14 @@ function check_addons() {
     # if service account has been existed and it is managed by helm chart
     if (arena-kubectl get serviceaccount --all-namespaces -l helm.sh/chart=arena-artifacts | grep " $sa "  2>1) &> /dev/null; then
         logger debug "service account $sa has been existed,and it is managed by helm,skip to reinstall $addon_name"
-        return 
-    fi    
+        return
+    fi
     # if service account has been existed and it is not managed by helm chart
     if arena-kubectl get serviceaccount --all-namespaces | grep " $sa " &> /dev/null; then
         logger debug "service account $sa has been existed,and it is not managed by helm,skip to reinstall $addon_name"
         export HELM_OPTIONS="$HELM_OPTIONS --set $option"
-        return 
-    fi    
+        return
+    fi
 }
 
 function apply_crds() {
@@ -202,10 +202,10 @@ function apply_crds() {
     if arena-kubectl get apiservices v1beta1.apiextensions.k8s.io &> /dev/null;then
         export CRD_VERSION="v1beta1"
     fi
-    if [ -d $SCRIPT_DIR/arena-artifacts/crds ];then 
+    if [ -d $SCRIPT_DIR/arena-artifacts/crds ];then
         rm -rf $SCRIPT_DIR/arena-artifacts/crds
-    fi 
-    cp -a $SCRIPT_DIR/arena-artifacts/all_crds/$CRD_VERSION $SCRIPT_DIR/arena-artifacts/crds 
+    fi
+    cp -a $SCRIPT_DIR/arena-artifacts/all_crds/$CRD_VERSION $SCRIPT_DIR/arena-artifacts/crds
 }
 
 # annotate crds with annotation helm.sh/resource-policy=keep
@@ -220,8 +220,8 @@ function annotate_crds() {
                 continue
             fi
             if arena-kubectl  get -f $path &> /dev/null;then
-                arena-kubectl annotate -f $path --overwrite helm.sh/resource-policy=keep 
-            fi 
+                arena-kubectl annotate -f $path --overwrite helm.sh/resource-policy=keep
+            fi
         fi
     done
 }
@@ -244,15 +244,19 @@ function apply_et() {
     check_addons et-operator true et-operator et.enabled=false
 }
 
+function apply_job_supervisor() {
+    check_addons et-operator false job-supervisor et.enabled=false
+}
+
 function clean_old_env() {
-    set +e 
+    set +e
     # update the crd version
     if (arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i 'version: v1alpha2' 2>1) &> /dev/null; then
-        arena-kubectl delete crd tfjobs.kubeflow.org    
+        arena-kubectl delete crd tfjobs.kubeflow.org
         arena-kubectl create -f ${SCRIPT_DIR}/arena-artifacts/charts/tf-operator/crds
     fi
     # remove the old kubedl-operator
-    if arena-kubectl get deployment,Service,ServiceAccount -n $NAMESPACE | grep kubedl-operator &> /dev/null;then 
+    if arena-kubectl get deployment,Service,ServiceAccount -n $NAMESPACE | grep kubedl-operator &> /dev/null;then
         arena-kubectl delete deployment kubedl-operator -n $NAMESPACE
         arena-kubectl delete ServiceAccount kubedl-operator -n $NAMESPACE
         arena-kubectl delete crd crons.apps.kubedl.io
@@ -261,7 +265,7 @@ function clean_old_env() {
         arena-kubectl delete Service kubedl-operator -n $NAMESPACE
         arena-kubectl delete ServiceMonitor kubedl-operator -n $NAMESPACE
     fi
-    set -e    
+    set -e
 }
 function apply_cron() {
     check_addons cron-operator true cron-operator cron.enabled=false
@@ -286,7 +290,7 @@ function create_namespace() {
 
 function install_binary_on_master() {
     if [[ $INSTALL_BINARY_ON_MASTER != "true" ]];then
-        return 
+        return
     fi
     master_count=$(arena-kubectl get nodes -l node-role.kubernetes.io/master | grep -v NAME  | wc -l)
     master_count=$(echo $master_count)
@@ -310,8 +314,8 @@ function operators() {
         if ! helm version &> /dev/null;then
             logger error "not found helm binary,can not install arena by helm"
             exit 2
-        fi    
-    fi  
+        fi
+    fi
     clean_old_env
     apply_crds
     apply_tf
@@ -320,6 +324,7 @@ function operators() {
     apply_et
     apply_cron
     apply_tf_dashboard
+    apply_job_supervisor
     install_binary_on_master
     deploy_with_helm
 
@@ -328,18 +333,18 @@ function operators() {
 function deploy_with_helm() {
     if [[ $CHART_VALUE_FILE != "" ]];then
         export HELM_OPTIONS="$HELM_OPTIONS -f $CHART_VALUE_FILE"
-    fi  
+    fi
     if arena-helm list -n $NAMESPACE | grep "arena-artifacts" &> /dev/null;then
-        if [[ $UPDATE_EXISTED_ARTIFACTS != "true" ]];then 
+        if [[ $UPDATE_EXISTED_ARTIFACTS != "true" ]];then
             logger debug "user doesn't want to update artifacts,skip"
-            return 
-        fi 
+            return
+        fi
         logger debug "arena-artifacts has been installed,start to upgrade it"
         annotate_crds $SCRIPT_DIR/arena-artifacts/crds
-        arena-helm upgrade arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts 
-        return 
-    fi  
-    arena-helm install arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts 
+        arena-helm upgrade arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts
+        return
+    fi
+    arena-helm install arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts
 }
 
 function parse_args() {
