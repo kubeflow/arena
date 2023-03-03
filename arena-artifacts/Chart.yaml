@@ -59,8 +59,8 @@ dependencies:
     version: 0.1.0
     repository: "@gpu-exporter"
     condition: exporter.enabled,global.exporter.enabled
-  - name: elasitc-job-supervisor
-    alias: elasitc-job-supervisor
+  - name: elastic-job-supervisor
+    alias: elastic-job-supervisor
     version: 0.1.0
-    repository: "@elasitc-job-supervisor"
-    condition: elasitc-job-supervisor.enabled,global.elasitc-job-supervisor.enabled
+    repository: "@elastic-job-supervisor"
+    condition: elastic-job-supervisor.enabled,global.elastic-job-supervisor.enabled
