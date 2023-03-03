@@ -436,7 +436,7 @@ function main() {
     parse_args "$@"
     set_sed_option
     set_sudo
-    binary
+    #binary
     operators
     logger "debug" "--------------------------------"
     logger "debug" "Arena has been installed successfully!"
