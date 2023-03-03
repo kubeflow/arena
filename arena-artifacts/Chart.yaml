@@ -64,3 +64,4 @@ dependencies:
     version: 0.1.0
     repository: "@elastic-job-supervisor"
     condition: elastic-job-supervisor.enabled,global.elastic-job-supervisor.enabled
+
