@@ -287,6 +287,10 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 	}
 
 	resourceLimits := deploy.Spec.Template.Spec.Containers[0].Resources.Limits
+	if resourceLimits == nil {
+		resourceLimits = make(map[v1.ResourceName]resource.Quantity)
+	}
+
 	if args.GPUCount > 0 {
 		resourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.GPUCount))
 		if _, ok := resourceLimits[ResourceGPUMemory]; ok {
