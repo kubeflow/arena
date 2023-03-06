@@ -599,7 +599,7 @@ func (s *SubmitArgsBuilder) setJobInfoToEnv() error {
 
 func (s *SubmitArgsBuilder) addPodGroupLabel() error {
 	if s.args.Coscheduling {
-		s.args.PodGroupName = fmt.Sprintf("%v_%v", s.args.TrainingType, s.args.Name)
+		s.args.PodGroupName = fmt.Sprintf("%v-%v", s.args.TrainingType, s.args.Name)
 		s.args.PodGroupMinAvailable = fmt.Sprintf("%v", s.args.WorkerCount)
 	}
 	return nil
