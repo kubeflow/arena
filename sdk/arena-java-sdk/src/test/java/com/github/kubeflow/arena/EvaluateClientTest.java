@@ -44,7 +44,7 @@ public class EvaluateClientTest {
     @Test
     public void testGet() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
-        EvaluateJobInfo jobInfo = client.evaluate().namespace("default-group").get("test-evaluate1");
+        EvaluateJobInfo jobInfo = client.evaluate().namespace("default-group").get("test-evaluate2");
         System.out.println(JSON.toJSONString(jobInfo));
     }
 
@@ -60,7 +60,7 @@ public class EvaluateClientTest {
     @Test
     public void testDelete() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
-        String result = client.evaluate().namespace("default-group").delete("test-evaluate3");
+        String result = client.evaluate().namespace("default-group").delete("test-evaluate2");
         System.out.println(result);
     }
 
