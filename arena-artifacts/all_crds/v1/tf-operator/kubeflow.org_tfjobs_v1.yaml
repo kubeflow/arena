@@ -6,7 +6,7 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.6.0
     git-repo: github.com/AliyunContainerService/tf-operator.git
     git-branch: v1.0-aliyun-branch
-    git-commit: fd3b5c48
+    git-commit: b81dfd7a
   creationTimestamp: null
   name: tfjobs.kubeflow.org
 spec:
@@ -60,6 +60,12 @@ spec:
                 description: Defines the policy for cleaning up pods after the TFJob
                   completes. Defaults to Running.
                 type: string
+              startingDeadlineSeconds:
+                description: Specifies the duration (in seconds) since startTime during
+                  which the job can remain pending before it is terminated. Must be
+                  a positive integer.
+                format: int64
+                type: integer
               tfReplicaSpecs:
                 additionalProperties:
                   description: ReplicaSpec is a description of the job replica.

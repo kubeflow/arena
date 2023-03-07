@@ -29,7 +29,7 @@ binary:
 tf:
   enabled: true
   image: acs/tf_operator
-  tag: v1.0-aliyun-986e8d5
+  tag: v1.0-aliyun-b81dfd7
   imagePullPolicy: IfNotPresent
   resources:
     limits:
