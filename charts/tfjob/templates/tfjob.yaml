@@ -30,6 +30,9 @@ spec:
   cleanPodPolicy: Running
 {{- end }}
 {{- end }}
+{{- if .Values.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+{{- end }}
   tfReplicaSpecs:
 {{- if .Values.ps }}
     PS:

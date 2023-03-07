@@ -23,6 +23,9 @@ spec:
 {{- if .Values.cleanPodPolicy }}
   cleanPodPolicy: {{ .Values.cleanPodPolicy }}
 {{- end }}
+{{- if .Values.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+{{- end }}
   pytorchReplicaSpecs:
     Master:
       replicas: 1
