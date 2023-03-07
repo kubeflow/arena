@@ -80,7 +80,7 @@ public class Command {
     public static String execCommand(String... cmd) throws IOException {
         String cmdString = StringUtils.join(cmd, " ");
         System.out.printf("exec command: [%s]\n",cmdString);
-        return String.format("exec command: [%s]\n", cmdString) + new Command(newCommandBuild(cmd)).run();
+        return new Command(newCommandBuild(cmd)).run();
     }
 
     private static String[] newCommandBuild(String... cmd) {

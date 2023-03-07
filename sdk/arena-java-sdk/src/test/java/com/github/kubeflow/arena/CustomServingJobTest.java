@@ -69,10 +69,10 @@ public class CustomServingJobTest {
                 throw  new ArenaException(ArenaErrorEnum.UNKNOWN,"time out for waiting custom serving job to be running.");
             }
             count++;
-            List<ServingJobInfo> jobInfos = client.serving().list(ServingJobType.AllServingJob);
-            for (int i = 0;i < jobInfos.size(); i++) {
-                System.out.println(jobInfos.get(i));
-            }
+//            List<ServingJobInfo> jobInfos = client.serving().list(ServingJobType.AllServingJob);
+//            for (int i = 0;i < jobInfos.size(); i++) {
+//                System.out.println(jobInfos.get(i));
+//            }
             ServingJobInfo jobInfo = client.serving().get(jobName,jobType,jobVersion);
             if (jobInfo.getAvailableInstances() != jobInfo.getDesiredInstances()) {
                 TimeUnit.SECONDS.sleep(10);
