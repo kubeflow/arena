@@ -82,6 +82,9 @@ type SubmitTFJobArgs struct {
 	// ActiveDeadlineSeconds Specifies the duration (in seconds) since startTime during which the job can remain active
 	// before it is terminated
 	ActiveDeadlineSeconds int64 `yaml:"activeDeadlineSeconds,omitempty"`
+	// StartingDeadlineSeconds Specifies the duration (in seconds) since startTime during which the job can remain pending
+	// before it is terminated
+	StartingDeadlineSeconds int64 `yaml:"startingDeadlineSeconds,omitempty"`
 	// for common args
 	CommonSubmitArgs `yaml:",inline"`
 

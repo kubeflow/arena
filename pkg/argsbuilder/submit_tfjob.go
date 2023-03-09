@@ -87,6 +87,7 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		evaluatorSelectors []string
 		roleSequence       string
 		runningTimeout     time.Duration
+		startingTimeout    time.Duration
 	)
 	command.Flags().StringVar(&s.args.WorkerImage, "workerImage", "", "the docker image for tensorflow workers")
 	command.Flags().MarkDeprecated("workerImage", "please use --worker-image instead")
@@ -134,6 +135,7 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "Running", "How to clean tasks after Training is done, support Running, None and All.")
 
 	command.Flags().DurationVar(&runningTimeout, "running-timeout", runningTimeout, "Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').")
+	command.Flags().DurationVar(&startingTimeout, "starting-timeout", startingTimeout, "Specifies the duration since createTime during which the job can remain pending before it is terminated(e.g. '5s', '1m', '2h22m').")
 
 	// Estimator
 	command.Flags().BoolVar(&s.args.UseChief, "chief", false, "enable chief, which is required for estimator.")
@@ -172,7 +174,8 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("evaluator-selector", &evaluatorSelectors).
 		AddArgValue("ps-selector", &psSelectors).
 		AddArgValue("role-sequence", &roleSequence).
-		AddArgValue("running-timeout", &runningTimeout)
+		AddArgValue("running-timeout", &runningTimeout).
+		AddArgValue("starting-timeout", &startingTimeout)
 }
 
 func (s *SubmitTFJobArgsBuilder) PreBuild() error {
@@ -239,13 +242,17 @@ func (s *SubmitTFJobArgsBuilder) setRuntime() error {
 
 func (s *SubmitTFJobArgsBuilder) setRunPolicy() error {
 	// Get active deadline
-	rt, ok := s.argValues["running-timeout"]
-	if !ok {
-		return nil
+	if rt, ok := s.argValues["running-timeout"]; ok {
+		runningTimeout := rt.(*time.Duration)
+		s.args.ActiveDeadlineSeconds = int64(runningTimeout.Seconds())
 	}
 
-	runningTimeout := rt.(*time.Duration)
-	s.args.ActiveDeadlineSeconds = int64(runningTimeout.Seconds())
+	// Get starting deadline
+	if sd, ok := s.argValues["starting-timeout"]; ok {
+		startingTimeout := sd.(*time.Duration)
+		s.args.StartingDeadlineSeconds = int64(startingTimeout.Seconds())
+	}
+
 	return nil
 }
 
@@ -322,8 +329,11 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 			return fmt.Errorf("--worker-memory is invalid")
 		}
 	}
-	if s.args.ActiveDeadlineSeconds <= 0 {
+	if s.args.ActiveDeadlineSeconds < 0 {
 		return fmt.Errorf("--running-timeout is invalid")
+	}
+	if s.args.StartingDeadlineSeconds < 0 {
+		return fmt.Errorf("--starting-timeout is invalid")
 	}
 	return nil
 }

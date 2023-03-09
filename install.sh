@@ -330,20 +330,35 @@ function operators() {
 
 }
 
+function upgrade_crd() {
+    # Upgrade tfjob crd if the following conditions are met.
+    if (arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i "git-commit") &> /dev/null; then
+        old_version=$(arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i "git-commit")
+        new_version=$(cat $SCRIPT_DIR/arena-artifacts/crds/tf-operator/kubeflow.org_tfjobs_v1.yaml |grep -i "git-commit")
+        if [[ ${old_version} != ${new_version} ]]; then
+            echo "upgrade tfjob crd from ${old_version} to ${new_version}"
+            arena-kubectl replace -f $SCRIPT_DIR/arena-artifacts/crds/tf-operator/kubeflow.org_tfjobs_v1.yaml
+        fi
+    fi
+}
+
 function deploy_with_helm() {
     if [[ $CHART_VALUE_FILE != "" ]];then
         export HELM_OPTIONS="$HELM_OPTIONS -f $CHART_VALUE_FILE"
     fi
+
     if arena-helm list -n $NAMESPACE | grep "arena-artifacts" &> /dev/null;then
         if [[ $UPDATE_EXISTED_ARTIFACTS != "true" ]];then
             logger debug "user doesn't want to update artifacts,skip"
             return
         fi
         logger debug "arena-artifacts has been installed,start to upgrade it"
+        upgrade_crd
         annotate_crds $SCRIPT_DIR/arena-artifacts/crds
         arena-helm upgrade arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts
         return
     fi
+    upgrade_crd
     arena-helm install arena-artifacts -n $NAMESPACE $HELM_OPTIONS $SCRIPT_DIR/arena-artifacts
 }
 
