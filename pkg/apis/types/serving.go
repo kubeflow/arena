@@ -159,12 +159,14 @@ type CommonServingArgs struct {
 	DataSubpathExprs   map[string]string `yaml:"dataSubPathExprs"`    // --data-subpath-expr
 	TempDirSubpathExpr map[string]string `yaml:"tempDirSubPathExprs"` // --temp-dir-subpath-expr
 	TempDirs           map[string]string `yaml:"tempDirs"`            // --temp-dir
+	ShareMemory        string            `yaml:"shareMemory"`         // --share-memory
 
-	HostVolumes   []DataDirVolume   `yaml:"hostVolumes"`   // --data-dir
-	NodeSelectors map[string]string `yaml:"nodeSelectors"` // --selector
-	Tolerations   []TolerationArgs  `yaml:"tolerations"`   // --toleration
-	Annotations   map[string]string `yaml:"annotations"`
-	Labels        map[string]string `yaml:"labels"` // --label
+	ImagePullSecrets []string          `yaml:"imagePullSecrets"` //--image-pull-secrets
+	HostVolumes      []DataDirVolume   `yaml:"hostVolumes"`      // --data-dir
+	NodeSelectors    map[string]string `yaml:"nodeSelectors"`    // --selector
+	Tolerations      []TolerationArgs  `yaml:"tolerations"`      // --toleration
+	Annotations      map[string]string `yaml:"annotations"`
+	Labels           map[string]string `yaml:"labels"` // --label
 	// ConfigFiles stores the config file which is existed in client host node
 	// and map it to container,match option --config-file
 	ConfigFiles map[string]map[string]ConfigFileInfo `yaml:"configFiles"`

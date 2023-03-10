@@ -86,6 +86,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		labels             []string
 		selectors          []string
 		configFiles        []string
+		imagePullSecrets   []string
 	)
 	defaultImage := ""
 	item, ok := s.argValues["default-image"]
@@ -103,6 +104,9 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.Replicas, "replicas", 1, "the replicas number of the serve job.")
+	command.Flags().StringVar(&s.args.ShareMemory, "share-memory", "", "the request share memory of each replica to run the serve.")
+	// add option --image-pull-secret its' value will be get from viper,Using a Private Registry
+	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
 
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 
@@ -150,7 +154,8 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("temp-dir-subpath-expr", &tempDirSubpathExpr).
 		AddArgValue("temp-dir", &tempDir).
 		AddArgValue("env", &envs).
-		AddArgValue("config-file", &configFiles)
+		AddArgValue("config-file", &configFiles).
+		AddArgValue("image-pull-secret", &imagePullSecrets)
 }
 
 func (s *ServingArgsBuilder) PreBuild() error {
@@ -201,6 +206,10 @@ func (s *ServingArgsBuilder) PreBuild() error {
 	if err := s.setUserNameAndUserId(); err != nil {
 		return err
 	}
+	// set image pull secrets
+	if err := s.setImagePullSecrets(); err != nil {
+		return err
+	}
 	// set config files
 	if err := s.setConfigFiles(); err != nil {
 		return err
@@ -246,8 +255,38 @@ func (s *ServingArgsBuilder) check() error {
 			return fmt.Errorf("--memory is invalid")
 		}
 	}
+	if s.args.ShareMemory != "" {
+		_, err := resource.ParseQuantity(s.args.ShareMemory)
+		if err != nil {
+			return fmt.Errorf("--share-memory is invalid")
+		}
+	}
 
 	return s.checkServiceExists()
+}
+
+// setImagePullSecrets is used to set
+func (s *ServingArgsBuilder) setImagePullSecrets() error {
+	s.args.ImagePullSecrets = []string{}
+	argKey := "image-pull-secret"
+	var imagePullSecrets *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	imagePullSecrets = value.(*[]string)
+
+	if len(*imagePullSecrets) == 0 {
+		arenaConfig := config.GetArenaConfiger().GetConfigsFromConfigFile()
+		if temp, found := arenaConfig["imagePullSecrets"]; found {
+			log.Debugf("imagePullSecrets load from arenaConfigs: %v", temp)
+			s.args.ImagePullSecrets = strings.Split(temp, ",")
+		}
+	} else {
+		s.args.ImagePullSecrets = *imagePullSecrets
+	}
+	log.Debugf("imagePullSecrets: %v", s.args.ImagePullSecrets)
+	return nil
 }
 
 // setDataSets is used to handle option --data
