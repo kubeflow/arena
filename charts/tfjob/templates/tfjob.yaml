@@ -36,6 +36,9 @@ spec:
 {{- if .Values.startingDeadlineSeconds }}
   startingDeadlineSeconds: {{ .Values.startingDeadlineSeconds }}
 {{- end }}
+{{- if .Values.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+{{- end }}
   tfReplicaSpecs:
 {{- if .Values.ps }}
     PS:

@@ -88,6 +88,7 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		roleSequence       string
 		runningTimeout     time.Duration
 		startingTimeout    time.Duration
+		ttlAfterFinished   time.Duration
 	)
 	command.Flags().StringVar(&s.args.WorkerImage, "workerImage", "", "the docker image for tensorflow workers")
 	command.Flags().MarkDeprecated("workerImage", "please use --worker-image instead")
@@ -136,6 +137,7 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	command.Flags().DurationVar(&runningTimeout, "running-timeout", runningTimeout, "Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').")
 	command.Flags().DurationVar(&startingTimeout, "starting-timeout", startingTimeout, "Specifies the duration since createTime during which the job can remain pending before it is terminated(e.g. '5s', '1m', '2h22m').")
+	command.Flags().DurationVar(&ttlAfterFinished, "ttl-after-finished", ttlAfterFinished, "Defines the TTL for cleaning up finished TFJobs(e.g. '5s', '1m', '2h22m'). Defaults to infinite.")
 
 	// Estimator
 	command.Flags().BoolVar(&s.args.UseChief, "chief", false, "enable chief, which is required for estimator.")
@@ -175,7 +177,8 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("ps-selector", &psSelectors).
 		AddArgValue("role-sequence", &roleSequence).
 		AddArgValue("running-timeout", &runningTimeout).
-		AddArgValue("starting-timeout", &startingTimeout)
+		AddArgValue("starting-timeout", &startingTimeout).
+		AddArgValue("ttl-after-finished", &ttlAfterFinished)
 }
 
 func (s *SubmitTFJobArgsBuilder) PreBuild() error {
@@ -251,6 +254,12 @@ func (s *SubmitTFJobArgsBuilder) setRunPolicy() error {
 	if sd, ok := s.argValues["starting-timeout"]; ok {
 		startingTimeout := sd.(*time.Duration)
 		s.args.StartingDeadlineSeconds = int64(startingTimeout.Seconds())
+	}
+
+	// Get ttlSecondsAfterFinished
+	if ft, ok := s.argValues["ttl-after-finished"]; ok {
+		ttlAfterFinished := ft.(*time.Duration)
+		s.args.TTLSecondsAfterFinished = int32(ttlAfterFinished.Seconds())
 	}
 
 	return nil
@@ -334,6 +343,9 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 	}
 	if s.args.StartingDeadlineSeconds < 0 {
 		return fmt.Errorf("--starting-timeout is invalid")
+	}
+	if s.args.TTLSecondsAfterFinished < 0 {
+		return fmt.Errorf("--ttl-after-finished is invalid")
 	}
 	return nil
 }

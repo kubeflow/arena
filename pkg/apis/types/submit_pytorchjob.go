@@ -22,4 +22,7 @@ type SubmitPyTorchJobArgs struct {
 	// ActiveDeadlineSeconds Specifies the duration (in seconds) since startTime during which the job can remain active
 	// before it is terminated
 	ActiveDeadlineSeconds int64 `yaml:"activeDeadlineSeconds,omitempty"`
+
+	// Defines the TTL for cleaning up finished PytorchJobs. Defaults to infinite.
+	TTLSecondsAfterFinished int32 `yaml:"ttlSecondsAfterFinished,omitempty"`
 }

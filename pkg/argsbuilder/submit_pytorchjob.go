@@ -72,14 +72,19 @@ func (s *SubmitPytorchJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 
-	var runningTimeout time.Duration
+	var (
+		runningTimeout   time.Duration
+		ttlAfterFinished time.Duration
+	)
 
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "Running", "How to clean tasks after Training is done, support None, Running, All.")
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	command.Flags().DurationVar(&runningTimeout, "running-timeout", runningTimeout, "Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').")
+	command.Flags().DurationVar(&ttlAfterFinished, "ttl-after-finished", ttlAfterFinished, "Defines the TTL for cleaning up finished PytorchJobs(e.g. '5s', '1m', '2h22m'). Defaults to infinite.")
 
-	s.AddArgValue("running-timeout", &runningTimeout)
+	s.AddArgValue("running-timeout", &runningTimeout).
+		AddArgValue("ttl-after-finished", &ttlAfterFinished)
 }
 
 func (s *SubmitPytorchJobArgsBuilder) PreBuild() error {
@@ -112,13 +117,16 @@ func (s *SubmitPytorchJobArgsBuilder) Build() error {
 
 func (s *SubmitPytorchJobArgsBuilder) setRunPolicy() error {
 	// Get active deadline
-	rt, ok := s.argValues["running-timeout"]
-	if !ok {
-		return nil
+	if rt, ok := s.argValues["running-timeout"]; ok {
+		runningTimeout := rt.(*time.Duration)
+		s.args.ActiveDeadlineSeconds = int64(runningTimeout.Seconds())
 	}
 
-	runningTimeout := rt.(*time.Duration)
-	s.args.ActiveDeadlineSeconds = int64(runningTimeout.Seconds())
+	// Get ttlSecondsAfterFinished
+	if ft, ok := s.argValues["ttl-after-finished"]; ok {
+		ttlAfterFinished := ft.(*time.Duration)
+		s.args.TTLSecondsAfterFinished = int32(ttlAfterFinished.Seconds())
+	}
 	return nil
 }
 
@@ -149,8 +157,11 @@ func (s *SubmitPytorchJobArgsBuilder) check() error {
 			return fmt.Errorf("--memory is invalid")
 		}
 	}
-	if s.args.ActiveDeadlineSeconds <= 0 {
+	if s.args.ActiveDeadlineSeconds < 0 {
 		return fmt.Errorf("--running-timeout is invalid")
+	}
+	if s.args.TTLSecondsAfterFinished < 0 {
+		return fmt.Errorf("--ttl-after-finished is invalid")
 	}
 	return nil
 }
