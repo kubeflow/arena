@@ -78,7 +78,7 @@ func (s *TritonServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().IntVar(&s.args.MetricsPort, "metrics-port", 8002, "the port of metrics server")
 	command.Flags().BoolVar(&s.args.AllowMetrics, "allow-metrics", false, "open metrics")
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
-	command.Flags().StringVar(&s.args.ExtendCommand, "extend-command", "", "")
+	command.Flags().StringVar(&s.args.ExtendCommand, "extend-command", "", "the command will attach to server's command.")
 	command.Flags().StringArrayVar(&loadModels, "load-model", []string{}, `giving names of model to load, usage:"--load-model <model-name>"`)
 
 	s.AddArgValue("load-model", &loadModels)
