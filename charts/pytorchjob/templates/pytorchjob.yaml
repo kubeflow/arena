@@ -26,6 +26,9 @@ spec:
 {{- if .Values.activeDeadlineSeconds }}
   activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
 {{- end }}
+{{- if .Values.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+{{- end }}
   pytorchReplicaSpecs:
     Master:
       replicas: 1

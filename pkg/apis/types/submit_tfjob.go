@@ -85,6 +85,8 @@ type SubmitTFJobArgs struct {
 	// StartingDeadlineSeconds Specifies the duration (in seconds) since startTime during which the job can remain pending
 	// before it is terminated
 	StartingDeadlineSeconds int64 `yaml:"startingDeadlineSeconds,omitempty"`
+	// Defines the TTL for cleaning up finished TFJobs. Defaults to infinite.
+	TTLSecondsAfterFinished int32 `yaml:"ttlSecondsAfterFinished,omitempty"`
 	// for common args
 	CommonSubmitArgs `yaml:",inline"`
 

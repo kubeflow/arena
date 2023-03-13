@@ -29,3 +29,7 @@
 ### 0.4.0
 
 * change image repo from kube-ai to acs
+
+### 0.5.0
+
+* Support ActiveDeadlineSeconds,TTLSecondsAfterFinished

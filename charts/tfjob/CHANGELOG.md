@@ -164,3 +164,7 @@
 ### 0.38.0
 
 * Support activeDeadlineSeconds,startingDeadlineSeconds
+
+### 0.39.0
+
+* Support TTLSecondsAfterFinished
