@@ -218,10 +218,12 @@ type SeldonServingArgs struct {
 }
 
 type TritonServingArgs struct {
-	ModelRepository   string `yaml:"modelRepository"` // --model-repository
-	MetricsPort       int    `yaml:"metricsPort"`     // --metrics-port
-	HttpPort          int    `yaml:"httpPort"`        // --http-port
-	GrpcPort          int    `yaml:"grpcPort"`        // --grpc-port
-	AllowMetrics      bool   `yaml:"allowMetrics"`    // --allow-metrics
+	ModelRepository   string   `yaml:"modelRepository"` // --model-repository
+	MetricsPort       int      `yaml:"metricsPort"`     // --metrics-port
+	HttpPort          int      `yaml:"httpPort"`        // --http-port
+	GrpcPort          int      `yaml:"grpcPort"`        // --grpc-port
+	AllowMetrics      bool     `yaml:"allowMetrics"`    // --allow-metrics
+	LoadModels        []string `yaml:"loadModels"`      // --load-model
+	ExtendCommand     string   `yaml:"extendCommand"`   // --extend-command
 	CommonServingArgs `yaml:",inline"`
 }
