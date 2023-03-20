@@ -77,6 +77,12 @@ spec:
         {{- end }}
       {{- end }}
       {{- end }}
+      {{- if ne (len .Values.imagePullSecrets) 0 }}
+      imagePullSecrets:
+      {{- range $imagePullSecret := .Values.imagePullSecrets }}
+        - name: "{{ $imagePullSecret }}"
+      {{- end }}
+      {{- end }}
       containers:
         - name: tritonserver
           {{- if .Values.image }}
@@ -122,6 +128,8 @@ spec:
               tritonserver --http-port={{ .Values.httpPort }} --grpc-port={{ .Values.grpcPort }}
             {{- if .Values.allowMetrics }} --metrics-port={{ .Values.metricsPort }} {{- end }} --allow-metrics={{ .Values.allowMetrics }}
             {{- if ne .Values.modelRepository "" }} --model-repository={{ .Values.modelRepository }} {{- end }}
+            {{- if ne (len .Values.loadModels) 0 }} {{- range $loadModel := .Values.loadModels }} --load-model {{ $loadModel }} {{- end }} {{- end }}
+            {{- if .Values.extendCommand }} {{ .Values.extendCommand }} {{- end }}
           {{- end }}
           ports:
             - containerPort: {{ .Values.httpPort }}
@@ -165,6 +173,10 @@ spec:
               aliyun.com/gpu-core.percentage: {{ .Values.gpuCore }}
               {{- end }}
           volumeMounts:
+            {{- if .Values.shareMemory }}
+            - mountPath: /dev/shm
+              name: dshm
+            {{- end }}
             {{- if .Values.modelDirs }}
             {{- range $pvcName, $destPath := .Values.modelDirs}}
             - name: "{{ $pvcName }}"
@@ -197,6 +209,12 @@ spec:
             {{- end }}
             {{- end }}
       volumes:
+        {{- if .Values.shareMemory }}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.shareMemory }}
+        {{- end }}
         {{- if .Values.modelDirs }}
         {{- range $pvcName, $destPath := .Values.modelDirs}}
         - name: "{{ $pvcName }}"

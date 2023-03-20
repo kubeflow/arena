@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,7 @@ package argsbuilder
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 
@@ -70,12 +71,17 @@ func (s *TritonServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
+	var loadModels []string
 	command.Flags().StringVar(&s.args.ModelRepository, "model-repository", "", "the path of triton model path")
 	command.Flags().IntVar(&s.args.HttpPort, "http-port", 8000, "the port of http serving server")
 	command.Flags().IntVar(&s.args.GrpcPort, "grpc-port", 8001, "the port of grpc serving server")
 	command.Flags().IntVar(&s.args.MetricsPort, "metrics-port", 8002, "the port of metrics server")
 	command.Flags().BoolVar(&s.args.AllowMetrics, "allow-metrics", false, "open metrics")
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
+	command.Flags().StringVar(&s.args.ExtendCommand, "extend-command", "", "the command will attach to server's command.")
+	command.Flags().StringArrayVar(&loadModels, "load-model", []string{}, `giving names of model to load, usage:"--load-model <model-name>"`)
+
+	s.AddArgValue("load-model", &loadModels)
 }
 
 func (s *TritonServingArgsBuilder) PreBuild() error {
@@ -83,6 +89,9 @@ func (s *TritonServingArgsBuilder) PreBuild() error {
 		if err := s.subBuilders[name].PreBuild(); err != nil {
 			return err
 		}
+	}
+	if err := s.setLoadModels(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -122,4 +131,23 @@ func (s *TritonServingArgsBuilder) checkPortsIsOk() error {
 		return nil
 	}
 	return fmt.Errorf("all ports are 0, invalid configuration")
+}
+
+func (s *TritonServingArgsBuilder) setLoadModels() error {
+	argKey := "load-model"
+	var loadModels *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	loadModels = value.(*[]string)
+
+	if len(*loadModels) > 0 {
+		s.args.LoadModels = *loadModels
+	} else {
+		s.args.LoadModels = []string{}
+	}
+
+	log.Debugf("Load Models: %v", s.args.LoadModels)
+	return nil
 }
