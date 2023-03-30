@@ -16,18 +16,21 @@ package kubectl
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/config"
 	"io/ioutil"
-	v1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/kubeflow/arena/pkg/apis/config"
 )
 
 var kubectlCmd = []string{"arena-kubectl"}
@@ -230,14 +233,15 @@ func DeleteAppConfigMap(name, namespace string) (err error) {
 	args := []string{"delete", "configmap", name, "--namespace", namespace}
 	out, err := kubectl(args)
 
-	if err != nil {
+	if err != nil && !strings.Contains(string(out), "Error from server (NotFound): ") {
 		log.Debugf("Failed to execute %s, %v with %v", "kubectl", args, err)
 		log.Debugf("%s", string(out))
+		return err
 	} else {
-		fmt.Printf("%s", string(out))
+		log.Debugf("configmap %s has been deleted successfully", name)
 	}
 
-	return err
+	return nil
 }
 
 /**
@@ -353,4 +357,65 @@ func UpdateDeployment(deploy *v1.Deployment) error {
 
 	_, err := client.AppsV1().Deployments(deploy.Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
 	return err
+}
+
+// PatchOwnerReferenceWithAppInfoFile patch tfjob / pytorchjob ownerReference
+func PatchOwnerReferenceWithAppInfoFile(name, trainingType, appInfoFile, namespace string) error {
+	binary, err := exec.LookPath(kubectlCmd[0])
+	if err != nil {
+		return fmt.Errorf("failed to locate kubectl binary: %v", err)
+	}
+	errs := []string{}
+
+	// get training job
+	args := []string{binary, "get", trainingType, name, "--namespace", namespace, "-o json"}
+	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to get training job: %v", err)
+	}
+
+	obj := &unstructured.Unstructured{}
+	err = json.Unmarshal(out, obj)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal training job: %v", err)
+	}
+
+	patch := fmt.Sprintf(`-p='[{"op": "add", "path": "/metadata/ownerReferences", `+
+		`"value": [{"apiVersion": "%s","kind": "%s","name": "%s","uid": "%s","blockOwnerDeletion": true,"controller": true}]}]'`,
+		obj.GetAPIVersion(), obj.GetKind(), name, obj.GetUID())
+
+	data, err := ioutil.ReadFile(appInfoFile)
+	if err != nil {
+		return err
+	}
+	resources := strings.Split(string(data), "\n")
+	// add configmap
+	configmapName := fmt.Sprintf("%v-%v", name, trainingType)
+	resources = append(resources, "configmap/"+configmapName)
+
+	for _, resource := range resources {
+		// skip tfjob / pytorchjob.
+		if resource == "tfjob.kubeflow.org/"+name ||
+			resource == "pytorchjob.kubeflow.org/"+name {
+			continue
+		}
+
+		// patch ownerReferences
+		args := []string{binary, "patch", resource, "--namespace", namespace, "--type=json", patch}
+		log.Debugf("Exec bash -c %v", args)
+		cmd := exec.Command("bash", "-c", strings.Join(args, " "))
+		out, err := cmd.CombinedOutput()
+		log.Debugf("%s", string(out))
+		if err != nil {
+			errs = append(errs, string(out))
+		}
+	}
+
+	if len(errs) != 0 {
+		log.Debugf("Failed to patch ownerReference,reason: %v", errs)
+		return fmt.Errorf("%v", strings.Join(errs, "\n"))
+	}
+
+	return nil
 }
