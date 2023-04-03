@@ -11,6 +11,8 @@ metadata:
     heritage: {{ .Release.Service }}
     role: tensorboard
     createdBy: "TFJob"
+    group-name: kubeflow.org
+    tf-job-name: {{ .Release.Name }}
 spec:
   type: {{ .Values.tensorboardServiceType }}
   ports:

@@ -168,3 +168,7 @@
 ### 0.39.0
 
 * Support TTLSecondsAfterFinished
+
+### 0.39.1
+
+* Add service labels

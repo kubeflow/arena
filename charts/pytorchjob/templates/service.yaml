@@ -10,6 +10,10 @@ metadata:
     heritage: {{ .Release.Service }}
     role: tensorboard
     createdBy: "PyTorchJob"
+    controller-name: pytorch-operator
+    group-name: kubeflow.org
+    job-name: {{ .Release.Name }}
+    pytorch-job-name: {{ .Release.Name }}
 spec:
   type: {{ .Values.tensorboardServiceType }}
   ports:

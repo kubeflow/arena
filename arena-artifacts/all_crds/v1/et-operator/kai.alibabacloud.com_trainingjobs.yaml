@@ -6,7 +6,7 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.6.0
     git-repo: https://github.com/AliyunContainerService/et-operator.git
     git-branch: master
-    git-commit: "1499985"
+    git-commit: "8aff240"
   creationTimestamp: null
   name: trainingjobs.kai.alibabacloud.com
 spec:

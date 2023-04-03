@@ -33,3 +33,7 @@
 ### 0.5.0
 
 * Support ActiveDeadlineSeconds,TTLSecondsAfterFinished
+
+### 0.5.1
+
+* Add service labels

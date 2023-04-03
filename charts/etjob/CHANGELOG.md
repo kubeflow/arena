@@ -10,3 +10,7 @@
 
 * change image repo from kube-ai to acs
 
+### 0.3.1
+
+* update gitImage
+
