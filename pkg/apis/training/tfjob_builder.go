@@ -451,6 +451,13 @@ func (b *TFJobBuilder) RoleSequence(roles []string) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) TTLSecondsAfterFinished(ttl int32) *TFJobBuilder {
+	if ttl > 0 {
+		b.args.TTLSecondsAfterFinished = ttl
+	}
+	return b
+}
+
 func (b *TFJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
 		b.AddArgValue(key, value)

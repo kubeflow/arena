@@ -264,6 +264,13 @@ func (b *PytorchJobBuilder) Memory(memory string) *PytorchJobBuilder {
 	return b
 }
 
+func (b *PytorchJobBuilder) TTLSecondsAfterFinished(ttl int32) *PytorchJobBuilder {
+	if ttl > 0 {
+		b.args.TTLSecondsAfterFinished = ttl
+	}
+	return b
+}
+
 // Build is used to build the job
 func (b *PytorchJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
