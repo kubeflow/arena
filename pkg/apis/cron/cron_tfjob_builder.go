@@ -282,6 +282,11 @@ func (c *CronTFJobBuilder) RoleSequence(roles []string) *CronTFJobBuilder {
 	return c
 }
 
+func (c *CronTFJobBuilder) TTLSecondsAfterFinished(ttl int32) *CronTFJobBuilder {
+	c.TFJobBuilder.TTLSecondsAfterFinished(ttl)
+	return c
+}
+
 func (c *CronTFJobBuilder) Shell(shell string) *CronTFJobBuilder {
 	if shell != "" {
 		c.args.Shell = shell
