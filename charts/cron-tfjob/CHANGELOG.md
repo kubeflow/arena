@@ -10,3 +10,7 @@
 ### 1.0.2
 
 * change image repo from kube-ai to acs
+
+### 1.0.3
+
+* Support Cron tfjob set activeDeadlineSeconds, startingDeadlineSeconds, ttlSecondsAfterFinished.
