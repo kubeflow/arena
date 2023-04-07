@@ -361,6 +361,18 @@ func UpdateDeployment(deploy *v1.Deployment) error {
 
 // PatchOwnerReferenceWithAppInfoFile patch tfjob / pytorchjob ownerReference
 func PatchOwnerReferenceWithAppInfoFile(name, trainingType, appInfoFile, namespace string) error {
+	data, err := ioutil.ReadFile(appInfoFile)
+	if err != nil {
+		return err
+	}
+	resources := strings.Split(string(data), "\n")
+
+	// cron tfjob skip patch ownerReference
+	if len(resources) == 1 && resources[0] == "cron.apps.kubedl.io/"+name {
+		log.Debugf("resource: %s is cron tfjob, skip patch ownerReference", resources[0])
+		return nil
+	}
+
 	binary, err := exec.LookPath(kubectlCmd[0])
 	if err != nil {
 		return fmt.Errorf("failed to locate kubectl binary: %v", err)
@@ -385,11 +397,6 @@ func PatchOwnerReferenceWithAppInfoFile(name, trainingType, appInfoFile, namespa
 		`"value": [{"apiVersion": "%s","kind": "%s","name": "%s","uid": "%s","blockOwnerDeletion": true,"controller": true}]}]'`,
 		obj.GetAPIVersion(), obj.GetKind(), name, obj.GetUID())
 
-	data, err := ioutil.ReadFile(appInfoFile)
-	if err != nil {
-		return err
-	}
-	resources := strings.Split(string(data), "\n")
 	// add configmap
 	configmapName := fmt.Sprintf("%v-%v", name, trainingType)
 	resources = append(resources, "configmap/"+configmapName)
