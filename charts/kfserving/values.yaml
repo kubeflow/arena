@@ -10,10 +10,11 @@ image: codait/max-object-detector
 cpu: 100m
 memory: 1Gi
 gpuCount: 0
-storageUri: "hdfs://kfserving-samples/models/tensorflow/flowers-2"
+storageUri: "gs://kfserving-samples/models/sklearn/iris"
 canaryTrafficPercent: 0
 command:
 modelType: custom
+minReplicas: 0
 
 imagePullSecrets: []
 

@@ -9,6 +9,8 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 
+	kservev1beta1 "github.com/kubeflow/arena/pkg/operators/kserve-operator/apis/serving/v1beta1"
+	kserveversioned "github.com/kubeflow/arena/pkg/operators/kserve-operator/client/clientset/versioned"
 	appv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/client-go/kubernetes"
@@ -163,6 +165,40 @@ func (k *k8sResourceAccesser) ListPods(namespace string, filterLabels string, fi
 		pods = append(pods, copyPod)
 	}
 	return pods, nil
+}
+
+func (k *k8sResourceAccesser) ListInferenceService(servingv1beta1 *kserveversioned.Clientset, namespace string, filterLabels string) ([]*kservev1beta1.InferenceService, error) {
+	isvcs := []*kservev1beta1.InferenceService{}
+	isvcList :=&kservev1beta1.InferenceServiceList{}
+	labelSelector, err := parseLabelSelector(filterLabels)
+	if err != nil {
+		return nil, err
+	}
+	if k.cacheEnabled {
+		err = k.cacheClient.List(
+			context.Background(),
+			isvcList,
+			client.InNamespace(namespace),
+			&client.ListOptions{
+				LabelSelector: labelSelector,
+			})
+	} else {
+		isvcList, err = servingv1beta1.ServingV1beta1().InferenceServices(namespace).List(metav1.ListOptions{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "ListOptions",
+				APIVersion: "v1",
+			},
+			LabelSelector: labelSelector.String(),
+		})
+
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, sts := range isvcList.Items {
+		isvcs = append(isvcs, sts.DeepCopy())
+	}
+	return isvcs, nil
 }
 
 func (k *k8sResourceAccesser) ListStatefulSets(namespace string, filterLabels string) ([]*appv1.StatefulSet, error) {
