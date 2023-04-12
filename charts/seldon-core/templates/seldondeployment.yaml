@@ -41,12 +41,12 @@ spec:
                   {{- if gt (int $gpuCount) 0 }}
                   nvidia.com/gpu: {{ .Values.gpuCount }}
                   {{- end }}
-                  {{ - if gt (int $gpuMemory) 0 }}
+                  {{- if gt (int $gpuMemory) 0 }}
                   aliyun.com/gpu-mem: {{ .Values.gpuMemory }}
-                  {{ - end } }
-                  {{ - if gt (int $gpuCore) 0 }}
+                  {{- end }}
+                  {{- if gt (int $gpuCore) 0 }}
                   aliyun.com/gpu-core.percentage: {{ .Values.gpuCore }}
-                  {{ - end }}
+                  {{- end }}
       graph:
         implementation: {{ .Values.implementation }}
         modelUri: {{ .Values.modelUri }}
