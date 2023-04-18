@@ -6,7 +6,7 @@
 {{- if .Values.ps }}
 {{- if .Values.hasGangScheduler }}
 {{- if .Values.enableGangScheduler }}
-apiVersion: policy/v1beta1
+apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: {{ .Release.Name }}
