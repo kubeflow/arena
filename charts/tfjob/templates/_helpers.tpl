@@ -24,6 +24,14 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 {{- end -}}
 
+{{- define "policy.api" }}
+{{- if .Capabilities.APIVersions.Has "policy/v1beta1" -}}
+v1beta1
+{{- else -}}
+v1
+{{- end }}
+{{- end }}
+
 {{/*
 Create chart name and version as used by the chart label.
 */}}
