@@ -117,12 +117,12 @@ spec:
           - name: code-sync
             mountPath: /code
         {{- end }}
-        {{- if ne (len .Values.imagePullSecrets) 0 }}
-        imagePullSecrets:
-        {{- range $imagePullSecret := .Values.imagePullSecrets }}
-          - name: "{{ $imagePullSecret }}"
-        {{- end }}
-        {{- end }}
+      {{- if ne (len .Values.imagePullSecrets) 0 }}
+      imagePullSecrets:
+      {{- range $imagePullSecret := .Values.imagePullSecrets }}
+        - name: "{{ $imagePullSecret }}"
+      {{- end }}
+      {{- end }}
       containers:
         - name: evaluatejob
           {{- if .Values.image }}
