@@ -1,5 +1,6 @@
 package com.github.kubeflow.arena;
 import com.github.kubeflow.arena.client.ArenaClient;
+import com.github.kubeflow.arena.enums.ServingJobType;
 import com.github.kubeflow.arena.exceptions.ArenaException;
 import com.github.kubeflow.arena.model.serving.ServingJob;
 import com.github.kubeflow.arena.model.serving.TritonServingJobBuilder;
@@ -25,6 +26,7 @@ public class TritonServingJobTest {
         ServingJob job = new TritonServingJobBuilder()
                 .name("triton-serv")
                 .namespace("default-group")
+                .version("alpha")
                 .gpus(1)
                 .replicas(1)
                 .labels(labels)
@@ -36,6 +38,11 @@ public class TritonServingJobTest {
                 .build();
 
         ArenaClient client = new ArenaClient();
-        client.serving().submit(job);
+        String output = client.serving().namespace("default-group").submit(job);
+        System.out.println(output);
+
+        System.out.println("start to delete triton serving job:");
+        String result = client.serving().namespace("default-group").delete("triton-serv", ServingJobType.TritonServingJob,"alpha");
+        System.out.println(result);
     }
 }

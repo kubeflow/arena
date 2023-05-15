@@ -451,6 +451,13 @@ func (b *TFJobBuilder) RoleSequence(roles []string) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) ActiveDeadlineSeconds(act int64) *TFJobBuilder {
+	if act > 0 {
+		b.args.ActiveDeadlineSeconds = act
+	}
+	return b
+}
+
 func (b *TFJobBuilder) TTLSecondsAfterFinished(ttl int32) *TFJobBuilder {
 	if ttl > 0 {
 		b.args.TTLSecondsAfterFinished = ttl

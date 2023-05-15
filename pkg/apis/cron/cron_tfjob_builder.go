@@ -282,6 +282,11 @@ func (c *CronTFJobBuilder) RoleSequence(roles []string) *CronTFJobBuilder {
 	return c
 }
 
+func (c *CronTFJobBuilder) ActiveDeadlineSeconds(ttl int64) *CronTFJobBuilder {
+	c.TFJobBuilder.ActiveDeadlineSeconds(ttl)
+	return c
+}
+
 func (c *CronTFJobBuilder) TTLSecondsAfterFinished(ttl int32) *CronTFJobBuilder {
 	c.TFJobBuilder.TTLSecondsAfterFinished(ttl)
 	return c

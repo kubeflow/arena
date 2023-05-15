@@ -52,6 +52,7 @@ arena submit tfjob [flags]
       --rdma                         enable RDMA
       --retry int                    retry times.
       --role-sequence string         specify the tfjob role sequence,like: "Worker,PS,Chief,Evaluator" or "w,p,c,e"
+      --running-timeout duration     Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').
       --selector strings             assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" 
       --sync-image string            the docker image of syncImage
       --sync-mode string             syncMode: support rsync, hdfs, git
@@ -59,6 +60,7 @@ arena submit tfjob [flags]
       --tensorboard                  enable tensorboard
       --tensorboard-image string     the docker image for tensorboard (default "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel")
       --toleration strings           tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" 
+      --ttl-after-finished duration  Defines the TTL for cleaning up finished TFJobs(e.g. '5s', '1m', '2h22m'). Defaults to infinite.
       --worker-cpu string            the cpu resource to use for the worker, like 1 for 1 core.
       --worker-cpu-limit string      the cpu resource limit to use for the worker, like 1 for 1 core.      
       --worker-image string          the docker image for tensorflow workers

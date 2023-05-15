@@ -8,6 +8,8 @@ import com.github.kubeflow.arena.model.serving.Instance;
 import com.github.kubeflow.arena.model.serving.ServingJob;
 import com.github.kubeflow.arena.model.serving.ServingJobInfo;
 import com.github.kubeflow.arena.model.serving.TensorflowServingJobBuilder;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -18,7 +20,7 @@ import java.util.Map;
 
 public class ServingClientTest {
 
-    @Test
+    @Before
     public void testSubmit() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
 
@@ -29,6 +31,7 @@ public class ServingClientTest {
                 .name("test-tfserving")
                 .namespace("default-group")
                 .modelName("transformer")
+                .version("alpha")
                 .replicas(1)
                 .gpus(1)
                 .image("tensorflow/serving:1.15.0-gpu")
@@ -49,6 +52,28 @@ public class ServingClientTest {
                 System.out.println(JSON.toJSONString(instance));
             }
         }
+    }
+
+    @Test
+    public void testUpdate() throws ArenaException, IOException {
+        ServingJob job = new TensorflowServingJobBuilder()
+                .name("test-tfserving")
+                .namespace("default-group")
+                .version("alpha")
+                .replicas(2)
+                .build();
+
+        ArenaClient client = new ArenaClient();
+        String result = client.serving().namespace("default-group").update(job);
+        System.out.println(result);
+    }
+
+    @After
+    public void testDelete() throws ArenaException, IOException {
+        ArenaClient client = new ArenaClient();
+        String result = client.serving().namespace("default-group")
+                .delete("test-tfserving", ServingJobType.TFServingJob, "alpha");
+        System.out.println(result);
     }
 
 }

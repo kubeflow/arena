@@ -6,6 +6,8 @@ import com.github.kubeflow.arena.exceptions.ArenaException;
 import com.github.kubeflow.arena.model.evaluate.EvaluateJob;
 import com.github.kubeflow.arena.model.evaluate.EvaluateJobBuilder;
 import com.github.kubeflow.arena.model.evaluate.EvaluateJobInfo;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -15,7 +17,7 @@ import java.util.Map;
 
 public class EvaluateClientTest {
 
-    @Test
+    @Before
     public void testSubmit() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
 
@@ -57,7 +59,7 @@ public class EvaluateClientTest {
         }
     }
 
-    @Test
+    @After
     public void testDelete() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
         String result = client.evaluate().namespace("default-group").delete("test-evaluate2");

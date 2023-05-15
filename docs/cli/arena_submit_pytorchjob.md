@@ -31,6 +31,7 @@ arena submit pytorchjob [flags]
   -p, --priority string             priority class name
       --rdma                        enable RDMA
       --retry int                   retry times.
+      --running-timeout duration    Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').
       --selector strings            assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" 
       --sync-image string           the docker image of syncImage
       --sync-mode string            syncMode: support rsync, hdfs, git
@@ -38,6 +39,7 @@ arena submit pytorchjob [flags]
       --tensorboard                 enable tensorboard
       --tensorboard-image string    the docker image for tensorboard (default "registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.12.0-devel")
       --toleration strings          tolerate some k8s nodes with taints,usage: "--toleration taint-key" or "--toleration all" 
+      --ttl-after-finished duration Defines the TTL for cleaning up finished PytorchJobs(e.g. '5s', '1m', '2h22m'). Defaults to infinite.
       --workers int                 the worker number to run the distributed training. (default 1)
       --working-dir string          working directory to extract the code. If using syncMode, the $workingDir/code contains the code (default "/root")
 ```

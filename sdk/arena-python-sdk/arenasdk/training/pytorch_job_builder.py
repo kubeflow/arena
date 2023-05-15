@@ -19,6 +19,14 @@ class PytorchJobBuilder(JobBuilder):
     def with_memory(self,memory: str) ->PytorchJobBuilder:
         self._options.append(StringField("--memory",memory))
         return self
+
+    def witch_running_timeout(self,time: str) -> PytorchJobBuilder:
+        self._options.append(StringField("--running-timeout", time))
+        return self
+
+    def witch_ttl_after_finished(self,time: str) -> PytorchJobBuilder:
+        self._options.append(StringField("--ttl-after-finished", time))
+        return self
     
     def with_name(self,name: str) ->PytorchJobBuilder:
         super().with_name(name)
