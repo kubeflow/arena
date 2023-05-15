@@ -51,9 +51,9 @@ public class CustomServingJobTest {
                 .image("happy365/fast-style-transfer:latest")
                 .command("python app.py")
                 .build();
-        if (client.serving().namespace("default").get(jobName,jobType,jobVersion) == null) {
+        if (client.serving().namespace("default-group").get(jobName,jobType,jobVersion) == null) {
             try {
-                client.serving().namespace("default").submit(job);
+                client.serving().namespace("default-group").submit(job);
                 System.out.println("create custom serving job succeed.");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -69,11 +69,11 @@ public class CustomServingJobTest {
                 throw  new ArenaException(ArenaErrorEnum.UNKNOWN,"time out for waiting custom serving job to be running.");
             }
             count++;
-            List<ServingJobInfo> jobInfos = client.serving().list(ServingJobType.AllServingJob);
+            List<ServingJobInfo> jobInfos = client.serving().namespace("default-group").list(ServingJobType.AllServingJob);
             for (int i = 0;i < jobInfos.size(); i++) {
                 System.out.println(jobInfos.get(i));
             }
-            ServingJobInfo jobInfo = client.serving().get(jobName,jobType,jobVersion);
+            ServingJobInfo jobInfo = client.serving().namespace("default-group").get(jobName,jobType,jobVersion);
             if (jobInfo.getAvailableInstances() != jobInfo.getDesiredInstances()) {
                 TimeUnit.SECONDS.sleep(10);
                 continue;
@@ -121,7 +121,7 @@ public class CustomServingJobTest {
             break;
         }
         System.out.println("start to delete custom serving job:");
-        String output = client.serving().delete(jobName,jobType,jobVersion);
+        String output = client.serving().namespace("default-group").delete(jobName,jobType,jobVersion);
         System.out.println(output);
     }
 }

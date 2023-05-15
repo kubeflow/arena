@@ -7,6 +7,7 @@ import com.github.kubeflow.arena.exceptions.ArenaException;
 import com.github.kubeflow.arena.model.training.TFJobBuilder;
 import com.github.kubeflow.arena.model.training.TrainingJob;
 import com.github.kubeflow.arena.model.training.TrainingJobInfo;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ import java.util.Map;
 
 public class TrainingClientTest {
 
-    @Test
+    @Before
     public void testSubmit() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
 
@@ -26,6 +27,7 @@ public class TrainingClientTest {
         String command = "python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000";
 
         TrainingJob job = new TFJobBuilder()
+                .ttlAfterFinished("30s")
                 .name("test-tfjob")
                 .gpus(1)
                 .labels(labels)
@@ -42,7 +44,7 @@ public class TrainingClientTest {
     @Test
     public void testListTrainingJob() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
-        List<TrainingJobInfo> jobs = client.training().list(TrainingJobType.AllTrainingJob);
+        List<TrainingJobInfo> jobs = client.training().namespace("default-group").list(TrainingJobType.AllTrainingJob);
         for(TrainingJobInfo info : jobs) {
             System.out.println(JSON.toJSONString(info));
 
@@ -51,5 +53,4 @@ public class TrainingClientTest {
             }
         }
     }
-
 }

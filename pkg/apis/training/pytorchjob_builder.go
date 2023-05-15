@@ -264,6 +264,15 @@ func (b *PytorchJobBuilder) Memory(memory string) *PytorchJobBuilder {
 	return b
 }
 
+// ActiveDeadlineSeconds match option --running-timeout
+func (b *PytorchJobBuilder) ActiveDeadlineSeconds(act int64) *PytorchJobBuilder {
+	if act > 0 {
+		b.args.ActiveDeadlineSeconds = act
+	}
+	return b
+}
+
+// TTLSecondsAfterFinished match option --ttl-after-finished
 func (b *PytorchJobBuilder) TTLSecondsAfterFinished(ttl int32) *PytorchJobBuilder {
 	if ttl > 0 {
 		b.args.TTLSecondsAfterFinished = ttl

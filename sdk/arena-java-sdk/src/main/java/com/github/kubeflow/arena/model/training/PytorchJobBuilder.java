@@ -27,6 +27,18 @@ public class PytorchJobBuilder extends JobBuilder {
         return this;
     }
 
+    // Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').
+    public PytorchJobBuilder runningTimeout(String t) {
+        this.options.add(new StringField("--running-timeout", t));
+        return this;
+    }
+
+    // Defines the TTL for cleaning up finished PytorchJobs(e.g. '5s', '1m', '2h22m'). Defaults to infinite."
+    public PytorchJobBuilder ttlAfterFinished(String t) {
+        this.options.add(new StringField("--ttl-after-finished", t));
+        return this;
+    }
+
     /**
      * following functions invoke JobBuilder functions
      **/

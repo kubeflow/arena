@@ -22,6 +22,7 @@ public class PyTorchJobTest {
         String command = "python /root/code/mnist-pytorch/mnist.py --backend gloo";
 
         TrainingJob job = new PytorchJobBuilder()
+                .ttlAfterFinished("30s")
                 .name("test-pytorchjob-1")
                 .gpus(1)
                 .labels(labels)
@@ -32,7 +33,8 @@ public class PyTorchJobTest {
                 .command(command)
                 .build();
 
-        client.training().namespace("default-group").submit(job);
+        String result = client.training().namespace("default-group").submit(job);
+        System.out.println(result);
     }
 
 }

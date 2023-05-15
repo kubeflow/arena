@@ -1,9 +1,11 @@
 package com.github.kubeflow.arena;
 
 import com.github.kubeflow.arena.client.ArenaClient;
+import com.github.kubeflow.arena.enums.ServingJobType;
 import com.github.kubeflow.arena.exceptions.ArenaException;
 import com.github.kubeflow.arena.model.serving.ServingJob;
 import com.github.kubeflow.arena.model.serving.TensorflowServingJobBuilder;
+import org.junit.After;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,6 +32,7 @@ public class TensorflowServingJobTest {
                 .gpus(1)
                 .replicas(1)
                 .modelName("transformer")
+                .version("alpha")
                 .labels(labels)
                 .image("tensorflow/serving:1.15.0-gpu")
                 .datas(datas)
@@ -40,20 +43,16 @@ public class TensorflowServingJobTest {
                 .build();
 
         ArenaClient client = new ArenaClient();
-        client.serving().submit(job);
+        String result =client.serving().submit(job);
+        System.out.println(result);
     }
 
-    @Test
-    public void testUpdate() throws ArenaException, IOException {
-        ServingJob job = new TensorflowServingJobBuilder()
-                .name("test-tfserving")
-                .namespace("default-group")
-                .version("202303071100")
-                .replicas(2)
-                .build();
-
+    @After
+    public void testDelete() throws ArenaException, IOException {
         ArenaClient client = new ArenaClient();
-        client.serving().namespace("default-group").update(job);
+        String result = client.serving().namespace("default-group")
+                .delete("bert3", ServingJobType.TFServingJob, "alpha");
+        System.out.println(result);
     }
 
 }

@@ -40,6 +40,14 @@ class TensorflowJobBuilder(JobBuilder):
         self._options.append(StringField("--worker-cpu-limit",cpu))
         return self
 
+    def witch_running_timeout(self,time: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--running-timeout", time))
+        return self
+
+    def witch_ttl_after_finished(self,time: str) -> TensorflowJobBuilder:
+        self._options.append(StringField("--ttl-after-finished", time))
+        return self
+
     def witch_ps_selectors(self,selectors: Dict[str,str]) -> TensorflowJobBuilder:
         self._options.append(StringMapField("--ps-selector",selectors,"="))
         return self

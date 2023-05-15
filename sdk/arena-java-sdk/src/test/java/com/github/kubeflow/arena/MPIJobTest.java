@@ -39,14 +39,14 @@ public class MPIJobTest {
                 .workers(1)
                 .gpus(1)
                 .enableTensorboard()
-                .cpu("3000m")
+                .cpu("2500m")
                 .memory("4Gi")
                 .image("registry.cn-hangzhou.aliyuncs.com/tensorflow-samples/horovod:0.13.11-tf1.10.0-torch0.4.0-py3.5")
                 .command("sh -c -- 'mpirun python /benchmarks/scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py --model resnet101 --batch_size 64     --variable_update horovod --train_dir=/training_logs --summary_verbosity=3 --save_summaries_steps=10'")
                 .build();
-        if (client.training().namespace("default").get(jobName,jobType) == null) {
+        if (client.training().namespace("default-group").get(jobName,jobType) == null) {
             try {
-                client.training().namespace("default").submit(job);
+                client.training().namespace("default-group").submit(job);
                 System.out.println("create mpi training job succeed.");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -62,11 +62,11 @@ public class MPIJobTest {
                 throw  new ArenaException(ArenaErrorEnum.UNKNOWN,"time out for waiting mpi training job to be running.");
             }
             count++;
-            List<TrainingJobInfo> jobInfos = client.training().list(TrainingJobType.AllTrainingJob,true);
+            List<TrainingJobInfo> jobInfos = client.training().namespace("default-group").list(TrainingJobType.AllTrainingJob,true);
             for (TrainingJobInfo jobInfo : jobInfos) {
                 System.out.print(jobInfo);
             }
-            TrainingJobInfo jobInfo = client.training().get(jobName,jobType);
+            TrainingJobInfo jobInfo = client.training().namespace("default-group").get(jobName,jobType);
             if (jobInfo.getStatus().equals(TrainingJobStatus.TrainingJobPending)) {
                 TimeUnit.SECONDS.sleep(10);
                 continue;
@@ -115,7 +115,7 @@ public class MPIJobTest {
             break;
         }
         System.out.println("start to delete mpi training job:");
-        String output = client.training().delete(jobName,jobType);
+        String output = client.training().namespace("default-group").delete(jobName,jobType);
         System.out.println(output);
     }
 }
