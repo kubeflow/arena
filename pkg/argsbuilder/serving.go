@@ -133,7 +133,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&tempDir, "temp-dir", "", []string{}, "specify the deployment empty dir, like <empty_dir_name>:<mount_point_on_pod>")
 	command.MarkFlagRequired("name")
 
-	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "specify the annotations")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `specify the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
 	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration key=value:effect,operator" or "--toleration all" `)
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)

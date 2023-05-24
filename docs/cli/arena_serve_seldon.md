@@ -13,7 +13,7 @@ arena serve seldon [flags]
 ### Options
 
 ```
-  -a, --annotation stringArray     the annotations
+  -a, --annotation stringArray     the annotations, usage: "--annotation=key=value" or "--annotation key=value"
       --cpu string                 the request cpu of each replica to run the serve.
   -d, --data stringArray           specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>
       --data-dir stringArray       specify the trained models datasource on host to mount for serving, like <host_path>:<mount_point_on_job>

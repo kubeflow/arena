@@ -13,7 +13,7 @@ arena submit pytorchjob [flags]
 ### Options
 
 ```
-  -a, --annotation strings          the annotations
+  -a, --annotation strings          the annotations, usage: "--annotation=key=value" or "--annotation key=value"
       --clean-task-policy string    How to clean tasks after Training is done, support None, Running, All. (default "None")
       --config-file strings         giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"
       --cpu string                  the cpu resource to use for the training, like 1 for 1 core.

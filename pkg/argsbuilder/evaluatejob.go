@@ -82,7 +82,7 @@ func (e *EvaluateJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&e.args.Memory, "memory", "", "the request memory of each replica to run the evaluate job.")
 
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
-	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
 	command.Flags().StringArrayVarP(&labels, "label", "", []string{}, "the labels")
 	command.Flags().StringArrayVar(&tolerations, "toleration", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration key=value:effect,operator" or "--toleration all" `)
 	// add option --selector, it's value will be get from viper

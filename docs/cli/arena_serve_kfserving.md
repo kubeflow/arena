@@ -13,7 +13,7 @@ arena serve kfserving [flags]
 ### Options
 
 ```
-  -a, --annotation stringArray     the annotations
+  -a, --annotation stringArray     the annotations, usage: "--annotation=key=value" or "--annotation key=value"
       --canary-percent int         the percent of the desired canary
       --cpu string                 the request cpu of each replica to run the serve.
   -d, --data stringArray           specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>

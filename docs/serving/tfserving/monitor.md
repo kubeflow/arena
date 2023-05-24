@@ -100,7 +100,7 @@ Aliases:
   tensorflow, tf
 
 Flags:
-  -a, --annotation stringArray          specify the annotations
+  -a, --annotation stringArray          specify the annotations, usage: "--annotation=key=value" or "--annotation key=value"
       --command string                  the command will inject to container's command.
       --cpu string                      the request cpu of each replica to run the serve.
   -d, --data stringArray                specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>
