@@ -30,6 +30,7 @@ public class PyTorchJobTest {
                 .syncSource("https://code.aliyun.com/370272561/mnist-pytorch.git")
                 .logDir("/training_logs")
                 .image("registry.cn-beijing.aliyuncs.com/ai-samples/pytorch-with-tensorboard:1.5.1-cuda10.1-cudnn7-runtime")
+                .imagePullPolicy("IfNotPresent")
                 .command(command)
                 .build();
 

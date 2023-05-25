@@ -198,6 +198,11 @@ public class TFJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TFJobBuilder imagePullPolicy(String policy) {
+        super.imagePullPolicy(policy);
+        return this;
+    }
+
     public TFJobBuilder gpus(int count) {
         super.gpus(count);
         return this;

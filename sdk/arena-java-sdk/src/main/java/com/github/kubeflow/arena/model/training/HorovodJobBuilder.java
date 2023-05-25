@@ -55,6 +55,11 @@ public class HorovodJobBuilder extends JobBuilder {
         return this;
     }
 
+    public HorovodJobBuilder imagePullPolicy(String policy) {
+        super.imagePullPolicy(policy);
+        return this;
+    }
+
     public HorovodJobBuilder gpus(int count) {
         super.gpus(count);
         return this;

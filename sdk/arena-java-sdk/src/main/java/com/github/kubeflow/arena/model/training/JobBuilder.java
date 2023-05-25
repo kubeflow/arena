@@ -57,6 +57,11 @@ public abstract class JobBuilder {
         return this;
     }
 
+    public JobBuilder imagePullPolicy(String policy) {
+        this.options.add(new StringField("--image-pull-policy", policy));
+        return this;
+    }
+
     public JobBuilder gpus(int count) {
         this.options.add(new StringField("--gpus",String.valueOf(count)));
         return this;

@@ -70,6 +70,11 @@ public class ETJobBuilder extends JobBuilder {
         return this;
     }
 
+    public ETJobBuilder imagePullPolicy(String policy) {
+        super.imagePullPolicy(policy);
+        return this;
+    }
+
     public ETJobBuilder gpus(int count) {
         super.gpus(count);
         return this;

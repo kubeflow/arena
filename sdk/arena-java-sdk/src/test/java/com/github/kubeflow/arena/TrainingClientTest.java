@@ -35,6 +35,7 @@ public class TrainingClientTest {
                 .syncSource("https://github.com/happy2048/tensorflow-sample-code.git")
                 .logDir("/training_logs")
                 .image("registry.cn-beijing.aliyuncs.com/ai-samples/tensorflow:1.5.0-devel-gpu")
+                .imagePullPolicy("IfNotPresent")
                 .command(command)
                 .build();
 
