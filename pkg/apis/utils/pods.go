@@ -305,8 +305,11 @@ func GetRunningTimeOfPod(pod *v1.Pod) time.Duration {
 		allContainerStatuses = append(allContainerStatuses, s)
 	}
 	startTime, endTime = getStartTimeAndEndTime(allContainerStatuses)
-	if startTime == nil {
+	if startTime == nil && pod.Status.StartTime != nil {
 		startTime = pod.Status.StartTime
+	}
+	if startTime == nil {
+		startTime = &pod.CreationTimestamp
 	}
 	if pod.Status.Phase == v1.PodRunning || endTime == nil {
 		return metav1.Now().Sub(startTime.Time)

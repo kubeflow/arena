@@ -111,7 +111,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().MarkDeprecated("dataDir", "please use --data-dir instead")
 	command.Flags().StringArrayVar(&dataDir, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
 	// add option --annotation,its' value will be get from viper
-	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the label")
 	// enable RDMA or not, support hostnetwork for now
 	// add option --rdma

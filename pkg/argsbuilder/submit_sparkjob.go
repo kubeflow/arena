@@ -81,7 +81,7 @@ func (s *SubmitSparkJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Driver.MemoryRequest, "driver-memory-request", "500m", "memory request for driver pod (min is 500m)")
 	command.Flags().IntVar(&s.args.Executor.CPURequest, "executor-cpu-request", 1, "cpu request for executor pod")
 	command.Flags().StringVar(&s.args.Executor.MemoryRequest, "executor-memory-request", "500m", "memory request for executor pod (min is 500m)")
-	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the label")
 	s.AddArgValue("annotation", &annotations).AddArgValue("label", &labels)
 }

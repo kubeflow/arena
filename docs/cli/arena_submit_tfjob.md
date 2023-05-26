@@ -13,7 +13,7 @@ arena submit tfjob [flags]
 ### Options
 
 ```
-  -a, --annotation strings           the annotations
+  -a, --annotation strings           the annotations, usage: "--annotation=key=value" or "--annotation key=value"
       --chief                        enable chief, which is required for estimator.
       --chief-cpu string             the cpu resource to use for the Chief, like 1 for 1 core.
       --chief-cpu-limit string       the cpu resource limit to use for the Chief, like 1 for 1 core.      

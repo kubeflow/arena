@@ -96,7 +96,7 @@ func (s *SubmitVolcanoJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().IntVar(&s.args.TaskPort, "taskPort", 2222, "the task port number. default value is 2222")
 	command.Flags().MarkDeprecated("taskPort", "please use --task-port instead")
 	command.Flags().IntVar(&s.args.TaskPort, "task-port", 2222, "the task port number. default value is 2222")
-	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "the annotations")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the label")
 	s.AddArgValue("annotation", &annotations).AddArgValue("label", &labels)
 }

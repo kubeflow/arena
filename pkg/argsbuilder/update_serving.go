@@ -80,7 +80,7 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the request memory of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.Replicas, "replicas", 0, "the replicas number of the serve job.")
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
-	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, "specify the annotations")
+	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `specify the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
