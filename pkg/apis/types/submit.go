@@ -39,6 +39,9 @@ type CommonSubmitArgs struct {
 	// Image stores the docker image of job,match option --image
 	Image string `yaml:"image"`
 
+	// ImagePullPolicy stores the docker image pull policy of job,match option --image-pull-policy
+	ImagePullPolicy string `yaml:"imagePullPolicy"`
+
 	// GPUCount stores the gpu count of the job needs,match option --gpus
 	GPUCount int `yaml:"gpuCount"`
 

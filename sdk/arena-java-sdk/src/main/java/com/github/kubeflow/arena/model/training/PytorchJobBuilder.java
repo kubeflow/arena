@@ -64,6 +64,11 @@ public class PytorchJobBuilder extends JobBuilder {
         return this;
     }
 
+    public PytorchJobBuilder imagePullPolicy(String policy) {
+        super.imagePullPolicy(policy);
+        return this;
+    }
+
     public PytorchJobBuilder gpus(int count) {
         super.gpus(count);
         return this;

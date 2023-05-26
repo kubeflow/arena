@@ -50,6 +50,11 @@ public class MPIJobBuilder extends JobBuilder {
         return this;
     }
 
+    public MPIJobBuilder imagePullPolicy(String policy) {
+        super.imagePullPolicy(policy);
+        return this;
+    }
+
     public MPIJobBuilder gpus(int count) {
       super.gpus(count);
         return this;
