@@ -16,3 +16,4 @@ Below are the adopters of project Arena. If you are using Arena to improve effic
 | [DOUYU](https://www.douyu.com) | [@gongcan1219](https://github.com/gongcan1219) | **Production** | DOUYU AI Platform |
 | [NJU PASA Lab](http://pasa-bigdata.nju.edu.cn) | [@iluoeli](https://github.com/iluoeli) | **Testing** | ML Platform |
 | [Alluxio](https://www.alluxio.io) | [@apc999](https://github.com/apc999) | **Testing** | Performance Testing on Alluxio |
+| [PITS Global Data Recovery Services](https://www.pitsdatarecovery.net/) | [@pheianox](https://github.com/pheianox) | **Testing** | Machine Learning Platform |
