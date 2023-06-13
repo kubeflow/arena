@@ -1,10 +1,10 @@
-// Copyright 2018 The Kubeflow Authors
+// Copyright 2023 The Kubeflow Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,13 +17,14 @@ package training
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
-	log "github.com/sirupsen/logrus"
 )
 
-func SubmitHorovodJob(namespace string, submitArgs *types.SubmitHorovodJobArgs) (err error) {
+func SubmitDeepSpeedJob(namespace string, submitArgs *types.SubmitDeepSpeedJobArgs) (err error) {
 	submitArgs.Namespace = namespace
 	trainers := GetAllTrainers()
 	trainer, ok := trainers[submitArgs.TrainingType]
@@ -43,8 +44,8 @@ func SubmitHorovodJob(namespace string, submitArgs *types.SubmitHorovodJobArgs) 
 		return err
 	}
 	// the master is also considered as a worker
-	horovodTrainingChart := util.GetChartsFolder() + "/tf-horovod"
-	err = workflow.SubmitJob(submitArgs.Name, string(types.HorovodTrainingJob), namespace, submitArgs, horovodTrainingChart, submitArgs.HelmOptions...)
+	deepspeedjobChart := util.GetChartsFolder() + "/etjob"
+	err = workflow.SubmitJob(submitArgs.Name, string(types.DeepSpeedTrainingJob), namespace, submitArgs, deepspeedjobChart, submitArgs.HelmOptions...)
 	if err != nil {
 		return err
 	}

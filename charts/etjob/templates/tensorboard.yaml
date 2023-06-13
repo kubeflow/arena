@@ -5,23 +5,23 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-tensorboard
   labels:
-    app: {{ template "etjob.name" . }}
+    app: {{ .Values.trainingType }}
     chart: {{ template "etjob.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    createdBy: "ETJob"
+    createdBy: {{ .Values.trainingType }}
     role: tensorboard
 spec:
   selector:
     matchLabels:
-      app: {{ template "etjob.name" . }}
+      app: {{ .Values.trainingType }}
       chart: {{ template "etjob.chart" . }}
       release: {{ .Release.Name }}
       role: tensorboard
   template:
     metadata:
       labels:
-        app: {{ template "etjob.name" . }}
+        app: {{ .Values.trainingType }}
         chart: {{ template "etjob.chart" . }}
         release: {{ .Release.Name }}
         role: tensorboard

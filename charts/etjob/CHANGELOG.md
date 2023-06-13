@@ -14,3 +14,6 @@
 
 * update gitImage
 
+### 0.3.2
+
+* Support new training type deepspeed.

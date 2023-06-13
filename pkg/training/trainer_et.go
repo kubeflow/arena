@@ -302,6 +302,9 @@ func (ejt *ETJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, er
 	if err := CheckJobIsOwnedByTrainer(etjob.Labels); err != nil {
 		return nil, err
 	}
+	if !ejt.isETJob(name, namespace, etjob) {
+		return nil, types.ErrTrainingJobNotFound
+	}
 	// 2. Find the pod list, and determine the pod of the job
 	pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, fmt.Sprintf("release=%v,app=%v", name, ejt.Type()), "", nil)
 	if err != nil {

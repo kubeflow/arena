@@ -32,5 +32,6 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewSubmitSparkJobCommand())
 	command.AddCommand(NewVolcanoJobCommand())
 	command.AddCommand(NewSubmitETJobCommand())
+	command.AddCommand(NewSubmitDeepSpeedJobCommand())
 	return command
 }

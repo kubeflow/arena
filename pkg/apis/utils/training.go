@@ -128,3 +128,19 @@ func IsSparkPod(name, ns string, item *v1.Pod) bool {
 	}
 	return true
 }
+
+func IsDeepSpeedPod(name, ns string, pod *v1.Pod) bool {
+	if pod.Labels["release"] != name {
+		return false
+	}
+	if pod.Labels["app"] != string(types.DeepSpeedTrainingJob) {
+		return false
+	}
+	if pod.Labels[deepspeedGroupName] != "kai.alibabacloud.com" {
+		return false
+	}
+	if pod.Namespace != ns {
+		return false
+	}
+	return true
+}

@@ -24,6 +24,9 @@ const (
 
 	// etjob
 	etLabelGroupName = "group-name"
+
+	// deepspeedjob
+	deepspeedGroupName = "group-name"
 )
 
 // GetTrainingJobTypes returns the supported training job types

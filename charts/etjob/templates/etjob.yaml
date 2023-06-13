@@ -11,11 +11,11 @@ metadata:
     {{ $key }}: {{ $value | quote }}
   {{- end }}
   labels:
-    app: {{ template "etjob.name" . }}
+    app: {{ .Values.trainingType }}
     chart: {{ template "etjob.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    createdBy: "ETJob"
+    createdBy: {{ .Values.trainingType }}
   {{- range $key, $value := .Values.labels }}
     {{ $key }}: {{ $value | quote }}
   {{- end }}
@@ -36,11 +36,11 @@ spec:
         metadata:
           name: {{ .Release.Name }}
           labels:
-            app: {{ template "etjob.name" . }}
+            app: {{ .Values.trainingType }}
             chart: {{ template "etjob.chart" . }}
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
-            createdBy: "ETJob"
+            createdBy: {{ .Values.trainingType }}
             master-pod-name: {{ .Release.Name }}-launcher
             {{- if .Values.podGroupName }}
             pod-group.scheduling.sigs.k8s.io/name: {{ .Values.podGroupName }}
@@ -320,11 +320,11 @@ spec:
         metadata:
           name: {{ .Release.Name }}
           labels:
-            app: {{ template "etjob.name" . }}
+            app: {{ .Values.trainingType }}
             chart: {{ template "etjob.chart" . }}
             release: {{ .Release.Name }}
             heritage: {{ .Release.Service }}
-            createdBy: "ETJob"
+            createdBy: {{ .Values.trainingType }}
           {{- range $key, $value := .Values.labels }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}

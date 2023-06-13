@@ -4,12 +4,12 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-tensorboard
   labels:
-    app: {{ template "etjob.name" . }}
+    app: {{ .Values.trainingType }}
     chart: {{ template "etjob.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
     role: tensorboard
-    createdBy: "etjob"
+    createdBy: {{ .Values.trainingType }}
 spec:
   type: {{ .Values.tensorboardServiceType }}
   ports:
@@ -18,7 +18,7 @@ spec:
       protocol: TCP
       name: tensorboard
   selector:
-    app: {{ template "etjob.name" . }}
+    app: {{ .Values.trainingType }}
     chart: {{ template "etjob.chart" . }}
     release: {{ .Release.Name }}
     role: tensorboard

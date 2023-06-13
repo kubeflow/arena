@@ -41,6 +41,7 @@ func GetAllTrainers() map[types.TrainingJobType]Trainer {
 			NewETJobTrainer,
 			NewVolcanoJobTrainer,
 			NewSparkJobTrainer,
+			NewDeepSpeedJobTrainer,
 		}
 		var wg sync.WaitGroup
 		for _, initFunc := range trainerInits {

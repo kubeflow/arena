@@ -54,6 +54,6 @@ func SubmitTFJob(namespace string, submitArgs *types.SubmitTFJobArgs) (err error
 		return err
 	}
 	log.Infof("The Job %s has been submitted successfully", submitArgs.Name)
-	log.Infof("You can run `arena get %s --type %s` to check the job status", submitArgs.Name, submitArgs.TrainingType)
+	log.Infof("You can run `arena get %s --type %s -n %s` to check the job status", submitArgs.Name, submitArgs.TrainingType, submitArgs.Namespace)
 	return nil
 }
