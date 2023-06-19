@@ -442,7 +442,7 @@ func (s *SubmitTFJobArgsBuilder) setTFNodeSelectors() error {
 	if ok {
 		chiefSelectors = item3.(*[]string)
 	}
-	item4, ok := s.argValues["chief-selector"]
+	item4, ok := s.argValues["evaluator-selector"]
 	if ok {
 		evaluatorSelectors = item4.(*[]string)
 	}
