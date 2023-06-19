@@ -6,11 +6,11 @@ metadata:
   annotations:
       nginx.ingress.kubernetes.io/rewrite-target: /
   labels:
-    app: {{ template "etjob.name" . }}
+    app: {{ .Values.trainingType }}
     chart: {{ template "etjob.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
-    createdBy: "etjob"
+    createdBy: {{ .Values.trainingType }}
 spec:
   rules:
     - http:

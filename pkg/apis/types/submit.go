@@ -23,7 +23,7 @@ type CommonSubmitArgs struct {
 	Namespace string `yaml:"-"`
 
 	// TrainingType stores the trainingType
-	TrainingType TrainingJobType `yaml:"-"`
+	TrainingType TrainingJobType `yaml:"trainingType"`
 
 	// NodeSelectors defines the node selectors,match option --selector
 	NodeSelectors map[string]string `yaml:"nodeSelectors"`

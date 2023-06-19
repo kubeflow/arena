@@ -67,6 +67,9 @@ func (t *TrainingJobClient) Submit(job *apistraining.Job) error {
 	case types.SparkTrainingJob:
 		args := job.Args().(*types.SubmitSparkJobArgs)
 		return training.SubmitSparkJob(t.namespace, args)
+	case types.DeepSpeedTrainingJob:
+		args := job.Args().(*types.SubmitDeepSpeedJobArgs)
+		return training.SubmitDeepSpeedJob(t.namespace, args)
 	}
 	return nil
 }

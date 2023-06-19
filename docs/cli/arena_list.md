@@ -16,7 +16,7 @@ arena list [flags]
   -A, --all-namespaces   show all the namespaces
   -h, --help             help for list
   -o, --output string    Output format. One of: json|yaml|wide (default "wide")
-  -T, --type string      The training type to list, the possible option is et(ElasticTraining),spark(Spark),tf(Tensorflow),mpi(MPI),py(Pytorch),horovod(Horovod),volcano(Volcano). (optional)
+  -T, --type string      The training type to list, the possible option is et(ElasticTraining),spark(Spark),dp(DeepSpeed),tf(Tensorflow),mpi(MPI),py(Pytorch),horovod(Horovod),volcano(Volcano). (optional)
 ```
 
 ### Options inherited from parent commands

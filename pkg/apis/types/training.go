@@ -34,6 +34,8 @@ const (
 	ETTrainingJob TrainingJobType = "etjob"
 	// SparkTrainingJob defines the spark job
 	SparkTrainingJob TrainingJobType = "sparkjob"
+	// DeepSpeedTrainingJob defines the deepspeed job
+	DeepSpeedTrainingJob TrainingJobType = "deepspeedjob"
 	// AllTrainingJob represents all job types
 	AllTrainingJob TrainingJobType = ""
 	// UnknownTrainingJob defines the unknown training
@@ -87,6 +89,11 @@ var TrainingTypeMap = map[TrainingJobType]TrainingJobTypeInfo{
 		Name:      SparkTrainingJob,
 		Alias:     "Spark",
 		Shorthand: "spark",
+	},
+	DeepSpeedTrainingJob: {
+		Name:      DeepSpeedTrainingJob,
+		Alias:     "DeepSpeed",
+		Shorthand: "dp",
 	},
 }
 

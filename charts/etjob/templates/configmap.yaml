@@ -8,11 +8,11 @@ kind: ConfigMap
 metadata:
   name: {{ $releaseName }}-{{ $containerPathKey }}
   labels:
-    app: {{ template "etjob.name" $ }}
+    app: {{ .Values.trainingType }}
     chart: {{ template "etjob.chart" $ }}
     release: {{ $releaseName }}
     heritage: {{ $releaseService }}
-    createdBy: "ETJob"
+    createdBy: {{ .Values.trainingType }}
 data:
 {{- range $configFileKey,$configFileInfo := $configFileInfos }}
   {{ $configFileInfo.containerFileName }}: |-
