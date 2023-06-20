@@ -233,14 +233,24 @@ func UpdateCustomServing(args *types.UpdateCustomServingArgs) error {
 		if deploy.Spec.Template.Spec.Tolerations == nil {
 			deploy.Spec.Template.Spec.Tolerations = []v1.Toleration{}
 		}
+		exist := map[string]bool{}
+		var tolerations []v1.Toleration
 		for _, toleration := range args.Tolerations {
-			deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, v1.Toleration{
+			tolerations = append(tolerations, v1.Toleration{
 				Key:      toleration.Key,
 				Value:    toleration.Value,
 				Effect:   v1.TaintEffect(toleration.Effect),
 				Operator: v1.TolerationOperator(toleration.Operator),
 			})
+			exist[toleration.Key+toleration.Value] = true
 		}
+
+		for _, preToleration := range deploy.Spec.Template.Spec.Tolerations {
+			if !exist[preToleration.Key+preToleration.Value] {
+				tolerations = append(tolerations, preToleration)
+			}
+		}
+		deploy.Spec.Template.Spec.Tolerations = tolerations
 	}
 
 	return updateDeployment(args.Name, args.Version, deploy)
@@ -322,6 +332,7 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 	deploy.Spec.Template.Spec.Containers[0].Resources.Limits = resourceLimits
 
 	var newEnvs []v1.EnvVar
+	exist := map[string]bool{}
 	if args.Envs != nil {
 		for k, v := range args.Envs {
 			envVar := v1.EnvVar{
@@ -329,9 +340,15 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 				Value: v,
 			}
 			newEnvs = append(newEnvs, envVar)
+			exist[k] = true
 		}
 	}
-	deploy.Spec.Template.Spec.Containers[0].Env = append(deploy.Spec.Template.Spec.Containers[0].Env, newEnvs...)
+	for _, env := range deploy.Spec.Template.Spec.Containers[0].Env {
+		if !exist[env.Name] {
+			newEnvs = append(newEnvs, env)
+		}
+	}
+	deploy.Spec.Template.Spec.Containers[0].Env = newEnvs
 
 	if args.Command != "" {
 		// commands: sh -c xxx
