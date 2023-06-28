@@ -162,7 +162,7 @@ type CommonServingArgs struct {
 	ShareMemory        string            `yaml:"shareMemory"`         // --share-memory
 
 	ImagePullSecrets []string          `yaml:"imagePullSecrets"` //--image-pull-secrets
-	HostVolumes      []DataDirVolume   `yaml:"hostVolumes"`      // --data-dir
+	HostVolumes      []DataDirVolume   `yaml:"dataDirs"`         // --data-dir
 	NodeSelectors    map[string]string `yaml:"nodeSelectors"`    // --selector
 	Tolerations      []TolerationArgs  `yaml:"tolerations"`      // --toleration
 	Annotations      map[string]string `yaml:"annotations"`
