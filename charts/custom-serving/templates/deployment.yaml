@@ -1,6 +1,7 @@
 {{- $gpuCount := .Values.gpuCount -}}
 {{- $gpuMemory := .Values.gpuMemory -}}
 {{- $gpuCore := .Values.gpuCore -}}
+{{- $dataDirs := .Values.dataDirs -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -192,6 +193,12 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
+            {{- if $dataDirs }}
+            {{- range $dataDirs }}
+            - name: {{ .name }}
+              mountPath: {{ .containerPath }}
+            {{- end }}
+            {{- end }}
       volumes:
         {{- if .Values.shareMemory }}
         - name: dshm
@@ -218,5 +225,12 @@ spec:
         - name: {{ $containerPathKey }}
           configMap:
             name: {{ $releaseName }}-{{ $containerPathKey }}
+        {{- end }}
+        {{- end }}
+        {{- if $dataDirs }}
+        {{- range $dataDirs }}
+        - name: {{ .name }}
+          hostPath:
+            path: {{ .hostPath }}
         {{- end }}
         {{- end }}
