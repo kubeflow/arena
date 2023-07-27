@@ -30,4 +30,5 @@ const (
 	MultiTenantIsolationLabel = "arena.kubeflow.org/isolate-user"
 	UserNameIdLabel           = "arena.kubeflow.org/uid"
 	UserNameNameLabel         = "arena.kubeflow.org/username"
+	SSHSecretName             = "arena.kubeflow.org/ssh-secret"
 )

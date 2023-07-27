@@ -49,6 +49,6 @@ func SubmitTensorRTServingJob(namespace string, args *types.TensorRTServingArgs)
 		return err
 	}
 	log.Infof("The Job %s has been submitted successfully", args.Name)
-	log.Infof("You can run `arena get %s --type %s` to check the job status", args.Name, args.Type)
+	log.Infof("You can run `arena serve get %s --type %s` to check the job status", args.Name, args.Type)
 	return nil
 }

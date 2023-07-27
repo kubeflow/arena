@@ -16,7 +16,6 @@ package training
 
 import (
 	"fmt"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -26,6 +25,15 @@ import (
 
 func SubmitDeepSpeedJob(namespace string, submitArgs *types.SubmitDeepSpeedJobArgs) (err error) {
 	submitArgs.Namespace = namespace
+	// generate ssh secret
+	if submitArgs.SSHSecret == "" {
+		submitArgs.SecretData, err = util.GenerateRsaKey()
+		if err != nil {
+			log.Infof("The Job %s generate ssh secret failed, err: %s", submitArgs.Name, err)
+			return err
+		}
+	}
+
 	trainers := GetAllTrainers()
 	trainer, ok := trainers[submitArgs.TrainingType]
 	if !ok {

@@ -13,4 +13,6 @@ const (
 	spotInstanceAnnotation = "job-supervisor.kube-ai.io/spot-instance"
 
 	maxWaitTimeAnnotation = "job-supervisor.kube-ai.io/max-wait-time"
+
+	NCCLAsyncErrorHanding = "NCCL_ASYNC_ERROR_HANDLING"
 )

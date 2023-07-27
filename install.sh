@@ -256,15 +256,15 @@ function clean_old_env() {
         arena-kubectl create -f ${SCRIPT_DIR}/arena-artifacts/charts/tf-operator/crds
     fi
     # remove the old kubedl-operator
-    if arena-kubectl get deployment,Service,ServiceAccount -n $NAMESPACE | grep kubedl-operator &> /dev/null;then
-        arena-kubectl delete deployment kubedl-operator -n $NAMESPACE
-        arena-kubectl delete ServiceAccount kubedl-operator -n $NAMESPACE
-        arena-kubectl delete crd crons.apps.kubedl.io
-        arena-kubectl delete ClusterRole kubedl-operator-role -n $NAMESPACE
-        arena-kubectl delete ClusterRoleBinding kubedl-operator-rolebinding -n $NAMESPACE
-        arena-kubectl delete Service kubedl-operator -n $NAMESPACE
-        arena-kubectl delete ServiceMonitor kubedl-operator -n $NAMESPACE
-    fi
+    #    if arena-kubectl get deployment,Service,ServiceAccount -n $NAMESPACE | grep kubedl-operator &> /dev/null;then
+    #        arena-kubectl delete deployment kubedl-operator -n $NAMESPACE
+    #        arena-kubectl delete ServiceAccount kubedl-operator -n $NAMESPACE
+    #        arena-kubectl delete crd crons.apps.kubedl.io
+    #        arena-kubectl delete ClusterRole kubedl-operator-role -n $NAMESPACE
+    #        arena-kubectl delete ClusterRoleBinding kubedl-operator-rolebinding -n $NAMESPACE
+    #        arena-kubectl delete Service kubedl-operator -n $NAMESPACE
+    #        arena-kubectl delete ServiceMonitor kubedl-operator -n $NAMESPACE
+    #    fi
     set -e
 }
 function apply_cron() {
