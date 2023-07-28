@@ -49,9 +49,12 @@ spec:
           {{- range $key, $value := .Values.labels }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
-          {{- if .Values.annotations }}
+          {{- if or .Values.annotations .Values.launcherAnnotations }}
           annotations:
           {{- range $key, $value := .Values.annotations }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
+          {{- range $key, $value := .Values.launcherAnnotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
           {{- end }}
@@ -328,9 +331,12 @@ spec:
           {{- range $key, $value := .Values.labels }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
-          {{- if .Values.annotations }}
+          {{- if or .Values.annotations .Values.workerAnnotations }}
           annotations:
           {{- range $key, $value := .Values.annotations }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
+          {{- range $key, $value := .Values.workerAnnotations }}
             {{ $key }}: {{ $value | quote }}
           {{- end }}
           {{- end }}

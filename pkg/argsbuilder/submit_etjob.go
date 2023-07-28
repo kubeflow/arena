@@ -72,7 +72,13 @@ func (s *SubmitETJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
-	var launcherSelectors []string
+
+	var (
+		launcherSelectors   []string
+		launcherAnnotations []string
+		workerAnnotations   []string
+	)
+
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	command.Flags().IntVar(&s.args.MaxWorkers, "max-workers", 1000, "the max worker number to run the distributed training.")
@@ -83,8 +89,12 @@ func (s *SubmitETJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.JobRestartPolicy, "job-restart-policy", "", "training job restart policy, support: Never and OnFailure")
 	command.Flags().StringVar(&s.args.WorkerRestartPolicy, "worker-restart-policy", "", "training job worker restart policy, support: Never/OnFailure/Always/ExitCode")
 	command.Flags().IntVar(&s.args.JobBackoffLimit, "job-backoff-limit", 6, "the max restart count of trainingjob, default is six")
+	command.Flags().StringArrayVar(&launcherAnnotations, "launcher-annotation", []string{}, `the launcher annotations, usage: "--launcher-annotation=key=value" or "--launcher-annotation key=value"`)
+	command.Flags().StringArrayVar(&workerAnnotations, "worker-annotation", []string{}, `the worker annotations, usage: "--worker-annotation=key=value" or "--worker-annotation key=value"`)
 
 	s.argValues["launcher-selector"] = &launcherSelectors
+	s.argValues["launcher-annotation"] = &launcherAnnotations
+	s.argValues["worker-annotation"] = &workerAnnotations
 }
 
 func (s *SubmitETJobArgsBuilder) PreBuild() error {
@@ -113,6 +123,12 @@ func (s *SubmitETJobArgsBuilder) Build() error {
 		return nil
 	}
 	if err := s.setMaxWaitTime(); err != nil {
+		return nil
+	}
+	if err := s.setLauncherAnnotations(); err != nil {
+		return nil
+	}
+	if err := s.setWorkerAnnotations(); err != nil {
 		return nil
 	}
 	if err := s.setLauncherSelectors(); err != nil {
@@ -170,18 +186,58 @@ func (s *SubmitETJobArgsBuilder) setMaxWaitTime() error {
 	return nil
 }
 
-func (m *SubmitETJobArgsBuilder) setLauncherSelectors() error {
+func (s *SubmitETJobArgsBuilder) setLauncherSelectors() error {
 	log.Debug("begin setLauncherSelector")
-	m.args.LauncherSelectors = map[string]string{}
+	s.args.LauncherSelectors = map[string]string{}
 	argKey := "launcher-selector"
 	var LauncherSelectors *[]string
-	value, ok := m.argValues[argKey]
+	value, ok := s.argValues[argKey]
 	if !ok {
 		log.Warnf("Fail to get key: %s", argKey)
 		return nil
 	}
 	LauncherSelectors = value.(*[]string)
-	m.args.LauncherSelectors = transformSliceToMap(*LauncherSelectors, "=")
-	log.Debugf("success to transform launcher selector: %v", m.args.LauncherSelectors)
+	s.args.LauncherSelectors = transformSliceToMap(*LauncherSelectors, "=")
+	log.Debugf("success to transform launcher selector: %v", s.args.LauncherSelectors)
+	return nil
+}
+
+// setLauncherAnnotations is used to handle option --launcher-annotation
+func (s *SubmitETJobArgsBuilder) setLauncherAnnotations() error {
+	if s.args.LauncherAnnotations == nil {
+		s.args.LauncherAnnotations = map[string]string{}
+	}
+	item, ok := s.argValues["launcher-annotation"]
+	if !ok {
+		return nil
+	}
+	var annotations *[]string
+	annotations = item.(*[]string)
+	if len(*annotations) == 0 {
+		return nil
+	}
+	for key, val := range transformSliceToMap(*annotations, "=") {
+		s.args.LauncherAnnotations[key] = val
+	}
+	return nil
+}
+
+// setLauncherAnnotations is used to handle option --launcher-annotation
+func (s *SubmitETJobArgsBuilder) setWorkerAnnotations() error {
+	if s.args.WorkerAnnotations == nil {
+		s.args.WorkerAnnotations = map[string]string{}
+	}
+	item, ok := s.argValues["worker-annotation"]
+	if !ok {
+		return nil
+	}
+	var annotations *[]string
+	annotations = item.(*[]string)
+	if len(*annotations) == 0 {
+		return nil
+	}
+	for key, val := range transformSliceToMap(*annotations, "=") {
+		s.args.WorkerAnnotations[key] = val
+	}
 	return nil
 }
