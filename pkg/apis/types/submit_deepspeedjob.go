@@ -26,4 +26,8 @@ type SubmitDeepSpeedJobArgs struct {
 	LauncherSelectors  map[string]string `yaml:"launcherSelectors"` // --launcher-selector
 	JobRestartPolicy   string            `yaml:"jobRestartPolicy"`  // --job-restart-policy
 	JobBackoffLimit    int               `yaml:"jobBackoffLimit"`   // --job-backoff-limit
+	// Annotations defines launcher pod annotations of job,match option --launcher-annotation
+	LauncherAnnotations map[string]string `yaml:"launcherAnnotations"`
+	// Annotations defines worker pod annotations of job,match option --worker-annotation
+	WorkerAnnotations map[string]string `yaml:"workerAnnotations"`
 }

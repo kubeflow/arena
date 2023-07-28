@@ -71,14 +71,23 @@ func (s *SubmitDeepSpeedJobArgsBuilder) AddCommandFlags(command *cobra.Command) 
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
-	var launcherSelectors []string
+	var (
+		launcherSelectors   []string
+		launcherAnnotations []string
+		workerAnnotations   []string
+	)
+
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the cpu resource to use for the training, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	command.Flags().StringArrayVarP(&launcherSelectors, "launcher-selector", "", []string{}, `assigning launcher pod to some k8s particular nodes, usage: "--launcher-selector=key=value" or "--launcher-selector key=value" `)
 	command.Flags().StringVar(&s.args.JobRestartPolicy, "job-restart-policy", "", "deepspeed job restart policy, support: Never and OnFailure. default Never.")
 	command.Flags().IntVar(&s.args.JobBackoffLimit, "job-backoff-limit", 6, "the max restart count of deepspeed job, default is six")
+	command.Flags().StringArrayVar(&launcherAnnotations, "launcher-annotation", []string{}, `the launcher annotations, usage: "--launcher-annotation=key=value" or "--launcher-annotation key=value"`)
+	command.Flags().StringArrayVar(&workerAnnotations, "worker-annotation", []string{}, `the worker annotations, usage: "--worker-annotation=key=value" or "--worker-annotation key=value"`)
 
 	s.argValues["launcher-selector"] = &launcherSelectors
+	s.argValues["launcher-annotation"] = &launcherAnnotations
+	s.argValues["worker-annotation"] = &workerAnnotations
 }
 
 func (s *SubmitDeepSpeedJobArgsBuilder) PreBuild() error {
@@ -101,6 +110,12 @@ func (s *SubmitDeepSpeedJobArgsBuilder) Build() error {
 		return err
 	}
 	if err := s.setEnv(); err != nil {
+		return nil
+	}
+	if err := s.setLauncherAnnotations(); err != nil {
+		return nil
+	}
+	if err := s.setWorkerAnnotations(); err != nil {
 		return nil
 	}
 	if err := s.setLauncherSelectors(); err != nil {
@@ -137,18 +152,58 @@ func (s *SubmitDeepSpeedJobArgsBuilder) setEnv() error {
 	return nil
 }
 
-func (m *SubmitDeepSpeedJobArgsBuilder) setLauncherSelectors() error {
+func (s *SubmitDeepSpeedJobArgsBuilder) setLauncherSelectors() error {
 	log.Debug("begin setLauncherSelector")
-	m.args.LauncherSelectors = map[string]string{}
+	s.args.LauncherSelectors = map[string]string{}
 	argKey := "launcher-selector"
 	var LauncherSelectors *[]string
-	value, ok := m.argValues[argKey]
+	value, ok := s.argValues[argKey]
 	if !ok {
 		log.Warnf("Fail to get key: %s", argKey)
 		return nil
 	}
 	LauncherSelectors = value.(*[]string)
-	m.args.LauncherSelectors = transformSliceToMap(*LauncherSelectors, "=")
-	log.Debugf("success to transform launcher selector: %v", m.args.LauncherSelectors)
+	s.args.LauncherSelectors = transformSliceToMap(*LauncherSelectors, "=")
+	log.Debugf("success to transform launcher selector: %v", s.args.LauncherSelectors)
+	return nil
+}
+
+// setLauncherAnnotations is used to handle option --launcher-annotation
+func (s *SubmitDeepSpeedJobArgsBuilder) setLauncherAnnotations() error {
+	if s.args.LauncherAnnotations == nil {
+		s.args.LauncherAnnotations = map[string]string{}
+	}
+	item, ok := s.argValues["launcher-annotation"]
+	if !ok {
+		return nil
+	}
+	var annotations *[]string
+	annotations = item.(*[]string)
+	if len(*annotations) == 0 {
+		return nil
+	}
+	for key, val := range transformSliceToMap(*annotations, "=") {
+		s.args.LauncherAnnotations[key] = val
+	}
+	return nil
+}
+
+// setLauncherAnnotations is used to handle option --launcher-annotation
+func (s *SubmitDeepSpeedJobArgsBuilder) setWorkerAnnotations() error {
+	if s.args.WorkerAnnotations == nil {
+		s.args.WorkerAnnotations = map[string]string{}
+	}
+	item, ok := s.argValues["worker-annotation"]
+	if !ok {
+		return nil
+	}
+	var annotations *[]string
+	annotations = item.(*[]string)
+	if len(*annotations) == 0 {
+		return nil
+	}
+	for key, val := range transformSliceToMap(*annotations, "=") {
+		s.args.WorkerAnnotations[key] = val
+	}
 	return nil
 }
