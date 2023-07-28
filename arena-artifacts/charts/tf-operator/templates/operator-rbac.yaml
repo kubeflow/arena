@@ -42,25 +42,45 @@ rules:
       - tfjobs
       - tfjobs/status
     verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - apiextensions.k8s.io
     resources:
       - customresourcedefinitions
     verbs:
-      - '*'
+      - get
+      - list
+      - watch
   - apiGroups:
       - storage.k8s.io
     resources:
       - storageclasses
     verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - batch
     resources:
       - jobs
     verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
   - apiGroups:
       - ""
     resources:
@@ -71,11 +91,10 @@ rules:
       - persistentvolumeclaims
       - events
     verbs:
-      - '*'
-  - apiGroups:
-      - apps
-      - extensions
-    resources:
-      - deployments
-    verbs:
-      - '*'
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch

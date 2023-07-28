@@ -89,6 +89,7 @@ func (s *SubmitETJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.JobRestartPolicy, "job-restart-policy", "", "training job restart policy, support: Never and OnFailure")
 	command.Flags().StringVar(&s.args.WorkerRestartPolicy, "worker-restart-policy", "", "training job worker restart policy, support: Never/OnFailure/Always/ExitCode")
 	command.Flags().IntVar(&s.args.JobBackoffLimit, "job-backoff-limit", 6, "the max restart count of trainingjob, default is six")
+	command.Flags().StringVar(&s.args.SSHSecret, "ssh-secret", "", "Use an existing secret name for job ssh key.")
 	command.Flags().StringArrayVar(&launcherAnnotations, "launcher-annotation", []string{}, `the launcher annotations, usage: "--launcher-annotation=key=value" or "--launcher-annotation key=value"`)
 	command.Flags().StringArrayVar(&workerAnnotations, "worker-annotation", []string{}, `the worker annotations, usage: "--worker-annotation=key=value" or "--worker-annotation key=value"`)
 
@@ -114,6 +115,9 @@ func (s *SubmitETJobArgsBuilder) Build() error {
 		}
 	}
 	if err := s.check(); err != nil {
+		return err
+	}
+	if err := s.setAnnotations(); err != nil {
 		return err
 	}
 	if err := s.addWorkerToEnv(); err != nil {
@@ -199,6 +203,14 @@ func (s *SubmitETJobArgsBuilder) setLauncherSelectors() error {
 	LauncherSelectors = value.(*[]string)
 	s.args.LauncherSelectors = transformSliceToMap(*LauncherSelectors, "=")
 	log.Debugf("success to transform launcher selector: %v", s.args.LauncherSelectors)
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *SubmitETJobArgsBuilder) setAnnotations() error {
+	if s.args.SSHSecret != "" {
+		s.args.Annotations[types.SSHSecretName] = s.args.SSHSecret
+	}
 	return nil
 }
 

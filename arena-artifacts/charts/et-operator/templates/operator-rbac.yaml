@@ -104,18 +104,6 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - secrets
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - ""
-    resources:
       - serviceaccounts
     verbs:
       - create
@@ -211,11 +199,8 @@ rules:
       - rolebindings
     verbs:
       - create
-      - delete
       - get
       - list
-      - patch
-      - update
       - watch
   - apiGroups:
       - rbac.authorization.k8s.io
@@ -223,12 +208,20 @@ rules:
       - roles
     verbs:
       - create
-      - delete
       - get
       - list
-      - patch
-      - update
       - watch
+  {{- if .Values.createSSHSecret }}
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

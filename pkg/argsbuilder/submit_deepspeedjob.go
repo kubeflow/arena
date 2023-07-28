@@ -82,6 +82,7 @@ func (s *SubmitDeepSpeedJobArgsBuilder) AddCommandFlags(command *cobra.Command) 
 	command.Flags().StringArrayVarP(&launcherSelectors, "launcher-selector", "", []string{}, `assigning launcher pod to some k8s particular nodes, usage: "--launcher-selector=key=value" or "--launcher-selector key=value" `)
 	command.Flags().StringVar(&s.args.JobRestartPolicy, "job-restart-policy", "", "deepspeed job restart policy, support: Never and OnFailure. default Never.")
 	command.Flags().IntVar(&s.args.JobBackoffLimit, "job-backoff-limit", 6, "the max restart count of deepspeed job, default is six")
+	command.Flags().StringVar(&s.args.SSHSecret, "ssh-secret", "", "Use an existing secret name for job ssh key.")
 	command.Flags().StringArrayVar(&launcherAnnotations, "launcher-annotation", []string{}, `the launcher annotations, usage: "--launcher-annotation=key=value" or "--launcher-annotation key=value"`)
 	command.Flags().StringArrayVar(&workerAnnotations, "worker-annotation", []string{}, `the worker annotations, usage: "--worker-annotation=key=value" or "--worker-annotation key=value"`)
 
@@ -111,6 +112,9 @@ func (s *SubmitDeepSpeedJobArgsBuilder) Build() error {
 	}
 	if err := s.setEnv(); err != nil {
 		return nil
+	}
+	if err := s.setAnnotations(); err != nil {
+		return err
 	}
 	if err := s.setLauncherAnnotations(); err != nil {
 		return nil
@@ -148,7 +152,9 @@ func (s *SubmitDeepSpeedJobArgsBuilder) check() error {
 
 func (s *SubmitDeepSpeedJobArgsBuilder) setEnv() error {
 	// avoid deepspeed job handing
-	s.args.Envs["NCCL_ASYNC_ERROR_HANDLING"] = "1"
+	if _, ok := s.args.Envs[NCCLAsyncErrorHanding]; !ok {
+		s.args.Envs[NCCLAsyncErrorHanding] = "1"
+	}
 	return nil
 }
 
@@ -165,6 +171,14 @@ func (s *SubmitDeepSpeedJobArgsBuilder) setLauncherSelectors() error {
 	LauncherSelectors = value.(*[]string)
 	s.args.LauncherSelectors = transformSliceToMap(*LauncherSelectors, "=")
 	log.Debugf("success to transform launcher selector: %v", s.args.LauncherSelectors)
+	return nil
+}
+
+// setAnnotations is used to handle option --annotation
+func (s *SubmitDeepSpeedJobArgsBuilder) setAnnotations() error {
+	if s.args.SSHSecret != "" {
+		s.args.Annotations[types.SSHSecretName] = s.args.SSHSecret
+	}
 	return nil
 }
 

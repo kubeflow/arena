@@ -15,6 +15,9 @@ type SubmitETJobArgs struct {
 	JobRestartPolicy    string            `yaml:"jobRestartPolicy"`    // --job-restart-policy
 	WorkerRestartPolicy string            `yaml:"workerRestartPolicy"` // --worker-restart-policy
 	JobBackoffLimit     int               `yaml:"jobBackoffLimit"`     // --job-backoff-limit
+	// SSHSecret enables create secret for job.
+	SSHSecret  string            `yaml:"sshSecret"`
+	SecretData map[string]string `yaml:"secretData"`
 	// Annotations defines launcher pod annotations of job,match option --launcher-annotation
 	LauncherAnnotations map[string]string `yaml:"launcherAnnotations"`
 	// Annotations defines worker pod annotations of job,match option --worker-annotation
