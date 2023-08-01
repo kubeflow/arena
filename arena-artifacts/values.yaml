@@ -29,7 +29,7 @@ binary:
 tf:
   enabled: true
   image: acs/tf_operator
-  tag: v1.0-aliyun-b81dfd7
+  tag: v1.0-aliyun-cfb1239
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -58,7 +58,7 @@ tfdashboard:
 mpi:
   enabled: true
   image: acs/mpi-operator
-  tag: v0.1.0-aliyun-cc4b2b5
+  tag: v0.1.0-aliyun-e94b924
   kubectlDelivery:
     image: acs/kubectl-delivery
     tag: v0.1.0
@@ -92,7 +92,7 @@ et:
   enabled: true
   createSSHSecret: false
   image: acs/et-operator
-  tag: v0.1.3-aliyun-96920fd
+  tag: v0.1.4-aliyun-cd9163f
   imagePullPolicy: IfNotPresent
   resources:
     limits:
