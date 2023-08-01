@@ -1,6 +1,6 @@
 module github.com/kubeflow/arena
 
-go 1.12
+go 1.16
 
 require (
 	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
