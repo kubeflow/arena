@@ -6,22 +6,22 @@ import (
 	"strings"
 	"sync"
 
+	kservev1beta1 "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
+	kserveClient "github.com/kserve/kserve/pkg/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
-
 	appv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
-
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	v1alpha12 "github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
 	etversioned "github.com/kubeflow/arena/pkg/operators/et-operator/client/clientset/versioned"
@@ -383,6 +383,37 @@ func (k *k8sResourceAccesser) ListCrons(cronClient *cronversioned.Clientset, nam
 		crons = append(crons, cron.DeepCopy())
 	}
 	return crons, nil
+}
+
+func (k *k8sResourceAccesser) ListKServeInferenceService(ctx context.Context, kserveClient *kserveClient.Clientset, namespace string, label string) ([]*kservev1beta1.InferenceService, error) {
+	jobs := []*kservev1beta1.InferenceService{}
+	jobList := &kservev1beta1.InferenceServiceList{}
+	var err error
+	labelSelector, err := parseLabelSelector(label)
+	if err != nil {
+		return nil, err
+	}
+	if k.cacheEnabled {
+		err = k.cacheClient.List(
+			ctx,
+			jobList,
+			client.InNamespace(namespace),
+			&client.ListOptions{
+				LabelSelector: labelSelector,
+			},
+		)
+	} else {
+		jobList, err = kserveClient.ServingV1beta1().InferenceServices(namespace).List(ctx, metav1.ListOptions{
+			LabelSelector: labelSelector.String(),
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, job := range jobList.Items {
+		jobs = append(jobs, job.DeepCopy())
+	}
+	return jobs, nil
 }
 
 func (k *k8sResourceAccesser) ListTensorflowJobs(tfjobClient *tfversioned.Clientset, namespace string, tfjobLabel string) ([]*tfv1.TFJob, error) {

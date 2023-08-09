@@ -8,7 +8,8 @@ var (
 Available Commands:
   tensorflow,tf  Update a TensorFlow Serving Job
   triton         Update a Nvidia Triton Serving Job
-  custom         Update a Custom Serving Job`
+  custom         Update a Custom Serving Job
+  kserve         Update a KServe Serving Job`
 )
 
 func NewUpdateCommand() *cobra.Command {
@@ -23,6 +24,7 @@ func NewUpdateCommand() *cobra.Command {
 	command.AddCommand(NewUpdateTensorflowCommand())
 	command.AddCommand(NewUpdateTritonCommand())
 	command.AddCommand(NewUpdateCustomCommand())
+	command.AddCommand(NewUpdateKServeCommand())
 
 	return command
 }

@@ -38,3 +38,20 @@ type UpdateTritonServingArgs struct {
 type UpdateCustomServingArgs struct {
 	CommonUpdateServingArgs `yaml:",inline"`
 }
+
+type UpdateKServeArgs struct {
+	ModelFormat             *ModelFormat `yaml:"modelFormat"`                    // --model-format
+	Runtime                 string       `yaml:"runtime"`                        // --runtime
+	StorageUri              string       `yaml:"storageUri"`                     // --storageUri
+	RuntimeVersion          string       `yaml:"runtimeVersion"`                 // --runtime-version
+	ProtocolVersion         string       `yaml:"protocolVersion"`                // --protocol-version
+	MinReplicas             int          `yaml:"minReplicas"`                    // --min-replicas
+	MaxReplicas             int          `yaml:"maxReplicas"`                    // --max-replicas
+	ScaleTarget             int          `yaml:"scaleTarget"`                    // --scale-target
+	ScaleMetric             string       `yaml:"scaleMetric"`                    // --scale-metric
+	ContainerConcurrency    int64        `yaml:"containerConcurrency"`           // --container-concurrency
+	TimeoutSeconds          int64        `yaml:"timeout"`                        // --timeout
+	CanaryTrafficPercent    int64        `yaml:"canaryTrafficPercent,omitempty"` // --canary-traffic-percent
+	Port                    int          `yaml:"port"`                           // --port
+	CommonUpdateServingArgs `yaml:",inline"`
+}

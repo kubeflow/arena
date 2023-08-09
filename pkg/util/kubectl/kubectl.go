@@ -24,13 +24,14 @@ import (
 	"strings"
 	"sync"
 
+	kservev1beta1 "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
+	kserveClient "github.com/kserve/kserve/pkg/client/clientset/versioned"
+	"github.com/kubeflow/arena/pkg/apis/config"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/kubeflow/arena/pkg/apis/config"
 )
 
 var kubectlCmd = []string{"arena-kubectl"}
@@ -351,11 +352,24 @@ func GetDeployment(name, namespace string) (*v1.Deployment, error) {
 	return client.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
+func GetInferenceService(name, namespace string) (*kservev1beta1.InferenceService, error) {
+	client := kserveClient.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
+
+	return client.ServingV1beta1().InferenceServices(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+}
+
 func UpdateDeployment(deploy *v1.Deployment) error {
 	arenaConfiger := config.GetArenaConfiger()
 	client := arenaConfiger.GetClientSet()
 
 	_, err := client.AppsV1().Deployments(deploy.Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
+	return err
+}
+
+func UpdateInferenceService(inferenceService *kservev1beta1.InferenceService) error {
+	client := kserveClient.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
+
+	_, err := client.ServingV1beta1().InferenceServices(inferenceService.Namespace).Update(context.TODO(), inferenceService, metav1.UpdateOptions{})
 	return err
 }
 

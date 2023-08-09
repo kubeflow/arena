@@ -16,6 +16,8 @@ type ServingJob interface {
 	Name() string
 	// GetNamespace returns the namespace
 	Namespace() string
+	// Uid returns the uid
+	Uid() string
 	// Type returns the type
 	Type() types.ServingJobType
 	// Version returns the job version
@@ -32,10 +34,16 @@ type ServingJob interface {
 	StartTime() *metav1.Time
 	// Endpoints return the endpoints
 	Endpoints() []types.Endpoint
+	// IPAddress return the inference address
+	IPAddress() string
+	// RequestCPUs returns the cpus which serving job owned
+	RequestCPUs() float64
 	// RequestGPUs returns the gpus which serving job owned
 	RequestGPUs() float64
 	// RequestGPUMemory returns the gpu memory,only for gpushare
 	RequestGPUMemory() int
+	// RequestGPUCore returns the gpu core, only for cgpu
+	RequestGPUCore() int
 	// DesiredInstances return the desired instances count
 	DesiredInstances() int
 	// AvailableInstances returns the available instances

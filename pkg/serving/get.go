@@ -8,11 +8,11 @@ import (
 	"sync"
 	"text/tabwriter"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -92,7 +92,13 @@ func validateJobs(jobs []ServingJob, name string) error {
 	knownJobs := []ServingJob{}
 	unknownJobs := []ServingJob{}
 	for _, s := range jobs {
-		if CheckJobIsOwnedByProcesser(s.Deployment().Labels) {
+		labels := map[string]string{}
+		if ksjob, ok := s.(*kserveJob); ok {
+			labels = ksjob.inferenceService.Labels
+		} else {
+			labels = s.Deployment().Labels
+		}
+		if CheckJobIsOwnedByProcesser(labels) {
 			knownJobs = append(knownJobs, s)
 		} else {
 			unknownJobs = append(unknownJobs, s)
