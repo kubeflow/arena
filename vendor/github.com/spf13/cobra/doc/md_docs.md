@@ -1,6 +1,6 @@
 # Generating Markdown Docs For Your Own cobra.Command
 
-Generating man pages from a cobra command is incredibly easy. An example is as follows:
+Generating Markdown pages from a cobra command is incredibly easy. An example is as follows:
 
 ```go
 package main
@@ -85,7 +85,7 @@ func GenMarkdownCustom(cmd *Command, out *bytes.Buffer, linkHandler func(string)
 }
 ```
 
-The `filePrepender` will prepend the return value given the full filepath to the rendered Markdown file. A common use case is to add front matter to use the generated documentation with [Hugo](http://gohugo.io/):
+The `filePrepender` will prepend the return value given the full filepath to the rendered Markdown file. A common use case is to add front matter to use the generated documentation with [Hugo](https://gohugo.io/):
 
 ```go
 const fmTemplate = `---

@@ -119,7 +119,7 @@ build-pkg:
 				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
 				 --build-arg "VERSION=${VERSION}" \
 				 --build-arg "OS_ARCH=${OS_ARCH}" \
-				 --build-arg "GOLANG_VERSION=1.16" \
+				 --build-arg "GOLANG_VERSION=1.18" \
 				 --build-arg "TARGET=cli-${OS_ARCH}" \
 	-t arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} -f Dockerfile.build .
 	docker run -itd --name=arena-pkg arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} /bin/bash
