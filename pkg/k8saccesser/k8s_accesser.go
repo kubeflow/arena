@@ -21,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	v1alpha12 "github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
@@ -89,7 +88,7 @@ func NewK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset
 			log.Errorf("failed to create cacheClient, reason: %v", err)
 			return nil, err
 		}
-		cacheClient.IndexField(context.TODO(), &v1.Pod{}, "spec.nodeName", func(o runtime.Object) []string {
+		cacheClient.IndexField(context.TODO(), &v1.Pod{}, "spec.nodeName", func(o client.Object) []string {
 			if pod, ok := o.(*v1.Pod); ok {
 				return []string{pod.Spec.NodeName}
 			}
@@ -109,12 +108,12 @@ func (k *k8sResourceAccesser) Run() (err error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		if err = k.cacheClient.Start(context.Background().Done()); err != nil {
+		if err = k.cacheClient.Start(context.Background()); err != nil {
 			cancel()
 			log.Errorf("failed to start cacheClient, reason: %v", err)
 		}
 	}()
-	k.cacheClient.WaitForCacheSync(ctx.Done())
+	k.cacheClient.WaitForCacheSync(ctx)
 	return err
 }
 
