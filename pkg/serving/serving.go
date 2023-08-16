@@ -50,6 +50,7 @@ func GetAllProcesser() map[types.ServingJobType]Processer {
 		processerInits := []func() Processer{
 			NewCustomServingProcesser,
 			NewKFServingProcesser,
+			NewKServeProcesser,
 			NewTensorflowServingProcesser,
 			NewTensorrtServingProcesser,
 			NewSeldonServingProcesser,

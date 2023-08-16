@@ -50,6 +50,9 @@ func (t *ServingJobClient) Submit(job *apiserving.Job) error {
 	case types.KFServingJob:
 		args := job.Args().(*types.KFServingArgs)
 		return serving.SubmitKFServingJob(args.Namespace, args)
+	case types.KServeJob:
+		args := job.Args().(*types.KServeArgs)
+		return serving.SubmitKServeJob(args.Namespace, args)
 	case types.SeldonServingJob:
 		args := job.Args().(*types.SeldonServingArgs)
 		return serving.SubmitSeldonServingJob(args.Namespace, args)
@@ -168,6 +171,9 @@ func (t *ServingJobClient) Update(job *apiserving.Job) error {
 	case types.CustomServingJob:
 		args := job.Args().(*types.UpdateCustomServingArgs)
 		return serving.UpdateCustomServing(args)
+	case types.KServeJob:
+		args := job.Args().(*types.UpdateKServeArgs)
+		return serving.UpdateKServe(args)
 	}
 	return nil
 }

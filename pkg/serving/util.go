@@ -60,7 +60,13 @@ func ValidateJobsBeforeSubmiting(jobs []ServingJob, name string) error {
 	knownJobs := []ServingJob{}
 	unknownJobs := []ServingJob{}
 	for _, s := range jobs {
-		if CheckJobIsOwnedByProcesser(s.Deployment().Labels) {
+		labels := map[string]string{}
+		if ksjob, ok := s.(*kserveJob); ok {
+			labels = ksjob.inferenceService.Labels
+		} else {
+			labels = s.Deployment().Labels
+		}
+		if CheckJobIsOwnedByProcesser(labels) {
 			knownJobs = append(knownJobs, s)
 		} else {
 			unknownJobs = append(unknownJobs, s)

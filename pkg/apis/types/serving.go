@@ -11,6 +11,8 @@ const (
 	TRTServingJob ServingJobType = "trt-serving"
 	// KFServingJob defines the kfserving job
 	KFServingJob ServingJobType = "kf-serving"
+	// KServeJob defines the kserve job
+	KServeJob ServingJobType = "kserve"
 	// SeldonServingJob defines the seldon core job
 	SeldonServingJob ServingJobType = "seldon-serving"
 	// TritonServingJob defines the nvidia triton server job
@@ -40,6 +42,11 @@ var ServingTypeMap = map[ServingJobType]ServingTypeInfo{
 		Name:      KFServingJob,
 		Alias:     "KFServing",
 		Shorthand: "kf",
+	},
+	KServeJob: {
+		Name:      KServeJob,
+		Alias:     "KServe",
+		Shorthand: "kserve",
 	},
 	TFServingJob: {
 		Name:      TFServingJob,
@@ -211,6 +218,23 @@ type KFServingArgs struct {
 	CommonServingArgs `yaml:",inline"`
 }
 
+type KServeArgs struct {
+	ModelFormat          *ModelFormat `yaml:"modelFormat"`                    // --model-format
+	Runtime              string       `yaml:"runtime"`                        // --runtime
+	StorageUri           string       `yaml:"storageUri"`                     // --storageUri
+	RuntimeVersion       string       `yaml:"runtimeVersion"`                 // --runtime-version
+	ProtocolVersion      string       `yaml:"protocolVersion"`                // --protocol-version
+	MinReplicas          int          `yaml:"minReplicas"`                    // --min-replicas
+	MaxReplicas          int          `yaml:"maxReplicas"`                    // --max-replicas
+	ScaleTarget          int          `yaml:"scaleTarget"`                    // --scale-target
+	ScaleMetric          string       `yaml:"scaleMetric"`                    // --scale-metric
+	ContainerConcurrency int64        `yaml:"containerConcurrency"`           // --container-concurrency
+	TimeoutSeconds       int64        `yaml:"timeout"`                        // --timeout
+	CanaryTrafficPercent int64        `yaml:"canaryTrafficPercent,omitempty"` // --canary-traffic-percent
+	Port                 int          `yaml:"port"`                           // --port
+	CommonServingArgs    `yaml:",inline"`
+}
+
 type SeldonServingArgs struct {
 	Implementation    string `yaml:"implementation"` // --implementation
 	ModelUri          string `yaml:"modelUri"`       // --modelUri
@@ -226,4 +250,15 @@ type TritonServingArgs struct {
 	LoadModels        []string `yaml:"loadModels"`      // --load-model
 	ExtendCommand     string   `yaml:"extendCommand"`   // --extend-command
 	CommonServingArgs `yaml:",inline"`
+}
+
+type ModelFormat struct {
+	// Name of the model format.
+	// +required
+	Name string `yaml:"name"`
+	// Version of the model format.
+	// Used in validating that a predictor is supported by a runtime.
+	// Can be "major", "major.minor" or "major.minor.patch".
+	// +optional
+	Version *string `yaml:"version,omitempty"`
 }

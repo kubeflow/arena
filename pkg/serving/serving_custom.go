@@ -49,6 +49,6 @@ func SubmitCustomServingJob(namespace string, args *types.CustomServingArgs) (er
 		return err
 	}
 	log.Infof("The Job %s has been submitted successfully", args.Name)
-	log.Infof("You can run `arena serve get %s --type %s` to check the job status", args.Name, args.Type)
+	log.Infof("You can run `arena serve get %s --type %s -n %s` to check the job status", args.Name, args.Type, args.Namespace)
 	return nil
 }
