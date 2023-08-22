@@ -15,7 +15,6 @@ metadata:
     app: {{ template "kserve.name" . }}
     servingType: "kserve"
     servingName: "{{ .Values.servingName }}"
-    servingVersion: "{{ .Values.servingVersion }}"
   {{- range $key, $value := .Values.labels }}
     {{ $key }}: {{ $value | quote }}
   {{- end }}
