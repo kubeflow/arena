@@ -184,10 +184,21 @@ type CommonServingArgs struct {
 }
 
 type CustomServingArgs struct {
-	Port              int `yaml:"port"`        // --port
-	RestfulPort       int `yaml:"restApiPort"` // --restfulPort
-	MetricsPort       int `yaml:"metricsPort"` // --metrics-port
-	CommonServingArgs `yaml:",inline"`
+	Port                       int      `yaml:"port"`                       // --port
+	RestfulPort                int      `yaml:"restApiPort"`                // --restfulPort
+	MetricsPort                int      `yaml:"metricsPort"`                // --metrics-port
+	MaxSurge                   string   `yaml:"maxSurge"`                   // --maxSurge
+	MaxUnavailable             string   `yaml:"maxUnavailable"`             // --maxUnavailable
+	LivenessProbeAction        string   `yaml:"livenessProbeAction"`        // --liveness-probe-action
+	LivenessProbeActionOption  []string `yaml:"livenessProbeActionOption"`  // --liveness-probe-action-option
+	LivenessProbeOption        []string `yaml:"livenessProbeOption"`        // --liveness-probe-option
+	ReadinessProbeAction       string   `yaml:"readinessProbeAction"`       // --readiness-probe-action
+	ReadinessProbeActionOption []string `yaml:"readinessProbeActionOption"` // --readiness-probe-action-option
+	ReadinessProbeOption       []string `yaml:"readinessProbeOption"`       // --readiness-probe-option
+	StartupProbeAction         string   `yaml:"startupProbeAction"`         // --startup-probe-action
+	StartupProbeActionOption   []string `yaml:"startupProbeActionOption"`   // --startup-probe-action-option
+	StartupProbeOption         []string `yaml:"startupProbeOption"`         // --startup-probe-option
+	CommonServingArgs          `yaml:",inline"`
 }
 
 type TensorFlowServingArgs struct {

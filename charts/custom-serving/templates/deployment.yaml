@@ -23,6 +23,13 @@ metadata:
 spec:
   replicas: {{ .Values.replicas }}
   strategy:
+    rollingUpdate:
+      {{- if .Values.maxSurge }}
+      maxSurge: {{ .Values.maxSurge }}
+      {{- end }}
+      {{- if .Values.maxUnavailable }}
+      maxUnavailable: {{ .Values.maxUnavailable }}
+      {{- end }}
     type: RollingUpdate
   selector:
     matchLabels:
@@ -135,11 +142,36 @@ spec:
               name: metrics
               protocol: TCP
             {{- end }}
-          #readinessProbe:
-          #  tcpSocket:
-          #    port: grpc
-          #  initialDelaySeconds: 15
-          #  timeoutSeconds: 1
+          {{- if .Values.livenessProbeAction }}
+          livenessProbe:
+            {{ .Values.livenessProbeAction }}:
+              {{- range $key := .Values.livenessProbeActionOption }}
+              {{ $key }}
+              {{- end }}
+            {{- range $key := .Values.livenessProbeOption }}
+            {{ $key }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.readinessProbeAction }}
+          readinessProbe:
+            {{ .Values.readinessProbeAction }}:
+              {{- range $key := .Values.readinessProbeActionOption }}
+              {{ $key }}
+              {{- end }}
+            {{- range $key := .Values.readinessProbeOption }}
+            {{ $key }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.startupProbeAction }}
+          startupProbe:
+            {{ .Values.startupProbeAction }}:
+              {{- range $key := .Values.startupProbeActionOption }}
+              {{ $key }}
+              {{- end }}
+            {{- range $key := .Values.startupProbeOption }}
+            {{ $key }}
+            {{- end }}
+          {{- end }}
           resources:
             limits:
               {{- if .Values.cpu }}
