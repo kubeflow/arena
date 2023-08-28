@@ -31,8 +31,16 @@ spec:
       - key: node-role.alibabacloud.com/addon
         operator: Exists
         effect: NoSchedule
-      nodeSelector:
-         node-role.kubernetes.io/master: ""
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: Exists
       restartPolicy: Never
       containers:
       - name: installer
