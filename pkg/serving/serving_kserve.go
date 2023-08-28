@@ -48,7 +48,6 @@ func NewKServeProcesser() Processer {
 }
 
 func SubmitKServeJob(namespace string, args *types.KServeArgs) (err error) {
-	nameWithVersion := fmt.Sprintf("%v-%v", args.Name, args.Version)
 	args.Namespace = namespace
 	processers := GetAllProcesser()
 	processer, ok := processers[args.Type]
@@ -64,7 +63,7 @@ func SubmitKServeJob(namespace string, args *types.KServeArgs) (err error) {
 	}
 	// the master is also considered as a worker
 	chart := util.GetChartsFolder() + "/kserve"
-	err = workflow.SubmitJob(nameWithVersion, string(types.KServeJob), namespace, args, chart, args.HelmOptions...)
+	err = workflow.SubmitJob(args.Name, string(types.KServeJob), namespace, args, chart, args.HelmOptions...)
 	if err != nil {
 		return err
 	}
@@ -87,9 +86,6 @@ func (p *KServeProcesser) GetServingJobs(namespace, name, version string) ([]Ser
 	selector := []string{
 		fmt.Sprintf("%v=%v", servingNameLabelKey, name),
 		fmt.Sprintf("%v=%v", servingTypeLabelKey, p.processerType),
-	}
-	if version != "" {
-		selector = append(selector, fmt.Sprintf("%v=%v", servingVersionLabelKey, version))
 	}
 	log.Debugf("processer %v,filter jobs by labels: %v", p.processerType, selector)
 	return p.FilterServingJobs(namespace, false, strings.Join(selector, ","))
@@ -131,18 +127,21 @@ func (p *KServeProcesser) FilterServingJobs(namespace string, allNamespace bool,
 		filterPods := []*v1.Pod{}
 		for _, deployment := range deployments {
 			if iservice.Labels[servingNameLabelKey] == deployment.Labels[servingNameLabelKey] &&
-				iservice.Labels[servingTypeLabelKey] == deployment.Labels[servingTypeLabelKey] &&
-				iservice.Labels[servingVersionLabelKey] == deployment.Labels[servingVersionLabelKey] {
+				iservice.Labels[servingTypeLabelKey] == deployment.Labels[servingTypeLabelKey] {
 				filterDeployments = append(filterDeployments, deployment)
 			}
 		}
 
 		for _, pod := range pods {
 			if iservice.Labels[servingNameLabelKey] == pod.Labels[servingNameLabelKey] &&
-				iservice.Labels[servingTypeLabelKey] == pod.Labels[servingTypeLabelKey] &&
-				iservice.Labels[servingVersionLabelKey] == pod.Labels[servingVersionLabelKey] {
+				iservice.Labels[servingTypeLabelKey] == pod.Labels[servingTypeLabelKey] {
 				filterPods = append(filterPods, pod)
 			}
+		}
+
+		version := iservice.Status.Components["predictor"].LatestCreatedRevision
+		if len(version) > 5 {
+			version = version[len(version)-5:]
 		}
 
 		servingJobs = append(servingJobs, &kserveJob{
@@ -152,7 +151,7 @@ func (p *KServeProcesser) FilterServingJobs(namespace string, allNamespace bool,
 				name:          iservice.Labels[servingNameLabelKey],
 				namespace:     iservice.Namespace,
 				servingType:   p.processerType,
-				version:       iservice.Labels[servingVersionLabelKey],
+				version:       version,
 				deployment:    nil,
 				pods:          filterPods,
 				services:      services,

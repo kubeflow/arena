@@ -144,13 +144,32 @@ func PrintServingJob(job ServingJob, format types.FormatStyle) {
 	title := ""
 	step := ""
 	gpuLine := ""
+	var lines []string
 	if totalGPUs != 0 {
 		title = "\tGPU"
 		step = "\t---"
 		gpuLine = fmt.Sprintf("GPU:        %v", totalGPUs)
+		lines = append(lines, gpuLine)
 	}
 
-	lines := []string{gpuLine, "", "Instances:", fmt.Sprintf("  NAME\tSTATUS\tAGE\tREADY\tRESTARTS%v\tNODE", title)}
+	if job.Type() == types.KServeJob {
+		if ksjob, ok := job.(*kserveJob); ok {
+			lines = append(lines, "")
+			for _, traffic := range ksjob.inferenceService.Status.Components["predictor"].Traffic {
+				revision := traffic.RevisionName
+				percent := *traffic.Percent
+				if traffic.Tag == "prev" {
+					lines = append(lines, fmt.Sprintf("PrevRevision:       %v", revision))
+					lines = append(lines, fmt.Sprintf("PrevPrecent:        %v", percent))
+				} else {
+					lines = append(lines, fmt.Sprintf("LatestRevision:     %v", revision))
+					lines = append(lines, fmt.Sprintf("LatestPrecent:      %v", percent))
+				}
+			}
+		}
+	}
+
+	lines = append(lines, "", "Instances:", fmt.Sprintf("  NAME\tSTATUS\tAGE\tREADY\tRESTARTS%v\tNODE", title))
 	lines = append(lines, fmt.Sprintf("  ----\t------\t---\t-----\t--------%v\t----", step))
 	for _, i := range jobInfo.Instances {
 		value := fmt.Sprintf("%v", i.RequestGPUs)

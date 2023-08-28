@@ -1,7 +1,6 @@
 {{- $gpuCount := .Values.gpuCount -}}
 {{- $gpuMemory := .Values.gpuMemory -}}
 {{- $gpuCore := .Values.gpuCore -}}
-{{- $dataDirs := .Values.dataDirs -}}
 apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
@@ -16,7 +15,6 @@ metadata:
     app: {{ template "kserve.name" . }}
     servingType: "kserve"
     servingName: "{{ .Values.servingName }}"
-    servingVersion: "{{ .Values.servingVersion }}"
   {{- range $key, $value := .Values.labels }}
     {{ $key }}: {{ $value | quote }}
   {{- end }}
@@ -115,18 +113,12 @@ spec:
         {{- range $pvcName, $destPath := .Values.modelDirs}}
         - name: "{{ $pvcName }}"
           mountPath: "{{ $destPath }}"
-          {{- if hasKey $.Values.dataSubPathExprs $pvcName }}
-          subPathExpr: {{ get $.Values.dataSubPathExprs $pvcName }}
-          {{- end }}
         {{- end }}
         {{- end }}
         {{- if .Values.tempDirs }}
         {{- range $name, $destPath := .Values.tempDirs}}
         - name: "{{ $name }}"
           mountPath: "{{ $destPath }}"
-          {{- if hasKey $.Values.tempDirSubPathExprs $name }}
-          subPathExpr: {{ get $.Values.tempDirSubPathExprs $name }}
-          {{- end }}
         {{- end }}
         {{- end }}
         {{- if ne (len .Values.configFiles) 0 }}
@@ -140,12 +132,6 @@ spec:
         {{- $visit = "true" }}
         {{- end }}
         {{- end }}
-        {{- end }}
-        {{- end }}
-        {{- if $dataDirs }}
-        {{- range $dataDirs }}
-        - name: {{ .name }}
-          mountPath: {{ .containerPath }}
         {{- end }}
         {{- end }}
     {{- else }}
@@ -201,18 +187,12 @@ spec:
           {{- range $pvcName, $destPath := .Values.modelDirs}}
           - name: "{{ $pvcName }}"
             mountPath: "{{ $destPath }}"
-            {{- if hasKey $.Values.dataSubPathExprs $pvcName }}
-            subPathExpr: {{ get $.Values.dataSubPathExprs $pvcName }}
-            {{- end }}
           {{- end }}
           {{- end }}
           {{- if .Values.tempDirs }}
           {{- range $name, $destPath := .Values.tempDirs}}
           - name: "{{ $name }}"
             mountPath: "{{ $destPath }}"
-            {{- if hasKey $.Values.tempDirSubPathExprs $name }}
-            subPathExpr: {{ get $.Values.tempDirSubPathExprs $name }}
-            {{- end }}
           {{- end }}
           {{- end }}
           {{- if ne (len .Values.configFiles) 0 }}

@@ -497,7 +497,7 @@ func (s *ServingArgsBuilder) setEnvs() error {
 }
 
 func (s *ServingArgsBuilder) setServingVersion() error {
-	if s.args.Version == "" {
+	if s.args.Version == "" && s.args.Type != types.KServeJob {
 		t := time.Now()
 		s.args.Version = fmt.Sprint(t.Format("200601021504"))
 	}

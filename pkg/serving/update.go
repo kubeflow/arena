@@ -426,7 +426,7 @@ func findAndBuildInferenceService(args *types.UpdateKServeArgs) (*kservev1beta1.
 		return nil, err
 	}
 
-	inferenceName := fmt.Sprintf("%s-%s", args.Name, args.Version)
+	inferenceName := args.Name
 	inferenceService, err := kubectl.GetInferenceService(inferenceName, args.Namespace)
 	if err != nil {
 		return nil, err
