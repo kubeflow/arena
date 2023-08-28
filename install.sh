@@ -292,7 +292,7 @@ function install_binary_on_master() {
     if [[ $INSTALL_BINARY_ON_MASTER != "true" ]];then
         return
     fi
-    master_count=$(arena-kubectl get nodes -l node-role.kubernetes.io/master | grep -v NAME  | wc -l)
+    master_count=$(arena-kubectl get nodes --show-labels | grep -E 'node-role.kubernetes.io/master|node-role.kubernetes.io/control-plane' | wc -l)
     master_count=$(echo $master_count)
     export HELM_OPTIONS="$HELM_OPTIONS --set binary.enabled=true --set binary.masterCount=$master_count"
 }
