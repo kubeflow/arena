@@ -19,6 +19,9 @@ func DeleteServingJob(namespace, name, version string, jobType types.ServingJobT
 		return err
 	}
 	nameWithVersion := fmt.Sprintf("%v-%v", job.Name(), job.Version())
+	if job.Type() == types.KServeJob {
+		nameWithVersion = job.Name()
+	}
 	servingType := string(job.Type())
 	err = workflow.DeleteJob(nameWithVersion, namespace, servingType)
 	if err != nil {
