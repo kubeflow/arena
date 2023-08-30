@@ -3,7 +3,7 @@
 # 
 # Create a go runtime for building arena
 
-ARG GOLANG_VERSION=1.18
+ARG GOLANG_VERSION=1.19.4
 ARG KUBE_VERSION=v1.23.0
 ARG HELM_VERSION=v3.7.2
 ARG VERSION=v0.3.0-rc
@@ -12,7 +12,7 @@ ARG COMMIT=stable
 ARG TARGET=cli-$OS_ARCH
 
 
-FROM golang:$GOLANG_VERSION-stretch as build
+FROM golang:$GOLANG_VERSION as build
 
 ARG KUBE_VERSION
 ARG HELM_VERSION
