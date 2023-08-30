@@ -5,8 +5,8 @@ version: 2
 jobs:
   build:
     docker:
-    - image: circleci/golang:1.14.10
-    working_directory: /go/src/github.com/kubeflow/arena
+    - image: cimg/go:1.19.4
+    working_directory: /home/circleci/go/src/github.com/kubeflow/arena
     steps:
     - checkout
     - setup_remote_docker:
