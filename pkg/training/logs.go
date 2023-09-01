@@ -97,7 +97,7 @@ func getInstanceName(job TrainingJob) (string, error) {
 func moreThanOneInstanceHelpInfo(pods []*v1.Pod) string {
 	header := fmt.Sprintf("There is %d instances have been found:", len(pods))
 	lines := []string{}
-	footer := fmt.Sprintf("please use '-i' or '--instance' to filter.")
+	footer := "please use '-i' or '--instance' to filter."
 	for _, p := range pods {
 		lines = append(lines, fmt.Sprintf("%v", p.Name))
 	}

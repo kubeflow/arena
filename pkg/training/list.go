@@ -45,7 +45,7 @@ func ListTrainingJobs(namespace string, allNamespaces bool, jobType types.Traini
 				if strings.Contains(err.Error(), "forbidden: User") {
 					item := fmt.Sprintf("namespace %v", namespace)
 					if allNamespaces {
-						item = fmt.Sprintf("all namespaces")
+						item = "all namespaces"
 					}
 					log.Debugf("the user has no privileges to list the %v in %v,reason: %v", trainerType, item, err)
 					noPrivileges = true
@@ -63,7 +63,7 @@ func ListTrainingJobs(namespace string, allNamespaces bool, jobType types.Traini
 	if noPrivileges {
 		item := fmt.Sprintf("namespace %v", namespace)
 		if allNamespaces {
-			item = fmt.Sprintf("all namespaces")
+			item = "all namespaces"
 		}
 		return nil, fmt.Errorf("the user has no privileges to list the training jobs in %v", item)
 	}

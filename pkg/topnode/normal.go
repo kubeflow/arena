@@ -126,7 +126,7 @@ func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, sh
 			}
 		}
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("0"))
+			items = append(items, "0")
 		}
 		PrintLine(w, items...)
 	}

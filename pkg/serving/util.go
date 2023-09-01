@@ -21,7 +21,7 @@ func moreThanOneJobHelpInfo(infos []ServingJob) string {
 	header := fmt.Sprintf("There is %d jobs have been found:", len(infos))
 	tableHeader := "NAME\tTYPE\tVERSION"
 	lines := []string{tableHeader}
-	footer := fmt.Sprintf("please use '--type' or '--version' to filter.")
+	footer := "please use '--type' or '--version' to filter."
 	for _, info := range infos {
 		line := fmt.Sprintf("%s\t%s\t%s",
 			info.Name(),
@@ -36,7 +36,7 @@ func moreThanOneJobHelpInfo(infos []ServingJob) string {
 func moreThanOneInstanceHelpInfo(instances []types.ServingInstance) string {
 	header := fmt.Sprintf("There is %d instances have been found:", len(instances))
 	lines := []string{}
-	footer := fmt.Sprintf("please use '-i' or '--instance' to filter.")
+	footer := "please use '-i' or '--instance' to filter."
 	for _, i := range instances {
 		lines = append(lines, fmt.Sprintf("%v", i.Name))
 	}

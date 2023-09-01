@@ -676,7 +676,7 @@ func displayGPUShareNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		if nodeInfo.TotalGPUCore > 0 {
 			items = append(items, fmt.Sprintf("%d/%d", nodeInfo.AllocatedGPUCore, nodeInfo.TotalGPUCore))
 		} else {
-			items = append(items, fmt.Sprintf("__"))
+			items = append(items, "__")
 		}
 		if isUnhealthy {
 			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))

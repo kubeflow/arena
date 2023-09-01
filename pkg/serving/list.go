@@ -58,7 +58,7 @@ func ListServingJobs(namespace string, allNamespace bool, servingType types.Serv
 	if noPrivileges {
 		item := fmt.Sprintf("namespace %v", namespace)
 		if allNamespace {
-			item = fmt.Sprintf("all namespaces")
+			item = "all namespaces"
 		}
 		return nil, fmt.Errorf("the user has no privileges to list the serving jobs in %v", item)
 	}
