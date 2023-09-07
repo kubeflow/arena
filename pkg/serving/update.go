@@ -130,7 +130,7 @@ func UpdateTritonServing(args *types.UpdateTritonServingArgs) error {
 		return err
 	}
 
-	if args.Command == "" {
+	if args.Command == "" && args.ModelRepository != "" {
 		containerArgs := deploy.Spec.Template.Spec.Containers[0].Args
 
 		servingArgs := containerArgs[0]
