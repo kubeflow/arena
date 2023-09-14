@@ -29,10 +29,10 @@ deploy an InferenceService with a predictor that will load a bloom model with te
 3\. Check the status of KServe job
 
     $ arena serve list
-    NAME                 TYPE    VERSION  DESIRED  AVAILABLE  ADDRESS                                  PORTS
-    bloom-560m   KServe  00001    1        1          http://bloom-560m.default-group.example.com  :80    1
+    NAME         TYPE    VERSION  DESIRED  AVAILABLE  ADDRESS                                      PORTS
+    bloom-560m   KServe  00001    1        1          http://bloom-560m.default-group.example.com  :80
 
-    $ arena serve get sklearn-iris
+    $ arena serve get bloom-560m
     Name:       bloom-560m
     Namespace:  default
     Type:       KServe
@@ -70,7 +70,7 @@ Add the canaryTrafficPercent field to the predictor component and update command
     $ arena serve update kserve \
     --name bloom-560m \
     --canary-traffic-percent=10 \
-    "text-generation-launcher --disable-custom-kernels --model-id /mnt/models/bloom-560m-v2 --num-shard 1 -p 8036"
+    "text-generation-launcher --disable-custom-kernels --model-id /mnt/models/bloom-560m-v2 --num-shard 1 -p 8080"
 
 After rolling out the canary model, traffic is split between the latest ready revision 2 and the previously rolled out revision 1.
 
