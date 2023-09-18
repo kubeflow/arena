@@ -128,7 +128,7 @@ Now all traffic goes to the revision 2 for the new model. The pods for revision 
 
 7\. Delete the kserve job
 
-    $ arena serve delete sklearn-iris
+    $ arena serve delete bloom-560m
 
     
 
