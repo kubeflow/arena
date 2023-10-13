@@ -171,8 +171,7 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 		trainingType == string(types.PytorchTrainingJob) {
 		err := kubectl.PatchOwnerReferenceWithAppInfoFile(name, trainingType, appInfoFileName, namespace)
 		if err != nil {
-			log.Warnf("Failed to patch ownerReference %s due to %v`", name, err)
-			return err
+			log.Debugf("Failed to patch ownerReference %s due to %v`", name, err)
 		}
 	}
 

@@ -41,6 +41,8 @@ func initKubeClient(kubeconfig string) (clientcmd.ClientConfig, *rest.Config, *k
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	restConfig.QPS = 10
+	restConfig.Burst = 20
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
