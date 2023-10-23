@@ -32,3 +32,11 @@ const (
 	UserNameNameLabel         = "arena.kubeflow.org/username"
 	SSHSecretName             = "arena.kubeflow.org/ssh-secret"
 )
+
+const (
+	QGPUCoreResourceName   = "tke.cloud.tencent.com/qgpu-core"
+	QGPUMemoryResourceName = "tke.cloud.tencent.com/qgpu-memory"
+	QGPUAllocationLabel    = "tke.cloud.tencent.com/qgpu"
+	QGPUNodeLabels         = "qgpu-device-enable=enable"
+	QGPUIndexPrefix        = "tke.cloud.tencent.com/qgpu-pgpu-"
+)
