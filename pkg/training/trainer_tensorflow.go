@@ -459,6 +459,9 @@ func checkStatus(status commonv1.JobStatus) commonv1.JobConditionType {
 	for _, condition := range status.Conditions {
 		if condition.Status == v1.ConditionTrue {
 			t = condition.Type
+			if condition.Type != "Queuing" {
+				break
+			}
 		}
 	}
 	return t
