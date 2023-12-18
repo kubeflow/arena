@@ -22,23 +22,23 @@ metadata:
     {{ $key }}: {{ $value | quote }}
   {{- end }}
 spec:
-{{- if .Values.cleanPodPolicy }}
-{{- if eq "None" $cleanPodPolicy }}
-  cleanPodPolicy: None
+{{- if or .Values.cleanPodPolicy .Values.activeDeadlineSeconds .Values.ttlSecondsAfterFinished }}
+  runPolicy:
+  {{- if .Values.cleanPodPolicy }}
+    cleanPodPolicy: {{ .Values.cleanPodPolicy }}
+  {{- end }}
+  {{- if .Values.activeDeadlineSeconds }}
+    activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+  {{- end }}
+  {{- if .Values.ttlSecondsAfterFinished }}
+    ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  {{- end }}
 {{- end }}
-{{- if eq "Running" $cleanPodPolicy }}
-  cleanPodPolicy: Running
-{{- end }}
-{{- end }}
-{{- if .Values.activeDeadlineSeconds }}
-  activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
-{{- end }}
+
 {{- if .Values.startingDeadlineSeconds }}
   startingDeadlineSeconds: {{ .Values.startingDeadlineSeconds }}
 {{- end }}
-{{- if .Values.ttlSecondsAfterFinished }}
-  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
-{{- end }}
+
   tfReplicaSpecs:
 {{- if .Values.ps }}
     PS:

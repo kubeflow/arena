@@ -20,15 +20,19 @@ metadata:
     {{ $key }}: {{ $value | quote }}
   {{- end }}
 spec:
-{{- if .Values.cleanPodPolicy }}
-  cleanPodPolicy: {{ .Values.cleanPodPolicy }}
+{{- if or .Values.cleanPodPolicy .Values.activeDeadlineSeconds .Values.ttlSecondsAfterFinished }}
+  runPolicy:
+  {{- if .Values.cleanPodPolicy }}
+    cleanPodPolicy: {{ .Values.cleanPodPolicy }}
+  {{- end }}
+  {{- if .Values.activeDeadlineSeconds }}
+    activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+  {{- end }}
+  {{- if .Values.ttlSecondsAfterFinished }}
+    ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  {{- end }}
 {{- end }}
-{{- if .Values.activeDeadlineSeconds }}
-  activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
-{{- end }}
-{{- if .Values.ttlSecondsAfterFinished }}
-  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
-{{- end }}
+
   pytorchReplicaSpecs:
     Master:
       replicas: 1
