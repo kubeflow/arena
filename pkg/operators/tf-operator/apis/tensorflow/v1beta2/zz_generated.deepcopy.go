@@ -97,9 +97,9 @@ func (in *TFJobSpec) DeepCopyInto(out *TFJobSpec) {
 		*out = new(int32)
 		**out = **in
 	}
-	if in.CleanPodPolicy != nil {
-		in, out := &in.CleanPodPolicy, &out.CleanPodPolicy
-		*out = new(commonv1beta2.CleanPodPolicy)
+	if in.RunPolicy != nil {
+		in, out := &in.RunPolicy, &out.RunPolicy
+		*out = new(commonv1beta2.RunPolicy)
 		**out = **in
 	}
 	if in.TTLSecondsAfterFinished != nil {

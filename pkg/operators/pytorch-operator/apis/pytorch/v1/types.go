@@ -51,9 +51,9 @@ type PyTorchJobSpec struct {
 	// +optional
 	BackoffLimit *int32 `json:"backoffLimit,omitempty"`
 
-	// Defines the policy for cleaning up pods after the PyTorchJob completes.
+	// Defines the policy for cleaning up pods( under runPolicy) after the PyTorchJob completes.
 	// Defaults to None.
-	CleanPodPolicy *common.CleanPodPolicy `json:"cleanPodPolicy,omitempty"`
+	RunPolicy *common.RunPolicy `json:"runPolicy,omitempty"`
 
 	// Defines the TTL for cleaning up finished PyTorchJobs (temporary
 	// before Kubernetes adds the cleanup controller).
