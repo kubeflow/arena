@@ -1,10 +1,40 @@
-# Arena 2019 Roadmap
+# Kubeflow Arena Roadmap
+
+## Kubeflow Arena 2024 Roadmap
 
 This document defines a high level roadmap for Arena development.
 
-### 2019
+* Objective：Simplify the user experience by deeply integrating with the Kubeflow Ecosystem.
+    * Kubeflow Integration
+        * Prepare Arena for  release v1.0.0 alongside kubeflow v1.9.0.
+        * Develop a seamless integration with the Training Operator to help simplify model training using command line.
+        * Integrate with Kubeflow Pipelines to facilitate model training from a Pipeline.
+        * Enable mode serving with KServe.
+        * Add documentation to Kubeflow website:
+            * Installation, uninstallation, and upgrade processes.
+            * Guide for tfjob, mpijob, pytorchJob.
 
-#### Core CUJs
+* Objective：Amplify the Extensibility of the Arena for Different ML frameworks, AIGC models and platforms.
+    * Support DeepSpeed Training Job.
+    * Support for submitting and managing llm fine-tuning jobs, like DeepSpeed.
+    * Enable model serving for an expanded set of models like Baichuan, LLaMA, ChatGLM, Falcon, and more.
+    * Extend platform support to include ARM.
+    * Integrate [Fluid project](https://github.com/fluid-cloudnative/fluid) for efficient data management.
+    * Add support for Ray Job management with [Kuberay](https://github.com/ray-project/kuberay).
+
+* Objective: Boost Performance and Stability.
+    * Regularly publish recommended practices documentation.
+    * Enhancements on Arena SDK.
+    * Enhance code quality by:
+        * Reduce repetitive code.
+        * Enhance unit test.
+    * Implement automated End-to-End Test:
+        * Execute against an ACK/GKE Cluster.
+        * Strive for more than 60% Test Coverage of Supported Features.
+
+## Kubeflow Arena 2019 Roadmap
+
+### Core CUJs
 
 Objectives: "Make Arena easily to be integrated with External System."
 
