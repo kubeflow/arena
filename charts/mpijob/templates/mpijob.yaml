@@ -21,7 +21,8 @@ metadata:
   {{- end }}    
 spec:
   {{- if .Values.cleanPodPolicy }}
-  cleanPodPolicy: {{ .Values.cleanPodPolicy }}
+  RunPolicy:
+    cleanPodPolicy: {{ .Values.cleanPodPolicy }}
   {{- end }}
   {{- if .Values.launcherOnMaster }}
   launcherOnMaster: {{ .Values.launcherOnMaster }}
