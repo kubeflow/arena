@@ -98,6 +98,9 @@ type SubmitTFJobArgs struct {
 
 	// TFRuntime stores the runtime
 	TFRuntime `yaml:"-"`
+
+	// TrainingOperatorCRD compatible with training-operator crd.
+	TrainingOperatorCRD bool `yaml:"trainingOperatorCRD,omitempty"`
 }
 
 // SubmitTensorboardArgs is used to store tensorborad information

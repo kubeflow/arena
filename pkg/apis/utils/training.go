@@ -32,6 +32,8 @@ func IsTensorFlowPod(name, ns string, pod *v1.Pod) bool {
 		return true
 	case pod.Labels[labelGroupNameV1alpha2] == "kubeflow.org":
 		return true
+	case pod.Labels[OperatorNameLabel] == "tfjob-controller":
+		return true
 	}
 	return false
 }
@@ -49,10 +51,13 @@ func IsPyTorchPod(name, ns string, pod *v1.Pod) bool {
 		return false
 	}
 	// check the group name
-	if pod.Labels[labelPyTorchGroupName] != "kubeflow.org" {
-		return false
+	switch {
+	case pod.Labels[labelPyTorchGroupName] == "kubeflow.org":
+		return true
+	case pod.Labels[OperatorNameLabel] == "pytorchjob-controller":
+		return true
 	}
-	return true
+	return false
 }
 
 func IsMPIPod(name, ns string, pod *v1.Pod) bool {

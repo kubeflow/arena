@@ -27,6 +27,9 @@ const (
 
 	// deepspeedjob
 	deepspeedGroupName = "group-name"
+
+	// training-operator
+	OperatorNameLabel = "training.kubeflow.org/operator-name"
 )
 
 // GetTrainingJobTypes returns the supported training job types

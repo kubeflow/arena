@@ -20,14 +20,27 @@ metadata:
     {{ $key }}: {{ $value | quote }}
   {{- end }}
 spec:
-{{- if .Values.cleanPodPolicy }}
+{{- if .Values.trainingOperatorCRD }}
+  runPolicy:
+    {{- if .Values.cleanPodPolicy }}
+    cleanPodPolicy: {{ .Values.cleanPodPolicy }}
+    {{- end }}
+    {{- if .Values.activeDeadlineSeconds }}
+    activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+    {{- end }}
+    {{- if .Values.ttlSecondsAfterFinished }}
+    ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+    {{- end }}
+{{- else }}
+  {{- if .Values.cleanPodPolicy }}
   cleanPodPolicy: {{ .Values.cleanPodPolicy }}
-{{- end }}
-{{- if .Values.activeDeadlineSeconds }}
+  {{- end }}
+  {{- if .Values.activeDeadlineSeconds }}
   activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
-{{- end }}
-{{- if .Values.ttlSecondsAfterFinished }}
+  {{- end }}
+  {{- if .Values.ttlSecondsAfterFinished }}
   ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  {{- end }}
 {{- end }}
   pytorchReplicaSpecs:
     Master:

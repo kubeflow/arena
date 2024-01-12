@@ -25,4 +25,7 @@ type SubmitPyTorchJobArgs struct {
 
 	// Defines the TTL for cleaning up finished PytorchJobs. Defaults to infinite.
 	TTLSecondsAfterFinished int32 `yaml:"ttlSecondsAfterFinished,omitempty"`
+
+	// TrainingOperatorCRD compatible with training-operator crd.
+	TrainingOperatorCRD bool `yaml:"trainingOperatorCRD,omitempty"`
 }

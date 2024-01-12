@@ -42,6 +42,11 @@ const (
 	requestGPUsOfJobAnnoKey = "requestGPUsOfJobOwner"
 
 	spotInstanceJobStatusAnnotation = "job-supervisor.kube-ai.io/job-status"
+
+	// TrainingReplicaTypeLabel training-operator replica type label
+	TrainingReplicaTypeLabel = "training.kubeflow.org/replica-type"
+	// TrainingReplicaIndexLabel training-operator replica index label
+	TrainingReplicaIndexLabel = "training.kubeflow.org/replica-index"
 )
 
 var (
