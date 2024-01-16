@@ -17,10 +17,12 @@ package training
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
-	log "github.com/sirupsen/logrus"
 )
 
 func SubmitTFJob(namespace string, submitArgs *types.SubmitTFJobArgs) (err error) {
@@ -49,6 +51,10 @@ func SubmitTFJob(namespace string, submitArgs *types.SubmitTFJobArgs) (err error
 	if submitArgs.TFRuntime != nil {
 		tfjob_chart = util.GetChartsFolder() + "/" + submitArgs.TFRuntime.GetChartName()
 	}
+
+	compatible := CompatibleJobCRD(k8saccesser.TensorflowCRDName, "runPolicy")
+	submitArgs.TrainingOperatorCRD = compatible
+
 	err = workflow.SubmitJob(submitArgs.Name, string(types.TFTrainingJob), namespace, submitArgs, tfjob_chart, submitArgs.HelmOptions...)
 	if err != nil {
 		return err

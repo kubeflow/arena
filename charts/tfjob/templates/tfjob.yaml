@@ -22,22 +22,35 @@ metadata:
     {{ $key }}: {{ $value | quote }}
   {{- end }}
 spec:
-{{- if .Values.cleanPodPolicy }}
-{{- if eq "None" $cleanPodPolicy }}
+{{- if .Values.trainingOperatorCRD }}
+  runPolicy:
+    {{- if .Values.cleanPodPolicy }}
+    cleanPodPolicy: {{ .Values.cleanPodPolicy }}
+    {{- end }}
+    {{- if .Values.activeDeadlineSeconds }}
+    activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+    {{- end }}
+    {{- if .Values.ttlSecondsAfterFinished }}
+    ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+    {{- end }}
+{{- else }}
+  {{- if .Values.cleanPodPolicy }}
+  {{- if eq "None" $cleanPodPolicy }}
   cleanPodPolicy: None
-{{- end }}
-{{- if eq "Running" $cleanPodPolicy }}
+  {{- end }}
+  {{- if eq "Running" $cleanPodPolicy }}
   cleanPodPolicy: Running
-{{- end }}
-{{- end }}
-{{- if .Values.activeDeadlineSeconds }}
+  {{- end }}
+  {{- end }}
+  {{- if .Values.activeDeadlineSeconds }}
   activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
-{{- end }}
-{{- if .Values.startingDeadlineSeconds }}
+  {{- end }}
+  {{- if .Values.startingDeadlineSeconds }}
   startingDeadlineSeconds: {{ .Values.startingDeadlineSeconds }}
-{{- end }}
-{{- if .Values.ttlSecondsAfterFinished }}
+  {{- end }}
+  {{- if .Values.ttlSecondsAfterFinished }}
   ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  {{- end }}
 {{- end }}
   tfReplicaSpecs:
 {{- if .Values.ps }}

@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
@@ -44,6 +45,10 @@ func SubmitPytorchJob(namespace string, submitArgs *types.SubmitPyTorchJobArgs) 
 	}
 	// the master is also considered as a worker
 	submitArgs.WorkerCount = submitArgs.WorkerCount - 1
+
+	compatible := CompatibleJobCRD(k8saccesser.PytorchCRDName, "runPolicy")
+	submitArgs.TrainingOperatorCRD = compatible
+
 	pytorchjobChart := util.GetChartsFolder() + "/pytorchjob"
 	err = workflow.SubmitJob(submitArgs.Name, string(types.PytorchTrainingJob), namespace, submitArgs, pytorchjobChart, submitArgs.HelmOptions...)
 	if err != nil {

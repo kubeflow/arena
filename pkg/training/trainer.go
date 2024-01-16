@@ -15,15 +15,18 @@
 package training
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
-	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
 )
 
 var trainers map[types.TrainingJobType]Trainer
@@ -196,4 +199,25 @@ func CheckJobIsOwnedByTrainer(labels map[string]string) error {
 		return nil
 	}
 	return types.ErrNoPrivilegesToOperateJob
+}
+
+// CompatibleJobCRD Compatible with training-operator CRD.
+func CompatibleJobCRD(crdName, fieldToCheck string) bool {
+	arenaConfiger := config.GetArenaConfiger()
+
+	tfCRD, err := arenaConfiger.GetAPIExtensionClientSet().ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), crdName, metav1.GetOptions{})
+	if err != nil {
+		log.Errorf("Get tensorflow crd failed, error: %s", err)
+		return false
+	}
+
+	compatible := false
+	for _, version := range tfCRD.Spec.Versions {
+		if _, ok := version.Schema.OpenAPIV3Schema.Properties["spec"].Properties[fieldToCheck]; ok {
+			compatible = true
+			break
+		}
+	}
+
+	return compatible
 }

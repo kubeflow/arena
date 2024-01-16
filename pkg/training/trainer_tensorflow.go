@@ -330,6 +330,7 @@ func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (Training
 }
 
 func (tt *TensorFlowJobTrainer) isChiefPod(tfjob *tfv1.TFJob, item *v1.Pod) bool {
+	isChiefPod := false
 
 	// find chief pod in chief mode
 	if _, ok := tfjob.Spec.TFReplicaSpecs[tfv1.TFReplicaTypeChief]; ok {
@@ -337,24 +338,27 @@ func (tt *TensorFlowJobTrainer) isChiefPod(tfjob *tfv1.TFJob, item *v1.Pod) bool
 		if val, ok := item.Labels[tfReplicaTypeLabel]; ok && (val == "chief") {
 			log.Debugf("the tfjob %s with labels %s is the chief pod", item.Name, val)
 			return true
-		} else {
-			return false
 		}
+		if val, ok := item.Labels[TrainingReplicaTypeLabel]; ok && (val == "chief") {
+			log.Debugf("the tfjob %s with labels %s is the chief pod", item.Name, val)
+			return true
+		}
+		return false
 	}
 
 	if val, ok := item.Labels[tfReplicaTypeLabel]; ok && (val == "worker") {
-		log.Debugf("the tfjob %s with labels %s is the chief pod", item.Name, val)
-	} else {
-		return false
+		if val, ok := item.Labels[tfReplicaIndexLabel]; ok && (val == "0") {
+			isChiefPod = true
+		}
 	}
 
-	if val, ok := item.Labels[tfReplicaIndexLabel]; ok && (val == "0") {
-		log.Debugf("the chief pod of tfjob %s with labels %s is found.", item.Name, val)
-	} else {
-		return false
+	if val, ok := item.Labels[TrainingReplicaTypeLabel]; ok && (val == "worker") {
+		if val, ok := item.Labels[TrainingReplicaIndexLabel]; ok && (val == "0") {
+			isChiefPod = true
+		}
 	}
 
-	return true
+	return isChiefPod
 }
 
 func (tt *TensorFlowJobTrainer) isTensorFlowJob(name, ns string, item *tfv1.TFJob) bool {

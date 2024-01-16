@@ -332,11 +332,17 @@ func (tt *PyTorchJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 }
 
 func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob *pytorchv1.PyTorchJob, item *v1.Pod) bool {
-	if item.Labels[pytorchReplicaTypeLabel] != "master" {
-		return false
+	isChiefPod := false
+
+	if val, ok := item.Labels[pytorchReplicaTypeLabel]; ok && val == "master" {
+		isChiefPod = true
 	}
-	log.Debugf("the pytorchjob %s with labels master", item.Name)
-	return true
+
+	if val, ok := item.Labels[TrainingReplicaTypeLabel]; ok && val == "master" {
+		isChiefPod = true
+	}
+	
+	return isChiefPod
 }
 
 // check Labels: release==pytorchjob.name/app=="pytorchjob", namespace
