@@ -6,7 +6,7 @@ This document defines a high level roadmap for Arena development.
 
 * Objective：Simplify the user experience by deeply integrating with the Kubeflow Ecosystem.
     * Kubeflow Integration
-        * Prepare Arena for  release v1.0.0 alongside kubeflow v1.9.0.
+        * Prepare Arena for release v1.0.0 alongside kubeflow v1.10.
         * Develop a seamless integration with the Training Operator to help simplify model training using command line.
         * Integrate with Kubeflow Pipelines to facilitate model training from a Pipeline.
         * Enable mode serving with KServe.
@@ -29,7 +29,7 @@ This document defines a high level roadmap for Arena development.
         * Reduce repetitive code.
         * Enhance unit test.
     * Implement automated End-to-End Test:
-        * Execute against an ACK/GKE Cluster.
+        * Add integration tests using GitHub Actions.
         * Strive for more than 60% Test Coverage of Supported Features.
 
 ## Kubeflow Arena 2019 Roadmap
