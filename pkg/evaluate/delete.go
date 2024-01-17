@@ -1,9 +1,10 @@
 package evaluate
 
 import (
+	log "github.com/sirupsen/logrus"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/workflow"
-	log "github.com/sirupsen/logrus"
 )
 
 func DeleteEvaluateJob(name, namespace string) error {
