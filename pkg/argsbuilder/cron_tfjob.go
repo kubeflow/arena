@@ -9,17 +9,17 @@ import (
 )
 
 type CronTFJobArgsBuilder struct {
-	args         *types.CronTFJobArgs
-	argValues    map[string]interface{}
-	subBuilders  map[string]ArgsBuilder
+	args        *types.CronTFJobArgs
+	argValues   map[string]interface{}
+	subBuilders map[string]ArgsBuilder
 }
 
 func NewCronTFJobArgsBuilder(args *types.CronTFJobArgs) ArgsBuilder {
 	args.TrainingType = types.TFTrainingJob
 	c := &CronTFJobArgsBuilder{
-		args:         args,
-		argValues:    map[string]interface{}{},
-		subBuilders:  map[string]ArgsBuilder{},
+		args:        args,
+		argValues:   map[string]interface{}{},
+		subBuilders: map[string]ArgsBuilder{},
 	}
 	c.AddSubBuilder(
 		NewSubmitTFJobArgsBuilder(&c.args.SubmitTFJobArgs),

@@ -1,8 +1,8 @@
 package evaluate
 
 type baseJob struct {
-	name    string
-	args    interface{}
+	name string
+	args interface{}
 }
 
 type EvaluateJob struct {
@@ -11,8 +11,8 @@ type EvaluateJob struct {
 
 func newBaseJob(name string, args interface{}) baseJob {
 	return baseJob{
-		name:    name,
-		args:    args,
+		name: name,
+		args: args,
 	}
 }
 

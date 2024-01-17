@@ -13,8 +13,8 @@ import (
 func NewEvaluateModelCommand() *cobra.Command {
 	builder := evaluate.NewEvaluateJobBuilder()
 	var command = &cobra.Command{
-		Use:     "model",
-		Short:   "Submit a model evaluate job.",
+		Use:   "model",
+		Short: "Submit a model evaluate job.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			viper.BindPFlags(cmd.Flags())
 		},

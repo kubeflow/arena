@@ -2,13 +2,15 @@ package arenaclient
 
 import (
 	"fmt"
+
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/kubeflow/arena/pkg/apis/config"
 	apievaluate "github.com/kubeflow/arena/pkg/apis/evaluate"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/evaluate"
-	log "github.com/sirupsen/logrus"
-	"github.com/google/uuid"
 )
 
 type EvaluateClient struct {
@@ -107,4 +109,3 @@ func (c *EvaluateClient) Delete(names ...string) error {
 
 	return nil
 }
-

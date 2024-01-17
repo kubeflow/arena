@@ -341,7 +341,7 @@ func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob *pytorchv1.PyTorchJob, item *
 	if val, ok := item.Labels[TrainingReplicaTypeLabel]; ok && val == "master" {
 		isChiefPod = true
 	}
-	
+
 	return isChiefPod
 }
 

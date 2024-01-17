@@ -126,6 +126,11 @@ build-pkg:
 	docker cp arena-pkg:/arena-installer-${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH}.tar.gz .
 	docker rm -f arena-pkg
 
+fmt: ## Run go fmt against code.
+	go fmt ./...
+
+vet: ## Run go vet against code.
+	go vet ./...
 
 build-dependabot:
 	python3 hack/create_dependabot.py
