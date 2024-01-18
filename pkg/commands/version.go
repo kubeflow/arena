@@ -28,7 +28,7 @@ func NewVersionCmd(cliName string) *cobra.Command {
 	)
 	versionCmd := cobra.Command{
 		Use:   "version",
-		Short: fmt.Sprintf("Print version information"),
+		Short: "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
 			version := arena.GetVersion()
 			fmt.Printf("%s: %s\n", cliName, version)

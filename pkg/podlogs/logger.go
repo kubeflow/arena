@@ -53,11 +53,15 @@ func (p *PodLogger) AcceptLogs() (int, error) {
 	if err := p.getLogs(func(reader io.ReadCloser) {
 		defer p.Writer.Close()
 		defer reader.Close()
-		io.Copy(p.Writer, reader)
+		if _, err := io.Copy(p.Writer, reader); err != nil {
+			log.Debugf("get logs failed, err: %s", err)
+		}
 	}); err != nil {
 		return 1, err
 	}
-	io.Copy(p.WriterCloser, p.Reader)
+	if _, err := io.Copy(p.WriterCloser, p.Reader); err != nil {
+		log.Debugf("get logs failed, err: %s", err)
+	}
 	return 0, nil
 }
 

@@ -17,13 +17,13 @@ package validation
 import (
 	"testing"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
+	"k8s.io/api/core/v1"
+
 	commonv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
 	commonv1beta2 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1beta2"
 	tfv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1"
 	tfv1beta2 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1beta2"
-
-	"k8s.io/api/core/v1"
 )
 
 func TestValidateBetaTwoTFJobSpec(t *testing.T) {

@@ -303,17 +303,3 @@ func isolateUserInNamespace(namespaceName string, clientSet *kubernetes.Clientse
 	}
 	return namespace.Labels[types.MultiTenantIsolationLabel] == "true", nil
 }
-
-func getClusterInstalledCRDs(client *extclientset.Clientset) ([]string, error) {
-	selectorListOpts := metav1.ListOptions{}
-
-	list, err := client.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), selectorListOpts)
-	if err != nil {
-		return nil, err
-	}
-	crds := []string{}
-	for _, crd := range list.Items {
-		crds = append(crds, crd.Name)
-	}
-	return crds, nil
-}

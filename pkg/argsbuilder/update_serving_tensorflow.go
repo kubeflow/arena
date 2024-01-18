@@ -15,13 +15,14 @@ package argsbuilder
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"reflect"
 	"regexp"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/apis/types"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 type UpdateTensorflowServingArgsBuilder struct {
@@ -99,8 +100,7 @@ func (s *UpdateTensorflowServingArgsBuilder) Build() error {
 
 func (s *UpdateTensorflowServingArgsBuilder) validateModelName() error {
 	if s.args.ModelName != "" {
-		var reg *regexp.Regexp
-		reg = regexp.MustCompile(regexp4serviceName)
+		reg := regexp.MustCompile(regexp4serviceName)
 		matched := reg.MatchString(s.args.ModelName)
 		if !matched {
 			return fmt.Errorf("model name should be numbers, letters, dashes, and underscores ONLY")

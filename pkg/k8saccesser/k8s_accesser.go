@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -43,13 +44,13 @@ var accesser *k8sResourceAccesser
 var once sync.Once
 
 func init() {
-	tfv1.AddToScheme(scheme.Scheme)
-	v1alpha1.AddToScheme(scheme.Scheme)
-	v1alpha12.AddToScheme(scheme.Scheme)
-	pytorch_v1.AddToScheme(scheme.Scheme)
-	spark_v1beta2.AddToScheme(scheme.Scheme)
-	volcano_v1alpha1.AddToScheme(scheme.Scheme)
-	cron_v1alpha1.AddToScheme(scheme.Scheme)
+	utilruntime.Must(tfv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(v1alpha12.AddToScheme(scheme.Scheme))
+	utilruntime.Must(pytorch_v1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(spark_v1beta2.AddToScheme(scheme.Scheme))
+	utilruntime.Must(volcano_v1alpha1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(cron_v1alpha1.AddToScheme(scheme.Scheme))
 }
 
 func InitK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset, isDaemonMode bool) error {
@@ -88,7 +89,7 @@ func NewK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset
 			log.Errorf("failed to create cacheClient, reason: %v", err)
 			return nil, err
 		}
-		cacheClient.IndexField(context.TODO(), &v1.Pod{}, "spec.nodeName", func(o client.Object) []string {
+		_ = cacheClient.IndexField(context.TODO(), &v1.Pod{}, "spec.nodeName", func(o client.Object) []string {
 			if pod, ok := o.(*v1.Pod); ok {
 				return []string{pod.Spec.NodeName}
 			}
@@ -878,14 +879,4 @@ func parseFieldSelector(item string) (fields.Selector, error) {
 		return nil, err
 	}
 	return selector, nil
-}
-
-func createClientListOptions(labelSelector labels.Selector, fieldSelector fields.Selector) *client.ListOptions {
-	options := &client.ListOptions{
-		LabelSelector: labelSelector,
-	}
-	if !fieldSelector.Empty() {
-		options.FieldSelector = fieldSelector
-	}
-	return options
 }

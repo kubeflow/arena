@@ -64,7 +64,7 @@ func RetryDuring(duration time.Duration, sleep time.Duration, callback func() er
 			log.Infof("Still need to wait for func, err:%s\n", err.Error())
 		}
 
-		delta := time.Now().Sub(start)
+		delta := time.Since(start)
 		if delta > duration {
 			return fmt.Errorf("After %d attempts (during %s), last error: %s", i, delta, err)
 		}

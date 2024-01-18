@@ -123,7 +123,7 @@ func (m *ModelEvaluateJobBuilder) Memory(memory string) *ModelEvaluateJobBuilder
 
 // Envs is used to set env of job containers,match option --env
 func (m *ModelEvaluateJobBuilder) Envs(envs map[string]string) *ModelEvaluateJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -141,7 +141,7 @@ func (m *ModelEvaluateJobBuilder) Tolerations(tolerations []string) *ModelEvalua
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (m *ModelEvaluateJobBuilder) NodeSelectors(selectors map[string]string) *ModelEvaluateJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -153,7 +153,7 @@ func (m *ModelEvaluateJobBuilder) NodeSelectors(selectors map[string]string) *Mo
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (m *ModelEvaluateJobBuilder) Annotations(annotations map[string]string) *ModelEvaluateJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -165,7 +165,7 @@ func (m *ModelEvaluateJobBuilder) Annotations(annotations map[string]string) *Mo
 
 // Labels is used to add labels for job
 func (m *ModelEvaluateJobBuilder) Labels(labels map[string]string) *ModelEvaluateJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -177,7 +177,7 @@ func (m *ModelEvaluateJobBuilder) Labels(labels map[string]string) *ModelEvaluat
 
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (m *ModelEvaluateJobBuilder) Datas(volumes map[string]string) *ModelEvaluateJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -189,7 +189,7 @@ func (m *ModelEvaluateJobBuilder) Datas(volumes map[string]string) *ModelEvaluat
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (m *ModelEvaluateJobBuilder) DataDirs(volumes map[string]string) *ModelEvaluateJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))

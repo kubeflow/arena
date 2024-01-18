@@ -35,7 +35,7 @@ const (
 // GetTrainingJobTypes returns the supported training job types
 func GetTrainingJobTypes() []types.TrainingJobType {
 	trainingTypes := []types.TrainingJobType{}
-	for trainingType, _ := range types.TrainingTypeMap {
+	for trainingType := range types.TrainingTypeMap {
 		trainingTypes = append(trainingTypes, trainingType)
 	}
 	return trainingTypes
@@ -56,13 +56,13 @@ func TransferTrainingJobType(jobType string) types.TrainingJobType {
 		return types.AllTrainingJob
 	}
 	for trainingType, typeInfo := range types.TrainingTypeMap {
-		if strings.ToLower(string(typeInfo.Name)) == strings.ToLower(jobType) {
+		if strings.EqualFold(string(typeInfo.Name), jobType) {
 			return trainingType
 		}
-		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
+		if strings.EqualFold(typeInfo.Alias, jobType) {
 			return trainingType
 		}
-		if strings.ToLower(typeInfo.Shorthand) == strings.ToLower(jobType) {
+		if strings.EqualFold(typeInfo.Shorthand, jobType) {
 			return trainingType
 		}
 	}
@@ -82,7 +82,7 @@ func TransferNodeType(nodeType string) types.NodeType {
 		return types.AllKnownNode
 	}
 	for _, typeInfo := range types.NodeTypeSlice {
-		if strings.ToLower(typeInfo.Alias) == strings.ToLower(nodeType) {
+		if strings.EqualFold(typeInfo.Alias, nodeType) {
 			return typeInfo.Name
 		}
 		if string(typeInfo.Name) == nodeType {
@@ -117,13 +117,13 @@ func TransferServingJobType(jobType string) types.ServingJobType {
 		return types.AllServingJob
 	}
 	for servingType, typeInfo := range types.ServingTypeMap {
-		if strings.ToLower(string(typeInfo.Name)) == strings.ToLower(jobType) {
+		if strings.EqualFold(string(typeInfo.Name), jobType) {
 			return servingType
 		}
-		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
+		if strings.EqualFold(typeInfo.Alias, jobType) {
 			return servingType
 		}
-		if strings.ToLower(typeInfo.Shorthand) == strings.ToLower(jobType) {
+		if strings.EqualFold(typeInfo.Shorthand, jobType) {
 			return servingType
 		}
 	}
@@ -167,13 +167,13 @@ func TransferPrintFormat(format string) types.FormatStyle {
 func PrintErrorMessage(message string) {
 	if strings.Contains(message, "please use '--type' or '--version' to filter.") {
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintf(w, message)
+		fmt.Fprint(w, message)
 		w.Flush()
 		return
 	}
 	if strings.Contains(message, "please use '-i' or '--instance' to filter.") {
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintf(w, message)
+		fmt.Fprint(w, message)
 		w.Flush()
 		return
 	}
@@ -265,13 +265,13 @@ func TransferModelJobType(jobType string) types.ModelJobType {
 		return types.AllModelJob
 	}
 	for modelJobType, typeInfo := range types.ModelTypeMap {
-		if strings.ToLower(string(typeInfo.Name)) == strings.ToLower(jobType) {
+		if strings.EqualFold(string(typeInfo.Name), jobType) {
 			return modelJobType
 		}
-		if strings.ToLower(typeInfo.Alias) == strings.ToLower(jobType) {
+		if strings.EqualFold(typeInfo.Alias, jobType) {
 			return modelJobType
 		}
-		if strings.ToLower(typeInfo.Shorthand) == strings.ToLower(jobType) {
+		if strings.EqualFold(typeInfo.Shorthand, jobType) {
 			return modelJobType
 		}
 	}

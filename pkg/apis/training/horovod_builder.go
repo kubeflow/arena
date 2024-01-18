@@ -59,7 +59,7 @@ func (b *HorovodJobBuilder) WorkingDir(dir string) *HorovodJobBuilder {
 
 // Envs is used to set env of job containers,match option --env
 func (b *HorovodJobBuilder) Envs(envs map[string]string) *HorovodJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -93,7 +93,7 @@ func (b *HorovodJobBuilder) Tolerations(tolerations []string) *HorovodJobBuilder
 
 // ConfigFiles is used to mapping config files form local to job containers,match option --config-file
 func (b *HorovodJobBuilder) ConfigFiles(files map[string]string) *HorovodJobBuilder {
-	if files != nil && len(files) != 0 {
+	if len(files) != 0 {
 		filesSlice := []string{}
 		for localPath, containerPath := range files {
 			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
@@ -105,7 +105,7 @@ func (b *HorovodJobBuilder) ConfigFiles(files map[string]string) *HorovodJobBuil
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (b *HorovodJobBuilder) NodeSelectors(selectors map[string]string) *HorovodJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -117,7 +117,7 @@ func (b *HorovodJobBuilder) NodeSelectors(selectors map[string]string) *HorovodJ
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *HorovodJobBuilder) Annotations(annotations map[string]string) *HorovodJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -129,7 +129,7 @@ func (b *HorovodJobBuilder) Annotations(annotations map[string]string) *HorovodJ
 
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (b *HorovodJobBuilder) Datas(volumes map[string]string) *HorovodJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -141,7 +141,7 @@ func (b *HorovodJobBuilder) Datas(volumes map[string]string) *HorovodJobBuilder 
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *HorovodJobBuilder) DataDirs(volumes map[string]string) *HorovodJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))

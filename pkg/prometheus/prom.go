@@ -63,20 +63,6 @@ func GetPodsGpuInfo(client *kubernetes.Clientset, podNames []string) (JobGpuMetr
 	return *jobMetric, nil
 }
 
-func getMetricAverage(metrics []types.GpuMetricInfo) float64 {
-	var result float64
-	result = 0
-	for _, metric := range metrics {
-		v, _ := strconv.ParseFloat(metric.Value, 64)
-		result = result + v
-	}
-	if result == 0 {
-		return result
-	}
-	result = result / float64(len(metrics))
-	return result
-}
-
 // {__name__=~"nvidia_gpu_duty_cycle|nvidia_gpu_memory_used_bytes|nvidia_gpu_memory_total_bytes", pod_name=~"tf-distributed-test-ps-0|tf-distributed-test-worker-0"}
 
 func GetNodeGPUMetrics(client *kubernetes.Clientset, nodeNames []string) (map[string]types.NodeGpuMetric, error) {

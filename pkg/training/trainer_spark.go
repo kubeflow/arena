@@ -83,7 +83,6 @@ func (sj *SparkJob) GetStatus() (status string) {
 		if r := recover(); r != nil {
 			fmt.Println("spark job may not complete,because of ", r)
 		}
-		return
 	}()
 
 	status = "UNKNOWN"
@@ -271,25 +270,6 @@ func (st *SparkJobTrainer) IsSupported(name, ns string) bool {
 	}
 	_, err := st.GetTrainingJob(name, ns)
 	return err == nil
-}
-
-func (st *SparkJobTrainer) isSparkJob(name, ns string, job v1beta2.SparkApplication) bool {
-	if val, ok := job.Labels["release"]; ok && (val == name) {
-		log.Debugf("the sparkjob %s with labels %s", job.Name, val)
-	} else {
-		return false
-	}
-
-	if val, ok := job.Labels["app"]; ok && (val == "sparkjob") {
-		log.Debugf("the sparkjob %s with labels %s is found.", job.Name, val)
-	} else {
-		return false
-	}
-
-	if job.Namespace != ns {
-		return false
-	}
-	return true
 }
 
 func (st *SparkJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, error) {

@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
-)
 
-type PruneArgs struct {
-	since time.Duration
-}
+	"github.com/kubeflow/arena/pkg/util"
+)
 
 func PruneTrainingJobs(namespace string, allNamespaces bool, since time.Duration) error {
 	jobs := []TrainingJob{}

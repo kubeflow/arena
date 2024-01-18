@@ -117,7 +117,7 @@ func (b *CustomServingJobBuilder) Memory(memory string) *CustomServingJobBuilder
 
 // Envs is used to set env of job containers,match option --env
 func (b *CustomServingJobBuilder) Envs(envs map[string]string) *CustomServingJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -163,7 +163,7 @@ func (b *CustomServingJobBuilder) Tolerations(tolerations []string) *CustomServi
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (b *CustomServingJobBuilder) NodeSelectors(selectors map[string]string) *CustomServingJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -175,7 +175,7 @@ func (b *CustomServingJobBuilder) NodeSelectors(selectors map[string]string) *Cu
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *CustomServingJobBuilder) Annotations(annotations map[string]string) *CustomServingJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -187,7 +187,7 @@ func (b *CustomServingJobBuilder) Annotations(annotations map[string]string) *Cu
 
 // Labels is used to add labels for job
 func (b *CustomServingJobBuilder) Labels(labels map[string]string) *CustomServingJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -199,7 +199,7 @@ func (b *CustomServingJobBuilder) Labels(labels map[string]string) *CustomServin
 
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (b *CustomServingJobBuilder) Datas(volumes map[string]string) *CustomServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -211,7 +211,7 @@ func (b *CustomServingJobBuilder) Datas(volumes map[string]string) *CustomServin
 
 // DataSubPathExprs is used to mount k8s pvc subpath to job pods,match option data-subpath-expr
 func (b *CustomServingJobBuilder) DataSubPathExprs(exprs map[string]string) *CustomServingJobBuilder {
-	if exprs != nil && len(exprs) != 0 {
+	if len(exprs) != 0 {
 		s := []string{}
 		for key, value := range exprs {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -222,7 +222,7 @@ func (b *CustomServingJobBuilder) DataSubPathExprs(exprs map[string]string) *Cus
 }
 
 func (b *CustomServingJobBuilder) TempDirs(volumes map[string]string) *CustomServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -233,7 +233,7 @@ func (b *CustomServingJobBuilder) TempDirs(volumes map[string]string) *CustomSer
 }
 
 func (b *CustomServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) *CustomServingJobBuilder {
-	if exprs != nil && len(exprs) != 0 {
+	if len(exprs) != 0 {
 		s := []string{}
 		for key, value := range exprs {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -245,7 +245,7 @@ func (b *CustomServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) 
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *CustomServingJobBuilder) DataDirs(volumes map[string]string) *CustomServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))

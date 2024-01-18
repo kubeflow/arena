@@ -19,10 +19,6 @@ func printLine(w io.Writer, fields ...string) {
 	fmt.Fprintln(w, buffer)
 }
 
-func parseTime(strTime string) (time.Time, error) {
-	return time.Parse(formatLayout, strTime)
-}
-
 func formatTime(t time.Time) string {
 	return t.Format(formatLayout)
 }

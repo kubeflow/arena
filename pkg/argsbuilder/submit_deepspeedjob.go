@@ -191,8 +191,7 @@ func (s *SubmitDeepSpeedJobArgsBuilder) setLauncherAnnotations() error {
 	if !ok {
 		return nil
 	}
-	var annotations *[]string
-	annotations = item.(*[]string)
+	annotations := item.(*[]string)
 	if len(*annotations) == 0 {
 		return nil
 	}
@@ -211,8 +210,7 @@ func (s *SubmitDeepSpeedJobArgsBuilder) setWorkerAnnotations() error {
 	if !ok {
 		return nil
 	}
-	var annotations *[]string
-	annotations = item.(*[]string)
+	annotations := item.(*[]string)
 	if len(*annotations) == 0 {
 		return nil
 	}

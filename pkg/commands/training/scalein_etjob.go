@@ -17,7 +17,7 @@ func NewScaleInETJobCommand() *cobra.Command {
 		Short:   "Scale in a elastic training job",
 		Aliases: []string{"et"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

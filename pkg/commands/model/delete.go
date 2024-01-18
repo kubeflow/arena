@@ -15,7 +15,7 @@ func NewDeleteModelJobCommand() *cobra.Command {
 		Use:   "delete",
 		Short: "Delete a model job",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

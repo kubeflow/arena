@@ -39,7 +39,7 @@ func NewTopNodeCommand() *cobra.Command {
 		Use:   "node",
 		Short: "Display Resource (GPU) usage of nodes.",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			isDaemonMode := false
@@ -48,7 +48,7 @@ func NewTopNodeCommand() *cobra.Command {
 			}
 			now := time.Now()
 			defer func() {
-				log.Debugf("execute time of top nodes: %v\n", time.Now().Sub(now))
+				log.Debugf("execute time of top nodes: %v\n", time.Since(now))
 			}()
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),

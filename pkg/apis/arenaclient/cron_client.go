@@ -96,7 +96,7 @@ func (c *CronClient) Delete(names ...string) error {
 			continue
 		}
 
-		cron.DeleteCron(name, c.namespace, cronInfo.Type)
+		_ = cron.DeleteCron(name, c.namespace, cronInfo.Type)
 	}
 
 	return nil

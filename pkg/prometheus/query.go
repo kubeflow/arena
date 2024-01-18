@@ -213,21 +213,6 @@ func queryPrometheusMetricsProxyByAPIServer(client *kubernetes.Clientset, query 
 	return gpuMetric, nil
 }
 
-func prometheusInstalled(client *kubernetes.Clientset) bool {
-	server := getPrometheusServer(client)
-	if server == nil {
-		return false
-	}
-	log.Debugf("get prometheus service: %v", server.Service)
-	return true
-	//gpuDeviceMetrics, _ := QueryMetricByPrometheus(client, server, "nvidia_gpu_num_devices")
-	//return len(gpuDeviceMetrics) > 0
-}
-
-func GetPrometheusServer(client *kubernetes.Clientset) *types.PrometheusServer {
-	return getPrometheusServer(client)
-}
-
 // GetPrometheusServer get the matched prometheus server from the supported prometheus server
 func getPrometheusServer(client *kubernetes.Clientset) *types.PrometheusServer {
 	for _, s := range types.SUPPORT_PROMETHEUS_SERVERS {

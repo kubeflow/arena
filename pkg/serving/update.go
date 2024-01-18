@@ -328,13 +328,10 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 	switch args.Type {
 	case types.TFServingJob:
 		suffix = "tensorflow-serving"
-		break
 	case types.TritonServingJob:
 		suffix = "tritoninferenceserver"
-		break
 	case types.CustomServingJob:
 		suffix = "custom-serving"
-		break
 	default:
 		return nil, fmt.Errorf("invalid serving job type [%s]", args.Type)
 	}
@@ -361,23 +358,17 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 
 	if args.GPUCount > 0 {
 		resourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.GPUCount))
-		if _, ok := resourceLimits[ResourceGPUMemory]; ok {
-			delete(resourceLimits, ResourceGPUMemory)
-		}
+		delete(resourceLimits, ResourceGPUMemory)
 	}
 
 	if args.GPUMemory > 0 {
 		resourceLimits[ResourceGPUMemory] = resource.MustParse(strconv.Itoa(args.GPUMemory))
-		if _, ok := resourceLimits[ResourceGPU]; ok {
-			delete(resourceLimits, ResourceGPU)
-		}
+		delete(resourceLimits, ResourceGPU)
 	}
 
 	if args.GPUCore > 0 && args.GPUCore%5 == 0 {
 		resourceLimits[ResourceGPUCore] = resource.MustParse(strconv.Itoa(args.GPUCore))
-		if _, ok := resourceLimits[ResourceGPU]; ok {
-			delete(resourceLimits, ResourceGPU)
-		}
+		delete(resourceLimits, ResourceGPU)
 	}
 
 	if args.Cpu != "" {
@@ -515,21 +506,15 @@ func setInferenceServiceForFrameworkModel(args *types.UpdateKServeArgs, inferenc
 	}
 	if args.GPUCount > 0 {
 		resourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.GPUCount))
-		if _, ok := resourceLimits[ResourceGPUMemory]; ok {
-			delete(resourceLimits, ResourceGPUMemory)
-		}
+		delete(resourceLimits, ResourceGPUMemory)
 	}
 	if args.GPUMemory > 0 {
 		resourceLimits[ResourceGPUMemory] = resource.MustParse(strconv.Itoa(args.GPUMemory))
-		if _, ok := resourceLimits[ResourceGPU]; ok {
-			delete(resourceLimits, ResourceGPU)
-		}
+		delete(resourceLimits, ResourceGPU)
 	}
 	if args.GPUCore > 0 && args.GPUCore%5 == 0 {
 		resourceLimits[ResourceGPUCore] = resource.MustParse(strconv.Itoa(args.GPUCore))
-		if _, ok := resourceLimits[ResourceGPU]; ok {
-			delete(resourceLimits, ResourceGPU)
-		}
+		delete(resourceLimits, ResourceGPU)
 	}
 	if args.Cpu != "" {
 		resourceLimits[v1.ResourceCPU] = resource.MustParse(args.Cpu)
@@ -585,21 +570,15 @@ func setInferenceServiceForCustomModel(args *types.UpdateKServeArgs, inferenceSe
 	}
 	if args.GPUCount > 0 {
 		resourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.GPUCount))
-		if _, ok := resourceLimits[ResourceGPUMemory]; ok {
-			delete(resourceLimits, ResourceGPUMemory)
-		}
+		delete(resourceLimits, ResourceGPUMemory)
 	}
 	if args.GPUMemory > 0 {
 		resourceLimits[ResourceGPUMemory] = resource.MustParse(strconv.Itoa(args.GPUMemory))
-		if _, ok := resourceLimits[ResourceGPU]; ok {
-			delete(resourceLimits, ResourceGPU)
-		}
+		delete(resourceLimits, ResourceGPU)
 	}
 	if args.GPUCore > 0 && args.GPUCore%5 == 0 {
 		resourceLimits[ResourceGPUCore] = resource.MustParse(strconv.Itoa(args.GPUCore))
-		if _, ok := resourceLimits[ResourceGPU]; ok {
-			delete(resourceLimits, ResourceGPU)
-		}
+		delete(resourceLimits, ResourceGPU)
 	}
 	if args.Cpu != "" {
 		resourceLimits[v1.ResourceCPU] = resource.MustParse(args.Cpu)

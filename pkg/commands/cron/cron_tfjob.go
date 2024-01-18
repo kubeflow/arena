@@ -17,7 +17,7 @@ func NewCronTFJobCommand() *cobra.Command {
 		Short:   "Submit a cron tfjob.",
 		Aliases: []string{"tf"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

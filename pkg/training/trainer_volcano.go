@@ -76,7 +76,6 @@ func (vj *VolcanoJob) GetStatus() (status string) {
 		if r := recover(); r != nil {
 			fmt.Println("volcano job may not complete,because of ", r)
 		}
-		return
 	}()
 
 	status = "UNKNOWN"
@@ -349,22 +348,6 @@ func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace boo
 		})
 	}
 	return trainingJobs, nil
-}
-
-func (st *VolcanoJobTrainer) isVolcanoJob(name, ns string, job *v1alpha1.Job) bool {
-	if job.Labels["release"] != name {
-		return false
-	}
-	log.Debugf("the volcano job %s with labels release=%s", job.Name, name)
-
-	if job.Labels["app"] != string(st.trainerType) {
-		return false
-	}
-	log.Debugf("the volcano job %s with labels app=%v is found.", job.Name, st.trainerType)
-	if job.Namespace != ns {
-		return false
-	}
-	return true
 }
 
 func (st *VolcanoJobTrainer) isVolcanoPod(name, ns string, pod *v1.Pod) bool {

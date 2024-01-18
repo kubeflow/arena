@@ -82,7 +82,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// add option --name
 	command.Flags().StringVar(&s.args.Name, "name", "", "override name")
 	// --name is required
-	command.MarkFlagRequired("name")
+	_ = command.MarkFlagRequired("name")
 	// add option --image
 	command.Flags().StringVar(&s.args.Image, "image", "", "the docker image name of training job")
 	// command.MarkFlagRequired("image")
@@ -98,7 +98,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// command.MarkFlagRequired("syncSource")
 	// add option --working-dir
 	command.Flags().StringVar(&s.args.WorkingDir, "workingDir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
-	command.Flags().MarkDeprecated("workingDir", "please use --working-dir instead")
+	_ = command.Flags().MarkDeprecated("workingDir", "please use --working-dir instead")
 	command.Flags().StringVar(&s.args.WorkingDir, "working-dir", "/root", "working directory to extract the code. If using syncMode, the $workingDir/code contains the code")
 
 	// command.MarkFlagRequired("workingDir")
@@ -108,7 +108,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&dataSet, "data", "d", []string{}, "specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>")
 	// add option --data-dir,its' value will be get from viper
 	command.Flags().StringArrayVar(&dataDir, "dataDir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
-	command.Flags().MarkDeprecated("dataDir", "please use --data-dir instead")
+	_ = command.Flags().MarkDeprecated("dataDir", "please use --data-dir instead")
 	command.Flags().StringArrayVar(&dataDir, "data-dir", []string{}, "the data dir. If you specify /data, it means mounting hostpath /data into container path /data")
 	// add option --annotation,its' value will be get from viper
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
@@ -237,11 +237,6 @@ func (s *SubmitArgsBuilder) Build() error {
 // UpdateArgs is used to update args,this function will be invoked by api
 func (s *SubmitArgsBuilder) UpdateArgs(args *types.CommonSubmitArgs) {
 	s.args = args
-}
-
-// getArgs returns the CommonSubmitArgs
-func (s *SubmitArgsBuilder) getArgs() *types.CommonSubmitArgs {
-	return s.args
 }
 
 // checkNameAndPriorityClassName is used to check the name

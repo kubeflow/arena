@@ -17,14 +17,13 @@ package serving
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
-
-var output string
 
 // NewGetCommand
 func NewGetCommand() *cobra.Command {
@@ -39,7 +38,7 @@ func NewGetCommand() *cobra.Command {
 		Use:   "get JOB [-T JOB_TYPE] [-v JOB_VERSION]",
 		Short: "Display a serving job details",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

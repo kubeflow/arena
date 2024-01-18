@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -298,12 +297,8 @@ func GetRunningTimeOfPod(pod *v1.Pod) time.Duration {
 	var endTime *metav1.Time
 	// get pod start time
 	allContainerStatuses := []v1.ContainerStatus{}
-	for _, s := range pod.Status.InitContainerStatuses {
-		allContainerStatuses = append(allContainerStatuses, s)
-	}
-	for _, s := range pod.Status.ContainerStatuses {
-		allContainerStatuses = append(allContainerStatuses, s)
-	}
+	allContainerStatuses = append(allContainerStatuses, pod.Status.InitContainerStatuses...)
+	allContainerStatuses = append(allContainerStatuses, pod.Status.ContainerStatuses...)
 	startTime, endTime = getStartTimeAndEndTime(allContainerStatuses)
 	if startTime == nil && pod.Status.StartTime != nil {
 		startTime = pod.Status.StartTime
@@ -351,12 +346,4 @@ func GetDurationOfPod(pod *v1.Pod) time.Duration {
 		return GetPendingTimeOfPod(pod)
 	}
 	return GetRunningTimeOfPod(pod)
-}
-
-func parseInt(i interface{}) (int, error) {
-	s, ok := i.(int64)
-	if !ok {
-		return 0, errors.New("invalid value")
-	}
-	return int(s), nil
 }

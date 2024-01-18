@@ -16,7 +16,7 @@ func NewSubmitModelProfileJobCommand() *cobra.Command {
 		Use:   "profile",
 		Short: "Submit a model profile job",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

@@ -50,7 +50,7 @@ func (a *AttachBuilder) IOStreams(stream genericclioptions.IOStreams) *AttachBui
 }
 
 func (a *AttachBuilder) Command(command []string) *AttachBuilder {
-	if command != nil && len(command) != 0 {
+	if len(command) != 0 {
 		a.args.Command = command
 	}
 	return a

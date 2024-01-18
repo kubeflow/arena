@@ -69,7 +69,7 @@ func (s *SubmitSparkJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		labels      []string
 	)
 	command.Flags().StringVar(&s.args.Name, "name", "", "override name")
-	command.MarkFlagRequired("name")
+	_ = command.MarkFlagRequired("name")
 
 	command.Flags().StringVar(&s.args.Image, "image", "registry.aliyuncs.com/acs/spark:v2.4.0", "the docker image name of training job")
 	command.Flags().IntVar(&s.args.Executor.Replicas, "replicas", 1, "the executor's number to run the distributed training.")

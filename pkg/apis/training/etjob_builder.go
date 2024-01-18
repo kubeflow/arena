@@ -61,7 +61,7 @@ func (b *ETJobBuilder) WorkingDir(dir string) *ETJobBuilder {
 
 // Envs is used to set env of job containers,match option --env
 func (b *ETJobBuilder) Envs(envs map[string]string) *ETJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -95,7 +95,7 @@ func (b *ETJobBuilder) Tolerations(tolerations []string) *ETJobBuilder {
 
 // ConfigFiles is used to mapping config files form local to job containers,match option --config-file
 func (b *ETJobBuilder) ConfigFiles(files map[string]string) *ETJobBuilder {
-	if files != nil && len(files) != 0 {
+	if len(files) != 0 {
 		filesSlice := []string{}
 		for localPath, containerPath := range files {
 			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
@@ -107,7 +107,7 @@ func (b *ETJobBuilder) ConfigFiles(files map[string]string) *ETJobBuilder {
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (b *ETJobBuilder) NodeSelectors(selectors map[string]string) *ETJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -119,7 +119,7 @@ func (b *ETJobBuilder) NodeSelectors(selectors map[string]string) *ETJobBuilder 
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *ETJobBuilder) Annotations(annotations map[string]string) *ETJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -131,7 +131,7 @@ func (b *ETJobBuilder) Annotations(annotations map[string]string) *ETJobBuilder 
 
 // Labels is used to add labels for job
 func (b *ETJobBuilder) Labels(labels map[string]string) *ETJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -143,7 +143,7 @@ func (b *ETJobBuilder) Labels(labels map[string]string) *ETJobBuilder {
 
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (b *ETJobBuilder) Datas(volumes map[string]string) *ETJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -155,7 +155,7 @@ func (b *ETJobBuilder) Datas(volumes map[string]string) *ETJobBuilder {
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *ETJobBuilder) DataDirs(volumes map[string]string) *ETJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))

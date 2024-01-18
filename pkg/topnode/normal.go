@@ -5,9 +5,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/pkg/apis/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 var NormalNodeDescription = `
@@ -126,7 +127,7 @@ func displayNormalNodeSummary(w *tabwriter.Writer, nodes []Node, isUnhealthy, sh
 			}
 		}
 		if isUnhealthy {
-			items = append(items, fmt.Sprintf("0"))
+			items = append(items, "0")
 		}
 		PrintLine(w, items...)
 	}

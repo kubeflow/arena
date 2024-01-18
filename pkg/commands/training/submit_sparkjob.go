@@ -17,7 +17,7 @@ func NewSubmitSparkJobCommand() *cobra.Command {
 		Short:   "Submit a common spark application job.",
 		Aliases: []string{"spark"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

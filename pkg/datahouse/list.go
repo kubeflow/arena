@@ -132,5 +132,5 @@ func translateTimestamp(timestamp metav1.Time) string {
 	if timestamp.IsZero() {
 		return "<unknown>"
 	}
-	return util.ShortHumanDuration(time.Now().Sub(timestamp.Time))
+	return util.ShortHumanDuration(time.Since(timestamp.Time))
 }

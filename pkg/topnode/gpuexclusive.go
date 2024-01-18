@@ -5,10 +5,11 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 )
 
 var GPUExclusiveNodeDescription = `
@@ -86,18 +87,6 @@ func (g *gpuexclusive) getAllocatedGPUs() float64 {
 	return float64(allocatedGPUs)
 }
 
-func (g *gpuexclusive) getTotalGPUMemory() float64 {
-	totalGPUMemory := float64(0)
-	for _, metric := range g.gpuMetrics {
-		totalGPUMemory += metric.GpuMemoryTotal
-	}
-	// if gpu metric is enable,return the value given by prometheus
-	if totalGPUMemory != 0 {
-		return totalGPUMemory
-	}
-	return float64(0)
-}
-
 func (g *gpuexclusive) getAllocatedGPUMemory() float64 {
 	if !g.gpuMetricsIsEnabled() {
 		return float64(0)
@@ -117,34 +106,6 @@ func (g *gpuexclusive) getAllocatedGPUMemory() float64 {
 	return allocatedGPUMemory
 }
 
-func (g *gpuexclusive) getUsedGPUMemory() float64 {
-	// can not to detect gpu memory if no gpu metrics data
-	if !g.gpuMetricsIsEnabled() {
-		return float64(0)
-	}
-	usedGPUMemory := float64(0)
-	for _, gpuMetric := range g.gpuMetrics {
-		usedGPUMemory += gpuMetric.GpuMemoryUsed
-	}
-	return usedGPUMemory
-}
-
-func (g *gpuexclusive) getDutyCycle() float64 {
-	if !g.gpuMetricsIsEnabled() {
-		return float64(0)
-	}
-	dutyCycle := float64(0)
-	totalGPUs := float64(0)
-	for _, gpuMetric := range g.gpuMetrics {
-		totalGPUs += float64(1)
-		dutyCycle += gpuMetric.GpuDutyCycle
-	}
-	if totalGPUs == 0 {
-		return float64(0)
-	}
-	return dutyCycle / totalGPUs
-}
-
 func (g *gpuexclusive) getUnhealthyGPUs() float64 {
 	totalGPUs := g.getTotalGPUs()
 	allocatableGPUs, ok := g.node.Status.Allocatable[v1.ResourceName(types.NvidiaGPUResourceName)]
@@ -155,13 +116,6 @@ func (g *gpuexclusive) getUnhealthyGPUs() float64 {
 		return 0
 	}
 	return totalGPUs - float64(allocatableGPUs.Value())
-}
-
-func (g *gpuexclusive) getTotalGPUMemoryOfDevice(id string) float64 {
-	if metric, ok := g.gpuMetrics[id]; ok {
-		return metric.GpuMemoryTotal
-	}
-	return 0
 }
 
 func (g *gpuexclusive) convert2NodeInfo() types.GPUExclusiveNodeInfo {

@@ -55,7 +55,7 @@ func (e *EvaluateJobBuilder) WorkingDir(dir string) *EvaluateJobBuilder {
 
 // Envs is used to set env of job containers,match option --env
 func (e *EvaluateJobBuilder) Envs(envs map[string]string) *EvaluateJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -81,7 +81,7 @@ func (e *EvaluateJobBuilder) Tolerations(tolerations []string) *EvaluateJobBuild
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (e *EvaluateJobBuilder) NodeSelectors(selectors map[string]string) *EvaluateJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -93,7 +93,7 @@ func (e *EvaluateJobBuilder) NodeSelectors(selectors map[string]string) *Evaluat
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (e *EvaluateJobBuilder) Annotations(annotations map[string]string) *EvaluateJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -105,7 +105,7 @@ func (e *EvaluateJobBuilder) Annotations(annotations map[string]string) *Evaluat
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (e *EvaluateJobBuilder) DataDirs(volumes map[string]string) *EvaluateJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -117,7 +117,7 @@ func (e *EvaluateJobBuilder) DataDirs(volumes map[string]string) *EvaluateJobBui
 
 // Datas is used to mount host files to job containers,match option --data
 func (e *EvaluateJobBuilder) Datas(volumes map[string]string) *EvaluateJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))

@@ -18,7 +18,7 @@ func NewSubmitTRTServingJobCommand() *cobra.Command {
 		Short:   "Submit tensorRT inference serving job to deploy and serve machine learning models.",
 		Aliases: []string{"trt"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

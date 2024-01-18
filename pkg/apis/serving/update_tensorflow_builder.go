@@ -69,7 +69,7 @@ func (b *UpdateTFServingJobBuilder) Image(image string) *UpdateTFServingJobBuild
 
 // Envs is used to set env of job containers,match option --env
 func (b *UpdateTFServingJobBuilder) Envs(envs map[string]string) *UpdateTFServingJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -81,7 +81,7 @@ func (b *UpdateTFServingJobBuilder) Envs(envs map[string]string) *UpdateTFServin
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *UpdateTFServingJobBuilder) Annotations(annotations map[string]string) *UpdateTFServingJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -93,7 +93,7 @@ func (b *UpdateTFServingJobBuilder) Annotations(annotations map[string]string) *
 
 // Labels is used to add labels for job
 func (b *UpdateTFServingJobBuilder) Labels(labels map[string]string) *UpdateTFServingJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))

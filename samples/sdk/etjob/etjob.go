@@ -19,6 +19,10 @@ func main() {
 		LogLevel:   "debug",
 		Namespace:  "default",
 	})
+	if err != nil {
+		fmt.Printf("failed to create arena client, err: %v\n", err)
+		return
+	}
 	// create tfjob
 	/* command:
 		arena submit etjob \

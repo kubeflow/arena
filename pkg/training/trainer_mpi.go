@@ -355,25 +355,6 @@ func (tt *MPIJobTrainer) isChiefPod(item *v1.Pod) bool {
 	return true
 }
 
-func (tt *MPIJobTrainer) isMPIJob(name, ns string, item v1alpha1.MPIJob) bool {
-	if val, ok := item.Labels["release"]; ok && (val == name) {
-		log.Debugf("the mpijob %s with labels %s", item.Name, val)
-	} else {
-		return false
-	}
-
-	if val, ok := item.Labels["app"]; ok && (val == "mpijob") {
-		log.Debugf("the mpijob %s with labels %s is found.", item.Name, val)
-	} else {
-		return false
-	}
-
-	if item.Namespace != ns {
-		return false
-	}
-	return true
-}
-
 func (tt *MPIJobTrainer) isMPIPod(name, ns string, pod *v1.Pod) bool {
 	return utils.IsMPIPod(name, ns, pod)
 }

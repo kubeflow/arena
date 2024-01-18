@@ -24,20 +24,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const dns1123SubdomainFmt string = dns1123LabelFmt + "(\\." + dns1123LabelFmt + ")*"
-const dns1123SubdomainErrorMsg string = "a DNS-1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character"
-const DNS1123SubdomainMaxLength int = 253
-
 const dns1123LabelFmt string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
-const dns1123LabelErrMsg string = "a DNS-1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character"
-const DNS1123LabelMaxLength int = 63
 
 // Job Max lenth should be 49
 const JobMaxLength int = 49
 
 var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
-
-var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
 
 // ValidateJobName validates the job name, its length should less than 63, and match dns1123LabelFmt
 func ValidateJobName(value string) error {

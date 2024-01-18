@@ -32,7 +32,7 @@ func NewAttachCommand() *cobra.Command {
 		Use:   "attach JOB [-i INSTANCE] [-c CONTAINER]",
 		Short: "Attach a training job and execute some commands",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

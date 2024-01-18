@@ -8,8 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const doubleQuoteSpecialChars = "\\\n\r\"!$`"
-
 // ReadEnvFile returns configs map
 func ReadConfigFile(filename string) (configs map[string]string) {
 	configs = make(map[string]string)

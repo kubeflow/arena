@@ -204,9 +204,7 @@ func (p *SeldonServingProcesser) FilterServingJobs(namespace string, allNamespac
 			continue
 		}
 
-		for _, svc := range services {
-			filterServices = append(filterServices, svc)
-		}
+		filterServices = append(filterServices, services...)
 
 		job := &servingJob{
 			name:          deployment.Labels[servingNameLabelKey],

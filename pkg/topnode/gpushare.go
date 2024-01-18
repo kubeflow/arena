@@ -44,17 +44,6 @@ GPU Summary:
   Used GPU Memory:      %.1f GiB
 `
 
-var gpushareWithGpuCoreSummary = `
-GPU Summary:
-  Total GPUs:           %v
-  Allocated GPUs:       %v
-  Unhealthy GPUs:       %v
-  Total GPU Memory:     %.1f GiB
-  Allocated GPU Memory: %.1f GiB
-  Used GPU Memory:      %d
-  Total GPU Core:       %d
-`
-
 type gpushare struct {
 	node       *v1.Node
 	pods       []*v1.Pod
@@ -75,10 +64,6 @@ func NewGPUShareNode(client *kubernetes.Clientset, node *v1.Node, index int, arg
 			nodeType: types.GPUShareNode,
 		},
 	}, nil
-}
-
-func (g *gpushare) gpuMetricsIsEnabled() bool {
-	return len(g.gpuMetrics) != 0
 }
 
 func (g *gpushare) getTotalGPUs() float64 {
@@ -161,33 +146,6 @@ func (g *gpushare) getAllocatedGPUCore() int64 {
 		}
 	}
 	return allocatedGPUCore
-}
-
-func (g *gpushare) getUsedGPUMemory() float64 {
-	if !g.gpuMetricsIsEnabled() {
-		return float64(0)
-	}
-	usedGPUMemory := float64(0)
-	for _, gpuMetric := range g.gpuMetrics {
-		usedGPUMemory += gpuMetric.GpuMemoryUsed
-	}
-	return usedGPUMemory
-}
-
-func (g *gpushare) getDutyCycle() float64 {
-	if !g.gpuMetricsIsEnabled() {
-		return float64(0)
-	}
-	dutyCycle := float64(0)
-	totalGPUs := float64(0)
-	for _, gpuMetric := range g.gpuMetrics {
-		totalGPUs += float64(1)
-		dutyCycle += gpuMetric.GpuDutyCycle
-	}
-	if totalGPUs == 0 {
-		return float64(0)
-	}
-	return dutyCycle / totalGPUs
 }
 
 func (g *gpushare) getUnhealthyGPUs() float64 {
@@ -676,7 +634,7 @@ func displayGPUShareNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 		if nodeInfo.TotalGPUCore > 0 {
 			items = append(items, fmt.Sprintf("%d/%d", nodeInfo.AllocatedGPUCore, nodeInfo.TotalGPUCore))
 		} else {
-			items = append(items, fmt.Sprintf("__"))
+			items = append(items, "__")
 		}
 		if isUnhealthy {
 			items = append(items, fmt.Sprintf("%v", nodeInfo.UnhealthyGPUs))
