@@ -68,18 +68,10 @@ func AcceptJobLog(jobName string, trainingType types.TrainingJobType, args *type
 	return err
 }
 
-func getTrainingJobTypes() []string {
-	jobTypes := []string{}
-	for _, trainingType := range utils.GetTrainingJobTypes() {
-		jobTypes = append(jobTypes, string(trainingType))
-	}
-	return jobTypes
-}
-
 func getInstanceName(job TrainingJob) (string, error) {
 	pods := job.AllPods()
 	// if not found pods,return an error
-	if pods == nil || len(pods) == 0 {
+	if len(pods) == 0 {
 		return "", fmt.Errorf("not found instances of the job %v", job.Name())
 	}
 	// if the job has only one pod,return its' name
@@ -97,7 +89,7 @@ func getInstanceName(job TrainingJob) (string, error) {
 func moreThanOneInstanceHelpInfo(pods []*v1.Pod) string {
 	header := fmt.Sprintf("There is %d instances have been found:", len(pods))
 	lines := []string{}
-	footer := fmt.Sprintf("please use '-i' or '--instance' to filter.")
+	footer := "please use '-i' or '--instance' to filter."
 	for _, p := range pods {
 		lines = append(lines, fmt.Sprintf("%v", p.Name))
 	}

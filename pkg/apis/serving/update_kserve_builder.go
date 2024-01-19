@@ -59,7 +59,7 @@ func (b *UpdateKServeJobBuilder) Image(image string) *UpdateKServeJobBuilder {
 
 // Envs is used to set env of job containers,match option --env
 func (b *UpdateKServeJobBuilder) Envs(envs map[string]string) *UpdateKServeJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -71,7 +71,7 @@ func (b *UpdateKServeJobBuilder) Envs(envs map[string]string) *UpdateKServeJobBu
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *UpdateKServeJobBuilder) Annotations(annotations map[string]string) *UpdateKServeJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -83,7 +83,7 @@ func (b *UpdateKServeJobBuilder) Annotations(annotations map[string]string) *Upd
 
 // Labels is used to add labels for job
 func (b *UpdateKServeJobBuilder) Labels(labels map[string]string) *UpdateKServeJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))

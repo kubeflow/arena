@@ -185,7 +185,7 @@ func (t *ServingJobClient) TrafficRouterSplit(args *types.TrafficRouterSplitArgs
 func moreThanOneInstanceHelpInfo(instances []types.ServingInstance) string {
 	header := fmt.Sprintf("There is %d instances have been found:", len(instances))
 	lines := []string{}
-	footer := fmt.Sprintf("please use '-i' or '--instance' to filter.")
+	footer := "please use '-i' or '--instance' to filter."
 	for _, i := range instances {
 		lines = append(lines, fmt.Sprintf("%v", i.Name))
 	}

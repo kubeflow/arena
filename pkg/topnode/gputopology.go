@@ -6,10 +6,12 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 )
 
 var GPUTopologyNodeDescription = `
@@ -99,68 +101,6 @@ func (g *gputopo) getAllocatedGPUs() float64 {
 	return float64(allocatedGPUs)
 }
 
-func (g *gputopo) getTotalGPUMemory() float64 {
-	totalGPUMemory := float64(0)
-	for _, metric := range g.gpuMetrics {
-		totalGPUMemory += metric.GpuMemoryTotal
-	}
-	// if gpu metric is enable,return the value given by prometheus
-	if totalGPUMemory != 0 {
-		return totalGPUMemory
-	}
-	return float64(0)
-}
-
-func (g *gputopo) getAllocatedGPUMemory() float64 {
-	if !g.gpuMetricsIsEnabled() {
-		return float64(0)
-	}
-	allocatedGPUMemory := float64(0)
-	allocatedGPUs := map[string]bool{}
-	for _, pod := range g.pods {
-		if utils.IsCompletedPod(pod) {
-			continue
-		}
-		allocation := utils.GetPodGPUTopologyAllocation(pod)
-		for _, gpuId := range allocation {
-			allocatedGPUs[gpuId] = true
-		}
-	}
-	for key, metric := range g.gpuMetrics {
-		if allocatedGPUs[key] {
-			allocatedGPUMemory += metric.GpuMemoryTotal
-		}
-	}
-	return utils.DataUnitTransfer("GiB", "bytes", allocatedGPUMemory)
-}
-
-func (g *gputopo) getUsedGPUMemory() float64 {
-	if !g.gpuMetricsIsEnabled() {
-		return float64(0)
-	}
-	usedGPUMemory := float64(0)
-	for _, gpuMetric := range g.gpuMetrics {
-		usedGPUMemory += gpuMetric.GpuMemoryUsed
-	}
-	return usedGPUMemory
-}
-
-func (g *gputopo) getDutyCycle() float64 {
-	if !g.gpuMetricsIsEnabled() {
-		return float64(0)
-	}
-	dutyCycle := float64(0)
-	totalGPUs := float64(0)
-	for _, gpuMetric := range g.gpuMetrics {
-		totalGPUs += float64(1)
-		dutyCycle += gpuMetric.GpuDutyCycle
-	}
-	if totalGPUs == 0 {
-		return float64(0)
-	}
-	return dutyCycle / totalGPUs
-}
-
 func (g *gputopo) getUnhealthyGPUs() float64 {
 	totalGPUs := g.getTotalGPUs()
 	allocatableGPUs, ok := g.node.Status.Allocatable[v1.ResourceName(types.AliyunGPUResourceName)]
@@ -171,13 +111,6 @@ func (g *gputopo) getUnhealthyGPUs() float64 {
 		return 0
 	}
 	return totalGPUs - float64(allocatableGPUs.Value())
-}
-
-func (g *gputopo) getTotalGPUMemoryOfDevice(id string) float64 {
-	if metric, ok := g.gpuMetrics[id]; ok {
-		return metric.GpuMemoryTotal
-	}
-	return 0
 }
 
 func (g *gputopo) convert2NodeInfo() types.GPUTopologyNodeInfo {
@@ -201,7 +134,9 @@ func (g *gputopo) convert2NodeInfo() types.GPUTopologyNodeInfo {
 	deviceMap := map[string]types.GPUTopologyNodeDevice{}
 	if val, ok := g.configmap.Data["devices"]; ok {
 		devicesFromConfigmap := map[string]string{}
-		json.Unmarshal([]byte(val), &devicesFromConfigmap)
+		if err := json.Unmarshal([]byte(val), &devicesFromConfigmap); err != nil {
+			log.Debugf("get devices from configmap failed, err: %s", err)
+		}
 		for id, health := range devicesFromConfigmap {
 			healthy := false
 			if health == "Healthy" {
@@ -249,10 +184,10 @@ func (g *gputopo) convert2NodeInfo() types.GPUTopologyNodeInfo {
 		BandwidthMatrix: [][]float32{},
 	}
 	if val, ok := g.configmap.Data["linkType"]; ok {
-		json.Unmarshal([]byte(val), &topology.LinkMatrix)
+		_ = json.Unmarshal([]byte(val), &topology.LinkMatrix)
 	}
 	if val, ok := g.configmap.Data["bandwith"]; ok {
-		json.Unmarshal([]byte(val), &topology.BandwidthMatrix)
+		_ = json.Unmarshal([]byte(val), &topology.BandwidthMatrix)
 	}
 	gpuTopologyNodeInfo.PodInfos = podInfos
 	gpuTopologyNodeInfo.GPUTopology = topology
@@ -288,22 +223,20 @@ func (g *gputopo) WideFormat() string {
 	if len(nodeInfo.GPUTopology.LinkMatrix) != 0 {
 		header := []string{"  "}
 		lines = append(lines, "LinkTypeMatrix:")
-		for index, _ := range nodeInfo.Devices {
+		for index := range nodeInfo.Devices {
 			header = append(header, fmt.Sprintf("GPU%v", index))
 		}
 		lines = append(lines, strings.Join(header, "\t"))
 		for row, links := range nodeInfo.GPUTopology.LinkMatrix {
 			linkLine := []string{fmt.Sprintf("  GPU%v", row)}
-			for _, link := range links {
-				linkLine = append(linkLine, link)
-			}
+			linkLine = append(linkLine, links...)
 			lines = append(lines, strings.Join(linkLine, "\t"))
 		}
 	}
 	if len(nodeInfo.GPUTopology.BandwidthMatrix) != 0 {
 		header := []string{"  "}
 		lines = append(lines, "BandwidthMatrix:")
-		for index, _ := range nodeInfo.Devices {
+		for index := range nodeInfo.Devices {
 			header = append(header, fmt.Sprintf("GPU%v", index))
 		}
 		lines = append(lines, strings.Join(header, "\t"))
@@ -432,6 +365,7 @@ func (g *gputopo) displayDeviceInfoUnderMetrics(lines []string, nodeInfo types.G
 			utils.DataUnitTransfer("bytes", "GiB", totalAllocatedGPUMemory),
 			utils.DataUnitTransfer("bytes", "GiB", totalUsedGPUMemory),
 		))
+	lines = append(lines, deviceLines...)
 	return lines
 }
 

@@ -26,16 +26,15 @@ import (
 
 	kservev1beta1 "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
 	kserveClient "github.com/kserve/kserve/pkg/client/clientset/versioned"
-	"github.com/kubeflow/arena/pkg/apis/config"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/kubernetes"
+
+	"github.com/kubeflow/arena/pkg/apis/config"
 )
 
 var kubectlCmd = []string{"arena-kubectl"}
-var kubeClient *kubernetes.Clientset
 
 /**
 * dry-run creating kubernetes App Info for delete in future

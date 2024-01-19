@@ -62,7 +62,7 @@ func (b *TFJobBuilder) WorkingDir(dir string) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) Envs(envs map[string]string) *TFJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -92,7 +92,7 @@ func (b *TFJobBuilder) Tolerations(tolerations []string) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) ConfigFiles(files map[string]string) *TFJobBuilder {
-	if files != nil && len(files) != 0 {
+	if len(files) != 0 {
 		filesSlice := []string{}
 		for localPath, containerPath := range files {
 			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
@@ -103,7 +103,7 @@ func (b *TFJobBuilder) ConfigFiles(files map[string]string) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) NodeSelectors(selectors map[string]string) *TFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -114,7 +114,7 @@ func (b *TFJobBuilder) NodeSelectors(selectors map[string]string) *TFJobBuilder 
 }
 
 func (b *TFJobBuilder) Annotations(annotations map[string]string) *TFJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -125,7 +125,7 @@ func (b *TFJobBuilder) Annotations(annotations map[string]string) *TFJobBuilder 
 }
 
 func (b *TFJobBuilder) Labels(labels map[string]string) *TFJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -176,7 +176,7 @@ func (b *TFJobBuilder) ChiefPort(port int) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) ChiefSelectors(selectors map[string]string) *TFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		s := []string{}
 		for key, value := range selectors {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -187,7 +187,7 @@ func (b *TFJobBuilder) ChiefSelectors(selectors map[string]string) *TFJobBuilder
 }
 
 func (b *TFJobBuilder) Datas(volumes map[string]string) *TFJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -198,7 +198,7 @@ func (b *TFJobBuilder) Datas(volumes map[string]string) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) DataDirs(volumes map[string]string) *TFJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -242,7 +242,7 @@ func (b *TFJobBuilder) EvaluatorMemoryLimit(mem string) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) EvaluatorSelectors(selectors map[string]string) *TFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		s := []string{}
 		for key, value := range selectors {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -323,7 +323,7 @@ func (b *TFJobBuilder) PsPort(port int) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) PsSelectors(selectors map[string]string) *TFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		s := []string{}
 		for key, value := range selectors {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -414,7 +414,7 @@ func (b *TFJobBuilder) WorkerPort(port int) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) WorkerSelectors(selectors map[string]string) *TFJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		s := []string{}
 		for key, value := range selectors {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -445,7 +445,7 @@ func (b *TFJobBuilder) CleanPodPolicy(policy string) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) RoleSequence(roles []string) *TFJobBuilder {
-	if roles != nil && len(roles) != 0 {
+	if len(roles) != 0 {
 		b.argValues["role-sequence"] = strings.Join(roles, ",")
 	}
 	return b

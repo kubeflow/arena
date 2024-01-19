@@ -14,7 +14,7 @@ func NewEvaluateGetCommand() *cobra.Command {
 		Use:   "get",
 		Short: "get evaluate job by name.",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

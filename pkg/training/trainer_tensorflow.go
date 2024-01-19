@@ -361,26 +361,6 @@ func (tt *TensorFlowJobTrainer) isChiefPod(tfjob *tfv1.TFJob, item *v1.Pod) bool
 	return isChiefPod
 }
 
-func (tt *TensorFlowJobTrainer) isTensorFlowJob(name, ns string, item *tfv1.TFJob) bool {
-
-	if val, ok := item.Labels["release"]; ok && (val == name) {
-		log.Debugf("the tfjob %s with labels %s", item.Name, val)
-	} else {
-		return false
-	}
-
-	if val, ok := item.Labels["app"]; ok && (val == "tfjob") {
-		log.Debugf("the tfjob %s with labels %s is found.", item.Name, val)
-	} else {
-		return false
-	}
-
-	if item.Namespace != ns {
-		return false
-	}
-	return true
-}
-
 func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item *v1.Pod) bool {
 	return utils.IsTensorFlowPod(name, ns, item)
 }
@@ -447,15 +427,6 @@ func makeJobStatusSortedByTime(conditions []commonv1.JobCondition) []commonv1.Jo
 	}
 	sort.Sort(newConditions)
 	return []commonv1.JobCondition(newConditions)
-}
-
-func hasCondition(status commonv1.JobStatus, condType commonv1.JobConditionType) bool {
-	for _, condition := range status.Conditions {
-		if condition.Type == condType && condition.Status == v1.ConditionTrue {
-			return true
-		}
-	}
-	return false
 }
 
 func checkStatus(status commonv1.JobStatus) commonv1.JobConditionType {

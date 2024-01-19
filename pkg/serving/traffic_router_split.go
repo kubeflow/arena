@@ -19,8 +19,6 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 	istiov1alpha3 "istio.io/api/networking/v1alpha3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,11 +26,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
-)
 
-var (
-	modelPathSeparator = ":"
-	regexp4serviceName = "^[a-z0-9A-Z_-]+$"
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 func RunTrafficRouterSplit(namespace string, args *types.TrafficRouterSplitArgs) (err error) {
@@ -48,8 +44,14 @@ func RunTrafficRouterSplit(namespace string, args *types.TrafficRouterSplitArgs)
 	}
 	log.Debugf("serviceName: %s", preprocessObject.ServiceName)
 	jsonDestinationRule, err := json.Marshal(preprocessObject.DestinationRule)
+	if err != nil {
+		return err
+	}
 	log.Debugf("destination rule: %s", jsonDestinationRule)
 	jsonVirtualService, err := json.Marshal(preprocessObject.VirtualService)
+	if err != nil {
+		return err
+	}
 	log.Debugf("virtual service: %s", jsonVirtualService)
 	virtualServiceName := preprocessObject.ServiceName
 	log.Debugf("virtualServiceName:%s", virtualServiceName)

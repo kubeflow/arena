@@ -18,7 +18,7 @@ func NewSubmitHorovodJobCommand() *cobra.Command {
 		Short:   "Submit horovodjob as training job.",
 		Aliases: []string{"horovod", "hj"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

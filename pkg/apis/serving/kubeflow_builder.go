@@ -119,7 +119,7 @@ func (b *KFServingJobBuilder) Memory(memory string) *KFServingJobBuilder {
 
 // Envs is used to set env of job containers,match option --env
 func (b *KFServingJobBuilder) Envs(envs map[string]string) *KFServingJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -165,7 +165,7 @@ func (b *KFServingJobBuilder) Tolerations(tolerations []string) *KFServingJobBui
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (b *KFServingJobBuilder) NodeSelectors(selectors map[string]string) *KFServingJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -177,7 +177,7 @@ func (b *KFServingJobBuilder) NodeSelectors(selectors map[string]string) *KFServ
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *KFServingJobBuilder) Annotations(annotations map[string]string) *KFServingJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -189,7 +189,7 @@ func (b *KFServingJobBuilder) Annotations(annotations map[string]string) *KFServ
 
 // Labels is used to add labels for job
 func (b *KFServingJobBuilder) Labels(labels map[string]string) *KFServingJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -201,7 +201,7 @@ func (b *KFServingJobBuilder) Labels(labels map[string]string) *KFServingJobBuil
 
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (b *KFServingJobBuilder) Datas(volumes map[string]string) *KFServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -213,7 +213,7 @@ func (b *KFServingJobBuilder) Datas(volumes map[string]string) *KFServingJobBuil
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *KFServingJobBuilder) DataDirs(volumes map[string]string) *KFServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -257,7 +257,7 @@ func (b *KFServingJobBuilder) StorageUri(uri string) *KFServingJobBuilder {
 
 // ConfigFiles is used to mapping config files form local to job containers,match option --config-file
 func (b *KFServingJobBuilder) ConfigFiles(files map[string]string) *KFServingJobBuilder {
-	if files != nil && len(files) != 0 {
+	if len(files) != 0 {
 		filesSlice := []string{}
 		for localPath, containerPath := range files {
 			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))

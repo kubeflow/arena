@@ -121,7 +121,7 @@ func (b *TFServingJobBuilder) Memory(memory string) *TFServingJobBuilder {
 
 // Envs is used to set env of job containers,match option --env
 func (b *TFServingJobBuilder) Envs(envs map[string]string) *TFServingJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -183,7 +183,7 @@ func (b *TFServingJobBuilder) Tolerations(tolerations []string) *TFServingJobBui
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (b *TFServingJobBuilder) NodeSelectors(selectors map[string]string) *TFServingJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -195,7 +195,7 @@ func (b *TFServingJobBuilder) NodeSelectors(selectors map[string]string) *TFServ
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *TFServingJobBuilder) Annotations(annotations map[string]string) *TFServingJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -207,7 +207,7 @@ func (b *TFServingJobBuilder) Annotations(annotations map[string]string) *TFServ
 
 // Labels is used to add labels for job
 func (b *TFServingJobBuilder) Labels(labels map[string]string) *TFServingJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -219,7 +219,7 @@ func (b *TFServingJobBuilder) Labels(labels map[string]string) *TFServingJobBuil
 
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (b *TFServingJobBuilder) Datas(volumes map[string]string) *TFServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -231,7 +231,7 @@ func (b *TFServingJobBuilder) Datas(volumes map[string]string) *TFServingJobBuil
 
 // DataSubPathExprs is used to mount k8s pvc subpath to job pods,match option data-subpath-expr
 func (b *TFServingJobBuilder) DataSubPathExprs(exprs map[string]string) *TFServingJobBuilder {
-	if exprs != nil && len(exprs) != 0 {
+	if len(exprs) != 0 {
 		s := []string{}
 		for key, value := range exprs {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -243,7 +243,7 @@ func (b *TFServingJobBuilder) DataSubPathExprs(exprs map[string]string) *TFServi
 
 // TempDirs specify the deployment empty dir
 func (b *TFServingJobBuilder) TempDirs(volumes map[string]string) *TFServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -255,7 +255,7 @@ func (b *TFServingJobBuilder) TempDirs(volumes map[string]string) *TFServingJobB
 
 // EmptyDirSubPathExprs specify the datasource subpath to mount to the pod by expression
 func (b *TFServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) *TFServingJobBuilder {
-	if exprs != nil && len(exprs) != 0 {
+	if len(exprs) != 0 {
 		s := []string{}
 		for key, value := range exprs {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -267,7 +267,7 @@ func (b *TFServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) *TFS
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *TFServingJobBuilder) DataDirs(volumes map[string]string) *TFServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -319,7 +319,7 @@ func (b *TFServingJobBuilder) ModelPath(path string) *TFServingJobBuilder {
 
 // ConfigFiles is used to mapping config files form local to job containers,match option --config-file
 func (b *TFServingJobBuilder) ConfigFiles(files map[string]string) *TFServingJobBuilder {
-	if files != nil && len(files) != 0 {
+	if len(files) != 0 {
 		filesSlice := []string{}
 		for localPath, containerPath := range files {
 			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))

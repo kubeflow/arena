@@ -18,17 +18,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubeflow/arena/pkg/apis/arenaclient"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/kubeflow/arena/pkg/apis/arenaclient"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 )
-
-var output string
-
-var dashboardURL string
 
 // NewGetCommand
 func NewGetCommand() *cobra.Command {
@@ -40,7 +37,7 @@ func NewGetCommand() *cobra.Command {
 		Use:   "get JOB [-T JOB_TYPE]",
 		Short: "Display a training job details",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
@@ -49,7 +46,7 @@ func NewGetCommand() *cobra.Command {
 			}
 			now := time.Now()
 			defer func() {
-				log.Debugf("execute time of get training job: %v", time.Now().Sub(now))
+				log.Debugf("execute time of get training job: %v", time.Since(now))
 			}()
 			name := args[0]
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

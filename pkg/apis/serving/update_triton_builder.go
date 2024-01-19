@@ -69,7 +69,7 @@ func (b *UpdateTritonServingJobBuilder) Image(image string) *UpdateTritonServing
 
 // Envs is used to set env of job containers,match option --env
 func (b *UpdateTritonServingJobBuilder) Envs(envs map[string]string) *UpdateTritonServingJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -81,7 +81,7 @@ func (b *UpdateTritonServingJobBuilder) Envs(envs map[string]string) *UpdateTrit
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *UpdateTritonServingJobBuilder) Annotations(annotations map[string]string) *UpdateTritonServingJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -93,7 +93,7 @@ func (b *UpdateTritonServingJobBuilder) Annotations(annotations map[string]strin
 
 // Labels is used to add labels for job
 func (b *UpdateTritonServingJobBuilder) Labels(labels map[string]string) *UpdateTritonServingJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))

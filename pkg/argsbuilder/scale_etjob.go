@@ -71,7 +71,7 @@ func (s *ScaleETJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		script = s.(string)
 	}
 	command.Flags().StringVar(&s.args.Name, "name", "", "required, et job name")
-	command.MarkFlagRequired("name")
+	_ = command.MarkFlagRequired("name")
 	command.Flags().DurationVarP(&scaleDuration, "timeout", "t", 60*time.Second, "timeout of callback scaler script, like 5s, 2m, or 3h.")
 	command.Flags().IntVar(&s.args.Retry, "retry", 0, "retry times.")
 	command.Flags().IntVar(&s.args.Count, "count", 1, "the nums of you want to add or delete worker.")

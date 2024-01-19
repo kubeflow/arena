@@ -18,7 +18,7 @@ func NewSubmitTFServingJobCommand() *cobra.Command {
 		Short:   "Submit tensorflow serving job to deploy and serve machine learning models.",
 		Aliases: []string{"tf"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

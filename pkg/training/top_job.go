@@ -82,9 +82,7 @@ func topTrainingJobs(args []string, namespace string, allNamespaces bool, jobTyp
 		if err != nil {
 			return err
 		}
-		for _, j := range allJobs {
-			jobs = append(jobs, j)
-		}
+		jobs = append(jobs, allJobs...)
 	}
 	jobs = makeTrainingJobOrderdByGPUCount(jobs)
 	jobInfos := []types.TrainingJobInfo{}
@@ -99,14 +97,14 @@ func topTrainingJobs(args []string, namespace string, allNamespaces bool, jobTyp
 		if err != nil {
 			return err
 		}
-		fmt.Printf(string(outBytes))
+		fmt.Print(string(outBytes))
 		return nil
 	case types.YamlFormat:
 		outBytes, err := yaml.Marshal(jobInfos)
 		if err != nil {
 			return err
 		}
-		fmt.Printf(string(outBytes))
+		fmt.Print(string(outBytes))
 		return nil
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)

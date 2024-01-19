@@ -100,7 +100,7 @@ func (b *SparkJobBuilder) ExecutorMemoryRequest(memory string) *SparkJobBuilder 
 }
 
 func (b *SparkJobBuilder) Labels(labels map[string]string) *SparkJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -111,7 +111,7 @@ func (b *SparkJobBuilder) Labels(labels map[string]string) *SparkJobBuilder {
 }
 
 func (b *SparkJobBuilder) Annotations(annotations map[string]string) *SparkJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))

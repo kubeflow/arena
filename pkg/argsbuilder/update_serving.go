@@ -276,14 +276,6 @@ func (s *UpdateServingArgsBuilder) checkName() error {
 	return nil
 }
 
-func (s *UpdateServingArgsBuilder) checkVersion() error {
-	if s.args.Version == "" {
-		return fmt.Errorf("version not set, please set it")
-	}
-	log.Debugf("version is %v", s.args.Version)
-	return nil
-}
-
 func (s *UpdateServingArgsBuilder) checkReplicas() error {
 	if s.args.Replicas < 0 {
 		return fmt.Errorf("replicas not valid, must be greater than 0")

@@ -24,8 +24,7 @@ import (
 )
 
 const (
-	KServeModelFormat          = "modelFormat"
-	KServeCanaryTrafficPercent = "canaryTrafficPercent"
+	KServeModelFormat = "modelFormat"
 )
 
 type KServeArgsBuilder struct {
@@ -157,19 +156,6 @@ func (s *KServeArgsBuilder) setModelFormat() error {
 			Name:    mfs[0],
 			Version: &mfs[1],
 		}
-	}
-	return nil
-}
-
-func (s *KServeArgsBuilder) setCanaryTrafficPercent() error {
-	item, ok := s.argValues[KServeCanaryTrafficPercent]
-	if !ok {
-		return nil
-	}
-	ctp := item.(*int64)
-
-	if *ctp >= 0 && *ctp <= 100 {
-		s.args.CanaryTrafficPercent = *ctp
 	}
 	return nil
 }

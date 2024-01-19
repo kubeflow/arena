@@ -21,12 +21,12 @@ func NewListCommand() *cobra.Command {
 		Short:   "List all the training jobs",
 		Aliases: []string{"ls"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			now := time.Now()
 			defer func() {
-				log.Debugf("execute time of listing training jobs: %v\n", time.Now().Sub(now))
+				log.Debugf("execute time of listing training jobs: %v\n", time.Since(now))
 			}()
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
@@ -43,7 +43,7 @@ func NewListCommand() *cobra.Command {
 	}
 	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The training type to list, the possible option is %v. (optional)", utils.GetSupportTrainingJobTypesInfo()))
 	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
-	command.Flags().MarkDeprecated("allNamespaces", "please use --all-namespaces instead")
+	_ = command.Flags().MarkDeprecated("allNamespaces", "please use --all-namespaces instead")
 	command.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "show all the namespaces")
 	command.Flags().StringVarP(&format, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	return command

@@ -31,7 +31,7 @@ func NewTrafficRouterSplitCommand() *cobra.Command {
 		Short:   "Adjust traffic routing dynamically for tfserving jobs",
 		Aliases: []string{"trs", "traffic-router", "traffic-router-split", "traffic-shift", "traffic-shifting"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

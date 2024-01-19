@@ -93,15 +93,15 @@ func (s *SubmitSyncCodeArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 	command.Flags().StringVar(&s.args.SyncMode, "syncMode", "", "syncMode: support rsync, hdfs, git")
-	command.Flags().MarkDeprecated("syncMode", "please use --sync-mode instead")
+	_ = command.Flags().MarkDeprecated("syncMode", "please use --sync-mode instead")
 	command.Flags().StringVar(&s.args.SyncMode, "sync-mode", "", "syncMode: support rsync, hdfs, git")
 
 	// command.MarkFlagRequired("syncMode")
 	command.Flags().StringVar(&s.args.SyncSource, "syncSource", "", "syncSource: for rsync, it's like 10.88.29.56::backup/data/logoRecoTrain.zip; for git, it's like https://github.com/kubeflow/tf-operator.git")
-	command.Flags().MarkDeprecated("syncSource", "please use --sync-source instead")
+	_ = command.Flags().MarkDeprecated("syncSource", "please use --sync-source instead")
 	command.Flags().StringVar(&s.args.SyncSource, "sync-source", "", "sync-source: for rsync, it's like 10.88.29.56::backup/data/logoRecoTrain.zip; for git, it's like https://github.com/kubeflow/tf-operator.git")
 
 	command.Flags().StringVar(&s.args.SyncImage, "syncImage", "", "the docker image of syncImage")
-	command.Flags().MarkDeprecated("syncImage", "please use --sync-image instead")
+	_ = command.Flags().MarkDeprecated("syncImage", "please use --sync-image instead")
 	command.Flags().StringVar(&s.args.SyncImage, "sync-image", "", "the docker image of syncImage")
 }

@@ -18,7 +18,7 @@ func NewUpdateCustomCommand() *cobra.Command {
 		Use:   "custom",
 		Short: "Update a custom serving job and its associated instances",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

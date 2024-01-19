@@ -17,7 +17,7 @@ func NewWhoamiCommand() *cobra.Command {
 		Short: "Display current user information.",
 		Long:  "Display current user information.",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

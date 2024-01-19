@@ -132,29 +132,28 @@ func dashboardFromNodePort(k8sclient kubernetes.Interface, namespace string, nam
 			// address := svc.Status.LoadBalancer.Ingress[0].IP
 			// port := svc.Spec.Ports[0].Port
 			// return fmt.Sprintf("%s:%d", address, port), nil
-			for _, port := range svc.Spec.Ports {
-				nodePort := port.NodePort
-				// Get node address
-				node := corev1.Node{}
-				findReadyNode := false
+			port := svc.Spec.Ports[0]
+			nodePort := port.NodePort
+			// Get node address
+			node := corev1.Node{}
+			findReadyNode := false
 
-				for _, item := range nodes {
-					for _, condition := range item.Status.Conditions {
-						if condition.Type == "Ready" {
-							if condition.Status == "True" {
-								node = *item
-								findReadyNode = true
-								break
-							}
+			for _, item := range nodes {
+				for _, condition := range item.Status.Conditions {
+					if condition.Type == "Ready" {
+						if condition.Status == "True" {
+							node = *item
+							findReadyNode = true
+							break
 						}
 					}
 				}
-				if !findReadyNode {
-					return "", fmt.Errorf("Failed to find the ready node for exporting dashboard.")
-				}
-				address := node.Status.Addresses[0].Address
-				return fmt.Sprintf("%s:%d", address, nodePort), nil
 			}
+			if !findReadyNode {
+				return "", fmt.Errorf("Failed to find the ready node for exporting dashboard.")
+			}
+			address := node.Status.Addresses[0].Address
+			return fmt.Sprintf("%s:%d", address, nodePort), nil
 		}
 
 	}

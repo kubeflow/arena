@@ -8,19 +8,16 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-)
 
-var (
-	errUnknownServingJobType = fmt.Errorf("unknown serving types,only support: %v", utils.GetServingJobTypes())
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 )
 
 func ListServingJobs(namespace string, allNamespace bool, servingType types.ServingJobType) ([]ServingJob, error) {
 	if servingType == types.UnknownServingJob {
-		return nil, fmt.Errorf("Unknown serving job type,arena only supports: [%s]", utils.GetSupportServingJobTypesInfo())
+		return nil, fmt.Errorf("unknown serving job type,arena only supports: [%s]", utils.GetSupportServingJobTypesInfo())
 	}
 	processers := GetAllProcesser()
 	if servingType != types.AllServingJob {
@@ -58,7 +55,7 @@ func ListServingJobs(namespace string, allNamespace bool, servingType types.Serv
 	if noPrivileges {
 		item := fmt.Sprintf("namespace %v", namespace)
 		if allNamespace {
-			item = fmt.Sprintf("all namespaces")
+			item = "all namespaces"
 		}
 		return nil, fmt.Errorf("the user has no privileges to list the serving jobs in %v", item)
 	}

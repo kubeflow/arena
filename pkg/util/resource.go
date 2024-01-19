@@ -24,9 +24,7 @@ func AcquireAllPods(namespace string, client *kubernetes.Clientset) ([]v1.Pod, e
 	if err != nil {
 		return pods, err
 	}
-	for _, pod := range podList.Items {
-		pods = append(pods, pod)
-	}
+	pods = append(pods, podList.Items...)
 	allPods[namespace] = pods
 	log.Debugf("Pods in %s: %++v", namespace, allPods[namespace])
 	return pods, nil

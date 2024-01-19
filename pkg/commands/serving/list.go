@@ -19,7 +19,7 @@ func NewListCommand() *cobra.Command {
 		Short:   "List all the serving jobs",
 		Aliases: []string{"ls"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
@@ -36,7 +36,7 @@ func NewListCommand() *cobra.Command {
 		},
 	}
 	command.Flags().BoolVar(&allNamespaces, "allNamespaces", false, "show all the namespaces")
-	command.Flags().MarkDeprecated("allNamespaces", "please use --all-namespaces instead")
+	_ = command.Flags().MarkDeprecated("allNamespaces", "please use --all-namespaces instead")
 	command.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "show all the namespaces")
 	command.Flags().StringVarP(&format, "output", "o", "wide", "Output format. One of: json|yaml|wide")
 	command.Flags().StringVarP(&servingType, "type", "T", "", fmt.Sprintf("The serving type, the possible option is [%v]. (optional)", utils.GetSupportServingJobTypesInfo()))

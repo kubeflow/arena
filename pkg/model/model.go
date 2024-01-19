@@ -138,7 +138,7 @@ func (m *modelJob) Job() *batchv1.Job {
 }
 
 func (m *modelJob) Age() time.Duration {
-	return time.Now().Sub(m.job.ObjectMeta.CreationTimestamp.Time)
+	return time.Since(m.job.ObjectMeta.CreationTimestamp.Time)
 }
 
 func (m *modelJob) Duration() time.Duration {
@@ -232,7 +232,7 @@ func (m *modelJob) Instances() []types.ModelJobInstance {
 	var instances []types.ModelJobInstance
 	for index, pod := range m.pods {
 		status, totalContainers, restart, readyContainer := utils.DefinePodPhaseStatus(*pod)
-		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
+		age := util.ShortHumanDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
 		gpuCore := utils.GPUCoreCountInPod(pod)
 		gpus := getPodGPUs(pod, gpuMemory, index)

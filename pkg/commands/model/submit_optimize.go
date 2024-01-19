@@ -16,7 +16,7 @@ func NewSubmitModelOptimizeJobCommand() *cobra.Command {
 		Use:   "optimize",
 		Short: "Submit a model optimize job, this is a experimental feature",
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

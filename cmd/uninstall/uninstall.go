@@ -69,8 +69,9 @@ func deleteArenaArtifacts(force bool) error {
 			return err
 		}
 	}
-	execCommand([]string{"arena-helm", "del", "arena-artifacts", "-n", *arenaNamespace})
-	stdout, stderr, err = execCommand([]string{"arena-kubectl", "delete", "-f", tmpFile})
+	stdout, stderr, _ = execCommand([]string{"arena-helm", "del", "arena-artifacts", "-n", *arenaNamespace})
+	fmt.Printf("%v,%v\n", stdout, stderr)
+	stdout, stderr, _ = execCommand([]string{"arena-kubectl", "delete", "-f", tmpFile})
 	fmt.Printf("%v,%v\n", stdout, stderr)
 	stdout, stderr, err = execCommand([]string{"arena-kubectl", "delete", "ns", *arenaNamespace})
 	if err != nil {
@@ -230,46 +231,6 @@ func getAllCRDsInK8s() ([]string, error) {
 		crds = append(crds, items[0])
 	}
 	return crds, nil
-}
-
-func deleteClientFiles() {
-	execCommand([]string{"rm", "-rf", "/charts"})
-	execCommand([]string{"rm", "-rf", "~/charts"})
-	execCommand([]string{"rm", "-rf", "/usr/local/bin/arena"})
-	execCommand([]string{"rm", "-rf", "/usr/local/bin/arena-kubectl"})
-	execCommand([]string{"rm", "-rf", "/usr/local/bin/arena-helm"})
-	if err := removeLines([]string{"source <(arena completion bash)"}); err != nil {
-		fmt.Printf("Error: failed to remove line 'source <(arena completion bash)' from ~/bashrc or ~/.zshrc\n")
-		os.Exit(4)
-	}
-}
-
-func removeLines(lines []string) error {
-	homeDir := os.Getenv("HOME")
-	bashFile := path.Join(homeDir, ".bashrc")
-	zshFile := path.Join(homeDir, ".zshrc")
-	updateFile := func(f string) error {
-		contentBytes, err := ioutil.ReadFile(f)
-		if err != nil {
-			return err
-		}
-		content := string(contentBytes)
-		for _, line := range lines {
-			content = strings.ReplaceAll(content, line, "")
-		}
-		return ioutil.WriteFile(f, []byte(content), 0744)
-	}
-	if CheckFileExist(zshFile) {
-		if err := updateFile(zshFile); err != nil {
-			return err
-		}
-	}
-	if CheckFileExist(bashFile) {
-		if err := updateFile(bashFile); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func execCommand(args []string) (string, string, error) {

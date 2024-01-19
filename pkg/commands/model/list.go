@@ -18,7 +18,7 @@ func NewListModelJobsCommand() *cobra.Command {
 		Short:   "List all the model jobs",
 		Aliases: []string{"ls"},
 		PreRun: func(cmd *cobra.Command, args []string) {
-			viper.BindPFlags(cmd.Flags())
+			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{

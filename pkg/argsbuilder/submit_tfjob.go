@@ -91,48 +91,48 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		ttlAfterFinished   time.Duration
 	)
 	command.Flags().StringVar(&s.args.WorkerImage, "workerImage", "", "the docker image for tensorflow workers")
-	command.Flags().MarkDeprecated("workerImage", "please use --worker-image instead")
+	_ = command.Flags().MarkDeprecated("workerImage", "please use --worker-image instead")
 	command.Flags().StringVar(&s.args.WorkerImage, "worker-image", "", "the docker image for tensorflow workers")
 
 	command.Flags().StringVar(&s.args.PSImage, "psImage", "", "the docker image for tensorflow workers")
-	command.Flags().MarkDeprecated("psImage", "please use --ps-image instead")
+	_ = command.Flags().MarkDeprecated("psImage", "please use --ps-image instead")
 	command.Flags().StringVar(&s.args.PSImage, "ps-image", "", "the docker image for tensorflow workers")
 
 	command.Flags().IntVar(&s.args.PSCount, "ps", 0, "the number of the parameter servers.")
 
 	command.Flags().IntVar(&s.args.PSPort, "psPort", 0, "the port of the parameter server.")
-	command.Flags().MarkDeprecated("psPort", "please use --ps-port instead")
+	_ = command.Flags().MarkDeprecated("psPort", "please use --ps-port instead")
 	command.Flags().IntVar(&s.args.PSPort, "ps-port", 0, "the port of the parameter server.")
 
 	command.Flags().IntVar(&s.args.WorkerPort, "workerPort", 0, "the port of the worker.")
-	command.Flags().MarkDeprecated("workerPort", "please use --worker-port instead")
+	_ = command.Flags().MarkDeprecated("workerPort", "please use --worker-port instead")
 	command.Flags().IntVar(&s.args.WorkerPort, "worker-port", 0, "the port of the worker.")
 
 	command.Flags().StringVar(&s.args.WorkerCpu, "workerCpu", "", "the cpu resource to use for the worker, like 1 for 1 core.")
-	command.Flags().MarkDeprecated("workerCpu", "please use --worker-cpu instead")
+	_ = command.Flags().MarkDeprecated("workerCpu", "please use --worker-cpu instead")
 	command.Flags().StringVar(&s.args.WorkerCpu, "worker-cpu", "", "the cpu resource to use for the worker, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.WorkerCpuLimit, "worker-cpu-limit", "", "the cpu resource limit to use for the worker, like 1 for 1 core.")
 
 	command.Flags().StringVar(&s.args.WorkerMemory, "workerMemory", "", "the memory resource to use for the worker, like 1Gi.")
-	command.Flags().MarkDeprecated("workerMemory", "please use --worker-memory instead")
+	_ = command.Flags().MarkDeprecated("workerMemory", "please use --worker-memory instead")
 	command.Flags().StringVar(&s.args.WorkerMemory, "worker-memory", "", "the memory resource to use for the worker, like 1Gi.")
 	command.Flags().StringVar(&s.args.WorkerMemoryLimit, "worker-memory-limit", "", "the memory resource limit to use for the worker, like 1Gi.")
 
 	command.Flags().StringVar(&s.args.PSCpu, "psCpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
-	command.Flags().MarkDeprecated("psCpu", "please use --ps-cpu instead")
+	_ = command.Flags().MarkDeprecated("psCpu", "please use --ps-cpu instead")
 	command.Flags().StringVar(&s.args.PSCpu, "ps-cpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.PSCpuLimit, "ps-cpu-limit", "", "the cpu resource limit to use for the parameter servers, like 1 for 1 core.")
 
 	command.Flags().IntVar(&s.args.PSGpu, "ps-gpus", 0, "the gpu resource to use for the parameter servers, like 1 for 1 gpu.")
 
 	command.Flags().StringVar(&s.args.PSMemory, "psMemory", "", "the memory resource to use for the parameter servers, like 1Gi.")
-	command.Flags().MarkDeprecated("psMemory", "please use --ps-memory instead")
+	_ = command.Flags().MarkDeprecated("psMemory", "please use --ps-memory instead")
 	command.Flags().StringVar(&s.args.PSMemory, "ps-memory", "", "the memory resource to use for the parameter servers, like 1Gi.")
 	command.Flags().StringVar(&s.args.PSMemoryLimit, "ps-memory-limit", "", "the memory resource limit to use for the parameter servers, like 1Gi.")
 
 	// How to clean up Task
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "cleanTaskPolicy", "Running", "How to clean tasks after Training is done, support Running, None and All.")
-	command.Flags().MarkDeprecated("cleanTaskPolicy", "please use --clean-task-policy instead")
+	_ = command.Flags().MarkDeprecated("cleanTaskPolicy", "please use --clean-task-policy instead")
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "Running", "How to clean tasks after Training is done, support Running, None and All.")
 
 	command.Flags().DurationVar(&runningTimeout, "running-timeout", runningTimeout, "Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').")
@@ -143,27 +143,27 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&s.args.UseChief, "chief", false, "enable chief, which is required for estimator.")
 	command.Flags().BoolVar(&s.args.UseEvaluator, "evaluator", false, "enable evaluator, which is optional for estimator.")
 	command.Flags().StringVar(&s.args.ChiefCpu, "ChiefCpu", "", "the cpu resource to use for the Chief, like 1 for 1 core.")
-	command.Flags().MarkDeprecated("ChiefCpu", "please use --chief-cpu instead")
+	_ = command.Flags().MarkDeprecated("ChiefCpu", "please use --chief-cpu instead")
 	command.Flags().StringVar(&s.args.ChiefCpu, "chief-cpu", "", "the cpu resource to use for the Chief, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.ChiefCpuLimit, "chief-cpu-limit", "", "the cpu resource limit to use for the Chief, like 1 for 1 core.")
 
 	command.Flags().StringVar(&s.args.ChiefMemory, "ChiefMemory", "", "the memory resource to use for the Chief, like 1Gi.")
-	command.Flags().MarkDeprecated("ChiefMemory", "please use --chief-memory instead")
+	_ = command.Flags().MarkDeprecated("ChiefMemory", "please use --chief-memory instead")
 	command.Flags().StringVar(&s.args.ChiefMemory, "chief-memory", "", "the memory resource to use for the Chief, like 1Gi.")
 	command.Flags().StringVar(&s.args.ChiefMemoryLimit, "chief-memory-limit", "", "the memory liit resource to use for the Chief, like 1Gi.")
 
 	command.Flags().StringVar(&s.args.EvaluatorCpu, "evaluatorCpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
-	command.Flags().MarkDeprecated("evaluatorCpu", "please use --evaluator-cpu instead")
+	_ = command.Flags().MarkDeprecated("evaluatorCpu", "please use --evaluator-cpu instead")
 	command.Flags().StringVar(&s.args.EvaluatorCpu, "evaluator-cpu", "", "the cpu resource to use for the evaluator, like 1 for 1 core.")
 	command.Flags().StringVar(&s.args.EvaluatorCpuLimit, "evaluator-cpu-limit", "", "the cpu resource limit to use for the evaluator, like 1 for 1 core.")
 
 	command.Flags().StringVar(&s.args.EvaluatorMemory, "evaluatorMemory", "", "the memory resource to use for the evaluator, like 1Gi.")
-	command.Flags().MarkDeprecated("evaluatorMemory", "please use --evaluator-memory instead")
+	_ = command.Flags().MarkDeprecated("evaluatorMemory", "please use --evaluator-memory instead")
 	command.Flags().StringVar(&s.args.EvaluatorMemory, "evaluator-memory", "", "the memory resource to use for the evaluator, like 1Gi.")
 	command.Flags().StringVar(&s.args.EvaluatorMemoryLimit, "evaluator-memory-limit", "", "the memory resource limit to use for the evaluator, like 1Gi.")
 
 	command.Flags().IntVar(&s.args.ChiefPort, "chiefPort", 0, "the port of the chief.")
-	command.Flags().MarkDeprecated("chiefPort", "please use --chief-port instead")
+	_ = command.Flags().MarkDeprecated("chiefPort", "please use --chief-port instead")
 	command.Flags().IntVar(&s.args.ChiefPort, "chief-port", 0, "the port of the chief.")
 	command.Flags().StringArrayVar(&workerSelectors, "worker-selector", []string{}, `assigning jobs with "Worker" role to some k8s particular nodes(this option would cover --selector), usage: "--worker-selector=key=value"`)
 	command.Flags().StringArrayVar(&chiefSelectors, "chief-selector", []string{}, `assigning jobs with "Chief" role to some k8s particular nodes(this option would cover --selector), usage: "--chief-selector=key=value"`)
@@ -227,11 +227,6 @@ func (s *SubmitTFJobArgsBuilder) Build() error {
 	if err := s.check(); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (s *SubmitTFJobArgsBuilder) setCommand(args []string) error {
-	s.args.CommonSubmitArgs.Command = strings.Join(args, " ")
 	return nil
 }
 

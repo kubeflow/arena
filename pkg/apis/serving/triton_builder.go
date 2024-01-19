@@ -122,7 +122,7 @@ func (b *TritonServingJobBuilder) Memory(memory string) *TritonServingJobBuilder
 
 // Envs is used to set env of job containers,match option --env
 func (b *TritonServingJobBuilder) Envs(envs map[string]string) *TritonServingJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -168,7 +168,7 @@ func (b *TritonServingJobBuilder) Tolerations(tolerations []string) *TritonServi
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (b *TritonServingJobBuilder) NodeSelectors(selectors map[string]string) *TritonServingJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -180,7 +180,7 @@ func (b *TritonServingJobBuilder) NodeSelectors(selectors map[string]string) *Tr
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *TritonServingJobBuilder) Annotations(annotations map[string]string) *TritonServingJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -192,7 +192,7 @@ func (b *TritonServingJobBuilder) Annotations(annotations map[string]string) *Tr
 
 // Labels is used to add labels for job
 func (b *TritonServingJobBuilder) Labels(labels map[string]string) *TritonServingJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -204,7 +204,7 @@ func (b *TritonServingJobBuilder) Labels(labels map[string]string) *TritonServin
 
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (b *TritonServingJobBuilder) Datas(volumes map[string]string) *TritonServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -216,7 +216,7 @@ func (b *TritonServingJobBuilder) Datas(volumes map[string]string) *TritonServin
 
 // DataSubPathExprs is used to mount k8s pvc subpath to job pods,match option data-subpath-expr
 func (b *TritonServingJobBuilder) DataSubPathExprs(exprs map[string]string) *TritonServingJobBuilder {
-	if exprs != nil && len(exprs) != 0 {
+	if len(exprs) != 0 {
 		s := []string{}
 		for key, value := range exprs {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -228,7 +228,7 @@ func (b *TritonServingJobBuilder) DataSubPathExprs(exprs map[string]string) *Tri
 
 // TempDirs specify the deployment empty dir
 func (b *TritonServingJobBuilder) TempDirs(volumes map[string]string) *TritonServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -240,7 +240,7 @@ func (b *TritonServingJobBuilder) TempDirs(volumes map[string]string) *TritonSer
 
 // EmptyDirSubPathExprs specify the datasource subpath to mount to the pod by expression
 func (b *TritonServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) *TritonServingJobBuilder {
-	if exprs != nil && len(exprs) != 0 {
+	if len(exprs) != 0 {
 		s := []string{}
 		for key, value := range exprs {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -252,7 +252,7 @@ func (b *TritonServingJobBuilder) EmptyDirSubPathExprs(exprs map[string]string) 
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *TritonServingJobBuilder) DataDirs(volumes map[string]string) *TritonServingJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -302,7 +302,7 @@ func (b *TritonServingJobBuilder) AllowMetrics() *TritonServingJobBuilder {
 
 // ConfigFiles is used to mapping config files form local to job containers,match option --config-file
 func (b *TritonServingJobBuilder) ConfigFiles(files map[string]string) *TritonServingJobBuilder {
-	if files != nil && len(files) != 0 {
+	if len(files) != 0 {
 		filesSlice := []string{}
 		for localPath, containerPath := range files {
 			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))

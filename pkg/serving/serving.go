@@ -1,7 +1,6 @@
 package serving
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -33,10 +32,6 @@ const (
 	restfulServingPortName    = "http-serving"
 	istioGatewayHTTPPortName  = "http2"
 	istioGatewayHTTPsPortName = "https"
-)
-
-var (
-	errServingJobNotFound = errors.New("serving job not found")
 )
 
 var processers map[types.ServingJobType]Processer
@@ -153,7 +148,7 @@ func (s *servingJob) IPAddress() string {
 }
 
 func (s *servingJob) Age() time.Duration {
-	return time.Now().Sub(s.deployment.ObjectMeta.CreationTimestamp.Time)
+	return time.Since(s.deployment.ObjectMeta.CreationTimestamp.Time)
 }
 
 func (s *servingJob) StartTime() *metav1.Time {
@@ -275,7 +270,7 @@ func (s *servingJob) Instances() []types.ServingInstance {
 	instances := []types.ServingInstance{}
 	for index, pod := range s.pods {
 		status, totalContainers, restart, readyContainer := utils.DefinePodPhaseStatus(*pod)
-		age := util.ShortHumanDuration(time.Now().Sub(pod.ObjectMeta.CreationTimestamp.Time))
+		age := util.ShortHumanDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
 		gpuCore := utils.GPUCoreCountInPod(pod)
 		gpus := getPodGPUs(pod, gpuMemory, index)

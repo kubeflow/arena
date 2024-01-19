@@ -37,7 +37,10 @@ func main() {
 		defer cpuf.Close()
 
 		runtime.SetCPUProfileRate(getProfileHZ())
-		pprof.StartCPUProfile(cpuf)
+		err = pprof.StartCPUProfile(cpuf)
+		if err != nil {
+			log.Fatal(err)
+		}
 		log.Infof("Dump cpu profile file into /tmp/cpu_profile")
 		defer pprof.StopCPUProfile()
 	}

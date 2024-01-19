@@ -16,35 +16,27 @@ package training
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
+	"strings"
 	"sync"
+	"text/tabwriter"
+	"time"
 
 	log "github.com/sirupsen/logrus"
-
-	"encoding/json"
-	"os"
-	"strings"
-	"text/tabwriter"
+	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-
 	"github.com/kubeflow/arena/pkg/util"
-	yaml "gopkg.in/yaml.v2"
-
-	"time"
-
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-var (
-	errJobNotFoundMessage = "Not found training job %s in namespace %s,please use 'arena submit' to create it."
-	errGetMsg             = "Failed to get the training job %s, but the trainer config is found, please clean it by using 'arena delete %s %v'."
-)
 var getJobTemplate = `
 Name:      	%v
 Status:    	%v
@@ -165,14 +157,14 @@ func PrintTrainingJob(job TrainingJob, format string, showEvents bool, showGPUs 
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
-			fmt.Printf(string(outBytes))
+			fmt.Print(string(outBytes))
 		}
 	case "yaml":
 		outBytes, err := yaml.Marshal(BuildJobInfo(job, showGPUs, services, nodes))
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
-			fmt.Printf(string(outBytes))
+			fmt.Print(string(outBytes))
 		}
 	case "wide", "":
 		printSingleJobHelper(BuildJobInfo(job, showGPUs, services, nodes), job.Resources(), showEvents, showGPUs)
@@ -278,7 +270,7 @@ func printEvents(lines []string, namespace string, resouces []Resource) []string
 			lines = append(lines, fmt.Sprintf("  %v\t%v\t%v\t%v",
 				instanceName,
 				event.Type,
-				util.ShortHumanDuration(time.Now().Sub(event.CreationTimestamp.Time)),
+				util.ShortHumanDuration(time.Since(event.CreationTimestamp.Time)),
 				fmt.Sprintf("[%s] %s", event.Reason, event.Message),
 			))
 		}

@@ -168,7 +168,7 @@ func (s *kserveJob) Uid() string {
 }
 
 func (s *kserveJob) Age() time.Duration {
-	return time.Now().Sub(s.inferenceService.ObjectMeta.CreationTimestamp.Time)
+	return time.Since(s.inferenceService.ObjectMeta.CreationTimestamp.Time)
 }
 
 func (s *kserveJob) StartTime() *metav1.Time {

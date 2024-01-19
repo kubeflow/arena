@@ -70,8 +70,8 @@ func (s *TrafficRouterArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&versions, "version-weight", "v", []string{}, "set the version and weight,format is: version:weight, e.g. --version-weight version1:20 --version-weight version2:40")
 	//command.Flags().StringVar(&s.args.Versions, "versions", "", "Model versions which the traffic will be routed to, e.g. 1,2,3")
 	//command.Flags().StringVar(&s.args.Weights, "weights", "", "Weight percentage values for each model version which the traffic will be routed to,e.g. 70,20,10")
-	command.MarkFlagRequired("name")
-	command.MarkFlagRequired("version-weight")
+	_ = command.MarkFlagRequired("name")
+	_ = command.MarkFlagRequired("version-weight")
 	s.AddArgValue("version-weight", &versions)
 }
 
@@ -100,8 +100,7 @@ func (s *TrafficRouterArgsBuilder) Build() error {
 }
 
 func (s *TrafficRouterArgsBuilder) checkModelName() error {
-	var reg *regexp.Regexp
-	reg = regexp.MustCompile(regexp4serviceName)
+	reg := regexp.MustCompile(regexp4serviceName)
 	matched := reg.MatchString(s.args.ServingName)
 	if !matched {
 		return fmt.Errorf("parameter model name should be numbers, letters, dashes, and underscores ONLY")
@@ -120,7 +119,7 @@ func (s *TrafficRouterArgsBuilder) setVersionWeights() error {
 	exist := map[string]bool{}
 	for _, vw := range *versions {
 		item := strings.Split(vw, ":")
-		if exist[item[0]] == true {
+		if exist[item[0]] {
 			return fmt.Errorf("the version %v has duplicate weight", item[0])
 		}
 		exist[item[0]] = true

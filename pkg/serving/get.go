@@ -92,7 +92,7 @@ func validateJobs(jobs []ServingJob, name string) error {
 	knownJobs := []ServingJob{}
 	unknownJobs := []ServingJob{}
 	for _, s := range jobs {
-		labels := map[string]string{}
+		var labels map[string]string
 		if ksjob, ok := s.(*kserveJob); ok {
 			labels = ksjob.inferenceService.Labels
 		} else {
@@ -200,6 +200,6 @@ func PrintServingJob(job ServingJob, format types.FormatStyle) {
 		strings.Join(ports, ","),
 		strings.Join(lines, "\n"),
 	)
-	fmt.Fprintf(w, output)
+	fmt.Fprint(w, output)
 	w.Flush()
 }

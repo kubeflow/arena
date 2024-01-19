@@ -132,7 +132,7 @@ type GPUTopologyNodeInfo struct {
 	GPUTopology       GPUTopology          `json:"gpuTopology" yaml:"gpuTopology"`
 	CommonGPUNodeInfo `yaml:",inline" json:",inline"`
 	CommonNodeInfo    `yaml:",inline" json:",inline"`
-	Devices           []GPUTopologyNodeDevice `yaml:"devices" yaml:"devices"`
+	Devices           []GPUTopologyNodeDevice `json:"devices" yaml:"devices"`
 }
 
 type GPUTopology struct {

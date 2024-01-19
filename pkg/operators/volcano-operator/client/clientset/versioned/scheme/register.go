@@ -17,11 +17,13 @@ limitations under the License.
 package scheme
 
 import (
-	batchv1alpha1 "github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
-	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+
+	batchv1alpha1 "github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 )
 
 var Scheme = runtime.NewScheme()
@@ -48,6 +50,5 @@ func init() {
 // After this, RawExtensions in Kubernetes types will serialize kube-aggregator types
 // correctly.
 func AddToScheme(scheme *runtime.Scheme) {
-	batchv1alpha1.AddToScheme(scheme)
-
+	utilruntime.Must(batchv1alpha1.AddToScheme(scheme))
 }

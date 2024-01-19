@@ -14,18 +14,15 @@
 package argsbuilder
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 const (
@@ -79,26 +76,26 @@ func (s *TensorflowServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	}
 	command.Flags().IntVar(&s.args.Port, "port", 8500, "the port of tensorflow gRPC listening port")
 	command.Flags().IntVar(&s.args.RestfulPort, "restfulPort", 8501, "the port of tensorflow RESTful listening port")
-	command.Flags().MarkDeprecated("restfulPort", "please use --restful-port instead")
+	_ = command.Flags().MarkDeprecated("restfulPort", "please use --restful-port instead")
 	command.Flags().IntVar(&s.args.RestfulPort, "restful-port", 8501, "the port of tensorflow RESTful listening port")
 
 	command.Flags().StringVar(&s.args.ModelName, "modelName", "", "the model name for serving")
-	command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
+	_ = command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
 	command.Flags().StringVar(&s.args.ModelName, "model-name", "", "the model name for serving, ignored if --model-config-file flag is set")
 
 	command.Flags().StringVar(&s.args.ModelPath, "modelPath", "", "the model path for serving in the container")
-	command.Flags().MarkDeprecated("modelPath", "please use --model-path instead")
+	_ = command.Flags().MarkDeprecated("modelPath", "please use --model-path instead")
 	command.Flags().StringVar(&s.args.ModelPath, "model-path", "", "the model path for serving in the container, ignored if --model-config-file flag is set, otherwise required")
 
 	command.Flags().StringVar(&s.args.ModelConfigFile, "modelConfigFile", "", "corresponding with --model_config_file in tensorflow serving")
-	command.Flags().MarkDeprecated("modelConfigFile", "please use --model-config-file instead")
+	_ = command.Flags().MarkDeprecated("modelConfigFile", "please use --model-config-file instead")
 	command.Flags().StringVar(&s.args.ModelConfigFile, "model-config-file", "", "corresponding with --model_config_file in tensorflow serving")
 
 	command.Flags().StringVar(&s.args.MonitoringConfigFile, "monitoring-config-file", "", "corresponding with --monitoring_config_file in tensorflow serving")
 	command.Flags().StringVar(&s.args.VersionPolicy, "versionPolicy", "", "support latest, latest:N, specific:N, all")
-	command.Flags().MarkDeprecated("versionPolicy", "please use --version-policy instead")
+	_ = command.Flags().MarkDeprecated("versionPolicy", "please use --version-policy instead")
 	command.Flags().StringVar(&s.args.VersionPolicy, "version-policy", "", "support latest, latest:N, specific:N, all")
-	command.Flags().MarkDeprecated("version-policy", "please use --model-config-file instead")
+	_ = command.Flags().MarkDeprecated("version-policy", "please use --model-config-file instead")
 
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
 }
@@ -131,8 +128,7 @@ func (s *TensorflowServingArgsBuilder) validateModelName() error {
 	if s.args.ModelName == "" {
 		return fmt.Errorf("model name cannot be blank")
 	}
-	var reg *regexp.Regexp
-	reg = regexp.MustCompile(regexp4serviceName)
+	reg := regexp.MustCompile(regexp4serviceName)
 	matched := reg.MatchString(s.args.ModelName)
 	if !matched {
 		return fmt.Errorf("model name should be numbers, letters, dashes, and underscores ONLY")
@@ -166,20 +162,6 @@ func (s *TensorflowServingArgsBuilder) preprocess() (err error) {
 		if s.args.ModelPath != "" {
 			log.Infof("modelConfigFile=%s is specified, so --model-path will be ignored", s.args.ModelConfigFile)
 		}
-	}
-	return nil
-}
-
-func (s *TensorflowServingArgsBuilder) checkServiceExists() error {
-	client := config.GetArenaConfiger().GetClientSet()
-	_, err := client.CoreV1().Services(s.args.Namespace).Get(context.TODO(), s.args.Name, metav1.GetOptions{})
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-		s.args.ModelServiceExists = false
-	} else {
-		s.args.ModelServiceExists = true
 	}
 	return nil
 }

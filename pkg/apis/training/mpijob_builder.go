@@ -60,7 +60,7 @@ func (b *MPIJobBuilder) WorkingDir(dir string) *MPIJobBuilder {
 
 // Envs is used to set env of job containers,match option --env
 func (b *MPIJobBuilder) Envs(envs map[string]string) *MPIJobBuilder {
-	if envs != nil && len(envs) != 0 {
+	if len(envs) != 0 {
 		envSlice := []string{}
 		for key, value := range envs {
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
@@ -94,7 +94,7 @@ func (b *MPIJobBuilder) Tolerations(tolerations []string) *MPIJobBuilder {
 
 // ConfigFiles is used to mapping config files form local to job containers,match option --config-file
 func (b *MPIJobBuilder) ConfigFiles(files map[string]string) *MPIJobBuilder {
-	if files != nil && len(files) != 0 {
+	if len(files) != 0 {
 		filesSlice := []string{}
 		for localPath, containerPath := range files {
 			filesSlice = append(filesSlice, fmt.Sprintf("%v:%v", localPath, containerPath))
@@ -106,7 +106,7 @@ func (b *MPIJobBuilder) ConfigFiles(files map[string]string) *MPIJobBuilder {
 
 // NodeSelectors is used to set node selectors for scheduling job,match option --selector
 func (b *MPIJobBuilder) NodeSelectors(selectors map[string]string) *MPIJobBuilder {
-	if selectors != nil && len(selectors) != 0 {
+	if len(selectors) != 0 {
 		selectorsSlice := []string{}
 		for key, value := range selectors {
 			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
@@ -118,7 +118,7 @@ func (b *MPIJobBuilder) NodeSelectors(selectors map[string]string) *MPIJobBuilde
 
 // Annotations is used to add annotations for job pods,match option --annotation
 func (b *MPIJobBuilder) Annotations(annotations map[string]string) *MPIJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -130,7 +130,7 @@ func (b *MPIJobBuilder) Annotations(annotations map[string]string) *MPIJobBuilde
 
 // Labels is used to add labels for job
 func (b *MPIJobBuilder) Labels(labels map[string]string) *MPIJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -142,7 +142,7 @@ func (b *MPIJobBuilder) Labels(labels map[string]string) *MPIJobBuilder {
 
 // Datas is used to mount k8s pvc to job pods,match option --data
 func (b *MPIJobBuilder) Datas(volumes map[string]string) *MPIJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))
@@ -154,7 +154,7 @@ func (b *MPIJobBuilder) Datas(volumes map[string]string) *MPIJobBuilder {
 
 // DataDirs is used to mount host files to job containers,match option --data-dir
 func (b *MPIJobBuilder) DataDirs(volumes map[string]string) *MPIJobBuilder {
-	if volumes != nil && len(volumes) != 0 {
+	if len(volumes) != 0 {
 		s := []string{}
 		for key, value := range volumes {
 			s = append(s, fmt.Sprintf("%v:%v", key, value))

@@ -103,9 +103,8 @@ type ExecOptions struct {
 	ParentCommandName       string
 	EnableSuggestedCmdUsage bool
 
-	Builder          func() *resource.Builder
-	ExecutablePodFn  polymorphichelpers.AttachablePodForObjectFunc
-	restClientGetter genericclioptions.RESTClientGetter
+	Builder         func() *resource.Builder
+	ExecutablePodFn polymorphichelpers.AttachablePodForObjectFunc
 
 	Pod           *corev1.Pod
 	Executor      RemoteExecutor

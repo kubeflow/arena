@@ -22,7 +22,6 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/prometheus"
 	"github.com/kubeflow/arena/pkg/util/kubeclient"
-	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -61,14 +60,6 @@ func getTrainingTypes(name, namespace string) (cms []string, err error) {
 }
 
 /**
-*  check if the training config exist
- */
-func isTrainingConfigExist(name, trainingType, namespace string) bool {
-	configName := fmt.Sprintf("%s-%s", name, trainingType)
-	return kubectl.CheckAppConfigMap(configName, namespace)
-}
-
-/**
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
 func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes []*v1.Node) *types.TrainingJobInfo {
@@ -86,6 +77,9 @@ func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes 
 	instances := []types.TrainingJobInstance{}
 	if showGPUs {
 		jobGPUMetric, err = GetJobGpuMetric(config.GetArenaConfiger().GetClientSet(), job)
+		if err != nil {
+			log.Debugf("get job gpu metric failed, err: %s", err)
+		}
 	}
 	for _, pod := range job.AllPods() {
 		isChief := false

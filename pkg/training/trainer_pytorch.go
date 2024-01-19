@@ -84,17 +84,6 @@ func (pj *PyTorchJob) GetTrainJob() interface{} {
 	return pj.pytorchjob
 }
 
-func checkPyTorchStatus(status commonv1.JobStatus) commonv1.JobConditionType {
-	t := commonv1.JobConditionType("Pending")
-	for _, condition := range status.Conditions {
-		if condition.Status == v1.ConditionTrue {
-			t = condition.Type
-			break
-		}
-	}
-	return t
-}
-
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (pj *PyTorchJob) GetStatus() (status string) {
 	status = "PENDING"
@@ -343,20 +332,6 @@ func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob *pytorchv1.PyTorchJob, item *
 	}
 
 	return isChiefPod
-}
-
-// check Labels: release==pytorchjob.name/app=="pytorchjob", namespace
-func (tt *PyTorchJobTrainer) isPyTorchJob(name, ns string, item *pytorchv1.PyTorchJob) bool {
-	if item.Namespace != ns {
-		return false
-	}
-	if item.Labels["release"] != name {
-		return false
-	}
-	if item.Labels["app"] != string(tt.trainerType) {
-		return false
-	}
-	return true
 }
 
 // Determine whether it is a pod of pytorchjobs submitted by Arena

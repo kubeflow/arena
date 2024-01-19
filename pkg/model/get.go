@@ -91,6 +91,6 @@ func PrintModelJob(job ModelJob, format types.FormatStyle) {
 		jobInfo.Age,
 		strings.Join(lines, "\n"),
 	)
-	fmt.Fprintf(w, output)
+	fmt.Fprint(w, output)
 	w.Flush()
 }

@@ -95,7 +95,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	}
 	command.Flags().StringVar(&s.args.Image, "image", defaultImage, "the docker image name of serving job")
 	command.Flags().StringVar(&s.args.ImagePullPolicy, "imagePullPolicy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
-	command.Flags().MarkDeprecated("imagePullPolicy", "please use --image-pull-policy instead")
+	_ = command.Flags().MarkDeprecated("imagePullPolicy", "please use --image-pull-policy instead")
 	command.Flags().StringVar(&s.args.ImagePullPolicy, "image-pull-policy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
 
 	command.Flags().IntVar(&s.args.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
@@ -111,19 +111,19 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
 
 	command.Flags().BoolVar(&s.args.EnableIstio, "enableIstio", false, "enable Istio for serving or not (disable Istio by default)")
-	command.Flags().MarkDeprecated("enableIstio", "please use --enable-istio instead")
+	_ = command.Flags().MarkDeprecated("enableIstio", "please use --enable-istio instead")
 	command.Flags().BoolVar(&s.args.EnableIstio, "enable-istio", false, "enable Istio for serving or not (disable Istio by default)")
 
 	command.Flags().BoolVar(&s.args.ExposeService, "exposeService", false, "expose service using Istio gateway for external access or not (not expose by default)")
-	command.Flags().MarkDeprecated("exposeService", "please use --expose-service instead")
+	_ = command.Flags().MarkDeprecated("exposeService", "please use --expose-service instead")
 	command.Flags().BoolVar(&s.args.ExposeService, "expose-service", false, "expose service using Istio gateway for external access or not (not expose by default)")
 
 	command.Flags().StringVar(&s.args.Name, "servingName", "", "the serving name")
-	command.Flags().MarkDeprecated("servingName", "please use --name instead")
+	_ = command.Flags().MarkDeprecated("servingName", "please use --name instead")
 	command.Flags().StringVar(&s.args.Name, "name", "", "the serving name")
 
 	command.Flags().StringVar(&s.args.Version, "servingVersion", "", "the serving version")
-	command.Flags().MarkDeprecated("servingVersion", "please use --version instead")
+	_ = command.Flags().MarkDeprecated("servingVersion", "please use --version instead")
 	command.Flags().StringVar(&s.args.Version, "version", "", "the serving version")
 
 	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")
@@ -131,7 +131,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVarP(&datadir, "data-dir", "", []string{}, "specify the trained models datasource on host to mount for serving, like <host_path>:<mount_point_on_job>")
 	command.Flags().StringArrayVarP(&tempDirSubpathExpr, "temp-dir-subpath-expr", "", []string{}, "specify the datasource subpath to mount to the pod by expression, like <empty_dir_name>:<mount_subpath_expr>")
 	command.Flags().StringArrayVarP(&tempDir, "temp-dir", "", []string{}, "specify the deployment empty dir, like <empty_dir_name>:<mount_point_on_pod>")
-	command.MarkFlagRequired("name")
+	_ = command.MarkFlagRequired("name")
 
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `specify the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the labels")
@@ -587,8 +587,7 @@ func (s *ServingArgsBuilder) validateIstioEnablement() error {
 	if !s.args.EnableIstio {
 		return nil
 	}
-	var reg *regexp.Regexp
-	reg = regexp.MustCompile(regexp4serviceName)
+	reg := regexp.MustCompile(regexp4serviceName)
 	matched := reg.MatchString(s.args.Name)
 	if !matched {
 		return fmt.Errorf("--name should be numbers, letters, dashes, and underscores ONLY")

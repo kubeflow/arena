@@ -42,7 +42,7 @@ func (b *TrafficRouterBuilder) Namespace(namespace string) *TrafficRouterBuilder
 
 // VersionWeight is used to set version weight
 func (b *TrafficRouterBuilder) VersionWeight(weights []types.ServingVersionWeight) *TrafficRouterBuilder {
-	if weights != nil && len(weights) != 0 {
+	if len(weights) != 0 {
 		versionWeithts := []string{}
 		for _, v := range weights {
 			versionWeithts = append(versionWeithts, fmt.Sprintf("%v:%v", v.Version, v.Weight))

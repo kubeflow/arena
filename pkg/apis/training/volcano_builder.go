@@ -111,7 +111,7 @@ func (b *VolcanoJobBuilder) TaskPort(port int) *VolcanoJobBuilder {
 }
 
 func (b *VolcanoJobBuilder) Labels(labels map[string]string) *VolcanoJobBuilder {
-	if labels != nil && len(labels) != 0 {
+	if len(labels) != 0 {
 		s := []string{}
 		for key, value := range labels {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
@@ -122,7 +122,7 @@ func (b *VolcanoJobBuilder) Labels(labels map[string]string) *VolcanoJobBuilder 
 }
 
 func (b *VolcanoJobBuilder) Annotations(annotations map[string]string) *VolcanoJobBuilder {
-	if annotations != nil && len(annotations) != 0 {
+	if len(annotations) != 0 {
 		s := []string{}
 		for key, value := range annotations {
 			s = append(s, fmt.Sprintf("%v=%v", key, value))
