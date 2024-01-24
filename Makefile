@@ -140,5 +140,8 @@ ifeq ($(GOLANGCI_LINT),)
 endif
 	golangci-lint run --timeout 5m --go 1.18 ./...
 
+test:
+	go test ./... -coverprofile cover.out
+
 build-dependabot:
 	python3 hack/create_dependabot.py
