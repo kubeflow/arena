@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -82,7 +81,7 @@ func deleteArenaArtifacts(force bool) error {
 }
 
 func parseFields(fileName string) ([]string, error) {
-	contentBytes, err := ioutil.ReadFile(fileName)
+	contentBytes, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %v,reason: %v", fileName, err)
 	}
@@ -168,7 +167,7 @@ func detectManifests(manifestDir *string) (string, error) {
 }
 
 func detectCRDs(fileName string) ([]string, error) {
-	contentBytes, err := ioutil.ReadFile(fileName)
+	contentBytes, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %v,reason: %v", fileName, err)
 	}

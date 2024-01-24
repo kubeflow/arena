@@ -138,7 +138,7 @@ ifeq ($(GOLANGCI_LINT),)
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.53.3
 	$(info golangci-lint has been installed)
 endif
-	golangci-lint run --timeout 5m --go 1.18 ./...
+	golangci-lint run --timeout 5m --go 1.20 ./...
 
 build-dependabot:
 	python3 hack/create_dependabot.py

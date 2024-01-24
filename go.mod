@@ -1,6 +1,6 @@
 module github.com/kubeflow/arena
 
-go 1.18
+go 1.20
 
 require (
 	github.com/docker/docker v20.10.12+incompatible

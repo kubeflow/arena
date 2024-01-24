@@ -504,23 +504,25 @@ Type:     GPUShare
 Address:  192.168.7.183
 
 Instances:
-  NAMESPACE  NAME                                                       GPU_MEM(Requested)  GPU_MEM(Allocated)
-  ---------  ----                                                       ------------------  ------------------
-  default    binpack-0                                                  3                   GPU3->3
-  default    fast-style-transfer-alpha-custom-serving-754c5ff685-vzjmt  5                   GPU3->5
-  default    multi-gpushare-f4rgv                                       8                   GPU0->2,GPU1->2,GPU2->2,GPU3->2
-  default    multi-gpushare-qcsqq                                       8                   GPU0->2,GPU1->2,GPU2->2,GPU3->2
-  default    multi-gpushare-vz6xc                                       8                   GPU0->2,GPU1->2,GPU2->2,GPU3->2
+
+	NAMESPACE  NAME                                                       GPU_MEM(Requested)  GPU_MEM(Allocated)
+	---------  ----                                                       ------------------  ------------------
+	default    binpack-0                                                  3                   GPU3->3
+	default    fast-style-transfer-alpha-custom-serving-754c5ff685-vzjmt  5                   GPU3->5
+	default    multi-gpushare-f4rgv                                       8                   GPU0->2,GPU1->2,GPU2->2,GPU3->2
+	default    multi-gpushare-qcsqq                                       8                   GPU0->2,GPU1->2,GPU2->2,GPU3->2
+	default    multi-gpushare-vz6xc                                       8                   GPU0->2,GPU1->2,GPU2->2,GPU3->2
 
 GPUs:
-  INDEX  MEMORY(Used/Total)  PERCENT
-  -----  ------------------  -------
-  GPU0   6/15(GiB)           40.0%
-  GPU1   6/15(GiB)           40.0%
-  GPU2   6/15(GiB)           40.0%
-  GPU3   14/15(GiB)          93.3%
 
-  Total(Memory/GiB): 60,Allocated(Memory/GiB): 32/60(53.3%),Unhealthy(Memory/GiB): 0/60
+	INDEX  MEMORY(Used/Total)  PERCENT
+	-----  ------------------  -------
+	GPU0   6/15(GiB)           40.0%
+	GPU1   6/15(GiB)           40.0%
+	GPU2   6/15(GiB)           40.0%
+	GPU3   14/15(GiB)          93.3%
+
+	Total(Memory/GiB): 60,Allocated(Memory/GiB): 32/60(53.3%),Unhealthy(Memory/GiB): 0/60
 
 -----------------------------------------------------------------------------------------
 Allocated/Total GPU Memory In Cluster: 32/60(53.3%)

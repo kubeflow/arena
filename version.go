@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//       http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@ package arena
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"runtime"
 
 	"github.com/kubeflow/arena/pkg/util"
@@ -90,7 +90,7 @@ func GetVersion() Version {
 func getChartsInfo() ChartsInfo {
 	chartsFolder := util.GetChartsFolder()
 	charts := []string{}
-	chartFolder, err := ioutil.ReadDir(chartsFolder)
+	chartFolder, err := os.ReadDir(chartsFolder)
 	if err != nil {
 		fmt.Println(err)
 	} else {

@@ -12,10 +12,11 @@ import (
 
 // ArenaClient is a client which includes operations:
 // 1.manage training jobs,like:
-//   * submit a training job
-//   * get a training job information
-//   * get job logs
-//   * delete a job
+//   - submit a training job
+//   - get a training job information
+//   - get job logs
+//   - delete a job
+//
 // TODO: 2.manage serving job
 // TODO: 3.manage node
 // it serves for commands and apis

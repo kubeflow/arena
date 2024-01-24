@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -81,12 +81,12 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 	data := map[string]string{
 		chartName: chartVersion,
 	}
-	content, err := ioutil.ReadFile(configFileName)
+	content, err := os.ReadFile(configFileName)
 	if err != nil {
 		return err
 	}
 	data["values"] = string(content)
-	content, err = ioutil.ReadFile(appInfoFileName)
+	content, err = os.ReadFile(appInfoFileName)
 	if err != nil {
 		return err
 	}

@@ -16,7 +16,6 @@ package helm
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,7 +29,7 @@ import (
  */
 func GenerateValueFile(values interface{}) (valueFileName string, err error) {
 	// 1. generate the template file
-	valueFile, err := ioutil.TempFile(os.TempDir(), "values")
+	valueFile, err := os.CreateTemp(os.TempDir(), "values")
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", valueFile.Name(), err)
 		return "", err
@@ -51,7 +50,7 @@ func GenerateValueFile(values interface{}) (valueFileName string, err error) {
  */
 func GenerateHelmTemplate(name string, namespace string, valueFileName string, chartName string, options ...string) (templateFileName string, err error) {
 	tempName := fmt.Sprintf("%s.yaml", name)
-	templateFile, err := ioutil.TempFile("", tempName)
+	templateFile, err := os.CreateTemp("", tempName)
 	if err != nil {
 		return templateFileName, err
 	}

@@ -396,34 +396,39 @@ UsedGPUs:      0
 UnhealthyGPUs: 0
 
 Instances:
-  NAMESPACE  NAME                               GPU(Requested)  GPU(Allocated)
-  ---------  ----                               --------------  --------------
-  default    nginx-deployment-6687789574-6mn2z  2
-  default    nginx-deployment-6687789574-wd7vf  2
+
+	NAMESPACE  NAME                               GPU(Requested)  GPU(Allocated)
+	---------  ----                               --------------  --------------
+	default    nginx-deployment-6687789574-6mn2z  2
+	default    nginx-deployment-6687789574-wd7vf  2
 
 GPUs:
-  INDEX  STATUS  HEALTHY
-  ----   ------  -------
-  GPU0   idle    true
-  GPU1   idle    true
-  GPU2   idle    true
-  GPU3   idle    true
 
-  Total: 4,Allocated: 0/4,Unhealthy: 0/4
+	INDEX  STATUS  HEALTHY
+	----   ------  -------
+	GPU0   idle    true
+	GPU1   idle    true
+	GPU2   idle    true
+	GPU3   idle    true
+
+	Total: 4,Allocated: 0/4,Unhealthy: 0/4
 
 LinkTypeMatrix:
-        GPU0  GPU1  GPU2  GPU3
-  GPU0  N-A   NV2   NV1   NV2
-  GPU1  NV2   N-A   NV2   NV1
-  GPU2  NV1   NV2   N-A   NV1
-  GPU3  NV2   NV1   NV1   N-A
+
+	      GPU0  GPU1  GPU2  GPU3
+	GPU0  N-A   NV2   NV1   NV2
+	GPU1  NV2   N-A   NV2   NV1
+	GPU2  NV1   NV2   N-A   NV1
+	GPU3  NV2   NV1   NV1   N-A
 
 BandwidthMatrix:
-        GPU0    GPU1    GPU2    GPU3
-  GPU0  738.42  96.44   48.37   96.19
-  GPU1  96.26   744.05  96.23   48.36
-  GPU2  48.37   96.24   744.76  48.37
-  GPU3  96.23   48.37   48.37   744.76
+
+	      GPU0    GPU1    GPU2    GPU3
+	GPU0  738.42  96.44   48.37   96.19
+	GPU1  96.26   744.05  96.23   48.36
+	GPU2  48.37   96.24   744.76  48.37
+	GPU3  96.23   48.37   48.37   744.76
+
 -----------------------------------------------------------------------------------------
 Allocated/Total GPUs In Cluster: 4/4(100.0%)
 

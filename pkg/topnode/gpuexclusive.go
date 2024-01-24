@@ -332,9 +332,11 @@ UsedGPUs:      1/1(100.0%)
 UnhealthyGPUs: 0/1
 
 Instances:
-  NAMESPACE  NAME                          GPU(Requested)
-  ---------  ----                          --------------
-  default    tf-standalone-test-1-chief-0  1
+
+	NAMESPACE  NAME                          GPU(Requested)
+	---------  ----                          --------------
+	default    tf-standalone-test-1-chief-0  1
+
 -----------------------------------------------------------------------------------------
 Allocated/Total GPUs In Cluster: 1/1(100.0%)
 
