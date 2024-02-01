@@ -49,8 +49,6 @@ spec:
         {{- if .Values.modelFormat.version }}
         version: {{ .Values.modelFormat.version | quote }}
         {{- end }}
-      {{- end }}
-      {{- if .Values.storageUri }}
       {{- if .Values.runtime }}
       runtime: {{ .Values.runtime }}
       {{- end }}
@@ -95,6 +93,16 @@ spec:
           {{- if .Values.memory }}
           memory: {{ .Values.memory }}
           {{- end }}
+          {{- if gt (int $gpuCount) 0}}
+          nvidia.com/gpu: {{ .Values.gpuCount }}
+          {{- end }}
+          {{- if gt (int $gpuMemory) 0}}
+          aliyun.com/gpu-mem: {{ .Values.gpuMemory }}
+          {{- end }}
+          {{- if gt (int $gpuCore) 0 }}
+          aliyun.com/gpu-core.percentage: {{ .Values.gpuCore }}
+          {{- end }}
+        requests:
           {{- if gt (int $gpuCount) 0}}
           nvidia.com/gpu: {{ .Values.gpuCount }}
           {{- end }}
@@ -162,6 +170,16 @@ spec:
             protocol: TCP
           {{- end }}
         resources:
+          requests:
+            {{- if gt (int $gpuCount) 0}}
+            nvidia.com/gpu: {{ .Values.gpuCount }}
+            {{- end }}
+            {{- if gt (int $gpuMemory) 0}}
+            aliyun.com/gpu-mem: {{ .Values.gpuMemory }}
+            {{- end }}
+            {{- if gt (int $gpuCore) 0 }}
+            aliyun.com/gpu-core.percentage: {{ .Values.gpuCore }}
+            {{- end }}
           limits:
             {{- if .Values.cpu }}
             cpu: {{ .Values.cpu }}
