@@ -7,55 +7,53 @@ nav:
   - Home: index.md
   - Installation: installation/index.md
   - User Guide:
-    - Training Job Guide: training/index.md
-    - Serving Job Guide: serving/index.md
-    - Display Resource Usage Guide: top/index.md
-    - Supports Multiple Users Guide: multiple-users.md
-    - Isolate Users In Namespace: isolate-users-in-namespace.md
+      - Training Job Guide: training/index.md
+      - Serving Job Guide: serving/index.md
+      - Display Resource Usage Guide: top/index.md
+      - Supports Multiple Users Guide: multiple-users.md
+      - Isolate Users In Namespace: isolate-users-in-namespace.md
   - SDK:
-    - Golang: sdk/go/index.md
+      - Golang: sdk/go/index.md
   - Release Notes:
-    - v0.9.11: releases/v0.9.11.md
-    - v0.9.10: releases/v0.9.10.md
-    - v0.9.9: releases/v0.9.9.md
-    - v0.9.8: releases/v0.9.8.md
-    - v0.9.7: releases/v0.9.7.md
-    - v0.9.6: releases/v0.9.6.md
-    - v0.9.5: releases/v0.9.5.md
-    - v0.9.4: releases/v0.9.4.md
-    - v0.9.3: releases/v0.9.3.md
-    - v0.9.2: releases/v0.9.2.md
-    - v0.9.1: releases/v0.9.1.md
-    - v0.9.0: releases/v0.9.0.md
-    - v0.8.9: releases/v0.8.9.md
-    - v0.8.8: releases/v0.8.8.md
-    - v0.8.7: releases/v0.8.7.md
-    - v0.8.6: releases/v0.8.6.md
-    - v0.8.5: releases/v0.8.5.md
-    - v0.8.0: releases/v0.8.0.md
-    - v0.7.0: releases/v0.7.0.md
-    - v0.4.0: releases/v0.4.0.md
-    - v0.3.0: releases/v0.3.0.md
-    - v0.2.0: releases/v0.2.0.md
-    - v0.1.0: releases/v0.1.0.md
+      - v0.9.11: releases/v0.9.11.md
+      - v0.9.10: releases/v0.9.10.md
+      - v0.9.9: releases/v0.9.9.md
+      - v0.9.8: releases/v0.9.8.md
+      - v0.9.7: releases/v0.9.7.md
+      - v0.9.6: releases/v0.9.6.md
+      - v0.9.5: releases/v0.9.5.md
+      - v0.9.4: releases/v0.9.4.md
+      - v0.9.3: releases/v0.9.3.md
+      - v0.9.2: releases/v0.9.2.md
+      - v0.9.1: releases/v0.9.1.md
+      - v0.9.0: releases/v0.9.0.md
+      - v0.8.9: releases/v0.8.9.md
+      - v0.8.8: releases/v0.8.8.md
+      - v0.8.7: releases/v0.8.7.md
+      - v0.8.6: releases/v0.8.6.md
+      - v0.8.5: releases/v0.8.5.md
+      - v0.8.0: releases/v0.8.0.md
+      - v0.7.0: releases/v0.7.0.md
+      - v0.4.0: releases/v0.4.0.md
+      - v0.3.0: releases/v0.3.0.md
+      - v0.2.0: releases/v0.2.0.md
+      - v0.1.0: releases/v0.1.0.md
   - FAQ: faq/index.md
-  - About: 
-    - Adopter: about/ADOPTERS.md 
+  - About:
+      - Adopter: about/ADOPTERS.md
 
-theme: 
+theme:
   name: material
-  #name: mkdocs
-  #name: readthedocs
   highlightjs: true
   hljs_languages:
     - yaml
     - django
 
 markdown_extensions:
-    - admonition
+  - admonition
 
-copyright: Copyright &copy; 2021 <a href="https://github.com/happy2048">Junfeng Yang</a>, Maintained by the Arena Team.
+copyright: Copyright &copy 2024. Maintained by the Arena Team.
 
 plugins:
-    - search
+  - search
 
