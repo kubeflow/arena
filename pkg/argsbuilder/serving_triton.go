@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	DefaultTritonServingImage = "nvcr.io/nvidia/tritonserver:20.12-py3"
+	DefaultTritonServingImage = "nvcr.io/nvidia/tritonserver:24.01-py3"
 )
 
 type TritonServingArgsBuilder struct {
