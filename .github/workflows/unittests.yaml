@@ -1,0 +1,31 @@
+name: Go Unit Test
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    name: Unit-Test
+    runs-on: ubuntu-latest
+    env:
+      GOPATH: ${{ github.workspace }}/go
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/arena
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          path: ${{ env.GOPATH }}/src/github.com/kubeflow/arena
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/arena/go.mod
+
+      - name: Run Go test
+        run: |
+          make test
+
