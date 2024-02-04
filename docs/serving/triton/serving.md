@@ -9,7 +9,7 @@ $ arena serve triton \
  --name=test-triton \
  --namespace=triton \
  --gpus=1 \
- --image=nvcr.io/nvidia/tritonserver:20.12-py3 \
+ --image=nvcr.io/nvidia/tritonserver:24.01-py3 \
  --data=triton-pvc:/mnt/models \
  --model-repository=/mnt/models/ai/triton/model_repository
  
