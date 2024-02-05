@@ -30,3 +30,20 @@ Create chart name and version as used by the chart label.
 {{- define "nvidia-triton-server.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+Return tritonserver image
+*/}}
+{{- define "triton.image" -}}
+{{- if .Values.image }}
+{{- .Values.image -}}
+{{- else }}
+{{- if eq .Values.backend "vllm" }}
+{{- "nvcr.io/nvidia/tritonserver:24.01-vllm-python-py3" -}}
+{{- else if eq .Values.backend "trt-llm" }}
+{{- "nvcr.io/nvidia/tritonserver:24.01-trtllm-python-py3" -}}
+{{- else }}
+{{- "nvcr.io/nvidia/tritonserver:24.01-py3" -}}
+{{- end }}
+{{- end }}
+{{- end -}}

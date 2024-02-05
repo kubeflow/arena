@@ -20,7 +20,6 @@ func NewTritonServingJobBuilder() *TritonServingJobBuilder {
 		GrpcPort:    8001,
 		MetricsPort: 8002,
 		CommonServingArgs: types.CommonServingArgs{
-			Image:           argsbuilder.DefaultTritonServingImage,
 			ImagePullPolicy: "IfNotPresent",
 			Replicas:        1,
 			Namespace:       "default",

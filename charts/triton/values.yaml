@@ -11,8 +11,6 @@ serviceType: ClusterIP
 servingName:
 servingVersion:
 
-image: "nvcr.io/nvidia/tritonserver:24.01-py3"
-
 imagePullPolicy: "IfNotPresent"
 
 cpu: 1.0
