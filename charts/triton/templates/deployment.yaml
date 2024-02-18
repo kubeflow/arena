@@ -85,9 +85,7 @@ spec:
       {{- end }}
       containers:
         - name: tritonserver
-          {{- if .Values.image }}
-          image: "{{ .Values.image }}"
-          {{- end }}
+          image: {{ include "triton.image" . }}
           {{- if .Values.imagePullPolicy }}
           imagePullPolicy: "{{ .Values.imagePullPolicy }}"
           {{- end }}

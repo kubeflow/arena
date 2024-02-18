@@ -253,6 +253,7 @@ type SeldonServingArgs struct {
 }
 
 type TritonServingArgs struct {
+	Backend           string   `yaml:"backend"`         // --backend
 	ModelRepository   string   `yaml:"modelRepository"` // --model-repository
 	MetricsPort       int      `yaml:"metricsPort"`     // --metrics-port
 	HttpPort          int      `yaml:"httpPort"`        // --http-port

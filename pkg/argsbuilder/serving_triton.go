@@ -23,10 +23,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	DefaultTritonServingImage = "nvcr.io/nvidia/tritonserver:24.01-py3"
-)
-
 type TritonServingArgsBuilder struct {
 	args        *types.TritonServingArgs
 	argValues   map[string]interface{}
@@ -43,7 +39,6 @@ func NewTritonServingArgsBuilder(args *types.TritonServingArgs) ArgsBuilder {
 	s.AddSubBuilder(
 		NewServingArgsBuilder(&s.args.CommonServingArgs),
 	)
-	s.AddArgValue("default-image", DefaultTritonServingImage)
 	return s
 }
 
@@ -72,6 +67,7 @@ func (s *TritonServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 	var loadModels []string
+	command.Flags().StringVar(&s.args.Backend, "backend", "", "the backend type of triton server. Valid values: [vllm|trt-llm]")
 	command.Flags().StringVar(&s.args.ModelRepository, "model-repository", "", "the path of triton model path")
 	command.Flags().IntVar(&s.args.HttpPort, "http-port", 8000, "the port of http serving server")
 	command.Flags().IntVar(&s.args.GrpcPort, "grpc-port", 8001, "the port of grpc serving server")
@@ -112,14 +108,14 @@ func (s *TritonServingArgsBuilder) Build() error {
 }
 
 func (s *TritonServingArgsBuilder) validate() (err error) {
-	if s.args.Image == "" {
-		return fmt.Errorf("image must be specified")
-	}
-	/*
+	if s.args.Backend != "" {
+		if s.args.Backend != "vllm" && s.args.Backend != "trt-llm" {
+			return fmt.Errorf("backend %s is Invalid. Triton backend only supports vllm or trt-llm", s.args.Backend)
+		}
 		if s.args.GPUCount == 0 {
 			return fmt.Errorf("--gpus must be specific at least 1 GPU")
 		}
-	*/
+	}
 	return nil
 }
 
