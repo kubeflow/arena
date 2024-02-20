@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -59,7 +58,7 @@ func SaveAppInfo(fileName, namespace string) (configFileName string, err error) 
 	}
 
 	// 1. generate the config file
-	configFile, err := ioutil.TempFile("", "config")
+	configFile, err := os.CreateTemp("", "config")
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", configFile.Name(), err)
 		return "", err
@@ -123,7 +122,7 @@ func UninstallAppsWithAppInfoFile(appInfoFile, namespace string) error {
 		return err
 	}
 
-	data, err := ioutil.ReadFile(appInfoFile)
+	data, err := os.ReadFile(appInfoFile)
 	if err != nil {
 		return err
 	}
@@ -276,7 +275,7 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 		return "", err
 	}
 
-	file, err := ioutil.TempFile(os.TempDir(), name)
+	file, err := os.CreateTemp(os.TempDir(), name)
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", file.Name(), err)
 		return fileName, err
@@ -374,7 +373,7 @@ func UpdateInferenceService(inferenceService *kservev1beta1.InferenceService) er
 
 // PatchOwnerReferenceWithAppInfoFile patch tfjob / pytorchjob ownerReference
 func PatchOwnerReferenceWithAppInfoFile(name, trainingType, appInfoFile, namespace string) error {
-	data, err := ioutil.ReadFile(appInfoFile)
+	data, err := os.ReadFile(appInfoFile)
 	if err != nil {
 		return err
 	}

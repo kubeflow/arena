@@ -54,28 +54,29 @@ func (sj *SparkJob) GetTrainJob() interface{} {
 }
 
 /*
-				spark job driver state
-	-------------------------------------------------------
-	NewState              ApplicationStateType = ""
-	SubmittedState        ApplicationStateType = "SUBMITTED"
-	RunningState          ApplicationStateType = "RUNNING"
-	CompletedState        ApplicationStateType = "COMPLETED"
-	FailedState           ApplicationStateType = "FAILED"
-	FailedSubmissionState ApplicationStateType = "SUBMISSION_FAILED"
-	PendingRerunState     ApplicationStateType = "PENDING_RERUN"
-	InvalidatingState     ApplicationStateType = "INVALIDATING"
-	SucceedingState       ApplicationStateType = "SUCCEEDING"
-	FailingState          ApplicationStateType = "FAILING"
-	UnknownState          ApplicationStateType = "UNKNOWN"
+	spark job driver state
 
+-------------------------------------------------------
+NewState              ApplicationStateType = ""
+SubmittedState        ApplicationStateType = "SUBMITTED"
+RunningState          ApplicationStateType = "RUNNING"
+CompletedState        ApplicationStateType = "COMPLETED"
+FailedState           ApplicationStateType = "FAILED"
+FailedSubmissionState ApplicationStateType = "SUBMISSION_FAILED"
+PendingRerunState     ApplicationStateType = "PENDING_RERUN"
+InvalidatingState     ApplicationStateType = "INVALIDATING"
+SucceedingState       ApplicationStateType = "SUCCEEDING"
+FailingState          ApplicationStateType = "FAILING"
+UnknownState          ApplicationStateType = "UNKNOWN"
 
-				spark job executor state
-	-------------------------------------------------------
-	ExecutorPendingState   ExecutorState = "PENDING"
-	ExecutorRunningState   ExecutorState = "RUNNING"
-	ExecutorCompletedState ExecutorState = "COMPLETED"
-	ExecutorFailedState    ExecutorState = "FAILED"
-	ExecutorUnknownState   ExecutorState = "UNKNOWN"
+	spark job executor state
+
+-------------------------------------------------------
+ExecutorPendingState   ExecutorState = "PENDING"
+ExecutorRunningState   ExecutorState = "RUNNING"
+ExecutorCompletedState ExecutorState = "COMPLETED"
+ExecutorFailedState    ExecutorState = "FAILED"
+ExecutorUnknownState   ExecutorState = "UNKNOWN"
 */
 func (sj *SparkJob) GetStatus() (status string) {
 

@@ -3,7 +3,6 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"strings"
@@ -234,7 +233,7 @@ func DataUnitTransfer(from string, to string, value float64) float64 {
 }
 
 func ParseK8sObjectsFromYamlFile(filename string) ([]types.K8sObject, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

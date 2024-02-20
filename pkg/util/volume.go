@@ -75,8 +75,8 @@ func validateAbsolute(p string) error {
 
 // ValidateMountDestination validates the destination.
 // Currently, we have only two obvious rule for validation:
-//  - path must not be "/"
-//  - path must be absolute
+//   - path must not be "/"
+//   - path must be absolute
 func validateMountDestination(dest string) error {
 	if err := validateNotRoot(dest); err != nil {
 		return err

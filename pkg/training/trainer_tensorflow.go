@@ -127,7 +127,7 @@ func (tj *TensorFlowJob) Age() time.Duration {
 	return metav1.Now().Sub(job.Status.StartTime.Time)
 }
 
-//  Duration returns the duration of tfjob
+// Duration returns the duration of tfjob
 func (tj *TensorFlowJob) Duration() time.Duration {
 	job := tj.tfjob
 	if job.Status.StartTime == nil || job.Status.StartTime.IsZero() {

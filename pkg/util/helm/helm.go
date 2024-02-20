@@ -16,7 +16,6 @@ package helm
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,7 +37,7 @@ func InstallRelease(name string, namespace string, values interface{}, chartName
 	}
 
 	// 1. generate the template file
-	valueFile, err := ioutil.TempFile(os.TempDir(), "values")
+	valueFile, err := os.CreateTemp(os.TempDir(), "values")
 	if err != nil {
 		log.Errorf("Failed to create tmp file %v due to %v", valueFile.Name(), err)
 		return err
@@ -53,7 +52,7 @@ func InstallRelease(name string, namespace string, values interface{}, chartName
 		return err
 	}
 
-	// 3. check if the chart file exists, if it's it's unix path, then check if it's exist
+	// 3. check if the chart file exists, if it's unix path, then check if it's exist
 	if strings.HasPrefix(chartName, "/") {
 		if _, err = os.Stat(chartName); os.IsNotExist(err) {
 			// TODO: the chart will be put inside the binary in future

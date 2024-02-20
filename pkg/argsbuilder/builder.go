@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//  ArgsBuilder
+// ArgsBuilder
 type ArgsBuilder interface {
 	AddSubBuilder(b ...ArgsBuilder) ArgsBuilder
 	PreBuild() error

@@ -39,7 +39,7 @@ func (t *NodeClient) Details(nodeNames []string, nodeType types.NodeType, showMe
 	return topnode.ListNodeDetails(nodeNames, nodeType, showMetric)
 }
 
-//  ListAndPrintNodes is used to display nodes informations
+// ListAndPrintNodes is used to display nodes informations
 func (t *NodeClient) ListAndPrintNodes(nodeNames []string, nodeType types.NodeType, format types.FormatStyle, details bool, notStop bool, showMetric bool) error {
 	if format == types.UnknownFormat {
 		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")

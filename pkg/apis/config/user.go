@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	authenticationapi "k8s.io/api/authentication/v1"
 	authorizationv1 "k8s.io/api/authorization/v1"
@@ -29,7 +29,7 @@ func getUserName(namespace string, clientConfig clientcmd.ClientConfig, restConf
 	var token string
 	if tc.HasTokenAuth() {
 		if restConfig.BearerTokenFile != "" {
-			tokenContent, err := ioutil.ReadFile(restConfig.BearerTokenFile)
+			tokenContent, err := os.ReadFile(restConfig.BearerTokenFile)
 			if err != nil {
 				return nil, err
 			}
