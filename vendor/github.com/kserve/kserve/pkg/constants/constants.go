@@ -31,12 +31,13 @@ import (
 
 // KServe Constants
 var (
-	KServeName                     = "kserve"
-	KServeAPIGroupName             = "serving.kserve.io"
-	KnativeAutoscalingAPIGroupName = "autoscaling.knative.dev"
-	KnativeServingAPIGroupName     = "serving.knative.dev"
-	KServeNamespace                = getEnvOrDefault("POD_NAMESPACE", "kserve")
-	KServeDefaultVersion           = "v0.5.0"
+	KServeName                       = "kserve"
+	KServeAPIGroupName               = "serving.kserve.io"
+	KnativeAutoscalingAPIGroupName   = "autoscaling.knative.dev"
+	KnativeServingAPIGroupNamePrefix = "serving.knative"
+	KnativeServingAPIGroupName       = KnativeServingAPIGroupNamePrefix + ".dev"
+	KServeNamespace                  = getEnvOrDefault("POD_NAMESPACE", "kserve")
+	KServeDefaultVersion             = "v0.5.0"
 )
 
 // InferenceService Constants
@@ -50,6 +51,7 @@ var (
 // InferenceGraph Constants
 const (
 	RouterHeadersPropagateEnvVar = "PROPAGATE_HEADERS"
+	InferenceGraphLabel          = "serving.kserve.io/inferencegraph"
 )
 
 // TrainedModel Constants
@@ -82,6 +84,7 @@ var (
 	MinScaleAnnotationKey                       = KnativeAutoscalingAPIGroupName + "/min-scale"
 	MaxScaleAnnotationKey                       = KnativeAutoscalingAPIGroupName + "/max-scale"
 	RollOutDurationAnnotationKey                = KnativeServingAPIGroupName + "/rollout-duration"
+	KnativeOpenshiftEnablePassthroughKey        = "serving.knative.openshift.io/enablePassthrough"
 	EnableMetricAggregation                     = KServeAPIGroupName + "/enable-metric-aggregation"
 	SetPrometheusAnnotation                     = KServeAPIGroupName + "/enable-prometheus-scraping"
 	KserveContainerPrometheusPortKey            = "prometheus.kserve.io/port"
@@ -90,7 +93,7 @@ var (
 	PrometheusPathAnnotationKey                 = "prometheus.io/path"
 	DefaultPrometheusPath                       = "/metrics"
 	QueueProxyAggregatePrometheusMetricsPort    = "9088"
-	DefaultPodPrometheusPort                    = "9090"
+	DefaultPodPrometheusPort                    = "9091"
 )
 
 // InferenceService Internal Annotations
@@ -115,6 +118,13 @@ var (
 	PredictorProtocolAnnotationKey                   = InferenceServiceInternalAnnotationsPrefix + "/predictor-protocol"
 )
 
+// kserve networking constants
+const (
+	NetworkVisibility      = "networking.kserve.io/visibility"
+	ClusterLocalVisibility = "cluster-local"
+	ClusterLocalDomain     = "svc.cluster.local"
+)
+
 // StorageSpec Constants
 var (
 	DefaultStorageSpecSecret     = "storage-config"
@@ -123,8 +133,9 @@ var (
 
 // Controller Constants
 var (
-	ControllerLabelName = KServeName + "-controller-manager"
-	DefaultMinReplicas  = 1
+	ControllerLabelName          = KServeName + "-controller-manager"
+	DefaultMinReplicas           = 1
+	IstioSidecarUIDAnnotationKey = KServeAPIGroupName + "/storage-initializer-uid"
 )
 
 type AutoscalerClassType string
@@ -180,7 +191,8 @@ var (
 
 // Webhook Constants
 var (
-	PodMutatorWebhookName = KServeName + "-pod-mutator-webhook"
+	PodMutatorWebhookName              = KServeName + "-pod-mutator-webhook"
+	ServingRuntimeValidatorWebhookName = KServeName + "-servingRuntime-validator-webhook"
 )
 
 // GPU Constants
@@ -230,11 +242,12 @@ const (
 
 // InferenceService protocol enums
 const (
-	ProtocolV1      InferenceServiceProtocol = "v1"
-	ProtocolV2      InferenceServiceProtocol = "v2"
-	ProtocolGRPCV1  InferenceServiceProtocol = "grpc-v1"
-	ProtocolGRPCV2  InferenceServiceProtocol = "grpc-v2"
-	ProtocolUnknown InferenceServiceProtocol = ""
+	ProtocolV1         InferenceServiceProtocol = "v1"
+	ProtocolV2         InferenceServiceProtocol = "v2"
+	ProtocolGRPCV1     InferenceServiceProtocol = "grpc-v1"
+	ProtocolGRPCV2     InferenceServiceProtocol = "grpc-v2"
+	ProtocolUnknown    InferenceServiceProtocol = ""
+	ProtocolVersionENV                          = "PROTOCOL_VERSION"
 )
 
 // InferenceService Endpoint Ports
@@ -278,6 +291,11 @@ const (
 const (
 	InferenceServiceContainerName   = "kserve-container"
 	StorageInitializerContainerName = "storage-initializer"
+)
+
+// Transformer container name in collocation
+const (
+	TransformerContainerName = "transformer-container"
 )
 
 // DefaultModelLocalMountPath is where models will be mounted by the storage-initializer
@@ -429,6 +447,10 @@ func DefaultPredictorServiceName(name string) string {
 	return name + "-" + string(Predictor) + "-" + InferenceServiceDefault
 }
 
+func PredictorServiceName(name string) string {
+	return name + "-" + string(Predictor)
+}
+
 func CanaryPredictorServiceName(name string) string {
 	return name + "-" + string(Predictor) + "-" + InferenceServiceCanary
 }
@@ -437,12 +459,20 @@ func DefaultExplainerServiceName(name string) string {
 	return name + "-" + string(Explainer) + "-" + InferenceServiceDefault
 }
 
+func ExplainerServiceName(name string) string {
+	return name + "-" + string(Explainer)
+}
+
 func CanaryExplainerServiceName(name string) string {
 	return name + "-" + string(Explainer) + "-" + InferenceServiceCanary
 }
 
 func DefaultTransformerServiceName(name string) string {
 	return name + "-" + string(Transformer) + "-" + InferenceServiceDefault
+}
+
+func TransformerServiceName(name string) string {
+	return name + "-" + string(Transformer)
 }
 
 func CanaryTransformerServiceName(name string) string {

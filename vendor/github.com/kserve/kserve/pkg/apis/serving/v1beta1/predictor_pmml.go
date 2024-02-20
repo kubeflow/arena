@@ -37,7 +37,6 @@ var (
 func (p *PMMLSpec) Validate() error {
 	return utils.FirstNonNilError([]error{
 		ValidateMaxArgumentWorkers(p.Container.Args, 1),
-		validateStorageURI(p.GetStorageUri()),
 		validateStorageSpec(p.GetStorageSpec(), p.GetStorageUri()),
 	})
 }
@@ -48,10 +47,13 @@ func (p *PMMLSpec) Default(config *InferenceServicesConfig) {
 	setResourceRequirementDefaults(&p.Resources)
 }
 
-func (p *PMMLSpec) GetContainer(metadata metav1.ObjectMeta, extensions *ComponentExtensionSpec, config *InferenceServicesConfig) *v1.Container {
+func (p *PMMLSpec) GetContainer(metadata metav1.ObjectMeta, extensions *ComponentExtensionSpec, config *InferenceServicesConfig, predictorHost ...string) *v1.Container {
 	return &p.Container
 }
 
 func (p *PMMLSpec) GetProtocol() constants.InferenceServiceProtocol {
+	if p.ProtocolVersion != nil {
+		return *p.ProtocolVersion
+	}
 	return constants.ProtocolV1
 }
