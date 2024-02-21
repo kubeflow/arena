@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
@@ -45,6 +46,10 @@ type InferenceGraphSpec struct {
 	// Map of InferenceGraph router nodes
 	// Each node defines the router which can be different routing types
 	Nodes map[string]InferenceRouter `json:"nodes"`
+	// +optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// +optional
+	Affinity *corev1.Affinity `json:"affinity,omitempty" protobuf:"bytes,18,opt,name=affinity"`
 }
 
 // InferenceRouterType constant for inference routing types
@@ -225,6 +230,20 @@ type InferenceTarget struct {
 	ServiceURL string `json:"serviceUrl,omitempty"`
 }
 
+// InferenceStepDependencyType constant for inference step dependency
+// +k8s:openapi-gen=true
+// +kubebuilder:validation:Enum=Soft;Hard
+type InferenceStepDependencyType string
+
+// StepDependency Enum
+const (
+	// Soft
+	Soft InferenceStepDependencyType = "Soft"
+
+	// Hard
+	Hard InferenceStepDependencyType = "Hard"
+)
+
 // InferenceStep defines the inference target of the current step with condition, weights and data.
 // +k8s:openapi-gen=true
 type InferenceStep struct {
@@ -249,6 +268,10 @@ type InferenceStep struct {
 	// routing based on the condition
 	// +optional
 	Condition string `json:"condition,omitempty"`
+
+	// to decide whether a step is a hard or a soft dependency in the Inference Graph
+	// +optional
+	Dependency InferenceStepDependencyType `json:"dependency,omitempty"`
 }
 
 // InferenceGraphStatus defines the InferenceGraph conditions and status

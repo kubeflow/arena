@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KServe Authors.
+Copyright 2023 The KServe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,8 +33,7 @@ type Interface interface {
 	ServingV1beta1() servingv1beta1.ServingV1beta1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	servingV1beta1 *servingv1beta1.ServingV1beta1Client

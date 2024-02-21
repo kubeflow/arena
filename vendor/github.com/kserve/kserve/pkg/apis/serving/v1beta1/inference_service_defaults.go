@@ -145,6 +145,14 @@ func (isvc *InferenceService) setPredictorModelDefaults() {
 	case isvc.Spec.Predictor.Paddle != nil:
 		isvc.assignPaddleRuntime()
 	}
+
+	if isvc.Spec.Predictor.Model != nil && isvc.Spec.Predictor.Model.ProtocolVersion == nil {
+		if isvc.Spec.Predictor.Model.ModelFormat.Name == constants.SupportedModelTriton {
+			// set 'v2' as default protocol version for triton server
+			protocolV2 := constants.ProtocolV2
+			isvc.Spec.Predictor.Model.ProtocolVersion = &protocolV2
+		}
+	}
 }
 
 func (isvc *InferenceService) assignSKLearnRuntime() {
@@ -310,6 +318,13 @@ func (isvc *InferenceService) SetTorchServeDefaults() {
 	if constants.ProtocolV2 == *isvc.Spec.Predictor.Model.ProtocolVersion {
 		isvc.ObjectMeta.Labels[constants.ServiceEnvelope] = constants.ServiceEnvelopeKServeV2
 	}
+
+	// set torchserve env variable "PROTOCOL_VERSION" based on ProtocolVersion
+	isvc.Spec.Predictor.Model.Env = append(isvc.Spec.Predictor.Model.Env,
+		v1.EnvVar{
+			Name:  constants.ProtocolVersionENV,
+			Value: string(*isvc.Spec.Predictor.Model.ProtocolVersion),
+		})
 }
 
 func (isvc *InferenceService) SetTritonDefaults() {
