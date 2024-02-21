@@ -4,7 +4,7 @@
 # Create a go runtime for building arena
 
 ARG GOLANG_VERSION=1.20.12
-ARG KUBE_VERSION=v1.23.0
+ARG KUBE_VERSION=v1.26.4
 ARG HELM_VERSION=v3.7.2
 ARG VERSION=v0.3.0-rc
 ARG OS_ARCH=linux-amd64

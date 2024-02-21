@@ -114,12 +114,12 @@ notebook-image:
 .PHONY: build-pkg
 build-pkg:
 	docker rm -f arena-pkg || true
-	docker build --build-arg "KUBE_VERSION=v1.23.0" \
+	docker build --build-arg "KUBE_VERSION=v1.26.4" \
 				 --build-arg "HELM_VERSION=v3.7.2" \
 				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
 				 --build-arg "VERSION=${VERSION}" \
 				 --build-arg "OS_ARCH=${OS_ARCH}" \
-				 --build-arg "GOLANG_VERSION=1.18" \
+				 --build-arg "GOLANG_VERSION=1.20.12" \
 				 --build-arg "TARGET=cli-${OS_ARCH}" \
 	-t arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} -f Dockerfile.build .
 	docker run -itd --name=arena-pkg arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} /bin/bash
