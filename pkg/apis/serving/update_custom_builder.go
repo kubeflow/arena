@@ -43,6 +43,14 @@ func (b *UpdateCustomServingJobBuilder) Namespace(namespace string) *UpdateCusto
 	return b
 }
 
+// Version is used to set serving job version, match the option --version
+func (b *UpdateCustomServingJobBuilder) Version(version string) *UpdateCustomServingJobBuilder {
+	if version != "" {
+		b.args.Version = version
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *UpdateCustomServingJobBuilder) Command(args []string) *UpdateCustomServingJobBuilder {
 	b.args.Command = strings.Join(args, " ")
@@ -65,6 +73,24 @@ func (b *UpdateCustomServingJobBuilder) Envs(envs map[string]string) *UpdateCust
 			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
 		}
 		b.argValues["env"] = &envSlice
+	}
+	return b
+}
+
+// Tolerations are used to set tolerations for tolerate nodes, match option --toleration
+func (b *UpdateCustomServingJobBuilder) Tolerations(tolerations []string) *UpdateCustomServingJobBuilder {
+	b.argValues["toleration"] = &tolerations
+	return b
+}
+
+// NodeSelectors is used to set node selectors for scheduling job, match option --selector
+func (b *UpdateCustomServingJobBuilder) NodeSelectors(selectors map[string]string) *UpdateCustomServingJobBuilder {
+	if len(selectors) != 0 {
+		selectorsSlice := []string{}
+		for key, value := range selectors {
+			selectorsSlice = append(selectorsSlice, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["selector"] = &selectorsSlice
 	}
 	return b
 }

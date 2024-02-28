@@ -42,16 +42,38 @@ func main() {
 		Version(jobVersion).
 		Replicas(1).
 		RestfulPort(5000).
-		Image("happy365/fast-style-transfer:latest").Command([]string{"python app.py"}).Build()
+		Image("happy365/fast-style-transfer:latest").Command([]string{"python app.py"}).
+		Annotations(map[string]string{"testAnnotation": "v1"}).
+		Build()
 	if err != nil {
-		fmt.Printf("failed to build custom serving job,reason: %v\n", err)
+		fmt.Printf("failed to build custom serving job, reason: %v\n", err)
 		return
 	}
-	// submit tfjob
+
+	// submit custom serving
 	if err := client.Serving().Submit(job); err != nil {
-		fmt.Printf("failed to submit job,reason: %v\n", err)
+		fmt.Printf("failed to submit custom serving job, reason: %v\n", err)
 		return
 	}
+
+	// update custom serve
+	updateJob, err := serving.NewUpdateCustomServingJobBuilder().
+		Name(jobName).
+		Namespace("default").
+		Version(jobVersion).
+		Replicas(1).
+		Annotations(map[string]string{"testAnnotation": "v2"}).
+		Build()
+	if err != nil {
+		fmt.Printf("failed to build update custom serving job, reason: %v\n", err)
+		return
+	}
+
+	if err := client.Serving().Update(updateJob); err != nil {
+		fmt.Printf("failed to update custom serving job, resion: %v\n", err)
+		return
+	}
+
 	// list all jobs
 	jobInfos, err := client.Serving().List(true, types.AllServingJob)
 	if err != nil {
@@ -61,6 +83,7 @@ func main() {
 	for _, job := range jobInfos {
 		fmt.Printf("found job %s\n", job.Name)
 	}
+
 	// get the job information and wait it to be running,timeout: 500s
 	for i := 250; i >= 0; i-- {
 		time.Sleep(2 * time.Second)
@@ -80,6 +103,7 @@ func main() {
 		fmt.Printf("job info: %v\n", job)
 		break
 	}
+
 	// get the job log,the status of job must be RUNNING
 	logArgs, err := logger.NewLoggerBuilder().Build()
 	if err != nil {
