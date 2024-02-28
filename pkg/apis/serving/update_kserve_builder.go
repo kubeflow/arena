@@ -43,6 +43,14 @@ func (b *UpdateKServeJobBuilder) Namespace(namespace string) *UpdateKServeJobBui
 	return b
 }
 
+// Version is used to set serving job version, match the option --version
+func (b *UpdateKServeJobBuilder) Version(version string) *UpdateKServeJobBuilder {
+	if version != "" {
+		b.args.Version = version
+	}
+	return b
+}
+
 // Command is used to set job command
 func (b *UpdateKServeJobBuilder) Command(args []string) *UpdateKServeJobBuilder {
 	b.args.Command = strings.Join(args, " ")
