@@ -563,6 +563,19 @@ func setInferenceServiceForCustomModel(args *types.UpdateKServeArgs, inferenceSe
 		inferenceService.Spec.Predictor.Containers[0].Image = args.Image
 	}
 
+	// set resources requests
+	resourceRequests := inferenceService.Spec.Predictor.Containers[0].Resources.Requests
+	if resourceRequests == nil {
+		resourceRequests = make(map[v1.ResourceName]resource.Quantity)
+	}
+	if args.Cpu != "" {
+		resourceRequests[v1.ResourceCPU] = resource.MustParse(args.Cpu)
+	}
+	if args.Memory != "" {
+		resourceRequests[v1.ResourceMemory] = resource.MustParse(args.Memory)
+	}
+	inferenceService.Spec.Predictor.Containers[0].Resources.Requests = resourceRequests
+
 	// set resources limits
 	resourceLimits := inferenceService.Spec.Predictor.Containers[0].Resources.Limits
 	if resourceLimits == nil {
