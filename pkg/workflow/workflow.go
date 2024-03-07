@@ -141,8 +141,9 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	if err != nil {
 		return err
 	}
-	err = kubeclient.CreateAppConfigmap(name,
-		trainingType,
+
+	configName := fmt.Sprintf("%v-%v", name, trainingType)
+	err = kubeclient.CreateAppConfigmap(configName,
 		namespace,
 		valueFileName,
 		appInfoFileName,
@@ -161,8 +162,14 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	fmt.Printf("%s", result)
 	if err != nil {
 		// clean configmap
-		log.Infof("clean up the config map %s because creating application failed.", name)
-		log.Warnf("Please clean up the training job by using `arena delete %s --type %s`", name, trainingType)
+		delErr := kubeclient.DeleteConfigMap(namespace, configName)
+		if delErr != nil {
+			log.Errorf("Failed to clean up configmap %s in namespace %s, error: %s", configName, namespace, delErr.Error())
+		} else {
+			log.Infof("Successfully clean up the config map %s in namespace %s because creating application failed.", configName, namespace)
+		}
+
+		log.Warnf("Please clean up the %s job", name)
 		return err
 	}
 
