@@ -563,6 +563,30 @@ func setInferenceServiceForCustomModel(args *types.UpdateKServeArgs, inferenceSe
 		inferenceService.Spec.Predictor.Containers[0].Image = args.Image
 	}
 
+	//set volume
+	if len(args.ModelDirs) != 0 {
+		log.Debugf("update modelDirs: [%+v]", args.ModelDirs)
+		var volumes []v1.Volume
+		var volumeMounts []v1.VolumeMount
+
+		for pvName, mountPath := range args.ModelDirs {
+			volumes = append(volumes, v1.Volume{
+				Name: pvName,
+				VolumeSource: v1.VolumeSource{
+					PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+						ClaimName: pvName,
+					},
+				},
+			})
+			volumeMounts = append(volumeMounts, v1.VolumeMount{
+				Name:      pvName,
+				MountPath: mountPath,
+			})
+		}
+		inferenceService.Spec.Predictor.Containers[0].VolumeMounts = volumeMounts
+		inferenceService.Spec.Predictor.Volumes = volumes
+	}
+
 	// set resources requests
 	resourceRequests := inferenceService.Spec.Predictor.Containers[0].Resources.Requests
 	if resourceRequests == nil {

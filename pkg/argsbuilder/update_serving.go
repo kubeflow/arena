@@ -16,6 +16,7 @@ package argsbuilder
 import (
 	"fmt"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -68,6 +69,7 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		envs        []string
 		selectors   []string
 		tolerations []string
+		dataset     []string
 	)
 
 	command.Flags().StringVar(&s.args.Name, "name", "", "the serving name")
@@ -85,11 +87,14 @@ func (s *UpdateServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
 	command.Flags().StringArrayVarP(&selectors, "selector", "", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 	command.Flags().StringArrayVarP(&tolerations, "toleration", "", []string{}, `tolerate some k8s nodes with taints,usage: "--toleration key=value:effect,operator" or "--toleration all" `)
+	command.Flags().StringArrayVarP(&dataset, "data", "d", []string{}, "specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>")
+
 	s.AddArgValue("env", &envs).
 		AddArgValue("annotation", &annotations).
 		AddArgValue("selector", &selectors).
 		AddArgValue("label", &labels).
-		AddArgValue("toleration", &tolerations)
+		AddArgValue("toleration", &tolerations).
+		AddArgValue("data", &dataset)
 }
 
 func (s *UpdateServingArgsBuilder) PreBuild() error {
@@ -127,6 +132,10 @@ func (s *UpdateServingArgsBuilder) PreBuild() error {
 	}
 
 	if err := s.setLabels(); err != nil {
+		return err
+	}
+
+	if err := s.setDataSet(); err != nil {
 		return err
 	}
 
@@ -257,6 +266,28 @@ func (s *UpdateServingArgsBuilder) setLabels() error {
 		return nil
 	}
 	s.args.Labels = transformSliceToMap(*labels, "=")
+	return nil
+}
+
+// setDataSets is used to handle option --data
+func (s *UpdateServingArgsBuilder) setDataSet() error {
+	s.args.ModelDirs = map[string]string{}
+	argKey := "data"
+	var dataSet *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	dataSet = value.(*[]string)
+	log.Debugf("dataset: %v", *dataSet)
+	if len(*dataSet) <= 0 {
+		return nil
+	}
+	err := util.ValidateDatasets(*dataSet)
+	if err != nil {
+		return err
+	}
+	s.args.ModelDirs = transformSliceToMap(*dataSet, ":")
 	return nil
 }
 

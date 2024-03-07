@@ -19,6 +19,7 @@ type CommonUpdateServingArgs struct {
 	Tolerations   []TolerationArgs  `yaml:"tolerations"`   // --toleration
 	Shell         string            `yaml:"shell"`         // --shell
 	Command       string            `yaml:"command"`       // --command
+	ModelDirs     map[string]string `yaml:"modelDirs"`     // --data
 }
 
 type UpdateTensorFlowServingArgs struct {
