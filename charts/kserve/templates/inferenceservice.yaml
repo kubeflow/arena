@@ -103,6 +103,12 @@ spec:
           aliyun.com/gpu-core.percentage: {{ .Values.gpuCore }}
           {{- end }}
         requests:
+          {{- if .Values.cpu }}
+          cpu: {{ .Values.cpu }}
+          {{- end }}
+          {{- if .Values.memory }}
+          memory: {{ .Values.memory }}
+          {{- end }}
           {{- if gt (int $gpuCount) 0}}
           nvidia.com/gpu: {{ .Values.gpuCount }}
           {{- end }}
@@ -171,6 +177,12 @@ spec:
           {{- end }}
         resources:
           requests:
+            {{- if .Values.cpu }}
+            cpu: {{ .Values.cpu }}
+            {{- end }}
+            {{- if .Values.memory }}
+            memory: {{ .Values.memory }}
+            {{- end }}
             {{- if gt (int $gpuCount) 0}}
             nvidia.com/gpu: {{ .Values.gpuCount }}
             {{- end }}
