@@ -77,7 +77,7 @@ func CheckJobIsOwnedByUser(namespace, jobName string, jobType types.TrainingJobT
 	return true, nil
 }
 
-func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFileName, chartName, chartVersion string) (err error) {
+func CreateAppConfigmap(name, namespace, configFileName, appInfoFileName, chartName, chartVersion string) (err error) {
 	data := map[string]string{
 		chartName: chartVersion,
 	}
@@ -97,7 +97,7 @@ func CreateAppConfigmap(name, trainingType, namespace, configFileName, appInfoFi
 		return err
 	}
 	configmap := obj.(*corev1.ConfigMap)
-	configmap.Name = fmt.Sprintf("%v-%v", name, trainingType)
+	configmap.Name = name
 	configmap.Namespace = namespace
 	configmap.Data = data
 	arenaConfiger := config.GetArenaConfiger()
