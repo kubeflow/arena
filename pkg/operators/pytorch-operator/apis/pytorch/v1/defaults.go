@@ -16,7 +16,6 @@ package v1
 
 import (
 	"strings"
-
 	common "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -87,9 +86,9 @@ func setTypeNameToCamelCase(job *PyTorchJob, typ PyTorchReplicaType) {
 // SetDefaults_PyTorchJob sets any unspecified values to defaults.
 func SetDefaults_PyTorchJob(job *PyTorchJob) {
 	// Set default cleanpod policy to None.
-	if job.Spec.CleanPodPolicy == nil {
+	if job.Spec.RunPolicy.CleanPodPolicy == nil {
 		policy := common.CleanPodPolicyNone
-		job.Spec.CleanPodPolicy = &policy
+		job.Spec.RunPolicy.CleanPodPolicy = &policy
 	}
 
 	// Update the key of PyTorchReplicaSpecs to camel case.
