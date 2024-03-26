@@ -1,7 +1,11 @@
-package model
+package analyze
 
 import (
 	"fmt"
+	"math"
+	"strings"
+	"time"
+
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
@@ -12,9 +16,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"math"
-	"strings"
-	"time"
 )
 
 type modelProcessor struct {

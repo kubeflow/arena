@@ -1,14 +1,15 @@
-package model
+package analyze
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
-	"gopkg.in/yaml.v2"
 	"os"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
+	"gopkg.in/yaml.v2"
 )
 
 var getJobTemplate = `

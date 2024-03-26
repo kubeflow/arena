@@ -13,7 +13,7 @@ metadata:
     role: tensorboard
     createdBy: "TFJob"
     group-name: kubeflow.org
-    tf-job-name: { { .Release.Name } }
+    tf-job-name: {{ .Release.Name }}
 spec:
   rules:
     - http:

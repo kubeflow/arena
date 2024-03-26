@@ -104,9 +104,9 @@ spec:
               {{- if gt (int $gpuMemory) 0}}
               aliyun.com/gpu-mem: {{ .Values.gpuMemory }}
               {{- end }}
-              {{ - if gt (int $gpuCore) 0 }}
+              {{- if gt (int $gpuCore) 0 }}
               aliyun.com/gpu-core.percentage: {{ .Values.gpuCore }}
-              {{ - end }}
+              {{- end }}
           volumeMounts:
             {{- if .Values.shareMemory }}
             - mountPath: /dev/shm

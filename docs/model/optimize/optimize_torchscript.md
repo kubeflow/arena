@@ -65,7 +65,7 @@ Then give a profile configuration file named config.json like below.
 3\. Submit a model optimize job.
 
 ```shell
-$ arena model optimize \
+$ arena model analyze optimize \
     --name=resnet18-optimize \
     --namespace=default \
     --image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.0 \
@@ -78,13 +78,13 @@ $ arena model optimize \
     
 job.batch/resnet18-optimize created
 INFO[0002] The model optimize job resnet18-optimize has been submitted successfully
-INFO[0002] You can run `arena model get resnet18-optimize` to check the job status
+INFO[0002] You can run `arena model analyze get resnet18-optimize` to check the job status
 ```
 
 4\. List all the model optimize jobs.
 
 ```shell
-$ arena model list
+$ arena model analyze list
 
 NAMESPACE      NAME               STATUS   TYPE      DURATION  AGE  GPU(Requested)
 default-group  resnet18-optimize  RUNNING  Optimize  0s        1m   1
@@ -93,7 +93,7 @@ default-group  resnet18-optimize  RUNNING  Optimize  0s        1m   1
 5\. Get model optimize job detail info.
 
 ```shell
-$ arena model get resnet18-profile
+$ arena model analyze get resnet18-profile
 Name:       resnet18-optimize
 Namespace:  default-group
 Type:       Optimize

@@ -1,24 +1,30 @@
-package model
+package analyze
 
 import (
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/model"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func NewSubmitModelBenchmarkJobCommand() *cobra.Command {
-	builder := model.NewModelBenchmarkArgsBuilder()
+func NewGetModelJobCommand() *cobra.Command {
+	var jobType string
+	var output string
 	var command = &cobra.Command{
-		Use:   "benchmark",
-		Short: "Submit a model benchmark job",
+		Use:   "get",
+		Short: "Get a model analyze job",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("not set job name,please set it")
+			}
+			name := args[0]
+
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
 				LogLevel:       viper.GetString("loglevel"),
@@ -27,15 +33,14 @@ func NewSubmitModelBenchmarkJobCommand() *cobra.Command {
 				IsDaemonMode:   false,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to create arena client: %v\n", err)
+				return err
 			}
-			job, err := builder.Namespace(config.GetArenaConfiger().GetNamespace()).Command(args).Build()
-			if err != nil {
-				return fmt.Errorf("failed to validate command args: %v", err)
-			}
-			return client.Model().Submit(job)
+			return client.Analyze().GetAndPrint(utils.TransferModelJobType(jobType), name, output)
 		},
 	}
-	builder.AddCommandFlags(command)
+
+	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The model job type to delete, the possible option is [%v]. (optional)", utils.GetSupportModelJobTypesInfo()))
+	command.Flags().StringVarP(&output, "output", "o", "wide", "Output format. One of: json|yaml|wide")
+
 	return command
 }

@@ -1,7 +1,8 @@
-package model
+package analyze
 
 import (
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
@@ -9,20 +10,18 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewDeleteModelJobCommand() *cobra.Command {
+func NewListModelJobsCommand() *cobra.Command {
+	var allNamespaces bool
+	var format string
 	var jobType string
 	var command = &cobra.Command{
-		Use:   "delete",
-		Short: "Delete a model job",
+		Use:     "list",
+		Short:   "List all model analyze jobs",
+		Aliases: []string{"ls"},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return fmt.Errorf("not set job name,please set it")
-			}
-			names := args
-
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
 				LogLevel:       viper.GetString("loglevel"),
@@ -31,12 +30,13 @@ func NewDeleteModelJobCommand() *cobra.Command {
 				IsDaemonMode:   false,
 			})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			return client.Model().Delete(utils.TransferModelJobType(jobType), names...)
+			return client.Analyze().ListAndPrint(allNamespaces, utils.TransferModelJobType(jobType), format)
 		},
 	}
-
-	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The model job type to delete, the possible option is [%v]. (optional)", utils.GetSupportModelJobTypesInfo()))
+	command.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "show all the namespaces")
+	command.Flags().StringVarP(&format, "output", "o", "wide", "Output format. One of: json|yaml|wide")
+	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The model job type, the possible option is [%v]. (optional)", utils.GetSupportModelJobTypesInfo()))
 	return command
 }

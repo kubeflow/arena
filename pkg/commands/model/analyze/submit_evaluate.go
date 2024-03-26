@@ -1,17 +1,18 @@
-package model
+package analyze
 
 import (
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/model"
+	"github.com/kubeflow/arena/pkg/apis/model/analyze"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func NewSubmitModelEvaluateJobCommand() *cobra.Command {
-	builder := model.NewModelEvaluateJobBuilder()
+	builder := analyze.NewModelEvaluateJobBuilder()
 	var command = &cobra.Command{
 		Use:   "evaluate",
 		Short: "Submit a model evaluate job",
@@ -33,7 +34,7 @@ func NewSubmitModelEvaluateJobCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to validate command args: %v", err)
 			}
-			return client.Model().Submit(job)
+			return client.Analyze().Submit(job)
 		},
 	}
 	builder.AddCommandFlags(command)
