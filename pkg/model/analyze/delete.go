@@ -1,10 +1,11 @@
-package model
+package analyze
 
 import (
+	"strings"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
-	"strings"
 )
 
 func DeleteModelJob(namespace, name string, jobType types.ModelJobType) error {

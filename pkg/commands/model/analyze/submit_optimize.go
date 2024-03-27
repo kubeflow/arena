@@ -1,22 +1,21 @@
-package model
+package analyze
 
 import (
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/apis/model/analyze"
 	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func NewListModelJobsCommand() *cobra.Command {
-	var allNamespaces bool
-	var format string
-	var jobType string
+func NewSubmitModelOptimizeJobCommand() *cobra.Command {
+	builder := analyze.NewModelOptimizeJobBuilder()
 	var command = &cobra.Command{
-		Use:     "list",
-		Short:   "List all the model jobs",
-		Aliases: []string{"ls"},
+		Use:   "optimize",
+		Short: "Submit a model optimize job",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			_ = viper.BindPFlags(cmd.Flags())
 		},
@@ -31,11 +30,13 @@ func NewListModelJobsCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to create arena client: %v", err)
 			}
-			return client.Model().ListAndPrint(allNamespaces, utils.TransferModelJobType(jobType), format)
+			job, err := builder.Namespace(config.GetArenaConfiger().GetNamespace()).Command(args).Build()
+			if err != nil {
+				return fmt.Errorf("failed to validate command args: %v", err)
+			}
+			return client.Analyze().Submit(job)
 		},
 	}
-	command.Flags().BoolVarP(&allNamespaces, "all-namespaces", "A", false, "show all the namespaces")
-	command.Flags().StringVarP(&format, "output", "o", "wide", "Output format. One of: json|yaml|wide")
-	command.Flags().StringVarP(&jobType, "type", "T", "", fmt.Sprintf("The model job type, the possible option is [%v]. (optional)", utils.GetSupportModelJobTypesInfo()))
+	builder.AddCommandFlags(command)
 	return command
 }

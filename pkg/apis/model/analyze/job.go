@@ -1,4 +1,4 @@
-package model
+package analyze
 
 import "github.com/kubeflow/arena/pkg/apis/types"
 

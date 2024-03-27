@@ -1,7 +1,8 @@
-package model
+package analyze
 
 import (
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
@@ -22,6 +23,6 @@ func SubmitModelProfileJob(namespace string, args *types.ModelProfileArgs) error
 		return err
 	}
 	log.Infof("The model profile job %s has been submitted successfully", args.Name)
-	log.Infof("You can run `arena model get %s` to check the job status", args.Name)
+	log.Infof("You can run `arena model analyze get %s` to check the job status", args.Name)
 	return nil
 }

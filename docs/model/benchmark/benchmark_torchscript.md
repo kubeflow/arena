@@ -65,7 +65,7 @@ Then give a profile configuration file named config.json like below.
 3\. Submit a model benchmark job.
 
 ```shell
-$ arena model benchmark \
+$ arena model analyze benchmark \
   --name=resnet18-benchmark \
   --namespace=default \
   --image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.0 \
@@ -80,13 +80,13 @@ $ arena model benchmark \
     
 job.batch/resnet18-benchmark created
 INFO[0000] The model benchmark job resnet18-benchmark has been submitted successfully
-INFO[0000] You can run `arena model get resnet18-benchmark` to check the job status
+INFO[0000] You can run `arena model analyze get resnet18-benchmark` to check the job status
 ```
 
 4\. List all the model benchmark jobs.
 
 ```shell
-$ arena model list
+$ arena model analyze list
 
 NAMESPACE      NAME                STATUS   TYPE       DURATION  AGE  GPU(Requested)
 default  resnet18-benchmark  RUNNING  Benchmark  23s       23s  1
@@ -95,7 +95,7 @@ default  resnet18-benchmark  RUNNING  Benchmark  23s       23s  1
 5\. Get model benchmark job detail info.
 
 ```shell
-$ arena model get resnet18-benchmark
+$ arena model analyze get resnet18-benchmark
 Name:       resnet18-benchmark
 Namespace:  default
 Type:       Benchmark
@@ -125,7 +125,3 @@ Benchmark finished, cost 60.00157570838928 s
 Benchmark result:
 {"p90_latency": 3.806, "p95_latency": 3.924, "p99_latency": 4.781, "min_latency": 3.665, "max_latency": 1555.418, "mean_latency": 3.88, "median_latency": 3.731, "throughput": 257, "gpu_mem_used": 1.47, "gpu_utilization": 38.39514839785918}
 ```
-
-
-
-

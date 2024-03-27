@@ -1,20 +1,21 @@
-package model
+package analyze
 
 import (
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/model"
+	"github.com/kubeflow/arena/pkg/apis/model/analyze"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func NewSubmitModelOptimizeJobCommand() *cobra.Command {
-	builder := model.NewModelOptimizeJobBuilder()
+func NewSubmitModelProfileJobCommand() *cobra.Command {
+	builder := analyze.NewModelProfileJobBuilder()
 	var command = &cobra.Command{
-		Use:   "optimize",
-		Short: "Submit a model optimize job, this is a experimental feature",
+		Use:   "profile",
+		Short: "Submit a model profile job",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			_ = viper.BindPFlags(cmd.Flags())
 		},
@@ -33,7 +34,7 @@ func NewSubmitModelOptimizeJobCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to validate command args: %v", err)
 			}
-			return client.Model().Submit(job)
+			return client.Analyze().Submit(job)
 		},
 	}
 	builder.AddCommandFlags(command)

@@ -1,19 +1,20 @@
-package model
+package analyze
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/util"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/util"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 func ListModelJobs(namespace string, allNamespaces bool, modelJobType types.ModelJobType) ([]ModelJob, error) {

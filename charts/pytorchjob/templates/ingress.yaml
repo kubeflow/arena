@@ -13,8 +13,8 @@ metadata:
     createdBy: "PyTorchJob"
     controller-name: pytorch-operator
     group-name: kubeflow.org
-    job-name: { { .Release.Name } }
-    pytorch-job-name: { { .Release.Name } }
+    job-name: {{ .Release.Name }}
+    pytorch-job-name: {{ .Release.Name }}
 spec:
   rules:
     - http:

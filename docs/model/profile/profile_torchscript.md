@@ -65,7 +65,7 @@ Then give a profile configuration file named config.json like below.
 3\. Submit a model profile job.
 
 ```shell
-$ arena model profile \
+$ arena model analyze profile \
     --name=resnet18-profile \
     --namespace=default \
     --image=registry.cn-beijing.aliyuncs.com/kube-ai/easy-inference:1.0.0 \
@@ -82,13 +82,13 @@ service/resnet18-profile-tensorboard created
 deployment.apps/resnet18-profile-tensorboard created
 job.batch/resnet18-profile created
 INFO[0001] The model profile job resnet18-profile has been submitted successfully
-INFO[0001] You can run `arena model get resnet18-profile` to check the job status
+INFO[0001] You can run `arena model analyze get resnet18-profile` to check the job status
 ```
 
 4\. List all the profile jobs.
 
 ```shell
-$ arena model list
+$ arena model analyze list
 
 NAMESPACE      NAME              STATUS   TYPE     DURATION  AGE  GPU(Requested)
 default  resnet18-profile  RUNNING  Profile  34s       34s  1
@@ -97,7 +97,7 @@ default  resnet18-profile  RUNNING  Profile  34s       34s  1
 5\. Get model profile job detail info.
 
 ```shell
-$ arena model get resnet18-profile
+$ arena model analyze get resnet18-profile
 Name:       resnet18-profile
 Namespace:  default
 Type:       Profile
@@ -125,7 +125,5 @@ $ kubectl port-forward svc/resnet18-profile-tensorboard 6006:6006
 Forwarding from 127.0.0.1:6006 -> 6006
 Forwarding from [::1]:6006 -> 6006
 ```
-
-
 
 ![tensorboard](./1-torchscript-profile-result.jpg)
