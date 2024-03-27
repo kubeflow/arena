@@ -81,7 +81,6 @@ func (s *TensorflowServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	command.Flags().StringVar(&s.args.ModelName, "modelName", "", "the model name for serving")
 	_ = command.Flags().MarkDeprecated("modelName", "please use --model-name instead")
-	command.Flags().StringVar(&s.args.ModelName, "model-name", "", "the model name for serving, ignored if --model-config-file flag is set")
 
 	command.Flags().StringVar(&s.args.ModelPath, "modelPath", "", "the model path for serving in the container")
 	_ = command.Flags().MarkDeprecated("modelPath", "please use --model-path instead")

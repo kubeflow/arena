@@ -53,6 +53,10 @@ func (sj *SparkJob) GetTrainJob() interface{} {
 	return sj.sparkjob
 }
 
+func (sj *SparkJob) GetLabels() map[string]string {
+	return sj.sparkjob.Labels
+}
+
 /*
 	spark job driver state
 

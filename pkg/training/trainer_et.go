@@ -186,6 +186,10 @@ func (ej *ETJob) GetTrainJob() interface{} {
 	return ej.trainingjob
 }
 
+func (ej *ETJob) GetLabels() map[string]string {
+	return ej.trainingjob.Labels
+}
+
 func (ej *ETJob) GetWorkerMaxReplicas(maxWorkers int) interface{} {
 	_, worker := parseAnnotations(ej.trainingjob)
 	log.Infof("worker: %v", worker)

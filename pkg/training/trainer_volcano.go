@@ -70,6 +70,10 @@ func (vj *VolcanoJob) GetTrainJob() interface{} {
 	return vj.volcanoJob
 }
 
+func (vj *VolcanoJob) GetLabels() map[string]string {
+	return vj.volcanoJob.Labels
+}
+
 func (vj *VolcanoJob) GetStatus() (status string) {
 
 	defer func() {

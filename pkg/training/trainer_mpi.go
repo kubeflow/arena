@@ -78,6 +78,10 @@ func (mj *MPIJob) GetTrainJob() interface{} {
 	return mj.mpijob
 }
 
+func (mj *MPIJob) GetLabels() map[string]string {
+	return mj.mpijob.Labels
+}
+
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (mj *MPIJob) GetStatus() (status string) {
 	status = "UNKNOWN"

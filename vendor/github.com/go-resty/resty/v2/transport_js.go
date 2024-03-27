@@ -2,16 +2,16 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build go1.18
-// +build go1.18
+//go:build js && wasm
+// +build js,wasm
 
-package http2
+package resty
 
 import (
-	"crypto/tls"
+	"context"
 	"net"
 )
 
-func tlsUnderlyingConn(tc *tls.Conn) net.Conn {
-	return tc.NetConn()
+func transportDialContext(dialer *net.Dialer) func(context.Context, string, string) (net.Conn, error) {
+	return nil
 }

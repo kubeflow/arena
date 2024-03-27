@@ -84,6 +84,10 @@ func (pj *PyTorchJob) GetTrainJob() interface{} {
 	return pj.pytorchjob
 }
 
+func (pj *PyTorchJob) GetLabels() map[string]string {
+	return pj.pytorchjob.Labels
+}
+
 // Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (pj *PyTorchJob) GetStatus() (status string) {
 	status = "PENDING"

@@ -181,6 +181,9 @@ type CommonServingArgs struct {
 	HelmOptions []string `yaml:"-"`
 
 	ModelServiceExists bool `yaml:"modelServiceExists"` // --modelServiceExists
+
+	ModelName    string `yaml:"modelName"`    // --model-name
+	ModelVersion string `yaml:"modelVersion"` // --model-version
 }
 
 type CustomServingArgs struct {
@@ -205,7 +208,6 @@ type TensorFlowServingArgs struct {
 	VersionPolicy        string `yaml:"versionPolicy"`        // --version-policy
 	ModelConfigFile      string `yaml:"modelConfigFile"`      // --model-config-file
 	MonitoringConfigFile string `yaml:"monitoringConfigFile"` // --monitoring-config-file
-	ModelName            string `yaml:"modelName"`            // --model-name
 	ModelPath            string `yaml:"modelPath"`            // --model-path
 	Port                 int    `yaml:"port"`                 // --port
 	RestfulPort          int    `yaml:"restApiPort"`          // --restful-port

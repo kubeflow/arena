@@ -10,6 +10,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/podexec"
 	"github.com/kubeflow/arena/pkg/serving"
+	log "github.com/sirupsen/logrus"
 )
 
 // ServingJobClient provides some operators for managing serving jobs.
@@ -82,7 +83,30 @@ func (t *ServingJobClient) GetAndPrint(jobName, version string, jobType types.Se
 	if err != nil {
 		return err
 	}
-	serving.PrintServingJob(job, utils.TransferPrintFormat(format))
+
+	// Search model version associated with the job
+	jobLabels := job.GetLabels()
+	modelName := jobLabels["modelName"]
+	modelVersion := jobLabels["modelVersion"]
+	var mv *types.ModelVersion
+	if modelName != "" && modelVersion != "" {
+		modelClient, err := NewModelClient(t.namespace, t.configer)
+		if err != nil {
+			log.Warnf("failed to create model client: %v", err)
+		}
+		mv, err = modelClient.GetModelVersion(modelName, modelVersion)
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+	}
+	if mv == nil {
+		mv = &types.ModelVersion{
+			Name:    modelName,
+			Version: modelVersion,
+		}
+	}
+
+	serving.PrintServingJob(job, mv, utils.TransferPrintFormat(format))
 	return nil
 }
 

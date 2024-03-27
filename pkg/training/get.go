@@ -37,18 +37,6 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 )
 
-var getJobTemplate = `
-Name:      	%v
-Status:    	%v
-Namespace: 	%v
-Priority:  	%v
-Trainer:   	%v
-Duration:  	%v
-CreateTime:	%v
-EndTime:	%v
-%v
-`
-
 /*
 * search the training job with name and training type
  */
@@ -146,28 +134,34 @@ func getTrainingJobsByName(name, namespace string) (jobs []TrainingJob, err erro
 	return jobs, nil
 }
 
-func PrintTrainingJob(job TrainingJob, format string, showEvents bool, showGPUs bool) {
+func PrintTrainingJob(job TrainingJob, modelVersion *types.ModelVersion, format string, showEvents bool, showGPUs bool) {
 	services, nodes := PrepareServicesAndNodesForTensorboard([]TrainingJob{job}, false)
 	switch format {
 	case "name":
 		fmt.Println(job.Name())
 		// for future CRD support
 	case "json":
-		outBytes, err := json.MarshalIndent(BuildJobInfo(job, showGPUs, services, nodes), "", "    ")
+		jobInfo := BuildJobInfo(job, showGPUs, services, nodes)
+		patchModelInfo(jobInfo, modelVersion)
+		outBytes, err := json.MarshalIndent(jobInfo, "", "    ")
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Print(string(outBytes))
 		}
 	case "yaml":
-		outBytes, err := yaml.Marshal(BuildJobInfo(job, showGPUs, services, nodes))
+		jobInfo := BuildJobInfo(job, showGPUs, services, nodes)
+		patchModelInfo(jobInfo, modelVersion)
+		outBytes, err := yaml.Marshal(jobInfo)
 		if err != nil {
 			fmt.Printf("Failed due to %v", err)
 		} else {
 			fmt.Print(string(outBytes))
 		}
 	case "wide", "":
-		printSingleJobHelper(BuildJobInfo(job, showGPUs, services, nodes), job.Resources(), showEvents, showGPUs)
+		jobInfo := BuildJobInfo(job, showGPUs, services, nodes)
+		patchModelInfo(jobInfo, modelVersion)
+		printSingleJobHelper(jobInfo, job.Resources(), showEvents, showGPUs)
 		job.Resources()
 	default:
 		log.Fatalf("Unknown output format: %s", format)
@@ -176,6 +170,7 @@ func PrintTrainingJob(job TrainingJob, format string, showEvents bool, showGPUs 
 
 func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEvents bool, showGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+
 	lines := []string{"", "Instances:", "  NAME\tSTATUS\tAGE\tIS_CHIEF\tGPU(Requested)\tNODE"}
 	lines = append(lines, "  ----\t------\t---\t--------\t--------------\t----")
 	totalRequestGPUs := 0
@@ -234,20 +229,25 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 		endTime = util.GetFormatTime(job.CreationTimestamp + duration)
 	}
 	//startTime := time.Unix(job.CreationTimestamp, 0).Format("2006-01-02/15:04:05")
-	PrintLine(w, fmt.Sprintf(strings.Trim(getJobTemplate, "\n"),
-		job.Name,
-		job.Status,
-		job.Namespace,
-		job.Priority,
-		strings.ToUpper(string(job.Trainer)),
-		util.ShortHumanDuration(time.Duration(duration)*time.Second),
-		util.GetFormatTime(job.CreationTimestamp),
-		endTime,
-		strings.Join(lines, "\n"),
-	))
-	PrintLine(w, "")
-	_ = w.Flush()
-
+	fmt.Fprintf(w, "Name:\t%v\n", job.Name)
+	fmt.Fprintf(w, "Status:\t%v\n", job.Status)
+	fmt.Fprintf(w, "Namespace:\t%v\n", job.Namespace)
+	fmt.Fprintf(w, "Priority:\t%v\n", job.Priority)
+	fmt.Fprintf(w, "Trainer:\t%v\n", strings.ToUpper(string(job.Trainer)))
+	fmt.Fprintf(w, "Duration:\t%v\n", util.ShortHumanDuration(time.Duration(duration)*time.Second))
+	fmt.Fprintf(w, "CreateTime:\t%v\n", util.GetFormatTime(job.CreationTimestamp))
+	fmt.Fprintf(w, "EndTime:\t%v\n", endTime)
+	if job.ModelName != "" {
+		fmt.Fprintf(w, "ModelName:\t%v\n", job.Name)
+	}
+	if job.ModelVersion != "" {
+		fmt.Fprintf(w, "ModelVersion:\t%v\n", job.ModelVersion)
+	}
+	if job.ModelSource != "" {
+		fmt.Fprintf(w, "ModelSource:\t%v\n", job.ModelSource)
+	}
+	fmt.Fprintf(w, "%v\n", strings.Join(lines, "\n"))
+	w.Flush()
 }
 
 func printEvents(lines []string, namespace string, resouces []Resource) []string {
@@ -338,4 +338,14 @@ func displayGPUUsage(lines []string, status types.TrainingJobStatus, totalAlloca
 	lines = append(lines, "")
 	lines = append(lines, fmt.Sprintf("  Allocated/Requested GPUs of Job: %v/%v", totalAllocatedGPUs, totalRequestGPUs))
 	return lines
+}
+
+func patchModelInfo(jobInfo *types.TrainingJobInfo, modelVersion *types.ModelVersion) *types.TrainingJobInfo {
+	if modelVersion == nil {
+		return jobInfo
+	}
+	jobInfo.ModelName = modelVersion.Name
+	jobInfo.ModelVersion = modelVersion.Version
+	jobInfo.ModelSource = modelVersion.Source
+	return jobInfo
 }

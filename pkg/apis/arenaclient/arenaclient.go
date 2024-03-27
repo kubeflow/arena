@@ -86,3 +86,7 @@ func (a *ArenaClient) Evaluate() *EvaluateClient {
 func (a *ArenaClient) Analyze() *AnalyzeClient {
 	return NewAnalyzeClient(a.namespace, a.arenaConfiger)
 }
+
+func (a *ArenaClient) Model() (*ModelClient, error) {
+	return NewModelClient(a.namespace, a.arenaConfiger)
+}
