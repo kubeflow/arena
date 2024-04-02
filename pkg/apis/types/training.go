@@ -132,6 +132,11 @@ type TrainingJobInfo struct {
 
 	// CreationTimestamp stores the creation timestamp of job
 	CreationTimestamp int64 `json:"creationTimestamp" yaml:"creationTimestamp"`
+
+	// Model information associated with this job
+	ModelName    string `json:"modelName"`
+	ModelVersion string `json:"modelVersion"`
+	ModelSource  string `json:"modelSource"`
 }
 
 // TrainingJobStatus defines all the kinds of JobStatus

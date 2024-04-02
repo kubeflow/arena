@@ -144,6 +144,11 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// add option --shell
 	command.Flags().StringVarP(&s.args.Shell, "shell", "", "sh", "specify the linux shell, usage: bash or sh")
 
+	// add option --model-name
+	command.Flags().StringVar(&s.args.ModelName, "model-name", "", "model name")
+	// add option --model-version
+	command.Flags().StringVar(&s.args.ModelVersion, "model-version", "", "model version")
+
 	s.AddArgValue("annotation", &annotations).
 		AddArgValue("toleration", &tolerations).
 		AddArgValue("label", &labels).
@@ -221,6 +226,12 @@ func (s *ServingArgsBuilder) PreBuild() error {
 		return err
 	}
 	if err := s.checkGPUCore(); err != nil {
+		return err
+	}
+	if err := s.setModelName(); err != nil {
+		return err
+	}
+	if err := s.setModelVersion(); err != nil {
 		return err
 	}
 	return nil
@@ -635,6 +646,20 @@ func (s *ServingArgsBuilder) disabledNvidiaENVWithNoneGPURequest() error {
 func (s *ServingArgsBuilder) checkGPUCore() error {
 	if s.args.GPUCore%5 != 0 {
 		return fmt.Errorf("GPUCore should be the multiple of 5")
+	}
+	return nil
+}
+
+func (s *ServingArgsBuilder) setModelName() error {
+	if s.args.ModelName != "" {
+		s.args.Labels["modelName"] = s.args.ModelName
+	}
+	return nil
+}
+
+func (s *ServingArgsBuilder) setModelVersion() error {
+	if s.args.ModelVersion != "" {
+		s.args.Labels["modelVersion"] = s.args.ModelVersion
 	}
 	return nil
 }

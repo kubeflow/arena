@@ -14,6 +14,7 @@
 package argsbuilder
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -142,6 +143,10 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&s.args.UseHostIPC, "hostIPC", false, `enable hostIPC, usage: "--hostIPC true"`)
 	// add option --scheduler
 	command.Flags().BoolVar(&s.args.UseHostPID, "hostPID", false, `enable hostPID, usage: "--hostPID true"`)
+	// add option --model-name
+	command.Flags().StringVar(&s.args.ModelName, "model-name", "", "model name")
+	// add option --model-source
+	command.Flags().StringVar(&s.args.ModelSource, "model-source", "", "model source is a URI indicating the location of the model e.g. s3://my-bucket/path/to/model, pvc://namespace/pvc-name/path/to/model")
 
 	s.AddArgValue("image-pull-secret", &imagePullSecrets).
 		AddArgValue("config-file", &configFiles).
@@ -166,6 +171,10 @@ func (s *SubmitArgsBuilder) PreBuild() error {
 	}
 	// set data set
 	if err := s.setDataSet(); err != nil {
+		return err
+	}
+	// When model name is specified, model source must be specified too
+	if err := s.checkModelNameAndSource(); err != nil {
 		return err
 	}
 	return nil
@@ -229,6 +238,9 @@ func (s *SubmitArgsBuilder) Build() error {
 		return err
 	}
 	if err := s.disabledNvidiaENVWithNoneGPURequest(); err != nil {
+		return err
+	}
+	if err := s.setModelName(); err != nil {
 		return err
 	}
 	return nil
@@ -604,5 +616,19 @@ func (s *SubmitArgsBuilder) addPodGroupLabel() error {
 
 func (s *SubmitArgsBuilder) addRequestGPUsToAnnotation() error {
 	s.args.Annotations[types.RequestGPUsOfJobAnnoKey] = fmt.Sprintf("%v", s.args.WorkerCount*s.args.GPUCount)
+	return nil
+}
+
+func (s *SubmitArgsBuilder) checkModelNameAndSource() error {
+	if s.args.ModelName != "" && s.args.ModelSource == "" {
+		return errors.New("model version source must be specified when registering a model version")
+	}
+	return nil
+}
+
+func (s *SubmitArgsBuilder) setModelName() error {
+	if s.args.ModelName != "" {
+		s.args.Labels["modelName"] = s.args.ModelName
+	}
 	return nil
 }

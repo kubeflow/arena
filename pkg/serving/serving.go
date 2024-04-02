@@ -316,6 +316,10 @@ func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 	return servingJobInfo
 }
 
+func (s *servingJob) GetLabels() map[string]string {
+	return s.deployment.Labels
+}
+
 // processer defines the default processer
 type processer struct {
 	processerType   types.ServingJobType

@@ -23,6 +23,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/training"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/util/kubectl"
 )
 
 func NewSubmitDeepSpeedJobCommand() *cobra.Command {
@@ -53,7 +54,18 @@ func NewSubmitDeepSpeedJobCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to validate command args: %v", err)
 			}
-			return client.Training().Submit(job)
+			if err := client.Training().Submit(job); err != nil {
+				return err
+			}
+			fullSubmitCommand := getFullSubmitCommand(cmd, args)
+			_, modelVersion, err := createRegisteredModelAndModelVersion(client, job, fullSubmitCommand)
+			if modelVersion == nil {
+				return err
+			}
+			if err := kubectl.AddTrainingJobLabel(job, "modelVersion", modelVersion.Version); err != nil {
+				return fmt.Errorf("failed to patch label `modelVersion=%s` to job %s/%s: %v", modelVersion.Version, job.Type(), job.Name(), err)
+			}
+			return nil
 		},
 	}
 	builder.AddCommandFlags(command)

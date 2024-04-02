@@ -74,6 +74,8 @@ type TrainingJob interface {
 	GetPriorityClass() string
 
 	GetTrainJob() interface{}
+
+	GetLabels() map[string]string
 }
 
 type Trainer interface {

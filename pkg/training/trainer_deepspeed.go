@@ -184,6 +184,10 @@ func (dsj *DeepSpeedJob) GetTrainJob() interface{} {
 	return dsj.trainingjob
 }
 
+func (dsj *DeepSpeedJob) GetLabels() map[string]string {
+	return dsj.trainingjob.Labels
+}
+
 func (dsj *DeepSpeedJob) GetWorkerMaxReplicas(maxWorkers int) interface{} {
 	_, worker := parseAnnotations(dsj.trainingjob)
 	log.Infof("worker: %v", worker)

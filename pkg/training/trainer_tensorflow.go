@@ -90,6 +90,10 @@ func (tj *TensorFlowJob) GetTrainJob() interface{} {
 	return tj.tfjob
 }
 
+func (tj *TensorFlowJob) GetLabels() map[string]string {
+	return tj.tfjob.Labels
+}
+
 // GetStatus returns the status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
 func (tj *TensorFlowJob) GetStatus() (status string) {
 	status = "PENDING"

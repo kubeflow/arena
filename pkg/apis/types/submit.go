@@ -128,6 +128,12 @@ type CommonSubmitArgs struct {
 
 	// UseHostIPC defines using useHostIPC
 	UseHostIPC bool `yaml:"useHostIPC"`
+
+	// ModelName defines the model name associates with the job
+	ModelName string `yaml:"modelName"`
+
+	// ModelSource defines the model source
+	ModelSource string `yaml:"modelSource"`
 }
 
 // DataDirVolume defines the volume of kubernetes

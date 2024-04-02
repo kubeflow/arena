@@ -19,19 +19,6 @@ var (
 	errNotFoundServingJobMessage = "Not found serving job %v, please check it with `arena serve list | grep %v`"
 )
 
-var getJobTemplate = `
-Name:       %v
-Namespace:  %v
-Type:       %v
-Version:    %v
-Desired:    %v
-Available:  %v
-Age:        %v
-Address:    %v
-Port:       %v
-%v
-`
-
 func SearchServingJob(namespace, name, version string, servingType types.ServingJobType) (ServingJob, error) {
 	if servingType == types.UnknownServingJob {
 		return nil, fmt.Errorf("Unknown serving job type,arena only supports: [%s]", utils.GetSupportServingJobTypesInfo())
@@ -114,7 +101,7 @@ func validateJobs(jobs []ServingJob, name string) error {
 	return nil
 }
 
-func PrintServingJob(job ServingJob, format types.FormatStyle) {
+func PrintServingJob(job ServingJob, mv *types.ModelVersion, format types.FormatStyle) {
 	switch format {
 	case types.JsonFormat:
 		data, _ := json.MarshalIndent(job.Convert2JobInfo(), "", "    ")
@@ -188,18 +175,26 @@ func PrintServingJob(job ServingJob, format types.FormatStyle) {
 	}
 	lines = append(lines, "")
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	output := fmt.Sprintf(strings.Trim(getJobTemplate, "\n"),
-		jobInfo.Name,
-		jobInfo.Namespace,
-		jobInfo.Type,
-		jobInfo.Version,
-		jobInfo.Desired,
-		jobInfo.Available,
-		jobInfo.Age,
-		endpointAddress,
-		strings.Join(ports, ","),
-		strings.Join(lines, "\n"),
-	)
-	fmt.Fprint(w, output)
+	fmt.Fprintf(w, "Name:\t%v\n", jobInfo.Name)
+	fmt.Fprintf(w, "Namespace:\t%v\n", jobInfo.Namespace)
+	fmt.Fprintf(w, "Type:\t%v\n", jobInfo.Type)
+	fmt.Fprintf(w, "Version:\t%v\n", jobInfo.Version)
+	fmt.Fprintf(w, "Desired:\t%v\n", jobInfo.Desired)
+	fmt.Fprintf(w, "Available:\t%v\n", jobInfo.Available)
+	fmt.Fprintf(w, "Age:\t%v\n", jobInfo.Age)
+	fmt.Fprintf(w, "Address:\t%v\n", endpointAddress)
+	fmt.Fprintf(w, "Port:\t%v\n", strings.Join(ports, ","))
+	if mv != nil {
+		if mv.Name != "" {
+			fmt.Fprintf(w, "ModelName:\t%v\n", mv.Name)
+		}
+		if mv.Version != "" {
+			fmt.Fprintf(w, "ModelVersion:\t%v\n", mv.Version)
+		}
+		if mv.Source != "" {
+			fmt.Fprintf(w, "ModelSource:\t%v\n", mv.Source)
+		}
+	}
+	fmt.Fprintf(w, "%v\n", strings.Join(lines, "\n"))
 	w.Flush()
 }

@@ -50,6 +50,8 @@ type ServingJob interface {
 	AvailableInstances() int
 	// Convert2JobInfo convert to ServingJobInfo
 	Convert2JobInfo() types.ServingJobInfo
+	// GetLabels returns the labels
+	GetLabels() map[string]string
 }
 
 // Processer is used to process serving jobs

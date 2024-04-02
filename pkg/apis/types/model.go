@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 // ModelJobType defines the supporting model job type
 type ModelJobType string
 
@@ -207,4 +209,59 @@ type ModelEvaluateArgs struct {
 	CommonModelArgs `yaml:",inline"`
 	// for sync up source code
 	SubmitSyncCodeArgs `yaml:",inline"`
+}
+
+// Model Management
+type RegisteredModel struct {
+	Name                 string                  `json:"name"`
+	CreationTimestamp    int64                   `json:"creation_timestamp,omitempty"`
+	LastUpdatedTimestamp int64                   `json:"last_updated_timestamp,omitempty"`
+	Description          string                  `json:"description,omitempty"`
+	LatestVersions       []*ModelVersion         `json:"latest_versions,omitempty"`
+	Tags                 []*RegisteredModelTag   `json:"tags,omitempty"`
+	Aliases              []*RegisteredModelAlias `json:"aliases,omitempty"`
+}
+
+type RegisteredModelTag struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func (t RegisteredModelTag) String() string {
+	return fmt.Sprintf("%s=%s", t.Key, t.Value)
+}
+
+type RegisteredModelAlias struct {
+	Alias   string `json:"alias"`
+	Version string `json:"version"`
+}
+
+type ModelVersion struct {
+	Name                 string             `json:"name"`
+	Version              string             `json:"version,omitempty"`
+	CreationTimestamp    int64              `json:"creation_timestamp,omitempty"`
+	LastUpdatedTimestamp int64              `json:"last_updated_timestamp,omitempty"`
+	Description          string             `json:"description,omitempty"`
+	UserId               string             `json:"user_id,omitempty"`
+	CurrentStage         string             `json:"current_stage,omitempty"`
+	Source               string             `json:"source,omitempty"`
+	RunId                string             `json:"run_id,omitempty"`
+	Status               ModelVersionStatus `json:"status,omitempty"`
+	StatusMessage        string             `json:"status_message,omitempty"`
+	Tags                 []*ModelVersionTag `json:"tags,omitempty"`
+	RunLink              string             `json:"run_link,omitempty"`
+	Aliases              []string           `json:"aliases,omitempty"`
+}
+
+type ModelVersionStatus string
+
+const (
+	PENDING_REGISTRATION ModelVersionStatus = "PENDING_REGISTRATION"
+	FAILED_REGISTRATION  ModelVersionStatus = "FAILED_REGISTRATION"
+	READY                ModelVersionStatus = "READY"
+)
+
+type ModelVersionTag struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
