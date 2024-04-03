@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/kubeflow/arena/pkg/apis/config"
 	apistraining "github.com/kubeflow/arena/pkg/apis/training"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -122,26 +120,7 @@ func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJo
 
 	// Search model version associated with the job
 	jobLabels := job.GetLabels()
-	modelName := jobLabels["modelName"]
-	modelVersion := jobLabels["modelVersion"]
-	var mv *types.ModelVersion
-	if modelName != "" && modelVersion != "" {
-		modelClient, err := NewModelClient(t.namespace, t.configer)
-		if err != nil {
-			log.Warnf("failed to create model client: %v", err)
-		}
-		mv, err = modelClient.GetModelVersion(modelName, modelVersion)
-		if err != nil {
-			log.Warnf("%v", err)
-		}
-	}
-	if mv == nil {
-		mv = &types.ModelVersion{
-			Name:    modelName,
-			Version: modelVersion,
-		}
-	}
-
+	mv := searchModelVersionByJobLabels(t.namespace, t.configer, jobLabels)
 	training.PrintTrainingJob(job, mv, format, showEvent, showGPU)
 	return nil
 }

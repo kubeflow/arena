@@ -10,7 +10,6 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/podexec"
 	"github.com/kubeflow/arena/pkg/serving"
-	log "github.com/sirupsen/logrus"
 )
 
 // ServingJobClient provides some operators for managing serving jobs.
@@ -86,26 +85,7 @@ func (t *ServingJobClient) GetAndPrint(jobName, version string, jobType types.Se
 
 	// Search model version associated with the job
 	jobLabels := job.GetLabels()
-	modelName := jobLabels["modelName"]
-	modelVersion := jobLabels["modelVersion"]
-	var mv *types.ModelVersion
-	if modelName != "" && modelVersion != "" {
-		modelClient, err := NewModelClient(t.namespace, t.configer)
-		if err != nil {
-			log.Warnf("failed to create model client: %v", err)
-		}
-		mv, err = modelClient.GetModelVersion(modelName, modelVersion)
-		if err != nil {
-			log.Warnf("%v", err)
-		}
-	}
-	if mv == nil {
-		mv = &types.ModelVersion{
-			Name:    modelName,
-			Version: modelVersion,
-		}
-	}
-
+	mv := searchModelVersionByJobLabels(t.namespace, t.configer, jobLabels)
 	serving.PrintServingJob(job, mv, utils.TransferPrintFormat(format))
 	return nil
 }
@@ -127,7 +107,7 @@ func (t *ServingJobClient) List(allNamespaces bool, servingType types.ServingJob
 // ListAndPrint lists and prints the job informations
 func (t *ServingJobClient) ListAndPrint(allNamespaces bool, servingType types.ServingJobType, format string) error {
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 	jobs, err := serving.ListServingJobs(t.namespace, allNamespaces, servingType)
 	if err != nil {
