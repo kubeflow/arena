@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
 	"github.com/kubeflow/arena/pkg/apis/arenaclient"
 	"github.com/kubeflow/arena/pkg/apis/training"
 	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 // Model registration
@@ -133,11 +135,23 @@ func getFullSubmitCommand(cmd *cobra.Command, args []string) string {
 
 	// Append every flag as a line
 	cmd.Flags().Visit(func(f *pflag.Flag) {
-		lines = append(lines, fmt.Sprintf("--%s %s", f.Name, f.Value))
+		if !f.Changed {
+			return
+		}
+		sliceValue, ok := f.Value.(pflag.SliceValue)
+		if ok {
+			for _, v := range sliceValue.GetSlice() {
+				lines = append(lines, fmt.Sprintf("--%s %v", f.Name, v))
+			}
+		} else {
+			lines = append(lines, fmt.Sprintf("--%s %v", f.Name, f.Value))
+		}
 	})
 
 	// Append all args as a line
 	lines = append(lines, fmt.Sprintf("\"%s\"", strings.Join(args, " ")))
 
-	return strings.Join(lines, " \\\n    ")
+	s := strings.Join(lines, " \\\n    ")
+	log.Debugf("full submit command:\n%s", s)
+	return s
 }
