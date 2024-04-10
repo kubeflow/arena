@@ -9,6 +9,8 @@ nav:
   - User Guide:
       - Training Job Guide: training/index.md
       - Serving Job Guide: serving/index.md
+      - Model Manage Guide: model/index.md
+      - Model Analyze Guide: model/analyze/index.md
       - Display Resource Usage Guide: top/index.md
       - Supports Multiple Users Guide: multiple-users.md
       - Isolate Users In Namespace: isolate-users-in-namespace.md
