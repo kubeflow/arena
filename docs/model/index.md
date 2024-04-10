@@ -204,6 +204,7 @@ When submitting a training job, you can register a model version at the same tim
 ```shell
 $ arena submit pytorchjob \
   --name=bloom-sft \
+  --namespace=default \
   --gpus=1 \
   --image=registry.cn-hangzhou.aliyuncs.com/acs/deepspeed:v0.9.0-chat \
   --data=training-data:/model \
@@ -260,6 +261,7 @@ Description:
       --model-name my-model \
       --model-source pvc://default/training-data/bloom-560m-sft \
       --name bloom-sft \
+      --namespace=default \
       "cd /model/DeepSpeedExamples/applications/DeepSpeed-Chat/training/step1_supervised_finetuning && bash training_scripts/other_language/run_chinese.sh /model/bloom-560m-sft"
 Tags:
   createdBy: arena
@@ -276,6 +278,7 @@ When submitting a serving job, you can associate it with a model by specifying `
 ```shell
 $ arena serve custom \
     --name=bloom-tgi-inference \
+    --namespace=default \
     --gpus=1 \
     --version=v1 \
     --replicas=1 \
@@ -335,6 +338,7 @@ Description:
       --model-name my-model \
       --model-source pvc://default/training-data/bloom-560m-sft \
       --name bloom-sft \
+      --namespace=default \
       "cd /model/DeepSpeedExamples/applications/DeepSpeed-Chat/training/step1_supervised_finetuning && bash training_scripts/other_language/run_chinese.sh /model/bloom-560m-sft"
 Tags:
   createdBy: arena
