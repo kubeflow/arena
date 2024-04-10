@@ -238,7 +238,7 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 	fmt.Fprintf(w, "CreateTime:\t%v\n", util.GetFormatTime(job.CreationTimestamp))
 	fmt.Fprintf(w, "EndTime:\t%v\n", endTime)
 	if job.ModelName != "" {
-		fmt.Fprintf(w, "ModelName:\t%v\n", job.Name)
+		fmt.Fprintf(w, "ModelName:\t%v\n", job.ModelName)
 	}
 	if job.ModelVersion != "" {
 		fmt.Fprintf(w, "ModelVersion:\t%v\n", job.ModelVersion)
