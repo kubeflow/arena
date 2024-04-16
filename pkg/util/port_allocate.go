@@ -43,7 +43,8 @@ func SelectAvailablePort(client *kubernetes.Clientset) (int, error) {
 }
 
 func initK8sClusterUsedPort(client *kubernetes.Clientset) ([]int, error) {
-	if len(k8sClusterUsedPorts) == 0 {
+	maxUsedPort := AUTO_SELECT_PORT_MAX - AUTO_SELECT_PORT_MIN
+	if len(k8sClusterUsedPorts) == 0 || len(k8sClusterUsedPorts) >= maxUsedPort {
 		var err error
 		k8sClusterUsedPorts, err = getClusterUsedNodePorts(client)
 		if err != nil {
@@ -56,8 +57,8 @@ func initK8sClusterUsedPort(client *kubernetes.Clientset) ([]int, error) {
 // Gather used node ports for k8s cluster
 // 1. HostNetwork pod's HostPort
 // 2. NodePort / Loadbalancer Service's NodePort
-
 func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
+	k8sClusterUsedPorts = []int{}
 	pods, err := client.CoreV1().Pods("").List(context.TODO(), meta_v1.ListOptions{})
 	if err != nil {
 		return k8sClusterUsedPorts, err
@@ -74,7 +75,9 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 					usedHostPort = port.ContainerPort
 				}
 
-				k8sClusterUsedPorts = append(k8sClusterUsedPorts, int(usedHostPort))
+				if int(usedHostPort) >= AUTO_SELECT_PORT_MIN && int(usedHostPort) < AUTO_SELECT_PORT_MAX {
+					k8sClusterUsedPorts = append(k8sClusterUsedPorts, int(usedHostPort))
+				}
 			}
 		}
 	}
@@ -86,7 +89,9 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 	for _, service := range services.Items {
 		if service.Spec.Type == v1.ServiceTypeNodePort || service.Spec.Type == v1.ServiceTypeLoadBalancer {
 			for _, port := range service.Spec.Ports {
-				k8sClusterUsedPorts = append(k8sClusterUsedPorts, int(port.NodePort))
+				if int(port.NodePort) >= AUTO_SELECT_PORT_MIN && int(port.NodePort) < AUTO_SELECT_PORT_MAX {
+					k8sClusterUsedPorts = append(k8sClusterUsedPorts, int(port.NodePort))
+				}
 			}
 		}
 	}
