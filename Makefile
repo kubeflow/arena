@@ -115,7 +115,7 @@ notebook-image:
 build-pkg:
 	docker rm -f arena-pkg || true
 	docker build --build-arg "KUBE_VERSION=v1.26.4" \
-				 --build-arg "HELM_VERSION=v3.7.2" \
+				 --build-arg "HELM_VERSION=v3.13.3" \
 				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
 				 --build-arg "VERSION=${VERSION}" \
 				 --build-arg "OS_ARCH=${OS_ARCH}" \
