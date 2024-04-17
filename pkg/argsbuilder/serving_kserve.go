@@ -91,6 +91,10 @@ func (s *KServeArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().Int64Var(&s.args.TimeoutSeconds, "timeout", 0, "the number of seconds to wait before timing out a request to the component.")
 	command.Flags().Int64Var(&s.args.CanaryTrafficPercent, "canary-traffic-percent", -1, "the traffic split percentage between the candidate revision and the last ready revision")
 
+	// Prometheus metrics
+	command.Flags().BoolVar(&s.args.EnablePrometheus, "enable-prometheus", false, "enable prometheus scraping the metrics of inference services")
+	command.Flags().IntVar(&s.args.MetricsPort, "metrics-port", 8080, "the port which inference services expose metrics, default: 8080")
+
 	s.AddArgValue(KServeModelFormat, &modelFormat)
 }
 

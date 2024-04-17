@@ -60,3 +60,22 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+Support scale according to custom metrics
+See the doc for details. https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#scaling-on-custom-metrics
+*/}}
+{{- define "kserve.isCustomMetrics" -}}
+{{- if .Values.scaleMetric }}
+    {{- $supportedMetrics := list "cpu" "memory" "rps" "concurrency"}}
+    {{- $metrics := .Values.scaleMetric | lower }}
+    {{- if has $metrics $supportedMetrics }}
+        {{- false }}
+    {{- else }}
+        {{- true }}
+    {{- end -}}
+{{- else }}
+  {{- false }}
+{{- end }}
+{{- end -}}

@@ -245,6 +245,8 @@ type KServeArgs struct {
 	TimeoutSeconds       int64        `yaml:"timeout"`                        // --timeout
 	CanaryTrafficPercent int64        `yaml:"canaryTrafficPercent,omitempty"` // --canary-traffic-percent
 	Port                 int          `yaml:"port"`                           // --port
+	EnablePrometheus     bool         `yaml:"enablePrometheus,omitempty"`     //--enable-prometheus
+	MetricsPort          int          `yaml:"metricsPort,omitempty"`          //--metrics-port
 	CommonServingArgs    `yaml:",inline"`
 }
 
