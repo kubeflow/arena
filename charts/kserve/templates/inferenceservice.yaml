@@ -8,6 +8,12 @@ metadata:
   {{- range $key, $value := .Values.annotations }}
     {{ $key }}: {{ $value | quote }}
   {{- end }}
+  {{- if eq (include "kserve.isCustomMetrics" .) "true" }}
+    serving.kserve.io/autoscalerClass: external
+  {{- end }}
+  {{- if .Values.enablePrometheus }}
+    serving.kserve.io/enable-prometheus-scraping: "true"
+  {{- end }}
   labels:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
@@ -21,7 +27,10 @@ metadata:
   name: {{ .Release.Name }}
 spec:
   predictor:
+    {{- if eq (include "kserve.isCustomMetrics" .) "false" }}
+    {{- if .Values.minReplicas }}
     minReplicas: {{ .Values.minReplicas }}
+    {{- end }}
     {{- if .Values.maxReplicas }}
     maxReplicas: {{ .Values.maxReplicas }}
     {{- end }}
@@ -31,6 +40,7 @@ spec:
     {{- if .Values.scaleMetric }}
     scaleMetric: {{ .Values.scaleMetric }}
     {{- end }}
+    {{- end}}
     {{- if .Values.containerConcurrency }}
     containerConcurrency: {{ .Values.containerConcurrency }}
     {{- end }}
@@ -299,3 +309,68 @@ spec:
           name: {{ $releaseName }}-{{ $containerPathKey }}
       {{- end }}
       {{- end }}
+---
+{{- if eq (include "kserve.isCustomMetrics" .) "true" }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name:  {{ .Release.Name }}-predictor
+  {{- if .Values.minReplicas }}
+  minReplicas: {{ .Values.minReplicas }}
+  {{- end }}
+  {{- if .Values.maxReplicas }}
+  maxReplicas: {{ .Values.maxReplicas }}
+  {{- end }}
+  metrics:
+    - type: Pods
+      pods:
+        metric:
+          {{- if .Values.scaleMetric }}
+          name: {{ .Values.scaleMetric }}
+          {{- end }}
+        target:
+          type: Utilization
+          {{- if .Values.scaleTarget }}
+          averageValue: {{ .Values.scaleTarget }}
+          {{- end}}
+{{- end }}
+---
+{{- if .Values.enablePrometheus }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-metric-svc
+  labels:
+    isvc: {{ .Release.Name }}
+spec:
+  selector:
+    serving.kserve.io/inferenceservice: {{ .Release.Name }}
+  clusterIP: None
+  ports:
+    - name: metric
+      protocol: TCP
+      port: {{ .Values.metricsPort}}
+      targetPort: {{ .Values.metricsPort}}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-svcmonitor
+  annotations:
+    arms.prometheus.io/discovery: 'true'
+spec:
+  selector:
+    matchLabels:
+      isvc: {{ .Release.Name }}
+  namespaceSelector:
+    any: true
+  endpoints:
+    - port: metric
+      path: /metrics
+      interval: 15s
+{{- end }}
