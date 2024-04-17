@@ -96,7 +96,6 @@ func (s *TensorflowServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.VersionPolicy, "version-policy", "", "support latest, latest:N, specific:N, all")
 	_ = command.Flags().MarkDeprecated("version-policy", "please use --model-config-file instead")
 
-	command.Flags().StringVar(&s.args.Command, "command", "", "the command will inject to container's command.")
 }
 
 func (s *TensorflowServingArgsBuilder) PreBuild() error {

@@ -45,7 +45,9 @@ func (b *PytorchJobBuilder) Shell(shell string) *PytorchJobBuilder {
 
 // Command is used to set job command
 func (b *PytorchJobBuilder) Command(args []string) *PytorchJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

@@ -50,7 +50,9 @@ func (b *TFJobBuilder) Shell(shell string) *TFJobBuilder {
 }
 
 func (b *TFJobBuilder) Command(args []string) *TFJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

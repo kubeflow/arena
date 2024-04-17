@@ -55,7 +55,9 @@ func (b *UpdateTritonServingJobBuilder) Shell(shell string) *UpdateTritonServing
 
 // Command is used to set job command
 func (b *UpdateTritonServingJobBuilder) Command(args []string) *UpdateTritonServingJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

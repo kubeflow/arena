@@ -54,7 +54,9 @@ func (m *ModelBenchmarkArgsBuilder) Shell(shell string) *ModelBenchmarkArgsBuild
 
 // Command is used to set job command
 func (m *ModelBenchmarkArgsBuilder) Command(args []string) *ModelBenchmarkArgsBuilder {
-	m.args.Command = strings.Join(args, " ")
+	if m.args.Command == "" {
+		m.args.Command = strings.Join(args, " ")
+	}
 	return m
 }
 

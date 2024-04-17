@@ -59,7 +59,9 @@ func (b *TFServingJobBuilder) Shell(shell string) *TFServingJobBuilder {
 
 // Command is used to set job command
 func (b *TFServingJobBuilder) Command(args []string) *TFServingJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

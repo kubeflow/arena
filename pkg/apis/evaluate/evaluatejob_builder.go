@@ -40,7 +40,9 @@ func (e *EvaluateJobBuilder) Namespace(namespace string) *EvaluateJobBuilder {
 
 // Command is used to set job command
 func (e *EvaluateJobBuilder) Command(args []string) *EvaluateJobBuilder {
-	e.args.Command = strings.Join(args, " ")
+	if e.args.Command == "" {
+		e.args.Command = strings.Join(args, " ")
+	}
 	return e
 }
 

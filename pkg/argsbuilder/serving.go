@@ -144,6 +144,9 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// add option --shell
 	command.Flags().StringVarP(&s.args.Shell, "shell", "", "sh", "specify the linux shell, usage: bash or sh")
 
+	// add option --command
+	command.Flags().StringVar(&s.args.Command, "command", "", "specify the container command")
+
 	// add option --model-name
 	command.Flags().StringVar(&s.args.ModelName, "model-name", "", "model name")
 	// add option --model-version
