@@ -56,7 +56,10 @@ func (b *KServeJobBuilder) Shell(shell string) *KServeJobBuilder {
 
 // Command is used to set job command
 func (b *KServeJobBuilder) Command(args []string) *KServeJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	// If the user does not specifies `--command`, args are used as container commands.
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

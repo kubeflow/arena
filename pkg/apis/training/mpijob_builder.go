@@ -45,7 +45,9 @@ func (b *MPIJobBuilder) Shell(shell string) *MPIJobBuilder {
 
 // Command is used to set job command
 func (b *MPIJobBuilder) Command(args []string) *MPIJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

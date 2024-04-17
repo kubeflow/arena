@@ -60,7 +60,9 @@ func (b *TRTServingJobBuilder) Shell(shell string) *TRTServingJobBuilder {
 
 // Command is used to set job command
 func (b *TRTServingJobBuilder) Command(args []string) *TRTServingJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

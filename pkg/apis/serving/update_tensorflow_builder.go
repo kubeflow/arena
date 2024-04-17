@@ -55,7 +55,9 @@ func (b *UpdateTFServingJobBuilder) Shell(shell string) *UpdateTFServingJobBuild
 
 // Command is used to set job command
 func (b *UpdateTFServingJobBuilder) Command(args []string) *UpdateTFServingJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

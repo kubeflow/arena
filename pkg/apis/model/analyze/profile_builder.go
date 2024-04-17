@@ -54,7 +54,9 @@ func (m *ModelProfileJobBuilder) Shell(shell string) *ModelProfileJobBuilder {
 
 // Command is used to set job command
 func (m *ModelProfileJobBuilder) Command(args []string) *ModelProfileJobBuilder {
-	m.args.Command = strings.Join(args, " ")
+	if m.args.Command == "" {
+		m.args.Command = strings.Join(args, " ")
+	}
 	return m
 }
 

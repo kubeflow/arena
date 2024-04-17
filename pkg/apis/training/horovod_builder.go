@@ -44,7 +44,9 @@ func (b *HorovodJobBuilder) Shell(shell string) *HorovodJobBuilder {
 
 // Command is used to set job command
 func (b *HorovodJobBuilder) Command(args []string) *HorovodJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

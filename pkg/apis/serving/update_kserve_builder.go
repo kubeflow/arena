@@ -53,7 +53,9 @@ func (b *UpdateKServeJobBuilder) Version(version string) *UpdateKServeJobBuilder
 
 // Command is used to set job command
 func (b *UpdateKServeJobBuilder) Command(args []string) *UpdateKServeJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

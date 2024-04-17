@@ -46,7 +46,9 @@ func (b *ETJobBuilder) Shell(shell string) *ETJobBuilder {
 
 // Command is used to set job command
 func (b *ETJobBuilder) Command(args []string) *ETJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

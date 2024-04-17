@@ -53,7 +53,9 @@ func (b *UpdateCustomServingJobBuilder) Version(version string) *UpdateCustomSer
 
 // Command is used to set job command
 func (b *UpdateCustomServingJobBuilder) Command(args []string) *UpdateCustomServingJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

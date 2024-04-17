@@ -57,7 +57,9 @@ func (b *KFServingJobBuilder) Shell(shell string) *KFServingJobBuilder {
 
 // Command is used to set job command
 func (b *KFServingJobBuilder) Command(args []string) *KFServingJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

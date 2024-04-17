@@ -55,7 +55,9 @@ func (b *CustomServingJobBuilder) Shell(shell string) *CustomServingJobBuilder {
 
 // Command is used to set job command
 func (b *CustomServingJobBuilder) Command(args []string) *CustomServingJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

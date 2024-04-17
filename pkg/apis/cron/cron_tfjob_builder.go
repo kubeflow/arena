@@ -300,7 +300,9 @@ func (c *CronTFJobBuilder) Shell(shell string) *CronTFJobBuilder {
 }
 
 func (c *CronTFJobBuilder) Command(args []string) *CronTFJobBuilder {
-	c.args.Command = strings.Join(args, " ")
+	if c.args.Command == "" {
+		c.args.Command = strings.Join(args, " ")
+	}
 	return c
 }
 

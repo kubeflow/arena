@@ -58,7 +58,9 @@ func (b *DeepSpeedJobBuilder) Shell(shell string) *DeepSpeedJobBuilder {
 
 // Command is used to set job command
 func (b *DeepSpeedJobBuilder) Command(args []string) *DeepSpeedJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 

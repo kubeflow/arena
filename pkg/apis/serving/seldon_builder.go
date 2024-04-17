@@ -57,7 +57,9 @@ func (b *SeldonJobBuilder) Shell(shell string) *SeldonJobBuilder {
 
 // Command is used to set job command
 func (b *SeldonJobBuilder) Command(args []string) *SeldonJobBuilder {
-	b.args.Command = strings.Join(args, " ")
+	if b.args.Command == "" {
+		b.args.Command = strings.Join(args, " ")
+	}
 	return b
 }
 
