@@ -142,7 +142,7 @@ spec:
           command:
             - "sh"
             - "-c"
-            - "{{ .Values.command }}"
+            - {{ .Values.command }}
           {{- end }}
           resources:
             limits:

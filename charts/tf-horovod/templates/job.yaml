@@ -169,7 +169,7 @@ spec:
 {{- end }}
 {{- else }}
         args:
-          - "{{ .Values.command }}"
+          - {{ .Values.command }}
 {{- end }}        
         resources:
           requests:

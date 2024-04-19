@@ -121,7 +121,7 @@ spec:
           command:
           - "{{ .Values.shell }}"
           - "-c"
-          - "{{ .Values.command }}"
+          - {{ .Values.command }}
           {{- else }}
           command:
           - "{{ .Values.shell }}"
