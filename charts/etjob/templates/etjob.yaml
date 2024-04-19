@@ -221,7 +221,7 @@ spec:
             command:
             - "sh"
             - "-c"
-            - "{{ .Values.command }}"
+            - {{ .Values.command }}
             {{- if or .Values.cpu .Values.memory .Values.enableRDMA }}
             resources:
               requests:

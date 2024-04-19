@@ -88,7 +88,7 @@ spec:
       command:
       - "{{ .Values.shell }}"
       - "-c"
-      - "{{ .Values.command }}"
+      - {{ .Values.command }}
       {{- end }}
       ports:
         {{- if ne (int .Values.port) 0 }}
@@ -178,7 +178,7 @@ spec:
         command:
         - "{{ .Values.shell }}"
         - "-c"
-        - "{{ .Values.command }}"
+        - {{ .Values.command }}
         {{- end }}
         ports:
           {{- if ne (int .Values.port) 0 }}

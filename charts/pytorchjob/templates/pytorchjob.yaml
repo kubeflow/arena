@@ -233,7 +233,7 @@ spec:
             command:
             - "{{ .Values.shell }}"
             - "-c"
-            - "{{ .Values.command }}"
+            - {{ .Values.command }}
             resources:
               requests:
                 {{- if gt (int $gpuCount) 0}}
@@ -525,7 +525,7 @@ spec:
               command:
                 - "{{ .Values.shell }}"
                 - "-c"
-                - "{{ .Values.command }}"
+                - {{ .Values.command }}
               resources:
                 requests:
                   {{- if gt (int $gpuCount) 0}}

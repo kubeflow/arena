@@ -146,7 +146,7 @@ spec:
           command:
             - "{{ .Values.shell }}"
             - "-c"
-            - "{{ .Values.command }}"
+            - {{ .Values.command }}
           resources:
             limits:
               {{- if .Values.cpu }}
