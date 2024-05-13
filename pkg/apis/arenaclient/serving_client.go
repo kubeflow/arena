@@ -84,8 +84,11 @@ func (t *ServingJobClient) GetAndPrint(jobName, version string, jobType types.Se
 	}
 
 	// Search model version associated with the job
-	jobLabels := job.GetLabels()
-	mv := searchModelVersionByJobLabels(t.namespace, t.configer, jobLabels)
+	var mv *types.ModelVersion
+	if job.Deployment() != nil {
+		jobLabels := job.GetLabels()
+		mv = searchModelVersionByJobLabels(t.namespace, t.configer, jobLabels)
+	}
 	serving.PrintServingJob(job, mv, utils.TransferPrintFormat(format))
 	return nil
 }
