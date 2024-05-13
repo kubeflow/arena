@@ -269,6 +269,10 @@ func (s *kserveJob) AvailableInstances() int {
 	return int(available)
 }
 
+func (s *kserveJob) GetLabels() map[string]string {
+	return s.inferenceService.Labels
+}
+
 func (s *kserveJob) Convert2JobInfo() types.ServingJobInfo {
 	servingType := types.ServingTypeMap[s.servingType].Alias
 	servingJobInfo := types.ServingJobInfo{
