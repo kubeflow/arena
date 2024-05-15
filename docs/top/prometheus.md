@@ -32,8 +32,6 @@ $ kubectl apply -f kubernetes-artifacts/prometheus/gpu-exporter.yaml
 
 !!! note
 
-    * the prometheus and gpu-exporter components should be deployed in namespace ``kube-system``, and so that ``arena top job <job name>`` can work.
-
     * if the your prometheus has been existed in cluster,please make sure the k8s service whose port is 9090 has the label `kubernetes.io/service-name=prometheus-server` 
   
 3\. You can check the GPU metrics by prometheus SQL request
