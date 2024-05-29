@@ -22,16 +22,12 @@ spec:
       hostPID: true
       volumes:
       - hostPath:
-          path: /var/run/docker.sock
-          type: FileOrCreate
-        name: docker-sock
-      - hostPath:
           path: /run/containerd/containerd.sock
-          type: FileOrCreate
+          type: Socket
         name: containerd-sock
       containers:
       - name: node-gpu-exporter
-        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:0.1-0e21b28
+        image: registry.cn-hangzhou.aliyuncs.com/acs/gpu-prometheus-exporter:v1.0.1-b2c2f9b
         imagePullPolicy: Always
         ports:
         - containerPort: 9445
@@ -40,11 +36,9 @@ spec:
             memory: 30Mi
             cpu: 100m
           limits:
-            memory: 50Mi
-            cpu: 200m
+            memory: 2000Mi
+            cpu: 1000m
         volumeMounts:
-        - mountPath: /var/run/docker.sock
-          name: docker-sock
         - mountPath: /run/containerd/containerd.sock
           name: containerd-sock
 
