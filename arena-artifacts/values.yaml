@@ -29,12 +29,12 @@ binary:
 tf:
   enabled: true
   image: acs/tf_operator
-  tag: v1.0-aliyun-cfb1239
+  tag: v1.0-aliyun-9b730a8
   imagePullPolicy: IfNotPresent
   resources:
     limits:
-      cpu: 200m
-      memory: 2Gi
+      cpu: 2
+      memory: 8Gi
     requests:
       cpu: 100m
       memory: 256Mi
@@ -65,8 +65,8 @@ mpi:
   imagePullPolicy: IfNotPresent
   resources:
     limits:
-      cpu: 200m
-      memory: 2Gi
+      cpu: 2
+      memory: 8Gi
     requests:
       cpu: 100m
       memory: 256Mi
@@ -80,8 +80,8 @@ pytorch:
   imagePullPolicy: IfNotPresent
   resources:
     limits:
-      cpu: 200m
-      memory: 2Gi
+      cpu: 2
+      memory: 8Gi
     requests:
       cpu: 100m
       memory: 256Mi
@@ -96,8 +96,8 @@ et:
   imagePullPolicy: IfNotPresent
   resources:
     limits:
-      cpu: 200m
-      memory: 2Gi
+      cpu: 2
+      memory: 8Gi
     requests:
       cpu: 100m
       memory: 256Mi

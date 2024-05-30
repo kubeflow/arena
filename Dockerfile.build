@@ -25,12 +25,14 @@ ENV VERSION $VERSION
 ENV OS_ARCH $OS_ARCH
 ENV COMMIT $COMMIT
 ENV TARGET $TARGET
-ENV GO111MODULE off
+ENV GO111MODULE on
 
 RUN mkdir -p /go/src/github.com/kubeflow/arena
 
 WORKDIR /go/src/github.com/kubeflow/arena
 COPY . .
+
+RUN go mod download
 
 RUN make $TARGET
 
