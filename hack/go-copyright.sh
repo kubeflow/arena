@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2018 The Kubeflow Authors All rights reserved.
+# Copyright 2024 The Kubeflow Authors All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ for f in $(find . -name "*.go" -type f -not -path "./vendor/*"); do
   if (grep Copyright $f);then
     echo "No need to copy the License Header to $f"
   else
-    cat license.txt $f > $f.new
+    cat ./hack/boilerplate/boilerplate.go.txt $f > $f.new
     mv $f.new $f
     echo "License Header copied to $f"
   fi
