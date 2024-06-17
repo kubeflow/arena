@@ -350,7 +350,6 @@ metadata:
 spec:
   selector:
     serving.kserve.io/inferenceservice: {{ .Release.Name }}
-  clusterIP: None
   ports:
     - name: metric
       protocol: TCP
