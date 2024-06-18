@@ -32,6 +32,7 @@ spec:
             - -v=1
             - --monitoring-port=8443
             - --threadiness=4
+            - --init-container-image={{ .Values.initContainerImage }}
           # image: gcr.io/kubeflow-images-public/pytorch-operator:v0.6.0-18-g5e36a57
           image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}

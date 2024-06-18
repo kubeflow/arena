@@ -76,7 +76,7 @@ mpi:
 pytorch:
   enabled: true
   image: acs/pytorch-operator
-  tag: v1.0-aliyun-5ab19b0
+  tag: v1.0-aliyun-4026101
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -86,6 +86,7 @@ pytorch:
       cpu: 100m
       memory: 256Mi
   nodeSelector: {}
+  initContainerImage: alpine:3.10
 
 # et-operator
 et:
