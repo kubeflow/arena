@@ -79,7 +79,7 @@ func generateDestinationRule(namespace string, serviceName string, versionWeight
 			Labels:      nil,
 			Annotations: nil,
 		},
-		Spec: istiov1alpha3.DestinationRule{
+		Spec: &istiov1alpha3.DestinationRule{
 			Host: serviceName,
 		},
 	}

@@ -22,7 +22,6 @@ import (
 
 	kservev1beta1 "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
 	kserveClient "github.com/kserve/kserve/pkg/client/clientset/versioned"
-	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 	appv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -38,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
+	"github.com/kubeflow/arena/pkg/apis/types"
 	v1alpha12 "github.com/kubeflow/arena/pkg/operators/et-operator/api/v1alpha1"
 	etversioned "github.com/kubeflow/arena/pkg/operators/et-operator/client/clientset/versioned"
 	cron_v1alpha1 "github.com/kubeflow/arena/pkg/operators/kubedl-operator/apis/apps/v1alpha1"
@@ -92,13 +92,18 @@ func NewK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset
 	var cacheClient cache.Cache
 	var err error
 	if isDaemonMode {
-		mapper, err := apiutil.NewDynamicRESTMapper(config)
+		httpClient, err := rest.HTTPClientFor(config)
+		if err != nil {
+			log.Errorf("failed to create httpClient, reason: %v", err)
+			return nil, err
+		}
+		mapper, err := apiutil.NewDynamicRESTMapper(config, httpClient)
 		if err != nil {
 			log.Errorf("failed to create cacheClient mapper, reason: %v", err)
 			// if create dynamic mapper failed, use default restMapper
 			mapper = nil
 		}
-		cacheClient, err = cache.New(config, cache.Options{Mapper: mapper, Resync: nil, Namespace: ""})
+		cacheClient, err = cache.New(config, cache.Options{Mapper: mapper})
 		if err != nil {
 			log.Errorf("failed to create cacheClient, reason: %v", err)
 			return nil, err
