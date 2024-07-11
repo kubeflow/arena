@@ -82,6 +82,7 @@ func (s *SubmitPytorchJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Memory, "memory", "", "the memory resource to use for the training, like 1Gi.")
 	command.Flags().DurationVar(&runningTimeout, "running-timeout", runningTimeout, "Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').")
 	command.Flags().DurationVar(&ttlAfterFinished, "ttl-after-finished", ttlAfterFinished, "Defines the TTL for cleaning up finished PytorchJobs(e.g. '5s', '1m', '2h22m'). Defaults to infinite.")
+	command.Flags().StringVar(&s.args.ShareMemory, "share-memory", "2Gi", "the shared memory of each replica to run the job, default 2Gi.")
 
 	s.AddArgValue("running-timeout", &runningTimeout).
 		AddArgValue("ttl-after-finished", &ttlAfterFinished)
@@ -162,6 +163,12 @@ func (s *SubmitPytorchJobArgsBuilder) check() error {
 	}
 	if s.args.TTLSecondsAfterFinished < 0 {
 		return fmt.Errorf("--ttl-after-finished is invalid")
+	}
+	if s.args.ShareMemory != "" {
+		_, err := resource.ParseQuantity(s.args.ShareMemory)
+		if err != nil {
+			return fmt.Errorf("--share-memory is invalid")
+		}
 	}
 	return nil
 }

@@ -170,6 +170,7 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringArrayVar(&evaluatorSelectors, "evaluator-selector", []string{}, `assigning jobs with "Evaluator" role to some k8s particular nodes(this option would cover --selector), usage: "--evaluator-selector=key=value"`)
 	command.Flags().StringArrayVar(&psSelectors, "ps-selector", []string{}, `assigning jobs with "PS" role to some k8s particular nodes(this option would cover --selector), usage: "--ps-selector=key=value"`)
 	command.Flags().StringVar(&roleSequence, "role-sequence", "", `specify the tfjob role sequence,like: "Worker,PS,Chief,Evaluator" or "w,p,c,e"`)
+	command.Flags().StringVar(&s.args.ShareMemory, "share-memory", "2Gi", "the shared memory of each replica to run the job, default 2Gi.")
 
 	s.AddArgValue("worker-selector", &workerSelectors).
 		AddArgValue("chief-selector", &chiefSelectors).
@@ -341,6 +342,12 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 	}
 	if s.args.TTLSecondsAfterFinished < 0 {
 		return fmt.Errorf("--ttl-after-finished is invalid")
+	}
+	if s.args.ShareMemory != "" {
+		_, err := resource.ParseQuantity(s.args.ShareMemory)
+		if err != nil {
+			return fmt.Errorf("--share-memory is invalid")
+		}
 	}
 	return nil
 }

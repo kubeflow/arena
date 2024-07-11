@@ -204,6 +204,12 @@ spec:
               name: {{ .name }}
             {{- end }}
             {{- end }}
+            {{- if .Values.shareMemory }}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: {{ .Values.shareMemory }}
+            {{- end }}
           {{- if .Values.syncMode }}
           initContainers:
           - name: init-code
@@ -356,6 +362,10 @@ spec:
                 - name: "{{ $pvcName }}"
                   mountPath: "{{ $destPath }}"
                 {{- end }}
+                {{- end }}
+                {{- if .Values.shareMemory }}
+                - mountPath: /dev/shm
+                  name: dshm
                 {{- end }}
                 {{- if $dataDirs }}
                 {{- range $dataDirs }}
@@ -529,6 +539,12 @@ spec:
                 path: {{ .hostPath }}
               name: {{ .name }}
             {{- end }}
+            {{- end }}
+            {{- if .Values.shareMemory }}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: {{ .Values.shareMemory }}
             {{- end }}
           {{- if .Values.syncMode }}
           initContainers:
@@ -709,7 +725,10 @@ spec:
                   name: {{ .name }}
                 {{- end }}
                 {{- end }}
-
+                {{- if .Values.shareMemory }}
+                - mountPath: /dev/shm
+                  name: dshm
+                {{- end }}
 {{- end }}
 {{- if .Values.chief }}
 {{ .Values.chiefName | indent  4}}:
@@ -872,6 +891,12 @@ spec:
                 path: {{ .hostPath }}
               name: {{ .name }}
             {{- end }}
+            {{- end }}
+            {{- if .Values.shareMemory }}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: {{ .Values.shareMemory }}
             {{- end }}
           {{- if .Values.syncMode }}
           initContainers:
@@ -1050,6 +1075,10 @@ spec:
                   name: {{ .name }}
                 {{- end }}
                 {{- end }}
+                {{- if .Values.shareMemory }}
+                - mountPath: /dev/shm
+                  name: dshm
+                {{- end }}
 {{- end }}
 {{- if .Values.evaluator }}
     Evaluator:
@@ -1174,6 +1203,12 @@ spec:
                 path: {{ .hostPath }}
               name: {{ .name }}
             {{- end }}
+            {{- end }}
+            {{- if .Values.shareMemory }}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: {{ .Values.shareMemory }}
             {{- end }}
           {{- if .Values.syncMode }}
           initContainers:
@@ -1329,5 +1364,9 @@ spec:
                 - mountPath: {{ .containerPath }}
                   name: {{ .name }}
                 {{- end }}
+                {{- end }}
+                {{- if .Values.shareMemory }}
+                - mountPath: /dev/shm
+                  name: dshm
                 {{- end }}
 {{- end }}

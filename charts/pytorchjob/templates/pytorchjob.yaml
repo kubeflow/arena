@@ -160,11 +160,11 @@ spec:
             name: {{ .name }}
           {{- end }}
           {{- end }}
-          {{- if .Values.shmSize }}
+          {{- if .Values.shareMemory }}
           - name: dshm
             emptyDir:
               medium: Memory
-              sizeLimit: {{ .Values.shmSize }}
+              sizeLimit: {{ .Values.shareMemory }}
           {{- end }}
           {{- if .Values.syncMode }}
           initContainers:
@@ -324,7 +324,7 @@ spec:
               mountPath: "{{ $destPath }}"
             {{- end }}
             {{- end }}
-            {{- if .Values.shmSize }}
+            {{- if .Values.shareMemory }}
             - mountPath: /dev/shm
               name: dshm
             {{- end }}
@@ -452,11 +452,11 @@ spec:
             name: {{ .name }}
           {{- end }}
           {{- end }}
-          {{- if .Values.shmSize }}
+          {{- if .Values.shareMemory }}
           - name: dshm
             emptyDir:
               medium: Memory
-              sizeLimit: {{ .Values.shmSize }}
+              sizeLimit: {{ .Values.shareMemory }}
           {{- end }}
           {{- if .Values.syncMode }}
           initContainers:
@@ -616,7 +616,7 @@ spec:
                 mountPath: "{{ $destPath }}"
               {{- end }}
               {{- end }}
-              {{- if .Values.shmSize }}
+              {{- if .Values.shareMemory }}
               - mountPath: /dev/shm
                 name: dshm
               {{- end }}

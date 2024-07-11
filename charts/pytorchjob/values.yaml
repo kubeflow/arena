@@ -12,7 +12,6 @@ rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/acs/rsync:v3.1.0-aliyun
 # git sync image
 gitImage: registry.cn-zhangjiakou.aliyuncs.com/acs/git-sync:v3.3.5
 
-shmSize: 2Gi
 privileged: false
 
 useTensorboard: false
