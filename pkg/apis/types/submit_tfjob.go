@@ -87,6 +87,8 @@ type SubmitTFJobArgs struct {
 	StartingDeadlineSeconds int64 `yaml:"startingDeadlineSeconds,omitempty"`
 	// Defines the TTL for cleaning up finished TFJobs. Defaults to infinite.
 	TTLSecondsAfterFinished int32 `yaml:"ttlSecondsAfterFinished,omitempty"`
+	// ShareMemory Specifies the shared memory size
+	ShareMemory string `yaml:"shareMemory"`
 	// for common args
 	CommonSubmitArgs `yaml:",inline"`
 

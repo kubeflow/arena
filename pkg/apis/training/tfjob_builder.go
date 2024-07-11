@@ -481,6 +481,13 @@ func (b *TFJobBuilder) TTLSecondsAfterFinished(ttl int32) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) ShareMemory(shm string) *TFJobBuilder {
+	if shm != "" {
+		b.args.ShareMemory = shm
+	}
+	return b
+}
+
 func (b *TFJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {
 		b.AddArgValue(key, value)

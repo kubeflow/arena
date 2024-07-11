@@ -296,6 +296,13 @@ func (b *PytorchJobBuilder) TTLSecondsAfterFinished(ttl int32) *PytorchJobBuilde
 	return b
 }
 
+func (b *PytorchJobBuilder) ShareMemory(shm string) *PytorchJobBuilder {
+	if shm != "" {
+		b.args.ShareMemory = shm
+	}
+	return b
+}
+
 // Build is used to build the job
 func (b *PytorchJobBuilder) Build() (*Job, error) {
 	for key, value := range b.argValues {

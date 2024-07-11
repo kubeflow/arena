@@ -42,4 +42,7 @@ type SubmitPyTorchJobArgs struct {
 
 	// TrainingOperatorCRD compatible with training-operator crd.
 	TrainingOperatorCRD bool `yaml:"trainingOperatorCRD,omitempty"`
+
+	// ShareMemory Specifies the shared memory size
+	ShareMemory string `yaml:"shareMemory"`
 }
