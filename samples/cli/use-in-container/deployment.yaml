@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arena-demo
+  labels:
+    app: arena-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: arena-demo
+  template:
+    metadata:
+      labels:
+        app: arena-demo
+    spec:
+      containers:
+      - name: arena-demo
+        image: arena-demo:test # replace it with your exactly <image_name:tags>
+        command:
+        - bash
+        - -c
+        - sleep infinity
+        resources:
+          requests:
+            cpu: 1
+            memory: 2Gi
+      serviceAccountName: arena-demo
