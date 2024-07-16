@@ -145,6 +145,18 @@ func (b *KServeJobBuilder) Envs(envs map[string]string) *KServeJobBuilder {
 	return b
 }
 
+// EnvsFromSecret is used to set env of job containers,match option --env-from-secret
+func (b *KServeJobBuilder) EnvsFromSecret(envs map[string]string) *KServeJobBuilder {
+	if len(envs) != 0 {
+		envSlice := []string{}
+		for key, value := range envs {
+			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["env-from-secret"] = &envSlice
+	}
+	return b
+}
+
 // Replicas is used to set serving job replicas,match the option --replicas
 func (b *KServeJobBuilder) Replicas(count int) *KServeJobBuilder {
 	if count > 0 {

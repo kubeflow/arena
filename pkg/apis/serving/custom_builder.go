@@ -143,6 +143,18 @@ func (b *CustomServingJobBuilder) Envs(envs map[string]string) *CustomServingJob
 	return b
 }
 
+// EnvsFromSecret is used to set env of job containers,match option --env-from-secret
+func (b *CustomServingJobBuilder) EnvsFromSecret(envs map[string]string) *CustomServingJobBuilder {
+	if len(envs) != 0 {
+		envSlice := []string{}
+		for key, value := range envs {
+			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["env-from-secret"] = &envSlice
+	}
+	return b
+}
+
 // Replicas is used to set serving job replicas,match the option --replicas
 func (b *CustomServingJobBuilder) Replicas(count int) *CustomServingJobBuilder {
 	if count > 0 {
