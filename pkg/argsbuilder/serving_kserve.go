@@ -72,7 +72,8 @@ func (s *KServeArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	}
 
 	var (
-		modelFormat string
+		modelFormat     string
+		securityContext []string
 	)
 
 	command.Flags().StringVar(&modelFormat, "model-format", "", `the ModelFormat being served. usage: "--model-format=name" or "--model-format=name:version"`)
@@ -90,12 +91,14 @@ func (s *KServeArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().Int64Var(&s.args.ContainerConcurrency, "container-concurrency", 0, "the requests can be processed concurrently, this sets the hard limit of the container concurrency")
 	command.Flags().Int64Var(&s.args.TimeoutSeconds, "timeout", 0, "the number of seconds to wait before timing out a request to the component.")
 	command.Flags().Int64Var(&s.args.CanaryTrafficPercent, "canary-traffic-percent", -1, "the traffic split percentage between the candidate revision and the last ready revision")
+	command.Flags().StringArrayVar(&securityContext, "security-context", []string{}, `configure a security context, only support runAsUser, runAsGroup, fsGroup, usage: "--security-context runAsUser=1000"`)
 
 	// Prometheus metrics
 	command.Flags().BoolVar(&s.args.EnablePrometheus, "enable-prometheus", false, "enable prometheus scraping the metrics of inference services")
 	command.Flags().IntVar(&s.args.MetricsPort, "metrics-port", 8080, "the port which inference services expose metrics, default: 8080")
 
-	s.AddArgValue(KServeModelFormat, &modelFormat)
+	s.AddArgValue(KServeModelFormat, &modelFormat).
+		AddArgValue("security-context", &securityContext)
 }
 
 func (s *KServeArgsBuilder) PreBuild() error {
@@ -117,6 +120,9 @@ func (s *KServeArgsBuilder) Build() error {
 		return err
 	}
 	if err := s.setModelFormat(); err != nil {
+		return err
+	}
+	if err := s.setSecurityContext(); err != nil {
 		return err
 	}
 
@@ -161,5 +167,17 @@ func (s *KServeArgsBuilder) setModelFormat() error {
 			Version: &mfs[1],
 		}
 	}
+	return nil
+}
+
+func (s *KServeArgsBuilder) setSecurityContext() error {
+	argKey := "security-context"
+	var securityContext *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	securityContext = value.(*[]string)
+	s.args.SecurityContext = transformSliceToMap(*securityContext, "=")
 	return nil
 }
