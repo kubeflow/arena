@@ -50,6 +50,12 @@ spec:
     {{- if ge (int .Values.canaryTrafficPercent) 0 }}
     canaryTrafficPercent: {{ (int .Values.canaryTrafficPercent) }}
     {{- end }}
+    {{- if .Values.securityContext }}
+    securityContext:
+    {{- range $key, $value := .Values.securityContext }}
+      {{ $key }}: {{ $value }}
+    {{- end }}
+    {{- end }}
     {{- if .Values.modelFormat }}
     model:
       modelFormat:
