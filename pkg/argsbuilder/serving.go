@@ -76,6 +76,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	}
 	var (
 		envs               []string
+		envsFromSecret     []string
 		dataset            []string
 		datadir            []string
 		dataSubpathExpr    []string
@@ -108,7 +109,8 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// add option --image-pull-secret its' value will be get from viper,Using a Private Registry
 	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
 
-	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, "the environment variables")
+	command.Flags().StringArrayVarP(&envs, "env", "e", []string{}, `the environment variables, usage: "--env envName=envValue"`)
+	command.Flags().StringArrayVar(&envsFromSecret, "env-from-secret", []string{}, `the environment variables using Secret data, usage: "--env-from-secret envName=secretName"`)
 
 	command.Flags().BoolVar(&s.args.EnableIstio, "enableIstio", false, "enable Istio for serving or not (disable Istio by default)")
 	_ = command.Flags().MarkDeprecated("enableIstio", "please use --enable-istio instead")
@@ -162,6 +164,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("temp-dir-subpath-expr", &tempDirSubpathExpr).
 		AddArgValue("temp-dir", &tempDir).
 		AddArgValue("env", &envs).
+		AddArgValue("env-from-secret", &envsFromSecret).
 		AddArgValue("config-file", &configFiles).
 		AddArgValue("image-pull-secret", &imagePullSecrets)
 }
@@ -194,6 +197,9 @@ func (s *ServingArgsBuilder) PreBuild() error {
 		return err
 	}
 	if err := s.setEnvs(); err != nil {
+		return err
+	}
+	if err := s.setEnvsFromSecret(); err != nil {
 		return err
 	}
 	if err := s.setAnnotations(); err != nil {
@@ -507,6 +513,18 @@ func (s *ServingArgsBuilder) setEnvs() error {
 	}
 	envs = value.(*[]string)
 	s.args.Envs = transformSliceToMap(*envs, "=")
+	return nil
+}
+
+func (s *ServingArgsBuilder) setEnvsFromSecret() error {
+	argKey := "env-from-secret"
+	var envs *[]string
+	value, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	envs = value.(*[]string)
+	s.args.EnvsFromSecret = transformSliceToMap(*envs, "=")
 	return nil
 }
 

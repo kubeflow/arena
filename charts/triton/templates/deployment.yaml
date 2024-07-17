@@ -96,6 +96,15 @@ spec:
               value: "{{ $value }}"
           {{- end }}
           {{- end }}
+          {{- if .Values.envsFromSecret }}
+          {{- range $envName, $secretName := .Values.envsFromSecret }}
+            - name: "{{ $envName }}"
+              valueFrom:
+                secretKeyRef:
+                  key: "{{ $envName }}"
+                  name: "{{ $secretName }}"
+          {{- end }}
+          {{- end }}
             - name: ARENA_NODE_NAME
               valueFrom:
                 fieldRef:

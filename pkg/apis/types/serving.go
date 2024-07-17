@@ -171,6 +171,7 @@ type CommonServingArgs struct {
 	Cpu                string            `yaml:"cpu"`                 // --cpu
 	Memory             string            `yaml:"memory"`              // --memory
 	Envs               map[string]string `yaml:"envs"`                // --envs
+	EnvsFromSecret     map[string]string `yaml:"envsFromSecret"`      // --env-from-secret
 	Shell              string            `yaml:"shell"`               // --shell
 	Command            string            `yaml:"command"`             // --command
 	Replicas           int               `yaml:"replicas"`            // --replicas

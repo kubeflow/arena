@@ -147,6 +147,18 @@ func (b *TritonServingJobBuilder) Envs(envs map[string]string) *TritonServingJob
 	return b
 }
 
+// EnvsFromSecret is used to set env of job containers,match option --env-from-secret
+func (b *TritonServingJobBuilder) EnvsFromSecret(envs map[string]string) *TritonServingJobBuilder {
+	if len(envs) != 0 {
+		envSlice := []string{}
+		for key, value := range envs {
+			envSlice = append(envSlice, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["env-from-secret"] = &envSlice
+	}
+	return b
+}
+
 // Replicas is used to set serving job replicas,match the option --replicas
 func (b *TritonServingJobBuilder) Replicas(count int) *TritonServingJobBuilder {
 	if count > 0 {

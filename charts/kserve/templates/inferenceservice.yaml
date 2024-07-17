@@ -77,11 +77,18 @@ spec:
       {{- if .Values.imagePullPolicy }}
       imagePullPolicy: "{{ .Values.imagePullPolicy }}"
       {{- end }}
-      {{- if .Values.envs }}
+      {{- if or .Values.envs .Values.envsFromSecret }}
       env:
       {{- range $key, $value := .Values.envs }}
         - name: "{{ $key }}"
           value: "{{ $value }}"
+      {{- end }}
+      {{- range $envName, $secretName := .Values.envsFromSecret }}
+        - name: "{{ $envName }}"
+          valueFrom:
+            secretKeyRef:
+              key: "{{ $envName }}"
+              name: "{{ $secretName }}"
       {{- end }}
       {{- end }}
       {{- if ne .Values.command "" }}
@@ -167,11 +174,18 @@ spec:
         {{- if .Values.imagePullPolicy }}
         imagePullPolicy: "{{ .Values.imagePullPolicy }}"
         {{- end }}
-        {{- if .Values.envs }}
+        {{- if or .Values.envs .Values.envsFromSecret }}
         env:
         {{- range $key, $value := .Values.envs }}
           - name: "{{ $key }}"
             value: "{{ $value }}"
+        {{- end }}
+        {{- range $envName, $secretName := .Values.envsFromSecret }}
+          - name: "{{ $envName }}"
+            valueFrom:
+              secretKeyRef:
+                key: "{{ $envName }}"
+                name: "{{ $secretName }}"
         {{- end }}
         {{- end }}
         {{- if ne .Values.command "" }}
