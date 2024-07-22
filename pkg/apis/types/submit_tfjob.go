@@ -107,9 +107,9 @@ type SubmitTFJobArgs struct {
 
 // SubmitTensorboardArgs is used to store tensorborad information
 type SubmitTensorboardArgs struct {
-	UseTensorboard   bool   `yaml:"useTensorboard"`   // --tensorboard
-	TensorboardImage string `yaml:"tensorboardImage"` // --tensorboardImage
-	TrainingLogdir   string `yaml:"trainingLogdir"`   // --logdir
+	UseTensorboard   bool   `yaml:"useTensorboard"`             // --tensorboard
+	TensorboardImage string `yaml:"tensorboardImage,omitempty"` // --tensorboardImage
+	TrainingLogdir   string `yaml:"trainingLogdir"`             // --logdir
 	HostLogPath      string `yaml:"hostLogPath"`
 	IsLocalLogging   bool   `yaml:"isLocalLogging"`
 }

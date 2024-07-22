@@ -16,7 +16,7 @@ shmSize: 2Gi
 privileged: false
 
 useTensorboard: false
-tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/tensorflow-samples/tensorflow:1.5.0-devel
+tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/acs/tensorflow:1.12.0-devel
 tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
 
