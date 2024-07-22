@@ -85,9 +85,9 @@ func (s *SubmitTensorboardArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 	command.Flags().BoolVar(&s.args.UseTensorboard, "tensorboard", false, "enable tensorboard")
-	command.Flags().StringVar(&s.args.TensorboardImage, "tensorboardImage", "registry.cn-zhangjiakou.aliyuncs.com/acs/tensorflow:1.12.0-devel", "the docker image for tensorboard")
+	command.Flags().StringVar(&s.args.TensorboardImage, "tensorboardImage", "", "the docker image for tensorboard")
 	_ = command.Flags().MarkDeprecated("tensorboardImage", "please use --tensorboard-image instead")
-	command.Flags().StringVar(&s.args.TensorboardImage, "tensorboard-image", "registry.cn-zhangjiakou.aliyuncs.com/acs/tensorflow:1.12.0-devel", "the docker image for tensorboard")
+	command.Flags().StringVar(&s.args.TensorboardImage, "tensorboard-image", "", "the docker image for tensorboard")
 	command.Flags().StringVar(&s.args.TrainingLogdir, "logdir", "/training_logs", "the training logs dir, default is /training_logs")
 }
 

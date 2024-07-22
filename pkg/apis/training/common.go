@@ -25,6 +25,5 @@ var DefaultCommonSubmitArgs = types.CommonSubmitArgs{
 }
 
 var DefaultSubmitTensorboardArgs = types.SubmitTensorboardArgs{
-	TensorboardImage: "registry.cn-zhangjiakou.aliyuncs.com/acs/tensorflow:1.12.0-devel",
-	TrainingLogdir:   "/training_logs",
+	TrainingLogdir: "/training_logs",
 }
