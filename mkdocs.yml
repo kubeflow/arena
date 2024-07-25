@@ -17,6 +17,7 @@ nav:
   - SDK:
       - Golang: sdk/go/index.md
   - Release Notes:
+      - v0.9.16: releases/v0.9.16.md
       - v0.9.15: releases/v0.9.15.md
       - v0.9.14: releases/v0.9.14.md
       - v0.9.13: releases/v0.9.13.md
