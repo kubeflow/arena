@@ -21,8 +21,9 @@ type SubmitSparkJobArgs struct {
 	Image        string          `yaml:"Image"`
 	MainClass    string          `yaml:"MainClass"`
 	Jar          string          `yaml:"Jar"`
-	Executor     *Executor       `yaml:"Executor"`
+	SparkVersion string          `yaml:"SparkVersion"`
 	Driver       *Driver         `yaml:"Driver"`
+	Executor     *Executor       `yaml:"Executor"`
 	// Annotations defines pod annotations of job,match option --annotation
 	Annotations map[string]string `yaml:"annotations"`
 	// Labels specify the job labels and it is work for pods
@@ -30,8 +31,9 @@ type SubmitSparkJobArgs struct {
 }
 
 type Driver struct {
-	CPURequest    int    `yaml:"CPURequest"`
-	MemoryRequest string `yaml:"MemoryRequest"`
+	CPURequest     int    `yaml:"CPURequest"`
+	MemoryRequest  string `yaml:"MemoryRequest"`
+	ServiceAccount string `yaml:"ServiceAccount"`
 }
 
 type Executor struct {

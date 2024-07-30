@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: "sparkoperator.k8s.io/v1beta2"
+apiVersion: sparkoperator.k8s.io/v1beta2
 kind: SparkApplication
 metadata:
   name: {{ .Release.Name }}
   labels:
-    version: 2.4.5
+    version: {{ .Values.SparkVersion }}
     release: {{ .Release.Name }}
     app: {{ template "sparkjob.name" . }}
     createdBy: "SparkJob"
@@ -36,14 +36,14 @@ spec:
   imagePullPolicy: Always
   mainClass: {{ .Values.MainClass }}
   mainApplicationFile: {{ .Values.Jar }}
-  sparkVersion: "2.4.5"
+  sparkVersion: {{ .Values.SparkVersion }}
   restartPolicy:
     type: Never
   driver:
     cores: {{ .Values.Driver.CPURequest }}
     memory: {{ .Values.Driver.MemoryRequest }}
     labels:
-      version: 2.4.5
+      version: {{ .Values.SparkVersion }}
       release: {{ .Release.Name }}
       app: {{ template "sparkjob.name" . }}
       createdBy: "SparkJob"
@@ -54,13 +54,13 @@ spec:
     {{- range $key, $value := .Values.annotations }}
       {{ $key }}: {{ $value | quote }}
     {{- end }}
-    serviceAccount: spark
+    serviceAccount: {{ .Values.Driver.ServiceAccount }}
   executor:
     cores: {{ .Values.Executor.CPURequest }}
     instances: {{ .Values.Executor.Replicas }}
     memory: {{ .Values.Executor.MemoryRequest }}
     labels:
-      version: 2.4.5
+      version: {{ .Values.SparkVersion }}
       release: {{ .Release.Name }}
       app: {{ template "sparkjob.name" . }}
       createdBy: "SparkJob"
