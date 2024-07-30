@@ -71,16 +71,19 @@ func (s *SubmitSparkJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.Name, "name", "", "override name")
 	_ = command.MarkFlagRequired("name")
 
-	command.Flags().StringVar(&s.args.Image, "image", "registry.aliyuncs.com/acs/spark:v2.4.0", "the docker image name of training job")
+	command.Flags().StringVar(&s.args.Image, "image", "spark:3.5.0", "the docker image name of training job")
 	command.Flags().IntVar(&s.args.Executor.Replicas, "replicas", 1, "the executor's number to run the distributed training.")
 	command.Flags().StringVar(&s.args.MainClass, "main-class", "org.apache.spark.examples.SparkPi", "main class of your jar")
-	command.Flags().StringVar(&s.args.Jar, "jar", "local:///opt/spark/examples/jars/spark-examples_2.11-2.4.0.jar", "jar path in image")
+	command.Flags().StringVar(&s.args.Jar, "jar", "local:///opt/spark/examples/jars/spark-examples_2.12-3.5.0.jar", "jar path in image")
+	command.Flags().StringVar(&s.args.SparkVersion, "spark-version", "3.5.0", "the spark version of spark job")
 
-	// cpu and memory request
 	command.Flags().IntVar(&s.args.Driver.CPURequest, "driver-cpu-request", 1, "cpu request for driver pod")
 	command.Flags().StringVar(&s.args.Driver.MemoryRequest, "driver-memory-request", "500m", "memory request for driver pod (min is 500m)")
+	command.Flags().StringVar(&s.args.Driver.ServiceAccount, "driver-service-account", "spark", "the service account of driver pod")
+
 	command.Flags().IntVar(&s.args.Executor.CPURequest, "executor-cpu-request", 1, "cpu request for executor pod")
 	command.Flags().StringVar(&s.args.Executor.MemoryRequest, "executor-memory-request", "500m", "memory request for executor pod (min is 500m)")
+
 	command.Flags().StringArrayVarP(&annotations, "annotation", "a", []string{}, `the annotations, usage: "--annotation=key=value" or "--annotation key=value"`)
 	command.Flags().StringArrayVarP(&labels, "label", "l", []string{}, "specify the label")
 	s.AddArgValue("annotation", &annotations).AddArgValue("label", &labels)

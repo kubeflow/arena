@@ -1,17 +1,23 @@
 Lang: Scala
 
-Image: registry.aliyuncs.com/acs/spark:v2.4.0
+Image: spark:3.5.0
 
 MainClass: org.apache.spark.examples.SparkPi
 
-Jar: local:///opt/spark/examples/jars/spark-examples_2.11-2.4.0.jar
+Jar: local:///opt/spark/examples/jars/spark-examples_2.12-3.5.0.jar
+
+SparkVersion: 3.5.0
 
 Driver:
   CPURequest: 1
   MemoryRequest: "1g"
+  ServiceAccount: spark
 
 Executor:
   CPURequest: 1
   MemoryRequest: "1g"
   Replicas: 1
-  
+
+labels: {}
+
+annotations: {}
