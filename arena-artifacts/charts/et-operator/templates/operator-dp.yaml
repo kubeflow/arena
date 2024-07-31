@@ -28,6 +28,7 @@ spec:
         - args:
             - --enable-leader-election
             - --create-ssh-secret={{ .Values.createSSHSecret }}
+            - --init-container-image={{ .Values.initContainerImage }}
           command:
             - /manager
           image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}

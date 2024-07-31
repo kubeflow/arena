@@ -93,7 +93,7 @@ et:
   enabled: true
   createSSHSecret: false
   image: acs/et-operator
-  tag: v0.1.4-aliyun-cd9163f
+  tag: v0.1.5-aliyun-d298c36
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -103,6 +103,7 @@ et:
       cpu: 100m
       memory: 256Mi
   nodeSelector: {}
+  initContainerImage: alpine:3.10
 
 # cron-operator
 cron:
