@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"time"
 
-	dockerterm "github.com/docker/docker/pkg/term"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -200,8 +200,8 @@ func (o *StreamOptions) SetupTTY() term.TTY {
 	t.Raw = true
 
 	if o.overrideStreams == nil {
-		// use dockerterm.StdStreams() to get the right I/O handles on Windows
-		o.overrideStreams = dockerterm.StdStreams
+		// get the right I/O handles on Windows
+		o.overrideStreams = StdStreams
 	}
 	stdin, stdout, _ := o.overrideStreams()
 	o.In = stdin
@@ -285,4 +285,9 @@ func (p *ExecOptions) Run() error {
 	}
 
 	return nil
+}
+
+// StdStreams returns the standard streams (stdin, stdout, stderr).
+func StdStreams() (stdIn io.ReadCloser, stdOut, stdErr io.Writer) {
+	return os.Stdin, os.Stdout, os.Stderr
 }

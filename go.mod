@@ -3,7 +3,6 @@ module github.com/kubeflow/arena
 go 1.21
 
 require (
-	github.com/docker/docker v24.0.0+incompatible
 	github.com/go-resty/resty/v2 v2.12.0
 	github.com/golang/glog v1.1.2
 	github.com/google/uuid v1.6.0
@@ -123,7 +122,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gotest.tools v2.2.0+incompatible // indirect
 	k8s.io/component-base v0.28.4 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231113174909-778a5567bc1e // indirect
@@ -137,8 +135,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/docker/docker => github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
 
 replace k8s.io/api => k8s.io/api v0.28.4
 
