@@ -95,6 +95,17 @@ func (b *TFJobBuilder) GPUCount(count int) *TFJobBuilder {
 	return b
 }
 
+func (b *TFJobBuilder) Devices(devices map[string]string) *TFJobBuilder {
+	if len(devices) != 0 {
+		devicesSlice := []string{}
+		for key, value := range devices {
+			devicesSlice = append(devicesSlice, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["device"] = &devicesSlice
+	}
+	return b
+}
+
 func (b *TFJobBuilder) Image(image string) *TFJobBuilder {
 	if image != "" {
 		b.args.Image = image

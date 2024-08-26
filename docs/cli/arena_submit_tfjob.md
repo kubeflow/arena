@@ -25,6 +25,7 @@ arena submit tfjob [flags]
       --config-file strings          giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"
   -d, --data strings                 specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>
       --data-dir strings             the data dir. If you specify /data, it means mounting hostpath /data into container path /data
+      --device stringArray           specify the chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1.
   -e, --env strings                  the environment variables
       --evaluator                    enable evaluator, which is optional for estimator.
       --evaluator-cpu string         the cpu resource to use for the evaluator, like 1 for 1 core.

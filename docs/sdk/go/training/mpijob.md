@@ -14,34 +14,35 @@ This section introduces how to customly build a MPI training job.
 
 MPIJobBuilder has following functions to custom your MPI training job.
 
-| function  |  description  | matches cli option |
-|:---|:--:|:---|
-| Name(name string) *MPIJobBuilder   | specify the job name   | --name   |
-| Command(args []string) *MPIJobBuilder   |  specify the job command  | -   |
-| WorkingDir(dir string) *MPIJobBuilder   | specify the working dir  |  --working-dir  |
-| Envs(envs map[string]string) *MPIJobBuilder   | specify the container env   |  --env  |
-| GPUCount(count int) *MPIJobBuilder   |  specify the gpu count of each worker | --gpus   |
-| Image(image string) *MPIJobBuilder   |  specify the image  |  --image  |
-| Tolerations(tolerations []string) *MPIJobBuilder    | specify the k8s node taint tolerations   |  --toleration  |
-| ConfigFiles(files map[string]string) *MPIJobBuilder    | specify the configuration files   |  --config-file  |
-| NodeSelectors(selectors map[string]string) *MPIJobBuilder   | specify the node selectors   | --selector   |
-| Annotations(annotations map[string]string) *MPIJobBuilder   | specify the instance annotations   | --annotation   |
-| Datas(volumes map[string]string) *MPIJobBuilder   | specify the data pvc   | --data   |
-| DataDirs(volumes map[string]string) *MPIJobBuilder   |  specify host path and its'  mapping container path  |  --data-dir  |
-| LogDir(dir string) *MPIJobBuilder   | specify the log dir   | --logdir   |
-| Priority(priority string) *MPIJobBuilder   | specify the priority   | --priority   |
-| EnableRDMA() *MPIJobBuilder    | enable rdma   |  --rdma  |
-| SyncImage(image string) *MPIJobBuilder   | specify the sync image   | --sync-image   |
-| SyncMode(mode string) *MPIJobBuilder | specify the sync mode(rsync,git)| --sync-mode |
-| SyncSource(source string) *MPIJobBuilder   | specify the code address(eg: git url or rsync url)   | --sync-source   |
-| EnableTensorboard() *MPIJobBuilder   | enable tensorboard   |  --tensorboard  |
-| TensorboardImage(image string) *MPIJobBuilder   | specify the tensorboard image   |  --tensorboard-image  |
-| ImagePullSecrets(secrets []string) *MPIJobBuilder   | specify the image pull secret   |  --image-pull-secret  |
-| WorkerCount(count int) *MPIJobBuilder| specify the worker count | --workers|
-| CPU(cpu string) *MPIJobBuilder| specify the cpu limits| --cpu |
-| Memory(memory string) *MPIJobBuilder| specify the memory limits| --memory|
-| EnableGPUTopology() *MPIJobBuilder| enable gpu topology scheduling| --gputopology|
-|  Build() (*Job, error) | build the MPI training job | - |
+| function                                                  |  description  | matches cli option  |
+|:----------------------------------------------------------|:--:|:--------------------|
+| Name(name string) *MPIJobBuilder                          | specify the job name   | --name              |
+| Command(args []string) *MPIJobBuilder                     |  specify the job command  | -                   |
+| WorkingDir(dir string) *MPIJobBuilder                     | specify the working dir  | --working-dir       |
+| Envs(envs map[string]string) *MPIJobBuilder               | specify the container env   | --env               |
+| GPUCount(count int) *MPIJobBuilder                        |  specify the gpu count of each worker | --gpus              |
+| Image(image string) *MPIJobBuilder                        |  specify the image  | --image             |
+| Tolerations(tolerations []string) *MPIJobBuilder          | specify the k8s node taint tolerations   | --toleration        |
+| ConfigFiles(files map[string]string) *MPIJobBuilder       | specify the configuration files   | --config-file       |
+| NodeSelectors(selectors map[string]string) *MPIJobBuilder | specify the node selectors   | --selector          |
+| Annotations(annotations map[string]string) *MPIJobBuilder | specify the instance annotations   | --annotation        |
+| Datas(volumes map[string]string) *MPIJobBuilder           | specify the data pvc   | --data              |
+| DataDirs(volumes map[string]string) *MPIJobBuilder        |  specify host path and its'  mapping container path  | --data-dir          |
+| Devices(devices map[string]string) *MPIJobBuilder         |  specify the chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1  | --devices           |
+| LogDir(dir string) *MPIJobBuilder                         | specify the log dir   | --logdir            |
+| Priority(priority string) *MPIJobBuilder                  | specify the priority   | --priority          |
+| EnableRDMA() *MPIJobBuilder                               | enable rdma   | --rdma              |
+| SyncImage(image string) *MPIJobBuilder                    | specify the sync image   | --sync-image        |
+| SyncMode(mode string) *MPIJobBuilder                      | specify the sync mode(rsync,git)| --sync-mode         |
+| SyncSource(source string) *MPIJobBuilder                  | specify the code address(eg: git url or rsync url)   | --sync-source       |
+| EnableTensorboard() *MPIJobBuilder                        | enable tensorboard   | --tensorboard       |
+| TensorboardImage(image string) *MPIJobBuilder             | specify the tensorboard image   | --tensorboard-image |
+| ImagePullSecrets(secrets []string) *MPIJobBuilder         | specify the image pull secret   | --image-pull-secret |
+| WorkerCount(count int) *MPIJobBuilder                     | specify the worker count | --workers           |
+| CPU(cpu string) *MPIJobBuilder                            | specify the cpu limits| --cpu               |
+| Memory(memory string) *MPIJobBuilder                      | specify the memory limits| --memory            |
+| EnableGPUTopology() *MPIJobBuilder                        | enable gpu topology scheduling| --gputopology       |
+| Build() (*Job, error)                                     | build the MPI training job | -                   |
 
 ## Example
 

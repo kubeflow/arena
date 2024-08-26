@@ -45,6 +45,9 @@ type CommonSubmitArgs struct {
 	// GPUCount stores the gpu count of the job needs,match option --gpus
 	GPUCount int `yaml:"gpuCount"`
 
+	// Devices stores chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1,match option --device
+	Devices map[string]string `yaml:"devices"`
+
 	// Envs stores the envs of container in job, match option --env
 	Envs map[string]string `yaml:"envs"`
 

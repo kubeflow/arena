@@ -238,6 +238,9 @@ spec:
             nvidia.com/gpu: {{ $gpuCount | quote }}
             {{- end }}
             {{- end }}
+            {{- range $key, $value := .Values.devices }}
+            {{ $key }}: {{ $value }}
+            {{- end }}
             {{- if .Values.cpu }}
             cpu: {{ .Values.cpu | quote }}
             {{- end }}

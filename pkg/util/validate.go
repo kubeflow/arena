@@ -17,7 +17,11 @@ package util
 import (
 	"context"
 	"fmt"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,4 +58,28 @@ func ValidatePriorityClassName(client *kubernetes.Clientset, name string) error 
 	}
 
 	return err
+}
+
+func ValidateDevices(devices []string) error {
+	for _, member := range devices {
+		splits := strings.SplitN(member, "=", 2)
+		if len(splits) != 2 || len(splits[0]) == 0 || len(splits[1]) == 0 {
+			err := fmt.Errorf("Invalid device member %s, refer to amd.com/gpu=1.", member)
+			return err
+		}
+		if errs := validation.IsQualifiedName(splits[0]); len(errs) != 0 {
+			err := fmt.Errorf("Invalid device name %s is not Qualified", splits[0])
+			return err
+		}
+		_, err := strconv.Atoi(splits[1])
+		if err != nil {
+			err = fmt.Errorf("Invalid device value %s should be a number, refer to amd.com/gpu=1.", member)
+			return err
+		}
+		if strings.EqualFold(splits[0], types.NvidiaGPUResourceName) {
+			err = fmt.Errorf("Invalid device member %s, use --gpus to set %s count.", types.NvidiaGPUResourceName, types.NvidiaGPUResourceName)
+			return err
+		}
+	}
+	return nil
 }

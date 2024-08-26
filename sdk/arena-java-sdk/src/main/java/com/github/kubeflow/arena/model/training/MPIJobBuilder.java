@@ -60,6 +60,11 @@ public class MPIJobBuilder extends JobBuilder {
         return this;
     }
 
+    public MPIJobBuilder devices(Map<String, String> devices) {
+        super.devices(devices);
+        return this;
+    }
+
     public MPIJobBuilder envs(Map<String, String> envs) {
        super.envs(envs);
         return this;

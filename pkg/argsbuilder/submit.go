@@ -78,6 +78,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		nodeSelectors    []string
 		configFiles      []string
 		imagePullSecrets []string
+		devices          []string
 	)
 	// create subcommands
 	// add option --name
@@ -90,6 +91,9 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// add option --gpus
 	command.Flags().IntVar(&s.args.GPUCount, "gpus", 0,
 		"the GPU count of each worker to run the training.")
+	// add option --device
+	command.Flags().StringArrayVarP(&devices, "device", "", []string{},
+		"the chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1.")
 	// add option --workers
 	command.Flags().IntVar(&s.args.WorkerCount, "workers", 1,
 		"the worker number to run the distributed training.")
@@ -156,7 +160,8 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("data-dir", &dataDir).
 		AddArgValue("data", &dataSet).
 		AddArgValue("label", &labels).
-		AddArgValue("env", &envs)
+		AddArgValue("env", &envs).
+		AddArgValue("device", &devices)
 }
 
 func (s *SubmitArgsBuilder) PreBuild() error {
@@ -199,6 +204,9 @@ func (s *SubmitArgsBuilder) Build() error {
 		return err
 	}
 	if err := s.setLabels(); err != nil {
+		return err
+	}
+	if err := s.setDevices(); err != nil {
 		return err
 	}
 	if err := s.setUserNameAndUserId(); err != nil {
@@ -352,6 +360,35 @@ func (s *SubmitArgsBuilder) setQueue() error {
 			s.args.Annotations = map[string]string{}
 		}
 		s.args.Annotations[jobSuspend] = "true"
+	}
+	return nil
+}
+
+// setDevices is used to handle option --device
+func (s *SubmitArgsBuilder) setDevices() error {
+	if s.args.Devices == nil {
+		s.args.Devices = map[string]string{}
+	}
+	argKey := "device"
+	var devices *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	devices = item.(*[]string)
+	if len(*devices) <= 0 {
+		return nil
+	}
+	if s.args.Devices == nil {
+		s.args.Devices = map[string]string{}
+	}
+	err := util.ValidateDevices(*devices)
+	if err != nil {
+		return err
+	}
+	log.Debugf("devices: %v", *devices)
+	for key, val := range transformSliceToMap(*devices, "=") {
+		s.args.Devices[key] = val
 	}
 	return nil
 }

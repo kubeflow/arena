@@ -68,6 +68,11 @@ public class CustomServingJobBuilder extends JobBuilder {
         return this;
     }
 
+    public CustomServingJobBuilder devices(Map<String, String> devices) {
+        super.devices(devices);
+        return this;
+    }
+
     public CustomServingJobBuilder envs(Map<String, String> envs) {
         super.envs(envs);
         return this;
