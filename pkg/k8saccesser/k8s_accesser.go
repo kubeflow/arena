@@ -52,6 +52,8 @@ import (
 	tfversioned "github.com/kubeflow/arena/pkg/operators/tf-operator/client/clientset/versioned"
 	volcano_v1alpha1 "github.com/kubeflow/arena/pkg/operators/volcano-operator/apis/batch/v1alpha1"
 	volcanovesioned "github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
+	ray_v1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
+	rayversioned "github.com/ray-project/kuberay/ray-operator/pkg/client/clientset/versioned"
 )
 
 var accesser *k8sResourceAccesser
@@ -65,6 +67,7 @@ func init() {
 	utilruntime.Must(spark_v1beta2.AddToScheme(scheme.Scheme))
 	utilruntime.Must(volcano_v1alpha1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(cron_v1alpha1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(ray_v1.AddToScheme(scheme.Scheme))
 }
 
 func InitK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset, isDaemonMode bool) error {
@@ -528,6 +531,36 @@ func (k *k8sResourceAccesser) ListPytorchJobs(pytorchjobClient *pyversioned.Clie
 	return jobs, nil
 }
 
+func (k *k8sResourceAccesser) ListRayJobs(rayClient *rayversioned.Clientset, namespace string, labels string) ([]*ray_v1.RayJob, error) {
+	jobs := []*ray_v1.RayJob{}
+	jobList := &ray_v1.RayJobList{}
+	var err error
+	labelSelector, err := parseLabelSelector(labels)
+	if err != nil {
+		return nil, err
+	}
+	if k.cacheEnabled {
+		err = k.cacheClient.List(
+			context.Background(),
+			jobList,
+			client.InNamespace(namespace),
+			&client.ListOptions{
+				LabelSelector: labelSelector,
+			})
+	} else {
+		jobList, err = rayClient.RayV1().RayJobs(namespace).List(context.Background(), metav1.ListOptions{
+			LabelSelector: labelSelector.String(),
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, job := range jobList.Items {
+		jobs = append(jobs, job.DeepCopy())
+	}
+	return jobs, nil
+}
+
 func (k *k8sResourceAccesser) ListETJobs(etjobClient *etversioned.Clientset, namespace string, labels string) ([]*v1alpha12.TrainingJob, error) {
 	jobs := []*v1alpha12.TrainingJob{}
 	jobList := &v1alpha12.TrainingJobList{}
@@ -703,6 +736,30 @@ func (k *k8sResourceAccesser) GetPytorchJob(pytorchjobClient *pyversioned.Client
 		}
 	}
 	return pytorchjob, err
+}
+
+func (k *k8sResourceAccesser) GetRayJob(rayClient *rayversioned.Clientset, namespace string, name string) (*ray_v1.RayJob, error) {
+	rayJob := &ray_v1.RayJob{}
+	var err error
+	if k.cacheEnabled {
+		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, rayJob)
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, RayJobCRDNameInDaemonMode, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find rayjob %v from cache,reason: %v", name, err)
+		}
+
+	} else {
+		rayJob, err = rayClient.RayV1().RayJobs(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, RayJobCRDName, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find rayjob %v from api server,reason: %v", name, err)
+		}
+	}
+	return rayJob, err
 }
 
 func (k *k8sResourceAccesser) GetETJob(etjobClient *etversioned.Clientset, namespace string, name string) (*v1alpha12.TrainingJob, error) {

@@ -40,6 +40,8 @@ const (
 	AllTrainingJob TrainingJobType = ""
 	// UnknownTrainingJob defines the unknown training
 	UnknownTrainingJob TrainingJobType = "unknown"
+	// RayJob defines the ray job
+	RayJob TrainingJobType = "rayjob"
 )
 
 type TrainingJobTypeInfo struct {
@@ -94,6 +96,11 @@ var TrainingTypeMap = map[TrainingJobType]TrainingJobTypeInfo{
 		Name:      DeepSpeedTrainingJob,
 		Alias:     "DeepSpeed",
 		Shorthand: "dp",
+	},
+	RayJob: {
+		Name:      RayJob,
+		Alias:     "RayJob",
+		Shorthand: "rj",
 	},
 }
 

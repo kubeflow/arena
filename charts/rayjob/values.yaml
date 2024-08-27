@@ -1,0 +1,95 @@
+# Default values for rayjob.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+shutdownAfterJobFinishes: false
+# The TTL to clean up RayCluster. It's only working when ShutdownAfterJobFinishes set to true
+ttlSecondsAfterFinished: 0
+activeDeadlineSeconds: 120
+
+head:
+  # Configuration for Head's Kubernetes Service
+  serviceType: ClusterIP
+  # If enableInTreeAutoscaling is true, the autoscaler sidecar will be added to the Ray head pod.
+  # Ray autoscaler integration is supported only for Ray versions >= 1.11.0
+  # Ray autoscaler integration is Beta with KubeRay >= 0.3.0 and Ray >= 2.0.0.
+  enableInTreeAutoscaling: false
+  # autoscalerOptions is an OPTIONAL field specifying configuration overrides for the Ray autoscaler.
+  # The example configuration shown below represents the DEFAULT values.
+  autoscalerOptions:
+    upscalingMode: Default
+    # idleTimeoutSeconds is the number of seconds to wait before scaling down a worker pod which is not using Ray resources.
+    idleTimeoutSeconds: 60
+    # imagePullPolicy optionally overrides the autoscaler container's default image pull policy (IfNotPresent).
+    imagePullPolicy: IfNotPresent
+    # resources specifies optional resource request and limit overrides for the autoscaler container.
+    # For large Ray clusters, we recommend monitoring container resource usage to determine if overriding the defaults is required.
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+  labels: {}
+  # Note: From KubeRay v0.6.0, users need to create the ServiceAccount by themselves if they specify the `serviceAccountName`
+  # in the headGroupSpec. See https://github.com/ray-project/kuberay/pull/1128 for more details.
+  restartPolicy: Never
+  rayStartParams:
+    dashboard-host: '0.0.0.0'
+  # ports optionally allows specifying ports for the Ray container.
+  ports: 
+    - containerPort: 6379
+      name: gcs-server
+    - containerPort: 8265
+      name: dashboard
+    - containerPort: 10001
+      name: client
+  lifecycle:
+    preStop:
+      exec:
+        command: [ "/bin/sh","-c","ray stop" ]
+  # resource requests and limits for the Ray head container.
+  resources:
+    limits:
+      nvidia.com/gpu: "0"
+      cpu: "1"
+      # To avoid out-of-memory issues, never allocate less than 2G memory for the Ray head.
+      memory: "2G"
+    requests:
+      nvidia.com/gpu: "0"
+      cpu: "1"
+      memory: "2G"
+  annotations: {}
+  nodeSelector: {}
+  tolerations: []
+
+worker:
+  # If you want to disable the default workergroup
+  # uncomment the line below
+  # disabled: true
+  groupName: default-group
+  replicas: 0
+  minReplicas: 0
+  maxReplicas: 2147483647
+  numOfHosts: 1
+  labels: {}
+  restartPolicy: OnFailure
+  rayStartParams: {}
+  lifecycle:
+    preStop:
+      exec:
+        command: [ "/bin/sh","-c","ray stop" ]
+  # resource requests and limits for the Ray head container.
+  resources:
+    limits:
+      nvidia.com/gpu: "0"
+      cpu: "1"
+      memory: "1G"
+    requests:
+      nvidia.com/gpu: "0"
+      cpu: "1"
+      memory: "1G"
+  annotations: {}
+  nodeSelector: {}
+  tolerations: []

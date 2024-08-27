@@ -32,4 +32,7 @@ const (
 
 	SparkCRDNameInDaemonMode = "Sparkapplication.sparkoperator.k8s.io"
 	SparkCRDName             = "sparkapplications.sparkoperator.k8s.io"
+
+	RayJobCRDName             = "rayjobs.ray.io"
+	RayJobCRDNameInDaemonMode = "RayJob.ray.io"
 )

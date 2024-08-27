@@ -127,6 +127,19 @@ func AddTrainingJobLabel(job *training.Job, key string, value string) error {
 		if err != nil {
 			return err
 		}
+	case types.RayJob:
+		args := job.Args().(*types.SubmitRayJobArgs)
+		_, err := kubectl([]string{
+			"label",
+			"-n",
+			args.Namespace,
+			"rayjobs.ray.io",
+			args.Name,
+			fmt.Sprintf("%s=%s", key, value),
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

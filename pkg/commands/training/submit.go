@@ -26,6 +26,7 @@ Available Commands:
   etjob,et             Submit a ETJob.
   horovod,hj           Submit a Horovod Job.
   volcanojob,vj        Submit a VolcanoJob.
+  rayjob,rj            Submit a RayJob.
     `
 )
 
@@ -47,5 +48,6 @@ func NewSubmitCommand() *cobra.Command {
 	command.AddCommand(NewVolcanoJobCommand())
 	command.AddCommand(NewSubmitETJobCommand())
 	command.AddCommand(NewSubmitDeepSpeedJobCommand())
+	command.AddCommand(NewSubmitRayJobCommand())
 	return command
 }
