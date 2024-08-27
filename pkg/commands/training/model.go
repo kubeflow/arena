@@ -129,6 +129,19 @@ func createRegisteredModelAndModelVersion(client *arenaclient.ArenaClient, job *
 			})
 		}
 		source = args.ModelSource
+	case types.RayJob:
+		args := job.Args().(*types.SubmitRayJobArgs)
+		name = args.ModelName
+		if name == "" {
+			return nil, nil, nil
+		}
+		for key, value := range args.Labels {
+			versionTags = append(versionTags, &types.ModelVersionTag{
+				Key:   key,
+				Value: value,
+			})
+		}
+		source = args.ModelSource
 	}
 	modelClient, err := client.Model()
 	if err != nil {
