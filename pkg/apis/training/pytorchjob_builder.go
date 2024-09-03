@@ -94,6 +94,18 @@ func (b *PytorchJobBuilder) GPUCount(count int) *PytorchJobBuilder {
 	return b
 }
 
+// Devices is used to set chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1,match the option --device
+func (b *PytorchJobBuilder) Devices(devices map[string]string) *PytorchJobBuilder {
+	if len(devices) != 0 {
+		devicesSlice := []string{}
+		for deviceVendor, deviceCount := range devices {
+			devicesSlice = append(devicesSlice, fmt.Sprintf("%v:%v", deviceVendor, deviceCount))
+		}
+		b.argValues["device"] = &devicesSlice
+	}
+	return b
+}
+
 // Image is used to set job image,match the option --image
 func (b *PytorchJobBuilder) Image(image string) *PytorchJobBuilder {
 	if image != "" {

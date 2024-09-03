@@ -99,6 +99,18 @@ func (b *CustomServingJobBuilder) GPUCore(core int) *CustomServingJobBuilder {
 	return b
 }
 
+// Devices is used to set chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1,match the option --device
+func (b *CustomServingJobBuilder) Devices(devices map[string]string) *CustomServingJobBuilder {
+	if len(devices) != 0 {
+		devicesSlice := []string{}
+		for key, value := range devices {
+			devicesSlice = append(devicesSlice, fmt.Sprintf("%v=%v", key, value))
+		}
+		b.argValues["device"] = &devicesSlice
+	}
+	return b
+}
+
 // Image is used to set job image,match the option --image
 func (b *CustomServingJobBuilder) Image(image string) *CustomServingJobBuilder {
 	if image != "" {

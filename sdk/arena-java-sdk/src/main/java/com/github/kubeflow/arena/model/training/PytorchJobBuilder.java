@@ -74,6 +74,11 @@ public class PytorchJobBuilder extends JobBuilder {
         return this;
     }
 
+    public PytorchJobBuilder devices(Map<String, String> devices) {
+        super.devices(devices);
+        return this;
+    }
+
     public PytorchJobBuilder envs(Map<String, String> envs) {
         super.envs(envs);
         return this;

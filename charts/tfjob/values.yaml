@@ -8,6 +8,9 @@ useHostIPC: true
 gpuCount: 0 # user define
 privileged: false
 
+# device and resource
+#devices: amd.com/gpu=1
+
 chief: 0
 # Possible value: Chief/Master
 chiefName: Chief
@@ -25,6 +28,7 @@ ps: 0
 psImage: kubeflow/tf-dist-mnist-test:1.0
 # psCPU: 1
 # psMemory: 1 Gi
+# psGPU: 1
 # psPort: 2223
 annotations: {}
 

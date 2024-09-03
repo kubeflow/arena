@@ -88,6 +88,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		selectors          []string
 		configFiles        []string
 		imagePullSecrets   []string
+		devices            []string
 	)
 	defaultImage := ""
 	item, ok := s.argValues["default-image"]
@@ -100,6 +101,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.ImagePullPolicy, "image-pull-policy", "IfNotPresent", "the policy to pull the image, and the default policy is IfNotPresent")
 
 	command.Flags().IntVar(&s.args.GPUCount, "gpus", 0, "the limit GPU count of each replica to run the serve.")
+	command.Flags().StringArrayVarP(&devices, "device", "", []string{}, "the chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1.")
 	command.Flags().IntVar(&s.args.GPUMemory, "gpumemory", 0, "the limit GPU memory of each replica to run the serve.")
 	command.Flags().IntVar(&s.args.GPUCore, "gpucore", 0, "the limit GPU core of each replica to run the serve.")
 	command.Flags().StringVar(&s.args.Cpu, "cpu", "", "the request cpu of each replica to run the serve.")
@@ -164,6 +166,7 @@ func (s *ServingArgsBuilder) AddCommandFlags(command *cobra.Command) {
 		AddArgValue("temp-dir-subpath-expr", &tempDirSubpathExpr).
 		AddArgValue("temp-dir", &tempDir).
 		AddArgValue("env", &envs).
+		AddArgValue("device", &devices).
 		AddArgValue("env-from-secret", &envsFromSecret).
 		AddArgValue("config-file", &configFiles).
 		AddArgValue("image-pull-secret", &imagePullSecrets)
@@ -206,6 +209,9 @@ func (s *ServingArgsBuilder) PreBuild() error {
 		return err
 	}
 	if err := s.setLabels(); err != nil {
+		return err
+	}
+	if err := s.setDevices(); err != nil {
 		return err
 	}
 	if err := s.setNodeSelectors(); err != nil {
@@ -442,6 +448,27 @@ func (s *ServingArgsBuilder) setLabels() error {
 		return nil
 	}
 	s.args.Labels = transformSliceToMap(*labels, "=")
+	return nil
+}
+
+// setDevices is used to handle option --device
+func (s *ServingArgsBuilder) setDevices() error {
+	s.args.Devices = map[string]string{}
+	argKey := "device"
+	var devices *[]string
+	item, ok := s.argValues[argKey]
+	if !ok {
+		return nil
+	}
+	devices = item.(*[]string)
+	if len(*devices) <= 0 {
+		return nil
+	}
+	err := util.ValidateDevices(*devices)
+	if err != nil {
+		return err
+	}
+	s.args.Devices = transformSliceToMap(*devices, "=")
 	return nil
 }
 

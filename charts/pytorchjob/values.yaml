@@ -7,6 +7,9 @@ useHostPID: true
 useHostIPC: true
 gpuCount: 0 # user define
 
+# devices resources
+#devices: amd.com/gpu=1
+
 # rsync image
 rsyncImage: registry.cn-zhangjiakou.aliyuncs.com/acs/rsync:v3.1.0-aliyun
 # git sync image

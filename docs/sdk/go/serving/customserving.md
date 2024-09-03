@@ -14,30 +14,31 @@ This section introduces how to customly build a Custom serving job.
 
 CustomServingJobBuilder has following functions to custom your Custom serving job.
 
-| function  |  description  | matches cli option |
-|:---|:--:|:---|
-|Name(name string) *CustomServingJobBuilder|specify the job name|--name|
-| Namespace(namespace string) *CustomServingJobBuilder|specify the namespace|--namespace/-n|
-|Command(args []string) *CustomServingJobBuilder|specify the command|-|
-| GPUCount(count int) *CustomServingJobBuilder|specify the gpu count|--gpus|
-| GPUMemory(memory int) *CustomServingJobBuilder |specify the gpu memory(gpushare)| --gpumemory|
-| Image(image string) *CustomServingJobBuilder|specify the image|--image|
-| ImagePullPolicy(policy string) *CustomServingJobBuilder|specify the image pull policy|--image-pull-policy|
-| CPU(cpu string) *CustomServingJobBuilder | specify the cpu limitation|--cpu|
-|Memory(memory string) *CustomServingJobBuilder |specify the memory limitation|--memory|
-|Envs(envs map[string]string) *CustomServingJobBuilder | specify the envs of containers| --env |
-| Replicas(count int) *CustomServingJobBuilder|specify the replicas| --replicas|
-| EnableIstio() *CustomServingJobBuilder|enable istio|--enable-istio|
-| ExposeService() *CustomServingJobBuilder|expose service|--expose-service|
-| Version(version string) *CustomServingJobBuilder| specify the version|--version|
-| Tolerations(tolerations []string) *CustomServingJobBuilder|specify the node taint tolerations| --toleration|
-| NodeSelectors(selectors map[string]string) *CustomServingJobBuilder|specify the node selectors|--selector|
-|Annotations(annotations map[string]string) *CustomServingJobBuilder |specify the annotation|--annotation|
-|Datas(volumes map[string]string) *CustomServingJobBuilder|specify the pvc which stores dataset|--data|
-| DataDirs(volumes map[string]string) *CustomServingJobBuilder|specify the host path which stores dataset|--data-dir|
-| RestfulPort(port int) *CustomServingJobBuilder|specify the http service port|--restful-port|
-|Port(port int) *CustomServingJobBuilder|specify the grpc service port|--port|
-|Build() (*Job, error) |build the job|-|
+| function                                                            |  description  | matches cli option  |
+|:--------------------------------------------------------------------|:--:|:--------------------|
+| Name(name string) *CustomServingJobBuilder                          |specify the job name| --name              |
+| Namespace(namespace string) *CustomServingJobBuilder                |specify the namespace| --namespace/-n      |
+| Command(args []string) *CustomServingJobBuilder                     |specify the command| -                   |
+| GPUCount(count int) *CustomServingJobBuilder                        |specify the gpu count| --gpus              |
+| GPUMemory(memory int) *CustomServingJobBuilder                      |specify the gpu memory(gpushare)| --gpumemory         |
+| Image(image string) *CustomServingJobBuilder                        |specify the image| --image             |
+| ImagePullPolicy(policy string) *CustomServingJobBuilder             |specify the image pull policy| --image-pull-policy |
+| CPU(cpu string) *CustomServingJobBuilder                            | specify the cpu limitation| --cpu               |
+| Memory(memory string) *CustomServingJobBuilder                      |specify the memory limitation| --memory            |
+| Envs(envs map[string]string) *CustomServingJobBuilder               | specify the envs of containers| --env               |
+| Replicas(count int) *CustomServingJobBuilder                        |specify the replicas| --replicas          |
+| EnableIstio() *CustomServingJobBuilder                              |enable istio| --enable-istio      |
+| ExposeService() *CustomServingJobBuilder                            |expose service| --expose-service    |
+| Version(version string) *CustomServingJobBuilder                    | specify the version| --version           |
+| Tolerations(tolerations []string) *CustomServingJobBuilder          |specify the node taint tolerations| --toleration        |
+| NodeSelectors(selectors map[string]string) *CustomServingJobBuilder |specify the node selectors| --selector          |
+| Annotations(annotations map[string]string) *CustomServingJobBuilder |specify the annotation| --annotation        |
+| Datas(volumes map[string]string) *CustomServingJobBuilder           |specify the pvc which stores dataset| --data              |
+| DataDirs(volumes map[string]string) *CustomServingJobBuilder        |specify the host path which stores dataset| --data-dir          |
+| Devices(devices map[string]string) *CustomServingJobBuilder         |specify the chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1| --device            |
+| RestfulPort(port int) *CustomServingJobBuilder                      |specify the http service port| --restful-port      |
+| Port(port int) *CustomServingJobBuilder                             |specify the grpc service port| --port              |
+| Build() (*Job, error)                                               |build the job| -                   |
 
 ## Example
 

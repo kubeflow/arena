@@ -168,6 +168,7 @@ type CommonServingArgs struct {
 	GPUCount           int               `yaml:"gpuCount"`            // --gpus
 	GPUMemory          int               `yaml:"gpuMemory"`           // --gpumemory
 	GPUCore            int               `yaml:"gpuCore"`             // --gpucore
+	Devices            map[string]string `yaml:"devices"`             // --device
 	Cpu                string            `yaml:"cpu"`                 // --cpu
 	Memory             string            `yaml:"memory"`              // --memory
 	Envs               map[string]string `yaml:"envs"`                // --envs

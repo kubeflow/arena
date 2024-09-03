@@ -208,6 +208,11 @@ public class TFJobBuilder extends JobBuilder {
         return this;
     }
 
+    public TFJobBuilder devices(Map<String, String> devices) {
+        super.devices(devices);
+        return this;
+    }
+
     public TFJobBuilder envs(Map<String, String> envs) {
         super.envs(envs);
         return this;

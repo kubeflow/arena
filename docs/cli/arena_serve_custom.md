@@ -18,6 +18,7 @@ arena serve custom [flags]
   -d, --data stringArray           specify the trained models datasource to mount for serving, like <name_of_datasource>:<mount_point_on_job>
       --data-subpath-expr stringArray  specify the datasource subpath to mount to the job by expression, like <name_of_datasource>:<mount_subpath_expr>
       --data-dir stringArray       specify the trained models datasource on host to mount for serving, like <host_path>:<mount_point_on_job>
+      --device stringArray         specify the chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1.
       --enable-istio               enable Istio for serving or not (disable Istio by default)
   -e, --env stringArray            the environment variables
       --expose-service             expose service using Istio gateway for external access or not (not expose by default)

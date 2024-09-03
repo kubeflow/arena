@@ -239,9 +239,12 @@ spec:
                 {{- if gt (int $gpuCount) 0}}
                 {{- if .Values.nvidiaPath }}
                 alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                {{- else}}
+                {{- else }}
                 nvidia.com/gpu: {{ $gpuCount | quote }}
                 {{- end }}
+                {{- end }}
+                {{- range $key, $value := .Values.devices }}
+                {{ $key }}: {{ $value }}
                 {{- end }}
                 {{- if .Values.cpu }}
                 cpu: {{ .Values.cpu | quote }}
@@ -256,9 +259,12 @@ spec:
                 {{- if gt (int $gpuCount) 0}}
                 {{- if .Values.nvidiaPath }}
                 alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                {{- else}}
+                {{- else }}
                 nvidia.com/gpu: {{ $gpuCount | quote }}
                 {{- end }}
+                {{- end }}
+                {{- range $key, $value := .Values.devices }}
+                {{ $key }}: {{ $value }}
                 {{- end }}
                 {{- if .Values.cpu }}
                 cpu: {{ .Values.cpu | quote }}
@@ -531,9 +537,12 @@ spec:
                   {{- if gt (int $gpuCount) 0}}
                     {{- if .Values.nvidiaPath }}
                     alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                    {{- else}}
+                    {{- else }}
                     nvidia.com/gpu: {{ $gpuCount | quote }}
                     {{- end }}
+                    {{- end }}
+                    {{- range $key, $value := .Values.devices }}
+                    {{ $key }}: {{ $value }}
                     {{- end }}
                     {{- if .Values.cpu }}
                     cpu: {{ .Values.cpu | quote }}
@@ -548,9 +557,12 @@ spec:
                   {{- if gt (int $gpuCount) 0}}
                     {{- if .Values.nvidiaPath }}
                     alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                    {{- else}}
+                    {{- else }}
                     nvidia.com/gpu: {{ $gpuCount | quote }}
                     {{- end }}
+                    {{- end }}
+                    {{- range $key, $value := .Values.devices }}
+                    {{ $key }}: {{ $value }}
                     {{- end }}
                     {{- if .Values.cpu }}
                     cpu: {{ .Values.cpu | quote }}

@@ -18,6 +18,7 @@ arena submit mpijob [flags]
       --cpu string                  the cpu resource to use for the training, like 1 for 1 core.
   -d, --data strings                specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>
       --data-dir strings            the data dir. If you specify /data, it means mounting hostpath /data into container path /data
+      --device stringArray          specify the chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1.
   -e, --env strings                 the environment variables
       --gang                        enable gang scheduling
       --gpus int                    the GPU count of each worker to run the training.

@@ -288,6 +288,9 @@ spec:
                   {{- if gt (int $psGpuCount) 0}}
                   nvidia.com/gpu: {{ .Values.psGPU | quote }}
                   {{- end }}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
                   {{- if .Values.psCPU }}
                   cpu: {{ .Values.psCPU | quote }}
                   {{- end}}
@@ -300,6 +303,9 @@ spec:
                 limits:
                   {{- if gt (int $psGpuCount) 0}}
                   nvidia.com/gpu: {{ .Values.psGPU | quote }}
+                  {{- end }}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
                   {{- end }}
                   {{- if .Values.psCPULimit }}
                   cpu: {{ .Values.psCPULimit | quote }}
@@ -519,7 +525,7 @@ spec:
             - name: code-sync
               emptyDir: {}
             {{- end}}
-            {{- if gt (int $gpuCount) 0}}  
+            {{- if gt (int $gpuCount) 0}}
             {{- if .Values.nvidiaPath }}
             - hostPath:
                 path: "{{ .Values.nvidiaPath }}"
@@ -628,10 +634,13 @@ spec:
                   {{- if gt (int $gpuCount) 0}}   
                   {{- if .Values.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                  {{- else}}
+                  {{- else }}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
                   {{- if .Values.workerCPU }}
                   cpu: {{ .Values.workerCPU | quote }}
                   {{- end}}
@@ -642,13 +651,16 @@ spec:
                   rdma/hca: "1"
                   {{- end}}
                 limits:
-                  {{- if gt (int $gpuCount) 0}}   
+                  {{- if gt (int $gpuCount) 0}}
                   {{- if .Values.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                  {{- else}}
+                  {{- else }}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
                   {{- if .Values.workerCPULimit }}
                   cpu: {{ .Values.workerCPULimit | quote }}                  
                   {{- else if .Values.workerCPU }}
@@ -977,13 +989,16 @@ spec:
               {{- end }}
               resources:             
                 requests:
-                  {{- if gt (int $gpuCount) 0}}   
+                  {{- if gt (int $gpuCount) 0}}
                   {{- if .Values.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                  {{- else}}
+                  {{- else }}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
                   {{- if .Values.chiefCPU }}
                   cpu: {{ .Values.chiefCPU | quote }}
                   {{- end}}
@@ -994,13 +1009,16 @@ spec:
                   rdma/hca: "1"
                   {{- end}}
                 limits:
-                  {{- if gt (int $gpuCount) 0}}   
+                  {{- if gt (int $gpuCount) 0}}
                   {{- if .Values.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                  {{- else}}
+                  {{- else }}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
                   {{- if .Values.chiefCPULimit }}
                   cpu: {{ .Values.chiefCPULimit | quote }}                  
                   {{- else if .Values.chiefCPU }}
@@ -1284,13 +1302,16 @@ spec:
               {{- end }}
               resources:             
                 requests:
-                  {{- if gt (int $gpuCount) 0}}   
+                  {{- if gt (int $gpuCount) 0}}
                   {{- if .Values.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                  {{- else}}
+                  {{- else }}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
                   {{- if .Values.evaluatorCPU }}
                   cpu: {{ .Values.evaluatorCPU | quote }}
                   {{- end}}
@@ -1298,13 +1319,16 @@ spec:
                   memory: {{ .Values.evaluatorMemory | quote }}
                   {{- end}}
                 limits:
-                  {{- if gt (int $gpuCount) 0}}   
+                  {{- if gt (int $gpuCount) 0}}
                   {{- if .Values.nvidiaPath }}
                   alpha.kubernetes.io/nvidia-gpu: {{ $gpuCount | quote }}
-                  {{- else}}
+                  {{- else }}
                   nvidia.com/gpu: {{ $gpuCount | quote }}
                   {{- end}}
                   {{- end}}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
                   {{- if .Values.evaluatorCPULimit }}
                   cpu: {{ .Values.evaluatorCPULimit | quote }}                  
                   {{- else if .Values.evaluatorCPU }}

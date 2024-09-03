@@ -80,6 +80,11 @@ public class ETJobBuilder extends JobBuilder {
         return this;
     }
 
+    public ETJobBuilder devices(Map<String, String> devices) {
+        super.devices(devices);
+        return this;
+    }
+
     public ETJobBuilder envs(Map<String, String> envs) {
         super.envs(envs);
         return this;

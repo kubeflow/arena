@@ -102,6 +102,11 @@ public abstract class JobBuilder {
         return this;
     }
 
+    public JobBuilder devices(Map<String, String> devices) {
+        this.options.add(new StringMapField("--device", devices, "="));
+        return this;
+    }
+
     public JobBuilder datas(Map<String, String> datas) {
         this.options.add(new StringMapField("--data", datas, ":"));
         return this;
