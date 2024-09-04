@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.aliyun.ack</groupId>
     <artifactId>arena-java-sdk</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
 
     <dependencies>
         <dependency>
@@ -19,13 +19,14 @@
             <groupId>io.kubernetes</groupId>
             <artifactId>client-java</artifactId>
             <version>10.0.1</version>
-    		<exclusions>
-        		<exclusion>
-            		<groupId>io.sundr</groupId>
-            		<artifactId>builder-annotations</artifactId>
-        		</exclusion>
-    	    </exclusions>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.sundr</groupId>
+                    <artifactId>builder-annotations</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -45,6 +46,7 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -67,6 +69,7 @@
             <id>releases</id>
             <url>http://mvnrepo.alibaba-inc.com/mvn/releases</url>
         </repository>
+
         <snapshotRepository>
             <id>snapshots</id>
             <url>http://mvnrepo.alibaba-inc.com/mvn/snapshots</url>
