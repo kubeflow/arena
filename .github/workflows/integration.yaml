@@ -1,0 +1,79 @@
+name: Integration Test
+
+on:
+  pull_request:
+    branches:
+      - master
+      - release-*
+
+  push:
+    branches:
+      - master
+      - release-*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.actor }}
+  cancel-in-progress: true
+
+jobs:
+  build-arena:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run go mod tidy
+        run: |
+          go mod tidy
+          if ! git diff --quiet; then
+            echo "Please run 'go mod tidy' to add missing and remove unused dependencies"
+            exit 1
+          fi
+
+      - name: Run go fmt check
+        run: |
+          make go-fmt
+          if ! git diff --quiet; then
+            echo "Please run 'make go-fmt' to run go fmt aganist code"
+            exit 1
+          fi
+
+      - name: Run go vet check
+        run: |
+          make go-vet
+          if ! git diff --quiet; then
+            echo "Please run 'make go-vet' to run go vet aganist code"
+            exit 1
+          fi
+
+      - name: Run golangci-lint
+        run: |
+          make go-lint
+
+      - name: Run unit tests
+        run: |
+          make unit-test
+
+      - name: Build arena binary
+        run: |
+          make arena
+
+  build-java-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 8
+
+      - name: Build Java SDK
+        run: |
+          make java-sdk

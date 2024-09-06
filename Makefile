@@ -106,22 +106,25 @@ help: ## Display this help.
 
 ##@ Development
 
-fmt: ## Run go fmt against code.
+.PHONY: go-fmt
+go-fmt: ## Run go fmt against code.
 	@echo "Running go fmt..."
 	go fmt ./...
 
-vet: ## Run go vet against code.
+.PHONY: go-vet
+go-vet: ## Run go vet against code.
 	@echo "Running go vet..."
 	go vet ./...
 
-test: ## Run go unit tests.
-	@echo "Running go test..."
-	go test ./... -coverprofile cover.out
-
-.PHONY: lint
-lint: golangci-lint ## Run golangci-lint linter.
+.PHONY: go-lint
+go-lint: golangci-lint ## Run golangci-lint linter.
 	@echo "Running golangci-lint..."
 	$(GOLANGCI_LINT) run --timeout 5m --go 1.21 ./...
+
+.PHONY: unit-test
+unit-test: ## Run go unit tests.
+	@echo "Running go test..."
+	go test ./... -coverprofile cover.out
 
 # Build the project
 .PHONY: default
