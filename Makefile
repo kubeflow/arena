@@ -14,14 +14,14 @@ SHELL = /usr/bin/env bash -o pipefail
 
 PACKAGE ?= github.com/kubeflow/arena
 CURRENT_DIR ?= $(shell pwd)
-DIST_DIR ?= ${CURRENT_DIR}/bin
+DIST_DIR ?= $(CURRENT_DIR)/bin
 ARENA_CLI_NAME ?= arena
 JOB_MONITOR ?= jobmon
 ARENA_UNINSTALL ?= arena-uninstall
 OS ?= linux
 ARCH ?= amd64
 
-VERSION ?= $(shell cat ${CURRENT_DIR}/VERSION)
+VERSION ?= $(shell cat VERSION)
 BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GIT_COMMIT := $(shell git rev-parse HEAD)
 GIT_SHORT_COMMIT := $(shell git rev-parse --short HEAD)
@@ -30,8 +30,10 @@ GIT_TAG := $(shell if [ -z "`git status --porcelain`" ]; then git describe --exa
 GIT_TREE_STATE := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean" ; else echo "dirty"; fi)
 PACKR_CMD := $(shell if [ "`which packr`" ]; then echo "packr"; else echo "go run vendor/github.com/gobuffalo/packr/packr/main.go"; fi)
 
-## Location to install binaries
-LOCALBIN ?= $(shell pwd)/bin
+# Location to install binaries
+LOCALBIN ?= $(CURRENT_DIR)/bin
+# Location to put temp files
+TEMPDIR ?= $(CURRENT_DIR)/tmp
 
 # Versions
 GOLANG_VERSION=$(shell grep -e '^go ' go.mod | cut -d ' ' -f 2)
@@ -40,8 +42,14 @@ HELM_VERSION ?= 3.13.3
 GOLANGCI_LINT_VERSION ?= 1.57.2
 
 # Binaries
-ARENA ?= $(LOCALBIN)/arena
-GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
+ARENA ?= arena-v$(VERSION)-$(OS)-$(ARCH)
+KUBECTL ?= kubectl-v$(KUBECTL_VERSION)-$(OS)-$(ARCH)
+HELM ?= helm-v$(HELM_VERSION)-$(OS)-$(ARCH)
+GOLANGCI_LINT ?= golangci-lint-$(GOLANGCI_LINT_VERSION)
+
+# Tarballs
+ARENA_INSTALLER ?= arena-installer-$(VERSION)-$(OS)-$(ARCH)
+ARENA_INSTALLER_TARBALL ?= $(ARENA_INSTALLER).tar.gz
 
 BUILDER_IMAGE=arena-builder
 BASE_IMAGE=registry.aliyuncs.com/kubeflow-images-public/tensorflow-1.12.0-notebook-gpu:v0.4.0
@@ -63,7 +71,7 @@ override LDFLAGS += \
 IMAGE_REGISTRY ?= docker.io
 IMAGE_REPOSITORY ?= kubeflow/arena
 IMAGE_TAG ?= $(VERSION)
-IMAGE ?= $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY):$(IMAGE_TAG:-latest)
+IMAGE ?= $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY):$(IMAGE_TAG)
 DOCKER_PUSH=false
 
 ifneq (${GIT_TAG},)
@@ -106,12 +114,10 @@ help: ## Display this help.
 
 ##@ Development
 
-.PHONY: go-fmt
 go-fmt: ## Run go fmt against code.
 	@echo "Running go fmt..."
 	go fmt ./...
 
-.PHONY: go-vet
 go-vet: ## Run go vet against code.
 	@echo "Running go vet..."
 	go vet ./...
@@ -119,7 +125,7 @@ go-vet: ## Run go vet against code.
 .PHONY: go-lint
 go-lint: golangci-lint ## Run golangci-lint linter.
 	@echo "Running golangci-lint..."
-	$(GOLANGCI_LINT) run --timeout 5m --go 1.21 ./...
+	$(LOCALBIN)/$(GOLANGCI_LINT) run --timeout 5m --go 1.21 ./...
 
 .PHONY: unit-test
 unit-test: ## Run go unit tests.
@@ -147,29 +153,20 @@ endif
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
+$(TEMPDIR):
+	mkdir -p $(TEMPDIR)
+
+clean: ## Clean up all downloaded and generated files.
+	rm -rf $(LOCALBIN) $(TEMPDIR)
+
 .PHONY: arena
-arena: ## Build arena CLI for current platform.
+arena: $(LOCALBIN)/$(ARENA) ## Build arena CLI for current platform.
+$(LOCALBIN)/$(ARENA): $(LOCALBIN)
 	@echo "Building arena CLI..."
-	CGO_ENABLED=0 go build -tags netgo -ldflags '${LDFLAGS}' -o $(LOCALBIN)/arena cmd/arena/main.go
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -tags netgo -ldflags '${LDFLAGS}' -o $(LOCALBIN)/$(ARENA) cmd/arena/main.go
 
-.PHONY: arena-linux-amd64
-arena-linux-amd64: ## Build arena CLI for linux/amd64.
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags netgo -ldflags '${LDFLAGS}' -o $(LOCALBIN)/arena-linux-amd64-v$(VERSION) cmd/arena/main.go
-
-.PHONY: arena-linux-arm64
-arena-linux-arm64: ## Build arena CLI for linux/arm64.
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -tags netgo -ldflags '${LDFLAGS}' -o $(LOCALBIN)/arena-linux-arm64-v$(VERSION) cmd/arena/main.go
-
-.PHONY: arena-darwin-amd64
-arena-darwin-amd64: ## Build arena CLI for darwin/amd64.
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -tags netgo -ldflags '${LDFLAGS}' -o $(LOCALBIN)/arena-darwin-amd64-v$(VERSION) cmd/arena/main.go
-
-.PHONY: arena-darwin-arm64
-arena-darwin-arm64: ## Build arena CLI for darwin/arm64.
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -tags netgo -ldflags '${LDFLAGS}' -o $(LOCALBIN)/arena-darwin-arm64-v$(VERSION) cmd/arena/main.go
-
-.PHONY: build-java-sdk
-build-java-sdk: ## Build Java SDK.
+.PHONY: java-sdk
+java-sdk: ## Build Java SDK.
 	echo "Building arena Java SDK..."
 	mvn package -Dmaven.test.skip=true -Dgpg.skip -f sdk/arena-java-sdk
 
@@ -177,11 +174,19 @@ build-java-sdk: ## Build Java SDK.
 docker-build: ## Build docker image.
 	docker build \
 		-t $(IMAGE) \
-		-f Dockerfile.install .
+		-f Dockerfile .
 
 .PHONY: docker-push
 docker-push: ## Push docker image.
 	docker push $(IMAGE)
+
+.PHONY: docker-buildx
+PLATFORMS ?= linux/amd64,linux/arm64
+docker-buildx: ## Build and push docker images for multiple platforms.
+	- $(CONTAINER_TOOL) buildx create --name arena-builder
+	$(CONTAINER_TOOL) buildx use arena-builder
+	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag $(IMAGE) -f Dockerfile .
+	- $(CONTAINER_TOOL) buildx rm arena-builder
 
 .PHONY: notebook-image-kubeflow
 notebook-image-kubeflow:
@@ -193,32 +198,77 @@ notebook-image:
 	docker build --build-arg "BASE_IMAGE=tensorflow/tensorflow:1.12.0-devel-py3" -t cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT}-cpu -f Dockerfile.notebook.cpu .
 	docker tag cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT}-cpu cheyang/arena-notebook:cpu
 
-.PHONY: build-pkg
-build-pkg:
-	docker build \
-		--build-arg OS=${OS} \
-		--build-arg ARCH=${ARCH} \
-		--build-arg COMMIT=${GIT_SHORT_COMMIT} \
-		--build-arg VERSION=${VERSION} \
-		--build-arg GOLANG_VERSION=${GOLANG_VERSION} \
-		--build-arg KUBECTL_VERSION=${KUBECTL_VERSION} \
-		--build-arg HELM_VERSION=${HELM_VERSION} \
-		-t arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS}-${ARCH} \
-		-f Dockerfile.build \
-		.
-	docker run -itd --name=arena-pkg arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS}-${ARCH} /bin/bash
-	docker cp arena-pkg:/workspace/arena-installer-v${VERSION}-${GIT_SHORT_COMMIT}-${OS}-${ARCH}.tar.gz .
-	docker rm -f arena-pkg
-
+.PHONY: build-dependabot
 build-dependabot:
 	python3 hack/create_dependabot.py
 
+.PHONY: arena-installer
+arena-installer: $(ARENA_INSTALLER_TARBALL) ## Build arena installer tarball
+$(ARENA_INSTALLER_TARBALL): arena kubectl helm
+	echo "Building arena installer tarball..." && \
+	mkdir -p $(TEMPDIR)/$(ARENA_INSTALLER)/bin && \
+	cp $(LOCALBIN)/$(ARENA) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/arena && \
+	cp $(LOCALBIN)/$(KUBECTL) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/kubectl && \
+	cp $(LOCALBIN)/$(HELM) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/helm && \
+	cp -R charts $(TEMPDIR)/$(ARENA_INSTALLER) && \
+	cp -R arena-artifacts $(TEMPDIR)/$(ARENA_INSTALLER) && \
+	cp -R kubernetes-artifacts $(TEMPDIR)/$(ARENA_INSTALLER) && \
+	cp arena-gen-kubeconfig.sh $(TEMPDIR)/$(ARENA_INSTALLER)/bin && \
+	cp install.sh $(TEMPDIR)/$(ARENA_INSTALLER) && \
+	cp uninstall.sh $(TEMPDIR)/$(ARENA_INSTALLER)/bin/arena-uninstall && \
+	tar -zcf $(ARENA_INSTALLER).tar.gz -C $(TEMPDIR) $(ARENA_INSTALLER) && \
+	echo "Successfully saved arena installer to $(ARENA_INSTALLER).tar.gz."
+	
 ##@ Dependencies
 
 .PHONY: golangci-lint
-golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
-$(GOLANGCI_LINT): $(LOCALBIN)
-	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
+golangci-lint: $(LOCALBIN)/$(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
+$(LOCALBIN)/$(GOLANGCI_LINT): $(LOCALBIN)
+	$(call go-install-tool,$(LOCALBIN)/$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
+
+.PHONY: kubectl
+kubectl: $(LOCALBIN)/$(KUBECTL)
+$(LOCALBIN)/$(KUBECTL): $(LOCALBIN) $(TEMPDIR)
+	$(eval KUBECTL_URL=https://dl.k8s.io/release/v$(KUBECTL_VERSION)/bin/$(OS)/$(ARCH)/kubectl)
+	$(eval KUBECTL_SHA_URL=$(KUBECTL_URL).sha256)
+
+	cd $(TEMPDIR) && \
+	echo "Download $(KUBECTL) if not present..." && \
+	if [ ! -f $(KUBECTL) ]; then \
+		curl -sSLo $(KUBECTL) $(KUBECTL_URL); \
+	fi && \
+	echo "Download $(KUBECTL).sha256 if not present..." && \
+	if [ ! -f kubectl.sha256 ]; then \
+		curl -sSLo $(KUBECTL).sha256 $(KUBECTL_SHA_URL); \
+	fi && \
+	echo "Verifying checksum..." && \
+	echo -n "$$(cat $(KUBECTL).sha256)  $(KUBECTL)" | shasum -a 256 --check --quiet || (echo "Checksum verification failed, exiting." && false) && \
+	echo "Make kubectl executable and move it to bin directory..." && \
+	chmod +x $(KUBECTL) && \
+	cp $(KUBECTL) $(LOCALBIN) && \
+	echo "Successfully installed kubectl to $(LOCALBIN)/$(KUBECTL)."
+
+.PHONY: helm
+helm: $(LOCALBIN)/$(HELM)
+$(LOCALBIN)/$(HELM): $(LOCALBIN) $(TEMPDIR)
+	$(eval HELM_URL=https://get.helm.sh/$(HELM).tar.gz)
+	$(eval HELM_SHA_URL=https://get.helm.sh/$(HELM).tar.gz.sha256sum)
+
+	cd $(TEMPDIR) && \
+	echo "Download $(HELM).tar.gz if not present..." && \
+	if [ ! -f $(HELM).tar.gz ]; then \
+		wget -qO $(HELM).tar.gz $(HELM_URL); \
+	fi && \
+	echo "Download $(HELM).tar.gz.sha256sum if not present..." && \
+	if [ ! -f $(HELM).tar.gz.sha256sum ]; then \
+		wget -qO $(HELM).tar.gz.sha256sum $(HELM_SHA_URL); \
+	fi && \
+	echo "Verifying checksum..." && \
+	cat $(HELM).tar.gz.sha256sum | shasum -a 256 --check --quiet || (echo "Checksum verification failed, exiting." && false) && \
+	echo "Extrat helm tarball and move it to bin directory..." && \
+	tar -zxf $(HELM).tar.gz && \
+	cp ${OS}-${ARCH}/helm $(LOCALBIN)/$(HELM) && \
+	echo "Successfully installed helm to $(LOCALBIN)/$(HELM)."
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)
