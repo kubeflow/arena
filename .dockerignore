@@ -1,13 +1,3 @@
-Dockerfile.build
-Dockerfile.install
-Dockerfile.notebook.cpu
-Dockerfile.notebook.kubeflow
-LICENSE
-OWNERS
-README.md
-README_cn.md
-ROADMAP.md
-ROADMAP_cn.md
 bin/
 docs/
 jupyter/
@@ -15,6 +5,13 @@ samples/
 sdk/
 .gitignore
 .readthedocs.yaml
+Dockerfile*
+LICENSE
+OWNERS
+README.md
+README_cn.md
+ROADMAP.md
+ROADMAP_cn.md
 cover.out
 demo.jpg
 mkdocs.yml

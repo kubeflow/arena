@@ -73,6 +73,7 @@ IMAGE_REPOSITORY ?= kubeflow/arena
 IMAGE_TAG ?= $(VERSION)
 IMAGE ?= $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY):$(IMAGE_TAG)
 DOCKER_PUSH=false
+BASE_IMAGE ?= debian:12-slim
 
 ifneq (${GIT_TAG},)
 IMAGE_TAG=${GIT_TAG}
@@ -173,8 +174,10 @@ java-sdk: ## Build Java SDK.
 .PHONY: docker-build
 docker-build: ## Build docker image.
 	docker build \
-		-t $(IMAGE) \
-		-f Dockerfile .
+		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
+		--tag $(IMAGE) \
+		-f Dockerfile \
+		.
 
 .PHONY: docker-push
 docker-push: ## Push docker image.
@@ -185,7 +188,12 @@ PLATFORMS ?= linux/amd64,linux/arm64
 docker-buildx: ## Build and push docker images for multiple platforms.
 	- $(CONTAINER_TOOL) buildx create --name arena-builder
 	$(CONTAINER_TOOL) buildx use arena-builder
-	- $(CONTAINER_TOOL) buildx build --push --platform=$(PLATFORMS) --tag $(IMAGE) -f Dockerfile .
+	- $(CONTAINER_TOOL) buildx build --push \
+		--platform=$(PLATFORMS) \
+		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
+		--tag $(IMAGE) \
+		-f Dockerfile \
+		.
 	- $(CONTAINER_TOOL) buildx rm arena-builder
 
 .PHONY: notebook-image-kubeflow
