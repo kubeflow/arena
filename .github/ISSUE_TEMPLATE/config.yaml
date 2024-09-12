@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+
+contact_links:
+  - name: Arena Documentation
+    url: https://arena-docs.readthedocs.io/en/stable
+    about: Much help can be found in the docs
