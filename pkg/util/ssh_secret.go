@@ -20,15 +20,15 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+
 	"golang.org/x/crypto/ssh"
 )
 
 func GenerateRsaKey() (map[string]string, error) {
-	bitSize := 1024
+	bitSize := 2048
 
 	privateKey, err := rsa.GenerateKey(cryptoRand.Reader, bitSize)
 	if err != nil {
-		//klog.Errorf("rsa generateKey err: %v", err)
 		return nil, err
 	}
 
@@ -42,7 +42,6 @@ func GenerateRsaKey() (map[string]string, error) {
 	// id_rsa.pub
 	publicRsaKey, err := ssh.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		//klog.Errorf("ssh newPublicKey err: %v", err)
 		return nil, err
 	}
 	publicKeyBytes := ssh.MarshalAuthorizedKey(publicRsaKey)
