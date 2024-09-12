@@ -1,0 +1,69 @@
+name: Check Release
+
+on:
+  pull_request:
+    branches:
+      - release-*
+    paths:
+      - VERSION
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SEMVER_PATTERN: '^([0-9]+)\.([0-9]+)\.([0-9]+)(-rc\.([0-9]+))?$'
+  ARENA_ARTIFACTS_CHART: arena-artifacts
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Check whether version matches semver pattern
+        run: |
+          VERSION=$(cat VERSION)
+          if [[ ${VERSION} =~ ${{ env.SEMVER_PATTERN }} ]]; then
+            echo "Version '${VERSION}' matches semver pattern."
+          else
+            echo "Version '${VERSION}' does not match semver pattern."
+            exit 1
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Check arena artifacts chart version and appVersion
+        run: |
+          CHART_VERSION=$(cat ${{ env.ARENA_ARTIFACTS_CHART }}/Chart.yaml | grep -e '^version:' | awk '{print $2}')
+          CHART_APP_VERSION=$(cat ${{ env.ARENA_ARTIFACTS_CHART }}/Chart.yaml | grep -e '^appVersion:' | awk '{print $2}')
+          if [[ ${CHART_VERSION} == ${VERSION} ]]; then
+            echo "Chart version '${CHART_VERSION}' matches version '${VERSION}'."
+          else
+            echo "Chart version '${CHART_VERSION}' does not match version '${VERSION}'."
+            exit 1
+          fi
+          if [[ ${CHART_APP_VERSION} == ${VERSION} ]]; then
+            echo "Chart appVersion '${CHART_APP_VERSION}' matches version '${VERSION}'."
+          else
+            echo "Chart appVersion '${CHART_APP_VERSION}' does not match version '${VERSION}'."
+            exit 1
+          fi
+
+      - name: Check if tag exists
+        run: |
+          git fetch --tags
+          if git tag -l | grep -q "^v${VERSION}$"; then
+            echo "Tag 'v${VERSION}' already exists."
+            exit 1
+          else
+            echo "Tag 'v${VERSION}' does not exist."
+          fi

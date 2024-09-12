@@ -1,19 +1,55 @@
-PACKAGE=github.com/kubeflow/arena
-CURRENT_DIR=$(shell pwd)
-DIST_DIR=${CURRENT_DIR}/bin
-ARENA_CLI_NAME=arena
-JOB_MONITOR=jobmon
-ARENA_UNINSTALL=arena-uninstall
-OS_ARCH?=linux-amd64
+.SILENT:
 
-VERSION=$(shell cat ${CURRENT_DIR}/VERSION)
-BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-GIT_COMMIT=$(shell git rev-parse HEAD)
-GIT_SHORT_COMMIT=$(shell git rev-parse --short HEAD)
-DOCKER_BUILD_DATE=$(shell date -u +'%Y%m%d%H%M%S')
-GIT_TAG=$(shell if [ -z "`git status --porcelain`" ]; then git describe --exact-match --tags HEAD 2>/dev/null; fi)
-GIT_TREE_STATE=$(shell if [ -z "`git status --porcelain`" ]; then echo "clean" ; else echo "dirty"; fi)
-PACKR_CMD=$(shell if [ "`which packr`" ]; then echo "packr"; else echo "go run vendor/github.com/gobuffalo/packr/packr/main.go"; fi)
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
+
+# Setting SHELL to bash allows bash commands to be executed by recipes.
+# Options are set to exit when a recipe line exits non-zero or a piped command fails.
+SHELL = /usr/bin/env bash -o pipefail
+.SHELLFLAGS = -ec
+
+PACKAGE ?= github.com/kubeflow/arena
+CURRENT_DIR ?= $(shell pwd)
+DIST_DIR ?= $(CURRENT_DIR)/bin
+ARENA_CLI_NAME ?= arena
+JOB_MONITOR ?= jobmon
+ARENA_UNINSTALL ?= arena-uninstall
+OS ?= linux
+ARCH ?= amd64
+
+VERSION ?= $(shell cat VERSION)
+BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+GIT_COMMIT := $(shell git rev-parse HEAD)
+GIT_SHORT_COMMIT := $(shell git rev-parse --short HEAD)
+DOCKER_BUILD_DATE := $(shell date -u +'%Y%m%d%H%M%S')
+GIT_TAG := $(shell if [ -z "`git status --porcelain`" ]; then git describe --exact-match --tags HEAD 2>/dev/null; fi)
+GIT_TREE_STATE := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean" ; else echo "dirty"; fi)
+PACKR_CMD := $(shell if [ "`which packr`" ]; then echo "packr"; else echo "go run vendor/github.com/gobuffalo/packr/packr/main.go"; fi)
+
+# Location to install binaries
+LOCALBIN ?= $(CURRENT_DIR)/bin
+# Location to put temp files
+TEMPDIR ?= $(CURRENT_DIR)/tmp
+
+# Versions
+GOLANG_VERSION=$(shell grep -e '^go ' go.mod | cut -d ' ' -f 2)
+KUBECTL_VERSION ?= 1.28.4
+HELM_VERSION ?= 3.13.3
+GOLANGCI_LINT_VERSION ?= 1.57.2
+
+# Binaries
+ARENA ?= arena-v$(VERSION)-$(OS)-$(ARCH)
+KUBECTL ?= kubectl-v$(KUBECTL_VERSION)-$(OS)-$(ARCH)
+HELM ?= helm-v$(HELM_VERSION)-$(OS)-$(ARCH)
+GOLANGCI_LINT ?= golangci-lint-$(GOLANGCI_LINT_VERSION)
+
+# Tarballs
+ARENA_INSTALLER ?= arena-installer-$(VERSION)-$(OS)-$(ARCH)
+ARENA_INSTALLER_TARBALL ?= $(ARENA_INSTALLER).tar.gz
 
 BUILDER_IMAGE=arena-builder
 BASE_IMAGE=registry.aliyuncs.com/kubeflow-images-public/tensorflow-1.12.0-notebook-gpu:v0.4.0
@@ -32,8 +68,12 @@ override LDFLAGS += \
   -extldflags "-static"
 
 # docker image publishing options
+IMAGE_REGISTRY ?= docker.io
+IMAGE_REPOSITORY ?= kubeflow/arena
+IMAGE_TAG ?= $(VERSION)
+IMAGE ?= $(IMAGE_REGISTRY)/$(IMAGE_REPOSITORY):$(IMAGE_TAG)
 DOCKER_PUSH=false
-IMAGE_TAG=latest
+BASE_IMAGE ?= debian:12-slim
 
 ifneq (${GIT_TAG},)
 IMAGE_TAG=${GIT_TAG}
@@ -56,49 +96,105 @@ ifdef IMAGE_NAMESPACE
 IMAGE_PREFIX=${IMAGE_NAMESPACE}/
 endif
 
+##@ General
+
+# The help target prints out all targets with their descriptions organized
+# beneath their categories. The categories are represented by '##@' and the
+# target descriptions by '##'. The awk command is responsible for reading the
+# entire set of makefiles included in this invocation, looking for lines of the
+# file as xyz: ## something, and then pretty-format the target and help. Then,
+# if there's a line with ##@ something, that gets pretty-printed as a category.
+# More info on the usage of ANSI control characters for terminal formatting:
+# https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters
+# More info on the awk command:
+# http://linuxcommand.org/lc3_adv_awk.php
+
+.PHONY: help
+help: ## Display this help.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Development
+
+go-fmt: ## Run go fmt against code.
+	@echo "Running go fmt..."
+	go fmt ./...
+
+go-vet: ## Run go vet against code.
+	@echo "Running go vet..."
+	go vet ./...
+
+.PHONY: go-lint
+go-lint: golangci-lint ## Run golangci-lint linter.
+	@echo "Running golangci-lint..."
+	$(LOCALBIN)/$(GOLANGCI_LINT) run --timeout 5m --go 1.21 ./...
+
+.PHONY: unit-test
+unit-test: ## Run go unit tests.
+	@echo "Running go test..."
+	go test ./... -coverprofile cover.out
+
 # Build the project
 .PHONY: default
 default:
 ifeq ($(OS),Windows_NT)
-default: cli-windows
+default: arena-windows
 else
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-$(info "Building on Linux")
-default: cli-linux-amd64
+default: arena-linux-amd64
 else ifeq ($(UNAME_S),Darwin)
-$(info "Building on Darwin")
-default: cli-darwin-amd64
+default: arena-darwin-amd64
 else
 $(error "The OS is not supported")
 endif
 endif
 
-.PHONY: cli-linux-amd64
-cli-linux-amd64:
-	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} cmd/arena/*.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${JOB_MONITOR} cmd/job-monitor/*.go
+##@ Build
 
-.PHONY: cli-darwin-amd64
-cli-darwin-amd64:
-	mkdir -p bin
-	CGO_ENABLED=0 GOOS=darwin GO111MODULE=on go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME}  ./cmd/arena/*.go
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
 
-.PHONY: cli-darwin-arm64
-cli-darwin-arm64:
-	mkdir -p bin
-	CGO_ENABLED=0 GOOS=darwin GO111MODULE=on go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME}  ./cmd/arena/*.go
+$(TEMPDIR):
+	mkdir -p $(TEMPDIR)
 
-.PHONY: cli-windows
-cli-windows:
-	mkdir -p bin
-	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows GO111MODULE=on go build -tags 'netgo' -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${ARENA_CLI_NAME} ./cmd/arena/*.go
+clean: ## Clean up all downloaded and generated files.
+	rm -rf $(LOCALBIN) $(TEMPDIR)
 
+.PHONY: arena
+arena: $(LOCALBIN)/$(ARENA) ## Build arena CLI for current platform.
+$(LOCALBIN)/$(ARENA): $(LOCALBIN)
+	@echo "Building arena CLI..."
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -tags netgo -ldflags '${LDFLAGS}' -o $(LOCALBIN)/$(ARENA) cmd/arena/main.go
 
-.PHONY: install-image
-install-image:
-	docker build -t cheyang/arena:${VERSION}-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT} -f Dockerfile.install .
+.PHONY: java-sdk
+java-sdk: ## Build Java SDK.
+	echo "Building arena Java SDK..."
+	mvn package -Dmaven.test.skip=true -Dgpg.skip -f sdk/arena-java-sdk
+
+.PHONY: docker-build
+docker-build: ## Build docker image.
+	docker build \
+		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
+		--tag $(IMAGE) \
+		-f Dockerfile \
+		.
+
+.PHONY: docker-push
+docker-push: ## Push docker image.
+	docker push $(IMAGE)
+
+.PHONY: docker-buildx
+PLATFORMS ?= linux/amd64,linux/arm64
+docker-buildx: ## Build and push docker images for multiple platforms.
+	- $(CONTAINER_TOOL) buildx create --name arena-builder
+	$(CONTAINER_TOOL) buildx use arena-builder
+	- $(CONTAINER_TOOL) buildx build --push \
+		--platform=$(PLATFORMS) \
+		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
+		--tag $(IMAGE) \
+		-f Dockerfile \
+		.
+	- $(CONTAINER_TOOL) buildx rm arena-builder
 
 .PHONY: notebook-image-kubeflow
 notebook-image-kubeflow:
@@ -110,38 +206,88 @@ notebook-image:
 	docker build --build-arg "BASE_IMAGE=tensorflow/tensorflow:1.12.0-devel-py3" -t cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT}-cpu -f Dockerfile.notebook.cpu .
 	docker tag cheyang/arena:${VERSION}-notebook-${DOCKER_BUILD_DATE}-${GIT_SHORT_COMMIT}-cpu cheyang/arena-notebook:cpu
 
-# make OS_ARCH=darwin-amd64 build-pkg for mac
-.PHONY: build-pkg
-build-pkg:
-	docker rm -f arena-pkg || true
-	docker build --build-arg "KUBE_VERSION=v1.28.4" \
-				 --build-arg "HELM_VERSION=v3.13.3" \
-				 --build-arg "COMMIT=${GIT_SHORT_COMMIT}" \
-				 --build-arg "VERSION=${VERSION}" \
-				 --build-arg "OS_ARCH=${OS_ARCH}" \
-				 --build-arg "GOLANG_VERSION=1.21.12" \
-				 --build-arg "TARGET=cli-${OS_ARCH}" \
-	-t arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} -f Dockerfile.build .
-	docker run -itd --name=arena-pkg arena-build:${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH} /bin/bash
-	docker cp arena-pkg:/arena-installer-${VERSION}-${GIT_SHORT_COMMIT}-${OS_ARCH}.tar.gz .
-	docker rm -f arena-pkg
-
-fmt: ## Run go fmt against code.
-	go fmt ./...
-
-vet: ## Run go vet against code.
-	go vet ./...
-
-GOLANGCI_LINT=$(shell which golangci-lint)
-golangci-lint:
-ifeq ($(GOLANGCI_LINT),)
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.57.2
-	$(info golangci-lint has been installed)
-endif
-	golangci-lint run --timeout 5m --go 1.21 ./...
-
-test:
-	go test ./... -coverprofile cover.out
-
+.PHONY: build-dependabot
 build-dependabot:
 	python3 hack/create_dependabot.py
+
+.PHONY: arena-installer
+arena-installer: $(ARENA_INSTALLER_TARBALL) ## Build arena installer tarball
+$(ARENA_INSTALLER_TARBALL): arena kubectl helm
+	echo "Building arena installer tarball..." && \
+	mkdir -p $(TEMPDIR)/$(ARENA_INSTALLER)/bin && \
+	cp $(LOCALBIN)/$(ARENA) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/arena && \
+	cp $(LOCALBIN)/$(KUBECTL) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/kubectl && \
+	cp $(LOCALBIN)/$(HELM) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/helm && \
+	cp -R charts $(TEMPDIR)/$(ARENA_INSTALLER) && \
+	cp -R arena-artifacts $(TEMPDIR)/$(ARENA_INSTALLER) && \
+	cp -R kubernetes-artifacts $(TEMPDIR)/$(ARENA_INSTALLER) && \
+	cp arena-gen-kubeconfig.sh $(TEMPDIR)/$(ARENA_INSTALLER)/bin && \
+	cp install.sh $(TEMPDIR)/$(ARENA_INSTALLER) && \
+	cp uninstall.sh $(TEMPDIR)/$(ARENA_INSTALLER)/bin/arena-uninstall && \
+	tar -zcf $(ARENA_INSTALLER).tar.gz -C $(TEMPDIR) $(ARENA_INSTALLER) && \
+	echo "Successfully saved arena installer to $(ARENA_INSTALLER).tar.gz."
+	
+##@ Dependencies
+
+.PHONY: golangci-lint
+golangci-lint: $(LOCALBIN)/$(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
+$(LOCALBIN)/$(GOLANGCI_LINT): $(LOCALBIN)
+	$(call go-install-tool,$(LOCALBIN)/$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
+
+.PHONY: kubectl
+kubectl: $(LOCALBIN)/$(KUBECTL)
+$(LOCALBIN)/$(KUBECTL): $(LOCALBIN) $(TEMPDIR)
+	$(eval KUBECTL_URL=https://dl.k8s.io/release/v$(KUBECTL_VERSION)/bin/$(OS)/$(ARCH)/kubectl)
+	$(eval KUBECTL_SHA_URL=$(KUBECTL_URL).sha256)
+
+	cd $(TEMPDIR) && \
+	echo "Download $(KUBECTL) if not present..." && \
+	if [ ! -f $(KUBECTL) ]; then \
+		curl -sSLo $(KUBECTL) $(KUBECTL_URL); \
+	fi && \
+	echo "Download $(KUBECTL).sha256 if not present..." && \
+	if [ ! -f kubectl.sha256 ]; then \
+		curl -sSLo $(KUBECTL).sha256 $(KUBECTL_SHA_URL); \
+	fi && \
+	echo "Verifying checksum..." && \
+	echo -n "$$(cat $(KUBECTL).sha256)  $(KUBECTL)" | shasum -a 256 --check --quiet || (echo "Checksum verification failed, exiting." && false) && \
+	echo "Make kubectl executable and move it to bin directory..." && \
+	chmod +x $(KUBECTL) && \
+	cp $(KUBECTL) $(LOCALBIN) && \
+	echo "Successfully installed kubectl to $(LOCALBIN)/$(KUBECTL)."
+
+.PHONY: helm
+helm: $(LOCALBIN)/$(HELM)
+$(LOCALBIN)/$(HELM): $(LOCALBIN) $(TEMPDIR)
+	$(eval HELM_URL=https://get.helm.sh/$(HELM).tar.gz)
+	$(eval HELM_SHA_URL=https://get.helm.sh/$(HELM).tar.gz.sha256sum)
+
+	cd $(TEMPDIR) && \
+	echo "Download $(HELM).tar.gz if not present..." && \
+	if [ ! -f $(HELM).tar.gz ]; then \
+		wget -qO $(HELM).tar.gz $(HELM_URL); \
+	fi && \
+	echo "Download $(HELM).tar.gz.sha256sum if not present..." && \
+	if [ ! -f $(HELM).tar.gz.sha256sum ]; then \
+		wget -qO $(HELM).tar.gz.sha256sum $(HELM_SHA_URL); \
+	fi && \
+	echo "Verifying checksum..." && \
+	cat $(HELM).tar.gz.sha256sum | shasum -a 256 --check --quiet || (echo "Checksum verification failed, exiting." && false) && \
+	echo "Extrat helm tarball and move it to bin directory..." && \
+	tar -zxf $(HELM).tar.gz && \
+	cp ${OS}-${ARCH}/helm $(LOCALBIN)/$(HELM) && \
+	echo "Successfully installed helm to $(LOCALBIN)/$(HELM)."
+
+# go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
+# $1 - target path with name of binary (ideally with version)
+# $2 - package url which can be installed
+# $3 - specific version of package
+define go-install-tool
+@[ -f $(1) ] || { \
+set -e; \
+package=$(2)@v$(3) ;\
+echo "Downloading $${package}" ;\
+GOBIN=$(LOCALBIN) go install $${package} ;\
+mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
+}
+endef

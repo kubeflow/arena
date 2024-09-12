@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - release-*
+    paths:
+      - VERSION
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-arena-installer:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - linux
+          - darwin
+        arch:
+          - amd64
+          - arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version from VERSION file
+        run: |
+          VERSION=$(cat VERSION)
+          echo "VERSION=${VERSION}" >> ${GITHUB_ENV}
+
+      - name: Get git commit id
+        run: |
+          COMMIT=$(git rev-parse --short HEAD)
+          echo "COMMIT=${COMMIT}" >>${GITHUB_ENV}
+
+      - name: Build arena installer tarball
+        run: |
+          make arena-installer OS=${{ matrix.os }} ARCH=${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arena-installer-${{ env.VERSION }}-${{ matrix.os }}-${{ matrix.arch }}
+          path: arena-installer-${{ env.VERSION }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+          if-no-files-found: error
+          overwrite: true
+
+  push_tag:
+    needs:
+      - package-arena-installer
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Read version from VERSION file
+        run: |
+          VERSION=$(cat VERSION)
+          echo "VERSION=${VERSION}" >> ${GITHUB_ENV}
+
+      - name: Create and push tag
+        run: |
+          TAG="v${VERSION}"
+          git tag -a ${TAG} -m "Release v${VERSION}"
+          git push origin ${TAG}
+
+  draft_relase:
+    needs:
+      - push_tag
+
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Read version from VERSION file
+        run: |
+          VERSION=$(cat VERSION)
+          echo "VERSION=${VERSION}" >> ${GITHUB_ENV}
+
+      - name: Download arena installer tarballs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: arena-installer-${{ env.VERSION }}-{linux,darwin}-{amd64,arm64}
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: v${{ env.VERSION }}
+          prerelease: ${{ contains(env.VERSION, 'rc') }}
+          target_commitish: ${{ github.sha }}
+          draft: true
+          files: |
+            arena-installer-*/arena-installer-*.tar.gz
+          fail_on_unmatched_files: true

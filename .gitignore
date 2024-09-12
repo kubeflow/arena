@@ -1,12 +1,23 @@
-bin/
-**/*.tgz
-**/.DS_Store
-.idea
 .kube
-.vscode
+bin/
 Library
-
+tmp/
 sdk/arena-python-sdk/dist/
 sdk/arena-python-sdk/build/
 sdk/arena-python-sdk/arenasdk.egg-info/
-__pycache__
+
+*.tgz
+*.tar.gz
+
+# Python
+__pycache__/
+
+# Go
+cover.out
+
+# IDE files
+.idea/
+.vscode/
+
+# MacOS
+.DS_Store
