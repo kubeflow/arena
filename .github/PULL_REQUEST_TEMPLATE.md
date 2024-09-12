@@ -5,7 +5,25 @@
 3. If you want *faster* PR reviews, check how: https://git.k8s.io/community/contributors/guide/pull-requests.md#best-practices-for-faster-reviews
 -->
 
-**What this PR does / why we need it**:
+## Purpose of this PR
 
-**Which issue(s) this PR fixes** _(optional, in `Fixes #<issue number>, #<issue number>, ...` format, will close the issue(s) when PR gets merged)_:
-Fixes #
+<!-- Provide a clear and concise description of the changes. Explain the motivation behind these changes and link to relevant issues or discussions. -->
+
+**Proposed changes:**
+
+- <Change 1>
+- <Change 2>
+- <Change 3>
+
+## Change Category
+
+<!-- Indicate the type of change by marking the applicable boxes. -->
+
+- [ ] Bugfix (non-breaking change which fixes an issue)
+- [ ] Feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that could affect existing functionality)
+- [ ] Documentation update
+
+### Rationale
+
+<!-- Provide reasoning for the changes if not already covered in the description above. -->
