@@ -1,9 +1,6 @@
 ﻿# Arena
 
-[![CircleCI](https://circleci.com/gh/kubeflow/arena.svg?style=svg)](https://circleci.com/gh/kubeflow/arena)
-[![Build Status](https://travis-ci.org/kubeflow/arena.svg?branch=master)](https://travis-ci.org/kubeflow/arena) 
-[![Go Report Card](https://goreportcard.com/badge/github.com/kubeflow/arena)](https://goreportcard.com/report/github.com/kubeflow/arena)
-
+[![Integration Test](https://github.com/kubeflow/arena/actions/workflows/integration.yaml/badge.svg)](https://github.com/kubeflow/arena/actions/workflows/integration.yaml)[![Go Report Card](https://goreportcard.com/badge/github.com/kubeflow/arena)](https://goreportcard.com/report/github.com/kubeflow/arena)
 
 ## 概述
 
@@ -12,7 +9,6 @@ Arena 是一个命令行工具，可供数据科学家轻而易举地运行和�
 与此同时，用户需要 GPU 资源和节点管理。Arena 还提供了 `top` 命令，用于检查 Kubernetes 集群内的可用 GPU 资源。
 
 简而言之，Arena 的目标是让数据科学家感觉自己就像是在一台机器上工作，而实际上还可以享受到 GPU 集群的强大力量。
-
 
 ## 设置
 
@@ -32,8 +28,7 @@ Arena 是一种命令行界面，支持轻而易举地运行和监控机器学�
 
 ## 演示
 
-[![](demo.jpg)](http://cloud.video.taobao.com/play/u/2987821887/p/1/e/6/t/1/50210690772.mp4)
-
+[![arena demo](demo.jpg)](http://cloud.video.taobao.com/play/u/2987821887/p/1/e/6/t/1/50210690772.mp4)
 
 ## 开发
 
@@ -41,7 +36,7 @@ Arena 是一种命令行界面，支持轻而易举地运行和监控机器学�
 
 - Go >= 1.8
 
-```
+```shell
 mkdir -p $(go env GOPATH)/src/github.com/kubeflow
 cd $(go env GOPATH)/src/github.com/kubeflow
 git clone https://github.com/kubeflow/arena.git
@@ -58,4 +53,3 @@ make
 ## 路线图
 
 请参阅[路线图](ROADMAP.md)
-
