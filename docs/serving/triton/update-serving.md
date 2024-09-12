@@ -1,6 +1,6 @@
 This recipe suggest how to update the triton serving after it has deployed.
 
-1\. Deploy a triton serving job follow the [submit a nvidia triton serving job which use gpus](triton/serving.md).
+1\. Deploy a triton serving job follow the [submit a nvidia triton serving job which use gpus](serving.md).
 
 2\. Update the serving.
 
