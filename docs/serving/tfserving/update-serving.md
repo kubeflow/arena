@@ -1,6 +1,6 @@
 This recipe suggest how to update the tensorflow serving after it has deployed.
 
-1\. Deploy a tensorflow serving job follow the [submit a tensorflow serving job which uses gpus](tfserving/gpu.md).
+1\. Deploy a tensorflow serving job follow the [submit a tensorflow serving job which uses gpus](gpu.md).
 
 2\. Update the serving.
 
