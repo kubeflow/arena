@@ -6,7 +6,7 @@ require (
 	github.com/go-resty/resty/v2 v2.14.0
 	github.com/golang/glog v1.2.2
 	github.com/google/uuid v1.6.0
-	github.com/kserve/kserve v0.13.0
+	github.com/kserve/kserve v0.13.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/common v0.45.0
