@@ -52,6 +52,9 @@ spec:
   ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
   {{- end }}
 {{- end }}
+  {{- with .Values.successPolicy }}
+  successPolicy: {{ . }}
+  {{- end }}
   tfReplicaSpecs:
 {{- if .Values.ps }}
     PS:
