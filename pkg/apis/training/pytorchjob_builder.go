@@ -98,8 +98,8 @@ func (b *PytorchJobBuilder) GPUCount(count int) *PytorchJobBuilder {
 func (b *PytorchJobBuilder) Devices(devices map[string]string) *PytorchJobBuilder {
 	if len(devices) != 0 {
 		devicesSlice := []string{}
-		for deviceVendor, deviceCount := range devices {
-			devicesSlice = append(devicesSlice, fmt.Sprintf("%v:%v", deviceVendor, deviceCount))
+		for key, value := range devices {
+			devicesSlice = append(devicesSlice, fmt.Sprintf("%v=%v", key, value))
 		}
 		b.argValues["device"] = &devicesSlice
 	}
