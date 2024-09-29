@@ -125,8 +125,13 @@ go-vet: ## Run go vet against code.
 
 .PHONY: go-lint
 go-lint: golangci-lint ## Run golangci-lint linter.
-	@echo "Running golangci-lint..."
-	$(LOCALBIN)/$(GOLANGCI_LINT) run --timeout 5m --go 1.21 ./...
+	@echo "Running golangci-lint run..."
+	$(LOCALBIN)/$(GOLANGCI_LINT) run --timeout 5m ./...
+
+.PHONY: go-lint-fix
+go-lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
+	@echo "Running golangci-lint run --fix..."
+	$(LOCALBIN)/$(GOLANGCI_LINT) run --fix --timeout 5m ./...
 
 .PHONY: unit-test
 unit-test: ## Run go unit tests.
