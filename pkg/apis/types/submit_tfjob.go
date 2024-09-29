@@ -47,6 +47,8 @@ type SubmitTFJobArgs struct {
 	PSMemory string `yaml:"psMemory"`
 	// PSMemoryLimit stores the ps memory limit,match option --ps-memory-limit
 	PSMemoryLimit string `yaml:"psMemoryLimit"`
+	// SuccessPolicy defines the policy to mark the TFJob as succeeded.
+	SuccessPolicy string `yaml:"successPolicy"`
 	// CleanPodPolicy stores the cleaning pod policy,match option --clean-task-policy
 	CleanPodPolicy string `yaml:"cleanPodPolicy"`
 	// UseChief stores the using chief or not,match option --chief

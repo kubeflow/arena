@@ -33,6 +33,9 @@ import (
 
 const (
 	disableTFConfigAnnotation = "arena.kubeflow.org/disable-tf-config"
+
+	TFJobSuccessPolicyChiefWorker = "ChiefWorker"
+	TFJobSuccessPolicyAllWorkers  = "AllWorkers"
 )
 
 type SubmitTFJobArgsBuilder struct {
@@ -129,6 +132,8 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	_ = command.Flags().MarkDeprecated("psMemory", "please use --ps-memory instead")
 	command.Flags().StringVar(&s.args.PSMemory, "ps-memory", "", "the memory resource to use for the parameter servers, like 1Gi.")
 	command.Flags().StringVar(&s.args.PSMemoryLimit, "ps-memory-limit", "", "the memory resource limit to use for the parameter servers, like 1Gi.")
+
+	command.Flags().StringVar(&s.args.SuccessPolicy, "success-policy", TFJobSuccessPolicyChiefWorker, "Specifies the policy to mark the TFJob as succeeded. Available options are ChiefWorker and AllWorkers. Default to ChiefWorker.")
 
 	// How to clean up Task
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "cleanTaskPolicy", "Running", "How to clean tasks after Training is done, support Running, None and All.")
@@ -262,12 +267,20 @@ func (s *SubmitTFJobArgsBuilder) setRunPolicy() error {
 }
 
 func (s *SubmitTFJobArgsBuilder) check() error {
+	switch s.args.SuccessPolicy {
+	case TFJobSuccessPolicyChiefWorker, TFJobSuccessPolicyAllWorkers:
+		log.Debugf("Supported successPolicy: %s", s.args.SuccessPolicy)
+	default:
+		return fmt.Errorf("unsupported successPolicy %s", s.args.SuccessPolicy)
+	}
+
 	switch s.args.CleanPodPolicy {
 	case "None", "Running", "All":
 		log.Debugf("Supported cleanTaskPolicy: %s", s.args.CleanPodPolicy)
 	default:
 		return fmt.Errorf("Unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
 	}
+
 	if s.args.WorkerCount == 0 && !s.args.UseChief {
 		return fmt.Errorf("--workers must be greater than 0 in distributed training")
 	}
@@ -401,6 +414,12 @@ func (s *SubmitTFJobArgsBuilder) transform() error {
 	if s.args.UseEvaluator {
 		s.args.EvaluatorCount = 1
 	}
+
+	if s.args.SuccessPolicy == TFJobSuccessPolicyChiefWorker {
+		// The value of chief worker policy actually is empty string in training-operator.
+		s.args.SuccessPolicy = ""
+	}
+
 	return nil
 }
 
