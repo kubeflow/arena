@@ -3,7 +3,7 @@ module github.com/kubeflow/arena
 go 1.22.7
 
 require (
-	github.com/go-resty/resty/v2 v2.15.2
+	github.com/go-resty/resty/v2 v2.15.3
 	github.com/golang/glog v1.2.2
 	github.com/google/uuid v1.6.0
 	github.com/kserve/kserve v0.13.1
