@@ -69,6 +69,10 @@ If you want to use arena to manage training jobs, this guide is for you. we have
 
 * I want to [submit a volcano training job](volcanojob/volcanojob.md).
 
+## Ray Training Job Guide
+
+* I want to [submit a ray training job](rayjob/rayjob.md).
+
 ## Other Usage
 
 * I want to [submit a training job with specified the imagePullSecrets](common/image-pull-secret.md).

@@ -255,6 +255,8 @@ github.com/prometheus/procfs v0.15.1 h1:YagwOFzUgYfKKHX6Dr+sHT7km/hxC76UB0leargg
 github.com/prometheus/procfs v0.15.1/go.mod h1:fB45yRUv8NstnjriLhBQLuOUt+WW4BsoGhij/e3PBqk=
 github.com/prometheus/statsd_exporter v0.25.0 h1:gpVF1TMf1UqMJmBDpzBYrEaGOFMpbMBYYYUDwM38Y/I=
 github.com/prometheus/statsd_exporter v0.25.0/go.mod h1:HwzfSvg6ehmb0Qg71ZuFrlgj5XQt9C+MGVLz5Gt5lqc=
+github.com/ray-project/kuberay/ray-operator v1.1.1 h1:mVOA1ddS9aAsPvhhHrpf0ZXgTzccIAyTbeYeDqtcfAk=
+github.com/ray-project/kuberay/ray-operator v1.1.1/go.mod h1:ZqyKKvMP5nKDldQoKmur+Wcx7wVlV9Q98phFqHzr+KY=
 github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
 github.com/rogpeppe/go-internal v1.10.0/go.mod h1:UQnix2H7Ngw/k4C5ijL5+65zddjncjaFoBhdsK/akog=
 github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=
