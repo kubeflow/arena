@@ -22,6 +22,8 @@ ARG TARGETOS
 
 ARG TARGETARCH
 
+WORKDIR /root
+
 RUN apt-get update \
     && apt-get install -y tini \
     && rm -rf /var/lib/apt/lists/*
@@ -32,7 +34,7 @@ RUN set -eux && \
     tar -zxvf arena-installer.tar.gz && \
     mv arena-installer-*-${TARGETOS}-${TARGETARCH} arena-installer && \
     arena-installer/install.sh --only-binary && \
-    rm -rf arena-installer.tar.gz arena-installer
+    rm -rf arena-installer.tar.gz
 
 COPY entrypoint.sh /usr/local/bin/
 
