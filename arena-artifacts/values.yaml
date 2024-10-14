@@ -7,7 +7,7 @@ global:
   # pull image by aliyun vpc network
   pullImageByVPCNetwork: false
   # the prefix of all image
-  imagePrefix: registry.cn-zhangjiakou.aliyuncs.com
+  imagePrefix: registry-cn-zhangjiakou.ack.aliyuncs.com
   # the cluster type
   clusterProfile: "Default"
   # specfiy the nodeSelector for all operator pods
