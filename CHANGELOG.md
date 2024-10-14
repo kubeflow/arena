@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.10.1](https://github.com/kubeflow/arena/tree/v0.10.1) (2024-10-14)
+
+### Bug Fixes
+
+- fix: keep arena installer after installing the binary ([#1164](https://github.com/kubeflow/arena/pull/1164) by [@ChenYi015](https://github.com/ChenYi015))
+- fix: unsupported success policy when success policy is not specified ([#1170](https://github.com/kubeflow/arena/pull/1170) by [@ChenYi015](https://github.com/ChenYi015))
+- fix: failed to sync cache due to status subresouce missed in tfjob CRD ([#1173](https://github.com/kubeflow/arena/pull/1173) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Misc
+
+- Bump github.com/prometheus/common from 0.59.1 to 0.60.0 ([#1160](https://github.com/kubeflow/arena/pull/1160) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump golang.org/x/crypto from 0.27.0 to 0.28.0 ([#1162](https://github.com/kubeflow/arena/pull/1162) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Migrate docker image to ACREE ([#1171](https://github.com/kubeflow/arena/pull/1171) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump mkdocs-material from 9.5.38 to 9.5.40 ([#1166](https://github.com/kubeflow/arena/pull/1166) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump google.golang.org/protobuf from 1.34.2 to 1.35.1 ([#1163](https://github.com/kubeflow/arena/pull/1163) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Remove redundant run_arena.sh file ([#1172](https://github.com/kubeflow/arena/pull/1172) by [@ChenYi015](https://github.com/ChenYi015))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.10.0...v0.10.1)
+
 ## [v0.10.0](https://github.com/kubeflow/arena/tree/v0.10.0) (2024-09-29)
 
 ### New Features
