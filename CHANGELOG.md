@@ -1,0 +1,45 @@
+# Changelog
+
+## [v0.10.0](https://github.com/kubeflow/arena/tree/v0.10.0) (2024-09-29)
+
+### New Features
+
+- Support multiple type devices ([#1122](https://github.com/kubeflow/arena/pull/1122) by [@lizhiboo](https://github.com/lizhiboo))
+- Increase RSA key bit size from 1024 to 2048 ([#1130](https://github.com/kubeflow/arena/pull/1130) by [@ChenYi015](https://github.com/ChenYi015))
+- Add success policy to TF training job ([#1148](https://github.com/kubeflow/arena/pull/1148) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Bug Fixes
+
+- Fix submitting spark training jobs and update docs ([#1112](https://github.com/kubeflow/arena/pull/1112) by [@ChenYi015](https://github.com/ChenYi015))
+- docs: fix broken links and add CI for checking document build status ([#1131](https://github.com/kubeflow/arena/pull/1131) by [@ChenYi015](https://github.com/ChenYi015))
+- [Bugfix] Make PytorchJob devices format to key=value ([#1155](https://github.com/kubeflow/arena/pull/1155) by [@AlanFokCo](https://github.com/AlanFokCo))
+
+### SDK
+
+- Bump arena Java SDK version to 1.0.8 ([#1124](https://github.com/kubeflow/arena/pull/1124) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Misc
+
+- Remove docker dependency ([#1113](https://github.com/kubeflow/arena/pull/1113) by [@Syulin7](https://github.com/Syulin7))
+- Update Makefile and release workflow ([#1128](https://github.com/kubeflow/arena/pull/1128) by [@ChenYi015](https://github.com/ChenYi015))
+- chore: remove travis and circle CI ([#1129](https://github.com/kubeflow/arena/pull/1129) by [@ChenYi015](https://github.com/ChenYi015))
+- chore: add issue templates and update depenabot bot ([#1140](https://github.com/kubeflow/arena/pull/1140) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump github.com/golang/glog from 1.1.2 to 1.2.2 ([#1139](https://github.com/kubeflow/arena/pull/1139) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump golang.org/x/crypto from 0.21.0 to 0.27.0 ([#1126](https://github.com/kubeflow/arena/pull/1126) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/spf13/cobra from 1.8.0 to 1.8.1 ([#1137](https://github.com/kubeflow/arena/pull/1137) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/go-resty/resty/v2 from 2.12.0 to 2.14.0 ([#1134](https://github.com/kubeflow/arena/pull/1134) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/kserve/kserve from 0.13.0 to 0.13.1 ([#1135](https://github.com/kubeflow/arena/pull/1135) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/prometheus/common from 0.45.0 to 0.59.1 ([#1138](https://github.com/kubeflow/arena/pull/1138) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump client-java from 10.0.1 to 11.0.1 ([#1132](https://github.com/kubeflow/arena/pull/1132) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump github.com/prometheus/client_golang from 1.20.0 to 1.20.4 ([#1144](https://github.com/kubeflow/arena/pull/1144) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/go-resty/resty/v2 from 2.14.0 to 2.15.0 ([#1143](https://github.com/kubeflow/arena/pull/1143) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump mkdocs-material from 9.5.34 to 9.5.35 ([#1145](https://github.com/kubeflow/arena/pull/1145) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/go-resty/resty/v2 from 2.15.0 to 2.15.1 ([#1147](https://github.com/kubeflow/arena/pull/1147) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/go-resty/resty/v2 from 2.15.1 to 2.15.2 ([#1150](https://github.com/kubeflow/arena/pull/1150) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump mkdocs-material from 9.5.35 to 9.5.36 ([#1151](https://github.com/kubeflow/arena/pull/1151) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump golang from 1.21 to 1.22.7 ([#1142](https://github.com/kubeflow/arena/pull/1142) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump mkdocs-material from 9.5.36 to 9.5.38 ([#1153](https://github.com/kubeflow/arena/pull/1153) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/go-resty/resty/v2 from 2.15.2 to 2.15.3 ([#1156](https://github.com/kubeflow/arena/pull/1156) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Release v0.10.0 ([#1157](https://github.com/kubeflow/arena/pull/1157) by [@ChenYi015](https://github.com/ChenYi015))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.9.16...v0.10.0)
