@@ -6,7 +6,7 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.15.0
     git-repo: https://github.com/AliyunContainerService/tf-operator
     git-branch: v1.0-aliyun-branch
-    git-commit: a0bb318635fbf624d277e6981e62ba0b46e20ee2
+    git-commit: c36c43433bccfa740b1dec5e0e7cd4091d08fd27
   name: tfjobs.kubeflow.org
 spec:
   group: kubeflow.org
@@ -17,7 +17,14 @@ spec:
     singular: tfjob
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[-1:].type
+      name: State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: Represents a TFJob resource.
@@ -4358,3 +4365,5 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
