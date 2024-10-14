@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License
+
 package argsbuilder
 
 import (
@@ -34,6 +35,7 @@ import (
 const (
 	disableTFConfigAnnotation = "arena.kubeflow.org/disable-tf-config"
 
+	TFJobSuccessPolicyDefault     = ""
 	TFJobSuccessPolicyChiefWorker = "ChiefWorker"
 	TFJobSuccessPolicyAllWorkers  = "AllWorkers"
 )
@@ -268,7 +270,7 @@ func (s *SubmitTFJobArgsBuilder) setRunPolicy() error {
 
 func (s *SubmitTFJobArgsBuilder) check() error {
 	switch s.args.SuccessPolicy {
-	case TFJobSuccessPolicyChiefWorker, TFJobSuccessPolicyAllWorkers:
+	case TFJobSuccessPolicyDefault, TFJobSuccessPolicyAllWorkers:
 		log.Debugf("Supported successPolicy: %s", s.args.SuccessPolicy)
 	default:
 		return fmt.Errorf("unsupported successPolicy %s", s.args.SuccessPolicy)
@@ -417,7 +419,7 @@ func (s *SubmitTFJobArgsBuilder) transform() error {
 
 	if s.args.SuccessPolicy == TFJobSuccessPolicyChiefWorker {
 		// The value of chief worker policy actually is empty string in training-operator.
-		s.args.SuccessPolicy = ""
+		s.args.SuccessPolicy = TFJobSuccessPolicyDefault
 	}
 
 	return nil
