@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.11.0](https://github.com/kubeflow/arena/tree/v0.11.0) (2024-10-24)
+
+### New Features
+
+- Support ray job  ([#1123](https://github.com/kubeflow/arena/pull/1123) by [@qile123](https://github.com/qile123))
+
+### Misc
+
+- Bump github.com/prometheus/client_golang from 1.20.4 to 1.20.5 ([#1176](https://github.com/kubeflow/arena/pull/1176) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump mkdocs-material from 9.5.40 to 9.5.42 ([#1179](https://github.com/kubeflow/arena/pull/1179) by [@dependabot[bot]](https://github.com/apps/dependabot))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/e15cb18...v0.11.0)
+
 ## [v0.10.1](https://github.com/kubeflow/arena/tree/v0.10.1) (2024-10-14)
 
 ### Bug Fixes
