@@ -1,0 +1,459 @@
+{{- $syncMode := .Values.syncMode -}}
+{{- $dataDirs := .Values.dataDirs -}}
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ template "rayjob.name" . }}
+    chart: {{ template "rayjob.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    createdBy: "RayJob"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+spec:
+  entrypoint: {{ .Values.command }}
+  {{- if .Values.shutdownAfterJobFinishes }}
+  shutdownAfterJobFinishes: {{ .Values.shutdownAfterJobFinishes }}
+  {{- end }}
+  {{- if .Values.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  {{- end }}
+  {{- if .Values.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+  {{- end }}
+  {{- if .Values.suspend }}
+  suspend: {{ .Values.suspend }}
+  {{- end }}
+  rayClusterSpec:
+    {{- if .Values.rayVersion }}
+    rayVersion: {{ .Values.rayVersion }}
+    {{- end }}
+    {{- if .Values.enableInTreeAutoscaling }}
+    enableInTreeAutoscaling: {{ .Values.enableInTreeAutoscaling }}
+    {{- end }}
+    {{- if and .Values.enableInTreeAutoscaling .Values.autoscalerOptions }}
+    autoscalerOptions:
+      upscalingMode: {{ .Values.autoscalerOptions.upscalingMode }}
+      idleTimeoutSeconds: {{ .Values.autoscalerOptions.idleTimeoutSeconds }}
+      {{- if .Values.autoscalerOptions.image }}
+      image: {{ .Values.autoscalerOptions.image }}
+      {{- end }}
+      imagePullPolicy: {{ .Values.autoscalerOptions.imagePullPolicy }}
+      resources:
+        limits:
+          cpu: {{ .Values.autoscalerOptions.cpu | quote }}
+          memory: {{ .Values.autoscalerOptions.memory | quote }}
+        requests:
+          cpu: {{ .Values.autoscalerOptions.cpu | quote }}
+          memory: {{ .Values.autoscalerOptions.memory | quote }}
+    {{- end }}
+    headGroupSpec:
+      serviceType: {{ .Values.head.serviceType }}
+      rayStartParams:
+        dashboard-host: '0.0.0.0'
+      template:
+        metadata:
+          labels:
+            app: {{ template "rayjob.name" . }}
+            chart: {{ template "rayjob.chart" . }}
+            release: {{ .Release.Name }}
+            heritage: {{ .Release.Service }}
+            createdBy: "RayJob"
+          {{- range $key, $value := .Values.labels }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
+          annotations:
+          {{- range $key, $value := .Values.annotations }}
+            {{ $key }}: {{ $value | quote }}
+          {{- end }}
+        spec:
+          {{- if ne (len .Values.nodeSelectors) 0 }}
+          nodeSelector:
+          {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+            {{ $nodeKey }}: "{{ $nodeVal }}"
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.tolerations) 0 }}
+          tolerations:
+          {{- range $tolerationKey := .Values.tolerations }}
+          - {{- if $tolerationKey.key }}
+            key: "{{ $tolerationKey.key }}"
+            {{- end }}
+            {{- if $tolerationKey.value }}
+            value: "{{ $tolerationKey.value }}"
+            {{- end }}
+            {{- if $tolerationKey.effect }}
+            effect: "{{ $tolerationKey.effect }}"
+            {{- end }}
+            {{- if $tolerationKey.operator }}
+            operator: "{{ $tolerationKey.operator }}"
+            {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.imagePullSecrets) 0 }}
+          imagePullSecrets:
+          {{- range $imagePullSecret := .Values.imagePullSecrets }}
+            - name: "{{ $imagePullSecret }}"
+          {{- end }}
+          {{- end }}
+          restartPolicy: Never
+          containers:
+            - name: ray-head
+              image: "{{ default .Values.image .Values.head.image }}" 
+              imagePullPolicy: {{ .Values.imagePullPolicy }}
+              {{- if .Values.workingDir }}
+              workingDir: {{ .Values.workingDir }}
+              {{- end }}
+              resources:
+                requests:
+                  {{- if gt (int .Values.head.gpu) 0 }}
+                  nvidia.com/gpu: {{ .Values.head.gpu | quote }}
+                  {{- end }}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
+                  {{- if .Values.head.cpu }}
+                  cpu: {{ .Values.head.cpu | quote }}
+                  {{- end }}
+                  {{- if .Values.head.memory }}
+                  memory: {{ .Values.head.memory | quote }}
+                  {{- end }}
+                limits:
+                  {{- if gt (int .Values.head.gpu) 0 }}
+                  nvidia.com/gpu: {{ .Values.head.gpu | quote }}
+                  {{- end }}
+                  {{- range $key, $value := .Values.devices }}
+                  {{ $key }}: {{ $value }}
+                  {{- end }}
+                  {{- if .Values.head.cpu }}
+                  cpu: {{ .Values.head.cpu | quote }}
+                  {{- end }}
+                  {{- if .Values.head.memory }}
+                  memory: {{ .Values.head.memory | quote }}
+                  {{- end }}
+              {{- if .Values.envs }}
+              env:
+              {{- range $key, $value := .Values.envs }}
+                {{- if and (ne $key "gpus") (ne $key "workers") }}
+                - name: "{{ $key }}"
+                  value: "{{ $value }}"
+                {{- end }}
+              {{- end }}
+              {{- end }}
+              ports:
+                - containerPort: 6379
+                  name: gcs-server
+                - containerPort: 8265
+                  name: dashboard
+                - containerPort: 10001
+                  name: client
+              {{- if .Values.preStopCmd }}
+              lifecycle:
+                preStop:
+                  exec:
+                    command: {{- toYaml .Values.preStopCmd | nindent 22 }}
+              {{- end }}
+              volumeMounts:
+              {{- if ne (len .Values.configFiles) 0 }}
+              {{- $releaseName := .Release.Name }}
+              {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+              {{- $visit := "false" }}
+              {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+              {{- if eq  "false" $visit }}
+                - mountPath: {{ $configFileInfo.containerFilePath }}
+                  name: {{ $containerPathKey }}
+              {{- $visit = "true" }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if .Values.useTensorboard }}
+              {{- if .Values.isLocalLogging }}
+                - mountPath: {{ .Values.trainingLogdir }}
+                  name: training-logs-volume
+              {{- end }}
+              {{- end }}
+              {{- if .Values.syncMode }}
+              {{- if .Values.workingDir }}
+                - name: code-sync
+                  mountPath: {{ .Values.workingDir }}/code
+              {{- else }}
+                - name: code-sync
+                  mountPath: /code
+              {{- end }}
+              {{- end }}
+              {{- if .Values.nvidiaPath }}
+                - mountPath: /usr/local/nvidia
+                  name: nvidia
+              {{- end }}
+              {{- if .Values.dataset }}
+              {{- range $pvcName, $destPath := .Values.dataset }}
+                - name: "{{ $pvcName }}"
+                  mountPath: "{{ $destPath }}"
+              {{- end }}
+              {{- end }}
+              {{- if .Values.shareMemory }}
+                - mountPath: /dev/shm
+                  name: dshm
+              {{- end }}
+              {{- if $dataDirs }}
+              {{- range $dataDirs }}
+                - mountPath: {{ .containerPath }}
+                  name: {{ .name }}
+              {{- end }}
+              {{- end }}
+          volumes:
+          {{- if ne (len .Values.configFiles) 0 }}
+          {{- $releaseName := .Release.Name }}
+          {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+            - name: {{ $containerPathKey }}
+              configMap:
+                name: {{ $releaseName }}-{{ $containerPathKey }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.useTensorboard }}
+          {{- if .Values.isLocalLogging }}
+            - hostPath:
+                path: "{{ .Values.hostLogPath }}"
+              name: training-logs-volume
+          {{- end }}
+          {{- end }}
+          {{- if .Values.syncMode }}
+            - name: code-sync
+              emptyDir: {}
+          {{- end }}
+          {{- if .Values.nvidiaPath }}
+            - hostPath:
+                path: "{{ .Values.nvidiaPath }}"
+              name: nvidia
+          {{- end }}
+          {{- if .Values.dataset }}
+          {{- range $pvcName, $destPath := .Values.dataset }}
+            - name: "{{ $pvcName }}"
+              persistentVolumeClaim:
+                claimName: "{{ $pvcName }}"
+          {{- end }}
+          {{- end }}
+          {{- if $dataDirs }}
+          {{- range $dataDirs }}
+            - hostPath:
+                path: {{ .hostPath }}
+              name: {{ .name }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.shareMemory }}
+            - name: dshm
+              emptyDir:
+                medium: Memory
+                sizeLimit: {{ .Values.shareMemory }}
+          {{- end }}
+          {{- if .Values.priorityClassName }}
+          priorityClassName: {{ .Values.priorityClassName }}
+          {{- end }}
+
+    workerGroupSpecs:
+      - rayStartParams: {}
+        replicas: {{ .Values.worker.replicas }}
+        minReplicas: {{ default .Values.worker.replicas .Values.worker.minReplicas }}
+        maxReplicas: {{ default .Values.worker.replicas .Values.worker.maxReplicas }}
+        numOfHosts: {{ .Values.worker.numOfHosts | default 1 }}
+        groupName: default-group
+        template:
+          metadata:
+            labels:
+              app: {{ template "rayjob.name" . }}
+              chart: {{ template "rayjob.chart" . }}
+              release: {{ .Release.Name }}
+              heritage: {{ .Release.Service }}
+              createdBy: "RayJob"
+            {{- range $key, $value := .Values.labels }}
+              {{ $key }}: {{ $value | quote }}
+            {{- end }}
+            annotations:
+            {{- range $key, $value := .Values.annotations }}
+              {{ $key }}: {{ $value | quote }}
+            {{- end }}
+          spec:
+            {{- if ne (len .Values.nodeSelectors) 0 }}
+            nodeSelector:
+            {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+              {{ $nodeKey }}: "{{ $nodeVal }}"
+            {{- end }}
+            {{- end }}
+            {{- if ne (len .Values.tolerations) 0 }}
+            tolerations:
+            {{- range $tolerationKey := .Values.tolerations }}
+            - {{- if $tolerationKey.key }}
+              key: "{{ $tolerationKey.key }}"
+              {{- end }}
+              {{- if $tolerationKey.value }}
+              value: "{{ $tolerationKey.value }}"
+              {{- end }}
+              {{- if $tolerationKey.effect }}
+              effect: "{{ $tolerationKey.effect }}"
+              {{- end }}
+              {{- if $tolerationKey.operator }}
+              operator: "{{ $tolerationKey.operator }}"
+              {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if ne (len .Values.imagePullSecrets) 0 }}
+            imagePullSecrets:
+            {{- range $imagePullSecret := .Values.imagePullSecrets }}
+              - name: "{{ $imagePullSecret }}"
+            {{- end }}
+            {{- end }}
+            restartPolicy: OnFailure
+            containers:
+              - name: ray-worker
+                image: "{{ default .Values.image .Values.worker.image }}" 
+                imagePullPolicy: {{ .Values.imagePullPolicy }}
+                {{- if .Values.workingDir }}
+                workingDir: {{ .Values.workingDir }}
+                {{- end }}
+                resources:
+                  requests:
+                    {{- if gt (int .Values.worker.gpu) 0 }}
+                    nvidia.com/gpu: {{ .Values.worker.gpu | quote }}
+                    {{- end }}
+                    {{- range $key, $value := .Values.devices }}
+                    {{ $key }}: {{ $value }}
+                    {{- end }}
+                    {{- if .Values.worker.cpu }}
+                    cpu: {{ .Values.worker.cpu | quote }}
+                    {{- end }}
+                    {{- if .Values.worker.memory }}
+                    memory: {{ .Values.worker.memory | quote }}
+                    {{- end }}
+                  limits:
+                    {{- if gt (int .Values.worker.gpu) 0 }}
+                    nvidia.com/gpu: {{ .Values.worker.gpu | quote }}
+                    {{- end }}
+                    {{- range $key, $value := .Values.devices }}
+                    {{ $key }}: {{ $value }}
+                    {{- end }}
+                    {{- if .Values.worker.cpu }}
+                    cpu: {{ .Values.worker.cpu | quote }}
+                    {{- end }}
+                    {{- if .Values.worker.memory }}
+                    memory: {{ .Values.worker.memory | quote }}
+                    {{- end }}
+                {{- if .Values.envs }}
+                env:
+                {{- range $key, $value := .Values.envs }}
+                  {{- if and (ne $key "gpus") (ne $key "workers") }}
+                  - name: "{{ $key }}"
+                    value: "{{ $value }}"
+                  {{- end }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.preStopCmd }}
+                lifecycle:
+                  preStop:
+                    exec:
+                      command: {{- toYaml .Values.preStopCmd | nindent 24 }}
+                {{- end }}
+                volumeMounts:
+                {{- if ne (len .Values.configFiles) 0 }}
+                {{- $releaseName := .Release.Name }}
+                {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+                {{- $visit := "false" }}
+                {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+                {{- if eq  "false" $visit }}
+                  - mountPath: {{ $configFileInfo.containerFilePath }}
+                    name: {{ $containerPathKey }}
+                {{- $visit = "true" }}
+                {{- end }}
+                {{- end }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.useTensorboard }}
+                {{- if .Values.isLocalLogging }}
+                  - mountPath: {{ .Values.trainingLogdir }}
+                    name: training-logs-volume
+                {{- end }}
+                {{- end }}
+                {{- if .Values.syncMode }}
+                {{- if .Values.workingDir }}
+                  - name: code-sync
+                    mountPath: {{ .Values.workingDir }}/code
+                {{- else }}
+                  - name: code-sync
+                    mountPath: /code
+                {{- end }}
+                {{- end }}
+                {{- if .Values.nvidiaPath }}
+                  - mountPath: /usr/local/nvidia
+                    name: nvidia
+                {{- end }}
+                {{- if .Values.dataset }}
+                {{- range $pvcName, $destPath := .Values.dataset }}
+                  - name: "{{ $pvcName }}"
+                    mountPath: "{{ $destPath }}"
+                {{- end }}
+                {{- end }}
+                {{- if .Values.shareMemory }}
+                  - mountPath: /dev/shm
+                    name: dshm
+                {{- end }}
+                {{- if $dataDirs }}
+                {{- range $dataDirs }}
+                  - mountPath: {{ .containerPath }}
+                    name: {{ .name }}
+                {{- end }}
+                {{- end }}
+            volumes:
+            {{- if ne (len .Values.configFiles) 0 }}
+            {{- $releaseName := .Release.Name }}
+            {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+              - name: {{ $containerPathKey }}
+                configMap:
+                  name: {{ $releaseName }}-{{ $containerPathKey }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.useTensorboard }}
+            {{- if .Values.isLocalLogging }}
+              - hostPath:
+                  path: "{{ .Values.hostLogPath }}"
+                name: training-logs-volume
+            {{- end }}
+            {{- end }}
+            {{- if .Values.syncMode }}
+              - name: code-sync
+                emptyDir: {}
+            {{- end }}
+            {{- if .Values.nvidiaPath }}
+              - hostPath:
+                  path: "{{ .Values.nvidiaPath }}"
+                name: nvidia
+            {{- end }}
+            {{- if .Values.dataset }}
+            {{- range $pvcName, $destPath := .Values.dataset }}
+              - name: "{{ $pvcName }}"
+                persistentVolumeClaim:
+                  claimName: "{{ $pvcName }}"
+            {{- end }}
+            {{- end }}
+            {{- if $dataDirs }}
+            {{- range $dataDirs }}
+              - hostPath:
+                  path: {{ .hostPath }}
+                name: {{ .name }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.shareMemory }}
+              - name: ray-logs
+                emptyDir:
+                  medium: Memory
+                  sizeLimit: {{ .Values.shareMemory }}
+            {{- end }}
+            {{- if .Values.priorityClassName }}
+            priorityClassName: {{ .Values.priorityClassName }}
+            {{- end }}

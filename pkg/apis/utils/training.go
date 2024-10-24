@@ -74,6 +74,24 @@ func IsPyTorchPod(name, ns string, pod *v1.Pod) bool {
 	return false
 }
 
+func IsRayJobPod(name, ns string, pod *v1.Pod) bool {
+	// determine whether the pod is a ray job pod
+	if pod.Labels["job-name"] == name {
+		return true
+	}
+	// determine whether the pod is a ray cluster pod
+	if pod.Labels["release"] != name {
+		return false
+	}
+	if pod.Labels["app"] != string(types.RayJob) {
+		return false
+	}
+	if pod.Namespace != ns {
+		return false
+	}
+	return true
+}
+
 func IsMPIPod(name, ns string, pod *v1.Pod) bool {
 	// check the release name is matched mpijob name
 	if pod.Labels["release"] != name {
