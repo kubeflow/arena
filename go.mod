@@ -9,7 +9,7 @@ require (
 	github.com/kserve/kserve v0.13.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/prometheus/client_golang v1.20.5
-	github.com/prometheus/common v0.60.0
+	github.com/prometheus/common v0.60.1
 	github.com/ray-project/kuberay/ray-operator v1.2.2
 	github.com/sirupsen/logrus v1.9.1
 	github.com/spf13/cobra v1.8.1
