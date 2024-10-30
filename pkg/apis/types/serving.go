@@ -33,6 +33,8 @@ const (
 	TritonServingJob ServingJobType = "triton-serving"
 	// CustomServingJob defines the custom serving job
 	CustomServingJob ServingJobType = "custom-serving"
+	// DistributedServingJob defines the distributed serving job
+	DistributedServingJob ServingJobType = "distributed-serving"
 	// AllServingJob represents all serving job type
 	AllServingJob ServingJobType = ""
 	// UnknownServingJob defines the unknown serving job
@@ -81,6 +83,11 @@ var ServingTypeMap = map[ServingJobType]ServingTypeInfo{
 		Name:      SeldonServingJob,
 		Alias:     "Seldon",
 		Shorthand: "seldon",
+	},
+	DistributedServingJob: {
+		Name:      DistributedServingJob,
+		Alias:     "Distributed",
+		Shorthand: "distributed",
 	},
 }
 
@@ -283,6 +290,25 @@ type TritonServingArgs struct {
 	LoadModels        []string `yaml:"loadModels"`      // --load-model
 	ExtendCommand     string   `yaml:"extendCommand"`   // --extend-command
 	CommonServingArgs `yaml:",inline"`
+}
+
+type DistributedServingArgs struct {
+	Masters           int    `yaml:"masters"`         // --masters
+	Workers           int    `yaml:"workers"`         // --workers
+	MasterCpu         string `yaml:"masterCpus"`      // --master-cpu
+	WorkerCpu         string `yaml:"workerCpus"`      // --worker-cpu
+	MasterGPUCount    int    `yaml:"masterGpus"`      // --master-gpus
+	WorkerGPUCount    int    `yaml:"workerGpus"`      // --worker-gpus
+	MasterMemory      string `yaml:"masterMemory"`    // --master-memory
+	WorkerMemory      string `yaml:"workerMemory"`    // --worker-memory
+	MasterGPUMemory   int    `yaml:"masterGPUMemory"` // --master-gpumemory
+	WorkerGPUMemory   int    `yaml:"workerGPUMemory"` // --worker-gpumemory
+	MasterGPUCore     int    `yaml:"masterGPUCore"`   // --master-gpucore
+	WorkerGPUCore     int    `yaml:"workerGPUCore"`   // --worker-gpucore
+	MasterCommand     string `yaml:"masterCommand"`   // --master-command
+	WorkerCommand     string `yaml:"workerCommand"`   // --worker-command
+	InitBackend       string `yaml:"initBackend"`     // --init-backend
+	CustomServingArgs `yaml:",inline"`
 }
 
 type ModelFormat struct {

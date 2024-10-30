@@ -29,6 +29,8 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	lwsv1 "sigs.k8s.io/lws/api/leaderworkerset/v1"
+	lwsClient "sigs.k8s.io/lws/client-go/clientset/versioned"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 )
@@ -356,6 +358,11 @@ func GetInferenceService(name, namespace string) (*kservev1beta1.InferenceServic
 	return client.ServingV1beta1().InferenceServices(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
+func GetLWSJob(name, namespace string) (*lwsv1.LeaderWorkerSet, error) {
+	client := lwsClient.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
+	return client.LeaderworkersetV1().LeaderWorkerSets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+}
+
 func UpdateDeployment(deploy *v1.Deployment) error {
 	arenaConfiger := config.GetArenaConfiger()
 	client := arenaConfiger.GetClientSet()
@@ -368,6 +375,13 @@ func UpdateInferenceService(inferenceService *kservev1beta1.InferenceService) er
 	client := kserveClient.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
 
 	_, err := client.ServingV1beta1().InferenceServices(inferenceService.Namespace).Update(context.TODO(), inferenceService, metav1.UpdateOptions{})
+	return err
+}
+
+func UpdateLWSJob(lwsJob *lwsv1.LeaderWorkerSet) error {
+	client := lwsClient.NewForConfigOrDie(config.GetArenaConfiger().GetRestConfig())
+
+	_, err := client.LeaderworkersetV1().LeaderWorkerSets(lwsJob.Namespace).Update(context.TODO(), lwsJob, metav1.UpdateOptions{})
 	return err
 }
 

@@ -25,7 +25,8 @@ Available Commands:
   custom         Submit a Custom Serving Job  
   kfserving,kfs  Submit a kubeflow Serving Job
   kserve         Submit a KServe Serving Job
-  seldon         Submit a Seldon Serving Job`
+  seldon         Submit a Seldon Serving Job
+  distributed    Submit a Distributed Serving Job`
 )
 
 func NewServeCommand() *cobra.Command {
@@ -44,6 +45,7 @@ func NewServeCommand() *cobra.Command {
 	command.AddCommand(NewSubmitKServeJobCommand())
 	command.AddCommand(NewSubmitSeldonServingJobCommand())
 	command.AddCommand(NewSubmitTritonServingJobCommand())
+	command.AddCommand(NewSubmitDistributedServingJobCommand())
 	command.AddCommand(NewListCommand())
 	command.AddCommand(NewDeleteCommand())
 	command.AddCommand(NewGetCommand())

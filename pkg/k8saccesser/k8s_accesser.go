@@ -54,6 +54,8 @@ import (
 	volcanovesioned "github.com/kubeflow/arena/pkg/operators/volcano-operator/client/clientset/versioned"
 	ray_v1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
 	rayversioned "github.com/ray-project/kuberay/ray-operator/pkg/client/clientset/versioned"
+	lws_v1 "sigs.k8s.io/lws/api/leaderworkerset/v1"
+	lwsversioned "sigs.k8s.io/lws/client-go/clientset/versioned"
 )
 
 var accesser *k8sResourceAccesser
@@ -651,6 +653,37 @@ func (k *k8sResourceAccesser) ListSparkJobs(sparkjobClient *sparkversioned.Clien
 	return jobs, nil
 }
 
+func (k *k8sResourceAccesser) ListLWSJobs(lwsClient *lwsversioned.Clientset, namespace string, labels string) ([]*lws_v1.LeaderWorkerSet, error) {
+	jobs := []*lws_v1.LeaderWorkerSet{}
+	jobList := &lws_v1.LeaderWorkerSetList{}
+	var err error
+	labelSelector, err := parseLabelSelector(labels)
+	if err != nil {
+		return nil, err
+	}
+	if k.cacheEnabled {
+		err = k.cacheClient.List(
+			context.Background(),
+			jobList,
+			client.InNamespace(namespace),
+			&client.ListOptions{
+				LabelSelector: labelSelector,
+			})
+	} else {
+		jobList, err = lwsClient.LeaderworkersetV1().LeaderWorkerSets(namespace).List(
+			context.Background(),
+			metav1.ListOptions{LabelSelector: labelSelector.String()},
+		)
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, job := range jobList.Items {
+		jobs = append(jobs, job.DeepCopy())
+	}
+	return jobs, nil
+}
+
 func (k *k8sResourceAccesser) GetCron(cronClient *cronversioned.Clientset, namespace string, name string) (*cron_v1alpha1.Cron, error) {
 	cron := &cron_v1alpha1.Cron{}
 	var err error
@@ -830,6 +863,29 @@ func (k *k8sResourceAccesser) GetSparkJob(sparkjobClient *sparkversioned.Clients
 		}
 	}
 	return sparkJob, err
+}
+
+func (k *k8sResourceAccesser) GetLWSJob(lwsClient *lwsversioned.Clientset, namespace string, name string) (*lws_v1.LeaderWorkerSet, error) {
+	lwsJob := &lws_v1.LeaderWorkerSet{}
+	var err error
+	if k.cacheEnabled {
+		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, lwsJob)
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, LWSCRDNameInDaemonMode, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find lwsjob %v from cache,reason: %v", name, err)
+		}
+	} else {
+		lwsJob, err = lwsClient.LeaderworkersetV1().LeaderWorkerSets(namespace).Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			if strings.Contains(err.Error(), fmt.Sprintf(`%v "%v" not found`, SparkCRDName, name)) {
+				return nil, types.ErrTrainingJobNotFound
+			}
+			return nil, fmt.Errorf("failed to find lws %v from api server,reason: %v", name, err)
+		}
+	}
+	return lwsJob, err
 }
 
 func (k *k8sResourceAccesser) GetService(namespace, name string) (*v1.Service, error) {

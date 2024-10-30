@@ -64,6 +64,7 @@ func GetAllProcesser() map[types.ServingJobType]Processer {
 			NewTensorrtServingProcesser,
 			NewSeldonServingProcesser,
 			NewTritonServingProcesser,
+			NewDistributedServingProcesser,
 		}
 		var wg sync.WaitGroup
 		for _, initFunc := range processerInits {

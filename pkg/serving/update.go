@@ -25,6 +25,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	lwsv1 "sigs.k8s.io/lws/api/leaderworkerset/v1"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
@@ -328,6 +329,77 @@ func UpdateKServe(args *types.UpdateKServeArgs) error {
 	return updateInferenceService(args.Name, args.Version, inferenceService)
 }
 
+func UpdateDistributedServing(args *types.UpdateDistributedServingArgs) error {
+	lwsJob, err := findAndBuildLWSJob(args)
+	if err != nil {
+		return nil
+	}
+
+	if args.Annotations != nil && len(args.Annotations) > 0 {
+		for k, v := range args.Annotations {
+			lwsJob.Annotations[k] = v
+			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Annotations[k] = v
+			lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Annotations[k] = v
+		}
+	}
+
+	if args.Labels != nil && len(args.Labels) > 0 {
+		for k, v := range args.Labels {
+			lwsJob.Labels[k] = v
+			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Labels[k] = v
+			lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Labels[k] = v
+		}
+	}
+
+	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+		if lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.NodeSelector == nil {
+			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.NodeSelector = map[string]string{}
+		}
+		if lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.NodeSelector == nil {
+			lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.NodeSelector = map[string]string{}
+		}
+		for k, v := range args.NodeSelectors {
+			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.NodeSelector[k] = v
+			lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.NodeSelector[k] = v
+		}
+	}
+
+	if args.Tolerations != nil && len(args.Tolerations) > 0 {
+		if lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Tolerations == nil {
+			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Tolerations = []v1.Toleration{}
+		}
+		if lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Tolerations == nil {
+			lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Tolerations = []v1.Toleration{}
+		}
+		exist := map[string]bool{}
+		var tolerations []v1.Toleration
+		for _, toleration := range args.Tolerations {
+			tolerations = append(tolerations, v1.Toleration{
+				Key:      toleration.Key,
+				Value:    toleration.Value,
+				Effect:   v1.TaintEffect(toleration.Effect),
+				Operator: v1.TolerationOperator(toleration.Operator),
+			})
+			exist[toleration.Key+toleration.Value] = true
+		}
+
+		for _, preToleration := range lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Tolerations {
+			if !exist[preToleration.Key+preToleration.Value] {
+				tolerations = append(tolerations, preToleration)
+			}
+		}
+		for _, preToleration := range lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Tolerations {
+			if !exist[preToleration.Key+preToleration.Value] {
+				tolerations = append(tolerations, preToleration)
+			}
+		}
+		lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Tolerations = tolerations
+		lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Tolerations = tolerations
+	}
+
+	return updateLWSJob(args.Name, args.Version, lwsJob)
+}
+
 func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deployment, error) {
 	job, err := SearchServingJob(args.Namespace, args.Name, args.Version, args.Type)
 	if err != nil {
@@ -470,6 +542,133 @@ func findAndBuildInferenceService(args *types.UpdateKServeArgs) (*kservev1beta1.
 	return inferenceService, nil
 }
 
+func findAndBuildLWSJob(args *types.UpdateDistributedServingArgs) (*lwsv1.LeaderWorkerSet, error) {
+	job, err := SearchServingJob(args.Namespace, args.Name, args.Version, args.Type)
+	if err != nil {
+		return nil, err
+	}
+	if args.Version == "" {
+		jobInfo := job.Convert2JobInfo()
+		args.Version = jobInfo.Version
+	}
+
+	lwsName := fmt.Sprintf("%s-%s-%s", args.Name, args.Version, "distributed-serving")
+	lwsJob, err := kubectl.GetLWSJob(lwsName, args.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if args.Image != "" {
+		lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Image = args.Image
+		lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Image = args.Image
+	}
+
+	if args.Replicas > 0 {
+		replicas := int32(args.Replicas)
+		lwsJob.Spec.Replicas = &replicas
+	}
+
+	// update resource
+	masterResourceLimits := lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Resources.Limits
+	workerResourceLimits := lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Resources.Limits
+	if masterResourceLimits == nil {
+		masterResourceLimits = make(map[v1.ResourceName]resource.Quantity)
+	}
+	if workerResourceLimits == nil {
+		workerResourceLimits = make(map[v1.ResourceName]resource.Quantity)
+	}
+	if args.MasterCpu != "" {
+		masterResourceLimits[v1.ResourceCPU] = resource.MustParse(args.MasterCpu)
+	}
+	if args.WorkerCpu != "" {
+		workerResourceLimits[v1.ResourceCPU] = resource.MustParse(args.WorkerCpu)
+	}
+	if args.MasterGPUCount > 0 {
+		masterResourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.MasterGPUCount))
+		delete(masterResourceLimits, ResourceGPUMemory)
+	}
+	if args.WorkerGPUCount > 0 {
+		workerResourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.WorkerGPUCount))
+		delete(workerResourceLimits, ResourceGPUMemory)
+	}
+	if args.MasterGPUMemory > 0 {
+		masterResourceLimits[ResourceGPUMemory] = resource.MustParse(strconv.Itoa(args.MasterGPUMemory))
+		delete(masterResourceLimits, ResourceGPU)
+	}
+	if args.WorkerGPUMemory > 0 {
+		workerResourceLimits[ResourceGPUMemory] = resource.MustParse(strconv.Itoa(args.WorkerGPUMemory))
+		delete(workerResourceLimits, ResourceGPU)
+	}
+	if args.MasterGPUCore > 0 {
+		masterResourceLimits[ResourceGPUCore] = resource.MustParse(strconv.Itoa(args.MasterGPUCore))
+		delete(masterResourceLimits, ResourceGPU)
+	}
+	if args.WorkerGPUCore > 0 {
+		workerResourceLimits[ResourceGPUCore] = resource.MustParse(strconv.Itoa(args.WorkerGPUCore))
+		delete(workerResourceLimits, ResourceGPU)
+	}
+	if args.MasterMemory != "" {
+		masterResourceLimits[v1.ResourceMemory] = resource.MustParse(args.MasterMemory)
+	}
+	if args.WorkerMemory != "" {
+		workerResourceLimits[v1.ResourceMemory] = resource.MustParse(args.WorkerMemory)
+	}
+	lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Resources.Limits = masterResourceLimits
+	lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Resources.Limits = workerResourceLimits
+
+	// update env
+	var masterEnvs []v1.EnvVar
+	var workerEnvs []v1.EnvVar
+	masterExist := map[string]bool{}
+	workerExist := map[string]bool{}
+	if args.Envs != nil {
+		for k, v := range args.Envs {
+			envVar := v1.EnvVar{
+				Name:  k,
+				Value: v,
+			}
+			masterEnvs = append(masterEnvs, envVar)
+			workerEnvs = append(workerEnvs, envVar)
+			masterExist[k] = true
+			workerExist[k] = true
+		}
+	}
+	for _, env := range lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Env {
+		if !masterExist[env.Name] {
+			masterEnvs = append(masterEnvs, env)
+		}
+	}
+	for _, env := range lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Env {
+		if !workerExist[env.Name] {
+			workerEnvs = append(workerEnvs, env)
+		}
+	}
+	lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Env = masterEnvs
+	lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Env = workerEnvs
+
+	// update command
+	if args.MasterCommand != "" {
+		// commands: sh -c xxx
+		masterCommand := lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Command
+		newMasterCommand := make([]string, len(masterCommand))
+		copy(newMasterCommand, masterCommand)
+		newMasterCommand[len(newMasterCommand)-1] = args.MasterCommand
+		lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Command = newMasterCommand
+		lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Args = []string{}
+	}
+	if args.WorkerCommand != "" {
+		// commands: sh -c xxx
+		workerCommand := lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Command
+		newWorkerCommand := make([]string, len(workerCommand))
+		copy(newWorkerCommand, workerCommand)
+		newWorkerCommand[len(newWorkerCommand)-1] = args.WorkerCommand
+		lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Command = newWorkerCommand
+		lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Args = []string{}
+	}
+
+	return lwsJob, nil
+}
+
 func updateDeployment(name, version string, deploy *appsv1.Deployment) error {
 	err := kubectl.UpdateDeployment(deploy)
 	if err == nil {
@@ -482,6 +681,17 @@ func updateDeployment(name, version string, deploy *appsv1.Deployment) error {
 
 func updateInferenceService(name, version string, inferenceService *kservev1beta1.InferenceService) error {
 	err := kubectl.UpdateInferenceService(inferenceService)
+	if err != nil {
+		log.Errorf("The serving job %s with version %s update failed", name, version)
+		return err
+	}
+
+	log.Infof("The serving job %s with version %s has been updated successfully", name, version)
+	return nil
+}
+
+func updateLWSJob(name, version string, lwsJob *lwsv1.LeaderWorkerSet) error {
+	err := kubectl.UpdateLWSJob(lwsJob)
 	if err != nil {
 		log.Errorf("The serving job %s with version %s update failed", name, version)
 		return err

@@ -1,0 +1,546 @@
+{{- $podNum := add (int .Values.masters) (int .Values.workers) -}}
+{{- $masterGpuCount := .Values.masterGpus -}}
+{{- $workerGpuCount := .Values.workerGpus -}}
+{{- $masterGpuMemory := .Values.masterGPUMemory -}}
+{{- $workerGpuMemory := .Values.workerGPUMemory -}}
+{{- $masterGpuCore := .Values.masterGPUCore -}}
+{{- $workerGpuCore := .Values.workerGPUCore -}}
+{{- $dataDirs := .Values.dataDirs -}}
+apiVersion: leaderworkerset.x-k8s.io/v1
+kind: LeaderWorkerSet
+metadata:
+  name: {{ template "distributed-serving.fullname" . }}
+  labels:
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "distributed-serving.chart" . }}
+    app: {{ template "distributed-serving.name" . }}
+    servingName: "{{ .Values.servingName }}"
+    servingType: "distributed-serving"
+    serviceName: "{{ .Values.servingName }}"
+    servingVersion: "{{ .Values.servingVersion }}"
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+    "helm.sh/created": {{ now | unixEpoch | quote }}
+spec:
+  replicas: {{ .Values.replicas }}
+  rolloutStrategy:
+    rollingUpdateConfiguration:
+      {{- if .Values.maxSurge }}
+      maxSurge: {{ .Values.maxSurge }}
+      {{- end }}
+      {{- if .Values.maxUnavailable }}
+      maxUnavailable: {{ .Values.maxUnavailable }}
+      {{- end }}
+  leaderWorkerTemplate:
+    size: {{ $podNum }}
+    restartPolicy: RecreateGroupOnPodRestart
+    leaderTemplate:
+      metadata:
+        annotations:
+          {{- if eq .Values.enableIstio true }}
+          sidecar.istio.io/inject: "true"
+          {{- end }}
+          {{- range $key, $value := .Values.annotations }}
+          {{ $key }}: {{ $value | quote }}
+          {{- end }}
+        labels:
+          heritage: {{ .Release.Service | quote }}
+          release: {{ .Release.Name | quote }}
+          chart: {{ template "distributed-serving.chart" . }}
+          app: {{ template "distributed-serving.name" . }}
+          serviceName: "{{ .Values.servingName }}"
+          servingType: "distributed-serving"
+          servingName: "{{ .Values.servingName }}"
+          servingVersion: "{{ .Values.servingVersion }}"
+          role: "master"
+          {{- range $key, $value := .Values.labels }}
+          {{ $key }}: {{ $value | quote }}
+          {{- end }}
+      spec:
+        {{- if ne (len .Values.nodeSelectors) 0 }}
+        nodeSelector:
+          {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+          {{ $nodeKey }}: "{{ $nodeVal }}"
+          {{- end }}
+        {{- end }}
+        {{- if .Values.schedulerName }}
+        schedulerName: {{ .Values.schedulerName }}
+        {{- end }}
+        {{- if ne (len .Values.tolerations) 0 }}
+        tolerations:
+        {{- range $tolerationKey := .Values.tolerations }}
+        - {{- if $tolerationKey.key }}
+          key: "{{ $tolerationKey.key }}"
+          {{- end }}
+          {{- if $tolerationKey.value }}
+          value: "{{ $tolerationKey.value }}"
+          {{- end }}
+          {{- if $tolerationKey.effect }}
+          effect: "{{ $tolerationKey.effect }}"
+          {{- end }}
+          {{- if $tolerationKey.operator }}
+          operator: "{{ $tolerationKey.operator }}"
+          {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if ne (len .Values.imagePullSecrets) 0 }}
+        imagePullSecrets:
+        {{- range $imagePullSecret := .Values.imagePullSecrets }}
+          - name: "{{ $imagePullSecret }}"
+        {{- end }}
+        {{- end }}
+        containers:
+          - name: distributed-serving-master
+            image: {{ .Values.image }}
+            {{- if .Values.imagePullPolicy }}
+            imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+            {{- end }}
+            env:
+              {{- if .Values.envs }}
+              {{- range $key, $value := .Values.envs }}
+              - name: "{{ $key }}"
+                value: "{{ $value }}"
+              {{- end }}
+              {{- end }}
+              {{- if .Values.envsFromSecret }}
+              {{- range $envName, $secretName := .Values.envsFromSecret }}
+              - name: "{{ $envName }}"
+                valueFrom:
+                  secretKeyRef:
+                    key: "{{ $envName }}"
+                    name: "{{ $secretName }}"
+              {{- end }}
+              {{- end }}
+              - name: MASTER_ADDR
+                value: $(LWS_LEADER_ADDRESS)
+              - name: WORLD_SIZE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.annotations['leaderworkerset.sigs.k8s.io/size']
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              - name: POD_INDEX
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.labels['leaderworkerset.sigs.k8s.io/worker-index']
+              - name: GROUP_INDEX
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.labels['leaderworkerset.sigs.k8s.io/group-index']
+              - name: GPU_COUNT
+                value: "{{ .Values.masterGpus }}"
+              - name: HOSTFILE
+                value: /etc/hostfile
+              - name: ROLE
+                value: master
+              {{- if and (eq (int $masterGpuCount) 0) (eq (int $masterGpuMemory) 0) (eq (int $masterGpuCore) 0) }}
+              - name: NVIDIA_VISIBLE_DEVICES
+                value: void
+              {{- end }}
+            command:
+              {{- if eq .Values.initBackend "ray" }}
+              - "/etc/ray_init.sh"
+              {{- else }}
+              - {{ .Values.shell }}
+              - -c
+              {{- end }}
+              - {{ .Values.masterCommand }}
+            ports:
+              {{- if ne (int .Values.port) 0 }}
+              - containerPort: {{ .Values.port }}
+                name: grpc
+                protocol: TCP
+              {{- end }}
+              {{- if ne (int .Values.restApiPort) 0 }}
+              - containerPort: {{ .Values.restApiPort }}
+                name: restful
+                protocol: TCP
+              {{- end }}
+              {{- if ne (int .Values.metricsPort) 0 }}
+              - containerPort: {{ .Values.metricsPort }}
+                name: metrics
+                protocol: TCP
+              {{- end }}
+            {{- if .Values.livenessProbeAction }}
+            livenessProbe:
+              {{ .Values.livenessProbeAction }}:
+                {{- range $key := .Values.livenessProbeActionOption }}
+                {{ $key }}
+                {{- end }}
+              {{- range $key := .Values.livenessProbeOption }}
+              {{ $key }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.readinessProbeAction }}
+            readinessProbe:
+              {{ .Values.readinessProbeAction }}:
+                {{- range $key := .Values.readinessProbeActionOption }}
+                {{ $key }}
+                {{- end }}
+              {{- range $key := .Values.readinessProbeOption }}
+              {{ $key }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.startupProbeAction }}
+            startupProbe:
+              {{ .Values.startupProbeAction }}:
+                {{- range $key := .Values.startupProbeActionOption }}
+                {{ $key }}
+                {{- end }}
+              {{- range $key := .Values.startupProbeOption }}
+              {{ $key }}
+              {{- end }}
+            {{- end }}
+            resources:
+              limits:
+                {{- if .Values.masterCpus }}
+                cpu: {{ .Values.masterCpus }}
+                {{- end }}
+                {{- if .Values.masterMemory }}
+                memory: {{ .Values.masterMemory }}
+                {{- end }}
+                {{- if gt (int $masterGpuCount) 0}}
+                nvidia.com/gpu: {{ .Values.masterGpus }}
+                {{- end }}
+                {{- range $key, $value := .Values.devices }}
+                {{ $key }}: {{ $value }}
+                {{- end }}
+                {{- if gt (int $masterGpuMemory) 0}}
+                aliyun.com/gpu-mem: {{ .Values.masterGPUMemory }}
+                {{- end }}
+                {{- if gt (int $masterGpuCore) 0 }}
+                aliyun.com/gpu-core.percentage: {{ .Values.masterGPUCore }}
+                {{- end }}
+            volumeMounts:
+              {{- if .Values.shareMemory }}
+              - name: dshm
+                mountPath: /dev/shm
+              {{- end }}
+              {{- if .Values.modelDirs }}
+              {{- range $pvcName, $destPath := .Values.modelDirs}}
+              - name: "{{ $pvcName }}"
+                mountPath: "{{ $destPath }}"
+                {{- if hasKey $.Values.dataSubPathExprs $pvcName }}
+                subPathExpr: {{ get $.Values.dataSubPathExprs $pvcName }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if .Values.tempDirs }}
+              {{- range $name, $destPath := .Values.tempDirs}}
+              - name: "{{ $name }}"
+                mountPath: "{{ $destPath }}"
+                {{- if hasKey $.Values.tempDirSubPathExprs $name }}
+                subPathExpr: {{ get $.Values.tempDirSubPathExprs $name }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if ne (len .Values.configFiles) 0 }}
+              {{- $releaseName := .Release.Name }}
+              {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+              {{- $visit := "false" }}
+              {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+              {{- if eq  "false" $visit }}
+              - name: {{ $containerPathKey }}
+                mountPath: {{ $configFileInfo.containerFilePath }}
+              {{- $visit = "true" }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if $dataDirs }}
+              {{- range $dataDirs }}
+              - name: {{ .name }}
+                mountPath: {{ .containerPath }}
+              {{- end }}
+              {{- end }}
+              - name: {{ $.Release.Name }}-cm
+                mountPath: /etc/hostfile
+                subPathExpr: hostfile-$(GROUP_INDEX)
+              {{- if eq .Values.initBackend "ray" }}
+              - name: {{ $.Release.Name }}-cm
+                mountPath: /etc/ray_init.sh
+                subPathExpr: ray_init.sh
+              {{- end }}
+        volumes:
+          - name: {{ $.Release.Name }}-cm
+            configMap:
+              name: {{ $.Release.Name }}-cm
+              items:
+                {{- range $i := until (int .Values.replicas) }}
+                - key: hostfile-{{ $i }}
+                  path: hostfile-{{ $i }}
+                  mode: 438
+                {{- end }}
+                {{- if eq .Values.initBackend "ray" }}
+                - key: master.rayInit
+                  path: ray_init.sh
+                  mode: 365
+                {{- end }}
+          {{- if .Values.shareMemory }}
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: {{ .Values.shareMemory }}
+          {{- end }}
+          {{- if .Values.modelDirs }}
+          {{- range $pvcName, $destPath := .Values.modelDirs}}
+          - name: "{{ $pvcName }}"
+            persistentVolumeClaim:
+              claimName: "{{ $pvcName }}"
+          {{- end }}
+          {{- end }}
+          {{- if .Values.tempDirs }}
+          {{- range $name, $destPath := .Values.tempDirs}}
+          - name: "{{ $name }}"
+            emptyDir: {}
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.configFiles) 0 }}
+          {{- $releaseName := .Release.Name }}
+          {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+          - name: {{ $containerPathKey }}
+            configMap:
+              name: {{ $releaseName }}-{{ $containerPathKey }}
+          {{- end }}
+          {{- end }}
+          {{- if $dataDirs }}
+          {{- range $dataDirs }}
+          - name: {{ .name }}
+            hostPath:
+              path: {{ .hostPath }}
+          {{- end }}
+          {{- end }}
+    workerTemplate:
+      metadata:
+        annotations:
+        {{- if eq .Values.enableIstio true }}
+          sidecar.istio.io/inject: "true"
+        {{- end }}
+        {{- range $key, $value := .Values.annotations }}
+          {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        labels:
+          heritage: {{ .Release.Service | quote }}
+          release: {{ .Release.Name | quote }}
+          chart: {{ template "distributed-serving.chart" . }}
+          app: {{ template "distributed-serving.name" . }}
+          serviceName: "{{ .Values.servingName }}"
+          servingType: "distributed-serving"
+          servingName: "{{ .Values.servingName }}"
+          servingVersion: "{{ .Values.servingVersion }}"
+          role: "worker"
+      spec:
+        {{- if ne (len .Values.nodeSelectors) 0 }}
+        nodeSelector:
+        {{- range $nodeKey,$nodeVal := .Values.nodeSelectors }}
+          {{ $nodeKey }}: "{{ $nodeVal }}"
+        {{- end }}
+        {{- end }}
+        {{- if .Values.schedulerName }}
+        schedulerName: {{ .Values.schedulerName }}
+        {{- end }}
+        {{- if ne (len .Values.tolerations) 0 }}
+        tolerations:
+        {{- range $tolerationKey := .Values.tolerations }}
+        - {{- if $tolerationKey.key }}
+          key: "{{ $tolerationKey.key }}"
+          {{- end }}
+          {{- if $tolerationKey.value }}
+          value: "{{ $tolerationKey.value }}"
+          {{- end }}
+          {{- if $tolerationKey.effect }}
+          effect: "{{ $tolerationKey.effect }}"
+          {{- end }}
+          {{- if $tolerationKey.operator }}
+          operator: "{{ $tolerationKey.operator }}"
+          {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if ne (len .Values.imagePullSecrets) 0 }}
+        imagePullSecrets:
+        {{- range $imagePullSecret := .Values.imagePullSecrets }}
+          - name: "{{ $imagePullSecret }}"
+        {{- end }}
+        {{- end }}
+        containers:
+          - name: distributed-serving-worker
+            image: {{ .Values.image }}
+            {{- if .Values.imagePullPolicy }}
+            imagePullPolicy: "{{ .Values.imagePullPolicy }}"
+            {{- end }}
+            env:
+              {{- if .Values.envs }}
+              {{- range $key, $value := .Values.envs }}
+              - name: "{{ $key }}"
+                value: "{{ $value }}"
+              {{- end }}
+              {{- end }}
+              {{- if .Values.envsFromSecret }}
+              {{- range $envName, $secretName := .Values.envsFromSecret }}
+              - name: "{{ $envName }}"
+                valueFrom:
+                  secretKeyRef:
+                    key: "{{ $envName }}"
+                    name: "{{ $secretName }}"
+              {{- end }}
+              {{- end }}
+              - name: MASTER_ADDR
+                value: $(LWS_LEADER_ADDRESS)
+              - name: WORLD_SIZE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.annotations['leaderworkerset.sigs.k8s.io/size']
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              - name: POD_INDEX
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.labels['leaderworkerset.sigs.k8s.io/worker-index']
+              - name: GROUP_INDEX
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.labels['leaderworkerset.sigs.k8s.io/group-index']
+              - name: GPU_COUNT
+                value: "{{ .Values.workerGpus }}"
+              - name: HOSTFILE
+                value: /etc/hostfile
+              - name: ROLE
+                value: worker
+              {{- if and (eq (int $workerGpuCount) 0) (eq (int $workerGpuMemory) 0) (eq (int $workerGpuCore) 0) }}
+              - name: NVIDIA_VISIBLE_DEVICES
+                value: void
+              {{- end }}
+            command:
+              {{- if eq .Values.initBackend "ray" }}
+              - "/etc/ray_init.sh"
+              {{- else }}
+              - {{ .Values.shell }}
+              - -c
+              {{- end }}
+              - {{ .Values.workerCommand }}
+            resources:
+              limits:
+                {{- if .Values.workerCpus }}
+                cpu: {{ .Values.workerCpus }}
+                {{- end }}
+                {{- if .Values.workerMemory }}
+                memory: {{ .Values.workerMemory }}
+                {{- end }}
+                {{- if gt (int $workerGpuCount) 0}}
+                nvidia.com/gpu: {{ .Values.workerGpus }}
+                {{- end }}
+                {{- range $key, $value := .Values.devices }}
+                {{ $key }}: {{ $value }}
+                {{- end }}
+                {{- if gt (int $workerGpuMemory) 0}}
+                aliyun.com/gpu-mem: {{ .Values.workerGPUMemory }}
+                {{- end }}
+                {{- if gt (int $workerGpuCore) 0 }}
+                aliyun.com/gpu-core.percentage: {{ .Values.workerGPUCore }}
+                {{- end }}
+            volumeMounts:
+              {{- if .Values.shareMemory }}
+              - name: dshm
+                mountPath: /dev/shm
+              {{- end }}
+              {{- if .Values.modelDirs }}
+              {{- range $pvcName, $destPath := .Values.modelDirs}}
+              - name: "{{ $pvcName }}"
+                mountPath: "{{ $destPath }}"
+                {{- if hasKey $.Values.dataSubPathExprs $pvcName }}
+                subPathExpr: {{ get $.Values.dataSubPathExprs $pvcName }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if .Values.tempDirs }}
+              {{- range $name, $destPath := .Values.tempDirs}}
+              - name: "{{ $name }}"
+                mountPath: "{{ $destPath }}"
+                {{- if hasKey $.Values.tempDirSubPathExprs $name }}
+                subPathExpr: {{ get $.Values.tempDirSubPathExprs $name }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if ne (len .Values.configFiles) 0 }}
+              {{- $releaseName := .Release.Name }}
+              {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+              {{- $visit := "false" }}
+              {{- range $cofigFileKey,$configFileInfo := $configFileInfos }}
+              {{- if eq  "false" $visit }}
+              - name: {{ $containerPathKey }}
+                mountPath: {{ $configFileInfo.containerFilePath }}
+              {{- $visit = "true" }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if $dataDirs }}
+              {{- range $dataDirs }}
+              - name: {{ .name }}
+                mountPath: {{ .containerPath }}
+              {{- end }}
+              {{- end }}
+              - name: {{ $.Release.Name }}-cm
+                mountPath: /etc/hostfile
+                subPathExpr: hostfile-$(GROUP_INDEX)
+              {{- if eq .Values.initBackend "ray" }}
+              - name: {{ $.Release.Name }}-cm
+                mountPath: /etc/ray_init.sh
+                subPathExpr: ray_init.sh
+              {{- end }}
+        volumes:
+          - name: {{ $.Release.Name }}-cm
+            configMap:
+              name: {{ $.Release.Name }}-cm
+              items:
+                {{- range $i := until (int .Values.replicas) }}
+                - key: hostfile-{{ $i }}
+                  path: hostfile-{{ $i }}
+                  mode: 438
+                {{- end }}
+                {{- if eq .Values.initBackend "ray" }}
+                - key: worker.rayInit
+                  path: ray_init.sh
+                  mode: 365
+                {{- end }}
+          {{- if .Values.shareMemory }}
+          - name: dshm
+            emptyDir:
+              medium: Memory
+              sizeLimit: {{ .Values.shareMemory }}
+          {{- end }}
+          {{- if .Values.modelDirs }}
+          {{- range $pvcName, $destPath := .Values.modelDirs}}
+          - name: "{{ $pvcName }}"
+            persistentVolumeClaim:
+              claimName: "{{ $pvcName }}"
+          {{- end }}
+          {{- end }}
+          {{- if .Values.tempDirs }}
+          {{- range $name, $destPath := .Values.tempDirs}}
+          - name: "{{ $name }}"
+            emptyDir: {}
+          {{- end }}
+          {{- end }}
+          {{- if ne (len .Values.configFiles) 0 }}
+          {{- $releaseName := .Release.Name }}
+          {{- range $containerPathKey,$configFileInfos := .Values.configFiles }}
+          - name: {{ $containerPathKey }}
+            configMap:
+              name: {{ $releaseName }}-{{ $containerPathKey }}
+          {{- end }}
+          {{- end }}
+          {{- if $dataDirs }}
+          {{- range $dataDirs }}
+          - name: {{ .name }}
+            hostPath:
+              path: {{ .hostPath }}
+          {{- end }}
+          {{- end }}

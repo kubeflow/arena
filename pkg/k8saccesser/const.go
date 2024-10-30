@@ -35,4 +35,7 @@ const (
 
 	RayJobCRDName             = "rayjobs.ray.io"
 	RayJobCRDNameInDaemonMode = "RayJob.ray.io"
+
+	LWSCRDName             = "leaderworkersets.leaderworkerset.x-k8s.io"
+	LWSCRDNameInDaemonMode = "Leaderworkerset.leaderworkerset.x-k8s.io"
 )
