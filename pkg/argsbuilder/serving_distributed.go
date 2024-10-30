@@ -153,6 +153,10 @@ func (s *DistributedServingArgsBuilder) check() error {
 		if s.args.MasterCommand != "" || s.args.WorkerCommand != "" {
 			return fmt.Errorf("--command and --master-command/--worker-command can not be set at the same time")
 		}
+	} else {
+		if s.args.MasterCommand == "" || s.args.WorkerCommand == "" {
+			return fmt.Errorf("--command or --master-command/--worker-command must be set")
+		}
 	}
 	if s.args.MasterGPUCount < 0 || s.args.WorkerGPUCount < 0 {
 		return fmt.Errorf("--master-gpus/--worker-gpus is invalid")
