@@ -139,9 +139,7 @@ func (s *DistributedServingArgsBuilder) setNvidiaENV() error {
 	// Since master and worker share the same envs, but they may have
 	// different gpu resource, we delete the NVIDIA_VISIBLE_DEVICES env
 	// and set it in helm chart manually
-	if _, exist := s.args.Envs["NVIDIA_VISIBLE_DEVICES"]; exist {
-		delete(s.args.Envs, "NVIDIA_VISIBLE_DEVICES")
-	}
+	delete(s.args.Envs, "NVIDIA_VISIBLE_DEVICES")
 	return nil
 }
 
