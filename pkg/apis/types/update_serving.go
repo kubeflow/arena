@@ -70,3 +70,20 @@ type UpdateKServeArgs struct {
 	Port                    int          `yaml:"port"`                           // --port
 	CommonUpdateServingArgs `yaml:",inline"`
 }
+
+type UpdateDistributedServingArgs struct {
+	Workers                 int    `yaml:"workers"`         // --workers
+	MasterCpu               string `yaml:"masterCPU"`       // --master-cpu
+	WorkerCpu               string `yaml:"workerCPU"`       // --worker-cpu
+	MasterGPUCount          int    `yaml:"masterGPUCount"`  // master-gpus
+	WorkerGPUCount          int    `yaml:"workerGPUCount"`  // worker-gpus
+	MasterMemory            string `yaml:"masterMemory"`    // master-memory
+	WorkerMemory            string `yaml:"workerMemory"`    // worker-memory
+	MasterGPUMemory         int    `yaml:"masterGPUMemory"` // master-gpumemory
+	WorkerGPUMemory         int    `yaml:"workerGPUMemory"` // worker-gpumemory
+	MasterGPUCore           int    `yaml:"masterGPUCore"`   // master-gpucore
+	WorkerGPUCore           int    `yaml:"workerGPUCore"`   // worker-gpucore
+	MasterCommand           string `yaml:"masterCommand"`   // master-command
+	WorkerCommand           string `yaml:"workerCommand"`   // worker-command
+	CommonUpdateServingArgs `yaml:",inline"`
+}

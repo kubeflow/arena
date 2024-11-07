@@ -23,7 +23,8 @@ Available Commands:
   tensorflow,tf  Update a TensorFlow Serving Job
   triton         Update a Nvidia Triton Serving Job
   custom         Update a Custom Serving Job
-  kserve         Update a KServe Serving Job`
+  kserve         Update a KServe Serving Job
+  distributed    Update a Distributed Serving Job`
 )
 
 func NewUpdateCommand() *cobra.Command {
@@ -39,6 +40,7 @@ func NewUpdateCommand() *cobra.Command {
 	command.AddCommand(NewUpdateTritonCommand())
 	command.AddCommand(NewUpdateCustomCommand())
 	command.AddCommand(NewUpdateKServeCommand())
+	command.AddCommand(NewUpdateDistributedCommand())
 
 	return command
 }

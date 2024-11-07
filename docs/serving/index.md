@@ -45,3 +45,6 @@ If you want to use arena to manage serving jobs, this guide is for you. we have 
 
 * I want to [submit a kserve job with supported serving runtime](kserve/sklearn.md)
 * I want to [submit a kserve job with custom serving runtime](kserve/custom.md)
+
+## Distributed Serving Job Guide
+* I want to [submit a distributed serving job](distributedserving/serving.md).

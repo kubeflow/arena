@@ -96,6 +96,8 @@ func validateJobs(jobs []ServingJob, name string) error {
 		var labels map[string]string
 		if ksjob, ok := s.(*kserveJob); ok {
 			labels = ksjob.inferenceService.Labels
+		} else if lwsjob, ok := s.(*lwsJob); ok {
+			labels = lwsjob.lws.Labels
 		} else {
 			labels = s.Deployment().Labels
 		}

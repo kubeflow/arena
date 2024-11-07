@@ -73,6 +73,9 @@ func (t *ServingJobClient) Submit(job *apiserving.Job) error {
 	case types.TritonServingJob:
 		args := job.Args().(*types.TritonServingArgs)
 		return serving.SubmitTritonServingJob(args.Namespace, args)
+	case types.DistributedServingJob:
+		args := job.Args().(*types.DistributedServingArgs)
+		return serving.SubmitDistributedServingJob(args.Namespace, args)
 	}
 	return nil
 }
@@ -192,6 +195,9 @@ func (t *ServingJobClient) Update(job *apiserving.Job) error {
 	case types.KServeJob:
 		args := job.Args().(*types.UpdateKServeArgs)
 		return serving.UpdateKServe(args)
+	case types.DistributedServingJob:
+		args := job.Args().(*types.UpdateDistributedServingArgs)
+		return serving.UpdateDistributedServing(args)
 	}
 	return nil
 }
