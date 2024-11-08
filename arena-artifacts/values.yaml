@@ -28,8 +28,8 @@ binary:
 # tf-operator
 tf:
   enabled: true
-  image: acs/tf_operator
-  tag: v1.0-aliyun-a0bb318
+  image: acs/tf-operator
+  tag: v1.0-aliyun-82bde3a
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -42,8 +42,8 @@ tf:
 # tf-dashboard
 tfdashboard:
   enabled: true
-  image: acs/tf_operator
-  tag: v1.0-aliyun-cfb1239
+  image: acs/tf-operator
+  tag: v1.0-aliyun-82bde3a
   imagePullPolicy: IfNotPresent
   resources:
     limits:
