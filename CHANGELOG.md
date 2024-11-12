@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.12.0](https://github.com/kubeflow/arena/tree/v0.12.0) (2024-11-11)
+
+### New Features
+
+- Feat: add support for distributed serving type ([#1187](https://github.com/kubeflow/arena/pull/1187) by [@linnlh](https://github.com/linnlh))
+- Support distributed serving with vendor update ([#1194](https://github.com/kubeflow/arena/pull/1194) by [@cheyang](https://github.com/cheyang))
+
+### Misc
+
+- Bump github.com/golang/glog from 1.2.2 to 1.2.3 ([#1189](https://github.com/kubeflow/arena/pull/1189) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github.com/prometheus/common from 0.60.0 to 0.60.1 ([#1182](https://github.com/kubeflow/arena/pull/1182) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump mkdocs-material from 9.5.42 to 9.5.44 ([#1190](https://github.com/kubeflow/arena/pull/1190) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Release v0.12.0 ([#1197](https://github.com/kubeflow/arena/pull/1197) by [@ChenYi015](https://github.com/ChenYi015))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/46a795e3...v0.12.0)
+
 ## [v0.11.0](https://github.com/kubeflow/arena/tree/v0.11.0) (2024-10-24)
 
 ### New Features
