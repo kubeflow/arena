@@ -406,8 +406,8 @@ spec:
           {{- if .Values.useTensorboard }}
           {{- if .Values.isLocalLogging }}
           - name: training-logs-volume
-          hostPath:
-            path: "{{ .Values.hostLogPath }}"
+            hostPath:
+              path: "{{ .Values.hostLogPath }}"
           {{- end }}
           {{- end }}
           {{- if .Values.nvidiaPath }}
