@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 	"time"
 
@@ -36,67 +35,6 @@ var helmCmd = []string{"arena-helm"}
 const (
 	WaitTimeout = 5 * time.Minute
 )
-
-/**
-* install the release with cmd: helm install -f values.yaml chart_name
- */
-func InstallRelease(name string, namespace string, values interface{}, chartName string) error {
-	binary, err := exec.LookPath(helmCmd[0])
-	if err != nil {
-		return err
-	}
-
-	// 1. generate the template file
-	valueFile, err := os.CreateTemp(os.TempDir(), "values")
-	if err != nil {
-		log.Errorf("Failed to create tmp file %v due to %v", valueFile.Name(), err)
-		return err
-	} else {
-		log.Debugf("Save the values file %s", valueFile.Name())
-	}
-	// defer os.Remove(valueFile.Name())
-
-	// 2. dump the object into the template file
-	err = toYaml(values, valueFile)
-	if err != nil {
-		return err
-	}
-
-	// 3. check if the chart file exists, if it's unix path, then check if it's exist
-	if strings.HasPrefix(chartName, "/") {
-		if _, err = os.Stat(chartName); os.IsNotExist(err) {
-			// TODO: the chart will be put inside the binary in future
-			return err
-		}
-	}
-
-	// 4. prepare the arguments
-	args := []string{"install", "-f", valueFile.Name(), "--namespace", namespace, name, chartName}
-	log.Debugf("Exec %s, %v", binary, args)
-
-	env := os.Environ()
-
-	// return syscall.Exec(cmd, args, env)
-	// 5. execute the command
-	cmd := exec.Command(binary, args...)
-	cmd.Env = env
-	out, err := cmd.CombinedOutput()
-	fmt.Println("")
-	fmt.Printf("%s\n", string(out))
-	if err != nil {
-		log.Fatalf("Failed to execute %s, %v with %v", binary, args, err)
-	}
-
-	// 6. clean up the value file if needed
-	if log.GetLevel() != log.DebugLevel {
-		err = os.Remove(valueFile.Name())
-		if err != nil {
-			log.Warnf("Failed to delete %s due to %v", valueFile.Name(), err)
-		}
-	}
-
-	return nil
-}
 
 /**
 * check if the release exist
