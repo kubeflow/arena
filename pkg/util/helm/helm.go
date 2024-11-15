@@ -17,8 +17,6 @@ package helm
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -35,50 +33,6 @@ var helmCmd = []string{"arena-helm"}
 const (
 	WaitTimeout = 5 * time.Minute
 )
-
-/**
-* check if the release exist
- */
-func CheckRelease(name string) (exist bool, err error) {
-	_, err = exec.LookPath(helmCmd[0])
-	if err != nil {
-		return exist, err
-	}
-
-	cmd := exec.Command(helmCmd[0], "get", name)
-	// support multiple cluster management
-	if err := cmd.Start(); err != nil {
-		log.Fatalf("cmd.Start: %v", err)
-		return exist, err
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		if exiterr, ok := err.(*exec.ExitError); ok {
-			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				exitStatus := status.ExitStatus()
-				log.Debugf("Exit Status: %d", exitStatus)
-				if exitStatus == 1 {
-					err = nil
-				}
-			}
-		} else {
-			log.Fatalf("cmd.Wait: %v", err)
-			return exist, err
-		}
-	} else {
-		waitStatus := cmd.ProcessState.Sys().(syscall.WaitStatus)
-		if waitStatus.ExitStatus() == 0 {
-			exist = true
-		} else {
-			if waitStatus.ExitStatus() != -1 {
-				return exist, fmt.Errorf("unexpected return code %d when exec helm get %s", waitStatus.ExitStatus(), name)
-			}
-		}
-	}
-
-	return exist, err
-}
 
 func getActionConfig(namespace string) (*action.Configuration, error) {
 	envSettings := cli.New()
