@@ -163,36 +163,6 @@ func ListReleases() (releases []string, err error) {
 	return strings.Split(string(out), "\n"), nil
 }
 
-func ListReleaseMap() (releaseMap map[string]string, err error) {
-	releaseMap = map[string]string{}
-	_, err = exec.LookPath(helmCmd[0])
-	if err != nil {
-		return releaseMap, err
-	}
-
-	cmd := exec.Command(helmCmd[0], "list")
-	// support multiple cluster management
-	out, err := cmd.Output()
-	if err != nil {
-		return releaseMap, err
-	}
-	lines := strings.Split(string(out), "\n")
-
-	for _, line := range lines {
-		line = strings.Trim(line, " ")
-		if !strings.Contains(line, "NAME") {
-			cols := strings.Fields(line)
-			log.Debugf("%d cols: %v", len(cols), cols)
-			if len(cols) > 1 {
-				log.Debugf("releaseMap: %s=%s\n", cols[0], cols[len(cols)-1])
-				releaseMap[cols[0]] = cols[len(cols)-1]
-			}
-		}
-	}
-
-	return releaseMap, nil
-}
-
 func toYaml(values interface{}, file *os.File) error {
 	log.Debugf("values: %+v", values)
 	data, err := yaml.Marshal(values)
