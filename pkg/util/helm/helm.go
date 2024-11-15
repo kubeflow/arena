@@ -20,12 +20,22 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 var helmCmd = []string{"arena-helm"}
+
+const (
+	WaitTimeout = 5 * time.Minute
+)
 
 /**
 * install the release with cmd: helm install -f values.yaml chart_name
@@ -130,6 +140,133 @@ func CheckRelease(name string) (exist bool, err error) {
 	}
 
 	return exist, err
+}
+
+func getActionConfig(namespace string) (*action.Configuration, error) {
+	envSettings := cli.New()
+	envSettings.SetNamespace(namespace)
+	actionConfig := &action.Configuration{}
+	err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), "", log.Debugf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init helm action config: %v", err)
+	}
+	return actionConfig, nil
+}
+
+func LoadChart(path string) (*chart.Chart, error) {
+	return loader.Load(path)
+}
+
+func Template(releaseName, releaseNamespace, chartPath string, values map[string]interface{}) (*release.Release, error) {
+	actionConfig, err := getActionConfig(releaseNamespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init helm action config: %v", err)
+	}
+
+	installAction := action.NewInstall(actionConfig)
+	installAction.ReleaseName = releaseName
+	installAction.Namespace = releaseNamespace
+	installAction.DryRun = true
+	installAction.Wait = false
+	installAction.Timeout = WaitTimeout
+
+	chart, err := loader.Load(chartPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load chart %s: %v", chartPath, err)
+	}
+
+	release, err := installAction.Run(chart, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to install release %s: %v", releaseName, err)
+	}
+
+	return release, nil
+}
+
+func Get(releaseName, releaseNamespace string) (*release.Release, error) {
+	actionConfig, err := getActionConfig(releaseNamespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init helm action config: %v", err)
+	}
+
+	getAction := action.NewGet(actionConfig)
+	return getAction.Run(releaseName)
+}
+
+func List(releaseNamespace string) ([]*release.Release, error) {
+	actionConfig, err := getActionConfig(releaseNamespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init helm action config: %v", err)
+	}
+
+	listAction := action.NewList(actionConfig)
+	return listAction.Run()
+}
+
+func Install(releaseName, releaseNamespace, chartPath string, values map[string]interface{}) (*release.Release, error) {
+	actionConfig, err := getActionConfig(releaseNamespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init helm action config: %v", err)
+	}
+
+	installAction := action.NewInstall(actionConfig)
+	installAction.ReleaseName = releaseName
+	installAction.Namespace = releaseNamespace
+	installAction.Wait = false
+	installAction.Timeout = WaitTimeout
+
+	chart, err := loader.Load(chartPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load chart %s: %v", chartPath, err)
+	}
+
+	release, err := installAction.Run(chart, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to install release %s: %v", releaseName, err)
+	}
+
+	return release, nil
+}
+
+func Upgrade(releaseName, releaseNamespace, chartPath string, values map[string]interface{}) (*release.Release, error) {
+	actionConfig, err := getActionConfig(releaseNamespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init helm action config: %v", err)
+	}
+
+	upgradeAction := action.NewUpgrade(actionConfig)
+	upgradeAction.Wait = false
+	upgradeAction.Timeout = WaitTimeout
+
+	chart, err := loader.Load(chartPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load chart %s: %v", chartPath, err)
+	}
+
+	release, err := upgradeAction.Run(releaseName, chart, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upgrade release %s: %v", releaseName, err)
+	}
+
+	return release, nil
+}
+
+func Uninstall(releaseName, releaseNamespace string) error {
+	actionConfig, err := getActionConfig(releaseNamespace)
+	if err != nil {
+		return fmt.Errorf("failed to init helm action config: %v", err)
+	}
+
+	uninstallAction := action.NewUninstall(actionConfig)
+	uninstallAction.Wait = false
+	uninstallAction.Timeout = WaitTimeout
+
+	_, err = uninstallAction.Run(releaseName)
+	if err != nil {
+		return fmt.Errorf("failed to uninstall release %s: %v", releaseName, err)
+	}
+
+	return nil
 }
 
 func toYaml(values interface{}, file *os.File) error {
