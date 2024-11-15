@@ -147,22 +147,6 @@ func DeleteRelease(name string) error {
 	return err
 }
 
-func ListReleases() (releases []string, err error) {
-	releases = []string{}
-	_, err = exec.LookPath(helmCmd[0])
-	if err != nil {
-		return releases, err
-	}
-
-	cmd := exec.Command(helmCmd[0], "list", "-q")
-	// support multiple cluster management
-	out, err := cmd.Output()
-	if err != nil {
-		return releases, err
-	}
-	return strings.Split(string(out), "\n"), nil
-}
-
 func toYaml(values interface{}, file *os.File) error {
 	log.Debugf("values: %+v", values)
 	data, err := yaml.Marshal(values)
