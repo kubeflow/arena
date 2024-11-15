@@ -49,6 +49,16 @@ func LoadChart(path string) (*chart.Chart, error) {
 	return loader.Load(path)
 }
 
+// GetChartVersion returns the chart version.
+func GetChartVersion(chartPath string) (version string, err error) {
+	chart, err := LoadChart(chartPath)
+	if err != nil || chart == nil {
+		return "", err
+	}
+
+	return chart.Metadata.Version, nil
+}
+
 func Template(releaseName, releaseNamespace, chartPath string, values map[string]interface{}) (*release.Release, error) {
 	actionConfig, err := getActionConfig(releaseNamespace)
 	if err != nil {
