@@ -17,18 +17,17 @@ package helm
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/release"
 )
-
-var helmCmd = []string{"arena-helm"}
 
 const (
 	WaitTimeout = 5 * time.Minute
@@ -171,6 +170,57 @@ func Uninstall(releaseName, releaseNamespace string) error {
 	return nil
 }
 
+// GenerateValueFile save the Helm values to a temporary file.
+func GenerateValueFile(values interface{}) (valueFileName string, err error) {
+	// 1. generate the template file
+	valueFile, err := os.CreateTemp(os.TempDir(), "values")
+	if err != nil {
+		log.Errorf("Failed to create tmp file %v due to %v", valueFile.Name(), err)
+		return "", err
+	}
+
+	valueFileName = valueFile.Name()
+	log.Debugf("Save the values file %s", valueFileName)
+
+	// 2. dump the object into the template file
+	err = toYaml(values, valueFile)
+	return valueFileName, err
+}
+
+// GenerateHelmTemplate generates helm manifests with the given valuesFile.
+func GenerateHelmTemplate(name string, namespace string, valuesFile string, chartPath string, options ...string) (templateFileName string, err error) {
+	tempName := fmt.Sprintf("%s.yaml", name)
+	templateFile, err := os.CreateTemp("", tempName)
+	if err != nil {
+		return templateFileName, err
+	}
+	defer templateFile.Close()
+	templateFileName = templateFile.Name()
+
+	values, err := chartutil.ReadValuesFile(valuesFile)
+	if err != nil {
+		return templateFileName, fmt.Errorf("failed to read values from file %s: %v", valuesFile, err)
+	}
+
+	release, err := Template(name, namespace, chartPath, values)
+	if err != nil {
+		return templateFileName, fmt.Errorf("failed to generate helm manifests %s: %v", name, err)
+	}
+
+	_, err = templateFile.WriteString(release.Manifest)
+	if err != nil {
+		return templateFileName, fmt.Errorf("failed to write helm manifests to file %s: %v", templateFileName, err)
+	}
+
+	return templateFileName, nil
+}
+
+// GetChartName returns the name of the chart.
+func GetChartName(chart string) string {
+	return filepath.Base(chart)
+}
+
+// toYaml writes the Helm values to the given file.
 func toYaml(values interface{}, file *os.File) error {
 	log.Debugf("values: %+v", values)
 	data, err := yaml.Marshal(values)
