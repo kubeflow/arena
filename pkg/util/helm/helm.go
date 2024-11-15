@@ -132,21 +132,6 @@ func CheckRelease(name string) (exist bool, err error) {
 	return exist, err
 }
 
-func DeleteRelease(name string) error {
-	binary, err := exec.LookPath(helmCmd[0])
-	if err != nil {
-		return err
-	}
-
-	args := []string{"del", "--purge", name}
-	cmd := exec.Command(binary, args...)
-
-	// return syscall.Exec(cmd, args, env)
-	out, err := cmd.Output()
-	log.Debugf("Delete release's result: %s\n", string(out))
-	return err
-}
-
 func toYaml(values interface{}, file *os.File) error {
 	log.Debugf("values: %+v", values)
 	data, err := yaml.Marshal(values)
