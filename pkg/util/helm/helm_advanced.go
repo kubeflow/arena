@@ -17,11 +17,10 @@ package helm
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"helm.sh/helm/v3/pkg/chartutil"
 )
 
 /*
@@ -43,62 +42,30 @@ func GenerateValueFile(values interface{}) (valueFileName string, err error) {
 	return valueFileName, err
 }
 
-/**
-* generate helm template without tiller: helm template -f values.yaml chart_name
-* Exec /usr/local/bin/helm, [template -f /tmp/values313606961 --namespace default --name hj /charts/tf-horovod]
-* returns generated template file: templateFileName
- */
-func GenerateHelmTemplate(name string, namespace string, valueFileName string, chartName string, options ...string) (templateFileName string, err error) {
+// GenerateHelmTemplate generates helm manifests with the given valuesFile.
+func GenerateHelmTemplate(name string, namespace string, valuesFile string, chartPath string, options ...string) (templateFileName string, err error) {
 	tempName := fmt.Sprintf("%s.yaml", name)
 	templateFile, err := os.CreateTemp("", tempName)
 	if err != nil {
 		return templateFileName, err
 	}
+	defer templateFile.Close()
 	templateFileName = templateFile.Name()
 
-	binary, err := exec.LookPath(helmCmd[0])
+	values, err := chartutil.ReadValuesFile(valuesFile)
 	if err != nil {
-		return templateFileName, err
+		return templateFileName, fmt.Errorf("failed to read values from file %s: %v", valuesFile, err)
 	}
 
-	// 3. check if the chart file exists
-	// if strings.HasPrefix(chartName, "/") {
-	if _, err = os.Stat(chartName); err != nil {
-		return templateFileName, err
-	}
-	// }
-
-	// 4. prepare the arguments
-	args := []string{binary, "template", "-f", valueFileName,
-		"--namespace", namespace,
-		name,
-	}
-	if len(options) != 0 {
-		args = append(args, options...)
-	}
-
-	args = append(args, []string{chartName, ">", templateFileName}...)
-
-	log.Debugf("Exec bash -c %v", args)
-
-	// return syscall.Exec(cmd, args, env)
-	// 5. execute the command
-	log.Debugf("Generating template  %v", args)
-	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
-	// cmd.Env = env
-	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", string(out))
+	release, err := Template(name, namespace, chartPath, values)
 	if err != nil {
-		return templateFileName, fmt.Errorf("Failed to execute %s, %v with %v", binary, args, err)
+		return templateFileName, fmt.Errorf("failed to generate helm manifests %s: %v", name, err)
 	}
 
-	// // 6. clean up the value file if needed
-	// if log.GetLevel() != log.DebugLevel {
-	// 	err = os.Remove(valueFileName)
-	// 	if err != nil {
-	// 		log.Warnf("Failed to delete %s due to %v", valueFileName, err)
-	// 	}
-	// }
+	_, err = templateFile.WriteString(release.Manifest)
+	if err != nil {
+		return templateFileName, fmt.Errorf("failed to write helm manifests to file %s: %v", templateFileName, err)
+	}
 
 	return templateFileName, nil
 }
