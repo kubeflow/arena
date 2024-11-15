@@ -103,48 +103,6 @@ func GenerateHelmTemplate(name string, namespace string, valueFileName string, c
 	return templateFileName, nil
 }
 
-/**
-* Check the chart version by given the chart directory
-* helm inspect chart /charts/tf-horovod
- */
-
-func GetChartVersion(chart string) (version string, err error) {
-	binary, err := exec.LookPath(helmCmd[0])
-	if err != nil {
-		return "", err
-	}
-
-	// 1. check if the chart file exists, if it's it's unix path, then check if it's exist
-	// if strings.HasPrefix(chart, "/") {
-	if _, err = os.Stat(chart); err != nil {
-		return "", err
-	}
-	// }
-
-	// 2. prepare the arguments
-	args := []string{binary, "inspect", "chart", chart,
-		"|", "grep", "version:"}
-	log.Debugf("Exec bash -c %v", args)
-
-	cmd := exec.Command("bash", "-c", strings.Join(args, " "))
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	lines := strings.Split(string(out), "\n")
-	if len(lines) == 0 {
-		return "", fmt.Errorf("Failed to find version when executing %s, result is %s", args, out)
-	}
-	fields := strings.Split(lines[0], ":")
-	if len(fields) != 2 {
-		return "", fmt.Errorf("Failed to find version when executing %s, result is %s", args, out)
-	}
-
-	version = strings.TrimSpace(fields[1])
-	return version, nil
-}
-
 func GetChartName(chart string) string {
 	return filepath.Base(chart)
 }
