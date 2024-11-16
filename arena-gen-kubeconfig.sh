@@ -123,7 +123,7 @@ function generate_manifest_yaml() {
         exit 2
     fi    
     output=$1
-    arena-helm template --name $USER_NAME --namespace $USER_NAMESPACE -f $USER_VALUES $CHART_DIR/user > $output
+    arena-helm template --release-name $USER_NAME --namespace $USER_NAMESPACE -f $USER_VALUES $CHART_DIR/user > $output
 }
 
 function apply_manifest_yaml() {
@@ -188,10 +188,31 @@ function get_cluster_url() {
     export CLUSTER_URL=$(arena-kubectl get endpoints | grep -E '\<kubernetes\>' | awk '{print $2}')
 }
 
+function is_k8s_version_gte_1_24() {
+     version=$(kubectl version | grep Server | awk '{print $3}')
+
+     version_number=${version:1}
+
+     major_version=$(echo $version_number | cut -d. -f1)
+     minor_version=$(echo $version_number | cut -d. -f2)
+
+     if [ "$major_version" -gt 1 ] || { [ "$major_version" -eq 1 ] && [ "$minor_version" -ge 24 ]; }; then
+         return 0
+     else
+         return 1
+     fi
+ }
+
 function generate_kubeconfig() {
     user=$USER_NAME
     namespace=$USER_NAMESPACE
-    SA_SECRET=$( arena-kubectl get sa -n $namespace $user -o jsonpath='{.secrets[0].name}' )
+
+    if is_k8s_version_gte_1_24; then
+       SA_SECRET="${user}-secret"
+    else
+       SA_SECRET=$( arena-kubectl get sa -n $namespace $user -o jsonpath='{.secrets[0].name}' )
+    fi
+
     BEARER_TOKEN=$( arena-kubectl get secrets -n $namespace $SA_SECRET -o jsonpath='{.data.token}' | base64 --decode)
     arena-kubectl get secrets -n $namespace $SA_SECRET -o jsonpath='{.data.ca\.crt}' | base64 --decode > $TEMPDIR/ca.crt
     arena-kubectl config \
