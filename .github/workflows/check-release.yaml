@@ -3,7 +3,7 @@ name: Check Release
 on:
   pull_request:
     branches:
-      - release-*
+      - master
     paths:
       - VERSION
 
