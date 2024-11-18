@@ -259,6 +259,9 @@ spec:
             {{- else}}
             nvidia.com/gpu: {{ $gpuCount | quote }}
             {{- end }}
+            {{- range $key, $value := .Values.devices }}
+            {{ $key }}: {{ $value }}
+            {{- end }}
             {{- end }}
             {{- if .Values.cpu }}
             cpu: {{ .Values.cpu | quote }}
