@@ -17,7 +17,7 @@ require (
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.29.0
-	google.golang.org/protobuf v1.35.1
+	google.golang.org/protobuf v1.35.2
 	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v1.19.4
 	k8s.io/api v0.30.2
