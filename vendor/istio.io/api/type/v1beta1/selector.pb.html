@@ -4,7 +4,7 @@ description: Definition of a workload selector.
 location: https://istio.io/docs/reference/config/type/workload-selector.html
 layout: protoc-gen-docs
 generator: protoc-gen-docs
-number_of_entries: 3
+number_of_entries: 4
 ---
 <h2 id="WorkloadSelector">WorkloadSelector</h2>
 <section>
@@ -35,7 +35,7 @@ the configuration namespace in which the resource is present.</p>
 
 </td>
 <td>
-Yes
+No
 </td>
 </tr>
 </tbody>
@@ -61,6 +61,95 @@ a listener having a specific port.</p>
 <td><code>uint32</code></td>
 <td>
 <p>Port number</p>
+
+</td>
+<td>
+Yes
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<h2 id="PolicyTargetReference">PolicyTargetReference</h2>
+<section>
+<p>PolicyTargetReference format as defined by <a href="https://gateway-api.sigs.k8s.io/geps/gep-2648/#direct-policy-design-rules">GEP-2648</a>.</p>
+<p>PolicyTargetReference specifies the targeted resource which the policy
+should be applied to. It must only target a single resource at a time, but it
+can be used to target larger resources such as Gateways that may apply to
+multiple child resources. The PolicyTargetReference will be used instead of
+a WorkloadSelector in the RequestAuthentication, AuthorizationPolicy,
+Telemetry, and WasmPlugin CRDs to target a Kubernetes Gateway.</p>
+<p>The following is an example of an AuthorizationPolicy bound to a waypoint proxy using
+a PolicyTargetReference. The example sets <code>action</code> to <code>DENY</code> to create a deny policy.
+It denies all the requests with <code>POST</code> method on port <code>8080</code> directed through the
+<code>waypoint</code> Gateway in the <code>foo</code> namespace.</p>
+<pre><code class="language-yaml">apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin
+  namespace: foo
+spec:
+  targetRefs:
+  - name: waypoint
+    kind: Gateway
+    group: gateway.networking.k8s.io
+  action: DENY
+  rules:
+  - to:
+    - operation:
+        methods: [&quot;POST&quot;]
+        ports: [&quot;8080&quot;]
+</code></pre>
+
+<table class="message-fields">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr id="PolicyTargetReference-group">
+<td><code>group</code></td>
+<td><code>string</code></td>
+<td>
+<p>group is the group of the target resource.</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
+<tr id="PolicyTargetReference-kind">
+<td><code>kind</code></td>
+<td><code>string</code></td>
+<td>
+<p>kind is kind of the target resource.</p>
+
+</td>
+<td>
+Yes
+</td>
+</tr>
+<tr id="PolicyTargetReference-name">
+<td><code>name</code></td>
+<td><code>string</code></td>
+<td>
+<p>name is the name of the target resource.</p>
+
+</td>
+<td>
+Yes
+</td>
+</tr>
+<tr id="PolicyTargetReference-namespace">
+<td><code>namespace</code></td>
+<td><code>string</code></td>
+<td>
+<p>namespace is the namespace of the referent. When unspecified, the local
+namespace is inferred.</p>
 
 </td>
 <td>
