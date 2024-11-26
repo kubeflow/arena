@@ -6,7 +6,7 @@ layout: protoc-gen-docs
 generator: protoc-gen-docs
 schema: istio.networking.v1alpha3.DestinationRule
 aliases: [/docs/reference/config/networking/v1alpha3/destination-rule]
-number_of_entries: 23
+number_of_entries: 26
 ---
 <p><code>DestinationRule</code> defines policies that apply to traffic intended for a
 service after routing has occurred. These rules specify configuration
@@ -14,9 +14,7 @@ for load balancing, connection pool size from the sidecar, and outlier
 detection settings to detect and evict unhealthy hosts from the load
 balancing pool. For example, a simple load balancing policy for the
 ratings service would look as follows:</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: bookinfo-ratings
@@ -26,28 +24,12 @@ spec:
     loadBalancer:
       simple: LEAST_REQUEST
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: bookinfo-ratings
-spec:
-  host: ratings.prod.svc.cluster.local
-  trafficPolicy:
-    loadBalancer:
-      simple: LEAST_REQUEST
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 <p>Version specific policies can be specified by defining a named
 <code>subset</code> and overriding the settings specified at the service level. The
 following rule uses a round robin load balancing policy for all traffic
 going to a subset named testversion that is composed of endpoints (e.g.,
 pods) with labels (version:v3).</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: bookinfo-ratings
@@ -64,36 +46,13 @@ spec:
       loadBalancer:
         simple: ROUND_ROBIN
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: bookinfo-ratings
-spec:
-  host: ratings.prod.svc.cluster.local
-  trafficPolicy:
-    loadBalancer:
-      simple: LEAST_REQUEST
-  subsets:
-  - name: testversion
-    labels:
-      version: v3
-    trafficPolicy:
-      loadBalancer:
-        simple: ROUND_ROBIN
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 <p><strong>Note:</strong> Policies specified for subsets will not take effect until
 a route rule explicitly sends traffic to this subset.</p>
 <p>Traffic policies can be customized to specific ports as well. The
 following rule uses the least connection load balancing policy for all
 traffic to port 80, while uses a round robin load balancing setting for
 traffic to the port 9080.</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: bookinfo-ratings-port
@@ -110,33 +69,10 @@ spec:
       loadBalancer:
         simple: ROUND_ROBIN
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: bookinfo-ratings-port
-spec:
-  host: ratings.prod.svc.cluster.local
-  trafficPolicy: # Apply to all ports
-    portLevelSettings:
-    - port:
-        number: 80
-      loadBalancer:
-        simple: LEAST_REQUEST
-    - port:
-        number: 9080
-      loadBalancer:
-        simple: ROUND_ROBIN
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 <p>Destination Rules can be customized to specific workloads as well.
 The following example shows how a destination rule can be applied to a
 specific workload using the workloadSelector configuration.</p>
-<p>{{<tabset category-name="selector-example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: configure-client-mtls-dr-with-workloadselector
@@ -155,29 +91,6 @@ spec:
         credentialName: client-credential
         mode: MUTUAL
 </code></pre>
-<p>{{</tab>}}
-{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: configure-client-mtls-dr-with-workloadselector
-spec:
-  host: example.com
-  workloadSelector:
-    matchLabels:
-      app: ratings
-  trafficPolicy:
-    loadBalancer:
-      simple: ROUND_ROBIN
-    portLevelSettings:
-    - port:
-        number: 31443
-      tls:
-        credentialName: client-credential
-        mode: MUTUAL
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 
 <h2 id="DestinationRule">DestinationRule</h2>
 <section>
@@ -372,6 +285,17 @@ Tunnel settings can be applied to TCP or TLS routes and can&rsquo;t be applied t
 No
 </td>
 </tr>
+<tr id="TrafficPolicy-proxy_protocol">
+<td><code>proxyProtocol</code></td>
+<td><code><a href="#TrafficPolicy-ProxyProtocol">ProxyProtocol</a></code></td>
+<td>
+<p>The upstream PROXY protocol settings.</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -385,9 +309,7 @@ service-level can be overridden at a subset-level. The following rule
 uses a round robin load balancing policy for all traffic going to a
 subset named testversion that is composed of endpoints (e.g., pods) with
 labels (version:v3).</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: bookinfo-ratings
@@ -404,27 +326,6 @@ spec:
       loadBalancer:
         simple: ROUND_ROBIN
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: bookinfo-ratings
-spec:
-  host: ratings.prod.svc.cluster.local
-  trafficPolicy:
-    loadBalancer:
-      simple: LEAST_REQUEST
-  subsets:
-  - name: testversion
-    labels:
-      version: v3
-    trafficPolicy:
-      loadBalancer:
-        simple: ROUND_ROBIN
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 <p><strong>Note:</strong> Policies specified for subsets will not take effect until
 a route rule explicitly sends traffic to this subset.</p>
 <p>One or more labels are typically required to identify the subset destination,
@@ -492,9 +393,7 @@ load balancing
 for more details.</p>
 <p>For example, the following rule uses a round robin load balancing policy
 for all traffic going to the ratings service.</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: bookinfo-ratings
@@ -504,26 +403,10 @@ spec:
     loadBalancer:
       simple: ROUND_ROBIN
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: bookinfo-ratings
-spec:
-  host: ratings.prod.svc.cluster.local
-  trafficPolicy:
-    loadBalancer:
-      simple: ROUND_ROBIN
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 <p>The following example sets up sticky sessions for the ratings service
 hashing-based load balancer for the same ratings service using the
 the User cookie as the hash key.</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: bookinfo-ratings
@@ -536,23 +419,6 @@ spec:
           name: user
           ttl: 0s
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: bookinfo-ratings
-spec:
-  host: ratings.prod.svc.cluster.local
-  trafficPolicy:
-    loadBalancer:
-      consistentHash:
-        httpCookie:
-          name: user
-          ttl: 0s
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 
 <table class="message-fields">
 <thead>
@@ -598,7 +464,18 @@ No
 <td><code>warmupDurationSecs</code></td>
 <td><code><a href="https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#duration">Duration</a></code></td>
 <td>
-<p>Represents the warmup duration of Service. If set, the newly created endpoint of service
+<p>Deprecated: use <code>warmup</code> instead.</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
+<tr id="LoadBalancerSettings-warmup">
+<td><code>warmup</code></td>
+<td><code><a href="#WarmupConfiguration">WarmupConfiguration</a></code></td>
+<td>
+<p>Represents the warmup configuration of Service. If set, the newly created endpoint of service
 remains in warmup mode starting from its creation time for the duration of this window and
 Istio progressively increases amount of traffic for that endpoint instead of sending proportional amount of traffic.
 This should be enabled for services that require warm up time to serve full production load with reasonable latency.
@@ -606,6 +483,57 @@ Please note that this is most effective when few new endpoints come up like scal
 endpoints are relatively new like new deployment, this is not very effective as all endpoints end up getting same
 amount of requests.
 Currently this is only supported for ROUND_ROBIN and LEAST_REQUEST load balancers.</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<h2 id="WarmupConfiguration">WarmupConfiguration</h2>
+<section>
+<table class="message-fields">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr id="WarmupConfiguration-duration">
+<td><code>duration</code></td>
+<td><code><a href="https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#duration">Duration</a></code></td>
+<td>
+<p>Duration of warmup mode</p>
+
+</td>
+<td>
+Yes
+</td>
+</tr>
+<tr id="WarmupConfiguration-minimum_percent">
+<td><code>minimumPercent</code></td>
+<td><code><a href="https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#doublevalue">DoubleValue</a></code></td>
+<td>
+<p>Configures the minimum percentage of origin weight
+If unspecified, defaults to 10</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
+<tr id="WarmupConfiguration-aggression">
+<td><code>aggression</code></td>
+<td><code><a href="https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#doublevalue">DoubleValue</a></code></td>
+<td>
+<p>This parameter controls the speed of traffic increase over the warmup duration. Defaults to 1.0, so that endpoints would
+get linearly increasing amount of traffic. When increasing the value for this parameter,
+the speed of traffic ramp-up increases non-linearly.</p>
 
 </td>
 <td>
@@ -624,9 +552,7 @@ for more details. Connection pool settings can be applied at the TCP
 level as well as at HTTP level.</p>
 <p>For example, the following rule sets a limit of 100 connections to redis
 service called myredissrv with a connect timeout of 30ms</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: bookinfo-redis
@@ -641,25 +567,6 @@ spec:
           time: 7200s
           interval: 75s
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: bookinfo-redis
-spec:
-  host: myredissrv.prod.svc.cluster.local
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        maxConnections: 100
-        connectTimeout: 30ms
-        tcpKeepalive:
-          time: 7200s
-          interval: 75s
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 
 <table class="message-fields">
 <thead>
@@ -712,9 +619,7 @@ with no more than 10 req/connection to the &ldquo;reviews&rdquo; service. In add
 it sets a limit of 1000 concurrent HTTP2 requests and configures upstream
 hosts to be scanned every 5 mins so that any host that fails 7 consecutive
 times with a 502, 503, or 504 error code will be ejected for 15 minutes.</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-cb-policy
@@ -732,28 +637,6 @@ spec:
       interval: 5m
       baseEjectionTime: 15m
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews-cb-policy
-spec:
-  host: reviews.prod.svc.cluster.local
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http2MaxRequests: 1000
-        maxRequestsPerConnection: 10
-    outlierDetection:
-      consecutive5xxErrors: 7
-      interval: 5m
-      baseEjectionTime: 15m
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 
 <table class="message-fields">
 <thead>
@@ -905,9 +788,7 @@ context</a>
 for more details. These settings are common to both HTTP and TCP upstreams.</p>
 <p>For example, the following rule configures a client to use mutual TLS
 for connections to upstream database cluster.</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: db-mtls
@@ -920,28 +801,9 @@ spec:
       privateKey: /etc/certs/client_private_key.pem
       caCertificates: /etc/certs/rootcacerts.pem
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: db-mtls
-spec:
-  host: mydbserver.prod.svc.cluster.local
-  trafficPolicy:
-    tls:
-      mode: MUTUAL
-      clientCertificate: /etc/certs/myclientcert.pem
-      privateKey: /etc/certs/client_private_key.pem
-      caCertificates: /etc/certs/rootcacerts.pem
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 <p>The following rule configures a client to use TLS when talking to a
 foreign service whose domain matches *.foo.com.</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: tls-foo
@@ -951,25 +813,9 @@ spec:
     tls:
       mode: SIMPLE
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: tls-foo
-spec:
-  host: &quot;*.foo.com&quot;
-  trafficPolicy:
-    tls:
-      mode: SIMPLE
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 <p>The following rule configures a client to use Istio mutual TLS when talking
 to rating services.</p>
-<p>{{<tabset category-name="example">}}
-{{<tab name="v1alpha3" category-value="v1alpha3">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1alpha3
+<pre><code class="language-yaml">apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: ratings-istio-mtls
@@ -979,20 +825,6 @@ spec:
     tls:
       mode: ISTIO_MUTUAL
 </code></pre>
-<p>{{</tab>}}</p>
-<p>{{<tab name="v1beta1" category-value="v1beta1">}}</p>
-<pre><code class="language-yaml">apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: ratings-istio-mtls
-spec:
-  host: ratings.prod.svc.cluster.local
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
-</code></pre>
-<p>{{</tab>}}
-{{</tabset>}}</p>
 
 <table class="message-fields">
 <thead>
@@ -1013,7 +845,7 @@ using TLS. The value of this field determines how TLS is enforced.</p>
 
 </td>
 <td>
-Yes
+No
 </td>
 </tr>
 <tr id="ClientTLSSettings-client_certificate">
@@ -1048,7 +880,8 @@ No
 <td>
 <p>OPTIONAL: The path to the file containing certificate authority
 certificates to use in verifying a presented server certificate. If
-omitted, the proxy will not verify the server&rsquo;s certificate.
+omitted, the proxy will verify the server&rsquo;s certificate using
+the OS CA certificates.
 Should be empty if mode is <code>ISTIO_MUTUAL</code>.</p>
 
 </td>
@@ -1094,8 +927,7 @@ certificate&rsquo;s subject alt name matches one of the specified values.
 If specified, this list overrides the value of subject_alt_names
 from the ServiceEntry. If unspecified, automatic validation of upstream
 presented certificate for new upstream connections will be done based on the
-downstream HTTP host/authority header, provided <code>VERIFY_CERTIFICATE_AT_CLIENT</code>
-and <code>ENABLE_AUTO_SNI</code> environmental variables are set to <code>true</code>.</p>
+downstream HTTP host/authority header.</p>
 
 </td>
 <td>
@@ -1108,8 +940,7 @@ No
 <td>
 <p>SNI string to present to the server during TLS handshake.
 If unspecified, SNI will be automatically set based on downstream HTTP
-host/authority header for SIMPLE and MUTUAL TLS modes, provided <code>ENABLE_AUTO_SNI</code>
-environmental variable is set to <code>true</code>.</p>
+host/authority header for SIMPLE and MUTUAL TLS modes.</p>
 
 </td>
 <td>
@@ -1120,17 +951,25 @@ No
 <td><code>insecureSkipVerify</code></td>
 <td><code><a href="https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#boolvalue">BoolValue</a></code></td>
 <td>
-<p>InsecureSkipVerify specifies whether the proxy should skip verifying the
+<p><code>insecureSkipVerify</code> specifies whether the proxy should skip verifying the
 CA signature and SAN for the server certificate corresponding to the host.
-This flag should only be set if global CA signature verification is
-enabled, <code>VerifyCertAtClient</code> environmental variable is set to <code>true</code>,
-but no verification is desired for a specific host. If enabled with or
-without <code>VerifyCertAtClient</code> enabled, verification of the CA signature and
-SAN will be skipped.</p>
-<p><code>InsecureSkipVerify</code> is <code>false</code> by default.
-<code>VerifyCertAtClient</code> is <code>false</code> by default in Istio version 1.9 but will
-be <code>true</code> by default in a later version where, going forward, it will be
-enabled by default.</p>
+The default value of this field is false.</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
+<tr id="ClientTLSSettings-ca_crl">
+<td><code>caCrl</code></td>
+<td><code>string</code></td>
+<td>
+<p>OPTIONAL: The path to the file containing the certificate revocation list (CRL)
+to use in verifying a presented server certificate. <code>CRL</code> is a list of certificates
+that have been revoked by the CA (Certificate Authority) before their scheduled expiration date.
+If specified, the proxy will verify if the presented certificate is part of the revoked list of certificates.
+If omitted, the proxy will not verify the certificate against the <code>crl</code>. Note that if <code>credentialName</code> is set,
+<code>CRL</code> cannot be specified using <code>caCrl</code>, rather it has to be specified inside the credential.</p>
 
 </td>
 <td>
@@ -1259,6 +1098,7 @@ The following labels which have special semantic meaning are also supported:</p>
 <li><code>topology.kubernetes.io/region</code> is used to match the region metadata of an endpoint, which maps to Kubernetes node label <code>topology.kubernetes.io/region</code> or the deprecated label <code>failure-domain.beta.kubernetes.io/region</code>.</li>
 <li><code>topology.kubernetes.io/zone</code> is used to match the zone metadata of an endpoint, which maps to Kubernetes node label <code>topology.kubernetes.io/zone</code> or the deprecated label <code>failure-domain.beta.kubernetes.io/zone</code>.</li>
 <li><code>topology.istio.io/subzone</code> is used to match the subzone metadata of an endpoint, which maps to Istio node label <code>topology.istio.io/subzone</code>.</li>
+<li><code>kubernetes.io/hostname</code> is used to match the current node of an endpoint, which maps to Kubernetes node label <code>kubernetes.io/hostname</code>.</li>
 </ul>
 <p>The below topology config indicates the following priority levels:</p>
 <pre><code class="language-yaml">failoverPriority:
@@ -1434,6 +1274,33 @@ Yes
 </tbody>
 </table>
 </section>
+<h2 id="TrafficPolicy-ProxyProtocol">TrafficPolicy.ProxyProtocol</h2>
+<section>
+<table class="message-fields">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr id="TrafficPolicy-ProxyProtocol-version">
+<td><code>version</code></td>
+<td><code><a href="#TrafficPolicy-ProxyProtocol-VERSION">VERSION</a></code></td>
+<td>
+<p>The PROXY protocol version to use. See <a href="https://www.haproxy.org/download/2.1/doc/proxy-protocol.txt">https://www.haproxy.org/download/2.1/doc/proxy-protocol.txt</a> for details.
+By default it is <code>V1</code>.</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
+</tbody>
+</table>
+</section>
 <h2 id="LoadBalancerSettings-ConsistentHashLB">LoadBalancerSettings.ConsistentHashLB</h2>
 <section>
 <p>Consistent Hash-based load balancing can be used to provide soft
@@ -1590,7 +1457,9 @@ No
 <td>
 <p>The table size for Maglev hashing. This helps in controlling the
 disruption when the backend hosts change.
-Increasing the table size reduces the amount of disruption.</p>
+Increasing the table size reduces the amount of disruption.
+The table size must be prime number less than 5000011.
+If it is not specified, the default is 65537.</p>
 
 </td>
 <td>
@@ -1603,8 +1472,7 @@ No
 <h2 id="LoadBalancerSettings-ConsistentHashLB-HTTPCookie">LoadBalancerSettings.ConsistentHashLB.HTTPCookie</h2>
 <section>
 <p>Describes a HTTP cookie that will be used as the hash key for the
-Consistent Hash load balancer. If the cookie is not present, it will
-be generated.</p>
+Consistent Hash load balancer.</p>
 
 <table class="message-fields">
 <thead>
@@ -1642,11 +1510,13 @@ No
 <td><code>ttl</code></td>
 <td><code><a href="https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#duration">Duration</a></code></td>
 <td>
-<p>Lifetime of the cookie.</p>
+<p>Lifetime of the cookie. If specified, a cookie with the TTL will be
+generated if the cookie is not present. If the TTL is present and zero,
+the generated cookie will be a session cookie.</p>
 
 </td>
 <td>
-Yes
+No
 </td>
 </tr>
 </tbody>
@@ -1707,6 +1577,24 @@ No
 <p>The maximum duration of a connection. The duration is defined as the period since a connection
 was established. If not set, there is no max duration. When max_connection_duration
 is reached the connection will be closed. Duration must be at least 1ms.</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
+<tr id="ConnectionPoolSettings-TCPSettings-idle_timeout">
+<td><code>idleTimeout</code></td>
+<td><code><a href="https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#duration">Duration</a></code></td>
+<td>
+<p>The idle timeout for TCP connections.
+The idle timeout is defined as the period in which there are no bytes sent or received on either
+the upstream or downstream connection.
+If not set, the default idle timeout is 1 hour. If set to 0s, the timeout will be disabled.
+Idle timeout is not configured per each cluster individually when weighted destinations are used,
+because idleTimeout is a property of a listener, not a cluster. In that case, idleTimeout
+specified in a destination rule for the first weighted route is configured in the listener,
+which means also for all weighted routes.</p>
 
 </td>
 <td>
@@ -1817,6 +1705,18 @@ No
 <p>If set to true, client protocol will be preserved while initiating connection to backend.
 Note that when this is set to true, h2_upgrade_policy will be ineffective i.e. the client
 connections will not be upgraded to http2.</p>
+
+</td>
+<td>
+No
+</td>
+</tr>
+<tr id="ConnectionPoolSettings-HTTPSettings-max_concurrent_streams">
+<td><code>maxConcurrentStreams</code></td>
+<td><code>int32</code></td>
+<td>
+<p>The maximum number of concurrent streams allowed for a peer on one HTTP/2 connection.
+Defaults to 2^31-1.</p>
 
 </td>
 <td>
@@ -1999,6 +1899,33 @@ No
 </td>
 <td>
 No
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<h2 id="TrafficPolicy-ProxyProtocol-VERSION">TrafficPolicy.ProxyProtocol.VERSION</h2>
+<section>
+<table class="enum-values">
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr id="TrafficPolicy-ProxyProtocol-VERSION-V1">
+<td><code>V1</code></td>
+<td>
+<p>⁣PROXY protocol version 1. Human readable format.</p>
+
+</td>
+</tr>
+<tr id="TrafficPolicy-ProxyProtocol-VERSION-V2">
+<td><code>V2</code></td>
+<td>
+<p>⁣PROXY protocol version 2. Binary format.</p>
+
 </td>
 </tr>
 </tbody>

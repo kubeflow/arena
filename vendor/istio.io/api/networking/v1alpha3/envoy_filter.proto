@@ -14,9 +14,9 @@
 
 syntax = "proto3";
 
-import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";
 import "networking/v1alpha3/sidecar.proto";
+import "type/v1beta1/selector.proto";
 
 // $schema: istio.networking.v1alpha3.EnvoyFilter
 // $title: Envoy Filter
@@ -335,7 +335,7 @@ import "networking/v1alpha3/sidecar.proto";
 //   #   to avoid accidental name collisions.
 //   - applyTo: EXTENSION_CONFIG
 //     patch:
-//       operation: ADD # REPLACE is also supported, and would override a cluster level resource with the same name.
+//       operation: ADD
 //       value:
 //         name: my-wasm-extension
 //         typed_config:
@@ -372,41 +372,6 @@ import "networking/v1alpha3/sidecar.proto";
 //           type_urls: ["type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"]
 // ```
 //
-// The following example adds a Wasm service extension for all proxies using a locally available Wasm file.
-// The singleton Wasm extension is used to maintain a shared state between workers executing Wasm filters.
-// For example, a local rate limit extension would rely on a singleton to limit requests across all workers.
-// As another example, an authorization Wasm extension can use a singleton to maintain a database of accounts.
-//
-// ```yaml
-// apiVersion: networking.istio.io/v1alpha3
-// kind: EnvoyFilter
-// metadata:
-//   name: wasm-service
-//   namespace: myns
-// spec:
-//   configPatches:
-//   - applyTo: BOOTSTRAP
-//     patch:
-//       operation: MERGE
-//       value:
-//         bootstrap_extensions:
-//         - name: envoy.bootstrap.wasm
-//           typed_config:
-//             "@type": type.googleapis.com/envoy.extensions.wasm.v3.WasmService
-//             singleton: true
-//             config:
-//               name: my_plugin
-//               configuration:
-//                 "@type": type.googleapis.com/google.protobuf.StringValue
-//                 value: |
-//                   {}
-//               vm_config:
-//                 runtime: "envoy.wasm.runtime.v8"
-//                 code:
-//                   local:
-//                     filename: "/etc/envoy_filter_http_wasm_example.wasm"
-// ```
-//
 // The following example inserts an `envoy.filters.listener.proxy_protocol` listener filter before the `envoy.filters.listener.tls_inspector`.
 //
 // ```yaml
@@ -419,7 +384,7 @@ import "networking/v1alpha3/sidecar.proto";
 //   configPatches:
 //   - applyTo: LISTENER_FILTER
 //     match:
-//       context: SIDECAR_INBOUND # will match outbound listeners in all sidecars
+//       context: SIDECAR_INBOUND # will match inbound listeners in all sidecars
 //       listener:
 //         portNumber: 15006
 //         listenerFilter: "envoy.filters.listener.tls_inspector"
@@ -439,12 +404,13 @@ option go_package = "istio.io/api/networking/v1alpha3";
 //
 // <!-- crd generation tags
 // +cue-gen:EnvoyFilter:groupName:networking.istio.io
-// +cue-gen:EnvoyFilter:version:v1alpha3
+// +cue-gen:EnvoyFilter:versions:v1alpha3
 // +cue-gen:EnvoyFilter:storageVersion
 // +cue-gen:EnvoyFilter:annotations:helm.sh/resource-policy=keep
 // +cue-gen:EnvoyFilter:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 // +cue-gen:EnvoyFilter:subresource:status
 // +cue-gen:EnvoyFilter:scope:Namespaced
+// +cue-gen:EnvoyFilter:releaseChannel:extended
 // +cue-gen:EnvoyFilter:resource:categories=istio-io,networking-istio-io
 // +cue-gen:EnvoyFilter:preserveUnknownFields:configPatches.[].patch.value
 // -->
@@ -455,6 +421,7 @@ option go_package = "istio.io/api/networking/v1alpha3";
 // +genclient
 // +k8s:deepcopy-gen=true
 // -->
+// +kubebuilder:validation:XValidation:message="only one of targetRefs or workloadSelector can be set",rule="(has(self.workloadSelector)?1:0)+(has(self.targetRefs)?1:0)<=1"
 message EnvoyFilter {
   // `ApplyTo` specifies where in the Envoy configuration, the given patch should be applied.
   enum ApplyTo {
@@ -496,7 +463,7 @@ message EnvoyFilter {
     // is only supported by HTTP filters.
     EXTENSION_CONFIG = 9;
 
-    // Applies the patch to bootstrap configuration.
+    // DEPRECATED. Applies the patch to bootstrap configuration.
     BOOTSTRAP = 10;
 
     // Applies the patch to the listener filter.
@@ -878,15 +845,33 @@ message EnvoyFilter {
   // Criteria used to select the specific set of pods/VMs on which
   // this patch configuration should be applied. If omitted, the set
   // of patches in this configuration will be applied to all workload
-  // instances in the same namespace.  If omitted, the `EnvoyFilter`
-  // patches will be applied to all workloads in the same
-  // namespace. If the `EnvoyFilter` is present in the config root
-  // namespace, it will be applied to all applicable workloads in any
-  // namespace.
+  // instances in the same namespace. If the `EnvoyFilter` is present
+  // in the config root namespace, it will be applied to all applicable
+  // workloads in any namespace.
   WorkloadSelector workload_selector = 3;
 
+  // Optional. The targetRefs specifies a list of resources the policy should be
+  // applied to. The targeted resources specified will determine which workloads
+  // the policy applies to.
+  //
+  // Currently, the following resource attachment types are supported:
+  // * `kind: Gateway` with `group: gateway.networking.k8s.io` in the same namespace.
+  // * `kind: Service` with `""` in the same namespace. This type is only supported for waypoints.
+  //
+  // If not set, the policy is applied as defined by the selector.
+  // At most one of the selector and targetRefs can be set.
+  //
+  // NOTE: If you are using the `targetRefs` field in a multi-revision environment with Istio versions prior to 1.22,
+  // it is highly recommended that you pin the policy to a revision running 1.22+ via the `istio.io/rev` label.
+  // This is to prevent proxies connected to older control planes (that don't know about the `targetRefs` field)
+  // from misinterpreting the policy as namespace-wide during the upgrade process.
+  //
+  // NOTE: Waypoint proxies are required to use this field for policies to apply; `selector` policies will be ignored.
+  // +kubebuilder:validation:MaxItems=16
+  repeated istio.type.v1beta1.PolicyTargetReference targetRefs = 6;
+
   // One or more patches with match conditions.
-  repeated EnvoyConfigObjectPatch config_patches = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated EnvoyConfigObjectPatch config_patches = 4;
 
   // Priority defines the order in which patch sets are applied within a context.
   // When one patch depends on another patch, the order of patch application
