@@ -195,6 +195,27 @@ function check_addons() {
         export HELM_OPTIONS="$HELM_OPTIONS --set $option"
         return
     fi
+    # if kubernetes version is less than 1.27, will skip to install lws-operator
+    if [ "$addon_name" == "lws-operator" ] && ! is_k8s_version_gt_1_26; then
+        logger debug "kubernetes version is less than 1.27, will skip to install lws-operator"
+        export HELM_OPTIONS="$HELM_OPTIONS --set $option"
+        return
+    fi
+}
+
+function is_k8s_version_gt_1_26() {
+     version=$(arena-kubectl version | grep Server | awk '{print $3}')
+
+     version_number=${version:1}
+
+     major_version=$(echo $version_number | cut -d. -f1)
+     minor_version=$(echo $version_number | cut -d. -f2)
+
+     if [ "$major_version" -gt 1 ] || { [ "$major_version" -eq 1 ] && [ "$minor_version" -gt 26 ]; }; then
+         return 0
+     else
+         return 1
+     fi
 }
 
 function apply_crds() {
@@ -275,6 +296,9 @@ function apply_tf_dashboard() {
     check_addons tf-dashboard false tf-job-dashboard tfdashboard.enabled=false
 }
 
+function apply_lws() {
+    check_addons lws-operator false lws-operator lws.enabled=false
+}
 
 function create_namespace() {
     if [[ "${NAMESPACE}" == "" ]]; then
@@ -318,6 +342,7 @@ function operators() {
     fi
     clean_old_env
     apply_crds
+    apply_lws
     apply_tf
     apply_pytorch
     apply_mpi

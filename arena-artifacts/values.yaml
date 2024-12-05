@@ -143,3 +143,23 @@ elastic-job-supervisor:
       cpu: 100m
       memory: 300Mi
   nodeSelector: {}
+
+# lws
+lws:
+  enabled: true
+  operator:
+    image: acs/lws
+    tag: v0.5.0
+    imagePullPolicy: IfNotPresent
+  kubeRbacProxy:
+    image: acs/kube-rbac-proxy
+    tag: v0.15.0
+    imagePullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 300m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+  nodeSelector: {}

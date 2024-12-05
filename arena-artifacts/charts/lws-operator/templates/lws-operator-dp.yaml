@@ -1,0 +1,99 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: lws-operator
+    {{- include "arena.labels" . | nindent 4 }}
+  name: lws-operator
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lws-operator
+      {{- include "arena.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: lws-operator
+        {{- include "arena.labels" . | nindent 8 }}
+    spec:
+      nodeSelector:
+        {{- include "arena.nodeSelector" . | nindent 8 }}
+        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
+      tolerations:
+      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
+      containers:
+        - args:
+            - --health-probe-bind-address=:8081
+            - --metrics-bind-address=127.0.0.1:8080
+          command:
+            - /manager
+          # TODO(user): use the image from the global config
+          # image: gcr.io/k8s-staging-lws/lws:v0.5.0
+          image: {{ include "arena.imagePrefix" . }}/{{ .Values.operator.image }}:{{ .Values.operator.tag }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: manager
+          ports:
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 1
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - mountPath: /tmp/k8s-webhook-server/serving-certs
+              name: cert
+              readOnly: true
+        - args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            - --v=0
+          # TODO(user): use the image from the global config
+{{/*          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0*/}}
+          image: {{ include "arena.imagePrefix" . }}/{{ .Values.kubeRbacProxy.image }}:{{ .Values.kubeRbacProxy.tag }}
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 5m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: lws-operator
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: lws-webhook-server-cert
