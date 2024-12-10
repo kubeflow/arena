@@ -1,5 +1,30 @@
 # Changelog
 
+## [v0.12.1](https://github.com/kubeflow/arena/tree/v0.12.1) (2024-11-25)
+
+### New Features
+
+- Support MPI Job with generic devices ([#1209](https://github.com/kubeflow/arena/pull/1209) by [@cheyang](https://github.com/cheyang))
+
+### Bug Fix
+
+- Update tf-operator image to fix clean pod policy issues ([#1200](https://github.com/kubeflow/arena/pull/1200) by [@ChenYi015](https://github.com/ChenYi015))
+- Fix etjob rendering error when using local logging dir ([#1203](https://github.com/kubeflow/arena/pull/1203) by [@TrafalgarZZZ](https://github.com/TrafalgarZZZ))
+- Fix the functionality of generating kubeconfig (#1204) ([#1205](https://github.com/kubeflow/arena/pull/1205) by [@wqlparallel](https://github.com/wqlparallel))
+- Update cron operator image ([#1214](https://github.com/kubeflow/arena/pull/1214) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Misc
+
+- Add changelog for v0.12.0 ([#1199](https://github.com/kubeflow/arena/pull/1199) by [@ChenYi015](https://github.com/ChenYi015))
+- Add go mod vendor check to integration test ([#1198](https://github.com/kubeflow/arena/pull/1198) by [@ChenYi015](https://github.com/ChenYi015))
+- bump github.com/go-resty/resty/v2 from 2.15.3 to 2.16.0 ([#1202](https://github.com/kubeflow/arena/pull/1202) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Publish releases only on master branch ([#1210](https://github.com/kubeflow/arena/pull/1210) by [@ChenYi015](https://github.com/ChenYi015))
+- Add docs for releasing arena ([#1201](https://github.com/kubeflow/arena/pull/1201) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump golang.org/x/crypto from 0.28.0 to 0.29.0 ([#1206](https://github.com/kubeflow/arena/pull/1206) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Release v0.12.1 ([#1215](https://github.com/kubeflow/arena/pull/1215) by [@ChenYi015](https://github.com/ChenYi015))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/29b2d6d2...v0.12.1)
+
 ## [v0.12.0](https://github.com/kubeflow/arena/tree/v0.12.0) (2024-11-11)
 
 ### New Features
