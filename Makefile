@@ -119,6 +119,9 @@ endif
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+.PHONY: all
+all: go-fmt go-vet go-lint unit-test e2e-test
+
 ##@ Development
 
 go-fmt: ## Run go fmt against code.
@@ -142,7 +145,7 @@ go-lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 .PHONY: unit-test
 unit-test: ## Run go unit tests.
 	@echo "Running go test..."
-	go test ./... -coverprofile cover.out
+	go test $(shell go list ./... | grep -v /e2e) -coverprofile cover.out
 
 .PHONY: e2e-test
 e2e-test: envtest ## Run the e2e tests against a Kind k8s instance that is spun up.
