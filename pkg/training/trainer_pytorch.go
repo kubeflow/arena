@@ -29,8 +29,6 @@ import (
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
-	appv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -299,21 +297,13 @@ func (tt *PyTorchJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 	if err != nil {
 		return nil, err
 	}
-	batchJobs, err := k8saccesser.GetK8sResourceAccesser().ListBatchJobs(namespace, "pytorch_job_name")
-	if err != nil {
-		return nil, err
-	}
-	statefulsets, err := k8saccesser.GetK8sResourceAccesser().ListStatefulSets(namespace, "pytorch_job_name")
-	if err != nil {
-		return nil, err
-	}
 	// important for getting pytorchjob status
 	pytorchjob.Status.Conditions = makeJobStatusSortedByTime(pytorchjob.Status.Conditions)
 	pods, chiefPod := getPodsOfPyTorchJob(tt, pytorchjob, allPods)
 	// 3. Find the other resources, like statefulset,job
 	return &PyTorchJob{
 		BasicJobInfo: &BasicJobInfo{
-			resources: tt.resources(statefulsets, batchJobs, name, namespace, pods),
+			resources: tt.resources(name, namespace, pods),
 			name:      name,
 		},
 		pytorchjob:  pytorchjob,
@@ -344,37 +334,8 @@ func (tt *PyTorchJobTrainer) isPyTorchPod(name, ns string, pod *v1.Pod) bool {
 	return utils.IsPyTorchPod(name, ns, pod)
 }
 
-func (tt *PyTorchJobTrainer) resources(statefulsets []*appv1.StatefulSet, batchJobs []*batchv1.Job, name string, namespace string, pods []*v1.Pod) []Resource {
-	resources := []Resource{}
-	// 2. Find the pod list, and determine the pod of the job
-	for _, sts := range statefulsets {
-		if sts.Labels["pytorch_job_name"] != name {
-			continue
-		}
-		if sts.Namespace != namespace {
-			continue
-		}
-		resources = append(resources, Resource{
-			Name:         sts.Name,
-			Uid:          string(sts.UID),
-			ResourceType: ResourceTypeStatefulSet,
-		})
-	}
-
-	for _, job := range batchJobs {
-		if job.Namespace != namespace {
-			continue
-		}
-		if job.Labels["pytorch_job_name"] != name {
-			continue
-		}
-		resources = append(resources, Resource{
-			Name:         job.Name,
-			Uid:          string(job.UID),
-			ResourceType: ResourceTypeJob,
-		})
-	}
-	resources = append(resources, podResources(pods)...)
+func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1.Pod) []Resource {
+	resources := podResources(pods)
 	return resources
 }
 
