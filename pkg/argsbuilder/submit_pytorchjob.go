@@ -16,6 +16,7 @@ package argsbuilder
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -83,6 +84,7 @@ func (s *SubmitPytorchJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().DurationVar(&runningTimeout, "running-timeout", runningTimeout, "Specifies the duration since startTime during which the job can remain active before it is terminated(e.g. '5s', '1m', '2h22m').")
 	command.Flags().DurationVar(&ttlAfterFinished, "ttl-after-finished", ttlAfterFinished, "Defines the TTL for cleaning up finished PytorchJobs(e.g. '5s', '1m', '2h22m'). Defaults to infinite.")
 	command.Flags().StringVar(&s.args.ShareMemory, "share-memory", "2Gi", "the shared memory of each replica to run the job, default 2Gi.")
+	command.Flags().StringVar(&s.args.NprocPerNode, "nproc-per-node", "", "The number of processes per node, available values are \"auto\", \"cpu\", \"gpu\" and a number (e.g. 4).")
 
 	s.AddArgValue("running-timeout", &runningTimeout).
 		AddArgValue("ttl-after-finished", &ttlAfterFinished)
@@ -110,7 +112,7 @@ func (s *SubmitPytorchJobArgsBuilder) Build() error {
 	if err := s.check(); err != nil {
 		return err
 	}
-	if err := s.addMasterAddr(); err != nil {
+	if err := s.addEnv(); err != nil {
 		return err
 	}
 	return nil
@@ -170,15 +172,36 @@ func (s *SubmitPytorchJobArgsBuilder) check() error {
 			return fmt.Errorf("--share-memory is invalid")
 		}
 	}
+
+	// Check whether nprocPerNode is valid
+	switch s.args.NprocPerNode {
+	case "auto", "cpu", "gpu":
+		log.Debugf("Supported nprocPerNode: %s", s.args.NprocPerNode)
+	case "":
+		log.Debugf("--nproc-per-node is not set")
+	default:
+		nprocPerNode, err := strconv.Atoi(s.args.NprocPerNode)
+		if err != nil {
+			return fmt.Errorf("--nproc-per-node is invalid")
+		}
+		log.Debugf("Supported nprocPerNode: %d", nprocPerNode)
+	}
+
 	return nil
 }
 
-func (s *SubmitPytorchJobArgsBuilder) addMasterAddr() error {
+func (s *SubmitPytorchJobArgsBuilder) addEnv() error {
+	if s.args.Envs == nil {
+		s.args.Envs = map[string]string{}
+	}
+
 	if s.args.EnableRDMA {
-		if s.args.Envs == nil {
-			s.args.Envs = map[string]string{}
-		}
 		s.args.Envs["MASTER_ADDR"] = fmt.Sprintf("%v-master-0", s.args.Name)
 	}
+
+	if s.args.NprocPerNode != "" {
+		s.args.Envs["PET_NPROC_PER_NODE"] = s.args.NprocPerNode
+	}
+
 	return nil
 }

@@ -31,9 +31,10 @@ tensorboardResources: {}
 #     cpu: 500m
 #     memory: 500Mi
 
-
 annotations: {}
 # annotations:
+
+envs: {}
 
 # enable RDMA support
 enableRDMA: false
@@ -62,3 +63,4 @@ imagePullPolicy: Always
 # add pod group
 podGroupName: ""
 podGroupMinAvailable: "1"
+
