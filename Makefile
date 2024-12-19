@@ -18,8 +18,8 @@ DIST_DIR ?= $(CURRENT_DIR)/bin
 ARENA_CLI_NAME ?= arena
 JOB_MONITOR ?= jobmon
 ARENA_UNINSTALL ?= arena-uninstall
-OS ?= linux
-ARCH ?= amd64
+OS ?= $(shell go env GOOS)
+ARCH ?= $(shell go env GOARCH)
 
 VERSION ?= $(shell cat VERSION)
 BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -166,8 +166,7 @@ clean: ## Clean up all downloaded and generated files.
 	rm -rf $(LOCALBIN) $(TEMPDIR)
 
 .PHONY: arena
-arena: $(LOCALBIN)/$(ARENA) ## Build arena CLI for current platform.
-$(LOCALBIN)/$(ARENA): $(LOCALBIN)
+arena: $(LOCALBIN) ## Build arena CLI for current platform.
 	@echo "Building arena CLI..."
 	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -tags netgo -ldflags '${LDFLAGS}' -o $(LOCALBIN)/$(ARENA) cmd/arena/main.go
 

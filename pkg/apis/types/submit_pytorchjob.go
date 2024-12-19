@@ -45,4 +45,8 @@ type SubmitPyTorchJobArgs struct {
 
 	// ShareMemory Specifies the shared memory size
 	ShareMemory string `yaml:"shareMemory"`
+
+	// Number of workers per node, supported values: [auto, cpu, gpu, int].
+	// For more, https://github.com/pytorch/pytorch/blob/26f7f470df64d90e092081e39507e4ac751f55d6/torch/distributed/run.py#L629-L658.
+	NprocPerNode string `yaml:"nprocPerNode,omitempty"`
 }
