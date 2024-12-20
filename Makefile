@@ -37,14 +37,20 @@ TEMPDIR ?= $(CURRENT_DIR)/tmp
 
 # Versions
 GOLANG_VERSION=$(shell grep -e '^go ' go.mod | cut -d ' ' -f 2)
-KUBECTL_VERSION ?= 1.28.4
-HELM_VERSION ?= 3.13.3
-GOLANGCI_LINT_VERSION ?= 1.57.2
+KUBECTL_VERSION ?= v1.28.4
+HELM_VERSION ?= v3.13.3
+KIND_VERSION ?= v0.23.0
+KIND_K8S_VERSION ?= v1.29.3
+ENVTEST_VERSION ?= release-0.18
+ENVTEST_K8S_VERSION ?= 1.29.3
+GOLANGCI_LINT_VERSION ?= v1.57.2
 
 # Binaries
 ARENA ?= arena-v$(VERSION)-$(OS)-$(ARCH)
-KUBECTL ?= kubectl-v$(KUBECTL_VERSION)-$(OS)-$(ARCH)
-HELM ?= helm-v$(HELM_VERSION)-$(OS)-$(ARCH)
+KUBECTL ?= kubectl-$(KUBECTL_VERSION)-$(OS)-$(ARCH)
+HELM ?= helm-$(HELM_VERSION)-$(OS)-$(ARCH)
+KIND ?= $(LOCALBIN)/kind-$(KIND_VERSION)
+ENVTEST ?= $(LOCALBIN)/setup-envtest-$(ENVTEST_VERSION)
 GOLANGCI_LINT ?= golangci-lint-$(GOLANGCI_LINT_VERSION)
 
 # Tarballs
@@ -113,6 +119,9 @@ endif
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+.PHONY: all
+all: go-fmt go-vet go-lint unit-test e2e-test
+
 ##@ Development
 
 go-fmt: ## Run go fmt against code.
@@ -136,7 +145,12 @@ go-lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes.
 .PHONY: unit-test
 unit-test: ## Run go unit tests.
 	@echo "Running go test..."
-	go test ./... -coverprofile cover.out
+	go test $(shell go list ./... | grep -v /e2e) -coverprofile cover.out
+
+.PHONY: e2e-test
+e2e-test: envtest ## Run the e2e tests against a Kind k8s instance that is spun up.
+	@echo "Running e2e tests..."
+	go test ./test/e2e/ -v -ginkgo.v -timeout 30m
 
 # Build the project
 .PHONY: default
@@ -238,10 +252,15 @@ golangci-lint: $(LOCALBIN)/$(GOLANGCI_LINT) ## Download golangci-lint locally if
 $(LOCALBIN)/$(GOLANGCI_LINT): $(LOCALBIN)
 	$(call go-install-tool,$(LOCALBIN)/$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
 
+.PHONY: envtest
+envtest: $(ENVTEST) ## Download setup-envtest locally if necessary.
+$(ENVTEST): $(LOCALBIN)
+	$(call go-install-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest,$(ENVTEST_VERSION))
+
 .PHONY: kubectl
 kubectl: $(LOCALBIN)/$(KUBECTL)
 $(LOCALBIN)/$(KUBECTL): $(LOCALBIN) $(TEMPDIR)
-	$(eval KUBECTL_URL=https://dl.k8s.io/release/v$(KUBECTL_VERSION)/bin/$(OS)/$(ARCH)/kubectl)
+	$(eval KUBECTL_URL=https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OS)/$(ARCH)/kubectl)
 	$(eval KUBECTL_SHA_URL=$(KUBECTL_URL).sha256)
 
 	cd $(TEMPDIR) && \
@@ -289,7 +308,7 @@ $(LOCALBIN)/$(HELM): $(LOCALBIN) $(TEMPDIR)
 define go-install-tool
 @[ -f $(1) ] || { \
 set -e; \
-package=$(2)@v$(3) ;\
+package=$(2)@$(3) ;\
 echo "Downloading $${package}" ;\
 GOBIN=$(LOCALBIN) go install $${package} ;\
 mv "$$(echo "$(1)" | sed "s/-$(3)$$//")" $(1) ;\
