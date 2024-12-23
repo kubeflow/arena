@@ -1,5 +1,26 @@
 # Changelog
 
+## [v0.13.0](https://github.com/kubeflow/arena/tree/v0.13.0) (2024-12-23)
+
+### New Features
+
+- feat: add support for torchrun ([#1228](https://github.com/kubeflow/arena/pull/1228) by [@ChenYi015](https://github.com/ChenYi015))
+- Update pytorch-operator image ([#1234](https://github.com/kubeflow/arena/pull/1234) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Bug Fix
+
+- Avoid listing jobs and statefulsets when get pytorchjob ([#1229](https://github.com/kubeflow/arena/pull/1229) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Misc
+
+- Update tfjob standalone training job doc ([#1222](https://github.com/kubeflow/arena/pull/1222) by [@ChenYi015](https://github.com/ChenYi015))
+- Remove archived docs ([#1208](https://github.com/kubeflow/arena/pull/1208) by [@ChenYi015](https://github.com/ChenYi015))
+- Add changelog for v0.12.1 ([#1224](https://github.com/kubeflow/arena/pull/1224) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump golang.org/x/crypto from 0.29.0 to 0.31.0 ([#1231](https://github.com/kubeflow/arena/pull/1231) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Bump google.golang.org/protobuf from 1.35.1 to 1.36.0 ([#1227](https://github.com/kubeflow/arena/pull/1227) by [@dependabot[bot]](https://github.com/apps/dependabot))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.12.1...v0.13.0)
+
 ## [v0.12.1](https://github.com/kubeflow/arena/tree/v0.12.1) (2024-11-25)
 
 ### New Features
