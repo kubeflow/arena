@@ -29,7 +29,7 @@ binary:
 tf:
   enabled: true
   image: acs/tf-operator
-  tag: v1.0-aliyun-82bde3a
+  tag: aliyun-82bde3a
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -39,11 +39,12 @@ tf:
       cpu: 100m
       memory: 256Mi
   nodeSelector: {}
+
 # tf-dashboard
 tfdashboard:
   enabled: true
   image: acs/tf-operator
-  tag: v1.0-aliyun-82bde3a
+  tag: aliyun-82bde3a
   imagePullPolicy: IfNotPresent
   resources:
     limits:
