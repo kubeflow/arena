@@ -94,7 +94,7 @@ et:
   enabled: true
   createSSHSecret: false
   image: acs/et-operator
-  tag: v0.1.5-aliyun-d298c36
+  tag: aliyun-96806fb
   imagePullPolicy: IfNotPresent
   resources:
     limits:
