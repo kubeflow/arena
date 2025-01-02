@@ -110,7 +110,7 @@ et:
 cron:
   enabled: true
   image: acs/cron-operator
-  tag: aliyun-0f570ce3
+  tag: aliyun-0f570ce
   imagePullPolicy: IfNotPresent
   resources:
     limits:
