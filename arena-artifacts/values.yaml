@@ -58,7 +58,7 @@ tfdashboard:
 mpi:
   enabled: true
   image: acs/mpi-operator
-  tag: v0.1.0-aliyun-e94b924
+  tag: aliyun-03b5e76
   kubectlDelivery:
     image: acs/kubectl-delivery
     tag: v0.1.0
