@@ -132,8 +132,8 @@ exporter:
 # elastic-job-supervisor
 elastic-job-supervisor:
   enabled: true
-  image: acs/elastic-job-supervisor
-  tag: v0.1.1-71871cc-aliyun
+  image: acs/job-supervisor
+  tag: v1.2.0-7a69190-aliyun
   imagePullPolicy: IfNotPresent
   resources:
     limits:
