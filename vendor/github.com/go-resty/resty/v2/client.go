@@ -450,6 +450,8 @@ func (c *Client) R() *Request {
 		PathParams:    map[string]string{},
 		RawPathParams: map[string]string{},
 		Debug:         c.Debug,
+		AuthScheme:    c.AuthScheme,
+		Token:         c.Token,
 
 		client:              c,
 		multipartFiles:      []*File{},
@@ -1236,7 +1238,6 @@ func (c *Client) executeBefore(req *Request) error {
 		return wrapNoRetryErr(err)
 	}
 
-	req.RawRequest.Body = newRequestBodyReleaser(req.RawRequest.Body, req.bodyBuf)
 	return nil
 }
 
@@ -1465,6 +1466,7 @@ func createClient(hc *http.Client) *Client {
 		XMLMarshal:             xml.Marshal,
 		XMLUnmarshal:           xml.Unmarshal,
 		HeaderAuthorizationKey: http.CanonicalHeaderKey("Authorization"),
+		AuthScheme:             "Bearer",
 
 		jsonEscapeHTML:      true,
 		httpClient:          hc,
