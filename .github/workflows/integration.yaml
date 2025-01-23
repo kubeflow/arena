@@ -101,3 +101,33 @@ jobs:
         run: |
           pip install -r docs/requirements.txt
           mkdocs build --strict
+
+  e2e-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Kind cluster
+        uses: helm/kind-action@v1
+        with:
+          node_image: kindest/node:v1.29.10
+          config: arena-artifacts/ci/kind-config.yaml
+
+      - name: Install arena client
+        run: |
+          make arena-installer
+          tar -zxf arena-installer-*.tar.gz
+          arena-installer-*/install.sh --only-binary
+
+      - name: Run e2e tests
+        run: |
+          make e2e-test
