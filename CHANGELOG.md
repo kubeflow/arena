@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.14.0](https://github.com/kubeflow/arena/tree/v0.14.0) (2025-02-12)
+
+### Features
+
+- rename parameter ([#1262](https://github.com/kubeflow/arena/pull/1262) by [@gujingit](https://github.com/gujingit))
+
+### Misc
+
+- Add changelog for v0.13.1 ([#1248](https://github.com/kubeflow/arena/pull/1248) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump github.com/go-resty/resty/v2 from 2.16.0 to 2.16.5 ([#1254](https://github.com/kubeflow/arena/pull/1254) by [@dependabot[bot]](https://github.com/apps/dependabot))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.13.1...v0.14.0)
+
 ## [v0.13.1](https://github.com/kubeflow/arena/tree/v0.13.1) (2025-01-13)
 
 ### Misc
