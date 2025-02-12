@@ -4,43 +4,41 @@
 
 Here is an example how you can use `arena` for the machine learning training. It will download the source code from the specified git url.
 
-1. The first step is to check the available resources:
+The first step is to check the available resources:
 
-    ```txt
-    $ arena top node
-    NAME                       IPADDRESS      ROLE    STATUS  GPU(Total)  GPU(Allocated)
-    cn-hongkong.192.168.2.107  47.242.51.160  <none>  Ready   0           0
-    cn-hongkong.192.168.2.108  192.168.2.108  <none>  Ready   1           0
-    cn-hongkong.192.168.2.109  192.168.2.109  <none>  Ready   1           0
-    cn-hongkong.192.168.2.110  192.168.2.110  <none>  Ready   1           0
-    ------------------------------------------------------------------------------------
-    Allocated/Total GPUs In Cluster:
-    0/3 (0.0%)
-    ```
+```txt
+$ arena top node
+NAME                       IPADDRESS      ROLE    STATUS  GPU(Total)  GPU(Allocated)
+cn-hongkong.192.168.2.107  47.242.51.160  <none>  Ready   0           0
+cn-hongkong.192.168.2.108  192.168.2.108  <none>  Ready   1           0
+cn-hongkong.192.168.2.109  192.168.2.109  <none>  Ready   1           0
+cn-hongkong.192.168.2.110  192.168.2.110  <none>  Ready   1           0
+------------------------------------------------------------------------------------
+Allocated/Total GPUs In Cluster:
+0/3 (0.0%)
+```
 
-    We can see that there are 3 available nodes with GPU resources for running training jobs.
+We can see that there are 3 available nodes with GPU resources for running training jobs. Now we can submit a training job with `arena`, it will download the source code from github:
 
-2. Now we can submit a training job with `arena`, it will download the source code from github:
+```txt
+$ arena \
+    submit \
+    tfjob \
+    --gpus=1 \
+    --name=tf-standalone-test-with-git \
+    --env=TEST_TMPDIR=code/tensorflow-sample-code/ \
+    --sync-mode=git \
+    --sync-source=https://github.com/happy2048/tensorflow-sample-code.git \
+    --logdir=/training_logs \
+    --image="registry.cn-beijing.aliyuncs.com/ai-samples/tensorflow:1.5.0-devel-gpu" \
+    "'python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000'"
 
-    ```txt
-    $ arena \
-      submit \
-      tfjob \
-      --gpus=1 \
-      --name=tf-standalone-test-with-git \
-      --env=TEST_TMPDIR=code/tensorflow-sample-code/ \
-      --sync-mode=git \
-      --sync-source=https://github.com/happy2048/tensorflow-sample-code.git \
-      --logdir=/training_logs \
-      --image="registry.cn-beijing.aliyuncs.com/ai-samples/tensorflow:1.5.0-devel-gpu" \
-      "'python code/tensorflow-sample-code/tfjob/docker/mnist/main.py --max_steps 5000'"
-    
-    configmap/tf-git-tfjob created
-    configmap/tf-git-tfjob labeled
-    tfjob.kubeflow.org/tf-git created
-    INFO[0000] The Job tf-git has been submitted successfully
-    INFO[0000] You can run `arena get tf-git --type tfjob` to check the job status
-    ```
+configmap/tf-git-tfjob created
+configmap/tf-git-tfjob labeled
+tfjob.kubeflow.org/tf-git created
+INFO[0000] The Job tf-git has been submitted successfully
+INFO[0000] You can run `arena get tf-git --type tfjob` to check the job status
+```
 
 !!! note
 
