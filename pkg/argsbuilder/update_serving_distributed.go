@@ -66,18 +66,18 @@ func (s *UpdateDistributedServingArgsBuilder) AddCommandFlags(command *cobra.Com
 		s.subBuilders[name].AddCommandFlags(command)
 	}
 
-	command.Flags().IntVar(&s.args.Workers, "workers", 0, "the number of the worker pods")
-	command.Flags().StringVar(&s.args.MasterCpu, "master-cpu", "", "the cpu resource to use for the master pods, like 1 for 1 core")
+	command.Flags().IntVar(&s.args.Workers, "worker-num", 0, "the number of the worker pods")
+	command.Flags().StringVar(&s.args.MasterCpu, "leader-cpu", "", "the cpu resource to use for the leader pods, like 1 for 1 core")
 	command.Flags().StringVar(&s.args.WorkerCpu, "worker-cpu", "", "the cpu resource to use for the worker pods, like 1 for 1 core")
-	command.Flags().IntVar(&s.args.MasterGPUCount, "master-gpus", 0, "the gpu resource to use for the master pods, like 1 for 1 gpu")
-	command.Flags().IntVar(&s.args.WorkerGPUCount, "worker-gpus", 0, "the gpu resource to use for the master pods, like 1 for 1 gpu")
-	command.Flags().IntVar(&s.args.MasterGPUMemory, "master-gpumemory", 0, "the limit GPU memory of master pod to run the serve.")
+	command.Flags().IntVar(&s.args.MasterGPUCount, "leader-gpus", 0, "the gpu resource to use for the leader pods, like 1 for 1 gpu")
+	command.Flags().IntVar(&s.args.WorkerGPUCount, "worker-gpus", 0, "the gpu resource to use for the leader pods, like 1 for 1 gpu")
+	command.Flags().IntVar(&s.args.MasterGPUMemory, "leader-gpumemory", 0, "the limit GPU memory of leader pod to run the serve.")
 	command.Flags().IntVar(&s.args.WorkerGPUMemory, "worker-gpumemory", 0, "the limit GPU memory of each worker pods to run the serve.")
-	command.Flags().IntVar(&s.args.MasterGPUCore, "master-gpucore", 0, "the limit GPU core of master pod to run the serve.")
+	command.Flags().IntVar(&s.args.MasterGPUCore, "leader-gpucore", 0, "the limit GPU core of leader pod to run the serve.")
 	command.Flags().IntVar(&s.args.WorkerGPUCore, "worker-gpucore", 0, "the limit GPU core of each worker pods to run the serve.")
-	command.Flags().StringVar(&s.args.MasterMemory, "master-memory", "", "the memory resource to use for the master pods, like 1Gi")
+	command.Flags().StringVar(&s.args.MasterMemory, "leader-memory", "", "the memory resource to use for the leader pods, like 1Gi")
 	command.Flags().StringVar(&s.args.WorkerMemory, "worker-memory", "", "the memory resource to use for the worker pods, like 1Gi")
-	command.Flags().StringVar(&s.args.MasterCommand, "master-command", "", "the command to run for the master pod")
+	command.Flags().StringVar(&s.args.MasterCommand, "leader-command", "", "the command to run for the leader pod")
 	command.Flags().StringVar(&s.args.WorkerCommand, "worker-command", "", "the command to run of each worker pods")
 
 	_ = command.Flags().MarkHidden("cpu")
@@ -127,7 +127,7 @@ func (s *UpdateDistributedServingArgsBuilder) check() error {
 	}
 	if s.args.Command != "" {
 		if s.args.MasterCommand != "" || s.args.WorkerCommand != "" {
-			return fmt.Errorf("--command and --master-command/--worker-command can not be set at the same time")
+			return fmt.Errorf("--command and --leader-command/--worker-command can not be set at the same time")
 		}
 	}
 	return nil
