@@ -17,15 +17,16 @@ package util
 import (
 	"context"
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 const dns1123LabelFmt string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
@@ -61,23 +62,27 @@ func ValidatePriorityClassName(client *kubernetes.Clientset, name string) error 
 }
 
 func ValidateDevices(devices []string) error {
-	for _, member := range devices {
-		splits := strings.SplitN(member, "=", 2)
+	for _, device := range devices {
+		splits := strings.SplitN(device, "=", 2)
 		if len(splits) != 2 || len(splits[0]) == 0 || len(splits[1]) == 0 {
-			err := fmt.Errorf("Invalid device member %s, refer to amd.com/gpu=1.", member)
+			err := fmt.Errorf("Invalid device '%s', refer to amd.com/gpu=1.", device)
 			return err
 		}
-		if errs := validation.IsQualifiedName(splits[0]); len(errs) != 0 {
-			err := fmt.Errorf("Invalid device name %s is not Qualified", splits[0])
+
+		name, value := splits[0], splits[1]
+		if errs := validation.IsQualifiedName(name); len(errs) != 0 {
+			err := fmt.Errorf("Device name '%s' is not a qualified name.", name)
 			return err
 		}
-		_, err := strconv.Atoi(splits[1])
-		if err != nil {
-			err = fmt.Errorf("Invalid device value %s should be a number, refer to amd.com/gpu=1.", member)
+
+		if strings.EqualFold(name, types.NvidiaGPUResourceName) {
+			err := fmt.Errorf("Please use '--gpus %s' instead of '--device %s=%s'.", value, types.NvidiaGPUResourceName, value)
 			return err
 		}
-		if strings.EqualFold(splits[0], types.NvidiaGPUResourceName) {
-			err = fmt.Errorf("Invalid device member %s, use --gpus to set %s count.", types.NvidiaGPUResourceName, types.NvidiaGPUResourceName)
+
+		_, parseErr := resource.ParseQuantity(value)
+		if parseErr != nil {
+			err := fmt.Errorf("Device value '%s' is not a valid quantity, refer to amd.com/gpu=1.", device)
 			return err
 		}
 	}
