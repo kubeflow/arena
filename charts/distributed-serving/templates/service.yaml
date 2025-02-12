@@ -35,5 +35,5 @@ spec:
   selector:
     app: {{ template "distributed-serving.name" . }}
     release: {{ .Release.Name | quote }}
-    role: master
+    role: leader
 {{- end }}

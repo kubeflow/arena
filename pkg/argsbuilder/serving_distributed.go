@@ -66,21 +66,21 @@ func (s *DistributedServingArgsBuilder) AddCommandFlags(command *cobra.Command) 
 	for name := range s.subBuilders {
 		s.subBuilders[name].AddCommandFlags(command)
 	}
-	command.Flags().IntVar(&s.args.Masters, "masters", 1, "the number of the master pods (p.s. only support 1 master currently)")
-	command.Flags().IntVar(&s.args.Workers, "workers", 0, "the number of the worker pods")
-	command.Flags().StringVar(&s.args.MasterCpu, "master-cpu", "", "the cpu resource to use for the master pod, like 1 for 1 core")
+	command.Flags().IntVar(&s.args.Masters, "leader-num", 1, "the number of the leader pods (p.s. only support 1 leader currently)")
+	command.Flags().IntVar(&s.args.Workers, "worker-num", 0, "the number of the worker pods")
+	command.Flags().StringVar(&s.args.MasterCpu, "leader-cpu", "", "the cpu resource to use for the leader pod, like 1 for 1 core")
 	command.Flags().StringVar(&s.args.WorkerCpu, "worker-cpu", "", "the cpu resource to use for each worker pods, like 1 for 1 core")
-	command.Flags().IntVar(&s.args.MasterGPUCount, "master-gpus", 0, "the gpu resource to use for the master pod, like 1 for 1 gpu")
+	command.Flags().IntVar(&s.args.MasterGPUCount, "leader-gpus", 0, "the gpu resource to use for the leader pod, like 1 for 1 gpu")
 	command.Flags().IntVar(&s.args.WorkerGPUCount, "worker-gpus", 0, "the gpu resource to use for each worker pods, like 1 for 1 gpu")
-	command.Flags().StringVar(&s.args.MasterMemory, "master-memory", "", "the memory resource to use for the master pod, like 1Gi")
+	command.Flags().StringVar(&s.args.MasterMemory, "leader-memory", "", "the memory resource to use for the leader pod, like 1Gi")
 	command.Flags().StringVar(&s.args.WorkerMemory, "worker-memory", "", "the memory resource to use for the worker pods, like 1Gi")
-	command.Flags().IntVar(&s.args.MasterGPUMemory, "master-gpumemory", 0, "the limit GPU memory of master pod to run the serve")
+	command.Flags().IntVar(&s.args.MasterGPUMemory, "leader-gpumemory", 0, "the limit GPU memory of leader pod to run the serve")
 	command.Flags().IntVar(&s.args.WorkerGPUMemory, "worker-gpumemory", 0, "the limit GPU memory of each worker pods to run the serve")
-	command.Flags().IntVar(&s.args.MasterGPUCore, "master-gpucore", 0, "the limit GPU core of master pod to run the serve")
+	command.Flags().IntVar(&s.args.MasterGPUCore, "leader-gpucore", 0, "the limit GPU core of leader pod to run the serve")
 	command.Flags().IntVar(&s.args.WorkerGPUCore, "worker-gpucore", 0, "the limit GPU core of each worker pods to run the serve")
-	command.Flags().StringVar(&s.args.MasterCommand, "master-command", "", "the command to run for the master pod")
+	command.Flags().StringVar(&s.args.MasterCommand, "leader-command", "", "the command to run for the leader pod")
 	command.Flags().StringVar(&s.args.WorkerCommand, "worker-command", "", "the command to run of each worker pods")
-	command.Flags().StringVar(&s.args.InitBackend, "init-backend", "", "specity the init backend for distributed serving job. Currently only support ray. support: ray")
+	command.Flags().StringVar(&s.args.InitBackend, "init-backend", "", "specify the init backend for distributed serving job. Currently only support ray. support: ray")
 
 	_ = command.Flags().MarkHidden("cpu")
 	_ = command.Flags().MarkHidden("memory")
@@ -145,25 +145,25 @@ func (s *DistributedServingArgsBuilder) setNvidiaENV() error {
 
 func (s *DistributedServingArgsBuilder) check() error {
 	if s.args.Masters != 1 {
-		return fmt.Errorf("can not change master number, only support 1 master currently")
+		return fmt.Errorf("can not change leader number, only support 1 leader currently")
 	}
 	if s.args.Command != "" {
 		if s.args.MasterCommand != "" || s.args.WorkerCommand != "" {
-			return fmt.Errorf("--command and --master-command/--worker-command can not be set at the same time")
+			return fmt.Errorf("--command and --leader-command/--worker-command can not be set at the same time")
 		}
 	} else {
 		if s.args.MasterCommand == "" || s.args.WorkerCommand == "" {
-			return fmt.Errorf("--command or --master-command/--worker-command must be set")
+			return fmt.Errorf("--command or --leader-command/--worker-command must be set")
 		}
 	}
 	if s.args.MasterGPUCount < 0 || s.args.WorkerGPUCount < 0 {
-		return fmt.Errorf("--master-gpus/--worker-gpus is invalid")
+		return fmt.Errorf("--leader-gpus/--worker-gpus is invalid")
 	}
 	if s.args.MasterGPUMemory < 0 || s.args.WorkerGPUMemory < 0 {
-		return fmt.Errorf("--master-gpumemory/--worker-gpumemory is invalid")
+		return fmt.Errorf("--leader-gpumemory/--worker-gpumemory is invalid")
 	}
 	if s.args.MasterGPUCore < 0 || s.args.WorkerGPUCore < 0 {
-		return fmt.Errorf("--master-gpucore/--worker-gpucore is invalid")
+		return fmt.Errorf("--leader-gpucore/--worker-gpucore is invalid")
 	}
 	if s.args.InitBackend != "" {
 		if s.args.InitBackend != "ray" {

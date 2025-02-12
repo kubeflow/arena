@@ -55,7 +55,7 @@ spec:
           servingType: "distributed-serving"
           servingName: "{{ .Values.servingName }}"
           servingVersion: "{{ .Values.servingVersion }}"
-          role: "master"
+          role: "leader"
           {{- range $key, $value := .Values.labels }}
           {{ $key }}: {{ $value | quote }}
           {{- end }}
@@ -93,7 +93,7 @@ spec:
         {{- end }}
         {{- end }}
         containers:
-          - name: distributed-serving-master
+          - name: distributed-serving-leader
             image: {{ .Values.image }}
             {{- if .Values.imagePullPolicy }}
             imagePullPolicy: "{{ .Values.imagePullPolicy }}"
