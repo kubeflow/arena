@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.13.1](https://github.com/kubeflow/arena/tree/v0.13.1) (2025-01-13)
+
+### Misc
+
+- feat: add linux/arm64 support for tf-operator image ([#1238](https://github.com/kubeflow/arena/pull/1238) by [@ChenYi015](https://github.com/ChenYi015))
+- feat: add linux/arm64 support for mpi-operator image ([#1239](https://github.com/kubeflow/arena/pull/1239) by [@ChenYi015](https://github.com/ChenYi015))
+- feat: add linux/arm64 support for cron-operator image ([#1240](https://github.com/kubeflow/arena/pull/1240) by [@ChenYi015](https://github.com/ChenYi015))
+- feat: add linux/arm64 support for et-operator image ([#1241](https://github.com/kubeflow/arena/pull/1241) by [@ChenYi015](https://github.com/ChenYi015))
+- Add PyTorch mnist example ([#1237](https://github.com/kubeflow/arena/pull/1237) by [@ChenYi015](https://github.com/ChenYi015))
+- Update the version of elastic-job-supervisor in arena-artifacts ([#1247](https://github.com/kubeflow/arena/pull/1247) by [@AlanFokCo](https://github.com/AlanFokCo))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.13.0...v0.13.1)
+
 ## [v0.13.0](https://github.com/kubeflow/arena/tree/v0.13.0) (2024-12-23)
 
 ### New Features
