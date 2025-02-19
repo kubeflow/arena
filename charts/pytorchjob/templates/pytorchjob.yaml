@@ -31,6 +31,7 @@ spec:
     {{- if .Values.ttlSecondsAfterFinished }}
     ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
     {{- end }}
+    backoffLimit: {{ .Values.retry }}
 {{- else }}
   {{- if .Values.cleanPodPolicy }}
   cleanPodPolicy: {{ .Values.cleanPodPolicy }}
@@ -41,6 +42,7 @@ spec:
   {{- if .Values.ttlSecondsAfterFinished }}
   ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
   {{- end }}
+  backoffLimit: {{ .Values.retry }}
 {{- end }}
   pytorchReplicaSpecs:
     Master:
