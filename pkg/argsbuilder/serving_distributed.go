@@ -19,8 +19,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/spf13/cobra"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/common"
 )
 
 type DistributedServingArgsBuilder struct {
@@ -139,7 +141,7 @@ func (s *DistributedServingArgsBuilder) setNvidiaENV() error {
 	// Since master and worker share the same envs, but they may have
 	// different gpu resource, we delete the NVIDIA_VISIBLE_DEVICES env
 	// and set it in helm chart manually
-	delete(s.args.Envs, "NVIDIA_VISIBLE_DEVICES")
+	delete(s.args.Envs, common.ENV_NVIDIA_VISIBLE_DEVICES)
 	return nil
 }
 

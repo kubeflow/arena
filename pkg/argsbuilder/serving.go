@@ -24,15 +24,16 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/resource"
-
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/common"
+	"github.com/kubeflow/arena/pkg/util"
 )
 
 type ServingArgsBuilder struct {
@@ -685,10 +686,24 @@ func (s *ServingArgsBuilder) disabledNvidiaENVWithNoneGPURequest() error {
 	if s.args.Envs == nil {
 		s.args.Envs = map[string]string{}
 	}
-	if s.args.GPUCount == 0 && s.args.GPUMemory == 0 && s.args.GPUCore == 0 {
-		s.args.Envs["NVIDIA_VISIBLE_DEVICES"] = "void"
+
+	// Handle cloud vendor special configurations first.
+	if s.hasAliyunGPUConfig() {
+		return nil
 	}
+
+	// Handle general GPU logic.
+	if s.args.GPUCount == 0 && s.args.GPUMemory == 0 && s.args.GPUCore == 0 {
+		s.args.Envs[common.ENV_NVIDIA_VISIBLE_DEVICES] = "void"
+	}
+
 	return nil
+}
+
+// hasAliyunGPUConfig check whether args has labels/devices related to Aliyun GPU config
+func (s *ServingArgsBuilder) hasAliyunGPUConfig() bool {
+	return (s.args.Labels != nil && s.args.Labels[common.LABEL_ALIYUN_COM_GPU_COUNT] != "") ||
+		(s.args.Devices != nil && s.args.Devices[common.DEVICE_ALIYUN_COM_GPU_MEM] != "")
 }
 
 func (s *ServingArgsBuilder) checkGPUCore() error {
