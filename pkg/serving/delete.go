@@ -27,7 +27,7 @@ func DeleteServingJob(namespace, name, version string, jobType types.ServingJobT
 	job, err := SearchServingJob(namespace, name, version, jobType)
 	if err != nil {
 		if strings.Contains(err.Error(), "Not found serving job") {
-			log.Infof("The serving job '%v' doest not exist,skip to delete it.", name)
+			log.Infof("The serving job '%v' does not exist,skip to delete it.", name)
 			return nil
 		}
 		return err

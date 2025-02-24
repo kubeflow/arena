@@ -16,7 +16,7 @@ package types
 type SubmitTFJobArgs struct {
 	// TFNodeSelectors assigns tfjob node selectors
 	TFNodeSelectors map[string]map[string]string `yaml:"tfNodeSelectors"`
-	// Port defines the defaut port if workerPort and PSPort are not set
+	// Port defines the default port if workerPort and PSPort are not set
 	Port int
 	// WorkerImage assigns worker image,match option --worker-image
 	WorkerImage string `yaml:"workerImage"`
@@ -33,9 +33,9 @@ type SubmitTFJobArgs struct {
 	// WorkerCpuLimit stores the cpu limit of job worker,match option --worker-cpu-limit
 	WorkerCpuLimit string `yaml:"workerCPULimit"`
 	//WorkerNodeSelectors map[string]string `yaml:"workerNodeSelectors"` // --worker-selector
-	// WorkerMemory stores woker memory,match option --worker-memory
+	// WorkerMemory stores worker memory,match option --worker-memory
 	WorkerMemory string `yaml:"workerMemory"`
-	// WorkerMemoryLimit stores woker memory limit,match option --worker-memory-limit
+	// WorkerMemoryLimit stores worker memory limit,match option --worker-memory-limit
 	WorkerMemoryLimit string `yaml:"workerMemoryLimit"`
 	// PSCpu stores ps cpu,match option --ps-cpu
 	PSCpu string `yaml:"psCPU"`
