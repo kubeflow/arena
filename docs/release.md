@@ -79,7 +79,7 @@ After `VERSION` file is modified and pushed to the master branch, a release work
 
     python hack/generate-changelog.py \
         --token=${GH_TOKEN} \
-        --range=${PREVIOUS_RELEASE}..<CURRENT_RELEASE>
+        --range=${PREVIOUS_RELEASE}..${CURRENT_RELEASE}
     ```
 
 2. Group PRs in the `CHANGELOG.md` file into **Features**, **Bug Fixes** and **Misc**, etc.
