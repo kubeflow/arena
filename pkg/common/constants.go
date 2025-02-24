@@ -18,12 +18,8 @@ package common
 
 const (
 	LABEL_ALIYUN_COM_GPU_COUNT = "aliyun.com/gpu-count"
-)
 
-const (
 	ENV_NVIDIA_VISIBLE_DEVICES = "NVIDIA_VISIBLE_DEVICES"
-)
 
-const (
 	DEVICE_ALIYUN_COM_GPU_MEM = "aliyun.com/gpu-mem"
 )
