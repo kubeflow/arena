@@ -77,7 +77,7 @@ spec:
                       template:
                         description: Template is the object that describes the pod
                           that will be created for this replica. RestartPolicy in
-                          PodTemplateSpec will be overide by RestartPolicy in ReplicaSpec
+                          PodTemplateSpec will be override by RestartPolicy in ReplicaSpec
                         properties:
                           metadata:
                             description: 'Standard object''s metadata. More info:
@@ -6637,7 +6637,7 @@ spec:
                       template:
                         description: Template is the object that describes the pod
                           that will be created for this replica. RestartPolicy in
-                          PodTemplateSpec will be overide by RestartPolicy in ReplicaSpec
+                          PodTemplateSpec will be override by RestartPolicy in ReplicaSpec
                         properties:
                           metadata:
                             description: 'Standard object''s metadata. More info:

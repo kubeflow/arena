@@ -31,7 +31,7 @@ import (
 
 const dns1123LabelFmt string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
 
-// Job Max lenth should be 49
+// Job Max length should be 49
 const JobMaxLength int = 49
 
 var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")

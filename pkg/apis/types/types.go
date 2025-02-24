@@ -29,7 +29,7 @@ const (
 	JsonFormat FormatStyle = "json"
 	// Yaml defines the yaml format
 	YamlFormat FormatStyle = "yaml"
-	// Unknwon defines the unknown format
+	// Unknown defines the unknown format
 	UnknownFormat FormatStyle = "unknown"
 )
 

@@ -33,11 +33,11 @@ func AcceptJobLog(name, version string, jobType types.ServingJobType, args *type
 		return fmt.Errorf("not found instances of serving job,please use 'arena serve get %v' to get job information", name)
 	}
 	// 2.if instance name is null and job has more than one instance,return an error
-	// push user to slelect one
+	// push user to select one
 	if len(jobInfo.Instances) > 1 && args.InstanceName == "" {
 		return fmt.Errorf("%v", moreThanOneInstanceHelpInfo(jobInfo.Instances))
 	}
-	// 3.if user not specifiy the instance name and the job has only one instance name,pick the instance
+	// 3.if user not specify the instance name and the job has only one instance name,pick the instance
 	if args.InstanceName == "" {
 		args.InstanceName = jobInfo.Instances[0].Name
 	}

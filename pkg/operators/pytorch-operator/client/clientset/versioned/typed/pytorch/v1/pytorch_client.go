@@ -64,7 +64,7 @@ func New(c rest.Interface) *KubeflowV1Client {
 	return &KubeflowV1Client{c}
 }
 
-// This funtion (from tensorflow_client.go)  does not depend on k8s.io/apimachinery v0.15.9
+// This function (from tensorflow_client.go)  does not depend on k8s.io/apimachinery v0.15.9
 func setConfigDefaults(config *rest.Config) error {
 	gv := v1.SchemeGroupVersion
 	config.GroupVersion = &gv

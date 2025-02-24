@@ -78,7 +78,7 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 		return k8sClusterUsedPorts, err
 	}
 	for _, pod := range pods.Items {
-		// fileter pod
+		// filter pod
 		if excludeInactivePod(&pod) {
 			continue
 		}

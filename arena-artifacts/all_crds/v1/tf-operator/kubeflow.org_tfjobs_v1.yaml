@@ -98,7 +98,7 @@ spec:
                     template:
                       description: |-
                         Describes the pod that will be created for this replica. Note that
-                        RestartPolicy in PodTemplateSpec will be overidden by RestartPolicy in ReplicaSpec.
+                        RestartPolicy in PodTemplateSpec will be overridden by RestartPolicy in ReplicaSpec.
                       properties:
                         metadata:
                           description: |-
