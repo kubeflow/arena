@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.14.1](https://github.com/kubeflow/arena/tree/v0.14.1) (2025-02-24)
+
+### Bug Fixes
+
+- fix: device value does not support k8s resource quantity ([#1267](https://github.com/kubeflow/arena/pull/1267) by [@ChenYi015](https://github.com/ChenYi015))
+- fix: pytorchjob does not support backoff limit ([#1272](https://github.com/kubeflow/arena/pull/1272) by [@ChenYi015](https://github.com/ChenYi015))
+- unset env NVIDIA_VISIBLE_DEVICES when gpushare is enabled ([#1273](https://github.com/kubeflow/arena/pull/1273) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Misc
+
+- docs: fixed typo ([#1257](https://github.com/kubeflow/arena/pull/1257) by [@DBMxrco](https://github.com/DBMxrco))
+- Bump github.com/golang/glog from 1.2.3 to 1.2.4 ([#1263](https://github.com/kubeflow/arena/pull/1263) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- fix: format of tensorflow standalone training docs is messed up ([#1265](https://github.com/kubeflow/arena/pull/1265) by [@ChenYi015](https://github.com/ChenYi015))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.14.0...v0.14.1)
+
 ## [v0.14.0](https://github.com/kubeflow/arena/tree/v0.14.0) (2025-02-12)
 
 ### Features
