@@ -23,11 +23,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/common"
+	"github.com/kubeflow/arena/pkg/util"
 )
 
 type SubmitArgsBuilder struct {
@@ -628,10 +630,24 @@ func (s *SubmitArgsBuilder) disabledNvidiaENVWithNoneGPURequest() error {
 	if s.args.Envs == nil {
 		s.args.Envs = map[string]string{}
 	}
-	if s.args.GPUCount == 0 {
-		s.args.Envs["NVIDIA_VISIBLE_DEVICES"] = "void"
+
+	// Handle cloud vendor special configurations first.
+	if s.hasAliyunGPUConfig() {
+		return nil
 	}
+
+	// Handle general GPU logic.
+	if s.args.GPUCount == 0 {
+		s.args.Envs[common.ENV_NVIDIA_VISIBLE_DEVICES] = "void"
+	}
+
 	return nil
+}
+
+// hasAliyunGPUConfig check whether args has labels/devices related to Aliyun GPU config.
+func (s *SubmitArgsBuilder) hasAliyunGPUConfig() bool {
+	return (s.args.Labels != nil && s.args.Labels[common.LABEL_ALIYUN_COM_GPU_COUNT] != "") ||
+		(s.args.Devices != nil && s.args.Devices[common.DEVICE_ALIYUN_COM_GPU_MEM] != "")
 }
 
 func (s *SubmitArgsBuilder) setJobInfoToEnv() error {
