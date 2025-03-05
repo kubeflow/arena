@@ -149,7 +149,7 @@ type DataDirVolume struct {
 	Name string `yaml:"name"`
 }
 
-// LimitedPodSecurityContext defines the kuberntes pod security context
+// LimitedPodSecurityContext defines the kubernetes pod security context
 type LimitedPodSecurityContext struct {
 	RunAsUser          int64   `yaml:"runAsUser"`
 	RunAsNonRoot       bool    `yaml:"runAsNonRoot"`

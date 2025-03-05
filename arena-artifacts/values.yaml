@@ -10,7 +10,7 @@ global:
   imagePrefix: registry-cn-zhangjiakou.ack.aliyuncs.com
   # the cluster type
   clusterProfile: "Default"
-  # specfiy the nodeSelector for all operator pods
+  # specify the nodeSelector for all operator pods
   nodeSelector: {}
   namespace: "arena-system"
 

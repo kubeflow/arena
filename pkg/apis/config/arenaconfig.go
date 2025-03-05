@@ -47,7 +47,7 @@ var errInitArenaClient error
 
 var once sync.Once
 
-// InitArenaConfiger initilize
+// InitArenaConfiger initialize
 func InitArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 	once.Do(func() {
 		arenaClient, errInitArenaClient = newArenaConfiger(args)
@@ -58,8 +58,8 @@ func InitArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 // GetArenaConfiger returns the arena configer,it must be invoked after invoking function InitArenaConfiger(...)
 func GetArenaConfiger() *ArenaConfiger {
 	if arenaClient == nil {
-		err := fmt.Errorf("ArenaClient is not initilized,but you want to get it")
-		log.Errorf("Arena Client is not initilized,please use function InitArenaClient(...) to init it")
+		err := fmt.Errorf("ArenaClient is not initialized,but you want to get it")
+		log.Errorf("Arena Client is not initialized,please use function InitArenaClient(...) to init it")
 		panic(err)
 	}
 	return arenaClient
