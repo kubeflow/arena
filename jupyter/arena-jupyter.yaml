@@ -110,7 +110,7 @@ metadata:
     app: arena-notebook
 spec:
   replicas: 1
-  selector: # define how the deployment finds the pods it mangages
+  selector: # define how the deployment finds the pods it manages
     matchLabels:
       app: arena-notebook
   template: # define the pods specifications

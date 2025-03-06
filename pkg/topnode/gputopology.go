@@ -129,7 +129,7 @@ func (g *gputopo) getUnhealthyGPUs() float64 {
 
 func (g *gputopo) convert2NodeInfo() types.GPUTopologyNodeInfo {
 	podInfos := []types.GPUTopologyPodInfo{}
-	// 1.initilize the common node information
+	// 1.initialize the common node information
 	gpuTopologyNodeInfo := types.GPUTopologyNodeInfo{
 		CommonNodeInfo: types.CommonNodeInfo{
 			Name:        g.Name(),
@@ -192,7 +192,7 @@ func (g *gputopo) convert2NodeInfo() types.GPUTopologyNodeInfo {
 			VisibleGPUs: visibleGPUs,
 		})
 	}
-	// 4.parse gpu topology from field "bandwith" and field "linkType" of configmap
+	// 4.parse gpu topology from field "bandwidth" and field "linkType" of configmap
 	topology := types.GPUTopology{
 		LinkMatrix:      [][]string{},
 		BandwidthMatrix: [][]float32{},
@@ -200,7 +200,7 @@ func (g *gputopo) convert2NodeInfo() types.GPUTopologyNodeInfo {
 	if val, ok := g.configmap.Data["linkType"]; ok {
 		_ = json.Unmarshal([]byte(val), &topology.LinkMatrix)
 	}
-	if val, ok := g.configmap.Data["bandwith"]; ok {
+	if val, ok := g.configmap.Data["bandwidth"]; ok {
 		_ = json.Unmarshal([]byte(val), &topology.BandwidthMatrix)
 	}
 	gpuTopologyNodeInfo.PodInfos = podInfos

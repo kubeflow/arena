@@ -360,7 +360,7 @@ func (m *ModelArgsBuilder) preprocess() (err error) {
 	} else {
 		//populate content from modelConfigFile
 		if m.args.ModelName != "" {
-			log.Infof("modelConfigFile=%s is specified, so --model-name will be ingored", m.args.ModelConfigFile)
+			log.Infof("modelConfigFile=%s is specified, so --model-name will be ignored", m.args.ModelConfigFile)
 		}
 		if m.args.ModelPath != "" {
 			log.Infof("modelConfigFile=%s is specified, so --model-path will be ignored", m.args.ModelConfigFile)

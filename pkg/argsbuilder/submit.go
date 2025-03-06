@@ -134,7 +134,7 @@ func (s *SubmitArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	// add option --selector,its' value will be get from viper
 	command.Flags().StringArrayVar(&nodeSelectors, "selector", []string{}, `assigning jobs to some k8s particular nodes, usage: "--selector=key=value" or "--selector key=value" `)
 	// add option --config-file its' value will be get from viper
-	command.Flags().StringArrayVar(&configFiles, "config-file", []string{}, `giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"`)
+	command.Flags().StringArrayVar(&configFiles, "config-file", []string{}, `giving configuration files when submitting jobs,usage:"--config-file <host_path_file>:<container_path_file>"`)
 	// add option --image-pull-secret its' value will be get from viper,Using a Private Registry
 	command.Flags().StringArrayVar(&imagePullSecrets, "image-pull-secret", []string{}, `giving names of imagePullSecret when you want to use a private registry, usage:"--image-pull-secret <name1>"`)
 	// add option --image-pull-policy it's value will be get from IfNotPresent, Always, Never. Default Always.

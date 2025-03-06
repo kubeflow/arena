@@ -176,7 +176,7 @@ func TransferPrintFormat(format string) types.FormatStyle {
 	return types.UnknownFormat
 }
 
-// print the help infomation
+// print the help information
 func PrintErrorMessage(message string) {
 	if strings.Contains(message, "please use '--type' or '--version' to filter.") {
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
