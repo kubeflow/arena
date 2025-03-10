@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.14.2](https://github.com/kubeflow/arena/tree/v0.14.2) (2025-03-10)
+
+### Misc
+
+- Fix typos ([#1276](https://github.com/kubeflow/arena/pull/1276) by [@co63oc](https://github.com/co63oc))
+- Update pytorch operator image ([#1281](https://github.com/kubeflow/arena/pull/1281) by [@ChenYi015](https://github.com/ChenYi015))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.14.1...v0.14.2)
+
 ## [v0.14.1](https://github.com/kubeflow/arena/tree/v0.14.1) (2025-02-24)
 
 ### Bug Fixes
