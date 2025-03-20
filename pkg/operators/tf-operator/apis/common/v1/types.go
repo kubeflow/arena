@@ -14,7 +14,7 @@
 package v1
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -107,6 +107,9 @@ const (
 	// but one or more of the pods/services has not been started.
 	// This includes time before pods being scheduled and launched.
 	JobCreated JobConditionType = "Created"
+
+	// JobQueuing means the job has been in the queue and is waiting to dequeue.
+	JobQueuing JobConditionType = "Queuing"
 
 	// JobRunning means all sub-resources (e.g. services/pods) of this job
 	// have been successfully scheduled and launched.

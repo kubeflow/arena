@@ -18,24 +18,20 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
+	"time"
 
-	"github.com/kubeflow/arena/pkg/operators/tf-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"time"
-
-	commonv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
-	tfv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1"
-
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
-	//k8stypes "k8s.io/apimachinery/pkg/types"
+	commonv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
+	tfv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/tensorflow/v1"
+	"github.com/kubeflow/arena/pkg/operators/tf-operator/client/clientset/versioned"
 )
 
 const (
@@ -94,20 +90,17 @@ func (tj *TensorFlowJob) GetLabels() map[string]string {
 	return tj.tfjob.Labels
 }
 
-// GetStatus returns the status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
-func (tj *TensorFlowJob) GetStatus() (status string) {
-	status = "PENDING"
+// GetStatus returns the status of the Job i.e. QUEUING, PENDING, RUNNING, SUCCEEDED and FAILED.
+func (tj *TensorFlowJob) GetStatus() string {
+	status := string(types.TrainingJobPending)
+	defer log.Debugf("Get status of TFJob %s: %s", tj.tfjob.Name, status)
+
 	if tj.tfjob.Name == "" {
-		return status
+		return string(status)
 	}
-	t := checkStatus(tj.tfjob.Status)
-	switch t {
-	case commonv1.JobCreated, commonv1.JobRestarting:
-		status = "PENDING"
-	default:
-		status = strings.ToUpper(string(t))
-	}
-	return status
+
+	status = getStatus(tj.tfjob.Status)
+	return string(status)
 }
 
 // StartTime returns the start time
@@ -433,17 +426,29 @@ func makeJobStatusSortedByTime(conditions []commonv1.JobCondition) []commonv1.Jo
 	return []commonv1.JobCondition(newConditions)
 }
 
-func checkStatus(status commonv1.JobStatus) commonv1.JobConditionType {
-	t := commonv1.JobConditionType("Pending")
+// getStatus returns the status of the Job i.e. PENDING, QUEUING, RUNNING, SUCCEEDED and FAILED.
+func getStatus(status commonv1.JobStatus) string {
+	s := types.TrainingJobPending
+	if hasCondition(status, commonv1.JobSucceeded) {
+		s = types.TrainingJobSucceeded
+	} else if hasCondition(status, commonv1.JobFailed) {
+		s = types.TrainingJobFailed
+	} else if hasCondition(status, commonv1.JobRunning) {
+		s = types.TrainingJobRunning
+	} else if hasCondition(status, commonv1.JobQueuing) {
+		s = types.TrainingJobQueuing
+	}
+	return string(s)
+}
+
+// hasCondition checks if the given job status has the condition type.
+func hasCondition(status commonv1.JobStatus, condType commonv1.JobConditionType) bool {
 	for _, condition := range status.Conditions {
-		if condition.Status == v1.ConditionTrue {
-			t = condition.Type
-			if condition.Type != "Queuing" {
-				break
-			}
+		if condition.Type == condType && condition.Status == v1.ConditionTrue {
+			return true
 		}
 	}
-	return t
+	return false
 }
 
 func getPodsOfTFJob(tt *TensorFlowJobTrainer, tfjob *tfv1.TFJob, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {

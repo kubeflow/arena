@@ -17,23 +17,19 @@ package training
 import (
 	"context"
 	"fmt"
-	"strings"
-
-	commonv1 "github.com/kubeflow/arena/pkg/operators/tf-operator/apis/common/v1"
-
 	"time"
 
-	"github.com/kubeflow/arena/pkg/apis/config"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/kubeflow/arena/pkg/apis/utils"
-	"github.com/kubeflow/arena/pkg/k8saccesser"
-	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/kubeflow/arena/pkg/apis/config"
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/apis/utils"
+	"github.com/kubeflow/arena/pkg/k8saccesser"
 	pytorchv1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
+	"github.com/kubeflow/arena/pkg/operators/pytorch-operator/client/clientset/versioned"
 )
 
 const (
@@ -86,21 +82,16 @@ func (pj *PyTorchJob) GetLabels() map[string]string {
 	return pj.pytorchjob.Labels
 }
 
-// Get the Status of the Job: RUNNING, PENDING, SUCCEEDED, FAILED
-func (pj *PyTorchJob) GetStatus() (status string) {
-	status = "PENDING"
-	pytorchjob := pj.pytorchjob
-	if pytorchjob.Name == "" {
+// GetStatus returns the status of the Job i.e. QUEUING, PENDING, RUNNING, SUCCEEDED and FAILED.
+func (pj *PyTorchJob) GetStatus() string {
+	status := string(types.TrainingJobPending)
+	defer log.Debugf("Get status of PyTorchJob %s: %s", pj.pytorchjob.Name, status)
+
+	if pj.pytorchjob.Name == "" {
 		return status
 	}
 
-	p := checkStatus(pytorchjob.Status)
-	if p == commonv1.JobCreated || p == commonv1.JobRestarting {
-		status = "PENDING"
-	} else {
-		status = strings.ToUpper(string(p))
-	}
-
+	status = getStatus(pj.pytorchjob.Status)
 	return status
 }
 
