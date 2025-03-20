@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -91,17 +90,17 @@ func (tj *TensorFlowJob) GetLabels() map[string]string {
 	return tj.tfjob.Labels
 }
 
-// GetStatus returns the status of the Job i.e. PENDING, QUEUING, RUNNING, SUCCEEDED and FAILED.
+// GetStatus returns the status of the Job i.e. QUEUING, PENDING, RUNNING, SUCCEEDED and FAILED.
 func (tj *TensorFlowJob) GetStatus() string {
-	status := "PENDING"
+	status := string(types.TrainingJobPending)
 	defer log.Debugf("Get status of TFJob %s: %s", tj.tfjob.Name, status)
 
 	if tj.tfjob.Name == "" {
-		return status
+		return string(status)
 	}
 
 	status = getStatus(tj.tfjob.Status)
-	return status
+	return string(status)
 }
 
 // StartTime returns the start time
@@ -429,20 +428,17 @@ func makeJobStatusSortedByTime(conditions []commonv1.JobCondition) []commonv1.Jo
 
 // getStatus returns the status of the Job i.e. PENDING, QUEUING, RUNNING, SUCCEEDED and FAILED.
 func getStatus(status commonv1.JobStatus) string {
-	var s string
+	s := types.TrainingJobPending
 	if hasCondition(status, commonv1.JobSucceeded) {
-		s = string(commonv1.JobSucceeded)
+		s = types.TrainingJobSucceeded
 	} else if hasCondition(status, commonv1.JobFailed) {
-		s = string(commonv1.JobFailed)
+		s = types.TrainingJobFailed
 	} else if hasCondition(status, commonv1.JobRunning) {
-		s = string(commonv1.JobRunning)
-	} else if hasCondition(status, commonv1.JobConditionType("Queuing")) {
-		s = "Queuing"
-	} else {
-		s = "Pending"
+		s = types.TrainingJobRunning
+	} else if hasCondition(status, commonv1.JobQueuing) {
+		s = types.TrainingJobQueuing
 	}
-	s = strings.ToUpper(s)
-	return s
+	return string(s)
 }
 
 // hasCondition checks if the given job status has the condition type.

@@ -82,9 +82,9 @@ func (pj *PyTorchJob) GetLabels() map[string]string {
 	return pj.pytorchjob.Labels
 }
 
-// GetStatus returns the status of the Job i.e. PENDING, QUEUING, RUNNING, SUCCEEDED and FAILED.
+// GetStatus returns the status of the Job i.e. QUEUING, PENDING, RUNNING, SUCCEEDED and FAILED.
 func (pj *PyTorchJob) GetStatus() string {
-	status := "PENDING"
+	status := string(types.TrainingJobPending)
 	defer log.Debugf("Get status of PyTorchJob %s: %s", pj.pytorchjob.Name, status)
 
 	if pj.pytorchjob.Name == "" {
