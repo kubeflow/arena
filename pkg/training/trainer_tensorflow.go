@@ -93,10 +93,15 @@ func (tj *TensorFlowJob) GetLabels() map[string]string {
 
 // GetStatus returns the status of the Job i.e. PENDING, QUEUING, RUNNING, SUCCEEDED and FAILED.
 func (tj *TensorFlowJob) GetStatus() string {
+	status := "PENDING"
+	defer log.Debugf("Get status of TFJob %s: %s", tj.tfjob.Name, status)
+
 	if tj.tfjob.Name == "" {
-		return "PENDING"
+		return status
 	}
-	return getStatus(tj.tfjob.Status)
+
+	status = getStatus(tj.tfjob.Status)
+	return status
 }
 
 // StartTime returns the start time
@@ -436,7 +441,8 @@ func getStatus(status commonv1.JobStatus) string {
 	} else {
 		s = "Pending"
 	}
-	return strings.ToUpper(s)
+	s = strings.ToUpper(s)
+	return s
 }
 
 // hasCondition checks if the given job status has the condition type.

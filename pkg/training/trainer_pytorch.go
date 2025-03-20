@@ -83,12 +83,16 @@ func (pj *PyTorchJob) GetLabels() map[string]string {
 }
 
 // GetStatus returns the status of the Job i.e. PENDING, QUEUING, RUNNING, SUCCEEDED and FAILED.
-func (pj *PyTorchJob) GetStatus() (status string) {
-	pytorchjob := pj.pytorchjob
-	if pytorchjob.Name == "" {
-		return "PENDING"
+func (pj *PyTorchJob) GetStatus() string {
+	status := "PENDING"
+	defer log.Debugf("Get status of PyTorchJob %s: %s", pj.pytorchjob.Name, status)
+
+	if pj.pytorchjob.Name == "" {
+		return status
 	}
-	return getStatus(pytorchjob.Status)
+
+	status = getStatus(pj.pytorchjob.Status)
+	return status
 }
 
 // Get the start time
