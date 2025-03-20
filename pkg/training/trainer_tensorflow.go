@@ -434,10 +434,10 @@ func getStatus(status commonv1.JobStatus) string {
 		s = string(commonv1.JobSucceeded)
 	} else if hasCondition(status, commonv1.JobFailed) {
 		s = string(commonv1.JobFailed)
-	} else if hasCondition(status, commonv1.JobConditionType("Queuing")) {
-		s = "Queuing"
 	} else if hasCondition(status, commonv1.JobRunning) {
 		s = string(commonv1.JobRunning)
+	} else if hasCondition(status, commonv1.JobConditionType("Queuing")) {
+		s = "Queuing"
 	} else {
 		s = "Pending"
 	}
