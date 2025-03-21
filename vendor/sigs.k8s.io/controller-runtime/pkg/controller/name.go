@@ -14,6 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package config contains functionality for interacting with
-// configuration for controller-runtime components.
-package config
+package controller
+
+import (
+	"fmt"
+	"sync"
+
+	"k8s.io/apimachinery/pkg/util/sets"
+)
+
+var nameLock sync.Mutex
+var usedNames sets.Set[string]
+
+func checkName(name string) error {
+	nameLock.Lock()
+	defer nameLock.Unlock()
+	if usedNames == nil {
+		usedNames = sets.Set[string]{}
+	}
+
+	if usedNames.Has(name) {
+		return fmt.Errorf("controller with name %s already exists. Controller names must be unique to avoid multiple controllers reporting to the same metric", name)
+	}
+
+	usedNames.Insert(name)
+
+	return nil
+}
