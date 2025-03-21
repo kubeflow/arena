@@ -15,15 +15,16 @@
 package commands
 
 import (
+	"github.com/spf13/cobra"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
 	"github.com/kubeflow/arena/pkg/commands/cron"
-	datacommand "github.com/kubeflow/arena/pkg/commands/data"
+	"github.com/kubeflow/arena/pkg/commands/data"
 	"github.com/kubeflow/arena/pkg/commands/evaluate"
 	"github.com/kubeflow/arena/pkg/commands/model"
 	"github.com/kubeflow/arena/pkg/commands/serving"
-	topcommand "github.com/kubeflow/arena/pkg/commands/top"
+	"github.com/kubeflow/arena/pkg/commands/top"
 	"github.com/kubeflow/arena/pkg/commands/training"
-	"github.com/spf13/cobra"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 const (
@@ -49,6 +50,7 @@ func NewCommand() *cobra.Command {
 	command.PersistentFlags().String("arena-namespace", "arena-system", "The namespace of arena system service, like tf-operator")
 	command.PersistentFlags().String("config", "", "Path to a kube config. Only required if out-of-cluster")
 	command.PersistentFlags().StringP("namespace", "n", "", "the namespace of the job")
+	command.PersistentFlags().Bool("helm-binary", false, "use helm binary to submit job")
 	command.AddCommand(training.NewSubmitCommand())
 	command.AddCommand(training.NewScaleOutCommand())
 	command.AddCommand(training.NewScaleInCommand())
@@ -60,9 +62,9 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(training.NewLogViewerCommand())
 	command.AddCommand(training.NewLogsCommand())
 	command.AddCommand(training.NewDeleteCommand())
-	command.AddCommand(topcommand.NewTopCommand())
+	command.AddCommand(top.NewTopCommand())
 	command.AddCommand(NewVersionCmd(CLIName))
-	command.AddCommand(datacommand.NewDataCommand())
+	command.AddCommand(data.NewDataCommand())
 	command.AddCommand(cron.NewCronCommand())
 	command.AddCommand(NewCompletionCommand())
 	command.AddCommand(evaluate.NewEvaluateCommand())

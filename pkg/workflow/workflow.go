@@ -22,6 +22,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util/kubeclient"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -72,7 +73,13 @@ func SubmitOps(name string, trainingType string, namespace string, values interf
 	}
 
 	// 2. Generate Template file
-	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart, options...)
+	helmBinary := viper.GetBool("helm-binary")
+	var template string
+	if helmBinary {
+		template, err = helm.GenerateHelmTemplateLegacy(name, namespace, valueFileName, chart, options...)
+	} else {
+		template, err = helm.GenerateHelmTemplate(name, namespace, valueFileName, chart, options...)
+	}
 	if err != nil {
 		return err
 	}
@@ -138,7 +145,13 @@ func SubmitJob(name string, trainingType string, namespace string, values interf
 	}
 
 	// 2. Generate Template file
-	template, err := helm.GenerateHelmTemplate(name, namespace, valueFileName, chart, options...)
+	helmBinary := viper.GetBool("helm-binary")
+	var template string
+	if helmBinary {
+		template, err = helm.GenerateHelmTemplateLegacy(name, namespace, valueFileName, chart, options...)
+	} else {
+		template, err = helm.GenerateHelmTemplate(name, namespace, valueFileName, chart, options...)
+	}
 	if err != nil {
 		return err
 	}

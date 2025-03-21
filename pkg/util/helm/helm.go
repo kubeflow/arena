@@ -22,7 +22,6 @@ import (
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var helmCmd = []string{"arena-helm"}
@@ -221,20 +220,4 @@ func ListAllReleasesWithDetail() (releaseMap map[string][]string, err error) {
 	}
 
 	return releaseMap, nil
-}
-
-func toYaml(values interface{}, file *os.File) error {
-	log.Debugf("values: %+v", values)
-	data, err := yaml.Marshal(values)
-	if err != nil {
-		log.Errorf("Failed to marshal value %v due to %v", values, err)
-		return err
-	}
-
-	defer file.Close()
-	_, err = file.Write(data)
-	if err != nil {
-		log.Errorf("Failed to write %v to %s due to %v", data, file.Name(), err)
-	}
-	return err
 }
