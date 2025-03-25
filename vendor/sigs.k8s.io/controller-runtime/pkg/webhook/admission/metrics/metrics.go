@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The Kubernetes Authors.
+Copyright 2024 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,29 +18,22 @@ package metrics
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 var (
-	// ReadCertificateTotal is a prometheus counter metrics which holds the total
-	// number of certificate reads.
-	ReadCertificateTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "certwatcher_read_certificate_total",
-		Help: "Total number of certificate reads",
-	})
-
-	// ReadCertificateErrors is a prometheus counter metrics which holds the total
-	// number of errors from certificate read.
-	ReadCertificateErrors = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "certwatcher_read_certificate_errors_total",
-		Help: "Total number of certificate read errors",
-	})
+	// WebhookPanics is a prometheus counter metrics which holds the total
+	// number of panics from webhooks.
+	WebhookPanics = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "controller_runtime_webhook_panics_total",
+		Help: "Total number of webhook panics",
+	}, []string{})
 )
 
 func init() {
 	metrics.Registry.MustRegister(
-		ReadCertificateTotal,
-		ReadCertificateErrors,
+		WebhookPanics,
 	)
+	// Init metric.
+	WebhookPanics.WithLabelValues().Add(0)
 }

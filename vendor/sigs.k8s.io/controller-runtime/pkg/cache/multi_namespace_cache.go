@@ -163,12 +163,13 @@ func (c *multiNamespaceCache) GetInformerForKind(ctx context.Context, gvk schema
 }
 
 func (c *multiNamespaceCache) Start(ctx context.Context) error {
+	errs := make(chan error)
 	// start global cache
 	if c.clusterCache != nil {
 		go func() {
 			err := c.clusterCache.Start(ctx)
 			if err != nil {
-				log.Error(err, "cluster scoped cache failed to start")
+				errs <- fmt.Errorf("failed to start cluster-scoped cache: %w", err)
 			}
 		}()
 	}
@@ -177,13 +178,16 @@ func (c *multiNamespaceCache) Start(ctx context.Context) error {
 	for ns, cache := range c.namespaceToCache {
 		go func(ns string, cache Cache) {
 			if err := cache.Start(ctx); err != nil {
-				log.Error(err, "multi-namespace cache failed to start namespaced informer", "namespace", ns)
+				errs <- fmt.Errorf("failed to start cache for namespace %s: %w", ns, err)
 			}
 		}(ns, cache)
 	}
-
-	<-ctx.Done()
-	return nil
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-errs:
+		return err
+	}
 }
 
 func (c *multiNamespaceCache) WaitForCacheSync(ctx context.Context) bool {
@@ -258,6 +262,9 @@ func (c *multiNamespaceCache) List(ctx context.Context, list client.ObjectList, 
 	if listOpts.Namespace != corev1.NamespaceAll {
 		cache, ok := c.namespaceToCache[listOpts.Namespace]
 		if !ok {
+			if global, hasGlobal := c.namespaceToCache[AllNamespaces]; hasGlobal {
+				return global.List(ctx, list, opts...)
+			}
 			return fmt.Errorf("unable to list: %v because of unknown namespace for the cache", listOpts.Namespace)
 		}
 		return cache.List(ctx, list, opts...)
