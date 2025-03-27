@@ -73,11 +73,18 @@ const (
 	AgentModelDirArgName  = "--model-dir"
 )
 
+// InferenceLogger Constants
+const (
+	LoggerCaBundleVolume  = "agent-ca-bundle"
+	LoggerCaCertMountPath = "/etc/tls/logger"
+)
+
 // InferenceService Annotations
 var (
 	InferenceServiceGKEAcceleratorAnnotationKey = KServeAPIGroupName + "/gke-accelerator"
 	DeploymentMode                              = KServeAPIGroupName + "/deploymentMode"
 	EnableRoutingTagAnnotationKey               = KServeAPIGroupName + "/enable-tag-routing"
+	DisableLocalModelKey                        = KServeAPIGroupName + "/disable-localmodel"
 	AutoscalerClass                             = KServeAPIGroupName + "/autoscalerClass"
 	AutoscalerMetrics                           = KServeAPIGroupName + "/metrics"
 	TargetUtilizationPercentage                 = KServeAPIGroupName + "/targetUtilizationPercentage"
@@ -91,6 +98,7 @@ var (
 	KServeContainerPrometheusPathKey            = "prometheus.kserve.io/path"
 	PrometheusPortAnnotationKey                 = "prometheus.io/port"
 	PrometheusPathAnnotationKey                 = "prometheus.io/path"
+	StorageReadonlyAnnotationKey                = "storage.kserve.io/readonly"
 	DefaultPrometheusPath                       = "/metrics"
 	QueueProxyAggregatePrometheusMetricsPort    = 9088
 	DefaultPodPrometheusPort                    = "9091"
@@ -106,6 +114,7 @@ var (
 	LoggerInternalAnnotationKey                      = InferenceServiceInternalAnnotationsPrefix + "/logger"
 	LoggerSinkUrlInternalAnnotationKey               = InferenceServiceInternalAnnotationsPrefix + "/logger-sink-url"
 	LoggerModeInternalAnnotationKey                  = InferenceServiceInternalAnnotationsPrefix + "/logger-mode"
+	LoggerMetadataHeadersInternalAnnotationKey       = InferenceServiceInternalAnnotationsPrefix + "/logger-metadata-headers"
 	BatcherInternalAnnotationKey                     = InferenceServiceInternalAnnotationsPrefix + "/batcher"
 	BatcherMaxBatchSizeInternalAnnotationKey         = InferenceServiceInternalAnnotationsPrefix + "/batcher-max-batchsize"
 	BatcherMaxLatencyInternalAnnotationKey           = InferenceServiceInternalAnnotationsPrefix + "/batcher-max-latency"
@@ -115,6 +124,9 @@ var (
 	AgentModelDirAnnotationKey                       = InferenceServiceInternalAnnotationsPrefix + "/modelDir"
 	PredictorHostAnnotationKey                       = InferenceServiceInternalAnnotationsPrefix + "/predictor-host"
 	PredictorProtocolAnnotationKey                   = InferenceServiceInternalAnnotationsPrefix + "/predictor-protocol"
+	LocalModelLabel                                  = InferenceServiceInternalAnnotationsPrefix + "/localmodel"
+	LocalModelSourceUriAnnotationKey                 = InferenceServiceInternalAnnotationsPrefix + "/localmodel-sourceuri"
+	LocalModelPVCNameAnnotationKey                   = InferenceServiceInternalAnnotationsPrefix + "/localmodel-pvc-name"
 )
 
 // kserve networking constants
@@ -122,6 +134,8 @@ const (
 	NetworkVisibility      = "networking.kserve.io/visibility"
 	ClusterLocalVisibility = "cluster-local"
 	ClusterLocalDomain     = "svc.cluster.local"
+	IsvcNameHeader         = "KServe-Isvc-Name"
+	IsvcNamespaceHeader    = "KServe-Isvc-Namespace"
 )
 
 // StorageSpec Constants
@@ -231,6 +245,7 @@ const (
 
 var (
 	LocalGatewayHost = "knative-local-gateway.istio-system.svc." + network.GetClusterDomainName()
+	IstioMeshGateway = "mesh"
 )
 
 // InferenceService Component enums
@@ -551,6 +566,10 @@ func ExplainPrefix() string {
 	return "^/v1/models/[\\w-]+:explain$"
 }
 
+func PathBasedExplainPrefix() string {
+	return "(/v1/models/[\\w-]+:explain)$"
+}
+
 func VirtualServiceHostname(name string, predictorHostName string) string {
 	index := strings.Index(predictorHostName, ".")
 	return name + predictorHostName[index:]
@@ -578,13 +597,13 @@ const portMatch = `(?::\d{1,5})?`
 // HostRegExp returns an ECMAScript regular expression to match either host or host:<any port>
 // for clusterLocalHost, we will also match the prefixes.
 func HostRegExp(host string) string {
-	localDomainSuffix := ".svc." + network.GetClusterDomainName()
+	localDomainSuffix := "(?i).svc." + network.GetClusterDomainName()
 	if !strings.HasSuffix(host, localDomainSuffix) {
 		return exact(regexp.QuoteMeta(host) + portMatch)
 	}
 	prefix := regexp.QuoteMeta(strings.TrimSuffix(host, localDomainSuffix))
-	clusterSuffix := regexp.QuoteMeta("." + network.GetClusterDomainName())
-	svcSuffix := regexp.QuoteMeta(".svc")
+	clusterSuffix := regexp.QuoteMeta("(?i)." + network.GetClusterDomainName())
+	svcSuffix := regexp.QuoteMeta("(?i).svc")
 	return exact(prefix + optional(svcSuffix+optional(clusterSuffix)) + portMatch)
 }
 
