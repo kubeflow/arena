@@ -4,8 +4,8 @@ cloud.google.com/go/internal
 cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
-# cloud.google.com/go/compute/metadata v0.3.0
-## explicit; go 1.19
+# cloud.google.com/go/compute/metadata v0.5.2
+## explicit; go 1.21
 cloud.google.com/go/compute/metadata
 # cloud.google.com/go/iam v1.1.5
 ## explicit; go 1.19
@@ -667,8 +667,8 @@ go.opencensus.io/trace/tracestate
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconv
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconvutil
-# go.opentelemetry.io/otel v1.28.0
-## explicit; go 1.21
+# go.opentelemetry.io/otel v1.31.0
+## explicit; go 1.22
 go.opentelemetry.io/otel
 go.opentelemetry.io/otel/attribute
 go.opentelemetry.io/otel/baggage
@@ -681,12 +681,12 @@ go.opentelemetry.io/otel/propagation
 go.opentelemetry.io/otel/semconv/v1.20.0
 go.opentelemetry.io/otel/semconv/v1.21.0
 go.opentelemetry.io/otel/semconv/v1.24.0
-# go.opentelemetry.io/otel/metric v1.28.0
-## explicit; go 1.21
+# go.opentelemetry.io/otel/metric v1.31.0
+## explicit; go 1.22
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
-# go.opentelemetry.io/otel/trace v1.28.0
-## explicit; go 1.21
+# go.opentelemetry.io/otel/trace v1.31.0
+## explicit; go 1.22
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
 # go.starlark.net v0.0.0-20230525235612-a134d8f9ddca
@@ -777,6 +777,7 @@ golang.org/x/sys/execabs
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+golang.org/x/sys/windows/registry
 # golang.org/x/term v0.27.0
 ## explicit; go 1.18
 golang.org/x/term
@@ -838,17 +839,17 @@ google.golang.org/api/transport/http/internal/propagation
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/type/date
 google.golang.org/genproto/googleapis/type/expr
-# google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157
-## explicit; go 1.20
+# google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576
+## explicit; go 1.21
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
-## explicit; go 1.20
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576
+## explicit; go 1.21
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.65.0
-## explicit; go 1.21
+# google.golang.org/grpc v1.69.0
+## explicit; go 1.22
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -858,6 +859,8 @@ google.golang.org/grpc/balancer/grpclb
 google.golang.org/grpc/balancer/grpclb/grpc_lb_v1
 google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/pickfirst
+google.golang.org/grpc/balancer/pickfirst/internal
+google.golang.org/grpc/balancer/pickfirst/pickfirstleaf
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/channelz
@@ -876,7 +879,9 @@ google.golang.org/grpc/credentials/insecure
 google.golang.org/grpc/credentials/oauth
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
+google.golang.org/grpc/experimental/stats
 google.golang.org/grpc/grpclog
+google.golang.org/grpc/grpclog/internal
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancer/gracefulswitch
@@ -899,12 +904,14 @@ google.golang.org/grpc/internal/resolver/dns/internal
 google.golang.org/grpc/internal/resolver/passthrough
 google.golang.org/grpc/internal/resolver/unix
 google.golang.org/grpc/internal/serviceconfig
+google.golang.org/grpc/internal/stats
 google.golang.org/grpc/internal/status
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/internal/xds
 google.golang.org/grpc/keepalive
+google.golang.org/grpc/mem
 google.golang.org/grpc/metadata
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
@@ -1012,8 +1019,10 @@ helm.sh/helm/v3/pkg/storage/driver
 helm.sh/helm/v3/pkg/time
 helm.sh/helm/v3/pkg/time/ctime
 helm.sh/helm/v3/pkg/uploader
-# istio.io/api v1.19.4
-## explicit; go 1.18
+# istio.io/api v1.25.1
+## explicit; go 1.22.0
+istio.io/api/analysis/v1alpha1
+istio.io/api/meta/v1alpha1
 istio.io/api/networking/v1alpha3
 istio.io/api/type/v1beta1
 # k8s.io/api v0.31.1 => k8s.io/api v0.28.4
