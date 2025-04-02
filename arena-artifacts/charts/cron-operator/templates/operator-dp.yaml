@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,3 +42,15 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.localTime }}
+          volumeMounts:
+          - name: volume-localtime
+            mountPath: /etc/localtime
+            readOnly: true
+          {{- end }}
+      {{- if .Values.localTime }}
+      volumes:
+      - name: volume-localtime
+        hostPath: 
+          path: /etc/localtime
+      {{- end }}
