@@ -1,6 +1,6 @@
 ARG BASE_IMAGE=debian:12-slim
 
-FROM golang:1.22.7 as builder
+FROM golang:1.24.2 as builder
 
 ARG TARGETOS
 
