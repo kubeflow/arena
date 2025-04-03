@@ -42,13 +42,13 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.localTime }}
+          {{- if .Values.useHostTimezone }}
           volumeMounts:
           - name: volume-localtime
             mountPath: /etc/localtime
             readOnly: true
           {{- end }}
-      {{- if .Values.localTime }}
+      {{- if .Values.useHostTimezone }}
       volumes:
       - name: volume-localtime
         hostPath: 

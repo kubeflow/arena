@@ -112,8 +112,8 @@ cron:
   image: acs/cron-operator
   tag: aliyun-0f570ce
   imagePullPolicy: IfNotPresent
-  # -- Whether to use local time in the container.
-  localTime: false
+  # -- Whether to use host timezone in the container.
+  useHostTimezone: false
   resources:
     limits:
       cpu: 200m
