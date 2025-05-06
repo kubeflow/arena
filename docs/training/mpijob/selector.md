@@ -28,7 +28,7 @@ Arena supports assigning jobs to some k8s particular nodes(Currently only suppor
 
 ## Roles are running with the same node selectors
 
-3\. you can use ``--selector`` to assgin nodes, for example::
+3\. you can use ``--selector`` to assign nodes, for example::
 
     $ arena submit mpi --name=mpi-dist \
         --gpus=1 \

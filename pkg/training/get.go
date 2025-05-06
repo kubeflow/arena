@@ -168,7 +168,7 @@ func PrintTrainingJob(job TrainingJob, modelVersion *types.ModelVersion, format 
 	}
 }
 
-func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEvents bool, showGPU bool) {
+func printSingleJobHelper(job *types.TrainingJobInfo, resource []Resource, showEvents bool, showGPU bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	lines := []string{"", "Instances:", "  NAME\tSTATUS\tAGE\tIS_CHIEF\tGPU(Requested)\tNODE"}
@@ -214,7 +214,7 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 		chiefPodNamespace = job.Namespace
 	}
 	if showEvents {
-		lines = printEvents(lines, chiefPodNamespace, resouce)
+		lines = printEvents(lines, chiefPodNamespace, resource)
 	}
 	var duration int64
 	var err error
@@ -250,10 +250,10 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resouce []Resource, showEv
 	w.Flush()
 }
 
-func printEvents(lines []string, namespace string, resouces []Resource) []string {
+func printEvents(lines []string, namespace string, resources []Resource) []string {
 	lines = append(lines, "", "Events:")
 	clientset := config.GetArenaConfiger().GetClientSet()
-	eventsMap, err := GetResourcesEvents(clientset, namespace, resouces)
+	eventsMap, err := GetResourcesEvents(clientset, namespace, resources)
 	if err != nil {
 		lines = append(lines, fmt.Sprintf("  Get job events failed, due to: %v", err))
 		return lines

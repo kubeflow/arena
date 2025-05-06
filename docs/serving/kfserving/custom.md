@@ -4,7 +4,7 @@ This guide walks through the steps to deploy and serve a custom model with kfser
 
 1\. Setup
 
-Follow the [KFserving Guide](https://github.com/kubeflow/kfserving#install-kfserving) to install kFserving.For the prerequisites,you should ensure 8g memery and 4 core cpu avaliable in your environment.
+Follow the [KFserving Guide](https://github.com/kubeflow/kfserving#install-kfserving) to install kFserving.For the prerequisites,you should ensure 8g memory and 4 core cpu available in your environment.
 
 2\. summit your serving job into kfserving
 

@@ -256,7 +256,7 @@ func (b *MPIJobBuilder) WorkerCount(count int) *MPIJobBuilder {
 	return b
 }
 
-// CPU assign cpu limts,match option --cpu
+// CPU assign cpu limits,match option --cpu
 func (b *MPIJobBuilder) CPU(cpu string) *MPIJobBuilder {
 	if cpu != "" {
 		b.args.Cpu = cpu

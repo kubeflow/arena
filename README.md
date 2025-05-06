@@ -59,7 +59,7 @@ Then you can analyze the profile by following [Go CPU profiling: pprof and speed
 
 ## Adopters
 
-If you are intrested in Arena and would like to share your experiences with others, you are warmly welcome to add your information on [ADOPTERS.md](docs/about/ADOPTERS.md) page. We will continuousely discuss new requirements and feature design with you in advance.
+If you are interested in Arena and would like to share your experiences with others, you are warmly welcome to add your information on [ADOPTERS.md](docs/about/ADOPTERS.md) page. We will continuously discuss new requirements and feature design with you in advance.
 
 ## FAQ
 

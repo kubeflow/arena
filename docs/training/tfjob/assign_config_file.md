@@ -1,6 +1,6 @@
 # Tensorflow job with configuration files
 
-The following steps will help you pass the configuration files to containers when submiting jobs.
+The following steps will help you pass the configuration files to containers when submitting jobs.
 
 1\. prepare the sample configuration files, create a test file which name is "test-config.json",its' path is "/tmp/test-config.json". we want push this file to containers of a tfjob (or mpijob) and the path in container is "/etc/config/config.json".
 

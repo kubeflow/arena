@@ -21,7 +21,7 @@ You can use ``arena serve get`` to get the serving job details, we will introduc
     ----                                                       ------   ---  -----  --------  ----  ----
     fast-style-transfer-alpha-custom-serving-856dbcdbcb-sxx2n  Running  11m  1/1    0         1     cn-beijing.192.168.1.112
 
-2\. you cant get the serving job details with json(or yaml) format only add option ``-o json``(or ``-o yaml``).
+2\. you can't get the serving job details with json(or yaml) format only add option ``-o json``(or ``-o yaml``).
 
     $ arena serve get fast-style-transfer -o json
     {

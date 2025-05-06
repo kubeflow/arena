@@ -14,7 +14,7 @@ arena submit etjob [flags]
 
 ```
   -a, --annotation strings          the annotations, usage: "--annotation=key=value" or "--annotation key=value"
-      --config-file strings         giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"
+      --config-file strings         giving configuration files when submitting jobs,usage:"--config-file <host_path_file>:<container_path_file>"
       --cpu string                  the cpu resource to use for the training, like 1 for 1 core.
   -d, --data strings                specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>
       --data-dir strings            the data dir. If you specify /data, it means mounting hostpath /data into container path /data

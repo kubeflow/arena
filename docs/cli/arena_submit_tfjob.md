@@ -22,7 +22,7 @@ arena submit tfjob [flags]
       --chief-port int               the port of the chief.
       --chief-selector strings       assigning jobs with "Chief" role to some k8s particular nodes(this option would cover --selector), usage: "--chief-selector=key=value"
       --clean-task-policy string     How to clean tasks after Training is done, only support Running, None. (default "Running")
-      --config-file strings          giving configuration files when submiting jobs,usage:"--config-file <host_path_file>:<container_path_file>"
+      --config-file strings          giving configuration files when submitting jobs,usage:"--config-file <host_path_file>:<container_path_file>"
   -d, --data strings                 specify the datasource to mount to the job, like <name_of_datasource>:<mount_point_on_job>
       --data-dir strings             the data dir. If you specify /data, it means mounting hostpath /data into container path /data
       --device stringArray           specify the chip vendors and count that used for resources, such as amd.com/gpu=1 gpu.intel.com/i915=1.

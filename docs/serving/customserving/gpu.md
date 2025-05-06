@@ -49,7 +49,7 @@ then,we can query the status of sample-client:
 	sample-client   1/1     Running   0          87s 
 
 
-we should query the sevice name,it is a combination of job name and version(the sample job name is fast-style-transfer and version is alpha):
+we should query the service name,it is a combination of job name and version(the sample job name is fast-style-transfer and version is alpha):
 
 	$ kubectl get svc fast-style-transfer-alpha
 	NAME                        TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE

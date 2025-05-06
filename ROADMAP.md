@@ -49,13 +49,13 @@ Objectives: "Simplify the user experience of the data scientists and provide a l
 	* Submit and manage Model Serving with [KF Serving](https://github.com/kubeflow/kfserving)
 
 
-Objectives: "Make Arena support the same Operator compatiable with different API version, so the upgrade of operator doesn't impact the existing users' experiences."
+Objectives: "Make Arena support the same Operator compatible with different API version, so the upgrade of operator doesn't impact the existing users' experiences."
 
 * Compatibility:
 	* v1aphla2 and v1 TFJob
 	* v1alpha1 and v1aphla2 MPIJob
 
-Objectives: "Enchance the software quality of Arena so it can be in the quick iteration"
+Objectives: "Enhance the software quality of Arena so it can be in the quick iteration"
 
 * Refactor the source code
 	* Move Training implementation from `cmd` into `pkg`

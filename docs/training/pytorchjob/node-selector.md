@@ -20,7 +20,7 @@ Arena supports specifying  pytorch jobs are running on some k8s particular nodes
 	➜ kubectl label nodes cn-huhehaote.172.16.0.208 gpu_node=true
 	node/cn-huhehaote.172.16.0.208 labeled
 
-	# 172.16.0.209 label gpu_node=ture
+	# 172.16.0.209 label gpu_node=true
 	➜ kubectl label nodes cn-huhehaote.172.16.0.209 gpu_node=true
 	node/cn-huhehaote.172.16.0.209 labeled
 
