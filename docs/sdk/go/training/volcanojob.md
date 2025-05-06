@@ -18,7 +18,7 @@ VolcanoJobBuilder has following functions to custom your Volcano training job.
 |:---|:--:|:---|
 |  Name(name string) *VolcanoJobBuilder| specify the job name| --name|
 | Command(args []string) *VolcanoJobBuilder| specify the job command| -|
-| MinAvailable(minAvailable int) *VolcanoJobBuilder| specify the min avaliable tasks| --min-available|
+| MinAvailable(minAvailable int) *VolcanoJobBuilder| specify the min available tasks| --min-available|
 |Queue(queue string) *VolcanoJobBuilder | specify the queue|--queue|
 | SchedulerName(name string) *VolcanoJobBuilder | specify the scheduler name|--scheduler-name|
 |TaskImages(images []string) *VolcanoJobBuilder| specify the task images|--task-images|

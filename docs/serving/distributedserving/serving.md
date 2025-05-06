@@ -5,11 +5,11 @@ This guide walks through the steps to deploy and serve a model on two nodes and 
 ## Prerequisites
 
 - Install LeaderWorkerSet API to your k8s cluster following this [guide](https://github.com/kubernetes-sigs/lws/blob/main/docs/setup/install.md) (required)
-- Create a pvc named `test-pvc` with models to depoy
+- Create a pvc named `test-pvc` with models to deploy
 
 ## Steps
 
-1\. Sumbit vllm distributed serving job with:
+1\. Submit vllm distributed serving job with:
 
     $ arena serve distributed \
         --name=vllm \

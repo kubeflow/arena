@@ -257,7 +257,7 @@ func (b *ETJobBuilder) WorkerCount(count int) *ETJobBuilder {
 	return b
 }
 
-// CPU assign cpu limts,match option --cpu
+// CPU assign cpu limits,match option --cpu
 func (b *ETJobBuilder) CPU(cpu string) *ETJobBuilder {
 	if cpu != "" {
 		b.args.Cpu = cpu

@@ -428,7 +428,7 @@ function parse_args() {
         ;;
         *)
             # unknown option
-            logger error "unkonw option [$key]"
+            logger error "unknown option [$key]"
             help
             exit 3
         ;;

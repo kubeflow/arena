@@ -29,7 +29,7 @@ Arena supports assigning jobs to some k8s particular nodes(Currently only suppor
 ## Roles are running with the same node selectors
 
 
-3\. because there is four roles("PS","Worker","Evaluator","Chief") in tf job,you can use ``--selector`` to assgin nodes, it is effective for all roles. for example:
+3\. because there is four roles("PS","Worker","Evaluator","Chief") in tf job,you can use ``--selector`` to assign nodes, it is effective for all roles. for example:
 
     $ arena submit tfjob \
         --name=tfjob-with-selector \

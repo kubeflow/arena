@@ -111,4 +111,4 @@ Instances:
   resnet18-optimize-xrd6w  ContainerCreating  1m   0/1    0         cn-shenzhen.192.168.1.209
 ```
 
-6\. After the optimize job finished, you can see a new torchscript modue named opt_resnet18.pt in --export-path.
+6\. After the optimize job finished, you can see a new torchscript module named opt_resnet18.pt in --export-path.

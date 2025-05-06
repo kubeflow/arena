@@ -12,5 +12,5 @@ If you want to use arena to display gpu resource consumption for nodes(or traini
 This guide covers three parts,they are:
 
 * How to use `arena top node` to [display node details](./top_node.md).
-* How to use `arena top job` to [dispaly job details](./top_job.md).
+* How to use `arena top job` to [display job details](./top_job.md).
 * How to [combine with prometheus to display gpu metrics](./prometheus.md).

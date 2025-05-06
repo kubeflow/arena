@@ -296,7 +296,7 @@ $(LOCALBIN)/$(HELM): $(LOCALBIN) $(TEMPDIR)
 	fi && \
 	echo "Verifying checksum..." && \
 	cat $(HELM).tar.gz.sha256sum | shasum -a 256 --check --quiet || (echo "Checksum verification failed, exiting." && false) && \
-	echo "Extrat helm tarball and move it to bin directory..." && \
+	echo "Extract helm tarball and move it to bin directory..." && \
 	tar -zxf $(HELM).tar.gz && \
 	cp ${OS}-${ARCH}/helm $(LOCALBIN)/$(HELM) && \
 	echo "Successfully installed helm to $(LOCALBIN)/$(HELM)."

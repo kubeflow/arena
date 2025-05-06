@@ -155,7 +155,7 @@ func (s *TensorflowServingArgsBuilder) preprocess() (err error) {
 	} else {
 		//populate content from modelConfigFile
 		if s.args.ModelName != "" {
-			log.Infof("modelConfigFile=%s is specified, so --model-name will be ingored", s.args.ModelConfigFile)
+			log.Infof("modelConfigFile=%s is specified, so --model-name will be ignored", s.args.ModelConfigFile)
 		}
 		if s.args.ModelPath != "" {
 			log.Infof("modelConfigFile=%s is specified, so --model-path will be ignored", s.args.ModelConfigFile)
