@@ -37,7 +37,7 @@ or copy the kubeconfig file to ``~/.kube/config``
 $ tar -xvf arena-installer.tar.gz 
 ```
 
-4\. Setup Environment Varaibles for customization
+4\. Setup Environment Variables for customization
 
 * If you'd like to train and serving in hostNetwork:
 

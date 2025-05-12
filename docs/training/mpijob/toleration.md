@@ -1,6 +1,6 @@
 # MPI job with specified node tolerations
 
-Arena supports submiting a job and the job tolerates k8s taints nodes(Currently only support mpi job and tf job), the following steps can help you how to use this feature.
+Arena supports submitting a job and the job tolerates k8s taints nodes(Currently only support mpi job and tf job), the following steps can help you how to use this feature.
 
 1\. query k8s cluster information.
 

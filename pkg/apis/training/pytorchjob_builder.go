@@ -276,7 +276,7 @@ func (b *PytorchJobBuilder) WorkerCount(count int) *PytorchJobBuilder {
 	return b
 }
 
-// CPU assign cpu limts,match option --cpu
+// CPU assign cpu limits,match option --cpu
 func (b *PytorchJobBuilder) CPU(cpu string) *PytorchJobBuilder {
 	if cpu != "" {
 		b.args.Cpu = cpu

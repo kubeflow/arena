@@ -1,6 +1,6 @@
 # Pytorch Training Job with configuration files
 
-You can pass the configuration files to containers when submiting pytorch jobs, the following steps show how to use this feature.
+You can pass the configuration files to containers when submitting pytorch jobs, the following steps show how to use this feature.
 
 1\. Prepare the configuration file to be mounted on the submitted machine.
 

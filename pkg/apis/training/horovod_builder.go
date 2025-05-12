@@ -243,7 +243,7 @@ func (b *HorovodJobBuilder) WorkerCount(count int) *HorovodJobBuilder {
 	return b
 }
 
-// CPU assign cpu limts,match option --cpu
+// CPU assign cpu limits,match option --cpu
 func (b *HorovodJobBuilder) CPU(cpu string) *HorovodJobBuilder {
 	if cpu != "" {
 		b.args.Cpu = cpu

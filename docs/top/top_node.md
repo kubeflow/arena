@@ -60,7 +60,7 @@ $ arena top node  -h | grep mode
   -m, --gpu-mode string   Display node information with following gpu mode:[n(none)|e(exclusive)|t(topology)|s(share)]
 ```
 
-4\. If you want to get more information of the node, "-d" is requried:
+4\. If you want to get more information of the node, "-d" is required:
 
 ```
 $ arena top node -d cn-beijing.192.168.8.3
