@@ -85,8 +85,8 @@ public class MPIJobBuilder extends JobBuilder {
         return this;
     }
 
-    public MPIJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public MPIJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
         return this;
     }
 

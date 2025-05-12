@@ -83,8 +83,8 @@ class JobBuilder(metaclass=abc.ABCMeta):
         self._options.append(StringListField("--toleration",tolerations))
         return self
 
-    def with_annotations(self,annotions: Dict[str, str]) -> JobBuilder:
-        self._options.append(StringMapField("--annotation",annotions,"="))
+    def with_annotations(self,annotations: Dict[str, str]) -> JobBuilder:
+        self._options.append(StringMapField("--annotation",annotations,"="))
         return self
 
     def with_datas(self,datas: Dict[str,str]) -> JobBuilder:

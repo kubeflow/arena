@@ -340,7 +340,7 @@ func (ejt *ETJobTrainer) isChiefPod(item *v1.Pod) bool {
 	if item.Labels[etLabelTrainingJobRole] != "launcher" {
 		return false
 	}
-	log.Debugf("the pod %s with labels training-job-role=laucher", item.Name)
+	log.Debugf("the pod %s with labels training-job-role=launcher", item.Name)
 	return true
 }
 

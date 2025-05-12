@@ -88,8 +88,8 @@ public class CustomServingJobBuilder extends JobBuilder {
         return this;
     }
 
-    public CustomServingJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public CustomServingJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
         return this;
     }
 

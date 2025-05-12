@@ -155,7 +155,7 @@ this code includes three steps:
 * (1) create arena client 
 * (2) create Logger 
 * (3) get standalone training
-* (4) print instances logs of standalone tfjob traning
+* (4) print instances logs of standalone tfjob training
 
 Instance Object has some attributes,you can use following functions to access:
 

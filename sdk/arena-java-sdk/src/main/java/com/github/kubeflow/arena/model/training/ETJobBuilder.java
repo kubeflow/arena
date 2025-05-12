@@ -105,8 +105,8 @@ public class ETJobBuilder extends JobBuilder {
         return this;
     }
 
-    public ETJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public ETJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
         return this;
     }
 

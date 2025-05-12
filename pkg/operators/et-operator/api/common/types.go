@@ -75,7 +75,7 @@ type ReplicaSpec struct {
 
 	// Template is the object that describes the pod that
 	// will be created for this replica. RestartPolicy in PodTemplateSpec
-	// will be overide by RestartPolicy in ReplicaSpec
+	// will be override by RestartPolicy in ReplicaSpec
 	Template v1.PodTemplateSpec `json:"template,omitempty"`
 
 	// Restart policy for all replicas within the job.

@@ -76,7 +76,7 @@ class ArenaErrorType(Enum):
     LogsServingJobError = ("serving_job_logs","failed to get serving job logs")
     DeleteServingJobError = ("serving_job_delete","failed to delete serving jobs")
     TrafficRouterSplitServingJobError = ("traffic_router_split","failed to split traffic router of the serving job")
-    ValidateArgsError = ("validate_args","failed to validate args of submiting jobs")
+    ValidateArgsError = ("validate_args","failed to validate args of submitting jobs")
     ServingJobExistError = ("serving_job_exist","serving job is existed")
     ServingJobNotFoundError = ("serving_job_not_found","not found serving job")
     TrainingJobExistError = ("training_job_exist","training job is existed")

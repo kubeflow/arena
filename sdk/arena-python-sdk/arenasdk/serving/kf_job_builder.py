@@ -70,8 +70,8 @@ class KFServingJobBuilder(JobBuilder):
         super().with_tolerations(tolerations)
         return self
     
-    def with_annotations(self,annotions: Dict[str, str]) -> KFServingJobBuilder:
-        super().with_annotations(annotions)
+    def with_annotations(self,annotations: Dict[str, str]) -> KFServingJobBuilder:
+        super().with_annotations(annotations)
         return self
 
     def with_datas(self,datas: Dict[str,str]) -> KFServingJobBuilder:

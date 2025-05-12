@@ -97,8 +97,8 @@ public abstract class JobBuilder {
         return this;
     }
 
-    public JobBuilder annotations(Map<String, String> annotions) {
-        this.options.add(new StringMapField("--annotation",annotions,"="));
+    public JobBuilder annotations(Map<String, String> annotations) {
+        this.options.add(new StringMapField("--annotation",annotations,"="));
         return this;
     }
 

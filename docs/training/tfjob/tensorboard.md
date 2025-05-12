@@ -47,7 +47,7 @@ There are 3 available nodes with GPU for running training jobs.
 
 ## List the tensorflow jobs 
 
-When submited the job, you can list all tensorflow training jobs:
+When submitted the job, you can list all tensorflow training jobs:
 
     $ arena list -T tfjob
     NAME                         STATUS     TRAINER  DURATION  GPU(Requested)  GPU(Allocated)  NODE

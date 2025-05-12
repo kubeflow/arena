@@ -82,8 +82,8 @@ public class EvaluateJobBuilder {
         return this;
     }
 
-    public EvaluateJobBuilder annotations(Map<String, String> annotions) {
-        this.options.add(new StringMapField("--annotation", annotions, "="));
+    public EvaluateJobBuilder annotations(Map<String, String> annotations) {
+        this.options.add(new StringMapField("--annotation", annotations, "="));
         return this;
     }
 

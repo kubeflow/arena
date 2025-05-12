@@ -68,8 +68,8 @@ class ETJobBuilder(JobBuilder):
         super().with_config_files(files)
         return self
 
-    def with_annotations(self,annotions: Dict[str, str]) -> ETJobBuilder:
-        super().with_annotations(annotions)
+    def with_annotations(self,annotations: Dict[str, str]) -> ETJobBuilder:
+        super().with_annotations(annotations)
         return self
 
     def with_datas(self,datas: Dict[str,str]) -> ETJobBuilder:

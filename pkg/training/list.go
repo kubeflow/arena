@@ -163,7 +163,7 @@ func CheckPrintFormat(format string) error {
 	case "yaml", "json", "wide", "":
 		return nil
 	}
-	return fmt.Errorf("Unknown format,only suppot: [yaml,json,wide]")
+	return fmt.Errorf("Unknown format,only support: [yaml,json,wide]")
 }
 
 func isNeededTrainingType(jobType types.TrainingJobType, targetJobType types.TrainingJobType) bool {

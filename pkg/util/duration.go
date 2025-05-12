@@ -23,7 +23,7 @@ const (
 	timeLayout = "2006-01-02 15:04:05"
 )
 
-// ShortHumanDuration returns a succint representation of the provided duration
+// ShortHumanDuration returns a succinct representation of the provided duration
 // with limited precision for consumption by humans.
 func ShortHumanDuration(d time.Duration) string {
 	// Allow deviation no more than 2 seconds(excluded) to tolerate machine time

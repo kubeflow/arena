@@ -26,7 +26,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.241-b07, mixed mode)
 from the [arena download page](https://github.com/kubeflow/arena/releases) to download package,assume that we download the package 'arena-installer-0.3.1-b96e1ac-linux-amd64.tar.gz
 ' and put it to /tmp/arena-installer-0.3.1-b96e1ac-linux-amd64.tar.gz
 
-(3). excute installation script
+(3). execute installation script
 
 use following commands to install arena-java-sdk:
 
