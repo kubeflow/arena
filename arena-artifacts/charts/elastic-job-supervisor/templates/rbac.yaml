@@ -46,12 +46,12 @@ rules:
   - '*'
   verbs:
   - '*'
+
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: elastic-job-supervisor
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "arena.labels" . | nindent 4 }}
 roleRef:
