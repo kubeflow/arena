@@ -74,8 +74,8 @@ class TRTServingJobBuilder(JobBuilder):
         super().with_tolerations(tolerations)
         return self
     
-    def with_annotations(self,annotions: Dict[str, str]) -> TRTServingJobBuilder:
-        super().with_annotations(annotions)
+    def with_annotations(self,annotations: Dict[str, str]) -> TRTServingJobBuilder:
+        super().with_annotations(annotations)
         return self
 
     def with_datas(self,datas: Dict[str,str]) -> TRTServingJobBuilder:

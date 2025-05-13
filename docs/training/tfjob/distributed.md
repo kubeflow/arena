@@ -40,7 +40,7 @@ The following command is an example. In this example, it defines 2 workers and 1
 
 !!! note
 
-    If you saw the job or pod is failed, and then look at the logs, you may find out it is due to the reason that git code is not be able to cloned, especially if you are runing container insider some countries like China. This is not caused by arena, but cross-border network connectivity. 
+    If you saw the job or pod is failed, and then look at the logs, you may find out it is due to the reason that git code is not be able to cloned, especially if you are running container insider some countries like China. This is not caused by arena, but cross-border network connectivity. 
 
 2\. Get the details of the specific job.
 

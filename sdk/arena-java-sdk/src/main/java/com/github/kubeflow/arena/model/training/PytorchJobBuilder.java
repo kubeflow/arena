@@ -99,8 +99,8 @@ public class PytorchJobBuilder extends JobBuilder {
         return this;
     }
 
-    public PytorchJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public PytorchJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
         return this;
     }
 

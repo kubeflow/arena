@@ -85,8 +85,8 @@ public class HorovodJobBuilder extends JobBuilder {
         return this;
     }
 
-    public HorovodJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public HorovodJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
         return this;
     }
 

@@ -233,8 +233,8 @@ public class TFJobBuilder extends JobBuilder {
         return this;
     }
 
-    public TFJobBuilder annotations(Map<String, String> annotions) {
-        super.annotations(annotions);
+    public TFJobBuilder annotations(Map<String, String> annotations) {
+        super.annotations(annotations);
         return this;
     }
 

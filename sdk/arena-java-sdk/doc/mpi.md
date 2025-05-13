@@ -159,7 +159,7 @@ this code includes three steps:
 * (1) create arena client 
 * (2) create Logger 
 * (3) get mpi training
-* (4) print instances logs of mpi traning
+* (4) print instances logs of mpi training
 
 Instance Object has some attributes,you can use following functions to access:
 

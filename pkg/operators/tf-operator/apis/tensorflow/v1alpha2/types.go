@@ -66,7 +66,7 @@ type TFReplicaSpec struct {
 
 	// Template is the object that describes the pod that
 	// will be created for this TFReplica. RestartPolicy in PodTemplateSpec
-	// will be overide by RestartPolicy in TFReplicaSpec
+	// will be override by RestartPolicy in TFReplicaSpec
 	Template v1.PodTemplateSpec `json:"template,omitempty"`
 
 	// Restart policy for all TFReplicas within the TFJob.
