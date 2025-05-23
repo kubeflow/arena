@@ -36,7 +36,7 @@ import (
 // CacheReader is a client.Reader.
 var _ client.Reader = &CacheReader{}
 
-// CacheReader wraps a cache.Index to implement the client.CacheReader interface for a single type.
+// CacheReader wraps a cache.Index to implement the client.Reader interface for a single type.
 type CacheReader struct {
 	// indexer is the underlying indexer wrapped by this cache.
 	indexer cache.Indexer
@@ -174,7 +174,13 @@ func (c *CacheReader) List(_ context.Context, out client.ObjectList, opts ...cli
 		}
 		runtimeObjs = append(runtimeObjs, outObj)
 	}
-	return apimeta.SetList(out, runtimeObjs)
+
+	if err := apimeta.SetList(out, runtimeObjs); err != nil {
+		return err
+	}
+
+	out.SetContinue("continue-not-supported")
+	return nil
 }
 
 func byIndexes(indexer cache.Indexer, requires fields.Requirements, namespace string) ([]interface{}, error) {

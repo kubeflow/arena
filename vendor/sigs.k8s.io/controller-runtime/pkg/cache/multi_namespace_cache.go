@@ -163,12 +163,13 @@ func (c *multiNamespaceCache) GetInformerForKind(ctx context.Context, gvk schema
 }
 
 func (c *multiNamespaceCache) Start(ctx context.Context) error {
+	errs := make(chan error)
 	// start global cache
 	if c.clusterCache != nil {
 		go func() {
 			err := c.clusterCache.Start(ctx)
 			if err != nil {
-				log.Error(err, "cluster scoped cache failed to start")
+				errs <- fmt.Errorf("failed to start cluster-scoped cache: %w", err)
 			}
 		}()
 	}
@@ -177,13 +178,16 @@ func (c *multiNamespaceCache) Start(ctx context.Context) error {
 	for ns, cache := range c.namespaceToCache {
 		go func(ns string, cache Cache) {
 			if err := cache.Start(ctx); err != nil {
-				log.Error(err, "multi-namespace cache failed to start namespaced informer", "namespace", ns)
+				errs <- fmt.Errorf("failed to start cache for namespace %s: %w", ns, err)
 			}
 		}(ns, cache)
 	}
-
-	<-ctx.Done()
-	return nil
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-errs:
+		return err
+	}
 }
 
 func (c *multiNamespaceCache) WaitForCacheSync(ctx context.Context) bool {
@@ -245,6 +249,10 @@ func (c *multiNamespaceCache) List(ctx context.Context, list client.ObjectList, 
 	listOpts := client.ListOptions{}
 	listOpts.ApplyOptions(opts)
 
+	if listOpts.Continue != "" {
+		return fmt.Errorf("continue list option is not supported by the cache")
+	}
+
 	isNamespaced, err := apiutil.IsObjectNamespaced(list, c.Scheme, c.RESTMapper)
 	if err != nil {
 		return err
@@ -258,6 +266,9 @@ func (c *multiNamespaceCache) List(ctx context.Context, list client.ObjectList, 
 	if listOpts.Namespace != corev1.NamespaceAll {
 		cache, ok := c.namespaceToCache[listOpts.Namespace]
 		if !ok {
+			if global, hasGlobal := c.namespaceToCache[AllNamespaces]; hasGlobal {
+				return global.List(ctx, list, opts...)
+			}
 			return fmt.Errorf("unable to list: %v because of unknown namespace for the cache", listOpts.Namespace)
 		}
 		return cache.List(ctx, list, opts...)
@@ -268,10 +279,7 @@ func (c *multiNamespaceCache) List(ctx context.Context, list client.ObjectList, 
 		return err
 	}
 
-	allItems, err := apimeta.ExtractList(list)
-	if err != nil {
-		return err
-	}
+	allItems := []runtime.Object{}
 
 	limitSet := listOpts.Limit > 0
 
@@ -309,7 +317,12 @@ func (c *multiNamespaceCache) List(ctx context.Context, list client.ObjectList, 
 	}
 	listAccessor.SetResourceVersion(resourceVersion)
 
-	return apimeta.SetList(list, allItems)
+	if err := apimeta.SetList(list, allItems); err != nil {
+		return err
+	}
+
+	list.SetContinue("continue-not-supported")
+	return nil
 }
 
 // multiNamespaceInformer knows how to handle interacting with the underlying informer across multiple namespaces.
@@ -321,18 +334,11 @@ type handlerRegistration struct {
 	handles map[string]toolscache.ResourceEventHandlerRegistration
 }
 
-type syncer interface {
-	HasSynced() bool
-}
-
 // HasSynced asserts that the handler has been called for the full initial state of the informer.
-// This uses syncer to be compatible between client-go 1.27+ and older versions when the interface changed.
 func (h handlerRegistration) HasSynced() bool {
-	for _, reg := range h.handles {
-		if s, ok := reg.(syncer); ok {
-			if !s.HasSynced() {
-				return false
-			}
+	for _, h := range h.handles {
+		if !h.HasSynced() {
+			return false
 		}
 	}
 	return true
@@ -365,6 +371,23 @@ func (i *multiNamespaceInformer) AddEventHandlerWithResyncPeriod(handler toolsca
 
 	for ns, informer := range i.namespaceToInformer {
 		registration, err := informer.AddEventHandlerWithResyncPeriod(handler, resyncPeriod)
+		if err != nil {
+			return nil, err
+		}
+		handles.handles[ns] = registration
+	}
+
+	return handles, nil
+}
+
+// AddEventHandlerWithOptions adds the handler with options to each namespaced informer.
+func (i *multiNamespaceInformer) AddEventHandlerWithOptions(handler toolscache.ResourceEventHandler, options toolscache.HandlerOptions) (toolscache.ResourceEventHandlerRegistration, error) {
+	handles := handlerRegistration{
+		handles: make(map[string]toolscache.ResourceEventHandlerRegistration, len(i.namespaceToInformer)),
+	}
+
+	for ns, informer := range i.namespaceToInformer {
+		registration, err := informer.AddEventHandlerWithOptions(handler, options)
 		if err != nil {
 			return nil, err
 		}
