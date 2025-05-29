@@ -42,6 +42,9 @@ spec:
               {{- if gt (int $gpuCount) 0}}
               nvidia.com/gpu: {{ .Values.gpuCount }}
               {{- end }}
+              {{- range $key, $value := .Values.devices }}
+              {{ $key }}: {{ $value }}
+              {{- end }}
             requests:
               {{- if .Values.cpu }}
               cpu: {{ .Values.cpu }}
@@ -51,4 +54,7 @@ spec:
               {{- end }}
               {{- if gt (int $gpuCount) 0}}
               nvidia.com/gpu: {{ .Values.gpuCount }}
+              {{- end }}
+              {{- range $key, $value := .Values.devices }}
+              {{ $key }}: {{ $value }}
               {{- end }}
