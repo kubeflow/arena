@@ -7,7 +7,7 @@ metadata:
     app: cron-operator
     {{- include "arena.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       app: cron-operator
@@ -24,33 +24,45 @@ spec:
         app: cron-operator
         {{- include "arena.labels" . | nindent 8 }}
     spec:
-      serviceAccountName: cron-operator
-      nodeSelector:
-        {{- include "arena.nodeSelector" . | nindent 8 }}
-        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
-      tolerations:
-      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       containers:
-        - name: cron
-          image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
-          args: 
-          - --workloads=Cron
-          ports:
-            - containerPort: 8443
-              name: metrics
-              protocol: TCP
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.useHostTimezone }}
-          volumeMounts:
-          - name: volume-localtime
-            mountPath: /etc/localtime
-            readOnly: true
-          {{- end }}
+      - name: cron
+        image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        args: 
+        - --workloads=Cron
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        {{- with .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- if .Values.useHostTimezone }}
+        volumeMounts:
+        - name: volume-localtime
+          mountPath: /etc/localtime
+          readOnly: true
+        {{- end }}
       {{- if .Values.useHostTimezone }}
       volumes:
       - name: volume-localtime
         hostPath: 
           path: /etc/localtime
       {{- end }}
+      nodeSelector:
+        {{- include "arena.nodeSelector" . | nindent 8 }}
+        {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  kustomize.component: tf-job-operator
+                  {{- include "arena.labels" . | nindent 18 }}
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
+      serviceAccountName: cron-operator
