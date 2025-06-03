@@ -30,7 +30,6 @@ spec:
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         args: 
         - --workloads=Cron
-        - --enable-leader-election=true
         ports:
         - containerPort: 8443
           name: metrics
