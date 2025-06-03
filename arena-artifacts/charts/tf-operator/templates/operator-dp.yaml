@@ -1,13 +1,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: tf-job-operator
+  namespace: {{ .Release.Namespace }}
   labels:
     kustomize.component: tf-job-operator
     {{- include "arena.labels" . | nindent 4 }}
-  name: tf-job-operator
-  namespace: {{ .Release.Namespace }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       kustomize.component: tf-job-operator
