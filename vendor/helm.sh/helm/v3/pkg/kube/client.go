@@ -46,6 +46,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/jsonmergepatch"
+	"k8s.io/apimachinery/pkg/util/mergepatch"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -55,6 +57,7 @@ import (
 	"k8s.io/client-go/rest"
 	cachetools "k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
+	"k8s.io/client-go/util/retry"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
@@ -82,26 +85,25 @@ type Client struct {
 	// Namespace allows to bypass the kubeconfig file for the choice of the namespace
 	Namespace string
 
-	kubeClient *kubernetes.Clientset
+	kubeClient kubernetes.Interface
 }
 
-var addToScheme sync.Once
+func init() {
+	// Add CRDs to the scheme. They are missing by default.
+	if err := apiextv1.AddToScheme(scheme.Scheme); err != nil {
+		// This should never happen.
+		panic(err)
+	}
+	if err := apiextv1beta1.AddToScheme(scheme.Scheme); err != nil {
+		panic(err)
+	}
+}
 
 // New creates a new Client.
 func New(getter genericclioptions.RESTClientGetter) *Client {
 	if getter == nil {
 		getter = genericclioptions.NewConfigFlags(true)
 	}
-	// Add CRDs to the scheme. They are missing by default.
-	addToScheme.Do(func() {
-		if err := apiextv1.AddToScheme(scheme.Scheme); err != nil {
-			// This should never happen.
-			panic(err)
-		}
-		if err := apiextv1beta1.AddToScheme(scheme.Scheme); err != nil {
-			panic(err)
-		}
-	})
 	return &Client{
 		Factory: cmdutil.NewFactory(getter),
 		Log:     nopLogger,
@@ -111,7 +113,7 @@ func New(getter genericclioptions.RESTClientGetter) *Client {
 var nopLogger = func(_ string, _ ...interface{}) {}
 
 // getKubeClient get or create a new KubernetesClientSet
-func (c *Client) getKubeClient() (*kubernetes.Clientset, error) {
+func (c *Client) getKubeClient() (kubernetes.Interface, error) {
 	var err error
 	if c.kubeClient == nil {
 		c.kubeClient, err = c.Factory.KubernetesClientSet()
@@ -131,7 +133,7 @@ func (c *Client) IsReachable() error {
 	if err != nil {
 		return errors.Wrap(err, "Kubernetes cluster unreachable")
 	}
-	if _, err := client.ServerVersion(); err != nil {
+	if _, err := client.Discovery().ServerVersion(); err != nil {
 		return errors.Wrap(err, "Kubernetes cluster unreachable")
 	}
 	return nil
@@ -379,14 +381,7 @@ func (c *Client) BuildTable(reader io.Reader, validate bool) (ResourceList, erro
 	return result, scrubValidationError(err)
 }
 
-// Update takes the current list of objects and target list of objects and
-// creates resources that don't already exist, updates resources that have been
-// modified in the target configuration, and deletes resources from the current
-// configuration that are not present in the target configuration. If an error
-// occurs, a Result will still be returned with the error, containing all
-// resource updates, creations, and deletions that were attempted. These can be
-// used for cleanup or other logging purposes.
-func (c *Client) Update(original, target ResourceList, force bool) (*Result, error) {
+func (c *Client) update(original, target ResourceList, force, threeWayMerge bool) (*Result, error) {
 	updateErrors := []string{}
 	res := &Result{}
 
@@ -421,7 +416,7 @@ func (c *Client) Update(original, target ResourceList, force bool) (*Result, err
 			return errors.Errorf("no %s with the name %q found", kind, info.Name)
 		}
 
-		if err := updateResource(c, info, originalInfo.Object, force); err != nil {
+		if err := updateResource(c, info, originalInfo.Object, force, threeWayMerge); err != nil {
 			c.Log("error updating the resource %q:\n\t %v", info.Name, err)
 			updateErrors = append(updateErrors, err.Error())
 		}
@@ -435,7 +430,7 @@ func (c *Client) Update(original, target ResourceList, force bool) (*Result, err
 	case err != nil:
 		return res, err
 	case len(updateErrors) != 0:
-		return res, errors.Errorf(strings.Join(updateErrors, " && "))
+		return res, errors.New(strings.Join(updateErrors, " && "))
 	}
 
 	for _, info := range original.Difference(target) {
@@ -460,6 +455,31 @@ func (c *Client) Update(original, target ResourceList, force bool) (*Result, err
 		res.Deleted = append(res.Deleted, info)
 	}
 	return res, nil
+}
+
+// Update takes the current list of objects and target list of objects and
+// creates resources that don't already exist, updates resources that have been
+// modified in the target configuration, and deletes resources from the current
+// configuration that are not present in the target configuration. If an error
+// occurs, a Result will still be returned with the error, containing all
+// resource updates, creations, and deletions that were attempted. These can be
+// used for cleanup or other logging purposes.
+//
+// The difference to Update is that UpdateThreeWayMerge does a three-way-merge
+// for unstructured objects.
+func (c *Client) UpdateThreeWayMerge(original, target ResourceList, force bool) (*Result, error) {
+	return c.update(original, target, force, true)
+}
+
+// Update takes the current list of objects and target list of objects and
+// creates resources that don't already exist, updates resources that have been
+// modified in the target configuration, and deletes resources from the current
+// configuration that are not present in the target configuration. If an error
+// occurs, a Result will still be returned with the error, containing all
+// resource updates, creations, and deletions that were attempted. These can be
+// used for cleanup or other logging purposes.
+func (c *Client) Update(original, target ResourceList, force bool) (*Result, error) {
+	return c.update(original, target, force, false)
 }
 
 // Delete deletes Kubernetes resources specified in the resources list with
@@ -596,20 +616,28 @@ func batchPerform(infos ResourceList, fn func(*resource.Info) error, errs chan<-
 }
 
 func createResource(info *resource.Info) error {
-	obj, err := resource.NewHelper(info.Client, info.Mapping).WithFieldManager(getManagedFieldsManager()).Create(info.Namespace, true, info.Object)
-	if err != nil {
-		return err
-	}
-	return info.Refresh(obj, true)
+	return retry.RetryOnConflict(
+		retry.DefaultRetry,
+		func() error {
+			obj, err := resource.NewHelper(info.Client, info.Mapping).WithFieldManager(getManagedFieldsManager()).Create(info.Namespace, true, info.Object)
+			if err != nil {
+				return err
+			}
+			return info.Refresh(obj, true)
+		})
 }
 
 func deleteResource(info *resource.Info, policy metav1.DeletionPropagation) error {
-	opts := &metav1.DeleteOptions{PropagationPolicy: &policy}
-	_, err := resource.NewHelper(info.Client, info.Mapping).WithFieldManager(getManagedFieldsManager()).DeleteWithOptions(info.Namespace, info.Name, opts)
-	return err
+	return retry.RetryOnConflict(
+		retry.DefaultRetry,
+		func() error {
+			opts := &metav1.DeleteOptions{PropagationPolicy: &policy}
+			_, err := resource.NewHelper(info.Client, info.Mapping).WithFieldManager(getManagedFieldsManager()).DeleteWithOptions(info.Namespace, info.Name, opts)
+			return err
+		})
 }
 
-func createPatch(target *resource.Info, current runtime.Object) ([]byte, types.PatchType, error) {
+func createPatch(target *resource.Info, current runtime.Object, threeWayMergeForUnstructured bool) ([]byte, types.PatchType, error) {
 	oldData, err := json.Marshal(current)
 	if err != nil {
 		return nil, types.StrategicMergePatchType, errors.Wrap(err, "serializing current configuration")
@@ -637,7 +665,7 @@ func createPatch(target *resource.Info, current runtime.Object) ([]byte, types.P
 
 	// Unstructured objects, such as CRDs, may not have a not registered error
 	// returned from ConvertToVersion. Anything that's unstructured should
-	// use the jsonpatch.CreateMergePatch. Strategic Merge Patch is not supported
+	// use generic JSON merge patch. Strategic Merge Patch is not supported
 	// on objects like CRDs.
 	_, isUnstructured := versionedObject.(runtime.Unstructured)
 
@@ -645,6 +673,19 @@ func createPatch(target *resource.Info, current runtime.Object) ([]byte, types.P
 	_, isCRD := versionedObject.(*apiextv1beta1.CustomResourceDefinition)
 
 	if isUnstructured || isCRD {
+		if threeWayMergeForUnstructured {
+			// from https://github.com/kubernetes/kubectl/blob/b83b2ec7d15f286720bccf7872b5c72372cb8e80/pkg/cmd/apply/patcher.go#L129
+			preconditions := []mergepatch.PreconditionFunc{
+				mergepatch.RequireKeyUnchanged("apiVersion"),
+				mergepatch.RequireKeyUnchanged("kind"),
+				mergepatch.RequireMetadataKeyUnchanged("name"),
+			}
+			patch, err := jsonmergepatch.CreateThreeWayJSONMergePatch(oldData, newData, currentData, preconditions...)
+			if err != nil && mergepatch.IsPreconditionFailed(err) {
+				err = fmt.Errorf("%w: at least one field was changed: apiVersion, kind or name", err)
+			}
+			return patch, types.MergePatchType, err
+		}
 		// fall back to generic JSON merge patch
 		patch, err := jsonpatch.CreateMergePatch(oldData, newData)
 		return patch, types.MergePatchType, err
@@ -659,7 +700,7 @@ func createPatch(target *resource.Info, current runtime.Object) ([]byte, types.P
 	return patch, types.StrategicMergePatchType, err
 }
 
-func updateResource(c *Client, target *resource.Info, currentObj runtime.Object, force bool) error {
+func updateResource(c *Client, target *resource.Info, currentObj runtime.Object, force, threeWayMergeForUnstructured bool) error {
 	var (
 		obj    runtime.Object
 		helper = resource.NewHelper(target.Client, target.Mapping).WithFieldManager(getManagedFieldsManager())
@@ -675,7 +716,7 @@ func updateResource(c *Client, target *resource.Info, currentObj runtime.Object,
 		}
 		c.Log("Replaced %q with kind %s for kind %s", target.Name, currentObj.GetObjectKind().GroupVersionKind().Kind, kind)
 	} else {
-		patch, patchType, err := createPatch(target, currentObj)
+		patch, patchType, err := createPatch(target, currentObj, threeWayMergeForUnstructured)
 		if err != nil {
 			return errors.Wrap(err, "failed to create patch")
 		}
@@ -802,6 +843,48 @@ func (c *Client) waitForPodSuccess(obj runtime.Object, name string) (bool, error
 	}
 
 	return false, nil
+}
+
+// GetPodList uses the kubernetes interface to get the list of pods filtered by listOptions
+func (c *Client) GetPodList(namespace string, listOptions metav1.ListOptions) (*v1.PodList, error) {
+	podList, err := c.kubeClient.CoreV1().Pods(namespace).List(context.Background(), listOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pod list with options: %+v with error: %v", listOptions, err)
+	}
+	return podList, nil
+}
+
+// OutputContainerLogsForPodList is a helper that outputs logs for a list of pods
+func (c *Client) OutputContainerLogsForPodList(podList *v1.PodList, namespace string, writerFunc func(namespace, pod, container string) io.Writer) error {
+	for _, pod := range podList.Items {
+		for _, container := range pod.Spec.Containers {
+			options := &v1.PodLogOptions{
+				Container: container.Name,
+			}
+			request := c.kubeClient.CoreV1().Pods(namespace).GetLogs(pod.Name, options)
+			err2 := copyRequestStreamToWriter(request, pod.Name, container.Name, writerFunc(namespace, pod.Name, container.Name))
+			if err2 != nil {
+				return err2
+			}
+		}
+	}
+	return nil
+}
+
+func copyRequestStreamToWriter(request *rest.Request, podName, containerName string, writer io.Writer) error {
+	readCloser, err := request.Stream(context.Background())
+	if err != nil {
+		return errors.Errorf("Failed to stream pod logs for pod: %s, container: %s", podName, containerName)
+	}
+	defer readCloser.Close()
+	_, err = io.Copy(writer, readCloser)
+	if err != nil {
+		return errors.Errorf("Failed to copy IO from logs for pod: %s, container: %s", podName, containerName)
+	}
+	if err != nil {
+		return errors.Errorf("Failed to close reader for pod: %s, container: %s", podName, containerName)
+	}
+	return nil
 }
 
 // scrubValidationError removes kubectl info from the message.
