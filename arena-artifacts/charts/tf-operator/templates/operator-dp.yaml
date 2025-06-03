@@ -19,37 +19,47 @@ spec:
         name: tf-job-operator
         {{- include "arena.labels" . | nindent 8 }}
     spec:
+      containers:
+      - name: tf-job-operator
+        image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        command:
+        - /opt/kubeflow/tf-operator.v1
+        - --alsologtostderr
+        - -v=1
+        - --monitoring-port=8443
+        - --threadiness=4
+        env:
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      volumes:
+      - name: config-volume
+        configMap:
+          name: tf-job-operator-config
       nodeSelector:
         {{- include "arena.nodeSelector" . | nindent 8 }}
         {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  kustomize.component: tf-job-operator
+                  {{- include "arena.labels" . | nindent 18 }}
+              topologyKey: kubernetes.io/hostname
       tolerations:
       {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
-      containers:
-        - command:
-            - /opt/kubeflow/tf-operator.v1
-            - --alsologtostderr
-            - -v=1
-            - --monitoring-port=8443
-            - --threadiness=4
-          env:
-            - name: MY_POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: MY_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-          image: {{ include "arena.imagePrefix" . }}/{{ .Values.image }}:{{ .Values.tag }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
-          name: tf-job-operator
-          volumeMounts:
-            - mountPath: /etc/config
-              name: config-volume
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
       serviceAccountName: tf-job-operator
-      volumes:
-        - configMap:
-            name: tf-job-operator-config
-          name: config-volume
