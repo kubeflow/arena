@@ -191,12 +191,14 @@ type CommonServingArgs struct {
 	TempDirs           map[string]string `yaml:"tempDirs"`            // --temp-dir
 	ShareMemory        string            `yaml:"shareMemory"`         // --share-memory
 
-	ImagePullSecrets []string          `yaml:"imagePullSecrets"` //--image-pull-secrets
-	HostVolumes      []DataDirVolume   `yaml:"dataDirs"`         // --data-dir
-	NodeSelectors    map[string]string `yaml:"nodeSelectors"`    // --selector
-	Tolerations      []TolerationArgs  `yaml:"tolerations"`      // --toleration
-	Annotations      map[string]string `yaml:"annotations"`
-	Labels           map[string]string `yaml:"labels"` // --label
+	ImagePullSecrets   []string          `yaml:"imagePullSecrets"`   //--image-pull-secrets
+	HostVolumes        []DataDirVolume   `yaml:"dataDirs"`           // --data-dir
+	NodeSelectors      map[string]string `yaml:"nodeSelectors"`      // --selector
+	Tolerations        []TolerationArgs  `yaml:"tolerations"`        // --toleration
+	AffinityPolicy     string            `yaml:"affinityPolicy"`     // --affinity-policy
+	AffinityConstraint string            `yaml:"affinityConstraint"` // --affinity-constraint
+	Annotations        map[string]string `yaml:"annotations"`
+	Labels             map[string]string `yaml:"labels"` // --label
 	// ConfigFiles stores the config file which is existed in client host node
 	// and map it to container,match option --config-file
 	ConfigFiles map[string]map[string]ConfigFileInfo `yaml:"configFiles"`

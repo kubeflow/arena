@@ -49,6 +49,10 @@ type SubmitTFJobArgs struct {
 	PSMemoryLimit string `yaml:"psMemoryLimit"`
 	// SuccessPolicy defines the policy to mark the TFJob as succeeded.
 	SuccessPolicy string `yaml:"successPolicy"`
+	// AffinityPolicy defines the affinity policy to schedule pods.
+	AffinityPolicy string `yaml:"affinityPolicy"`
+	// AffinityConstraint defines the affinity constraint rule during scheduling.
+	AffinityConstraint string `yaml:"affinityConstraint"`
 	// CleanPodPolicy stores the cleaning pod policy,match option --clean-task-policy
 	CleanPodPolicy string `yaml:"cleanPodPolicy"`
 	// UseChief stores the using chief or not,match option --chief

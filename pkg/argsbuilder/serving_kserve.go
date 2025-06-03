@@ -92,6 +92,8 @@ func (s *KServeArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().Int64Var(&s.args.TimeoutSeconds, "timeout", 0, "the number of seconds to wait before timing out a request to the component.")
 	command.Flags().Int64Var(&s.args.CanaryTrafficPercent, "canary-traffic-percent", -1, "the traffic split percentage between the candidate revision and the last ready revision")
 	command.Flags().StringArrayVar(&securityContext, "security-context", []string{}, `configure a security context, only support runAsUser, runAsGroup, fsGroup, usage: "--security-context runAsUser=1000"`)
+	command.Flags().StringVar(&s.args.AffinityPolicy, "affinity-policy", "none", `specify the pod affinity policy during scheduling, default is none. usage: "--affinity-policy=spread" or "--affinity-policy=binpack"`)
+	command.Flags().StringVar(&s.args.AffinityConstraint, "affinity-constraint", "preferred", `specify the affinity constraint rule during scheduling, default is "preferred". usage: "--affinity-constraint=preferred" or "-affinity-constraint=required"`)
 
 	// Prometheus metrics
 	command.Flags().BoolVar(&s.args.EnablePrometheus, "enable-prometheus", false, "enable prometheus scraping the metrics of inference services")
