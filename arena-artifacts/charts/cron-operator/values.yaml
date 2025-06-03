@@ -7,3 +7,12 @@ replicas: 1
 
 # -- Whether to use host timezone in the container.
 useHostTimezone: false
+
+# -- Resources for cron-operator pods.
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 200m
+    memory: 2Gi
