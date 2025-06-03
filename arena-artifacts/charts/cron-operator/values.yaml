@@ -2,5 +2,8 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- Replicas of cron-operator deployment.
+replicas: 1
+
 # -- Whether to use host timezone in the container.
 useHostTimezone: false
