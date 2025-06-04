@@ -232,13 +232,13 @@ build-dependabot:
 arena-installer: $(ARENA_INSTALLER_TARBALL) ## Build arena installer tarball
 $(ARENA_INSTALLER_TARBALL): arena kubectl helm
 	echo "Building arena installer tarball..." && \
+	rm -rf $(TEMPDIR)/$(ARENA_INSTALLER) && \
 	mkdir -p $(TEMPDIR)/$(ARENA_INSTALLER)/bin && \
 	cp $(LOCALBIN)/$(ARENA) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/arena && \
 	cp $(LOCALBIN)/$(KUBECTL) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/kubectl && \
 	cp $(LOCALBIN)/$(HELM) $(TEMPDIR)/$(ARENA_INSTALLER)/bin/helm && \
 	cp -R charts $(TEMPDIR)/$(ARENA_INSTALLER) && \
 	cp -R arena-artifacts $(TEMPDIR)/$(ARENA_INSTALLER) && \
-	cp -R kubernetes-artifacts $(TEMPDIR)/$(ARENA_INSTALLER) && \
 	cp arena-gen-kubeconfig.sh $(TEMPDIR)/$(ARENA_INSTALLER)/bin && \
 	cp install.sh $(TEMPDIR)/$(ARENA_INSTALLER) && \
 	cp uninstall.sh $(TEMPDIR)/$(ARENA_INSTALLER)/bin/arena-uninstall && \
