@@ -197,17 +197,6 @@ function check_addons() {
     fi
 }
 
-function apply_crds() {
-    export CRD_VERSION="v1"
-    if arena-kubectl get apiservices v1beta1.apiextensions.k8s.io &> /dev/null;then
-        export CRD_VERSION="v1beta1"
-    fi
-    if [ -d $SCRIPT_DIR/arena-artifacts/crds ];then
-        rm -rf $SCRIPT_DIR/arena-artifacts/crds
-    fi
-    cp -a $SCRIPT_DIR/arena-artifacts/all_crds/$CRD_VERSION $SCRIPT_DIR/arena-artifacts/crds
-}
-
 # annotate crds with annotation helm.sh/resource-policy=keep
 # fix bug that upgrade arena-artifacts but make crds missing
 function annotate_crds() {
@@ -255,16 +244,6 @@ function clean_old_env() {
         arena-kubectl delete crd tfjobs.kubeflow.org
         arena-kubectl create -f ${SCRIPT_DIR}/arena-artifacts/charts/tf-operator/crds
     fi
-    # remove the old kubedl-operator
-    #    if arena-kubectl get deployment,Service,ServiceAccount -n $NAMESPACE | grep kubedl-operator &> /dev/null;then
-    #        arena-kubectl delete deployment kubedl-operator -n $NAMESPACE
-    #        arena-kubectl delete ServiceAccount kubedl-operator -n $NAMESPACE
-    #        arena-kubectl delete crd crons.apps.kubedl.io
-    #        arena-kubectl delete ClusterRole kubedl-operator-role -n $NAMESPACE
-    #        arena-kubectl delete ClusterRoleBinding kubedl-operator-rolebinding -n $NAMESPACE
-    #        arena-kubectl delete Service kubedl-operator -n $NAMESPACE
-    #        arena-kubectl delete ServiceMonitor kubedl-operator -n $NAMESPACE
-    #    fi
     set -e
 }
 function apply_cron() {
@@ -317,7 +296,6 @@ function operators() {
         fi
     fi
     clean_old_env
-    apply_crds
     apply_tf
     apply_pytorch
     apply_mpi
