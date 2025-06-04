@@ -123,6 +123,9 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.WorkerMemory, "worker-memory", "", "the memory resource to use for the worker, like 1Gi.")
 	command.Flags().StringVar(&s.args.WorkerMemoryLimit, "worker-memory-limit", "", "the memory resource limit to use for the worker, like 1Gi.")
 
+	command.Flags().StringVar(&s.args.WorkerAffinityPolicy, "worker-affinity-policy", "none", `specify the affinity policy during worker pods scheduling, default is none. usage: "--worker-affinity-policy=spread" or "--worker-affinity-policy=binpack"`)
+	command.Flags().StringVar(&s.args.WorkerAffinityConstraint, "worker-affinity-constraint", "preferred", `specify the affinity constraint rule during worker pods scheduling, default is "preferred". usage: "--worker-affinity-constraint=preferred" or "--worker-affinity-constraint=required"`)
+
 	command.Flags().StringVar(&s.args.PSCpu, "psCpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
 	_ = command.Flags().MarkDeprecated("psCpu", "please use --ps-cpu instead")
 	command.Flags().StringVar(&s.args.PSCpu, "ps-cpu", "", "the cpu resource to use for the parameter servers, like 1 for 1 core.")
@@ -135,9 +138,10 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.PSMemory, "ps-memory", "", "the memory resource to use for the parameter servers, like 1Gi.")
 	command.Flags().StringVar(&s.args.PSMemoryLimit, "ps-memory-limit", "", "the memory resource limit to use for the parameter servers, like 1Gi.")
 
+	command.Flags().StringVar(&s.args.PSAffinityPolicy, "ps-affinity-policy", "none", `specify the affinity policy during parameter server pods scheduling, default is none. usage: "--ps-affinity-policy=spread" or "--ps-affinity-policy=binpack"`)
+	command.Flags().StringVar(&s.args.PSAffinityConstraint, "ps-affinity-constraint", "preferred", `specify the affinity constraint rule during parameter server pods scheduling, default is "preferred". usage: "--ps-affinity-constraint=preferred" or "--ps-affinity-constraint=required"`)
+
 	command.Flags().StringVar(&s.args.SuccessPolicy, "success-policy", TFJobSuccessPolicyChiefWorker, "Specifies the policy to mark the TFJob as succeeded. Available options are ChiefWorker and AllWorkers. Default to ChiefWorker.")
-	command.Flags().StringVar(&s.args.AffinityPolicy, "affinity-policy", "none", `specify the pod affinity policy during scheduling, default is none. usage: "--affinity-policy=spread" or "--affinity-policy=binpack"`)
-	command.Flags().StringVar(&s.args.AffinityConstraint, "affinity-constraint", "preferred", `specify the affinity constraint rule during scheduling, default is "preferred". usage: "--affinity-constraint=preferred" or "-affinity-constraint=required"`)
 
 	// How to clean up Task
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "cleanTaskPolicy", "Running", "How to clean tasks after Training is done, support Running, None and All.")

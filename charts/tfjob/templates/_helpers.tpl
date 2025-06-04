@@ -41,8 +41,8 @@ Create chart name and version as used by the chart label.
 
 
 {{- define "setPSAffinityFunction" -}}
-{{- $affinityPolicy := .Values.affinityPolicy -}}
-{{- $affinityConstraint := .Values.affinityConstraint -}}
+{{- $affinityPolicy := .Values.psAffinityPolicy -}}
+{{- $affinityConstraint := .Values.psAffinityConstraint -}}
 
 {{- if eq $affinityPolicy "spread" -}}
 {{- if eq $affinityConstraint "preferred" -}}
@@ -148,8 +148,8 @@ affinity:
 
 
 {{- define "setWorkerAffinityFunction" -}}
-{{- $affinityPolicy := .Values.affinityPolicy -}}
-{{- $affinityConstraint := .Values.affinityConstraint -}}
+{{- $affinityPolicy := .Values.workerAffinityPolicy -}}
+{{- $affinityConstraint := .Values.workerAffinityConstraint -}}
 
 {{- if eq $affinityPolicy "spread" -}}
 {{- if eq $affinityConstraint "preferred" -}}
