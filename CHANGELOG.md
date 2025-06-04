@@ -1,5 +1,33 @@
 # Changelog
 
+## [HEAD](https://github.com/kubeflow/arena/tree/v0.15.0) (2025-06-04)
+
+### Features
+
+- refactor: use helm lib instead of helm binary ([#1207](https://github.com/kubeflow/arena/pull/1207) by [@ChenYi015](https://github.com/ChenYi015))
+- feat: add new value for using localtime in cron-operator ([#1296](https://github.com/kubeflow/arena/pull/1296) by [@ChenYi015](https://github.com/ChenYi015))
+- Delete all services when the TFJob is terminated ([#1316](https://github.com/kubeflow/arena/pull/1316) by [@ChenYi015](https://github.com/ChenYi015))
+- Make number of replicas of cron-operator deployment configurable ([#1325](https://github.com/kubeflow/arena/pull/1325) by [@ChenYi015](https://github.com/ChenYi015))
+- Make number of replicas of tf-operator deployment configurable ([#1323](https://github.com/kubeflow/arena/pull/1323) by [@ChenYi015](https://github.com/ChenYi015))
+- Add custom device support for kserve and kserving. ([#1315](https://github.com/kubeflow/arena/pull/1315) by [@Leoyzen](https://github.com/Leoyzen))
+- Feat: support affinity policy for kserve and tfjob ([#1319](https://github.com/kubeflow/arena/pull/1319) by [@Syspretor](https://github.com/Syspretor))
+- Feat: support separate affinity policy configuration for PS and worke… ([#1331](https://github.com/kubeflow/arena/pull/1331) by [@Syspretor](https://github.com/Syspretor))
+
+### Bug Fixes
+
+- fix: job status displays incorrectly ([#1289](https://github.com/kubeflow/arena/pull/1289) by [@ChenYi015](https://github.com/ChenYi015))
+- fix: service account should use release namespace ([#1308](https://github.com/kubeflow/arena/pull/1308) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Misc
+
+- Add basic e2e tests ([#1225](https://github.com/kubeflow/arena/pull/1225) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump github.com/containerd/containerd from 1.7.23 to 1.7.27 ([#1290](https://github.com/kubeflow/arena/pull/1290) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- Add stale bot to mark stale issues and PRs ([#1141](https://github.com/kubeflow/arena/pull/1141) by [@ChenYi015](https://github.com/ChenYi015))
+- Fix typos in multiple files ([#1304](https://github.com/kubeflow/arena/pull/1304) by [@co63oc](https://github.com/co63oc))
+- Fix typos in multiple files ([#1310](https://github.com/kubeflow/arena/pull/1310) by [@co63oc](https://github.com/co63oc))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.14.2...v0.15.0)
+
 ## [v0.14.2](https://github.com/kubeflow/arena/tree/v0.14.2) (2025-03-10)
 
 ### Misc
