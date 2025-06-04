@@ -109,42 +109,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
-          {{- if .Values.binpack }}
-          affinity:
-            podAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-              - weight: 100
-                podAffinityTerm:
-                  topologyKey: kubernetes.io/hostname
-                  labelSelector:
-                    matchExpressions:
-                      - key: release
-                        operator: In
-                        values:
-                          - "{{ .Release.Name }}"
-                      - key: group-name
-                        operator: In
-                        values:
-                          - "kubeflow.org"
-              - weight: 60
-                podAffinityTerm:
-                  topologyKey: kubernetes.io/hostname
-                  labelSelector:
-                    matchExpressions:
-                      - key: tf-replica-type
-                        operator: In
-                        values:
-                          - worker
-              - weight: 30
-                podAffinityTerm:
-                  topologyKey: kubernetes.io/hostname
-                  labelSelector:
-                    matchExpressions:
-                      - key: tf-replica-type
-                        operator: In
-                        values:
-                          - ps      
-          {{- end }}
+          {{- include "setPSAffinityFunction" . | nindent 10 }}
           {{- if .Values.useHostNetwork }}
           {{- if not .Values.useENI }}
           hostNetwork: {{ .Values.useHostNetwork }}
@@ -441,42 +406,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- if .Values.ps }}
-          {{- if .Values.binpack }}
-          affinity:
-            podAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-              - weight: 100
-                podAffinityTerm:
-                  topologyKey: kubernetes.io/hostname
-                  labelSelector:
-                    matchExpressions:
-                      - key: release
-                        operator: In
-                        values:
-                          - "{{ .Release.Name }}"
-                      - key: group-name
-                        operator: In
-                        values:
-                          - "kubeflow.org"
-              - weight: 60
-                podAffinityTerm:
-                  topologyKey: kubernetes.io/hostname
-                  labelSelector:
-                    matchExpressions:
-                      - key: tf-replica-type
-                        operator: In
-                        values:
-                          - ps
-              - weight: 30
-                podAffinityTerm:
-                  topologyKey: kubernetes.io/hostname
-                  labelSelector:
-                    matchExpressions:
-                      - key: tf-replica-type
-                        operator: In
-                        values:
-                          - worker      
-          {{- end }}
+          {{- include "setWorkerAffinityFunction" . | nindent 10 }}
           {{- end }}
           {{- if .Values.useHostNetwork }}
           {{- if not .Values.useENI }}

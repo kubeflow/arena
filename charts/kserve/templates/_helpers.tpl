@@ -79,3 +79,51 @@ See the doc for details. https://kubernetes.io/docs/tasks/run-application/horizo
   {{- false }}
 {{- end }}
 {{- end -}}
+
+{{- define "setAffinityFunction" -}}
+{{- $affinityPolicy := .Values.affinityPolicy -}}
+{{- $affinityConstraint := .Values.affinityConstraint -}}
+
+{{- if eq $affinityPolicy "spread" -}}
+{{- if eq $affinityConstraint "preferred" -}}
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              servingName: "{{ .Values.servingName }}"
+          topologyKey: kubernetes.io/hostname
+        weight: 100
+{{- else if eq $affinityConstraint "required" -}}
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchLabels:
+          servingName: "{{ .Values.servingName }}"
+      topologyKey: kubernetes.io/hostname
+{{- end -}}
+
+{{- else if eq $affinityPolicy "binpack" -}}
+{{- if eq $affinityConstraint "preferred" -}}
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              servingName: "{{ .Values.servingName }}"
+          topologyKey: kubernetes.io/hostname
+        weight: 100
+{{- else if eq $affinityConstraint "required" -}}
+affinity:
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchLabels:
+          servingName: "{{ .Values.servingName }}"
+      topologyKey: kubernetes.io/hostname
+{{- end -}}
+{{- end -}}
+{{- end -}}

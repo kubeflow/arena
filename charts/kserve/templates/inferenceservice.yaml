@@ -27,6 +27,7 @@ metadata:
   name: {{ .Release.Name }}
 spec:
   predictor:
+    {{- include "setAffinityFunction" . | nindent 4 }}
     {{- if eq (include "kserve.isCustomMetrics" .) "false" }}
     {{- if .Values.minReplicas }}
     minReplicas: {{ .Values.minReplicas }}

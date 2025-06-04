@@ -38,3 +38,216 @@ Create chart name and version as used by the chart label.
 {{- define "tfjob.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+
+{{- define "setPSAffinityFunction" -}}
+{{- $affinityPolicy := .Values.affinityPolicy -}}
+{{- $affinityConstraint := .Values.affinityConstraint -}}
+
+{{- if eq $affinityPolicy "spread" -}}
+{{- if eq $affinityConstraint "preferred" -}}
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchExpressions:
+              - key: release
+                operator: In
+                values:
+                  - "{{ .Release.Name }}"
+              - key: group-name
+                operator: In
+                values:
+                  - "kubeflow.org"
+              - key: tf-replica-type
+                operator: In
+                values:
+                  - ps
+{{- else if eq $affinityConstraint "required" -}}
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+            - key: release
+              operator: In
+              values:
+                - "{{ .Release.Name }}"
+            - key: group-name
+              operator: In
+              values:
+                - "kubeflow.org"
+            - key: tf-replica-type
+              operator: In
+              values:
+                - ps
+{{- end -}}
+
+{{- else if eq $affinityPolicy "binpack" -}}
+{{- if eq $affinityConstraint "preferred" -}}
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+            - key: release
+              operator: In
+              values:
+                - "{{ .Release.Name }}"
+            - key: group-name
+              operator: In
+              values:
+                - "kubeflow.org"
+    - weight: 60
+      podAffinityTerm:
+        topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+            - key: tf-replica-type
+              operator: In
+              values:
+                - worker
+    - weight: 30
+      podAffinityTerm:
+        topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+            - key: tf-replica-type
+              operator: In
+              values:
+                - ps
+{{- else if eq $affinityConstraint "required" -}}
+affinity:
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - topologyKey: kubernetes.io/hostname
+      labelSelector:
+        matchExpressions:
+          - key: release
+            operator: In
+            values:
+              - "{{ .Release.Name }}"
+          - key: group-name
+            operator: In
+            values:
+              - "kubeflow.org"
+          - key: tf-replica-type
+            operator: In
+            values:
+              - ps
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+
+{{- define "setWorkerAffinityFunction" -}}
+{{- $affinityPolicy := .Values.affinityPolicy -}}
+{{- $affinityConstraint := .Values.affinityConstraint -}}
+
+{{- if eq $affinityPolicy "spread" -}}
+{{- if eq $affinityConstraint "preferred" -}}
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchExpressions:
+              - key: release
+                operator: In
+                values:
+                  - "{{ .Release.Name }}"
+              - key: group-name
+                operator: In
+                values:
+                  - "kubeflow.org"
+              - key: tf-replica-type
+                operator: In
+                values:
+                  - worker
+{{- else if eq $affinityConstraint "required" -}}
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+            - key: release
+              operator: In
+              values:
+                - "{{ .Release.Name }}"
+            - key: group-name
+              operator: In
+              values:
+                - "kubeflow.org"
+            - key: tf-replica-type
+              operator: In
+              values:
+                - worker
+{{- end -}}
+{{- else if eq $affinityPolicy "binpack" -}}
+{{- if eq $affinityConstraint "preferred" -}}
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+            - key: release
+              operator: In
+              values:
+                - "{{ .Release.Name }}"
+            - key: group-name
+              operator: In
+              values:
+                - "kubeflow.org"
+    - weight: 60
+      podAffinityTerm:
+        topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+            - key: tf-replica-type
+              operator: In
+              values:
+                - ps
+    - weight: 30
+      podAffinityTerm:
+        topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+            - key: tf-replica-type
+              operator: In
+              values:
+                - worker
+{{- else if eq $affinityConstraint "required" -}}
+affinity:
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - topologyKey: kubernetes.io/hostname
+      labelSelector:
+        matchExpressions:
+          - key: release
+            operator: In
+            values:
+              - "{{ .Release.Name }}"
+          - key: group-name
+            operator: In
+            values:
+              - "kubeflow.org"
+          - key: tf-replica-type
+            operator: In
+            values:
+              - worker
+{{- end -}}
+{{- end -}}
+{{- end -}}

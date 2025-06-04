@@ -136,6 +136,8 @@ func (s *SubmitTFJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.PSMemoryLimit, "ps-memory-limit", "", "the memory resource limit to use for the parameter servers, like 1Gi.")
 
 	command.Flags().StringVar(&s.args.SuccessPolicy, "success-policy", TFJobSuccessPolicyChiefWorker, "Specifies the policy to mark the TFJob as succeeded. Available options are ChiefWorker and AllWorkers. Default to ChiefWorker.")
+	command.Flags().StringVar(&s.args.AffinityPolicy, "affinity-policy", "none", `specify the pod affinity policy during scheduling, default is none. usage: "--affinity-policy=spread" or "--affinity-policy=binpack"`)
+	command.Flags().StringVar(&s.args.AffinityConstraint, "affinity-constraint", "preferred", `specify the affinity constraint rule during scheduling, default is "preferred". usage: "--affinity-constraint=preferred" or "-affinity-constraint=required"`)
 
 	// How to clean up Task
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "cleanTaskPolicy", "Running", "How to clean tasks after Training is done, support Running, None and All.")
