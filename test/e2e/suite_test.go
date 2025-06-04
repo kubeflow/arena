@@ -69,11 +69,7 @@ var _ = BeforeSuite(func() {
 	By("Bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
-			filepath.Join("..", "..", "arena-artifacts", "all_crds", "v1", "pytorch-operator"),
-			filepath.Join("..", "..", "arena-artifacts", "all_crds", "v1", "tf-operator"),
-			filepath.Join("..", "..", "arena-artifacts", "all_crds", "v1", "mpi-operator"),
-			filepath.Join("..", "..", "arena-artifacts", "all_crds", "v1", "et-operator"),
-			filepath.Join("..", "..", "arena-artifacts", "all_crds", "v1", "cron-operator"),
+			filepath.Join("..", "..", "arena-artifacts", "crds"),
 		},
 		ErrorIfCRDPathMissing: true,
 
