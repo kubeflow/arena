@@ -34,11 +34,14 @@ PACKR_CMD := $(shell if [ "`which packr`" ]; then echo "packr"; else echo "go ru
 LOCALBIN ?= $(CURRENT_DIR)/bin
 # Location to put temp files
 TEMPDIR ?= $(CURRENT_DIR)/tmp
+# ARENA_ARTIFACTS
+ARENA_ARTIFACTS_CHART_PATH ?= $(CURRENT_DIR)/arena-artifacts
 
 # Versions
 GOLANG_VERSION=$(shell grep -e '^go ' go.mod | cut -d ' ' -f 2)
 KUBECTL_VERSION ?= v1.28.4
 HELM_VERSION ?= v3.13.3
+HELM_UNITTEST_VERSION ?= 0.5.1
 KIND_VERSION ?= v0.23.0
 KIND_K8S_VERSION ?= v1.29.3
 ENVTEST_VERSION ?= release-0.18
@@ -245,6 +248,12 @@ $(ARENA_INSTALLER_TARBALL): arena kubectl helm
 	tar -zcf $(ARENA_INSTALLER).tar.gz -C $(TEMPDIR) $(ARENA_INSTALLER) && \
 	echo "Successfully saved arena installer to $(ARENA_INSTALLER).tar.gz."
 	
+##@ Helm
+
+.PHONY: helm-unittest
+helm-unittest: helm-unittest-plugin ## Run Helm chart unittests.
+	set -x && $(LOCALBIN)/$(HELM) unittest $(ARENA_ARTIFACTS_CHART_PATH) --strict --file "tests/**/*_test.yaml" --chart-tests-path $(CURRENT_DIR)
+	
 ##@ Dependencies
 
 .PHONY: golangci-lint
@@ -300,6 +309,13 @@ $(LOCALBIN)/$(HELM): $(LOCALBIN) $(TEMPDIR)
 	tar -zxf $(HELM).tar.gz && \
 	cp ${OS}-${ARCH}/helm $(LOCALBIN)/$(HELM) && \
 	echo "Successfully installed helm to $(LOCALBIN)/$(HELM)."
+
+.PHONY: helm-unittest-plugin
+helm-unittest-plugin: helm ## Download helm unittest plugin locally if necessary.
+	if [ -z "$(shell $(LOCALBIN)/$(HELM) plugin list | grep unittest)" ]; then \
+		echo "Installing helm unittest plugin"; \
+		$(LOCALBIN)/$(HELM) plugin install https://github.com/helm-unittest/helm-unittest.git --version $(HELM_UNITTEST_VERSION); \
+	fi
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)
