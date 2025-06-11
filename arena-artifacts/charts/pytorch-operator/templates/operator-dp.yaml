@@ -24,6 +24,12 @@ spec:
         {{- include "arena.nodeSelector" . | nindent 8 }}
         {{- include "arena.nonEdgeNodeSelector" . | nindent 8 }}
       tolerations:
+      {{- with .Values.global.tolerations }}
+      {{- . | toYaml | nindent 6 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      {{- . | toYaml | nindent 6 }}
+      {{- end }}
       {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       containers:
         - command:

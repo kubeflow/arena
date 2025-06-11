@@ -12,6 +12,8 @@ global:
   clusterProfile: "Default"
   # specify the nodeSelector for all operator pods
   nodeSelector: {}
+  # -- Tolerations for arena installer job and all operator deployments.
+  tolerations: []
   namespace: "arena-system"
 
 # arena binary installer

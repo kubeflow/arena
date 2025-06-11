@@ -61,5 +61,11 @@ spec:
                   {{- include "arena.labels" . | nindent 18 }}
               topologyKey: kubernetes.io/hostname
       tolerations:
+      {{- with .Values.global.tolerations }}
+      {{- . | toYaml | nindent 6 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      {{- . | toYaml | nindent 6 }}
+      {{- end }}
       {{- include "arena.tolerateNonEdgeNodeSelector" . | nindent 6 }}
       serviceAccountName: tf-job-operator
