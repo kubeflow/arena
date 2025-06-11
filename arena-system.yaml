@@ -1,0 +1,1056 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  imagePullSecrets:
+  - name: acr-credential-secret-aggregation
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","imagePullSecrets":[{"name":"acr-credential-secret-aggregation"}],"kind":"ServiceAccount","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app":"cron-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"cron-operator","namespace":"arena-system","resourceVersion":"10222692","uid":"d0d8c633-423f-47a6-a763-686285f14793"}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app: cron-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: cron-operator
+    namespace: arena-system
+    resourceVersion: "10224737"
+    uid: d0d8c633-423f-47a6-a763-686285f14793
+- apiVersion: v1
+  imagePullSecrets:
+  - name: acr-credential-secret-aggregation
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","imagePullSecrets":[{"name":"acr-credential-secret-aggregation"}],"kind":"ServiceAccount","metadata":{"annotations":{},"creationTimestamp":"2025-06-11T03:57:27Z","name":"default","namespace":"arena-system","resourceVersion":"10166765","uid":"9203cf3e-e116-473b-a448-2c5accb12384"}}
+    creationTimestamp: "2025-06-11T03:57:27Z"
+    name: default
+    namespace: arena-system
+    resourceVersion: "10224738"
+    uid: 9203cf3e-e116-473b-a448-2c5accb12384
+- apiVersion: v1
+  imagePullSecrets:
+  - name: acr-credential-secret-aggregation
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","imagePullSecrets":[{"name":"acr-credential-secret-aggregation"}],"kind":"ServiceAccount","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"elastic-job-supervisor","namespace":"arena-system","resourceVersion":"10222702","uid":"efd87790-cfd4-4720-a556-f230547b6736"}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: elastic-job-supervisor
+    namespace: arena-system
+    resourceVersion: "10224739"
+    uid: efd87790-cfd4-4720-a556-f230547b6736
+- apiVersion: v1
+  imagePullSecrets:
+  - name: acr-credential-secret-aggregation
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","imagePullSecrets":[{"name":"acr-credential-secret-aggregation"}],"kind":"ServiceAccount","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app":"et-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"et-operator","namespace":"arena-system","resourceVersion":"10222686","uid":"d5c47f8c-d1a8-41fe-81fc-19f24b0c442f"}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app: et-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: et-operator
+    namespace: arena-system
+    resourceVersion: "10224740"
+    uid: d5c47f8c-d1a8-41fe-81fc-19f24b0c442f
+- apiVersion: v1
+  imagePullSecrets:
+  - name: acr-credential-secret-aggregation
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","imagePullSecrets":[{"name":"acr-credential-secret-aggregation"}],"kind":"ServiceAccount","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"mpi-operator","namespace":"arena-system","resourceVersion":"10222706","uid":"c5b55e46-05e5-410e-b156-b1b2edb10db4"}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: mpi-operator
+    namespace: arena-system
+    resourceVersion: "10224741"
+    uid: c5b55e46-05e5-410e-b156-b1b2edb10db4
+- apiVersion: v1
+  imagePullSecrets:
+  - name: acr-credential-secret-aggregation
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","imagePullSecrets":[{"name":"acr-credential-secret-aggregation"}],"kind":"ServiceAccount","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app":"pytorch-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"pytorch-operator","namespace":"arena-system","resourceVersion":"10222687","uid":"e3c1dcf9-7d03-45c5-8438-1895bdb9302e"}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app: pytorch-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: pytorch-operator
+    namespace: arena-system
+    resourceVersion: "10224743"
+    uid: e3c1dcf9-7d03-45c5-8438-1895bdb9302e
+- apiVersion: v1
+  imagePullSecrets:
+  - name: acr-credential-secret-aggregation
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","imagePullSecrets":[{"name":"acr-credential-secret-aggregation"}],"kind":"ServiceAccount","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app":"tf-job-dashboard","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"},"name":"tf-job-dashboard","namespace":"arena-system","resourceVersion":"10222690","uid":"200e601e-c693-495c-bd5d-dd28fa77076f"}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app: tf-job-dashboard
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+      kustomize.component: tf-job-operator
+    name: tf-job-dashboard
+    namespace: arena-system
+    resourceVersion: "10224744"
+    uid: 200e601e-c693-495c-bd5d-dd28fa77076f
+- apiVersion: v1
+  imagePullSecrets:
+  - name: acr-credential-secret-aggregation
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","imagePullSecrets":[{"name":"acr-credential-secret-aggregation"}],"kind":"ServiceAccount","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app":"tf-job-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"},"name":"tf-job-operator","namespace":"arena-system","resourceVersion":"10222695","uid":"53a14bff-5547-4d40-9fbc-587e40fe9d0b"}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app: tf-job-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+      kustomize.component: tf-job-operator
+    name: tf-job-operator
+    namespace: arena-system
+    resourceVersion: "10224746"
+    uid: 53a14bff-5547-4d40-9fbc-587e40fe9d0b
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"Role","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"et-operator-leader-election","namespace":"arena-system","resourceVersion":"10222688","uid":"eb659c71-f037-462e-814e-f909f498c798"},"rules":[{"apiGroups":[""],"resources":["configmaps"],"verbs":["get","list","watch","create","update","patch","delete"]},{"apiGroups":[""],"resources":["configmaps/status"],"verbs":["get","update","patch"]},{"apiGroups":[""],"resources":["events"],"verbs":["create"]}]}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: et-operator-leader-election
+    namespace: arena-system
+    resourceVersion: "10224747"
+    uid: eb659c71-f037-462e-814e-f909f498c798
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs:
+    - get
+    - list
+    - watch
+    - create
+    - update
+    - patch
+    - delete
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps/status
+    verbs:
+    - get
+    - update
+    - patch
+  - apiGroups:
+    - ""
+    resources:
+    - events
+    verbs:
+    - create
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"RoleBinding","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"et-operator-leader-election","namespace":"arena-system","resourceVersion":"10222689","uid":"8d574744-1679-493d-a054-6a189e5aac64"},"roleRef":{"apiGroup":"rbac.authorization.k8s.io","kind":"Role","name":"et-operator-leader-election"},"subjects":[{"kind":"ServiceAccount","name":"et-operator","namespace":"arena-system"}]}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: et-operator-leader-election
+    namespace: arena-system
+    resourceVersion: "10224748"
+    uid: 8d574744-1679-493d-a054-6a189e5aac64
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: et-operator-leader-election
+  subjects:
+  - kind: ServiceAccount
+    name: et-operator
+    namespace: arena-system
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","generation":1,"labels":{"app":"cron-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"cron-operator","namespace":"arena-system","resourceVersion":"10222823","uid":"1c1e5295-d80f-4d32-9cb0-75ad0b197983"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"cron-operator","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"creationTimestamp":null,"labels":{"app":"cron-operator","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"},"namespace":"arena-system"},"spec":{"affinity":{"podAntiAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"podAffinityTerm":{"labelSelector":{"matchLabels":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"}},"topologyKey":"kubernetes.io/hostname"},"weight":100}]}},"containers":[{"args":["--workloads=Cron"],"image":"registry-cn-beijing-vpc.ack.aliyuncs.com/acs/cron-operator:aliyun-0f570ce","imagePullPolicy":"IfNotPresent","name":"cron","ports":[{"containerPort":8443,"name":"metrics","protocol":"TCP"}],"resources":{"limits":{"cpu":"200m","memory":"2Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"cron-operator","serviceAccountName":"cron-operator","terminationGracePeriodSeconds":30}}},"status":{"availableReplicas":1,"conditions":[{"lastTransitionTime":"2025-06-11T05:50:57Z","lastUpdateTime":"2025-06-11T05:50:57Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2025-06-11T05:50:55Z","lastUpdateTime":"2025-06-11T05:50:57Z","message":"ReplicaSet \"cron-operator-79fb9867f\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":1,"readyReplicas":1,"replicas":1,"updatedReplicas":1}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    generation: 2
+    labels:
+      app: cron-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: cron-operator
+    namespace: arena-system
+    resourceVersion: "10224751"
+    uid: 1c1e5295-d80f-4d32-9cb0-75ad0b197983
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: cron-operator
+        app.kubeflow.org/managed-by: arena
+        helm.sh/chart: arena-artifacts
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: cron-operator
+          app.kubeflow.org/managed-by: arena
+          helm.sh/chart: arena-artifacts
+        namespace: arena-system
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubeflow.org/managed-by: arena
+                    helm.sh/chart: arena-artifacts
+                    kustomize.component: tf-job-operator
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+        containers:
+        - args:
+          - --workloads=Cron
+          image: registry-cn-beijing-vpc.ack.aliyuncs.com/acs/cron-operator:aliyun-0f570ce
+          imagePullPolicy: IfNotPresent
+          name: cron
+          ports:
+          - containerPort: 8443
+            name: metrics
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 2Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: cron-operator
+        serviceAccountName: cron-operator
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-06-11T05:50:57Z"
+      lastUpdateTime: "2025-06-11T05:50:57Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-06-11T05:50:55Z"
+      lastUpdateTime: "2025-06-11T05:50:57Z"
+      message: ReplicaSet "cron-operator-79fb9867f" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","generation":1,"labels":{"app":"elastic-job-supervisor","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"elastic-job-supervisor","namespace":"arena-system","resourceVersion":"10222880","uid":"50faa4f0-7b41-47eb-91e0-27826e5b09c9"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"elastic-job-supervisor","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"creationTimestamp":null,"labels":{"app":"elastic-job-supervisor","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"}},"spec":{"containers":[{"command":["/job-supervisor"],"image":"registry-cn-beijing-vpc.ack.aliyuncs.com/acs/job-supervisor:v1.2.0-7a69190-aliyun","imagePullPolicy":"IfNotPresent","name":"elastic-job-supervisor","resources":{"limits":{"cpu":"300m","memory":"500Mi"},"requests":{"cpu":"100m","memory":"300Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"elastic-job-supervisor","serviceAccountName":"elastic-job-supervisor","terminationGracePeriodSeconds":30}}},"status":{"availableReplicas":1,"conditions":[{"lastTransitionTime":"2025-06-11T05:51:02Z","lastUpdateTime":"2025-06-11T05:51:02Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2025-06-11T05:50:55Z","lastUpdateTime":"2025-06-11T05:51:02Z","message":"ReplicaSet \"elastic-job-supervisor-76f57ffc9c\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":1,"readyReplicas":1,"replicas":1,"updatedReplicas":1}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    generation: 2
+    labels:
+      app: elastic-job-supervisor
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: elastic-job-supervisor
+    namespace: arena-system
+    resourceVersion: "10224753"
+    uid: 50faa4f0-7b41-47eb-91e0-27826e5b09c9
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: elastic-job-supervisor
+        app.kubeflow.org/managed-by: arena
+        helm.sh/chart: arena-artifacts
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: elastic-job-supervisor
+          app.kubeflow.org/managed-by: arena
+          helm.sh/chart: arena-artifacts
+      spec:
+        containers:
+        - command:
+          - /job-supervisor
+          image: registry-cn-beijing-vpc.ack.aliyuncs.com/acs/job-supervisor:v1.2.0-7a69190-aliyun
+          imagePullPolicy: IfNotPresent
+          name: elastic-job-supervisor
+          resources:
+            limits:
+              cpu: 300m
+              memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: elastic-job-supervisor
+        serviceAccountName: elastic-job-supervisor
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-06-11T05:51:02Z"
+      lastUpdateTime: "2025-06-11T05:51:02Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-06-11T05:50:55Z"
+      lastUpdateTime: "2025-06-11T05:51:02Z"
+      message: ReplicaSet "elastic-job-supervisor-76f57ffc9c" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","generation":1,"labels":{"app":"et-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"et-operator","namespace":"arena-system","resourceVersion":"10222864","uid":"d7f7f140-a296-46e3-99e3-6ddaebfab86a"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"et-operator","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"creationTimestamp":null,"labels":{"app":"et-operator","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"}},"spec":{"containers":[{"args":["--enable-leader-election","--create-ssh-secret=false","--init-container-image=kube-ai-registry.cn-shanghai.cr.aliyuncs.com/kube-ai/alpine:3.10.9"],"command":["/manager"],"image":"registry-cn-beijing-vpc.ack.aliyuncs.com/acs/et-operator:aliyun-96806fb","imagePullPolicy":"IfNotPresent","name":"manager","resources":{"limits":{"cpu":"2","memory":"8Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"et-operator","serviceAccountName":"et-operator","terminationGracePeriodSeconds":10}}},"status":{"availableReplicas":1,"conditions":[{"lastTransitionTime":"2025-06-11T05:51:01Z","lastUpdateTime":"2025-06-11T05:51:01Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2025-06-11T05:50:55Z","lastUpdateTime":"2025-06-11T05:51:01Z","message":"ReplicaSet \"et-operator-5496466466\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":1,"readyReplicas":1,"replicas":1,"updatedReplicas":1}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    generation: 2
+    labels:
+      app: et-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: et-operator
+    namespace: arena-system
+    resourceVersion: "10224756"
+    uid: d7f7f140-a296-46e3-99e3-6ddaebfab86a
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: et-operator
+        app.kubeflow.org/managed-by: arena
+        helm.sh/chart: arena-artifacts
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: et-operator
+          app.kubeflow.org/managed-by: arena
+          helm.sh/chart: arena-artifacts
+      spec:
+        containers:
+        - args:
+          - --enable-leader-election
+          - --create-ssh-secret=false
+          - --init-container-image=kube-ai-registry.cn-shanghai.cr.aliyuncs.com/kube-ai/alpine:3.10.9
+          command:
+          - /manager
+          image: registry-cn-beijing-vpc.ack.aliyuncs.com/acs/et-operator:aliyun-96806fb
+          imagePullPolicy: IfNotPresent
+          name: manager
+          resources:
+            limits:
+              cpu: "2"
+              memory: 8Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: et-operator
+        serviceAccountName: et-operator
+        terminationGracePeriodSeconds: 10
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-06-11T05:51:01Z"
+      lastUpdateTime: "2025-06-11T05:51:01Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-06-11T05:50:55Z"
+      lastUpdateTime: "2025-06-11T05:51:01Z"
+      message: ReplicaSet "et-operator-5496466466" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","generation":1,"labels":{"app":"mpi-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"mpi-operator","namespace":"arena-system","resourceVersion":"10222885","uid":"5aac553e-8c1a-4f2d-861f-a6ca97a0e367"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"mpi-operator","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"creationTimestamp":null,"labels":{"app":"mpi-operator","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"}},"spec":{"containers":[{"args":["--gpus-per-node","8","--kubectl-delivery-image","registry-cn-beijing-vpc.ack.aliyuncs.com/acs/kubectl-delivery:v0.1.0","--alsologtostderr","--v=5"],"image":"registry-cn-beijing-vpc.ack.aliyuncs.com/acs/mpi-operator:aliyun-03b5e76","imagePullPolicy":"IfNotPresent","name":"mpi-operator","resources":{"limits":{"cpu":"2","memory":"8Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"mpi-operator","serviceAccountName":"mpi-operator","terminationGracePeriodSeconds":30}}},"status":{"availableReplicas":1,"conditions":[{"lastTransitionTime":"2025-06-11T05:51:02Z","lastUpdateTime":"2025-06-11T05:51:02Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2025-06-11T05:50:55Z","lastUpdateTime":"2025-06-11T05:51:02Z","message":"ReplicaSet \"mpi-operator-677d54cc59\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":1,"readyReplicas":1,"replicas":1,"updatedReplicas":1}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    generation: 2
+    labels:
+      app: mpi-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: mpi-operator
+    namespace: arena-system
+    resourceVersion: "10224758"
+    uid: 5aac553e-8c1a-4f2d-861f-a6ca97a0e367
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: mpi-operator
+        app.kubeflow.org/managed-by: arena
+        helm.sh/chart: arena-artifacts
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: mpi-operator
+          app.kubeflow.org/managed-by: arena
+          helm.sh/chart: arena-artifacts
+      spec:
+        containers:
+        - args:
+          - --gpus-per-node
+          - "8"
+          - --kubectl-delivery-image
+          - registry-cn-beijing-vpc.ack.aliyuncs.com/acs/kubectl-delivery:v0.1.0
+          - --alsologtostderr
+          - --v=5
+          image: registry-cn-beijing-vpc.ack.aliyuncs.com/acs/mpi-operator:aliyun-03b5e76
+          imagePullPolicy: IfNotPresent
+          name: mpi-operator
+          resources:
+            limits:
+              cpu: "2"
+              memory: 8Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: mpi-operator
+        serviceAccountName: mpi-operator
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-06-11T05:51:02Z"
+      lastUpdateTime: "2025-06-11T05:51:02Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-06-11T05:50:55Z"
+      lastUpdateTime: "2025-06-11T05:51:02Z"
+      message: ReplicaSet "mpi-operator-677d54cc59" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","generation":1,"labels":{"app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"pytorch-operator","namespace":"arena-system","resourceVersion":"10222887","uid":"2da45859-c50e-4b5c-8d13-93026d0e3c98"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","name":"pytorch-operator"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"sidecar.istio.io/inject":"false"},"creationTimestamp":null,"labels":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","name":"pytorch-operator"}},"spec":{"containers":[{"command":["/pytorch-operator.v1","--alsologtostderr","-v=1","--monitoring-port=8443","--threadiness=4","--init-container-image=kube-ai-registry.cn-shanghai.cr.aliyuncs.com/kube-ai/alpine:3.10.9"],"image":"registry-cn-beijing-vpc.ack.aliyuncs.com/acs/pytorch-operator:e1235d0-aliyun","imagePullPolicy":"IfNotPresent","name":"pytorch-operator","resources":{"limits":{"cpu":"2","memory":"8Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"pytorch-operator","serviceAccountName":"pytorch-operator","terminationGracePeriodSeconds":30}}},"status":{"availableReplicas":1,"conditions":[{"lastTransitionTime":"2025-06-11T05:51:02Z","lastUpdateTime":"2025-06-11T05:51:02Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2025-06-11T05:50:55Z","lastUpdateTime":"2025-06-11T05:51:02Z","message":"ReplicaSet \"pytorch-operator-b657c9b99\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":1,"readyReplicas":1,"replicas":1,"updatedReplicas":1}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    generation: 2
+    labels:
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: pytorch-operator
+    namespace: arena-system
+    resourceVersion: "10224761"
+    uid: 2da45859-c50e-4b5c-8d13-93026d0e3c98
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubeflow.org/managed-by: arena
+        helm.sh/chart: arena-artifacts
+        name: pytorch-operator
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          sidecar.istio.io/inject: "false"
+        creationTimestamp: null
+        labels:
+          app.kubeflow.org/managed-by: arena
+          helm.sh/chart: arena-artifacts
+          name: pytorch-operator
+      spec:
+        containers:
+        - command:
+          - /pytorch-operator.v1
+          - --alsologtostderr
+          - -v=1
+          - --monitoring-port=8443
+          - --threadiness=4
+          - --init-container-image=kube-ai-registry.cn-shanghai.cr.aliyuncs.com/kube-ai/alpine:3.10.9
+          image: registry-cn-beijing-vpc.ack.aliyuncs.com/acs/pytorch-operator:e1235d0-aliyun
+          imagePullPolicy: IfNotPresent
+          name: pytorch-operator
+          resources:
+            limits:
+              cpu: "2"
+              memory: 8Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: pytorch-operator
+        serviceAccountName: pytorch-operator
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-06-11T05:51:02Z"
+      lastUpdateTime: "2025-06-11T05:51:02Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-06-11T05:50:55Z"
+      lastUpdateTime: "2025-06-11T05:51:02Z"
+      message: ReplicaSet "pytorch-operator-b657c9b99" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","generation":1,"labels":{"app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"},"name":"tf-job-dashboard","namespace":"arena-system","resourceVersion":"10222808","uid":"94f36b53-f205-4f69-be06-dd0e4f442717"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"creationTimestamp":null,"labels":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator","name":"tf-job-dashboard"}},"spec":{"containers":[{"command":["/opt/tensorflow_k8s/dashboard/backend"],"env":[{"name":"KUBEFLOW_NAMESPACE","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.namespace"}}}],"image":"registry-cn-beijing-vpc.ack.aliyuncs.com/acs/tf-operator:aliyun-82bde3a","imagePullPolicy":"IfNotPresent","name":"tf-job-dashboard","ports":[{"containerPort":8080,"protocol":"TCP"}],"resources":{"limits":{"cpu":"200m","memory":"2Gi"},"requests":{"cpu":"50m","memory":"256Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"tf-job-dashboard","serviceAccountName":"tf-job-dashboard","terminationGracePeriodSeconds":30}}},"status":{"availableReplicas":1,"conditions":[{"lastTransitionTime":"2025-06-11T05:50:57Z","lastUpdateTime":"2025-06-11T05:50:57Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2025-06-11T05:50:55Z","lastUpdateTime":"2025-06-11T05:50:57Z","message":"ReplicaSet \"tf-job-dashboard-779f5c58f5\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":1,"readyReplicas":1,"replicas":1,"updatedReplicas":1}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    generation: 2
+    labels:
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+      kustomize.component: tf-job-operator
+    name: tf-job-dashboard
+    namespace: arena-system
+    resourceVersion: "10224765"
+    uid: 94f36b53-f205-4f69-be06-dd0e4f442717
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubeflow.org/managed-by: arena
+        helm.sh/chart: arena-artifacts
+        kustomize.component: tf-job-operator
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app.kubeflow.org/managed-by: arena
+          helm.sh/chart: arena-artifacts
+          kustomize.component: tf-job-operator
+          name: tf-job-dashboard
+      spec:
+        containers:
+        - command:
+          - /opt/tensorflow_k8s/dashboard/backend
+          env:
+          - name: KUBEFLOW_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          image: registry-cn-beijing-vpc.ack.aliyuncs.com/acs/tf-operator:aliyun-82bde3a
+          imagePullPolicy: IfNotPresent
+          name: tf-job-dashboard
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 2Gi
+            requests:
+              cpu: 50m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: tf-job-dashboard
+        serviceAccountName: tf-job-dashboard
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-06-11T05:50:57Z"
+      lastUpdateTime: "2025-06-11T05:50:57Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-06-11T05:50:55Z"
+      lastUpdateTime: "2025-06-11T05:50:57Z"
+      message: ReplicaSet "tf-job-dashboard-779f5c58f5" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","generation":1,"labels":{"app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"},"name":"tf-job-operator","namespace":"arena-system","resourceVersion":"10222815","uid":"589ea65e-78d9-4293-92af-70e59869a61e"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"creationTimestamp":null,"labels":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator","name":"tf-job-operator"}},"spec":{"affinity":{"podAntiAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"podAffinityTerm":{"labelSelector":{"matchLabels":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"}},"topologyKey":"kubernetes.io/hostname"},"weight":100}]}},"containers":[{"command":["/opt/kubeflow/tf-operator.v1","--alsologtostderr","-v=1","--monitoring-port=8443","--threadiness=4"],"env":[{"name":"MY_POD_NAMESPACE","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.namespace"}}},{"name":"MY_POD_NAME","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.name"}}}],"image":"registry-cn-beijing-vpc.ack.aliyuncs.com/acs/tf-operator:aliyun-8d9ac19","imagePullPolicy":"IfNotPresent","name":"tf-job-operator","resources":{"limits":{"cpu":"2","memory":"8Gi"},"requests":{"cpu":"100m","memory":"256Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/etc/config","name":"config-volume"}]}],"dnsPolicy":"ClusterFirst","restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"tf-job-operator","serviceAccountName":"tf-job-operator","terminationGracePeriodSeconds":30,"volumes":[{"configMap":{"defaultMode":420,"name":"tf-job-operator-config"},"name":"config-volume"}]}}},"status":{"availableReplicas":1,"conditions":[{"lastTransitionTime":"2025-06-11T05:50:57Z","lastUpdateTime":"2025-06-11T05:50:57Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2025-06-11T05:50:55Z","lastUpdateTime":"2025-06-11T05:50:57Z","message":"ReplicaSet \"tf-job-operator-797bf5d99\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":1,"readyReplicas":1,"replicas":1,"updatedReplicas":1}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    generation: 2
+    labels:
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+      kustomize.component: tf-job-operator
+    name: tf-job-operator
+    namespace: arena-system
+    resourceVersion: "10224767"
+    uid: 589ea65e-78d9-4293-92af-70e59869a61e
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubeflow.org/managed-by: arena
+        helm.sh/chart: arena-artifacts
+        kustomize.component: tf-job-operator
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app.kubeflow.org/managed-by: arena
+          helm.sh/chart: arena-artifacts
+          kustomize.component: tf-job-operator
+          name: tf-job-operator
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubeflow.org/managed-by: arena
+                    helm.sh/chart: arena-artifacts
+                    kustomize.component: tf-job-operator
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+        containers:
+        - command:
+          - /opt/kubeflow/tf-operator.v1
+          - --alsologtostderr
+          - -v=1
+          - --monitoring-port=8443
+          - --threadiness=4
+          env:
+          - name: MY_POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          image: registry-cn-beijing-vpc.ack.aliyuncs.com/acs/tf-operator:aliyun-8d9ac19
+          imagePullPolicy: IfNotPresent
+          name: tf-job-operator
+          resources:
+            limits:
+              cpu: "2"
+              memory: 8Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/config
+            name: config-volume
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: tf-job-operator
+        serviceAccountName: tf-job-operator
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: tf-job-operator-config
+          name: config-volume
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-06-11T05:50:57Z"
+      lastUpdateTime: "2025-06-11T05:50:57Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-06-11T05:50:55Z"
+      lastUpdateTime: "2025-06-11T05:50:57Z"
+      message: ReplicaSet "tf-job-operator-797bf5d99" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 2
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app":"cron-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"cron-operator","namespace":"arena-system","resourceVersion":"10222713","uid":"180519c5-0622-4141-883d-801b988d384f"},"spec":{"clusterIP":"172.16.140.125","clusterIPs":["172.16.140.125"],"internalTrafficPolicy":"Cluster","ipFamilies":["IPv4"],"ipFamilyPolicy":"SingleStack","ports":[{"name":"metrics","port":80,"protocol":"TCP","targetPort":"metrics"}],"selector":{"app":"cron-operator","app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts"},"sessionAffinity":"None","type":"ClusterIP"},"status":{"loadBalancer":{}}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app: cron-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: cron-operator
+    namespace: arena-system
+    resourceVersion: "10224770"
+    uid: 180519c5-0622-4141-883d-801b988d384f
+  spec:
+    clusterIP: 172.16.140.125
+    clusterIPs:
+    - 172.16.140.125
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: metrics
+      port: 80
+      protocol: TCP
+      targetPort: metrics
+    selector:
+      app: cron-operator
+      app.kubeflow.org/managed-by: arena
+      helm.sh/chart: arena-artifacts
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system","prometheus.io/path":"/metrics","prometheus.io/port":"8443","prometheus.io/scrape":"true"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app":"pytorch-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts"},"name":"pytorch-operator","namespace":"arena-system","resourceVersion":"10222704","uid":"ccc06f49-6296-4c29-aea5-220734f65bb9"},"spec":{"clusterIP":"172.16.231.139","clusterIPs":["172.16.231.139"],"internalTrafficPolicy":"Cluster","ipFamilies":["IPv4"],"ipFamilyPolicy":"SingleStack","ports":[{"name":"monitoring-port","port":8443,"protocol":"TCP","targetPort":8443}],"selector":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","name":"pytorch-operator"},"sessionAffinity":"None","type":"ClusterIP"},"status":{"loadBalancer":{}}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+      prometheus.io/path: /metrics
+      prometheus.io/port: "8443"
+      prometheus.io/scrape: "true"
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app: pytorch-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+    name: pytorch-operator
+    namespace: arena-system
+    resourceVersion: "10224771"
+    uid: ccc06f49-6296-4c29-aea5-220734f65bb9
+  spec:
+    clusterIP: 172.16.231.139
+    clusterIPs:
+    - 172.16.231.139
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: monitoring-port
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
+    selector:
+      app.kubeflow.org/managed-by: arena
+      helm.sh/chart: arena-artifacts
+      name: pytorch-operator
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      getambassador.io/config: |-
+        ---
+        apiVersion: ambassador/v0
+        kind:  Mapping
+        name: tfjobs-ui-mapping
+        prefix: /tfjobs/
+        rewrite: /tfjobs/
+        service: tf-job-dashboard.kubeflow
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"getambassador.io/config":"---\napiVersion: ambassador/v0\nkind:  Mapping\nname: tfjobs-ui-mapping\nprefix: /tfjobs/\nrewrite: /tfjobs/\nservice: tf-job-dashboard.kubeflow","meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"},"name":"tf-job-dashboard","namespace":"arena-system","resourceVersion":"10222698","uid":"7ec71871-2a7f-49fe-bb8f-88d716b3e4c3"},"spec":{"clusterIP":"172.16.201.198","clusterIPs":["172.16.201.198"],"internalTrafficPolicy":"Cluster","ipFamilies":["IPv4"],"ipFamilyPolicy":"SingleStack","ports":[{"port":80,"protocol":"TCP","targetPort":8080}],"selector":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator","name":"tf-job-dashboard"},"sessionAffinity":"None","type":"ClusterIP"},"status":{"loadBalancer":{}}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+      kustomize.component: tf-job-operator
+    name: tf-job-dashboard
+    namespace: arena-system
+    resourceVersion: "10224772"
+    uid: 7ec71871-2a7f-49fe-bb8f-88d716b3e4c3
+  spec:
+    clusterIP: 172.16.201.198
+    clusterIPs:
+    - 172.16.201.198
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app.kubeflow.org/managed-by: arena
+      helm.sh/chart: arena-artifacts
+      kustomize.component: tf-job-operator
+      name: tf-job-dashboard
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"meta.helm.sh/release-name":"arena-artifacts","meta.helm.sh/release-namespace":"arena-system","prometheus.io/path":"/metrics","prometheus.io/port":"8443","prometheus.io/scrape":"true"},"creationTimestamp":"2025-06-11T05:50:55Z","labels":{"app":"tf-job-operator","app.kubeflow.org/managed-by":"arena","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator"},"name":"tf-job-operator","namespace":"arena-system","resourceVersion":"10222699","uid":"5cc6d6fa-c4e9-4c9e-b49f-13c1d913e020"},"spec":{"clusterIP":"172.16.113.109","clusterIPs":["172.16.113.109"],"internalTrafficPolicy":"Cluster","ipFamilies":["IPv4"],"ipFamilyPolicy":"SingleStack","ports":[{"name":"monitoring-port","port":8443,"protocol":"TCP","targetPort":8443}],"selector":{"app.kubeflow.org/managed-by":"arena","helm.sh/chart":"arena-artifacts","kustomize.component":"tf-job-operator","name":"tf-job-operator"},"sessionAffinity":"None","type":"ClusterIP"},"status":{"loadBalancer":{}}}
+      meta.helm.sh/release-name: arena-artifacts
+      meta.helm.sh/release-namespace: arena-system
+      prometheus.io/path: /metrics
+      prometheus.io/port: "8443"
+      prometheus.io/scrape: "true"
+    creationTimestamp: "2025-06-11T05:50:55Z"
+    labels:
+      app: tf-job-operator
+      app.kubeflow.org/managed-by: arena
+      app.kubernetes.io/managed-by: Helm
+      helm.sh/chart: arena-artifacts
+      kustomize.component: tf-job-operator
+    name: tf-job-operator
+    namespace: arena-system
+    resourceVersion: "10224774"
+    uid: 5cc6d6fa-c4e9-4c9e-b49f-13c1d913e020
+  spec:
+    clusterIP: 172.16.113.109
+    clusterIPs:
+    - 172.16.113.109
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: monitoring-port
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
+    selector:
+      app.kubeflow.org/managed-by: arena
+      helm.sh/chart: arena-artifacts
+      kustomize.component: tf-job-operator
+      name: tf-job-operator
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""

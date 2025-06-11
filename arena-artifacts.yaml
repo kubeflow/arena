@@ -1,0 +1,1503 @@
+---
+# Source: arena-artifacts/charts/cron/templates/operator-rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cron-operator
+  namespace: arena-system
+  labels:
+    app: cron-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+---
+# Source: arena-artifacts/charts/elastic-job-supervisor/templates/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: elastic-job-supervisor
+  namespace: arena-system
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+---
+# Source: arena-artifacts/charts/et/templates/operator-rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: et-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: et-operator
+  namespace: arena-system
+---
+# Source: arena-artifacts/charts/mpi/templates/operator-rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mpi-operator
+  namespace: arena-system
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+---
+# Source: arena-artifacts/charts/pytorch/templates/operator-rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: pytorch-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: pytorch-operator
+  namespace: arena-system
+---
+# Source: arena-artifacts/charts/tf/templates/operator-rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tf-job-operator
+  namespace: arena-system
+  labels:
+    app: tf-job-operator
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+---
+# Source: arena-artifacts/charts/tfdashboard/templates/dashboard-rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: tf-job-dashboard
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: tf-job-dashboard
+  namespace: arena-system
+---
+# Source: arena-artifacts/charts/tf/templates/operator-config.yaml
+apiVersion: v1
+data:
+  controller_config_file.yaml: |-
+    {
+        "grpcServerFilePath": "/opt/mlkube/grpc_tensorflow_server/grpc_tensorflow_server.py"
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: tf-job-operator-config
+  namespace: arena-system
+---
+# Source: arena-artifacts/templates/arena-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arena-config
+  namespace: arena-system
+  labels:
+    app.kubeflow.org: arena
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+data:
+  adminUsers: ""
+---
+# Source: arena-artifacts/charts/cron/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: cron-operator-role
+  namespace: arena-system
+  labels:
+    app: cron-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+rules:
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - tfjobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - tfjobs/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - pytorchjobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - pytorchjobs/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - xdl.kubedl.io
+    resources:
+      - xdljobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - xdl.kubedl.io
+    resources:
+      - xdljobs/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - xgboostjob.kubeflow.org
+    resources:
+      - xgboostjobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - xgboostjob.kubeflow.org
+    resources:
+      - xgboostjobs/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - apps
+    resources:
+      - controllerrevisions
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - "apps.kubedl.io"
+    resources:
+      - crons
+      - crons/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+# Source: arena-artifacts/charts/elastic-job-supervisor/templates/rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: elastic-job-supervisor
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - events
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - kai.alibabacloud.com
+  resources:
+  - '*'
+  verbs:
+  - '*'
+---
+# Source: arena-artifacts/charts/et/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: et-operator
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods/exec
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - pods/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - services/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - kai.alibabacloud.com
+    resources:
+      - scaleins
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - kai.alibabacloud.com
+    resources:
+      - scaleins/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - kai.alibabacloud.com
+    resources:
+      - scaleouts
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - kai.alibabacloud.com
+    resources:
+      - scaleouts/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - kai.alibabacloud.com
+    resources:
+      - trainingjobs
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - kai.alibabacloud.com
+    resources:
+      - trainingjobs/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - rolebindings
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+---
+# Source: arena-artifacts/charts/mpi/templates/operator-rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mpi-operator
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - serviceaccounts
+  verbs:
+  - create
+  - list
+  - watch
+# This is needed for the launcher Role.
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+# This is needed for the launcher Role.
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  verbs:
+  - create
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - create
+  - list
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - list
+  - update
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - kubeflow.org
+  resources:
+  - mpijobs
+  - mpijobs/status
+  verbs:
+  - "*"
+---
+# Source: arena-artifacts/charts/pytorch/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: pytorch-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: pytorch-operator
+rules:
+  - apiGroups:
+      - kubeflow.org
+    resources:
+      - pytorchjobs
+      - pytorchjobs/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - endpoints
+      - events
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+# Source: arena-artifacts/charts/tf/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tf-job-operator
+  labels:
+    app: tf-job-operator
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+rules:
+  - apiGroups:
+      - tensorflow.org
+      - kubeflow.org
+    resources:
+      - tfjobs
+      - tfjobs/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - storageclasses
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - pods
+      - services
+      - endpoints
+      - persistentvolumeclaims
+      - events
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+# Source: arena-artifacts/charts/tfdashboard/templates/dashboard-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: tf-job-dashboard
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: tf-job-dashboard
+rules:
+  - apiGroups:
+      - tensorflow.org
+      - kubeflow.org
+    resources:
+      - tfjobs
+      - tfjobs/status
+    verbs:
+      - '*'
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - '*'
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - storageclasses
+    verbs:
+      - '*'
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - pods
+      - services
+      - endpoints
+      - persistentvolumeclaims
+      - events
+      - pods/log
+      - namespaces
+    verbs:
+      - '*'
+  - apiGroups:
+      - apps
+      - extensions
+    resources:
+      - deployments
+    verbs:
+      - '*'
+---
+# Source: arena-artifacts/charts/cron/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: cron-operator-rolebinding
+  labels:
+    app: cron-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cron-operator-role
+subjects:
+  - kind: ServiceAccount
+    name: cron-operator
+    namespace: arena-system
+---
+# Source: arena-artifacts/charts/elastic-job-supervisor/templates/rbac.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: elastic-job-supervisor
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: elastic-job-supervisor
+subjects:
+- kind: ServiceAccount
+  name: elastic-job-supervisor
+  namespace: arena-system
+---
+# Source: arena-artifacts/charts/et/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: et-operator
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: et-operator
+subjects:
+  - kind: ServiceAccount
+    name: et-operator
+    namespace: arena-system
+---
+# Source: arena-artifacts/charts/mpi/templates/operator-rbac.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mpi-operator
+  namespace: arena-system
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mpi-operator
+subjects:
+- kind: ServiceAccount
+  name: mpi-operator
+  namespace: arena-system
+---
+# Source: arena-artifacts/charts/pytorch/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: pytorch-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: pytorch-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pytorch-operator
+subjects:
+  - kind: ServiceAccount
+    name: pytorch-operator
+    namespace: arena-system
+---
+# Source: arena-artifacts/charts/tf/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tf-job-operator
+  labels:
+    app: tf-job-operator
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tf-job-operator
+subjects:
+- kind: ServiceAccount
+  name: tf-job-operator
+  namespace: arena-system
+---
+# Source: arena-artifacts/charts/tfdashboard/templates/dashboard-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: tf-job-dashboard
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: tf-job-dashboard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tf-job-dashboard
+subjects:
+  - kind: ServiceAccount
+    name: tf-job-dashboard
+    namespace: arena-system
+---
+# Source: arena-artifacts/charts/et/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: et-operator-leader-election
+  namespace: arena-system
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps/status
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+---
+# Source: arena-artifacts/charts/et/templates/operator-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: et-operator-leader-election
+  namespace: arena-system
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: et-operator-leader-election
+subjects:
+  - kind: ServiceAccount
+    name: et-operator
+    namespace: arena-system
+---
+# Source: arena-artifacts/charts/cron/templates/operator-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cron-operator
+  namespace: arena-system
+  labels:
+    app: cron-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app: cron-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+---
+# Source: arena-artifacts/charts/pytorch/templates/operator-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8443"
+    prometheus.io/scrape: "true"
+  labels:
+    app: pytorch-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: pytorch-operator
+  namespace: arena-system
+spec:
+  ports:
+    - name: monitoring-port
+      port: 8443
+      targetPort: 8443
+  selector:
+    name: pytorch-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  type: ClusterIP
+---
+# Source: arena-artifacts/charts/tf/templates/operator-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8443"
+    prometheus.io/scrape: "true"
+  labels:
+    app: tf-job-operator
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: tf-job-operator
+  namespace: arena-system
+spec:
+  ports:
+    - name: monitoring-port
+      port: 8443
+      targetPort: 8443
+  selector:
+    kustomize.component: tf-job-operator
+    name: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  type: ClusterIP
+---
+# Source: arena-artifacts/charts/tfdashboard/templates/dashboard-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    getambassador.io/config: |-
+      ---
+      apiVersion: ambassador/v0
+      kind:  Mapping
+      name: tfjobs-ui-mapping
+      prefix: /tfjobs/
+      rewrite: /tfjobs/
+      service: tf-job-dashboard.kubeflow
+  labels:
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: tf-job-dashboard
+  namespace: arena-system
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+    kustomize.component: tf-job-operator
+    name: tf-job-dashboard
+  type: ClusterIP
+---
+# Source: arena-artifacts/charts/cron/templates/operator-dp.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cron-operator
+  namespace: arena-system
+  labels:
+    app: cron-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cron-operator
+      helm.sh/chart: arena-artifacts
+      app.kubeflow.org/managed-by: arena
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      namespace: arena-system
+      labels:
+        app: cron-operator
+        helm.sh/chart: arena-artifacts
+        app.kubeflow.org/managed-by: arena
+    spec:
+      containers:
+      - name: cron
+        image: registry-cn-hangzhou-vpc.ack.aliyuncs.com/acs/cron-operator:aliyun-0f570ce
+        imagePullPolicy: IfNotPresent
+        args: 
+        - --workloads=Cron
+        ports:
+        - containerPort: 8443
+          name: metrics
+          protocol: TCP
+        resources:
+            limits:
+              cpu: 200m
+              memory: 2Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      nodeSelector:
+        
+        
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  kustomize.component: tf-job-operator
+                  helm.sh/chart: arena-artifacts
+                  app.kubeflow.org/managed-by: arena
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      
+      serviceAccountName: cron-operator
+---
+# Source: arena-artifacts/charts/elastic-job-supervisor/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: elastic-job-supervisor
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: elastic-job-supervisor
+  namespace: arena-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elastic-job-supervisor
+      helm.sh/chart: arena-artifacts
+      app.kubeflow.org/managed-by: arena
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: arena-artifacts
+        app.kubeflow.org/managed-by: arena
+        app: elastic-job-supervisor
+    spec:
+      nodeSelector:
+        
+        
+      tolerations:
+      
+      containers:
+        - command:
+            - /job-supervisor
+          image: registry-cn-hangzhou-vpc.ack.aliyuncs.com/acs/job-supervisor:v1.2.0-7a69190-aliyun
+          imagePullPolicy: IfNotPresent
+          name: elastic-job-supervisor
+          resources:
+            limits:
+              cpu: 300m
+              memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      serviceAccount: elastic-job-supervisor
+      serviceAccountName: elastic-job-supervisor
+      terminationGracePeriodSeconds: 30
+---
+# Source: arena-artifacts/charts/et/templates/operator-dp.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: et-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: et-operator
+  namespace: arena-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: et-operator
+      helm.sh/chart: arena-artifacts
+      app.kubeflow.org/managed-by: arena
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: arena-artifacts
+        app.kubeflow.org/managed-by: arena
+        app: et-operator
+    spec:
+      nodeSelector:
+        
+        
+      tolerations:
+      
+      containers:
+        - args:
+            - --enable-leader-election
+            - --create-ssh-secret=false
+            - --init-container-image=alpine:3.10
+          command:
+            - /manager
+          image: registry-cn-hangzhou-vpc.ack.aliyuncs.com/acs/et-operator:aliyun-96806fb
+          imagePullPolicy: IfNotPresent
+          name: manager
+          resources:
+            limits:
+              cpu: 2
+              memory: 8Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      serviceAccountName: et-operator
+      terminationGracePeriodSeconds: 10
+---
+# Source: arena-artifacts/charts/mpi/templates/operator-dp.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mpi-operator
+  namespace: arena-system
+  labels:
+    app: mpi-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mpi-operator
+      helm.sh/chart: arena-artifacts
+      app.kubeflow.org/managed-by: arena
+  template:
+    metadata:
+      labels:
+        app: mpi-operator
+        helm.sh/chart: arena-artifacts
+        app.kubeflow.org/managed-by: arena
+    spec:
+      serviceAccountName: mpi-operator
+      nodeSelector:
+        
+        
+      tolerations:
+      
+      containers:
+      - name: mpi-operator
+        image: registry-cn-hangzhou-vpc.ack.aliyuncs.com/acs/mpi-operator:aliyun-03b5e76
+        imagePullPolicy: IfNotPresent
+        args:
+        - --gpus-per-node
+        - "8"
+        - --kubectl-delivery-image
+        - registry-cn-hangzhou-vpc.ack.aliyuncs.com/acs/kubectl-delivery:v0.1.0
+        - --alsologtostderr
+        - --v=5
+        resources:
+          limits:
+            cpu: 2
+            memory: 8Gi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+---
+# Source: arena-artifacts/charts/pytorch/templates/operator-dp.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pytorch-operator
+  namespace: arena-system
+  labels:
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: pytorch-operator
+      helm.sh/chart: arena-artifacts
+      app.kubeflow.org/managed-by: arena
+  template:
+    metadata:
+      labels:
+        name: pytorch-operator
+        helm.sh/chart: arena-artifacts
+        app.kubeflow.org/managed-by: arena
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      nodeSelector:
+        
+        
+      tolerations:
+      
+      containers:
+        - command:
+            - /pytorch-operator.v1
+            - --alsologtostderr
+            - -v=1
+            - --monitoring-port=8443
+            - --threadiness=4
+            - --init-container-image=alpine:3.10
+          # image: gcr.io/kubeflow-images-public/pytorch-operator:v0.6.0-18-g5e36a57
+          image: registry-cn-hangzhou-vpc.ack.aliyuncs.com/acs/pytorch-operator:e1235d0-aliyun
+          imagePullPolicy: IfNotPresent
+          name: pytorch-operator
+          resources:
+            limits:
+              cpu: 2
+              memory: 8Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      serviceAccountName: pytorch-operator
+---
+# Source: arena-artifacts/charts/tf/templates/operator-dp.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tf-job-operator
+  namespace: arena-system
+  labels:
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      kustomize.component: tf-job-operator
+      helm.sh/chart: arena-artifacts
+      app.kubeflow.org/managed-by: arena
+  template:
+    metadata:
+      labels:
+        kustomize.component: tf-job-operator
+        name: tf-job-operator
+        helm.sh/chart: arena-artifacts
+        app.kubeflow.org/managed-by: arena
+    spec:
+      containers:
+      - name: tf-job-operator
+        image: registry-cn-hangzhou-vpc.ack.aliyuncs.com/acs/tf-operator:aliyun-8d9ac19
+        imagePullPolicy: IfNotPresent
+        command:
+        - /opt/kubeflow/tf-operator.v1
+        - --alsologtostderr
+        - -v=1
+        - --monitoring-port=8443
+        - --threadiness=4
+        env:
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        resources:
+          limits:
+            cpu: 2
+            memory: 8Gi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+      volumes:
+      - name: config-volume
+        configMap:
+          name: tf-job-operator-config
+      nodeSelector:
+        
+        
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  kustomize.component: tf-job-operator
+                  helm.sh/chart: arena-artifacts
+                  app.kubeflow.org/managed-by: arena
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      
+      serviceAccountName: tf-job-operator
+---
+# Source: arena-artifacts/charts/tfdashboard/templates/dashboard-dp.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    kustomize.component: tf-job-operator
+    helm.sh/chart: arena-artifacts
+    app.kubeflow.org/managed-by: arena
+  name: tf-job-dashboard
+  namespace:  arena-system
+spec:
+  selector:
+    matchLabels:
+      kustomize.component: tf-job-operator
+      helm.sh/chart: arena-artifacts
+      app.kubeflow.org/managed-by: arena
+  template:
+    metadata:
+      labels:
+        kustomize.component: tf-job-operator
+        name: tf-job-dashboard
+        helm.sh/chart: arena-artifacts
+        app.kubeflow.org/managed-by: arena
+    spec:
+      nodeSelector:
+        
+        
+      tolerations:
+      
+      containers:
+        - command:
+            - /opt/tensorflow_k8s/dashboard/backend
+          env:
+            - name: KUBEFLOW_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: registry-cn-hangzhou-vpc.ack.aliyuncs.com/acs/tf-operator:aliyun-82bde3a
+          imagePullPolicy: IfNotPresent
+          name: tf-job-dashboard
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 200m
+              memory: 2Gi
+            requests:
+              cpu: 50m
+              memory: 256Mi
+      serviceAccountName: tf-job-dashboard
