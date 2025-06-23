@@ -81,16 +81,16 @@ func SubmitScaleInETJob(namespace string, submitArgs *types.ScaleInETJobArgs) er
 		if err == types.ErrTrainingJobNotFound {
 			return err
 		}
-		return fmt.Errorf("Check %s exist due to error %v", etjobName, err)
+		return fmt.Errorf("check %s exist due to error %v", etjobName, err)
 	}
 	if job.GetStatus() != "RUNNING" && job.GetStatus() != "SCALING" {
-		return fmt.Errorf("the job: %s status: %s , is not RUNNING or SCALING, please try again later.", etjobName, job.GetStatus())
+		return fmt.Errorf("the job: %s status: %s , is not RUNNING or SCALING, please try again later", etjobName, job.GetStatus())
 	}
 	currentWorkers := getETJobCurrentReplicas(job)
 	minWorkers := getETJobMinReplicas(job)
 	log.Debugf("currentWorkers: %v, minWorkers: %v", currentWorkers, minWorkers)
 	if currentWorkers-submitArgs.Count < minWorkers {
-		return fmt.Errorf("the number of current workers minus the number of scaling in is less than the min-workers. please try again later.")
+		return fmt.Errorf("the number of current workers minus the number of scaling in is less than the min-workers. please try again later")
 	}
 	scaleName := fmt.Sprintf("%s-%d", etjobName, time.Now().Unix())
 	log.Debugf("submitArgs: %v", submitArgs)
@@ -115,16 +115,16 @@ func SubmitScaleOutETJob(namespace string, submitArgs *types.ScaleOutETJobArgs) 
 		if err == types.ErrTrainingJobNotFound {
 			return err
 		}
-		return fmt.Errorf("Check %s exist due to error %v", etjobName, err)
+		return fmt.Errorf("check %s exist due to error %v", etjobName, err)
 	}
 	if job.GetStatus() != "RUNNING" && job.GetStatus() != "SCALING" {
-		return fmt.Errorf("the job: %s status: %s , is not RUNNING or SCALING, please try again later.", etjobName, job.GetStatus())
+		return fmt.Errorf("the job: %s status: %s , is not RUNNING or SCALING, please try again later", etjobName, job.GetStatus())
 	}
 	currentWorkers := getETJobCurrentReplicas(job)
 	maxWorkers := getETJobMaxReplicas(job)
 	log.Debugf("currentWorkers: %v, maxWorkers: %v", currentWorkers, maxWorkers)
 	if currentWorkers+submitArgs.Count > maxWorkers {
-		return fmt.Errorf("The number of scaling out plus the number of current workers exceeds the max-workers. please try again later.")
+		return fmt.Errorf("the number of scaling out plus the number of current workers exceeds the max-workers. please try again later")
 	}
 	scaleName := fmt.Sprintf("%s-%d", etjobName, time.Now().Unix())
 	log.Debugf("submitArgs: %v", submitArgs)

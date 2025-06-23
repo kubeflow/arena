@@ -19,7 +19,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -53,13 +53,13 @@ GPU Summary:
 `
 
 type gpuexclusive struct {
-	node       *v1.Node
-	pods       []*v1.Pod
+	node       *corev1.Node
+	pods       []*corev1.Pod
 	gpuMetrics types.NodeGpuMetric
 	baseNode
 }
 
-func NewGPUExclusiveNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
+func NewGPUExclusiveNode(client *kubernetes.Clientset, node *corev1.Node, index int, args buildNodeArgs) (Node, error) {
 	pods := getNodePods(node, args.pods)
 	return &gpuexclusive{
 		node:       node,
@@ -82,7 +82,7 @@ func (g *gpuexclusive) getTotalGPUs() float64 {
 	if len(g.gpuMetrics) != 0 {
 		return float64(len(g.gpuMetrics))
 	}
-	val, ok := g.node.Status.Capacity[v1.ResourceName(types.NvidiaGPUResourceName)]
+	val, ok := g.node.Status.Capacity[corev1.ResourceName(types.NvidiaGPUResourceName)]
 	if !ok {
 		return 0
 	}
@@ -122,7 +122,7 @@ func (g *gpuexclusive) getAllocatedGPUMemory() float64 {
 
 func (g *gpuexclusive) getUnhealthyGPUs() float64 {
 	totalGPUs := g.getTotalGPUs()
-	allocatableGPUs, ok := g.node.Status.Allocatable[v1.ResourceName(types.NvidiaGPUResourceName)]
+	allocatableGPUs, ok := g.node.Status.Allocatable[corev1.ResourceName(types.NvidiaGPUResourceName)]
 	if !ok {
 		return 0
 	}
@@ -263,7 +263,7 @@ func (g *gpuexclusive) displayDeviceInfoUnderMetrics(lines []string, nodeInfo ty
 	}
 	podMap := map[string]bool{}
 	for _, pod := range g.pods {
-		if pod.Status.Phase != v1.PodRunning {
+		if pod.Status.Phase != corev1.PodRunning {
 			continue
 		}
 		if utils.GPUCountInPod(pod) <= 0 {
@@ -323,8 +323,8 @@ func (g *gpuexclusive) displayDeviceInfoUnderMetrics(lines []string, nodeInfo ty
 	return lines
 }
 
-func IsGPUExclusiveNode(node *v1.Node) bool {
-	val, ok := node.Status.Allocatable[v1.ResourceName(types.NvidiaGPUResourceName)]
+func IsGPUExclusiveNode(node *corev1.Node) bool {
+	val, ok := node.Status.Allocatable[corev1.ResourceName(types.NvidiaGPUResourceName)]
 	if !ok {
 		return false
 	}

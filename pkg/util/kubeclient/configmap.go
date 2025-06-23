@@ -48,17 +48,17 @@ func UpdateConfigMapLabelsAndAnnotations(namespace string, name string, labels m
 		return err
 	}
 	newConfigMap := oldConfigMap.DeepCopy()
-	if len(newConfigMap.ObjectMeta.Annotations) == 0 {
-		newConfigMap.ObjectMeta.Annotations = map[string]string{}
+	if len(newConfigMap.Annotations) == 0 {
+		newConfigMap.Annotations = map[string]string{}
 	}
-	if len(newConfigMap.ObjectMeta.Labels) == 0 {
-		newConfigMap.ObjectMeta.Labels = map[string]string{}
+	if len(newConfigMap.Labels) == 0 {
+		newConfigMap.Labels = map[string]string{}
 	}
 	for k, v := range labels {
-		newConfigMap.ObjectMeta.Labels[k] = v
+		newConfigMap.Labels[k] = v
 	}
 	for k, v := range annotations {
-		newConfigMap.ObjectMeta.Annotations[k] = v
+		newConfigMap.Annotations[k] = v
 	}
 	_, err = client.CoreV1().ConfigMaps(newConfigMap.ObjectMeta.Namespace).Update(context.TODO(), newConfigMap, metav1.UpdateOptions{})
 	return err

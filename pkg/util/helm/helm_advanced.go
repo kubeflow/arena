@@ -69,7 +69,7 @@ func GenerateHelmTemplateLegacy(name string, namespace string, valueFileName str
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s", string(out))
 	if err != nil {
-		return templateFileName, fmt.Errorf("Failed to execute %s, %v with %v", binary, args, err)
+		return templateFileName, fmt.Errorf("failed to execute %s, %v with %v", binary, args, err)
 	}
 
 	// // 6. clean up the value file if needed

@@ -18,10 +18,11 @@ import (
 	"fmt"
 	"strings"
 
+	podlogs "github.com/kubeflow/arena/pkg/podlogs"
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	podlogs "github.com/kubeflow/arena/pkg/podlogs"
-	v1 "k8s.io/api/core/v1"
 )
 
 // AcceptJobLog is used for arena-go-sdk
@@ -29,7 +30,7 @@ func AcceptJobLog(jobName string, trainingType types.TrainingJobType, args *type
 	namespace := args.Namespace
 	// 1.transfer the training job type
 	if trainingType == types.UnknownTrainingJob {
-		return fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
+		return fmt.Errorf("unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
 	}
 	// 2.search the training job
 	job, err := SearchTrainingJob(jobName, namespace, trainingType)
@@ -52,7 +53,7 @@ func AcceptJobLog(jobName string, trainingType types.TrainingJobType, args *type
 	// 4.if the instance name is invalid,return error
 	status, ok := podStatuses[args.InstanceName]
 	if !ok {
-		return fmt.Errorf("invalid instance name %v in job %v,please use 'arena get %v' to make sure instance name.",
+		return fmt.Errorf("invalid instance name %v in job %v,please use 'arena get %v' to make sure instance name",
 			args.InstanceName,
 			jobName,
 			jobName,
@@ -86,7 +87,7 @@ func getInstanceName(job TrainingJob) (string, error) {
 	return "", fmt.Errorf("%v", moreThanOneInstanceHelpInfo(pods))
 }
 
-func moreThanOneInstanceHelpInfo(pods []*v1.Pod) string {
+func moreThanOneInstanceHelpInfo(pods []*corev1.Pod) string {
 	header := fmt.Sprintf("There is %d instances have been found:", len(pods))
 	lines := []string{}
 	footer := "please use '-i' or '--instance' to filter."

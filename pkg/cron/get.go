@@ -17,12 +17,13 @@ package cron
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"gopkg.in/yaml.v2"
 	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"gopkg.in/yaml.v2"
 )
 
 var getCronTemplate = `

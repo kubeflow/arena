@@ -25,7 +25,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -36,20 +36,20 @@ const (
 
 func DisplayDataVolumes(namespace string, allNamespaces bool) error {
 	client := config.GetArenaConfiger().GetClientSet()
-	var pvcList *v1.PersistentVolumeClaimList
+	var pvcList *corev1.PersistentVolumeClaimList
 	if allNamespaces {
 		namespace = metav1.NamespaceAll
 	}
 	pvcList, err := client.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return fmt.Errorf("Failed to list data volume due to %v", err)
+		return fmt.Errorf("failed to list data volume due to %v", err)
 	}
 	displayDataVolume(pvcList, allNamespaces)
 	return nil
 }
 
 // Display the data volume
-func displayDataVolume(pvcList *v1.PersistentVolumeClaimList, allNamespaces bool) {
+func displayDataVolume(pvcList *corev1.PersistentVolumeClaimList, allNamespaces bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	if allNamespaces {
 		fmt.Fprintf(w, "NAME\tNAMESPACE\tACCESSMODE\tDESCRIPTION\tOWNER\tAGE\n")
@@ -60,7 +60,7 @@ func displayDataVolume(pvcList *v1.PersistentVolumeClaimList, allNamespaces bool
 		return
 	}
 	for _, item := range pvcList.Items {
-		if item.ObjectMeta.DeletionTimestamp != nil || item.Status.Phase != v1.ClaimBound {
+		if item.DeletionTimestamp != nil || item.Status.Phase != corev1.ClaimBound {
 			log.Debugf("skip the data is not ready: %s", item.Name)
 			continue
 		}
@@ -92,23 +92,23 @@ func displayDataVolume(pvcList *v1.PersistentVolumeClaimList, allNamespaces bool
 
 }
 
-func getAccessModesAsString(modes []v1.PersistentVolumeAccessMode) string {
+func getAccessModesAsString(modes []corev1.PersistentVolumeAccessMode) string {
 	modes = removeDuplicateAccessModes(modes)
 	modesStr := []string{}
-	if containsAccessMode(modes, v1.ReadWriteOnce) {
+	if containsAccessMode(modes, corev1.ReadWriteOnce) {
 		modesStr = append(modesStr, "ReadWriteOnce")
 	}
-	if containsAccessMode(modes, v1.ReadOnlyMany) {
+	if containsAccessMode(modes, corev1.ReadOnlyMany) {
 		modesStr = append(modesStr, "ReadOnlyMany")
 	}
-	if containsAccessMode(modes, v1.ReadWriteMany) {
+	if containsAccessMode(modes, corev1.ReadWriteMany) {
 		modesStr = append(modesStr, "ReadWriteMany")
 	}
 	return strings.Join(modesStr, ",")
 }
 
-func removeDuplicateAccessModes(modes []v1.PersistentVolumeAccessMode) []v1.PersistentVolumeAccessMode {
-	accessModes := []v1.PersistentVolumeAccessMode{}
+func removeDuplicateAccessModes(modes []corev1.PersistentVolumeAccessMode) []corev1.PersistentVolumeAccessMode {
+	accessModes := []corev1.PersistentVolumeAccessMode{}
 	for _, m := range modes {
 		if !containsAccessMode(accessModes, m) {
 			accessModes = append(accessModes, m)
@@ -117,7 +117,7 @@ func removeDuplicateAccessModes(modes []v1.PersistentVolumeAccessMode) []v1.Pers
 	return accessModes
 }
 
-func containsAccessMode(modes []v1.PersistentVolumeAccessMode, mode v1.PersistentVolumeAccessMode) bool {
+func containsAccessMode(modes []corev1.PersistentVolumeAccessMode, mode corev1.PersistentVolumeAccessMode) bool {
 	for _, m := range modes {
 		if m == mode {
 			return true

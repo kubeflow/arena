@@ -63,7 +63,7 @@ func DeleteJob(name, namespace, trainingType string) error {
 func SubmitOps(name string, trainingType string, namespace string, values interface{}, chart string, options ...string) error {
 	found := kubectl.CheckAppConfigMap(fmt.Sprintf("%s-%s", name, trainingType), namespace)
 	if found {
-		return fmt.Errorf("the job configmap %v-%v is already exist, please delete it first.", name, trainingType)
+		return fmt.Errorf("the job configmap %v-%v is already exist, please delete it first", name, trainingType)
 	}
 
 	// 1. Generate value file
@@ -133,7 +133,7 @@ func SubmitOps(name string, trainingType string, namespace string, values interf
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string, options ...string) error {
 	_, err := kubeclient.GetConfigMap(namespace, fmt.Sprintf("%v-%v", name, trainingType))
 	if err == nil {
-		return fmt.Errorf("the job configmap %v-%v is already exist, please delete it first.", name, trainingType)
+		return fmt.Errorf("the job configmap %v-%v is already exist, please delete it first", name, trainingType)
 	}
 	if !k8serrors.IsNotFound(err) {
 		return err

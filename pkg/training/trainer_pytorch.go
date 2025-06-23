@@ -20,7 +20,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -45,8 +45,8 @@ const (
 type PyTorchJob struct {
 	*BasicJobInfo
 	pytorchjob   *pytorchv1.PyTorchJob
-	pods         []*v1.Pod // all the pods including statefulset and job
-	chiefPod     *v1.Pod   // the master pod
+	pods         []*corev1.Pod // all the pods including statefulset and job
+	chiefPod     *corev1.Pod   // the master pod
 	requestedGPU int64
 	allocatedGPU int64
 	trainerType  types.TrainingJobType // return trainer type: pytorchjob
@@ -61,7 +61,7 @@ func (pj *PyTorchJob) Uid() string {
 }
 
 // Get the master Pod of the Job.
-func (pj *PyTorchJob) ChiefPod() *v1.Pod {
+func (pj *PyTorchJob) ChiefPod() *corev1.Pod {
 	return pj.chiefPod
 }
 
@@ -70,7 +70,7 @@ func (pj *PyTorchJob) Trainer() types.TrainingJobType {
 }
 
 // Get all the pods of the Training Job
-func (pj *PyTorchJob) AllPods() []*v1.Pod {
+func (pj *PyTorchJob) AllPods() []*corev1.Pod {
 	return pj.pods
 }
 
@@ -121,13 +121,13 @@ func (pj *PyTorchJob) Duration() time.Duration {
 	}
 
 	if !pytorchjob.Status.CompletionTime.IsZero() {
-		return pytorchjob.Status.CompletionTime.Time.Sub(pytorchjob.Status.StartTime.Time)
+		return pytorchjob.Status.CompletionTime.Sub(pytorchjob.Status.StartTime.Time)
 	}
 
 	if pj.GetStatus() == "FAILED" {
 		cond := getPodLatestCondition(pj.chiefPod)
 		if !cond.LastTransitionTime.IsZero() {
-			return cond.LastTransitionTime.Time.Sub(pytorchjob.CreationTimestamp.Time)
+			return cond.LastTransitionTime.Sub(pytorchjob.CreationTimestamp.Time)
 		} else {
 			log.Debugf("the latest condition's time is zero of pod %s", pj.chiefPod.Name)
 		}
@@ -161,11 +161,11 @@ func (pj *PyTorchJob) GetJobDashboards(client *kubernetes.Clientset, namespace, 
 	}
 
 	if dashboardURL == "" {
-		return urls, fmt.Errorf("No LOGVIEWER Installed.")
+		return urls, fmt.Errorf("no LOGVIEWER Installed")
 	}
 
 	if len(pj.chiefPod.Spec.Containers) == 0 {
-		return urls, fmt.Errorf("pytorch launcher is not ready!")
+		return urls, fmt.Errorf("pytorch launcher is not ready")
 	}
 
 	url := fmt.Sprintf("%s/#!/log/%s/%s/%s?namespace=%s\n",
@@ -305,7 +305,7 @@ func (tt *PyTorchJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob
 
 }
 
-func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob *pytorchv1.PyTorchJob, item *v1.Pod) bool {
+func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob *pytorchv1.PyTorchJob, item *corev1.Pod) bool {
 	isChiefPod := false
 
 	if val, ok := item.Labels[pytorchReplicaTypeLabel]; ok && val == "master" {
@@ -321,11 +321,11 @@ func (tt *PyTorchJobTrainer) isChiefPod(pytorchjob *pytorchv1.PyTorchJob, item *
 
 // Determine whether it is a pod of pytorchjobs submitted by Arena
 // check pod label: release==pytorchjob.name/app=="pytorchjob"/group-name=='kubeflow.org', namespace
-func (tt *PyTorchJobTrainer) isPyTorchPod(name, ns string, pod *v1.Pod) bool {
+func (tt *PyTorchJobTrainer) isPyTorchPod(name, ns string, pod *corev1.Pod) bool {
 	return utils.IsPyTorchPod(name, ns, pod)
 }
 
-func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*v1.Pod) []Resource {
+func (tt *PyTorchJobTrainer) resources(name string, namespace string, pods []*corev1.Pod) []Resource {
 	resources := podResources(pods)
 	return resources
 }
@@ -383,8 +383,8 @@ func (p *PyTorchJob) GetPriorityClass() string {
 }
 
 // filter out all pods and chief pod (master pod) of pytorchjob from pods in current system
-func getPodsOfPyTorchJob(tt *PyTorchJobTrainer, pytorchjob *pytorchv1.PyTorchJob, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
-	return getPodsOfTrainingJob(pytorchjob.Name, pytorchjob.Namespace, podList, tt.isPyTorchPod, func(pod *v1.Pod) bool {
+func getPodsOfPyTorchJob(tt *PyTorchJobTrainer, pytorchjob *pytorchv1.PyTorchJob, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
+	return getPodsOfTrainingJob(pytorchjob.Name, pytorchjob.Namespace, podList, tt.isPyTorchPod, func(pod *corev1.Pod) bool {
 		return tt.isChiefPod(pytorchjob, pod)
 	})
 }

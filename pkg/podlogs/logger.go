@@ -25,7 +25,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -84,7 +84,7 @@ func (p *PodLogger) getLogs(accept func(io.ReadCloser)) error {
 	if err != nil {
 		return err
 	}
-	podLogOption := &v1.PodLogOptions{
+	podLogOption := &corev1.PodLogOptions{
 		// Container:    p.container,
 		Follow:       p.Follow,
 		Timestamps:   p.Timestamps,
@@ -115,13 +115,13 @@ func (p *PodLogger) ensureContainerStarted() error {
 		log.Debugf("pod:%s,pod phase: %v\n", p.InstanceName, pod.Status.Phase)
 		log.Debugf("pod print status: %s\n", status)
 		switch podPhase := pod.Status.Phase; {
-		case podPhase == v1.PodPending && strings.Index(status, "Init:") == 0:
+		case podPhase == corev1.PodPending && strings.Index(status, "Init:") == 0:
 			return nil
-		case podPhase == v1.PodPending && strings.Index(status, "PodInitializing") == 0:
+		case podPhase == corev1.PodPending && strings.Index(status, "PodInitializing") == 0:
 			return nil
-		case podPhase == v1.PodRunning && status != "Unknown":
+		case podPhase == corev1.PodRunning && status != "Unknown":
 			return nil
-		case podPhase == v1.PodFailed || podPhase == v1.PodSucceeded:
+		case podPhase == corev1.PodFailed || podPhase == corev1.PodSucceeded:
 			return nil
 		}
 		p.RetryCnt--

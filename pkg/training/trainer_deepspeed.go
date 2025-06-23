@@ -20,9 +20,9 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	appv1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -46,8 +46,8 @@ const (
 type DeepSpeedJob struct {
 	*BasicJobInfo
 	trainingjob  *v1alpha1.TrainingJob
-	pods         []*v1.Pod // all the pods including statefulset and job
-	chiefPod     *v1.Pod   // the chief pod
+	pods         []*corev1.Pod // all the pods including statefulset and job
+	chiefPod     *corev1.Pod   // the chief pod
 	requestedGPU int64
 	allocatedGPU int64
 	trainerType  types.TrainingJobType // return trainer type
@@ -67,7 +67,7 @@ func (dsj *DeepSpeedJob) Uid() string {
 }
 
 // Get the chief Pod of the Job.
-func (dsj *DeepSpeedJob) ChiefPod() *v1.Pod {
+func (dsj *DeepSpeedJob) ChiefPod() *corev1.Pod {
 	return dsj.chiefPod
 }
 
@@ -76,7 +76,7 @@ func (dsj *DeepSpeedJob) Trainer() types.TrainingJobType {
 }
 
 // Get all the pods of the Training Job
-func (dsj *DeepSpeedJob) AllPods() []*v1.Pod {
+func (dsj *DeepSpeedJob) AllPods() []*corev1.Pod {
 	return dsj.pods
 }
 
@@ -131,7 +131,7 @@ func (dsj *DeepSpeedJob) Duration() time.Duration {
 	if dsj.isFailed() {
 		cond := getPodLatestCondition(dsj.chiefPod)
 		if !cond.LastTransitionTime.IsZero() {
-			return cond.LastTransitionTime.Time.Sub(trainingjob.CreationTimestamp.Time)
+			return cond.LastTransitionTime.Sub(trainingjob.CreationTimestamp.Time)
 		} else {
 			log.Debugf("the latest condition's time is zero of pod %s", dsj.chiefPod.Name)
 		}
@@ -227,7 +227,7 @@ func (dsj *DeepSpeedJob) isScaling() bool {
 
 func (dsj *DeepSpeedJob) isPending() bool {
 
-	if len(dsj.chiefPod.Name) == 0 || dsj.chiefPod.Status.Phase == v1.PodPending {
+	if len(dsj.chiefPod.Name) == 0 || dsj.chiefPod.Status.Phase == corev1.PodPending {
 		log.Debugf("The DeepSpeedJob is pending due to chiefPod is not ready")
 		return true
 	}
@@ -365,7 +365,7 @@ func (dst *DeepSpeedJobTrainer) GetTrainingJob(name, namespace string) (Training
 
 }
 
-func (dst *DeepSpeedJobTrainer) isChiefPod(item *v1.Pod) bool {
+func (dst *DeepSpeedJobTrainer) isChiefPod(item *corev1.Pod) bool {
 	if item.Labels[deepspeedLabelTrainingJobRole] != "launcher" {
 		return false
 	}
@@ -386,11 +386,11 @@ func (dst *DeepSpeedJobTrainer) isDeepSpeedJob(name, ns string, item *v1alpha1.T
 	return true
 }
 
-func (dst *DeepSpeedJobTrainer) isDeepSpeedPod(name, ns string, pod *v1.Pod) bool {
+func (dst *DeepSpeedJobTrainer) isDeepSpeedPod(name, ns string, pod *corev1.Pod) bool {
 	return utils.IsDeepSpeedPod(name, ns, pod)
 }
 
-func (dst *DeepSpeedJobTrainer) resources(statefulsets []*appv1.StatefulSet, batchJobs []*batchv1.Job, name string, namespace string, pods []*v1.Pod) []Resource {
+func (dst *DeepSpeedJobTrainer) resources(statefulsets []*appsv1.StatefulSet, batchJobs []*batchv1.Job, name string, namespace string, pods []*corev1.Pod) []Resource {
 	resources := []Resource{}
 	// 2. Find the pod list, and determine the pod of the job
 	for _, sts := range statefulsets {
@@ -459,8 +459,8 @@ func (dst *DeepSpeedJobTrainer) ListTrainingJobs(namespace string, allNamespace 
 	return trainingJobs, nil
 }
 
-func getPodsOfDeepSpeedJob(job *v1alpha1.TrainingJob, dst *DeepSpeedJobTrainer, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
-	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, dst.isDeepSpeedPod, func(pod *v1.Pod) bool {
+func getPodsOfDeepSpeedJob(job *v1alpha1.TrainingJob, dst *DeepSpeedJobTrainer, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
+	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, dst.isDeepSpeedPod, func(pod *corev1.Pod) bool {
 		return dst.isChiefPod(pod)
 	})
 }

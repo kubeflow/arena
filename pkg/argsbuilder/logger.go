@@ -162,11 +162,11 @@ func ParseSinceSeconds(since string) (*int64, error) {
 			totalSeconds = totalSeconds + hour*3600
 			items = []string{}
 		case "m":
-			min, err := strconv.ParseInt(strings.Join(items, ""), 10, 64)
+			m, err := strconv.ParseInt(strings.Join(items, ""), 10, 64)
 			if err != nil {
 				return nil, errInvalidSinceSecond
 			}
-			totalSeconds = totalSeconds + min*60
+			totalSeconds = totalSeconds + m*60
 			items = []string{}
 		case "s":
 			second, err := strconv.ParseInt(strings.Join(items, ""), 10, 64)

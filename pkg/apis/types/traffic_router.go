@@ -54,8 +54,8 @@ type DestinationRuleCRD struct {
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
 	// +optional
 	APIVersion        string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
-	metav1.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	Spec              *istiov1alpha3.DestinationRule `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	metav1.ObjectMeta `json:"metadata,omitempty"   protobuf:"bytes,1,opt,name=metadata"   yaml:"metadata,omitempty"`
+	Spec              *istiov1alpha3.DestinationRule `json:"spec,omitempty"       protobuf:"bytes,2,opt,name=spec"       yaml:"spec,omitempty"`
 }
 
 type VirtualServiceCRD struct {
@@ -73,41 +73,41 @@ type VirtualServiceCRD struct {
 	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
 	// +optional
 	APIVersion        string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
-	metav1.ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	Spec              VirtualService `json:"spec,omitempty" yaml:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	metav1.ObjectMeta `json:"metadata,omitempty"   protobuf:"bytes,1,opt,name=metadata"   yaml:"metadata,omitempty"`
+	Spec              VirtualService `json:"spec,omitempty"       protobuf:"bytes,2,opt,name=spec"       yaml:"spec,omitempty"`
 }
 
 type VirtualService struct {
 	*istiov1alpha3.VirtualService
-	Http []*HTTPRoute `protobuf:"bytes,3,rep,name=http" json:"http,omitempty"`
+	Http []*HTTPRoute `json:"http,omitempty" protobuf:"bytes,3,rep,name=http"`
 }
 
 type HTTPRoute struct {
 	*istiov1alpha3.HTTPRoute
-	Match []*HTTPMatchRequest  `protobuf:"bytes,1,rep,name=match" json:"match,omitempty"`
-	Route []*DestinationWeight `protobuf:"bytes,2,rep,name=route" json:"route,omitempty"`
+	Match []*HTTPMatchRequest  `json:"match,omitempty" protobuf:"bytes,1,rep,name=match"`
+	Route []*DestinationWeight `json:"route,omitempty" protobuf:"bytes,2,rep,name=route"`
 }
 
 type HTTPMatchRequest struct {
 	*istiov1alpha3.HTTPMatchRequest
-	Uri *StringMatchPrefix `protobuf:"bytes,1,opt,name=uri" json:"uri,omitempty"`
+	Uri *StringMatchPrefix `json:"uri,omitempty" protobuf:"bytes,1,opt,name=uri"`
 }
 
 type StringMatchPrefix struct {
-	Prefix string `protobuf:"bytes,2,opt,name=prefix,proto3,oneof" json:"prefix,omitempty"`
+	Prefix string `json:"prefix,omitempty" protobuf:"bytes,2,opt,name=prefix,proto3,oneof"`
 }
 
 type DestinationWeight struct {
-	Destination *Destination `protobuf:"bytes,1,opt,name=destination" json:"destination,omitempty"`
-	Weight      int32        `protobuf:"varint,2,opt,name=weight,proto3" json:"weight"`
+	Destination *Destination `json:"destination,omitempty" protobuf:"bytes,1,opt,name=destination"`
+	Weight      int32        `json:"weight"                protobuf:"varint,2,opt,name=weight,proto3"`
 }
 
 type Destination struct {
 	*istiov1alpha3.Destination
-	Port *PortSelector `protobuf:"bytes,3,opt,name=port" json:"port,omitempty"`
+	Port *PortSelector `json:"port,omitempty" protobuf:"bytes,3,opt,name=port"`
 }
 
 type PortSelector struct {
 	*istiov1alpha3.PortSelector
-	Number uint32 `protobuf:"varint,1,opt,name=number,proto3,oneof" json:"number,omitempty"`
+	Number uint32 `json:"number,omitempty" protobuf:"varint,1,opt,name=number,proto3,oneof"`
 }

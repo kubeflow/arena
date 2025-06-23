@@ -84,7 +84,7 @@ func (c *EvaluateClient) Get(name, namespace string) (*types.EvaluateJobInfo, er
 func (c *EvaluateClient) GetAndPrint(name string, format string) error {
 	outputFormat := utils.TransferPrintFormat(format)
 	if outputFormat == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 
 	job, err := evaluate.GetEvaluateJob(name, c.namespace)
@@ -102,7 +102,7 @@ func (c *EvaluateClient) List(allNamespaces bool) ([]*types.EvaluateJobInfo, err
 func (c *EvaluateClient) ListAndPrint(allNamespaces bool, format string) error {
 	outputFormat := utils.TransferPrintFormat(format)
 	if outputFormat == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 
 	jobs, err := evaluate.ListEvaluateJobs(c.namespace, allNamespaces)

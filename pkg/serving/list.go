@@ -191,7 +191,7 @@ func addTrafficWeight(allJobInfos []types.ServingJobInfo) map[string]types.Servi
 		if jobInfo.IPAddress != "" && jobInfo.IPAddress != "N/A" {
 			servingJobsGroup[key].ip = jobInfo.IPAddress
 		}
-		if jobInfo.Endpoints != nil && len(jobInfo.Endpoints) != 0 {
+		if len(jobInfo.Endpoints) != 0 {
 			servingJobsGroup[key].endpoints = jobInfo.Endpoints
 		}
 		servingJobsGroup[key].items = append(servingJobsGroup[key].items, jobInfo)

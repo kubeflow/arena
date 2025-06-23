@@ -125,7 +125,7 @@ func (t *TrainingJobClient) Get(jobName string, jobType types.TrainingJobType, s
 // GetAndPrint print training job information
 func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJobType, format string, showEvent bool, showGPU bool) error {
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 	job, err := training.SearchTrainingJob(jobName, t.namespace, jobType)
 	if err != nil {
@@ -159,7 +159,7 @@ func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.Training
 // ListAndPrint lists and prints the job informations
 func (t *TrainingJobClient) ListAndPrint(allNamespaces bool, format string, trainingType types.TrainingJobType) error {
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 	jobs, err := training.ListTrainingJobs(t.namespace, allNamespaces, trainingType)
 	if err != nil {

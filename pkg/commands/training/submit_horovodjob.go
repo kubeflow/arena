@@ -49,7 +49,7 @@ func NewSubmitHorovodJobCommand() *cobra.Command {
 				IsDaemonMode:   false,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to create arena client: %v\n", err)
+				return fmt.Errorf("failed to create arena client: %v", err)
 			}
 			job, err := builder.Command(args).Build()
 			if err != nil {

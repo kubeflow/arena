@@ -124,7 +124,7 @@ type SubmitTensorboardArgs struct {
 	IsLocalLogging   bool   `yaml:"isLocalLogging"`
 }
 
-// Customized runtime for tf training training
+// Customized runtime for tf training
 type TFRuntime interface {
 	// check the tfjob args
 	Check(tf *SubmitTFJobArgs) (err error)

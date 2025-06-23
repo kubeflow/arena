@@ -24,8 +24,8 @@ import (
 	kserveClient "github.com/kserve/kserve/pkg/client/clientset/versioned"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	log "github.com/sirupsen/logrus"
-	appv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
@@ -42,7 +42,7 @@ type KServeProcesser struct {
 
 type kserveJob struct {
 	inferenceService     *kservev1beta1.InferenceService
-	inferenceDeployments []*appv1.Deployment
+	inferenceDeployments []*appsv1.Deployment
 	*servingJob
 }
 
@@ -137,8 +137,8 @@ func (p *KServeProcesser) FilterServingJobs(namespace string, allNamespace bool,
 
 	servingJobs := []ServingJob{}
 	for _, iservice := range inferenceServiceList {
-		filterDeployments := []*appv1.Deployment{}
-		filterPods := []*v1.Pod{}
+		filterDeployments := []*appsv1.Deployment{}
+		filterPods := []*corev1.Pod{}
 		for _, deployment := range deployments {
 			if iservice.Labels[servingNameLabelKey] == deployment.Labels[servingNameLabelKey] &&
 				iservice.Labels[servingTypeLabelKey] == deployment.Labels[servingTypeLabelKey] {
@@ -182,11 +182,11 @@ func (s *kserveJob) Uid() string {
 }
 
 func (s *kserveJob) Age() time.Duration {
-	return time.Since(s.inferenceService.ObjectMeta.CreationTimestamp.Time)
+	return time.Since(s.inferenceService.CreationTimestamp.Time)
 }
 
 func (s *kserveJob) StartTime() *metav1.Time {
-	return &s.inferenceService.ObjectMeta.CreationTimestamp
+	return &s.inferenceService.CreationTimestamp
 }
 
 func (s *kserveJob) Endpoints() []types.Endpoint {
@@ -210,7 +210,7 @@ func (s *kserveJob) RequestCPUs() float64 {
 		replicas := *dp.Spec.Replicas
 		podCPUs := 0.0
 		for _, c := range dp.Spec.Template.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.CPUResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.CPUResourceName)]; ok {
 				podCPUs += float64(val.Value())
 			}
 		}
@@ -225,10 +225,10 @@ func (s *kserveJob) RequestGPUs() float64 {
 		replicas := *dp.Spec.Replicas
 		podGPUs := 0
 		for _, c := range dp.Spec.Template.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.NvidiaGPUResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.NvidiaGPUResourceName)]; ok {
 				podGPUs += int(val.Value())
 			}
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.AliyunGPUResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.AliyunGPUResourceName)]; ok {
 				podGPUs += int(val.Value())
 			}
 		}
@@ -243,7 +243,7 @@ func (s *kserveJob) RequestGPUMemory() int {
 		replicas := *dp.Spec.Replicas
 		podGPUMemory := 0
 		for _, c := range dp.Spec.Template.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUShareResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUShareResourceName)]; ok {
 				podGPUMemory += int(val.Value())
 			}
 		}
@@ -258,7 +258,7 @@ func (s *kserveJob) RequestGPUCore() int {
 		replicas := *dp.Spec.Replicas
 		podGPUCore := 0
 		for _, c := range dp.Spec.Template.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUCoreShareResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUCoreShareResourceName)]; ok {
 				podGPUCore += int(val.Value())
 			}
 		}

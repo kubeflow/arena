@@ -22,7 +22,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -59,13 +59,13 @@ GPU Summary:
 `
 
 type gpushare struct {
-	node       *v1.Node
-	pods       []*v1.Pod
+	node       *corev1.Node
+	pods       []*corev1.Pod
 	gpuMetrics types.NodeGpuMetric
 	baseNode
 }
 
-func NewGPUShareNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
+func NewGPUShareNode(client *kubernetes.Clientset, node *corev1.Node, index int, args buildNodeArgs) (Node, error) {
 	pods := getNodePods(node, args.pods)
 	return &gpushare{
 		node:       node,
@@ -84,7 +84,7 @@ func (g *gpushare) getTotalGPUs() float64 {
 	if len(g.gpuMetrics) != 0 {
 		return float64(len(g.gpuMetrics))
 	}
-	val, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareCountName)]
+	val, ok := g.node.Status.Capacity[corev1.ResourceName(types.GPUShareCountName)]
 	if !ok {
 		return 0
 	}
@@ -119,7 +119,7 @@ func (g *gpushare) getTotalGPUMemory() float64 {
 	if totalGPUMemory != 0 {
 		return totalGPUMemory
 	}
-	val, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareResourceName)]
+	val, ok := g.node.Status.Capacity[corev1.ResourceName(types.GPUShareResourceName)]
 	if !ok {
 		return float64(0)
 	}
@@ -141,11 +141,11 @@ func (g *gpushare) getAllocatedGPUMemory() float64 {
 }
 
 func (g *gpushare) getTotalGPUCore() int64 {
-	val, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUCoreShareResourceName)]
+	val, ok := g.node.Status.Capacity[corev1.ResourceName(types.GPUCoreShareResourceName)]
 	if !ok {
 		return int64(0)
 	}
-	return int64(val.Value())
+	return val.Value()
 }
 
 func (g *gpushare) getAllocatedGPUCore() int64 {
@@ -164,11 +164,11 @@ func (g *gpushare) getAllocatedGPUCore() int64 {
 
 func (g *gpushare) getUnhealthyGPUs() float64 {
 	totalGPUs := g.getTotalGPUs()
-	totalGPUMemory, ok := g.node.Status.Capacity[v1.ResourceName(types.GPUShareResourceName)]
+	totalGPUMemory, ok := g.node.Status.Capacity[corev1.ResourceName(types.GPUShareResourceName)]
 	if !ok {
 		return 0
 	}
-	allocatableGPUMemory, ok := g.node.Status.Allocatable[v1.ResourceName(types.GPUShareResourceName)]
+	allocatableGPUMemory, ok := g.node.Status.Allocatable[corev1.ResourceName(types.GPUShareResourceName)]
 	if !ok {
 		return 0
 	}
@@ -692,12 +692,12 @@ func displayGPUShareNodesCustomSummary(w *tabwriter.Writer, nodes []Node) {
 	}
 }
 
-func IsGPUShareNode(node *v1.Node) bool {
+func IsGPUShareNode(node *corev1.Node) bool {
 	val, ok := node.Status.Allocatable[types.GPUShareResourceName]
 	if !ok {
 		return false
 	}
-	if int64(val.Value()) > 0 {
+	if val.Value() > 0 {
 		return true
 	}
 	return false

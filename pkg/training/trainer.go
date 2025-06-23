@@ -21,7 +21,7 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeflow/arena/pkg/apis/config"
@@ -66,36 +66,36 @@ func GetAllTrainers() map[types.TrainingJobType]Trainer {
 
 type orderedTrainingJob []TrainingJob
 
-func (this orderedTrainingJob) Len() int {
-	return len(this)
+func (jobs orderedTrainingJob) Len() int {
+	return len(jobs)
 }
 
-func (this orderedTrainingJob) Less(i, j int) bool {
-	return this[i].RequestedGPU() > this[j].RequestedGPU()
+func (jobs orderedTrainingJob) Less(i, j int) bool {
+	return jobs[i].RequestedGPU() > jobs[j].RequestedGPU()
 }
 
-func (this orderedTrainingJob) Swap(i, j int) {
-	this[i], this[j] = this[j], this[i]
+func (jobs orderedTrainingJob) Swap(i, j int) {
+	jobs[i], jobs[j] = jobs[j], jobs[i]
 }
 
 type orderedTrainingJobByAge []TrainingJob
 
-func (this orderedTrainingJobByAge) Len() int {
-	return len(this)
+func (jobs orderedTrainingJobByAge) Len() int {
+	return len(jobs)
 }
 
-func (this orderedTrainingJobByAge) Less(i, j int) bool {
-	if this[i].StartTime() == nil {
+func (jobs orderedTrainingJobByAge) Less(i, j int) bool {
+	if jobs[i].StartTime() == nil {
 		return true
-	} else if this[j].StartTime() == nil {
+	} else if jobs[j].StartTime() == nil {
 		return false
 	}
 
-	return this[i].StartTime().After(this[j].StartTime().Time)
+	return jobs[i].StartTime().After(jobs[j].StartTime().Time)
 }
 
-func (this orderedTrainingJobByAge) Swap(i, j int) {
-	this[i], this[j] = this[j], this[i]
+func (jobs orderedTrainingJobByAge) Swap(i, j int) {
+	jobs[i], jobs[j] = jobs[j], jobs[i]
 }
 
 func makeTrainingJobOrderdByAge(jobList []TrainingJob) []TrainingJob {
@@ -116,11 +116,11 @@ func makeTrainingJobOrderdByGPUCount(jobList []TrainingJob) []TrainingJob {
 	return []TrainingJob(newJoblist)
 }
 
-func getPodsOfTrainingJob(name, namespace string, podList []*v1.Pod, isTrainingJobPod func(name, namespace string, pod *v1.Pod) bool, isChiefPod func(pod *v1.Pod) bool) ([]*v1.Pod, *v1.Pod) {
-	pods := []*v1.Pod{}
+func getPodsOfTrainingJob(name, namespace string, podList []*corev1.Pod, isTrainingJobPod func(name, namespace string, pod *corev1.Pod) bool, isChiefPod func(pod *corev1.Pod) bool) ([]*corev1.Pod, *corev1.Pod) {
+	pods := []*corev1.Pod{}
 	var (
-		pendingChiefPod     *v1.Pod
-		nonePendingChiefPod *v1.Pod
+		pendingChiefPod     *corev1.Pod
+		nonePendingChiefPod *corev1.Pod
 	)
 	for _, item := range podList {
 		if !isTrainingJobPod(name, namespace, item) {
@@ -131,7 +131,7 @@ func getPodsOfTrainingJob(name, namespace string, podList []*v1.Pod, isTrainingJ
 			log.Debugf("the pod %v is not chief pod", item.Name)
 			continue
 		}
-		if item.Status.Phase == v1.PodPending {
+		if item.Status.Phase == corev1.PodPending {
 			if pendingChiefPod == nil {
 				pendingChiefPod = item
 			}
@@ -153,7 +153,7 @@ func getPodsOfTrainingJob(name, namespace string, podList []*v1.Pod, isTrainingJ
 		return pods, nonePendingChiefPod
 	}
 	if pendingChiefPod == nil {
-		return pods, &v1.Pod{}
+		return pods, &corev1.Pod{}
 	}
 	return pods, pendingChiefPod
 }

@@ -84,8 +84,8 @@ func NewMlflowClient(trackingUri, username, password string) *MlflowClient {
 // Create a MLflow client proxied by Kubernetes api server
 func NewProxiedMlflowClient(configr *config.ArenaConfiger, service *corev1.Service, username string, password string) *MlflowClient {
 	once.Do(func() {
-		namespace := service.ObjectMeta.Namespace
-		name := service.ObjectMeta.Name
+		namespace := service.Namespace
+		name := service.Name
 		port := 5000
 		if len(service.Spec.Ports) > 0 {
 			port = int(service.Spec.Ports[0].Port)

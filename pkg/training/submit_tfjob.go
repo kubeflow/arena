@@ -49,7 +49,7 @@ func SubmitTFJob(namespace string, submitArgs *types.SubmitTFJobArgs) (err error
 	// submitArgs.WorkerCount = submitArgs.WorkerCount - 1
 
 	if submitArgs.TFRuntime != nil {
-		tfjob_chart = util.GetChartsFolder() + "/" + submitArgs.TFRuntime.GetChartName()
+		tfjob_chart = util.GetChartsFolder() + "/" + submitArgs.GetChartName()
 	}
 
 	compatible := CompatibleJobCRD(k8saccesser.TensorflowCRDName, "runPolicy")

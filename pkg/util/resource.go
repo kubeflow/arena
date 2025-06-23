@@ -17,7 +17,7 @@ package util
 import (
 	"context"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
 	log "github.com/sirupsen/logrus"
@@ -25,15 +25,15 @@ import (
 )
 
 var (
-	allServices = map[string][]v1.Service{}
-	allPods     = map[string][]v1.Pod{}
+	allServices = map[string][]corev1.Service{}
+	allPods     = map[string][]corev1.Pod{}
 )
 
-func AcquireAllPods(namespace string, client *kubernetes.Clientset) ([]v1.Pod, error) {
+func AcquireAllPods(namespace string, client *kubernetes.Clientset) ([]corev1.Pod, error) {
 	if podsCache, ok := allPods[namespace]; ok {
 		return podsCache, nil
 	}
-	pods := []v1.Pod{}
+	pods := []corev1.Pod{}
 	podList, err := client.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return pods, err
@@ -44,7 +44,7 @@ func AcquireAllPods(namespace string, client *kubernetes.Clientset) ([]v1.Pod, e
 	return pods, nil
 }
 
-func AcquireServingServices(namespace string, client *kubernetes.Clientset) ([]v1.Service, error) {
+func AcquireServingServices(namespace string, client *kubernetes.Clientset) ([]corev1.Service, error) {
 	if serviceCache, ok := allServices[namespace]; ok {
 		return serviceCache, nil
 	}
@@ -53,7 +53,7 @@ func AcquireServingServices(namespace string, client *kubernetes.Clientset) ([]v
 	})
 	if err != nil {
 		log.Errorf("Failed to list services due to %v", err)
-		return []v1.Service{}, err
+		return []corev1.Service{}, err
 	}
 	allServices[namespace] = serviceList.Items
 	log.Debugf("Services in %s: %++v", namespace, allServices[namespace])

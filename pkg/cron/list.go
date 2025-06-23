@@ -17,11 +17,12 @@ package cron
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"gopkg.in/yaml.v2"
 	"os"
 	"strconv"
 	"text/tabwriter"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"gopkg.in/yaml.v2"
 )
 
 func ListCrons(namespace string, allNamespaces bool) ([]*types.CronInfo, error) {

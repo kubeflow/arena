@@ -21,7 +21,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -49,8 +49,8 @@ const (
 type TensorFlowJob struct {
 	*BasicJobInfo
 	tfjob        *tfv1.TFJob
-	pods         []*v1.Pod // all the pods including statefulset and job
-	chiefPod     *v1.Pod   // the chief pod
+	pods         []*corev1.Pod // all the pods including statefulset and job
+	chiefPod     *corev1.Pod   // the chief pod
 	requestedGPU int64
 	allocatedGPU int64
 	trainerType  types.TrainingJobType // return trainer type
@@ -67,7 +67,7 @@ func (tj *TensorFlowJob) Uid() string {
 }
 
 // ChiefPod gets the chief Pod of the Job.
-func (tj *TensorFlowJob) ChiefPod() *v1.Pod {
+func (tj *TensorFlowJob) ChiefPod() *corev1.Pod {
 	return tj.chiefPod
 }
 
@@ -77,7 +77,7 @@ func (tj *TensorFlowJob) Trainer() types.TrainingJobType {
 }
 
 // AllPods Get all the pods of the Training Job
-func (tj *TensorFlowJob) AllPods() []*v1.Pod {
+func (tj *TensorFlowJob) AllPods() []*corev1.Pod {
 	return tj.pods
 }
 
@@ -96,11 +96,11 @@ func (tj *TensorFlowJob) GetStatus() string {
 	defer log.Debugf("Get status of TFJob %s: %s", tj.tfjob.Name, status)
 
 	if tj.tfjob.Name == "" {
-		return string(status)
+		return status
 	}
 
 	status = getStatus(tj.tfjob.Status)
-	return string(status)
+	return status
 }
 
 // StartTime returns the start time
@@ -131,7 +131,7 @@ func (tj *TensorFlowJob) Duration() time.Duration {
 		return 0
 	}
 	if !job.Status.CompletionTime.IsZero() {
-		return job.Status.CompletionTime.Time.Sub(job.Status.StartTime.Time)
+		return job.Status.CompletionTime.Sub(job.Status.StartTime.Time)
 	}
 
 	if tj.GetStatus() != "FAILED" {
@@ -139,7 +139,7 @@ func (tj *TensorFlowJob) Duration() time.Duration {
 	}
 	cond := getPodLatestCondition(tj.chiefPod)
 	if !cond.LastTransitionTime.IsZero() {
-		return cond.LastTransitionTime.Time.Sub(job.Status.StartTime.Time)
+		return cond.LastTransitionTime.Sub(job.Status.StartTime.Time)
 	}
 	log.Debugf("the latest condition's time is zero of pod %s", tj.chiefPod.Name)
 	return metav1.Now().Sub(job.Status.StartTime.Time)
@@ -170,7 +170,7 @@ func (tj *TensorFlowJob) GetJobDashboards(client *kubernetes.Clientset, namespac
 	}
 
 	if dashboardURL == "" {
-		return urls, fmt.Errorf("No LOGVIEWER Installed.")
+		return urls, fmt.Errorf("no LOGVIEWER Installed")
 	}
 
 	tfjob := tj.tfjob
@@ -326,7 +326,7 @@ func (tt *TensorFlowJobTrainer) GetTrainingJob(name, namespace string) (Training
 	}, nil
 }
 
-func (tt *TensorFlowJobTrainer) isChiefPod(tfjob *tfv1.TFJob, item *v1.Pod) bool {
+func (tt *TensorFlowJobTrainer) isChiefPod(tfjob *tfv1.TFJob, item *corev1.Pod) bool {
 	isChiefPod := false
 
 	// find chief pod in chief mode
@@ -358,7 +358,7 @@ func (tt *TensorFlowJobTrainer) isChiefPod(tfjob *tfv1.TFJob, item *v1.Pod) bool
 	return isChiefPod
 }
 
-func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item *v1.Pod) bool {
+func (tt *TensorFlowJobTrainer) isTensorFlowPod(name, ns string, item *corev1.Pod) bool {
 	return utils.IsTensorFlowPod(name, ns, item)
 }
 
@@ -444,15 +444,15 @@ func getStatus(status commonv1.JobStatus) string {
 // hasCondition checks if the given job status has the condition type.
 func hasCondition(status commonv1.JobStatus, condType commonv1.JobConditionType) bool {
 	for _, condition := range status.Conditions {
-		if condition.Type == condType && condition.Status == v1.ConditionTrue {
+		if condition.Type == condType && condition.Status == corev1.ConditionTrue {
 			return true
 		}
 	}
 	return false
 }
 
-func getPodsOfTFJob(tt *TensorFlowJobTrainer, tfjob *tfv1.TFJob, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
-	return getPodsOfTrainingJob(tfjob.Name, tfjob.Namespace, podList, tt.isTensorFlowPod, func(pod *v1.Pod) bool {
+func getPodsOfTFJob(tt *TensorFlowJobTrainer, tfjob *tfv1.TFJob, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
+	return getPodsOfTrainingJob(tfjob.Name, tfjob.Namespace, podList, tt.isTensorFlowPod, func(pod *corev1.Pod) bool {
 		return tt.isChiefPod(tfjob, pod)
 	})
 }

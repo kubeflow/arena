@@ -21,7 +21,7 @@ import (
 	"text/tabwriter"
 
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -55,16 +55,16 @@ GPU Summary:
 `
 
 type gputopo struct {
-	node       *v1.Node
-	pods       []*v1.Pod
-	configmap  *v1.ConfigMap
+	node       *corev1.Node
+	pods       []*corev1.Pod
+	configmap  *corev1.ConfigMap
 	gpuMetrics types.NodeGpuMetric
 	baseNode
 }
 
-func NewGPUTopologyNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
+func NewGPUTopologyNode(client *kubernetes.Clientset, node *corev1.Node, index int, args buildNodeArgs) (Node, error) {
 	pods := getNodePods(node, args.pods)
-	var configmap *v1.ConfigMap
+	var configmap *corev1.ConfigMap
 	for _, c := range args.configmaps {
 		if val, ok := c.Labels["nodename"]; ok && val == node.Name {
 			configmap = c.DeepCopy()
@@ -96,7 +96,7 @@ func (g *gputopo) getTotalGPUs() float64 {
 	if len(g.gpuMetrics) != 0 {
 		return float64(len(g.gpuMetrics))
 	}
-	val, ok := g.node.Status.Capacity[v1.ResourceName(types.AliyunGPUResourceName)]
+	val, ok := g.node.Status.Capacity[corev1.ResourceName(types.AliyunGPUResourceName)]
 	if !ok {
 		return 0
 	}
@@ -117,7 +117,7 @@ func (g *gputopo) getAllocatedGPUs() float64 {
 
 func (g *gputopo) getUnhealthyGPUs() float64 {
 	totalGPUs := g.getTotalGPUs()
-	allocatableGPUs, ok := g.node.Status.Allocatable[v1.ResourceName(types.AliyunGPUResourceName)]
+	allocatableGPUs, ok := g.node.Status.Allocatable[corev1.ResourceName(types.AliyunGPUResourceName)]
 	if !ok {
 		return 0
 	}
@@ -383,7 +383,7 @@ func (g *gputopo) displayDeviceInfoUnderMetrics(lines []string, nodeInfo types.G
 	return lines
 }
 
-func IsGPUTopologyNode(node *v1.Node) bool {
+func IsGPUTopologyNode(node *corev1.Node) bool {
 	labels := strings.Split(types.GPUTopologyNodeLabels, ",")
 	for _, label := range labels {
 		topologyKey := strings.Split(label, "=")[0]
@@ -412,7 +412,7 @@ UnhealthyGPUs: 0
 Instances:
 
 	NAMESPACE  NAME                               GPU(Requested)  GPU(Allocated)
-	---------  ----                               --------------  --------------
+	---------  ----                               --------------
 	default    nginx-deployment-6687789574-6mn2z  2
 	default    nginx-deployment-6687789574-wd7vf  2
 
@@ -433,7 +433,7 @@ LinkTypeMatrix:
 	GPU0  N-A   NV2   NV1   NV2
 	GPU1  NV2   N-A   NV2   NV1
 	GPU2  NV1   NV2   N-A   NV1
-	GPU3  NV2   NV1   NV1   N-A
+	GPU3  NV2   NV1   N-A
 
 BandwidthMatrix:
 
@@ -441,7 +441,7 @@ BandwidthMatrix:
 	GPU0  738.42  96.44   48.37   96.19
 	GPU1  96.26   744.05  96.23   48.36
 	GPU2  48.37   96.24   744.76  48.37
-	GPU3  96.23   48.37   48.37   744.76
+	GPU3  96.23   48.37   744.76
 
 -----------------------------------------------------------------------------------------
 Allocated/Total GPUs In Cluster: 4/4(100.0%)

@@ -1,0 +1,76 @@
+version: "2"
+
+run:
+  # Timeout for total work, e.g. 30s, 5m, 5m30s.
+  # If the value is lower or equal to 0, the timeout is disabled.
+  # Default: 0 (disabled)
+  timeout: 2m
+
+linters:
+  # Enable specific linters.
+  # https://golangci-lint.run/usage/linters/#enabled-by-default
+  enable:
+    # Detects places where loop variables are copied.
+    - copyloopvar
+    # Checks for duplicate words in the source code.
+    - dupword
+    # Tool for detection of FIXME, TODO and other comment keywords.
+    # - godox
+    # Enforces consistent import aliases.
+    - importas
+    # Find code that shadows one of Go's predeclared identifiers.
+    - predeclared
+    # Check that struct tags are well aligned.
+    - tagalign
+    # Remove unnecessary type conversions.
+    - unconvert
+    # Checks Go code for unused constants, variables, functions and types.
+    - unused
+  # Disable specific linters.
+  disable:
+    # Errcheck is a program for checking for unchecked errors in Go code.
+    - errcheck
+
+  settings:
+    importas:
+      # List of aliases
+      alias:
+        - pkg: k8s.io/api/admissionregistration/v1
+          alias: admissionregistrationv1
+        - pkg: k8s.io/api/apps/v1
+          alias: appsv1
+        - pkg: k8s.io/api/batch/v1
+          alias: batchv1
+        - pkg: k8s.io/api/core/v1
+          alias: corev1
+        - pkg: k8s.io/api/extensions/v1beta1
+          alias: extensionsv1beta1
+        - pkg: k8s.io/api/networking/v1
+          alias: networkingv1
+        - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+          alias: metav1
+        - pkg: sigs.k8s.io/controller-runtime
+          alias: ctrl
+
+  exclusions:
+    # Which file paths to exclude: they will be analyzed, but issues from them won't be reported.
+    # "/" will be replaced by the current OS file path separator to properly work on Windows.
+    # Default: []
+    paths:
+      - pkg/operators
+
+issues:
+  # Maximum issues count per one linter.
+  # Set to 0 to disable.
+  # Default: 50
+  max-issues-per-linter: 50
+  # Maximum count of issues with the same text.
+  # Set to 0 to disable.
+  # Default: 3
+  max-same-issues: 10
+
+formatters:
+  enable:
+    # Check import statements are formatted according to the 'goimport' command.
+    - goimports
+

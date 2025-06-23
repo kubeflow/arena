@@ -24,7 +24,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -37,8 +37,8 @@ type VolcanoJob struct {
 	*BasicJobInfo
 	volcanoJob   *v1alpha1.Job
 	trainerType  types.TrainingJobType
-	pods         []*v1.Pod
-	chiefPod     *v1.Pod
+	pods         []*corev1.Pod
+	chiefPod     *corev1.Pod
 	requestedGPU int64
 	allocatedGPU int64
 }
@@ -52,7 +52,7 @@ func (vj *VolcanoJob) Uid() string {
 }
 
 // return driver pod
-func (vj *VolcanoJob) ChiefPod() *v1.Pod {
+func (vj *VolcanoJob) ChiefPod() *corev1.Pod {
 	return vj.chiefPod
 }
 
@@ -62,7 +62,7 @@ func (vj *VolcanoJob) Trainer() types.TrainingJobType {
 }
 
 // return pods from cache
-func (vj *VolcanoJob) AllPods() []*v1.Pod {
+func (vj *VolcanoJob) AllPods() []*corev1.Pod {
 	return vj.pods
 }
 
@@ -181,11 +181,11 @@ func (vj *VolcanoJob) GetJobDashboards(client *kubernetes.Clientset, namespace, 
 	}
 
 	if dashboardURL == "" {
-		return urls, fmt.Errorf("No LOGVIEWER Installed.")
+		return urls, fmt.Errorf("no LOGVIEWER Installed")
 	}
 
 	if len(vj.chiefPod.Spec.Containers) == 0 {
-		return urls, fmt.Errorf("volcano driver pod is not ready!")
+		return urls, fmt.Errorf("volcano driver pod is not ready")
 	}
 
 	url := fmt.Sprintf("%s/#!/log/%s/%s/%s?namespace=%s\n",
@@ -354,11 +354,11 @@ func (st *VolcanoJobTrainer) ListTrainingJobs(namespace string, allNamespace boo
 	return trainingJobs, nil
 }
 
-func (st *VolcanoJobTrainer) isVolcanoPod(name, ns string, pod *v1.Pod) bool {
+func (st *VolcanoJobTrainer) isVolcanoPod(name, ns string, pod *corev1.Pod) bool {
 	return utils.IsVolcanoPod(name, ns, pod)
 }
 
-func (st *VolcanoJobTrainer) isChiefPod(pod *v1.Pod) bool {
+func (st *VolcanoJobTrainer) isChiefPod(pod *corev1.Pod) bool {
 	if pod.Labels["volcano-role"] != "driver" {
 		return false
 	}
@@ -366,8 +366,8 @@ func (st *VolcanoJobTrainer) isChiefPod(pod *v1.Pod) bool {
 	return true
 }
 
-func getPodsOfVolcanoJob(job *v1alpha1.Job, st *VolcanoJobTrainer, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
-	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, st.isVolcanoPod, func(pod *v1.Pod) bool {
+func getPodsOfVolcanoJob(job *v1alpha1.Job, st *VolcanoJobTrainer, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
+	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, st.isVolcanoPod, func(pod *corev1.Pod) bool {
 		return st.isChiefPod(pod)
 	})
 }

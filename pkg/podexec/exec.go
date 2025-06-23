@@ -128,7 +128,7 @@ func (p *ExecOptions) Complete(argsIn []string, namespace string, argsLenAtDash 
 
 	p.ExecutablePodFn = polymorphichelpers.AttachablePodForObjectFn
 
-	p.GetPodTimeout = time.Duration(5 * time.Second)
+	p.GetPodTimeout = time.Duration(5) * time.Second
 
 	p.Stdin = true
 	p.TTY = true

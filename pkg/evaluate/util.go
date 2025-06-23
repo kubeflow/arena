@@ -16,12 +16,13 @@ package evaluate
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/types"
 	"io"
-	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
 	"strings"
 	"time"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -108,7 +109,7 @@ func isFailed(status batchv1.JobStatus) bool {
 
 func hasCondition(status batchv1.JobStatus, condType batchv1.JobConditionType) bool {
 	for _, condition := range status.Conditions {
-		if condition.Type == condType && condition.Status == v1.ConditionTrue {
+		if condition.Type == condType && condition.Status == corev1.ConditionTrue {
 			return true
 		}
 	}

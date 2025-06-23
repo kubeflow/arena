@@ -39,7 +39,7 @@ func PruneTrainingJobs(namespace string, allNamespaces bool, since time.Duration
 	}
 	deleted := false
 	if since == -1 {
-		return fmt.Errorf("Your need to specify the relative duration live time of the job that need to be cleaned by --since. Like --since 10h")
+		return fmt.Errorf("you need to specify the relative duration live time of the job that need to be cleaned by --since. Like --since 10h")
 	}
 	for _, job := range jobs {
 		if GetJobRealStatus(job) == "RUNNING" {

@@ -42,7 +42,7 @@ func NewSubmitModelBenchmarkJobCommand() *cobra.Command {
 				IsDaemonMode:   false,
 			})
 			if err != nil {
-				return fmt.Errorf("failed to create arena client: %v\n", err)
+				return fmt.Errorf("failed to create arena client: %v", err)
 			}
 			job, err := builder.Namespace(config.GetArenaConfiger().GetNamespace()).Command(args).Build()
 			if err != nil {

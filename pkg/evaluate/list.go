@@ -17,12 +17,13 @@ package evaluate
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"text/tabwriter"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"text/tabwriter"
 )
 
 func ListEvaluateJobs(namespace string, allNamespaces bool) ([]*types.EvaluateJobInfo, error) {

@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -73,7 +73,7 @@ func initK8sClusterUsedPort(client *kubernetes.Clientset) ([]int, error) {
 // 2. NodePort / Loadbalancer Service's NodePort
 func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 	k8sClusterUsedPorts = []int{}
-	pods, err := client.CoreV1().Pods("").List(context.TODO(), meta_v1.ListOptions{})
+	pods, err := client.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return k8sClusterUsedPorts, err
 	}
@@ -96,12 +96,12 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 		}
 	}
 
-	services, err := client.CoreV1().Services("").List(context.TODO(), meta_v1.ListOptions{})
+	services, err := client.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return k8sClusterUsedPorts, err
 	}
 	for _, service := range services.Items {
-		if service.Spec.Type == v1.ServiceTypeNodePort || service.Spec.Type == v1.ServiceTypeLoadBalancer {
+		if service.Spec.Type == corev1.ServiceTypeNodePort || service.Spec.Type == corev1.ServiceTypeLoadBalancer {
 			for _, port := range service.Spec.Ports {
 				if int(port.NodePort) >= AUTO_SELECT_PORT_MIN && int(port.NodePort) < AUTO_SELECT_PORT_MAX {
 					k8sClusterUsedPorts = append(k8sClusterUsedPorts, int(port.NodePort))
@@ -114,13 +114,13 @@ func getClusterUsedNodePorts(client *kubernetes.Clientset) ([]int, error) {
 }
 
 // exclude Inactive pod when compute ports
-func excludeInactivePod(pod *v1.Pod) bool {
+func excludeInactivePod(pod *corev1.Pod) bool {
 	// pod not assigned
 	if len(pod.Spec.NodeName) == 0 {
 		return true
 	}
 	// pod is Successed or failed
-	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+	if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 		return true
 	}
 	return false

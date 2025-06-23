@@ -74,7 +74,7 @@ func (s *SubmitRayJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 
 	var (
 		activeDeadline   time.Duration
-		ttlAfterFinished time.Duration = time.Second * 10
+		ttlAfterFinished = time.Second * 10
 		preStopCmd       string
 	)
 
@@ -202,14 +202,14 @@ func (s *SubmitRayJobArgsBuilder) check() error {
 	case "Always", "IfNotPresent", "Never":
 		log.Debugf("Supported imagePullPolicy: %s", s.args.AutoscalerOptions.ImagePullPolicy)
 	default:
-		return fmt.Errorf("Unsupported imagePullPolicy: %s", s.args.AutoscalerOptions.ImagePullPolicy)
+		return fmt.Errorf("unsupported imagePullPolicy: %s", s.args.AutoscalerOptions.ImagePullPolicy)
 	}
 	// check autoscaler-upscaling-mode
 	switch s.args.AutoscalerOptions.UpscalingMode {
 	case "Conservative", "Default", "Aggressive":
 		log.Debugf("Supported autoscalerUpscalingMode: %s", s.args.AutoscalerOptions.UpscalingMode)
 	default:
-		return fmt.Errorf("Unsupported autoscalerUpscalingMode: %s", s.args.AutoscalerOptions.UpscalingMode)
+		return fmt.Errorf("unsupported autoscalerUpscalingMode: %s", s.args.AutoscalerOptions.UpscalingMode)
 	}
 	if s.args.HeadGroupSpec.Gpu < 0 {
 		return fmt.Errorf("--head-gpu is invalid")
@@ -231,7 +231,7 @@ func (s *SubmitRayJobArgsBuilder) check() error {
 	case "ClusterIP", "NodePort", "LoadBalancer", "ExternalName":
 		log.Debugf("Supported headServiceType: %s", s.args.HeadGroupSpec.ServiceType)
 	default:
-		return fmt.Errorf("Unsupported headServiceType: %s", s.args.HeadGroupSpec.ServiceType)
+		return fmt.Errorf("unsupported headServiceType: %s", s.args.HeadGroupSpec.ServiceType)
 	}
 	if s.args.WorkerGroupSpec.Gpu < 0 {
 		return fmt.Errorf("--worker-gpu is invalid")

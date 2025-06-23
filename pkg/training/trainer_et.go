@@ -22,9 +22,9 @@ import (
 
 	"github.com/kubeflow/arena/pkg/operators/et-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
-	appv1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -48,8 +48,8 @@ const (
 type ETJob struct {
 	*BasicJobInfo
 	trainingjob  *v1alpha1.TrainingJob
-	pods         []*v1.Pod // all the pods including statefulset and job
-	chiefPod     *v1.Pod   // the chief pod
+	pods         []*corev1.Pod // all the pods including statefulset and job
+	chiefPod     *corev1.Pod   // the chief pod
 	requestedGPU int64
 	allocatedGPU int64
 	trainerType  types.TrainingJobType // return trainer type
@@ -69,7 +69,7 @@ func (ej *ETJob) Uid() string {
 }
 
 // Get the chief Pod of the Job.
-func (ej *ETJob) ChiefPod() *v1.Pod {
+func (ej *ETJob) ChiefPod() *corev1.Pod {
 	return ej.chiefPod
 }
 
@@ -78,7 +78,7 @@ func (ej *ETJob) Trainer() types.TrainingJobType {
 }
 
 // Get all the pods of the Training Job
-func (ej *ETJob) AllPods() []*v1.Pod {
+func (ej *ETJob) AllPods() []*corev1.Pod {
 	return ej.pods
 }
 
@@ -133,7 +133,7 @@ func (ej *ETJob) Duration() time.Duration {
 	if ej.isFailed() {
 		cond := getPodLatestCondition(ej.chiefPod)
 		if !cond.LastTransitionTime.IsZero() {
-			return cond.LastTransitionTime.Time.Sub(trainingjob.CreationTimestamp.Time)
+			return cond.LastTransitionTime.Sub(trainingjob.CreationTimestamp.Time)
 		} else {
 			log.Debugf("the latest condition's time is zero of pod %s", ej.chiefPod.Name)
 		}
@@ -229,7 +229,7 @@ func (ej *ETJob) isScaling() bool {
 
 func (ej *ETJob) isPending() bool {
 
-	if len(ej.chiefPod.Name) == 0 || ej.chiefPod.Status.Phase == v1.PodPending {
+	if len(ej.chiefPod.Name) == 0 || ej.chiefPod.Status.Phase == corev1.PodPending {
 		log.Debugf("The ETJob is pending due to chiefPod is not ready")
 		return true
 	}
@@ -336,7 +336,7 @@ func (ejt *ETJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, er
 
 }
 
-func (ejt *ETJobTrainer) isChiefPod(item *v1.Pod) bool {
+func (ejt *ETJobTrainer) isChiefPod(item *corev1.Pod) bool {
 	if item.Labels[etLabelTrainingJobRole] != "launcher" {
 		return false
 	}
@@ -357,11 +357,11 @@ func (ejt *ETJobTrainer) isETJob(name, ns string, item *v1alpha1.TrainingJob) bo
 	return true
 }
 
-func (ejt *ETJobTrainer) isETPod(name, ns string, pod *v1.Pod) bool {
+func (ejt *ETJobTrainer) isETPod(name, ns string, pod *corev1.Pod) bool {
 	return utils.IsETPod(name, ns, pod)
 }
 
-func (ejt *ETJobTrainer) resources(statefulsets []*appv1.StatefulSet, batchJobs []*batchv1.Job, name string, namespace string, pods []*v1.Pod) []Resource {
+func (ejt *ETJobTrainer) resources(statefulsets []*appsv1.StatefulSet, batchJobs []*batchv1.Job, name string, namespace string, pods []*corev1.Pod) []Resource {
 	resources := []Resource{}
 	// 2. Find the pod list, and determine the pod of the job
 	for _, sts := range statefulsets {
@@ -513,8 +513,8 @@ func (ej *ETJob) GetPriorityClass() string {
 	return ""
 }
 
-func getPodsOfETJob(job *v1alpha1.TrainingJob, ejt *ETJobTrainer, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
-	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, ejt.isETPod, func(pod *v1.Pod) bool {
+func getPodsOfETJob(job *v1alpha1.TrainingJob, ejt *ETJobTrainer, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
+	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, ejt.isETPod, func(pod *corev1.Pod) bool {
 		return ejt.isChiefPod(pod)
 	})
 }

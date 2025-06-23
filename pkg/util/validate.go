@@ -39,13 +39,13 @@ var dns1123LabelRegexp = regexp.MustCompile("^" + dns1123LabelFmt + "$")
 // ValidateJobName validates the job name, its length should less than 63, and match dns1123LabelFmt
 func ValidateJobName(value string) error {
 	if len(value) > JobMaxLength {
-		return fmt.Errorf("The len %d of name %s is too long, it should be less than %d",
+		return fmt.Errorf("the len %d of name %s is too long, it should be less than %d",
 			len(value),
 			value,
 			JobMaxLength)
 	}
 	if !dns1123LabelRegexp.MatchString(value) {
-		return fmt.Errorf("The job name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character.")
+		return fmt.Errorf("the job name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character")
 	}
 	return nil
 }
@@ -55,7 +55,7 @@ func ValidatePriorityClassName(client *kubernetes.Clientset, name string) error 
 	// client.SchedulingV1alpha1()
 	_, err := client.SchedulingV1().PriorityClasses().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
-		err = fmt.Errorf("The priority %s doesn't exist. Please check with `kubectl get pc` to get a valid priority.", name)
+		err = fmt.Errorf("the priority %s doesn't exist. Please check with `kubectl get pc` to get a valid priority", name)
 	}
 
 	return err
@@ -65,24 +65,24 @@ func ValidateDevices(devices []string) error {
 	for _, device := range devices {
 		splits := strings.SplitN(device, "=", 2)
 		if len(splits) != 2 || len(splits[0]) == 0 || len(splits[1]) == 0 {
-			err := fmt.Errorf("Invalid device '%s', refer to amd.com/gpu=1.", device)
+			err := fmt.Errorf("invalid device '%s', refer to amd.com/gpu=1", device)
 			return err
 		}
 
 		name, value := splits[0], splits[1]
 		if errs := validation.IsQualifiedName(name); len(errs) != 0 {
-			err := fmt.Errorf("Device name '%s' is not a qualified name.", name)
+			err := fmt.Errorf("device name '%s' is not a qualified name", name)
 			return err
 		}
 
 		if strings.EqualFold(name, types.NvidiaGPUResourceName) {
-			err := fmt.Errorf("Please use '--gpus %s' instead of '--device %s=%s'.", value, types.NvidiaGPUResourceName, value)
+			err := fmt.Errorf("please use '--gpus %s' instead of '--device %s=%s'", value, types.NvidiaGPUResourceName, value)
 			return err
 		}
 
 		_, parseErr := resource.ParseQuantity(value)
 		if parseErr != nil {
-			err := fmt.Errorf("Device value '%s' is not a valid quantity, refer to amd.com/gpu=1.", device)
+			err := fmt.Errorf("device value '%s' is not a valid quantity, refer to amd.com/gpu=1", device)
 			return err
 		}
 	}

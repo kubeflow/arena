@@ -16,10 +16,11 @@ package argsbuilder
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/spf13/cobra"
 	"reflect"
 	"strings"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/spf13/cobra"
 )
 
 type SeldonServingArgsBuilder struct {
@@ -92,7 +93,7 @@ func (s *SeldonServingArgsBuilder) Build() error {
 
 func (s *SeldonServingArgsBuilder) validate() (err error) {
 	if s.args.ModelUri == "" && s.args.Image == "" {
-		return fmt.Errorf("model uri and image can not be empty at the same time.")
+		return fmt.Errorf("model uri and image can not be empty at the same time")
 	}
 	return nil
 }

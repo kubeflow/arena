@@ -27,7 +27,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -43,7 +43,7 @@ import (
 func SearchTrainingJob(jobName, namespace string, jobType types.TrainingJobType) (TrainingJob, error) {
 	// 1.if job type is unknown,return error
 	if jobType == types.UnknownTrainingJob {
-		return nil, fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
+		return nil, fmt.Errorf("unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
 	}
 	// 2.if job type is given,search the job
 	if jobType != types.AllTrainingJob {
@@ -64,7 +64,7 @@ func SearchTrainingJob(jobName, namespace string, jobType types.TrainingJobType)
 	if len(jobs) == 1 {
 		return jobs[0], nil
 	}
-	return nil, fmt.Errorf("There are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`",
+	return nil, fmt.Errorf("there are more than 1 training jobs with the same name %s, please check it with `arena list | grep %s`",
 		jobName,
 		jobName,
 	)
@@ -186,7 +186,7 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resource []Resource, showE
 		}
 		var duration int64
 		var err error
-		job.Duration = strings.Replace(job.Duration, "s", "", -1)
+		job.Duration = strings.ReplaceAll(job.Duration, "s", "")
 		duration, err = strconv.ParseInt(job.Duration, 10, 64)
 		if err != nil {
 			log.Debugf("failed to parse duration: %v", err)
@@ -219,7 +219,7 @@ func printSingleJobHelper(job *types.TrainingJobInfo, resource []Resource, showE
 	var duration int64
 	var err error
 	var endTime string
-	job.Duration = strings.Replace(job.Duration, "s", "", -1)
+	job.Duration = strings.ReplaceAll(job.Duration, "s", "")
 	duration, err = strconv.ParseInt(job.Duration, 10, 64)
 	if err != nil {
 		log.Debugf("failed to parse duration: %v", err)
@@ -280,14 +280,14 @@ func printEvents(lines []string, namespace string, resources []Resource) []strin
 }
 
 // Get Event of the Job
-func GetResourcesEvents(client *kubernetes.Clientset, namespace string, resources []Resource) (map[string][]v1.Event, error) {
-	eventMap := make(map[string][]v1.Event)
+func GetResourcesEvents(client *kubernetes.Clientset, namespace string, resources []Resource) (map[string][]corev1.Event, error) {
+	eventMap := make(map[string][]corev1.Event)
 	events, err := client.CoreV1().Events(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return eventMap, err
 	}
 	for _, resource := range resources {
-		eventMap[resource.Name] = []v1.Event{}
+		eventMap[resource.Name] = []corev1.Event{}
 		for _, event := range events.Items {
 			if event.InvolvedObject.Kind == string(resource.ResourceType) && string(event.InvolvedObject.UID) == resource.Uid {
 				eventMap[resource.Name] = append(eventMap[resource.Name], event)

@@ -16,8 +16,9 @@ package argsbuilder
 
 import (
 	"errors"
-	"github.com/kubeflow/arena/pkg/apis/types"
 	"strings"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 func transformSliceToMap(sets []string, split string) (valuesMap map[string]string) {

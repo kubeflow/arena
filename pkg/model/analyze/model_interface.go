@@ -19,7 +19,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,7 +31,7 @@ type ModelJob interface {
 	// Type return the type
 	Type() types.ModelJobType
 	// Pods return the job pods
-	Pods() []*v1.Pod
+	Pods() []*corev1.Pod
 	// Job return the job
 	Job() *batchv1.Job
 	// Age return the job age

@@ -15,10 +15,11 @@
 package cron
 
 import (
+	"strings"
+
 	"github.com/kubeflow/arena/pkg/apis/training"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/argsbuilder"
-	"strings"
 )
 
 type CronTFJobBuilder struct {
@@ -325,7 +326,7 @@ func (c *CronTFJobBuilder) Build() (*Job, error) {
 		c.AddArgValue(key, value)
 	}
 
-	for key, value := range c.TFJobBuilder.GetArgValues() {
+	for key, value := range c.GetArgValues() {
 		c.AddArgValue(key, value)
 	}
 

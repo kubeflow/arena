@@ -17,17 +17,18 @@ package training
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/util/kubeclient"
 	"github.com/kubeflow/arena/pkg/workflow"
-	log "github.com/sirupsen/logrus"
 )
 
 func DeleteTrainingJob(jobName, namespace string, jobType types.TrainingJobType) error {
 	var trainingTypes []string
 	if jobType == types.UnknownTrainingJob {
-		return fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
+		return fmt.Errorf("unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
 	}
 
 	// if the jobType is sure,delete the job

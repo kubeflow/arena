@@ -15,10 +15,11 @@ package argsbuilder
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	log "github.com/sirupsen/logrus"
 
@@ -113,7 +114,7 @@ func (s *SubmitMPIJobArgsBuilder) check() error {
 	case "None", "Running", "All":
 		log.Debugf("Supported cleanTaskPolicy: %s", s.args.CleanPodPolicy)
 	default:
-		return fmt.Errorf("Unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
+		return fmt.Errorf("unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
 	}
 
 	if s.args.GPUCount < 0 {

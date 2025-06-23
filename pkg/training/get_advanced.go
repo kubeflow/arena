@@ -23,7 +23,7 @@ import (
 	"github.com/kubeflow/arena/pkg/prometheus"
 	"github.com/kubeflow/arena/pkg/util/kubeclient"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -48,7 +48,7 @@ func getTrainingTypes(name, namespace string) (cms []string, err error) {
 		return nil, types.ErrTrainingJobNotFound
 	}
 	if len(cms) > 1 {
-		return nil, fmt.Errorf("There are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one.",
+		return nil, fmt.Errorf("there are more than 1 training jobs with the same name %s, please double check with `arena list | grep %s`. And use `arena delete %s --type` to delete the exact one",
 			name,
 			name,
 			name)
@@ -62,7 +62,7 @@ func getTrainingTypes(name, namespace string) (cms []string, err error) {
 /**
 * BuildTrainingJobInfo returns types.TrainingJobInfo
  */
-func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes []*v1.Node) *types.TrainingJobInfo {
+func BuildJobInfo(job TrainingJob, showGPUs bool, services []*corev1.Service, nodes []*corev1.Node) *types.TrainingJobInfo {
 	chiefPodName := ""
 	//namespace := ""
 	if job.ChiefPod() != nil {
@@ -102,7 +102,7 @@ func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes 
 		status, _, _, _ := utils.DefinePodPhaseStatus(*pod)
 		nodeName := "N/A"
 		nodeIP := "N/A"
-		if pod.Status.Phase != v1.PodPending {
+		if pod.Status.Phase != corev1.PodPending {
 			nodeIP = pod.Status.HostIP
 			nodeName = pod.Spec.NodeName
 		}
@@ -129,7 +129,7 @@ func BuildJobInfo(job TrainingJob, showGPUs bool, services []*v1.Service, nodes 
 		Status:    types.TrainingJobStatus(GetJobRealStatus(job)),
 		//Duration:     util.ShortHumanDuration(job.Duration()),
 		Duration:     fmt.Sprintf("%vs", int(job.Duration().Seconds())),
-		Trainer:      types.TrainingJobType(job.Trainer()),
+		Trainer:      job.Trainer(),
 		Priority:     getPriorityClass(job),
 		Tensorboard:  tensorboard,
 		ChiefName:    chiefPodName,
@@ -165,7 +165,7 @@ func GetJobRealStatus(job TrainingJob) string {
 	if jobStatus == "RUNNING" {
 		pods := job.AllPods()
 		for _, pod := range pods {
-			if pod.Status.Phase == v1.PodPending {
+			if pod.Status.Phase == corev1.PodPending {
 				log.Debugf("pod %s is pending", pod.Name)
 				hasPendingPod = true
 				break
@@ -187,7 +187,7 @@ func GetJobGpuMetric(client *kubernetes.Clientset, job TrainingJob) (jobMetric p
 	}
 	pods := job.AllPods()
 	for _, pod := range pods {
-		if pod.Status.Phase == v1.PodRunning {
+		if pod.Status.Phase == corev1.PodRunning {
 			runningPods = append(runningPods, pod.Name)
 		}
 	}

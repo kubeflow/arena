@@ -16,6 +16,7 @@ package arenaclient
 
 import (
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/config"
 	apiscron "github.com/kubeflow/arena/pkg/apis/cron"
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -65,7 +66,7 @@ func (c *CronClient) List(allNamespaces bool) ([]*types.CronInfo, error) {
 func (c *CronClient) ListAndPrint(allNamespaces bool, format string) error {
 	outputFormat := utils.TransferPrintFormat(format)
 	if outputFormat == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 	cronInfos, err := cron.ListCrons(c.namespace, allNamespaces)
 	if err != nil {
@@ -82,7 +83,7 @@ func (c *CronClient) Get(name string) (*types.CronInfo, error) {
 func (c *CronClient) GetAndPrint(name string, format string) error {
 	outputFormat := utils.TransferPrintFormat(format)
 	if outputFormat == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 
 	cronInfo, err := cron.GetCronInfo(name, c.namespace)
