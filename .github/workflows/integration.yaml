@@ -47,7 +47,7 @@ jobs:
         run: |
           make go-fmt
           if ! git diff --quiet; then
-            echo "Please run 'make go-fmt' to run go fmt aganist code"
+            echo "Please run 'make go-fmt' to run go fmt against code"
             exit 1
           fi
 
@@ -55,7 +55,7 @@ jobs:
         run: |
           make go-vet
           if ! git diff --quiet; then
-            echo "Please run 'make go-vet' to run go vet aganist code"
+            echo "Please run 'make go-vet' to run go vet against code"
             exit 1
           fi
 
@@ -63,9 +63,13 @@ jobs:
         run: |
           make go-lint
 
-      - name: Run unit tests
+      - name: Run Go unit tests
         run: |
           make unit-test
+
+      - name: Run Helm unit tests
+        run: |
+          make helm-unittest
 
       - name: Build arena binary
         run: |
