@@ -14,7 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -xe
+set -eux
+
+HELM=${HELM:-arena-helm}
+KUBECTL=${KUBECTL:-arena-kubectl}
+RELEASE_NAME=${ARENA_RELEASE_NAME:-arena-artifacts}
+RELEASE_NAMESPACE=${ARENA_RELEASE_NAMESPACE:-arena-system}
+CLEAN_CLIENT=false
+ARTIFACTS_DIR=""
+CHART_DIR=""
 
 function help() {
     echo -e "
@@ -23,13 +31,10 @@ Usage:
     arena-uninstall [OPTION1] [OPTION2] ...
 
 Options:
-	--kubeconfig string              Specify the kubeconfig file
 	--namespace  string              Specify the namespace to delete arena
 	--delete-binary                  Clean the client env,include ~/charts and /usr/local/bin/arena
-	--delete-crds	                 Delete the CRDs,Warning: this option will delete the training jobs
 	--chart-dir                      Specify the chart dir
 "
-
 }
 
 function logger() {
@@ -38,91 +43,57 @@ function logger() {
     echo ${timestr}"  "${level}"  "$2
 }
 
-function run() {
-	detect_chart_dir
-	delete 
-	if [[ $DELETE_CRDS == "true" ]];then
-		delete_crds $ARTIFACTS_DIR/all_crds
-	fi
-	if [[ $CLEAN_CLIENT == "true" ]];then
-		delete_client
-	fi    
-}
-
 function delete() {
-	set +e 
-	if arena-helm list -n $ARENA_NAMESPACE | grep arena-artifacts &> /dev/null;then
-		arena-helm delete arena-artifacts -n $ARENA_NAMESPACE
-	fi
-	arena-helm template arena-artifacts -n $ARENA_NAMESPACE $ARTIFACTS_DIR > /tmp/arena-artifacts.yaml
-	arena-kubectl delete -f /tmp/arena-artifacts.yaml
-	arena-kubectl delete ns $ARENA_NAMESPACE
-	set -e  
+    if ${HELM} status -n ${RELEASE_NAMESPACE} ${RELEASE_NAME} &>/dev/null; then
+        ${HELM} delete -n ${RELEASE_NAMESPACE} ${RELEASE_NAME}
+    else
+        ${HELM} template ${RELEASE_NAME} -n ${RELEASE_NAMESPACE} $ARTIFACTS_DIR | ${KUBECTL} delete --ignore-not-found -f -
+    fi
 }
 
 function delete_client() {
-	rm -rf /charts
-	rm -rf /usr/local/bin/arena*
-}
-
-function delete_crds() {
-    for file in $(ls $1);do
-        local path=$1"/"$file
-        if [ -d $path ];then
-            delete_crds $path
-        else
-			arena-kubectl delete -f $path || true 
-        fi
-    done
+    rm -rf /charts
+    rm -rf /usr/local/bin/arena*
 }
 
 function detect_chart_dir() {
-	ARTIFACTS_DIR=""
-	if [[ $CHART_DIR !=  "" ]];then
-		export ARTIFACTS_DIR=$CHART_DIR
-		return 
-	fi 
-	if [ -d arena-artifacts ];then
-		export ARTIFACTS_DIR=arena-artifacts
-		return 
-	fi
-	if [ -d ~/charts/arena-artifacts ];then
-		export ARTIFACTS_DIR=~/charts/arena-artifacts
-		return 
-	fi
-	export ARTIFACTS_DIR=/charts/arena-artifacts    
+    if [[ $CHART_DIR != "" ]]; then
+        ARTIFACTS_DIR=$CHART_DIR
+    elif [ -d arena-artifacts ]; then
+        ARTIFACTS_DIR=arena-artifacts
+    elif [ -d ~/charts/arena-artifacts ]; then
+        ARTIFACTS_DIR=~/charts/arena-artifacts
+    else
+        ARTIFACTS_DIR=/charts/arena-artifacts
+    fi
 }
 
 function parse_args() {
-    while [[ $# -gt 0 ]];do
+    while [[ $# -gt 0 ]]; do
         key="$1"
         case $key in
         --delete-binary)
-            export CLEAN_CLIENT="true"
-        ;;
-        --delete-crds)
-            export DELETE_CRDS="true"
-        ;;
+            CLEAN_CLIENT=true
+            ;;
         --namespace)
-			check_option_value "--namespace" $2
-            export ARENA_NAMESPACE=$2
-			shift
-        ;;
+            check_option_value "--namespace" $2
+            RELEASE_NAMESPACE=$2
+            shift
+            ;;
         --chart-dir)
-			check_option_value "--chart-dir" $2
-            export CHART_DIR=$2
-			shift
-        ;;
-        --help|-h)
+            check_option_value "--chart-dir" $2
+            CHART_DIR=$2
+            shift
+            ;;
+        --help | -h)
             help
             exit 0
-        ;;
+            ;;
         *)
-            # unknown option
             logger error "unknown option [$key]"
             help
             exit 3
-        ;;
+            ;;
         esac
         shift
     done
@@ -131,16 +102,15 @@ function parse_args() {
 function check_option_value() {
     option=$1
     value=$2
-    if [[ $value == "" ]] || echo "$value" | grep -- "^--" &> /dev/null;then
+    if [[ $value == "" ]] || echo "$value" | grep -- "^--" &>/dev/null; then
         logger error "the option $option not set value,please set it"
         exit 3
     fi
 }
 
-function main() {
-    export ARENA_NAMESPACE="arena-system"
-	parse_args $@
-	run 
-}
-
-main $@
+parse_args "$@"
+detect_chart_dir
+delete
+if [[ $CLEAN_CLIENT == "true" ]]; then
+    delete_client
+fi
