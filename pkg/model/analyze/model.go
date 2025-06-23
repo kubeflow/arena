@@ -27,7 +27,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -56,7 +56,7 @@ func (p *modelProcessor) GetModelJob(namespace, name string) (ModelJob, error) {
 	}
 
 	if p.jobType == types.AllModelJob {
-		p.jobType = utils.TransferModelJobType(job.ObjectMeta.Labels["type"])
+		p.jobType = utils.TransferModelJobType(job.Labels["type"])
 	}
 
 	selector := fmt.Sprintf("app=modeljob,release=%s,type=%s", name, p.jobType)
@@ -95,10 +95,10 @@ func (p *modelProcessor) ListModelJobs(namespace string, allNamespaces bool) ([]
 	for _, job := range jobs {
 		var singleJobType types.ModelJobType
 		if p.jobType == types.AllModelJob {
-			singleJobType = utils.TransferModelJobType(job.ObjectMeta.Labels["type"])
+			singleJobType = utils.TransferModelJobType(job.Labels["type"])
 		}
 
-		jobName := job.ObjectMeta.Name
+		jobName := job.Name
 		podSelector := fmt.Sprintf("app=modeljob,release=%s,type=%s", jobName, singleJobType)
 		pods, err := k8saccesser.GetK8sResourceAccesser().ListPods(namespace, podSelector, "", nil)
 		if err != nil {
@@ -124,7 +124,7 @@ type modelJob struct {
 	name      string
 	namespace string
 	jobType   types.ModelJobType
-	pods      []*v1.Pod
+	pods      []*corev1.Pod
 	job       *batchv1.Job
 }
 
@@ -144,7 +144,7 @@ func (m *modelJob) Type() types.ModelJobType {
 	return m.jobType
 }
 
-func (m *modelJob) Pods() []*v1.Pod {
+func (m *modelJob) Pods() []*corev1.Pod {
 	return m.pods
 }
 
@@ -153,7 +153,7 @@ func (m *modelJob) Job() *batchv1.Job {
 }
 
 func (m *modelJob) Age() time.Duration {
-	return time.Since(m.job.ObjectMeta.CreationTimestamp.Time)
+	return time.Since(m.job.CreationTimestamp.Time)
 }
 
 func (m *modelJob) Duration() time.Duration {
@@ -165,7 +165,7 @@ func (m *modelJob) Duration() time.Duration {
 	}
 
 	if !job.Status.CompletionTime.IsZero() {
-		return job.Status.CompletionTime.Time.Sub(job.Status.StartTime.Time)
+		return job.Status.CompletionTime.Sub(job.Status.StartTime.Time)
 	}
 
 	//if pj.GetStatus() == "FAILED" {
@@ -197,13 +197,13 @@ func (m *modelJob) Status() string {
 }
 
 func (m *modelJob) StartTime() *metav1.Time {
-	return &m.job.ObjectMeta.CreationTimestamp
+	return &m.job.CreationTimestamp
 }
 
 func (m *modelJob) RequestCPUs() int64 {
 	var podCPUs int64
 	for _, c := range m.job.Spec.Template.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.CPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.CPUResourceName)]; ok {
 			podCPUs += val.Value()
 		}
 	}
@@ -213,10 +213,10 @@ func (m *modelJob) RequestCPUs() int64 {
 func (m *modelJob) RequestGPUs() int64 {
 	var podGPUs int64
 	for _, c := range m.job.Spec.Template.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.NvidiaGPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.NvidiaGPUResourceName)]; ok {
 			podGPUs += val.Value()
 		}
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.AliyunGPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.AliyunGPUResourceName)]; ok {
 			podGPUs += val.Value()
 		}
 	}
@@ -226,7 +226,7 @@ func (m *modelJob) RequestGPUs() int64 {
 func (m *modelJob) RequestGPUMemory() int64 {
 	var podGPUMemory int64
 	for _, c := range m.job.Spec.Template.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUShareResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUShareResourceName)]; ok {
 			podGPUMemory += val.Value()
 		}
 	}
@@ -236,7 +236,7 @@ func (m *modelJob) RequestGPUMemory() int64 {
 func (m *modelJob) RequestGPUCore() int64 {
 	var podGPUCore int64
 	for _, c := range m.job.Spec.Template.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUCoreShareResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUCoreShareResourceName)]; ok {
 			podGPUCore += val.Value()
 		}
 	}
@@ -247,7 +247,7 @@ func (m *modelJob) Instances() []types.ModelJobInstance {
 	var instances []types.ModelJobInstance
 	for index, pod := range m.pods {
 		status, totalContainers, restart, readyContainer := utils.DefinePodPhaseStatus(*pod)
-		age := util.ShortHumanDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
+		age := util.ShortHumanDuration(time.Since(pod.CreationTimestamp.Time))
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
 		gpuCore := utils.GPUCoreCountInPod(pod)
 		gpus := getPodGPUs(pod, gpuMemory, index)
@@ -306,11 +306,11 @@ func (m *modelJob) Convert2JobInfo() types.ModelJobInfo {
 	return servingJobInfo
 }
 
-func getPodGPUs(pod *v1.Pod, gpuMemory int, index int) float64 {
+func getPodGPUs(pod *corev1.Pod, gpuMemory int, index int) float64 {
 	if utils.IsCompletedPod(pod) {
 		return float64(0)
 	}
-	if pod.Status.Phase != v1.PodRunning {
+	if pod.Status.Phase != corev1.PodRunning {
 		return float64(0)
 	}
 	if len(pod.Spec.NodeName) == 0 {
@@ -358,8 +358,8 @@ func getNodeGPUMemory(nodeName string) float64 {
 //	return totalGPUMemory / totalGPUs
 //}
 
-func getResourceOfGPUShareNode(node *v1.Node, resourceName string) float64 {
-	val, ok := node.Status.Capacity[v1.ResourceName(resourceName)]
+func getResourceOfGPUShareNode(node *corev1.Node, resourceName string) float64 {
+	val, ok := node.Status.Capacity[corev1.ResourceName(resourceName)]
 	if !ok {
 		return 0
 	}

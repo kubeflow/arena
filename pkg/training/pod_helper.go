@@ -18,30 +18,30 @@ import (
 	"sort"
 
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Sort the pod condition by time.
-type SortPodConditionByLastTransitionTime []v1.PodCondition
+type SortPodConditionByLastTransitionTime []corev1.PodCondition
 
 func (s SortPodConditionByLastTransitionTime) Len() int      { return len(s) }
 func (s SortPodConditionByLastTransitionTime) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 func (s SortPodConditionByLastTransitionTime) Less(i, j int) bool {
 	// return s[i].CreatedAt.Before(s[j].CreatedAt)
-	return s[i].LastTransitionTime.Time.After(s[j].LastTransitionTime.Time)
+	return s[i].LastTransitionTime.After(s[j].LastTransitionTime.Time)
 }
 
-func makePodConditionsSortedByTime(conditions []v1.PodCondition) []v1.PodCondition {
+func makePodConditionsSortedByTime(conditions []corev1.PodCondition) []corev1.PodCondition {
 	newCondtions := make(SortPodConditionByLastTransitionTime, 0, len(conditions))
 	for _, c := range conditions {
 		newCondtions = append(newCondtions, c)
 	}
 	sort.Sort(newCondtions)
-	return []v1.PodCondition(newCondtions)
+	return []corev1.PodCondition(newCondtions)
 }
 
-func getPodLatestCondition(pod *v1.Pod) v1.PodCondition {
-	cond := v1.PodCondition{}
+func getPodLatestCondition(pod *corev1.Pod) corev1.PodCondition {
+	cond := corev1.PodCondition{}
 	conditions := makePodConditionsSortedByTime(pod.Status.Conditions)
 	if len(conditions) <= 0 {
 		log.Debugf("the pod %s's conditions %v is empty", pod.Name, conditions)

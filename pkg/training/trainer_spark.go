@@ -26,7 +26,7 @@ import (
 	"github.com/kubeflow/arena/pkg/operators/spark-operator/apis/sparkoperator.k8s.io/v1beta2"
 	"github.com/kubeflow/arena/pkg/operators/spark-operator/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -36,8 +36,8 @@ type SparkJob struct {
 	*BasicJobInfo
 	sparkjob    *v1beta2.SparkApplication
 	trainerType types.TrainingJobType
-	pods        []*v1.Pod
-	chiefPod    *v1.Pod
+	pods        []*corev1.Pod
+	chiefPod    *corev1.Pod
 }
 
 func (sj *SparkJob) Name() string {
@@ -49,7 +49,7 @@ func (sj *SparkJob) Uid() string {
 }
 
 // return driver pod
-func (sj *SparkJob) ChiefPod() *v1.Pod {
+func (sj *SparkJob) ChiefPod() *corev1.Pod {
 	return sj.chiefPod
 }
 
@@ -59,7 +59,7 @@ func (sj *SparkJob) Trainer() types.TrainingJobType {
 }
 
 // return pods from cache
-func (sj *SparkJob) AllPods() []*v1.Pod {
+func (sj *SparkJob) AllPods() []*corev1.Pod {
 	return sj.pods
 }
 
@@ -200,11 +200,11 @@ func (sj *SparkJob) GetJobDashboards(client *kubernetes.Clientset, namespace, ar
 	}
 
 	if dashboardURL == "" {
-		return urls, fmt.Errorf("No LOGVIEWER Installed.")
+		return urls, fmt.Errorf("no LOGVIEWER Installed")
 	}
 
 	if len(sj.chiefPod.Spec.Containers) == 0 {
-		return urls, fmt.Errorf("spark driver pod is not ready!")
+		return urls, fmt.Errorf("spark driver pod is not ready")
 	}
 
 	url := fmt.Sprintf("%s/#!/log/%s/%s/%s?namespace=%s\n",
@@ -346,11 +346,11 @@ func (st *SparkJobTrainer) ListTrainingJobs(namespace string, allNamespace bool)
 	return trainingJobs, nil
 }
 
-func (st *SparkJobTrainer) isSparkPod(name, ns string, item *v1.Pod) bool {
+func (st *SparkJobTrainer) isSparkPod(name, ns string, item *corev1.Pod) bool {
 	return utils.IsSparkPod(name, ns, item)
 }
 
-func (st *SparkJobTrainer) isChiefPod(item *v1.Pod) bool {
+func (st *SparkJobTrainer) isChiefPod(item *corev1.Pod) bool {
 	if val, ok := item.Labels["spark-role"]; ok && (val == "driver") {
 		log.Debugf("the sparkjob %s with labels %s", item.Name, val)
 	} else {
@@ -359,8 +359,8 @@ func (st *SparkJobTrainer) isChiefPod(item *v1.Pod) bool {
 	return true
 }
 
-func getPodsOfSparkJob(job *v1beta2.SparkApplication, st *SparkJobTrainer, podList []*v1.Pod) (pods []*v1.Pod, chiefPod *v1.Pod) {
-	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, st.isSparkPod, func(pod *v1.Pod) bool {
+func getPodsOfSparkJob(job *v1beta2.SparkApplication, st *SparkJobTrainer, podList []*corev1.Pod) (pods []*corev1.Pod, chiefPod *corev1.Pod) {
+	return getPodsOfTrainingJob(job.Name, job.Namespace, podList, st.isSparkPod, func(pod *corev1.Pod) bool {
 		return st.isChiefPod(pod)
 	})
 }

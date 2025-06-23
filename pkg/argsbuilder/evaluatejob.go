@@ -16,13 +16,14 @@ package argsbuilder
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"reflect"
-	"strings"
 )
 
 type EvaluateJobArgsBuilder struct {

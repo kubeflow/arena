@@ -14,7 +14,7 @@
 
 package training
 
-import v1 "k8s.io/api/core/v1"
+import corev1 "k8s.io/api/core/v1"
 
 type Resource struct {
 	Name         string
@@ -27,7 +27,7 @@ const ResourceTypePod = ResourceType("Pod")
 const ResourceTypeStatefulSet = ResourceType("StatefulSet")
 const ResourceTypeJob = ResourceType("Job")
 
-func podResources(pods []*v1.Pod) []Resource {
+func podResources(pods []*corev1.Pod) []Resource {
 	resources := []Resource{}
 	for _, pod := range pods {
 		resources = append(resources, Resource{

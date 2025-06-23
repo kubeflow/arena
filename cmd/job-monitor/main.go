@@ -38,8 +38,8 @@ var (
 	jobName         string
 	statefulSetName string
 
-	ErrNoNeedUpgrade = std_errors.New("No need upgrade. It's already the latest version.")
-	ErrStillNeedWait = std_errors.New("Need waited.")
+	ErrNoNeedUpgrade = std_errors.New("no need upgrade. It's already the latest version")
+	ErrStillNeedWait = std_errors.New("need waited")
 )
 
 // Receive Namespace, Job Name, Statefulset name
@@ -81,17 +81,17 @@ func main() {
 func updateInputFromEnv() error {
 	namespace = os.Getenv("NAMESPACE")
 	if len(namespace) == 0 {
-		return fmt.Errorf("Failed to get namespace from env NAMESPACE")
+		return fmt.Errorf("failed to get namespace from env NAMESPACE")
 	}
 
 	jobName = os.Getenv("JOBNAME")
 	if len(jobName) == 0 {
-		return fmt.Errorf("Failed to get jobName from env JOBNAME")
+		return fmt.Errorf("failed to get jobName from env JOBNAME")
 	}
 
 	statefulSetName = os.Getenv("STATEFULSETNAME")
 	if len(statefulSetName) == 0 {
-		return fmt.Errorf("Failed to get statefulsetName from env STATEFULSETNAME")
+		return fmt.Errorf("failed to get statefulsetName from env STATEFULSETNAME")
 	}
 
 	return nil
@@ -122,10 +122,7 @@ func WaitJobComplete(client *kubernetes.Clientset, namespace string, jobName str
 			return ErrStillNeedWait
 		}
 
-		succeed := false
-		if job.Status.Succeeded > 0 {
-			succeed = true
-		}
+		succeed := job.Status.Succeeded > 0
 
 		if !succeed {
 			log.Warnf("Failed due to %v", job.Status.Conditions)

@@ -139,7 +139,7 @@ func (s *TensorflowServingArgsBuilder) preprocess() (err error) {
 	//serveTensorFlowArgs.Command = strings.Join(args, " ")
 	log.Debugf("command: %s", s.args.Command)
 	if s.args.Image == "" {
-		return fmt.Errorf("image must be specified.")
+		return fmt.Errorf("image must be specified")
 	}
 	if s.args.ModelConfigFile == "" {
 		// need to validate modelName, modelPath if not specify modelConfigFile
@@ -171,5 +171,5 @@ func (s *TensorflowServingArgsBuilder) checkPortsIsOk() error {
 	case s.args.RestfulPort != 0:
 		return nil
 	}
-	return fmt.Errorf("all  ports are 0,invalid configuration.")
+	return fmt.Errorf("all  ports are 0,invalid configuration")
 }

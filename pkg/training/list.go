@@ -25,19 +25,19 @@ import (
 	"text/tabwriter"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/util"
-	log "github.com/sirupsen/logrus"
 )
 
 func ListTrainingJobs(namespace string, allNamespaces bool, jobType types.TrainingJobType) ([]TrainingJob, error) {
 	jobs := []TrainingJob{}
 	trainers := GetAllTrainers()
 	if jobType == types.UnknownTrainingJob {
-		return nil, fmt.Errorf("Unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
+		return nil, fmt.Errorf("unsupport job type,arena only supports: [%v]", utils.GetSupportTrainingJobTypesInfo())
 	}
 	var wg sync.WaitGroup
 	locker := new(sync.RWMutex)
@@ -125,7 +125,7 @@ func DisplayTrainingJobList(jobInfoList []TrainingJob, format string, allNamespa
 			if allNamespaces {
 				items = append(items, jobInfo.Namespace)
 			}
-			jobInfo.Duration = strings.Replace(jobInfo.Duration, "s", "", -1)
+			jobInfo.Duration = strings.ReplaceAll(jobInfo.Duration, "s", "")
 			duration, err := strconv.ParseInt(jobInfo.Duration, 10, 64)
 			if err != nil {
 				log.Debugf("failed to parse duration: %v", err)
@@ -163,7 +163,7 @@ func CheckPrintFormat(format string) error {
 	case "yaml", "json", "wide", "":
 		return nil
 	}
-	return fmt.Errorf("Unknown format,only support: [yaml,json,wide]")
+	return fmt.Errorf("unknown format,only support: [yaml,json,wide]")
 }
 
 func isNeededTrainingType(jobType types.TrainingJobType, targetJobType types.TrainingJobType) bool {

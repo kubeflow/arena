@@ -39,7 +39,7 @@ func ValidateDatasets(dataset []string) (err error) {
 			return err
 		}
 		if _, ok := tempPVCList[parts[0]]; ok {
-			return fmt.Errorf("Your PVC name: %s is repeated, please check it.", parts[0])
+			return fmt.Errorf("your PVC name: %s is repeated, please check it", parts[0])
 		} else {
 			tempPVCList[parts[0]] = true
 		}

@@ -51,7 +51,7 @@ type TrainingJobTypeInfo struct {
 }
 
 var (
-	ErrTrainingJobNotFound      = errors.New("training job not found,please use 'arena list' to make sure job is existed.")
+	ErrTrainingJobNotFound      = errors.New("training job not found,please use 'arena list' to make sure job is existed")
 	ErrNoPrivilegesToOperateJob = errors.New("you have no privileges to operate the job,because the owner of job is not you")
 )
 
@@ -166,7 +166,7 @@ const (
 type TrainingJobInstance struct {
 	// IP defines the instance ip
 	IP string `json:"ip" yaml:"ip"`
-	// the status of of instance
+	// the status of instance
 	Status string `json:"status"`
 	// the name of instance
 	Name string `json:"name"`

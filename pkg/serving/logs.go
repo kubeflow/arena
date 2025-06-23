@@ -47,7 +47,7 @@ func AcceptJobLog(name, version string, jobType types.ServingJobType, args *type
 		exists[i.Name] = true
 	}
 	if _, ok := exists[args.InstanceName]; !ok {
-		return fmt.Errorf("invalid instance name %v of serving job %v,please use 'arena serve get %v' to get instance names.", args.InstanceName, name, name)
+		return fmt.Errorf("invalid instance name %v of serving job %v,please use 'arena serve get %v' to get instance names", args.InstanceName, name, name)
 	}
 	logger := podlogs.NewPodLogger(args)
 	_, err = logger.AcceptLogs()

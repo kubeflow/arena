@@ -16,8 +16,9 @@ package cron
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/util/kubectl"
 	"strings"
+
+	"github.com/kubeflow/arena/pkg/util/kubectl"
 )
 
 func DeleteCron(name, namespace, jobType string) error {

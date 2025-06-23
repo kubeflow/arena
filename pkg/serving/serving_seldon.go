@@ -25,7 +25,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -100,7 +100,7 @@ func (s *seldonServingJob) Convert2JobInfo() types.ServingJobInfo {
 func (s *seldonServingJob) IPAddress() string {
 	// 1.search istio gateway
 	for _, svc := range s.istioServices {
-		if svc.Spec.Type == v1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
+		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
 			return svc.Status.LoadBalancer.Ingress[0].IP
 		}
 	}
@@ -108,7 +108,7 @@ func (s *seldonServingJob) IPAddress() string {
 	// 2.search ingress load balancer
 	ipAddress := "N/A"
 	for _, svc := range s.services {
-		if svc.Spec.Type == v1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
+		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
 			return svc.Status.LoadBalancer.Ingress[0].IP
 		}
 		// if the service is not we created,skip it
@@ -139,7 +139,7 @@ func (s *seldonServingJob) IPAddress() string {
 func (s *seldonServingJob) Endpoints() []types.Endpoint {
 	endpoints := []types.Endpoint{}
 	for _, svc := range s.istioServices {
-		if svc.Spec.Type == v1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
+		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
 			for _, p := range svc.Spec.Ports {
 				if p.Name == istioGatewayHTTPPortName {
 					endpoint := types.Endpoint{
@@ -204,8 +204,8 @@ func (p *SeldonServingProcesser) FilterServingJobs(namespace string, allNamespac
 	servingJobs := []ServingJob{}
 
 	for _, deployment := range deployments {
-		filterPods := []*v1.Pod{}
-		filterServices := []*v1.Service{}
+		filterPods := []*corev1.Pod{}
+		filterServices := []*corev1.Service{}
 		for _, pod := range pods {
 			if p.isDeploymentPod(deployment, pod) {
 				filterPods = append(filterPods, pod)

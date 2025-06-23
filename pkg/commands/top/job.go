@@ -39,10 +39,8 @@ func NewTopJobCommand() *cobra.Command {
 			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			isDaemonMode := false
-			if notStop {
-				isDaemonMode = true
-			}
+			isDaemonMode := notStop
+
 			client, err := arenaclient.NewArenaClient(types.ArenaClientArgs{
 				Kubeconfig:     viper.GetString("config"),
 				LogLevel:       viper.GetString("loglevel"),

@@ -16,10 +16,11 @@ package argsbuilder
 
 import (
 	"fmt"
-	"github.com/kubeflow/arena/pkg/apis/types"
-	"github.com/spf13/cobra"
 	"reflect"
 	"strings"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/spf13/cobra"
 )
 
 type CronTFJobArgsBuilder struct {

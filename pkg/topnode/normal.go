@@ -19,7 +19,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
@@ -40,19 +40,19 @@ Description:
 `
 
 type normalNode struct {
-	node *v1.Node
-	pods []*v1.Pod
+	node *corev1.Node
+	pods []*corev1.Pod
 	baseNode
 }
 
-func NewNormalNode(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error) {
+func NewNormalNode(client *kubernetes.Clientset, node *corev1.Node, index int, args buildNodeArgs) (Node, error) {
 	return &normalNode{
 		node: node,
-		pods: []*v1.Pod{},
+		pods: []*corev1.Pod{},
 		baseNode: baseNode{
 			index:    index,
 			node:     node,
-			pods:     []*v1.Pod{},
+			pods:     []*corev1.Pod{},
 			nodeType: types.NormalNode,
 		},
 	}, nil
@@ -176,7 +176,7 @@ func NewNormalNodeProcesser() NodeProcesser {
 		nodeType:                  types.NormalNode,
 		key:                       "normalNodes",
 		builder:                   NewNormalNode,
-		canBuildNode:              func(node *v1.Node) bool { return true },
+		canBuildNode:              func(node *corev1.Node) bool { return true },
 		displayNodesDetails:       displayNormalNodeDetails,
 		displayNodesSummary:       displayNormalNodeSummary,
 		displayNodesCustomSummary: displayNormalNodeCustomSummary,

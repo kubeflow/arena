@@ -35,7 +35,7 @@ var (
 
 func SearchServingJob(namespace, name, version string, servingType types.ServingJobType) (ServingJob, error) {
 	if servingType == types.UnknownServingJob {
-		return nil, fmt.Errorf("Unknown serving job type,arena only supports: [%s]", utils.GetSupportServingJobTypesInfo())
+		return nil, fmt.Errorf("unknown serving job type,arena only supports: [%s]", utils.GetSupportServingJobTypesInfo())
 	}
 	processers := GetAllProcesser()
 	if servingType != types.AllServingJob {

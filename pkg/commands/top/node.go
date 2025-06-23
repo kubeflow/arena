@@ -42,10 +42,8 @@ func NewTopNodeCommand() *cobra.Command {
 			_ = viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			isDaemonMode := false
-			if notStop {
-				isDaemonMode = true
-			}
+			isDaemonMode := notStop
+
 			now := time.Now()
 			defer func() {
 				log.Debugf("execute time of top nodes: %v\n", time.Since(now))

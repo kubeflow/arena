@@ -93,7 +93,7 @@ func (t *ServingJobClient) Get(jobName, version string, jobType types.ServingJob
 // GetAndPrint print serving job information
 func (t *ServingJobClient) GetAndPrint(jobName, version string, jobType types.ServingJobType, format string) error {
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 	job, err := serving.SearchServingJob(t.namespace, jobName, version, jobType)
 	if err != nil {

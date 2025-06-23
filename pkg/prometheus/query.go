@@ -34,7 +34,7 @@ import (
 
 	"github.com/prometheus/client_golang/api"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -240,7 +240,7 @@ func getPrometheusServer(client *kubernetes.Clientset) *types.PrometheusServer {
 	return nil
 }
 
-func getPrometheusService(client *kubernetes.Clientset, label string) *v1.Service {
+func getPrometheusService(client *kubernetes.Clientset, label string) *corev1.Service {
 	// find the prometheus server from all namespaces
 	services, err := k8saccesser.GetK8sResourceAccesser().ListServices(metav1.NamespaceAll, label)
 	if err != nil {

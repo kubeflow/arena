@@ -67,7 +67,7 @@ func PrintAllModelJobs(jobs []ModelJob, allNamespaces bool, format types.FormatS
 		if allNamespaces {
 			items = append(items, jobInfo.Namespace)
 		}
-		jobInfo.Duration = strings.Replace(jobInfo.Duration, "s", "", -1)
+		jobInfo.Duration = strings.ReplaceAll(jobInfo.Duration, "s", "")
 		duration, err := strconv.ParseInt(jobInfo.Duration, 10, 64)
 		if err != nil {
 			log.Debugf("failed to parse duration: %v", err)

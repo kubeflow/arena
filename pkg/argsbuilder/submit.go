@@ -504,7 +504,7 @@ func (s *SubmitArgsBuilder) setConfigFiles() error {
 		hostFile := files[0]
 		// change ~ to user home directory
 		if strings.Index(hostFile, "~/") == 0 {
-			hostFile = strings.Replace(hostFile, "~", os.Getenv("HOME"), -1)
+			hostFile = strings.ReplaceAll(hostFile, "~", os.Getenv("HOME"))
 		}
 		// change relative path to absolute path
 		hostFile, err = filepath.Abs(hostFile)

@@ -22,9 +22,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
+
+	"github.com/kubeflow/arena/pkg/apis/types"
 )
 
 const (
@@ -193,9 +194,9 @@ func PrintErrorMessage(message string) {
 	log.Errorf("%v", message)
 }
 
-func DefineNodeStatus(node *v1.Node) string {
-	conditionMap := make(map[v1.NodeConditionType]*v1.NodeCondition)
-	NodeAllConditions := []v1.NodeConditionType{v1.NodeReady}
+func DefineNodeStatus(node *corev1.Node) string {
+	conditionMap := make(map[corev1.NodeConditionType]*corev1.NodeCondition)
+	NodeAllConditions := []corev1.NodeConditionType{corev1.NodeReady}
 	for i := range node.Status.Conditions {
 		cond := node.Status.Conditions[i]
 		conditionMap[cond.Type] = &cond
@@ -203,7 +204,7 @@ func DefineNodeStatus(node *v1.Node) string {
 	var status []string
 	for _, validCondition := range NodeAllConditions {
 		if condition, ok := conditionMap[validCondition]; ok {
-			if condition.Status == v1.ConditionTrue {
+			if condition.Status == corev1.ConditionTrue {
 				status = append(status, string(condition.Type))
 			} else {
 				status = append(status, "Not"+string(condition.Type))

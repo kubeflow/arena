@@ -46,7 +46,7 @@ EndTime:	%v
 
 func TopTrainingJobs(args []string, namespace string, allNamespaces bool, jobType types.TrainingJobType, instanceName string, notStop bool, format types.FormatStyle) error {
 	if len(args) == 0 && notStop {
-		return fmt.Errorf("You must specify the job name when using `-r` flag")
+		return fmt.Errorf("you must specify the job name when using `-r` flag")
 	}
 	if !notStop {
 		return topTrainingJobs(args, namespace, allNamespaces, jobType, instanceName, notStop, format)
@@ -66,7 +66,7 @@ func TopTrainingJobs(args []string, namespace string, allNamespaces bool, jobTyp
 
 func topTrainingJobs(args []string, namespace string, allNamespaces bool, jobType types.TrainingJobType, instanceName string, notStop bool, format types.FormatStyle) error {
 	if format == types.UnknownFormat {
-		return fmt.Errorf("Unknown output format,only support:[wide|json|yaml]")
+		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
 	showSpecificJobMetric := false
 	jobs := []TrainingJob{}
@@ -165,7 +165,7 @@ func displayWithMetric(jobs []types.TrainingJobInfo, instanceName string, notSto
 		var duration int64
 		var err error
 		var endTime string
-		jobInfo.Duration = strings.Replace(jobInfo.Duration, "s", "", -1)
+		jobInfo.Duration = strings.ReplaceAll(jobInfo.Duration, "s", "")
 		duration, err = strconv.ParseInt(jobInfo.Duration, 10, 64)
 		if err != nil {
 			log.Debugf("failed to parse duration: %v", err)
@@ -218,7 +218,7 @@ func displayWithNoMetric(jobs []types.TrainingJobInfo, notStop bool, format type
 		}
 		var duration int64
 		var err error
-		jobInfo.Duration = strings.Replace(jobInfo.Duration, "s", "", -1)
+		jobInfo.Duration = strings.ReplaceAll(jobInfo.Duration, "s", "")
 		duration, err = strconv.ParseInt(jobInfo.Duration, 10, 64)
 		if err != nil {
 			log.Debugf("failed to parse duration: %v", err)

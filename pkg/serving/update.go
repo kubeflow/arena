@@ -23,7 +23,7 @@ import (
 	"github.com/kserve/kserve/pkg/constants"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	lwsv1 "sigs.k8s.io/lws/api/leaderworkerset/v1"
 
@@ -32,9 +32,9 @@ import (
 )
 
 const (
-	ResourceGPU       v1.ResourceName = "nvidia.com/gpu"
-	ResourceGPUMemory v1.ResourceName = "aliyun.com/gpu-mem"
-	ResourceGPUCore   v1.ResourceName = "aliyun.com/gpu-core.percentage"
+	ResourceGPU       corev1.ResourceName = "nvidia.com/gpu"
+	ResourceGPUMemory corev1.ResourceName = "aliyun.com/gpu-mem"
+	ResourceGPUCore   corev1.ResourceName = "aliyun.com/gpu-core.percentage"
 )
 
 func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
@@ -86,21 +86,21 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 		}
 	}
 
-	if args.Annotations != nil && len(args.Annotations) > 0 {
+	if len(args.Annotations) > 0 {
 		for k, v := range args.Annotations {
 			deploy.Annotations[k] = v
 			deploy.Spec.Template.Annotations[k] = v
 		}
 	}
 
-	if args.Labels != nil && len(args.Labels) > 0 {
+	if len(args.Labels) > 0 {
 		for k, v := range args.Labels {
 			deploy.Labels[k] = v
 			deploy.Spec.Template.Labels[k] = v
 		}
 	}
 
-	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+	if len(args.NodeSelectors) > 0 {
 		if deploy.Spec.Template.Spec.NodeSelector == nil {
 			deploy.Spec.Template.Spec.NodeSelector = map[string]string{}
 		}
@@ -109,9 +109,9 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 		}
 	}
 
-	if args.Tolerations != nil && len(args.Tolerations) > 0 {
+	if len(args.Tolerations) > 0 {
 		if deploy.Spec.Template.Spec.Tolerations == nil {
-			deploy.Spec.Template.Spec.Tolerations = []v1.Toleration{}
+			deploy.Spec.Template.Spec.Tolerations = []corev1.Toleration{}
 		}
 		mapSet := make(map[string]interface{})
 		for _, toleration := range deploy.Spec.Template.Spec.Tolerations {
@@ -125,11 +125,11 @@ func UpdateTensorflowServing(args *types.UpdateTensorFlowServingArgs) error {
 				toleration.Value,
 				toleration.Effect,
 				toleration.Operator)]; !ok {
-				deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, v1.Toleration{
+				deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, corev1.Toleration{
 					Key:      toleration.Key,
 					Value:    toleration.Value,
-					Effect:   v1.TaintEffect(toleration.Effect),
-					Operator: v1.TolerationOperator(toleration.Operator),
+					Effect:   corev1.TaintEffect(toleration.Effect),
+					Operator: corev1.TolerationOperator(toleration.Operator),
 				})
 			}
 
@@ -179,21 +179,21 @@ func UpdateTritonServing(args *types.UpdateTritonServingArgs) error {
 		deploy.Spec.Template.Spec.Containers[0].Args = []string{strings.Join(newArgs, " ")}
 	}
 
-	if args.Annotations != nil && len(args.Annotations) > 0 {
+	if len(args.Annotations) > 0 {
 		for k, v := range args.Annotations {
 			deploy.Annotations[k] = v
 			deploy.Spec.Template.Annotations[k] = v
 		}
 	}
 
-	if args.Labels != nil && len(args.Labels) > 0 {
+	if len(args.Labels) > 0 {
 		for k, v := range args.Labels {
 			deploy.Labels[k] = v
 			deploy.Spec.Template.Labels[k] = v
 		}
 	}
 
-	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+	if len(args.NodeSelectors) > 0 {
 		if deploy.Spec.Template.Spec.NodeSelector == nil {
 			deploy.Spec.Template.Spec.NodeSelector = map[string]string{}
 		}
@@ -202,16 +202,16 @@ func UpdateTritonServing(args *types.UpdateTritonServingArgs) error {
 		}
 	}
 
-	if args.Tolerations != nil && len(args.Tolerations) > 0 {
+	if len(args.Tolerations) > 0 {
 		if deploy.Spec.Template.Spec.Tolerations == nil {
-			deploy.Spec.Template.Spec.Tolerations = []v1.Toleration{}
+			deploy.Spec.Template.Spec.Tolerations = []corev1.Toleration{}
 		}
 		for _, toleration := range args.Tolerations {
-			deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, v1.Toleration{
+			deploy.Spec.Template.Spec.Tolerations = append(deploy.Spec.Template.Spec.Tolerations, corev1.Toleration{
 				Key:      toleration.Key,
 				Value:    toleration.Value,
-				Effect:   v1.TaintEffect(toleration.Effect),
-				Operator: v1.TolerationOperator(toleration.Operator),
+				Effect:   corev1.TaintEffect(toleration.Effect),
+				Operator: corev1.TolerationOperator(toleration.Operator),
 			})
 		}
 	}
@@ -225,21 +225,21 @@ func UpdateCustomServing(args *types.UpdateCustomServingArgs) error {
 		return err
 	}
 
-	if args.Annotations != nil && len(args.Annotations) > 0 {
+	if len(args.Annotations) > 0 {
 		for k, v := range args.Annotations {
 			deploy.Annotations[k] = v
 			deploy.Spec.Template.Annotations[k] = v
 		}
 	}
 
-	if args.Labels != nil && len(args.Labels) > 0 {
+	if len(args.Labels) > 0 {
 		for k, v := range args.Labels {
 			deploy.Labels[k] = v
 			deploy.Spec.Template.Labels[k] = v
 		}
 	}
 
-	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+	if len(args.NodeSelectors) > 0 {
 		if deploy.Spec.Template.Spec.NodeSelector == nil {
 			deploy.Spec.Template.Spec.NodeSelector = map[string]string{}
 		}
@@ -248,18 +248,18 @@ func UpdateCustomServing(args *types.UpdateCustomServingArgs) error {
 		}
 	}
 
-	if args.Tolerations != nil && len(args.Tolerations) > 0 {
+	if len(args.Tolerations) > 0 {
 		if deploy.Spec.Template.Spec.Tolerations == nil {
-			deploy.Spec.Template.Spec.Tolerations = []v1.Toleration{}
+			deploy.Spec.Template.Spec.Tolerations = []corev1.Toleration{}
 		}
 		exist := map[string]bool{}
-		var tolerations []v1.Toleration
+		var tolerations []corev1.Toleration
 		for _, toleration := range args.Tolerations {
-			tolerations = append(tolerations, v1.Toleration{
+			tolerations = append(tolerations, corev1.Toleration{
 				Key:      toleration.Key,
 				Value:    toleration.Value,
-				Effect:   v1.TaintEffect(toleration.Effect),
-				Operator: v1.TolerationOperator(toleration.Operator),
+				Effect:   corev1.TaintEffect(toleration.Effect),
+				Operator: corev1.TolerationOperator(toleration.Operator),
 			})
 			exist[toleration.Key+toleration.Value] = true
 		}
@@ -281,19 +281,19 @@ func UpdateKServe(args *types.UpdateKServeArgs) error {
 		return err
 	}
 
-	if args.Annotations != nil && len(args.Annotations) > 0 {
+	if len(args.Annotations) > 0 {
 		for k, v := range args.Annotations {
 			inferenceService.Annotations[k] = v
 		}
 	}
 
-	if args.Labels != nil && len(args.Labels) > 0 {
+	if len(args.Labels) > 0 {
 		for k, v := range args.Labels {
 			inferenceService.Labels[k] = v
 		}
 	}
 
-	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+	if len(args.NodeSelectors) > 0 {
 		if inferenceService.Spec.Predictor.NodeSelector == nil {
 			inferenceService.Spec.Predictor.NodeSelector = map[string]string{}
 		}
@@ -302,18 +302,18 @@ func UpdateKServe(args *types.UpdateKServeArgs) error {
 		}
 	}
 
-	if args.Tolerations != nil && len(args.Tolerations) > 0 {
+	if len(args.Tolerations) > 0 {
 		if inferenceService.Spec.Predictor.Tolerations == nil {
-			inferenceService.Spec.Predictor.Tolerations = []v1.Toleration{}
+			inferenceService.Spec.Predictor.Tolerations = []corev1.Toleration{}
 		}
 		exist := map[string]bool{}
-		var tolerations []v1.Toleration
+		var tolerations []corev1.Toleration
 		for _, toleration := range args.Tolerations {
-			tolerations = append(tolerations, v1.Toleration{
+			tolerations = append(tolerations, corev1.Toleration{
 				Key:      toleration.Key,
 				Value:    toleration.Value,
-				Effect:   v1.TaintEffect(toleration.Effect),
-				Operator: v1.TolerationOperator(toleration.Operator),
+				Effect:   corev1.TaintEffect(toleration.Effect),
+				Operator: corev1.TolerationOperator(toleration.Operator),
 			})
 			exist[toleration.Key+toleration.Value] = true
 		}
@@ -335,7 +335,7 @@ func UpdateDistributedServing(args *types.UpdateDistributedServingArgs) error {
 		return nil
 	}
 
-	if args.Annotations != nil && len(args.Annotations) > 0 {
+	if len(args.Annotations) > 0 {
 		for k, v := range args.Annotations {
 			lwsJob.Annotations[k] = v
 			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Annotations[k] = v
@@ -343,7 +343,7 @@ func UpdateDistributedServing(args *types.UpdateDistributedServingArgs) error {
 		}
 	}
 
-	if args.Labels != nil && len(args.Labels) > 0 {
+	if len(args.Labels) > 0 {
 		for k, v := range args.Labels {
 			lwsJob.Labels[k] = v
 			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Labels[k] = v
@@ -351,7 +351,7 @@ func UpdateDistributedServing(args *types.UpdateDistributedServingArgs) error {
 		}
 	}
 
-	if args.NodeSelectors != nil && len(args.NodeSelectors) > 0 {
+	if len(args.NodeSelectors) > 0 {
 		if lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.NodeSelector == nil {
 			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.NodeSelector = map[string]string{}
 		}
@@ -364,21 +364,21 @@ func UpdateDistributedServing(args *types.UpdateDistributedServingArgs) error {
 		}
 	}
 
-	if args.Tolerations != nil && len(args.Tolerations) > 0 {
+	if len(args.Tolerations) > 0 {
 		if lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Tolerations == nil {
-			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Tolerations = []v1.Toleration{}
+			lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Tolerations = []corev1.Toleration{}
 		}
 		if lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Tolerations == nil {
-			lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Tolerations = []v1.Toleration{}
+			lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Tolerations = []corev1.Toleration{}
 		}
 		exist := map[string]bool{}
-		var tolerations []v1.Toleration
+		var tolerations []corev1.Toleration
 		for _, toleration := range args.Tolerations {
-			tolerations = append(tolerations, v1.Toleration{
+			tolerations = append(tolerations, corev1.Toleration{
 				Key:      toleration.Key,
 				Value:    toleration.Value,
-				Effect:   v1.TaintEffect(toleration.Effect),
-				Operator: v1.TolerationOperator(toleration.Operator),
+				Effect:   corev1.TaintEffect(toleration.Effect),
+				Operator: corev1.TolerationOperator(toleration.Operator),
 			})
 			exist[toleration.Key+toleration.Value] = true
 		}
@@ -439,7 +439,7 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 
 	resourceLimits := deploy.Spec.Template.Spec.Containers[0].Resources.Limits
 	if resourceLimits == nil {
-		resourceLimits = make(map[v1.ResourceName]resource.Quantity)
+		resourceLimits = make(map[corev1.ResourceName]resource.Quantity)
 	}
 
 	if args.GPUCount > 0 {
@@ -458,19 +458,19 @@ func findAndBuildDeployment(args *types.CommonUpdateServingArgs) (*appsv1.Deploy
 	}
 
 	if args.Cpu != "" {
-		resourceLimits[v1.ResourceCPU] = resource.MustParse(args.Cpu)
+		resourceLimits[corev1.ResourceCPU] = resource.MustParse(args.Cpu)
 	}
 
 	if args.Memory != "" {
-		resourceLimits[v1.ResourceMemory] = resource.MustParse(args.Memory)
+		resourceLimits[corev1.ResourceMemory] = resource.MustParse(args.Memory)
 	}
 	deploy.Spec.Template.Spec.Containers[0].Resources.Limits = resourceLimits
 
-	var newEnvs []v1.EnvVar
+	var newEnvs []corev1.EnvVar
 	exist := map[string]bool{}
 	if args.Envs != nil {
 		for k, v := range args.Envs {
-			envVar := v1.EnvVar{
+			envVar := corev1.EnvVar{
 				Name:  k,
 				Value: v,
 			}
@@ -572,16 +572,16 @@ func findAndBuildLWSJob(args *types.UpdateDistributedServingArgs) (*lwsv1.Leader
 	masterResourceLimits := lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Resources.Limits
 	workerResourceLimits := lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Resources.Limits
 	if masterResourceLimits == nil {
-		masterResourceLimits = make(map[v1.ResourceName]resource.Quantity)
+		masterResourceLimits = make(map[corev1.ResourceName]resource.Quantity)
 	}
 	if workerResourceLimits == nil {
-		workerResourceLimits = make(map[v1.ResourceName]resource.Quantity)
+		workerResourceLimits = make(map[corev1.ResourceName]resource.Quantity)
 	}
 	if args.MasterCpu != "" {
-		masterResourceLimits[v1.ResourceCPU] = resource.MustParse(args.MasterCpu)
+		masterResourceLimits[corev1.ResourceCPU] = resource.MustParse(args.MasterCpu)
 	}
 	if args.WorkerCpu != "" {
-		workerResourceLimits[v1.ResourceCPU] = resource.MustParse(args.WorkerCpu)
+		workerResourceLimits[corev1.ResourceCPU] = resource.MustParse(args.WorkerCpu)
 	}
 	if args.MasterGPUCount > 0 {
 		masterResourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.MasterGPUCount))
@@ -608,22 +608,22 @@ func findAndBuildLWSJob(args *types.UpdateDistributedServingArgs) (*lwsv1.Leader
 		delete(workerResourceLimits, ResourceGPU)
 	}
 	if args.MasterMemory != "" {
-		masterResourceLimits[v1.ResourceMemory] = resource.MustParse(args.MasterMemory)
+		masterResourceLimits[corev1.ResourceMemory] = resource.MustParse(args.MasterMemory)
 	}
 	if args.WorkerMemory != "" {
-		workerResourceLimits[v1.ResourceMemory] = resource.MustParse(args.WorkerMemory)
+		workerResourceLimits[corev1.ResourceMemory] = resource.MustParse(args.WorkerMemory)
 	}
 	lwsJob.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers[0].Resources.Limits = masterResourceLimits
 	lwsJob.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers[0].Resources.Limits = workerResourceLimits
 
 	// update env
-	var masterEnvs []v1.EnvVar
-	var workerEnvs []v1.EnvVar
+	var masterEnvs []corev1.EnvVar
+	var workerEnvs []corev1.EnvVar
 	masterExist := map[string]bool{}
 	workerExist := map[string]bool{}
 	if args.Envs != nil {
 		for k, v := range args.Envs {
-			envVar := v1.EnvVar{
+			envVar := corev1.EnvVar{
 				Name:  k,
 				Value: v,
 			}
@@ -726,7 +726,7 @@ func setInferenceServiceForFrameworkModel(args *types.UpdateKServeArgs, inferenc
 	// set resources limits
 	resourceLimits := inferenceService.Spec.Predictor.Model.Resources.Limits
 	if resourceLimits == nil {
-		resourceLimits = make(map[v1.ResourceName]resource.Quantity)
+		resourceLimits = make(map[corev1.ResourceName]resource.Quantity)
 	}
 	if args.GPUCount > 0 {
 		resourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.GPUCount))
@@ -741,19 +741,19 @@ func setInferenceServiceForFrameworkModel(args *types.UpdateKServeArgs, inferenc
 		delete(resourceLimits, ResourceGPU)
 	}
 	if args.Cpu != "" {
-		resourceLimits[v1.ResourceCPU] = resource.MustParse(args.Cpu)
+		resourceLimits[corev1.ResourceCPU] = resource.MustParse(args.Cpu)
 	}
 	if args.Memory != "" {
-		resourceLimits[v1.ResourceMemory] = resource.MustParse(args.Memory)
+		resourceLimits[corev1.ResourceMemory] = resource.MustParse(args.Memory)
 	}
 	inferenceService.Spec.Predictor.Model.Resources.Limits = resourceLimits
 
 	// set env
-	var newEnvs []v1.EnvVar
+	var newEnvs []corev1.EnvVar
 	exist := map[string]bool{}
 	if args.Envs != nil {
 		for k, v := range args.Envs {
-			envVar := v1.EnvVar{
+			envVar := corev1.EnvVar{
 				Name:  k,
 				Value: v,
 			}
@@ -790,19 +790,19 @@ func setInferenceServiceForCustomModel(args *types.UpdateKServeArgs, inferenceSe
 	//set volume
 	if len(args.ModelDirs) != 0 {
 		log.Debugf("update modelDirs: [%+v]", args.ModelDirs)
-		var volumes []v1.Volume
-		var volumeMounts []v1.VolumeMount
+		var volumes []corev1.Volume
+		var volumeMounts []corev1.VolumeMount
 
 		for pvName, mountPath := range args.ModelDirs {
-			volumes = append(volumes, v1.Volume{
+			volumes = append(volumes, corev1.Volume{
 				Name: pvName,
-				VolumeSource: v1.VolumeSource{
-					PersistentVolumeClaim: &v1.PersistentVolumeClaimVolumeSource{
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 						ClaimName: pvName,
 					},
 				},
 			})
-			volumeMounts = append(volumeMounts, v1.VolumeMount{
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
 				Name:      pvName,
 				MountPath: mountPath,
 			})
@@ -814,20 +814,20 @@ func setInferenceServiceForCustomModel(args *types.UpdateKServeArgs, inferenceSe
 	// set resources requests
 	resourceRequests := inferenceService.Spec.Predictor.Containers[0].Resources.Requests
 	if resourceRequests == nil {
-		resourceRequests = make(map[v1.ResourceName]resource.Quantity)
+		resourceRequests = make(map[corev1.ResourceName]resource.Quantity)
 	}
 	if args.Cpu != "" {
-		resourceRequests[v1.ResourceCPU] = resource.MustParse(args.Cpu)
+		resourceRequests[corev1.ResourceCPU] = resource.MustParse(args.Cpu)
 	}
 	if args.Memory != "" {
-		resourceRequests[v1.ResourceMemory] = resource.MustParse(args.Memory)
+		resourceRequests[corev1.ResourceMemory] = resource.MustParse(args.Memory)
 	}
 	inferenceService.Spec.Predictor.Containers[0].Resources.Requests = resourceRequests
 
 	// set resources limits
 	resourceLimits := inferenceService.Spec.Predictor.Containers[0].Resources.Limits
 	if resourceLimits == nil {
-		resourceLimits = make(map[v1.ResourceName]resource.Quantity)
+		resourceLimits = make(map[corev1.ResourceName]resource.Quantity)
 	}
 	if args.GPUCount > 0 {
 		resourceLimits[ResourceGPU] = resource.MustParse(strconv.Itoa(args.GPUCount))
@@ -842,19 +842,19 @@ func setInferenceServiceForCustomModel(args *types.UpdateKServeArgs, inferenceSe
 		delete(resourceLimits, ResourceGPU)
 	}
 	if args.Cpu != "" {
-		resourceLimits[v1.ResourceCPU] = resource.MustParse(args.Cpu)
+		resourceLimits[corev1.ResourceCPU] = resource.MustParse(args.Cpu)
 	}
 	if args.Memory != "" {
-		resourceLimits[v1.ResourceMemory] = resource.MustParse(args.Memory)
+		resourceLimits[corev1.ResourceMemory] = resource.MustParse(args.Memory)
 	}
 	inferenceService.Spec.Predictor.Containers[0].Resources.Limits = resourceLimits
 
 	// set env
-	var newEnvs []v1.EnvVar
+	var newEnvs []corev1.EnvVar
 	exist := map[string]bool{}
 	if args.Envs != nil {
 		for k, v := range args.Envs {
-			envVar := v1.EnvVar{
+			envVar := corev1.EnvVar{
 				Name:  k,
 				Value: v,
 			}

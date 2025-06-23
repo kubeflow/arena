@@ -246,10 +246,10 @@ func (s *SubmitTFJobArgsBuilder) Build() error {
 
 func (s *SubmitTFJobArgsBuilder) setRuntime() error {
 	// Get the runtime name
-	annotations := s.args.CommonSubmitArgs.Annotations
+	annotations := s.args.Annotations
 	name := annotations["runtime"]
 	s.args.TFRuntime = runtime.GetTFRuntime(name)
-	return s.args.TFRuntime.Check(s.args)
+	return s.args.Check(s.args)
 }
 
 func (s *SubmitTFJobArgsBuilder) setRunPolicy() error {
@@ -286,7 +286,7 @@ func (s *SubmitTFJobArgsBuilder) check() error {
 	case "None", "Running", "All":
 		log.Debugf("Supported cleanTaskPolicy: %s", s.args.CleanPodPolicy)
 	default:
-		return fmt.Errorf("Unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
+		return fmt.Errorf("unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
 	}
 
 	if s.args.WorkerCount == 0 && !s.args.UseChief {
@@ -476,14 +476,14 @@ func (s *SubmitTFJobArgsBuilder) setTFNodeSelectors() error {
 		evaluatorSelectors = item4.(*[]string)
 	}
 	for _, role := range []string{"PS", "Worker", "Evaluator", "Chief"} {
-		switch {
-		case role == "PS":
+		switch role {
+		case "PS":
 			s.transformSelectorArrayToMap(psSelectors, "PS")
-		case role == "Worker":
+		case "Worker":
 			s.transformSelectorArrayToMap(workerSelectors, "Worker")
-		case role == "Chief":
+		case "Chief":
 			s.transformSelectorArrayToMap(chiefSelectors, "Chief")
-		case role == "Evaluator":
+		case "Evaluator":
 			s.transformSelectorArrayToMap(evaluatorSelectors, "Evaluator")
 		}
 	}
@@ -553,7 +553,7 @@ func (s *SubmitTFJobArgsBuilder) checkRoleSequence() error {
 		case "chief", "c":
 			roles = append(roles, "Chief")
 		default:
-			return fmt.Errorf("Unknown role: %v, the tfjob only supports:[Worker(w)|PS(p)|Evaluator(e)|Chief(c)]", r)
+			return fmt.Errorf("unknown role: %v, the tfjob only supports:[Worker(w)|PS(p)|Evaluator(e)|Chief(c)]", r)
 		}
 	}
 	if s.args.Annotations == nil {

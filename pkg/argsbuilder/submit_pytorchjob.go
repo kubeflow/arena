@@ -142,7 +142,7 @@ func (s *SubmitPytorchJobArgsBuilder) check() error {
 	case "None", "Running", "All":
 		log.Debugf("Supported cleanTaskPolicy: %s", s.args.CleanPodPolicy)
 	default:
-		return fmt.Errorf("Unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
+		return fmt.Errorf("unsupported cleanTaskPolicy %s", s.args.CleanPodPolicy)
 	}
 
 	if s.args.GPUCount < 0 {

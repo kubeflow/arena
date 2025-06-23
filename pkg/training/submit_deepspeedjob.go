@@ -16,6 +16,7 @@ package training
 
 import (
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/kubeflow/arena/pkg/apis/types"

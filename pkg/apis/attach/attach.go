@@ -59,7 +59,7 @@ func (a *AttachBuilder) ContainerName(name string) *AttachBuilder {
 }
 
 func (a *AttachBuilder) IOStreams(stream genericclioptions.IOStreams) *AttachBuilder {
-	a.args.Options.StreamOptions.IOStreams = stream
+	a.args.Options.IOStreams = stream
 	return a
 }
 

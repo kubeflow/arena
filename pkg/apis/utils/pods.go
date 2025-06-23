@@ -24,14 +24,14 @@ import (
 	"encoding/json"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 )
 
-func CPUCountInPod(pod *v1.Pod) float64 {
+func CPUCountInPod(pod *corev1.Pod) float64 {
 	total := 0.0
 	for _, count := range ResourceInContainers(pod, types.CPUResourceName) {
 		total += count.(float64)
@@ -39,7 +39,7 @@ func CPUCountInPod(pod *v1.Pod) float64 {
 	return total
 }
 
-func GPUCountInPod(pod *v1.Pod) int {
+func GPUCountInPod(pod *corev1.Pod) int {
 	total := int64(0)
 	for _, count := range ResourceInContainers(pod, types.NvidiaGPUResourceName) {
 		c := count.(int64)
@@ -48,7 +48,7 @@ func GPUCountInPod(pod *v1.Pod) int {
 	return int(total)
 }
 
-func AliyunGPUCountInPod(pod *v1.Pod) int {
+func AliyunGPUCountInPod(pod *corev1.Pod) int {
 	total := int64(0)
 	for _, count := range ResourceInContainers(pod, types.AliyunGPUResourceName) {
 		c := count.(int64)
@@ -57,11 +57,11 @@ func AliyunGPUCountInPod(pod *v1.Pod) int {
 	return int(total)
 }
 
-func ResourceInContainers(pod *v1.Pod, resourceName string) map[int]interface{} {
+func ResourceInContainers(pod *corev1.Pod, resourceName string) map[int]interface{} {
 	total := make(map[int]interface{})
 	containers := pod.Spec.Containers
 	for index, container := range containers {
-		if val, ok := container.Resources.Limits[v1.ResourceName(resourceName)]; ok && int(val.Value()) != 0 {
+		if val, ok := container.Resources.Limits[corev1.ResourceName(resourceName)]; ok && int(val.Value()) != 0 {
 			total[index] = val.Value()
 		}
 	}
@@ -69,18 +69,18 @@ func ResourceInContainers(pod *v1.Pod, resourceName string) map[int]interface{} 
 }
 
 // IsCompletedPod determines if the pod is completed or not
-func IsCompletedPod(pod *v1.Pod) bool {
+func IsCompletedPod(pod *corev1.Pod) bool {
 	if pod.DeletionTimestamp != nil {
 		return true
 	}
-	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+	if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 		return true
 	}
 	return false
 }
 
 // DefinePodPhaseStatus returns the pod status display in kubectl
-func DefinePodPhaseStatus(pod v1.Pod) (string, int, int, int) {
+func DefinePodPhaseStatus(pod corev1.Pod) (string, int, int, int) {
 	restarts := 0
 	totalContainers := len(pod.Spec.Containers)
 	readyContainers := 0
@@ -154,7 +154,7 @@ func DefinePodPhaseStatus(pod v1.Pod) (string, int, int, int) {
 	return reason, totalContainers, restarts, readyContainers
 }
 
-func GPUMemoryCountInPod(pod *v1.Pod) int {
+func GPUMemoryCountInPod(pod *corev1.Pod) int {
 	total := int64(0)
 	for _, count := range ResourceInContainers(pod, types.GPUShareResourceName) {
 		c := count.(int64)
@@ -163,7 +163,7 @@ func GPUMemoryCountInPod(pod *v1.Pod) int {
 	return int(total)
 }
 
-func GPUCoreCountInPod(pod *v1.Pod) int {
+func GPUCoreCountInPod(pod *corev1.Pod) int {
 	total := int64(0)
 	for _, count := range ResourceInContainers(pod, types.GPUCoreShareResourceName) {
 		c := count.(int64)
@@ -172,7 +172,7 @@ func GPUCoreCountInPod(pod *v1.Pod) int {
 	return int(total)
 }
 
-func GetContainerAllocation(pod *v1.Pod) map[int]map[string]int {
+func GetContainerAllocation(pod *corev1.Pod) map[int]map[string]int {
 	allocation := map[int]map[string]int{}
 	alloc := getPodAnnotation(pod, types.GPUShareAllocationLabel)
 	if alloc == "" {
@@ -185,7 +185,7 @@ func GetContainerAllocation(pod *v1.Pod) map[int]map[string]int {
 	return allocation
 }
 
-func GetContainerGPUCoreAllocation(pod *v1.Pod) map[int]map[string]int {
+func GetContainerGPUCoreAllocation(pod *corev1.Pod) map[int]map[string]int {
 	allocation := map[int]map[string]int{}
 	alloc := getPodAnnotation(pod, types.GPUCoreShareAllocationLabel)
 	if alloc == "" {
@@ -198,18 +198,18 @@ func GetContainerGPUCoreAllocation(pod *v1.Pod) map[int]map[string]int {
 	return allocation
 }
 
-func getPodAnnotation(pod *v1.Pod, key string) (ids string) {
-	if pod.ObjectMeta.Annotations == nil {
+func getPodAnnotation(pod *corev1.Pod, key string) (ids string) {
+	if pod.Annotations == nil {
 		return ids
 	}
-	if value, ok := pod.ObjectMeta.Annotations[key]; ok {
+	if value, ok := pod.Annotations[key]; ok {
 		ids = value
 		return ids
 	}
 	return ids
 }
 
-func GetPodAllocation(pod *v1.Pod) map[string]int {
+func GetPodAllocation(pod *corev1.Pod) map[string]int {
 	result := map[string]int{}
 	allocation := GetContainerAllocation(pod)
 	if len(allocation) != 0 {
@@ -229,7 +229,7 @@ func GetPodAllocation(pod *v1.Pod) map[string]int {
 	return result
 }
 
-func GetPodGPUCoreAllocation(pod *v1.Pod) map[string]int {
+func GetPodGPUCoreAllocation(pod *corev1.Pod) map[string]int {
 	result := map[string]int{}
 	allocation := GetContainerGPUCoreAllocation(pod)
 	if len(allocation) != 0 {
@@ -243,10 +243,10 @@ func GetPodGPUCoreAllocation(pod *v1.Pod) map[string]int {
 	return result
 }
 
-func AcquireAllActivePods(client *kubernetes.Clientset) ([]*v1.Pod, error) {
-	allPods := []*v1.Pod{}
+func AcquireAllActivePods(client *kubernetes.Clientset) ([]*corev1.Pod, error) {
+	allPods := []*corev1.Pod{}
 
-	fieldSelector, err := fields.ParseSelector("status.phase!=" + string(v1.PodSucceeded) + ",status.phase!=" + string(v1.PodFailed))
+	fieldSelector, err := fields.ParseSelector("status.phase!=" + string(corev1.PodSucceeded) + ",status.phase!=" + string(corev1.PodFailed))
 	if err != nil {
 		return allPods, err
 	}
@@ -261,9 +261,9 @@ func AcquireAllActivePods(client *kubernetes.Clientset) ([]*v1.Pod, error) {
 	return allPods, nil
 }
 
-func AcquireAllActivePodsOfNode(client *kubernetes.Clientset, nodeName string) ([]*v1.Pod, error) {
-	allPods := []*v1.Pod{}
-	selector := fmt.Sprintf("spec.nodeName=%v,status.phase!=%v,status.phase!=%v", nodeName, string(v1.PodSucceeded), string(v1.PodFailed))
+func AcquireAllActivePodsOfNode(client *kubernetes.Clientset, nodeName string) ([]*corev1.Pod, error) {
+	allPods := []*corev1.Pod{}
+	selector := fmt.Sprintf("spec.nodeName=%v,status.phase!=%v,status.phase!=%v", nodeName, string(corev1.PodSucceeded), string(corev1.PodFailed))
 
 	fieldSelector, err := fields.ParseSelector(selector)
 	if err != nil {
@@ -280,18 +280,18 @@ func AcquireAllActivePodsOfNode(client *kubernetes.Clientset, nodeName string) (
 	return allPods, nil
 }
 
-func GetPodGPUTopologyAllocation(pod *v1.Pod) []string {
+func GetPodGPUTopologyAllocation(pod *corev1.Pod) []string {
 	topoAllocation := getPodAnnotation(pod, types.GPUTopologyAllocationLabel)
 	return strings.Split(topoAllocation, ",")
 }
 
-func GetPodGPUTopologyVisibleGPUs(pod *v1.Pod) []string {
+func GetPodGPUTopologyVisibleGPUs(pod *corev1.Pod) []string {
 	visibleGPUs := getPodAnnotation(pod, types.GPUTopologyVisibleGPULabel)
 	return strings.Split(visibleGPUs, ",")
 }
 
-func GetPendingTimeOfPod(pod *v1.Pod) time.Duration {
-	if pod.Status.Phase == v1.PodPending {
+func GetPendingTimeOfPod(pod *corev1.Pod) time.Duration {
+	if pod.Status.Phase == corev1.PodPending {
 		if pod.CreationTimestamp.IsZero() {
 			return time.Duration(0)
 		}
@@ -303,14 +303,14 @@ func GetPendingTimeOfPod(pod *v1.Pod) time.Duration {
 	return pod.Status.StartTime.Sub(pod.CreationTimestamp.Time)
 }
 
-func GetRunningTimeOfPod(pod *v1.Pod) time.Duration {
-	if pod.Status.Phase == v1.PodPending || pod.Status.Phase == v1.PodUnknown {
+func GetRunningTimeOfPod(pod *corev1.Pod) time.Duration {
+	if pod.Status.Phase == corev1.PodPending || pod.Status.Phase == corev1.PodUnknown {
 		return time.Duration(0)
 	}
 	var startTime *metav1.Time
 	var endTime *metav1.Time
 	// get pod start time
-	allContainerStatuses := []v1.ContainerStatus{}
+	allContainerStatuses := []corev1.ContainerStatus{}
 	allContainerStatuses = append(allContainerStatuses, pod.Status.InitContainerStatuses...)
 	allContainerStatuses = append(allContainerStatuses, pod.Status.ContainerStatuses...)
 	startTime, endTime = getStartTimeAndEndTime(allContainerStatuses)
@@ -320,13 +320,13 @@ func GetRunningTimeOfPod(pod *v1.Pod) time.Duration {
 	if startTime == nil {
 		startTime = &pod.CreationTimestamp
 	}
-	if pod.Status.Phase == v1.PodRunning || endTime == nil {
+	if pod.Status.Phase == corev1.PodRunning || endTime == nil {
 		return metav1.Now().Sub(startTime.Time)
 	}
 	return endTime.Sub(startTime.Time)
 }
 
-func getStartTimeAndEndTime(containerStatuses []v1.ContainerStatus) (*metav1.Time, *metav1.Time) {
+func getStartTimeAndEndTime(containerStatuses []corev1.ContainerStatus) (*metav1.Time, *metav1.Time) {
 	startTimes := []*metav1.Time{}
 	endTimes := []*metav1.Time{}
 	for _, containerStatus := range containerStatuses {
@@ -355,8 +355,8 @@ func getStartTimeAndEndTime(containerStatuses []v1.ContainerStatus) (*metav1.Tim
 	return startTime, endTime
 }
 
-func GetDurationOfPod(pod *v1.Pod) time.Duration {
-	if pod.Status.Phase == v1.PodPending {
+func GetDurationOfPod(pod *corev1.Pod) time.Duration {
+	if pod.Status.Phase == corev1.PodPending {
 		return GetPendingTimeOfPod(pod)
 	}
 	return GetRunningTimeOfPod(pod)

@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -26,7 +26,7 @@ import (
 // The Training Job can be TensorFlow, MPI and Caffe
 type TrainingJob interface {
 	// Get the chief Pod of the Job.
-	ChiefPod() *v1.Pod
+	ChiefPod() *corev1.Pod
 
 	// Get the name of the Training Job
 	Name() string
@@ -38,7 +38,7 @@ type TrainingJob interface {
 	Namespace() string
 
 	// Get all the pods of the Training Job
-	AllPods() []*v1.Pod
+	AllPods() []*corev1.Pod
 
 	// Get all the kubernetes resource of the Training Job
 	Resources() []Resource

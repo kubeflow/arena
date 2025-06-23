@@ -16,11 +16,12 @@ package argsbuilder
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"reflect"
-	"strings"
 )
 
 type ModelOptimizeArgsBuilder struct {

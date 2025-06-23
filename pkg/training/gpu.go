@@ -18,13 +18,13 @@ import (
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 )
 
-func gpuInPod(pod v1.Pod) (gpuCount int64) {
+func gpuInPod(pod corev1.Pod) (gpuCount int64) {
 	containers := pod.Spec.Containers
 	for _, container := range containers {
 		gpuCount += gpuInContainer(container)
@@ -33,7 +33,7 @@ func gpuInPod(pod v1.Pod) (gpuCount int64) {
 	return gpuCount
 }
 
-func getRequestGPUsOfJobFromPodAnnotation(pods []*v1.Pod) int64 {
+func getRequestGPUsOfJobFromPodAnnotation(pods []*corev1.Pod) int64 {
 	for _, pod := range pods {
 		val := pod.Annotations[types.RequestGPUsOfJobAnnoKey]
 		if val == "" {
@@ -51,7 +51,7 @@ func getRequestGPUsOfJobFromPodAnnotation(pods []*v1.Pod) int64 {
 }
 
 // Get gpu number from the active pod
-func gpuInActivePod(pod v1.Pod) (gpuCount int64) {
+func gpuInActivePod(pod corev1.Pod) (gpuCount int64) {
 	if pod.Status.StartTime == nil {
 		return 0
 	}
@@ -68,7 +68,7 @@ func gpuInActivePod(pod v1.Pod) (gpuCount int64) {
 	return gpuCount
 }
 
-func gpuInContainer(container v1.Container) int64 {
+func gpuInContainer(container corev1.Container) int64 {
 	val, ok := container.Resources.Limits[NVIDIAGPUResourceName]
 
 	if !ok {
@@ -78,7 +78,7 @@ func gpuInContainer(container v1.Container) int64 {
 	return val.Value()
 }
 
-func gpuInContainerDeprecated(container v1.Container) int64 {
+func gpuInContainerDeprecated(container corev1.Container) int64 {
 	val, ok := container.Resources.Limits[DeprecatedNVIDIAGPUResourceName]
 
 	if !ok {

@@ -27,21 +27,21 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/prometheus"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 )
 
 type buildNodeArgs struct {
-	pods           []*v1.Pod
-	configmaps     []*v1.ConfigMap
+	pods           []*corev1.Pod
+	configmaps     []*corev1.ConfigMap
 	nodeGPUMetrics map[string]types.NodeGpuMetric
 }
 
 // NodeProcesser process the node
 type NodeProcesser interface {
 	// BuildNode builds the nodes and return the skip nodes
-	BuildNode(client *kubernetes.Clientset, v1nodes *v1.Node, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool)
+	BuildNode(client *kubernetes.Clientset, v1nodes *corev1.Node, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool)
 	// Convert2NodeInfos filters nodes
 	Convert2NodeInfos(nodes []Node, allNodes types.AllNodeInfo) types.AllNodeInfo
 	// DisplayNodesDetails display nodes which the processer knowns
@@ -68,9 +68,9 @@ type Node interface {
 	// Status returns the node status
 	Status() string
 	// GetV1Pods returns the pods of node
-	GetV1Pods() []*v1.Pod
+	GetV1Pods() []*corev1.Pod
 	// GetV1Node returns the v1.node
-	GetV1Node() *v1.Node
+	GetV1Node() *corev1.Node
 	// Convert2NodeInfo convert node to node info
 	Convert2NodeInfo() interface{}
 	// AllDevicesAreHealthy returns the all devices are healthy
@@ -86,8 +86,8 @@ const (
 
 type baseNode struct {
 	index    int
-	pods     []*v1.Pod
-	node     *v1.Node
+	pods     []*corev1.Pod
+	node     *corev1.Node
 	nodeType types.NodeType
 }
 
@@ -132,11 +132,11 @@ func (b *baseNode) Status() string {
 	return utils.DefineNodeStatus(b.node)
 }
 
-func (b *baseNode) GetV1Pods() []*v1.Pod {
+func (b *baseNode) GetV1Pods() []*corev1.Pod {
 	return b.pods
 }
 
-func (b *baseNode) GetV1Node() *v1.Node {
+func (b *baseNode) GetV1Node() *corev1.Node {
 	return b.node
 }
 
@@ -157,14 +157,14 @@ func GetSupportedNodePorcessers() []NodeProcesser {
 type nodeProcesser struct {
 	key                       string
 	nodeType                  types.NodeType
-	builder                   func(client *kubernetes.Clientset, node *v1.Node, index int, args buildNodeArgs) (Node, error)
-	canBuildNode              func(node *v1.Node) bool
+	builder                   func(client *kubernetes.Clientset, node *corev1.Node, index int, args buildNodeArgs) (Node, error)
+	canBuildNode              func(node *corev1.Node) bool
 	displayNodesDetails       func(w *tabwriter.Writer, nodes []Node)
 	displayNodesSummary       func(w *tabwriter.Writer, nodes []Node, isUnhealthy, showNodeType bool) (float64, float64, float64)
 	displayNodesCustomSummary func(w *tabwriter.Writer, nodes []Node)
 }
 
-func (n *nodeProcesser) BuildNode(client *kubernetes.Clientset, v1node *v1.Node, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool) {
+func (n *nodeProcesser) BuildNode(client *kubernetes.Clientset, v1node *corev1.Node, nodes []Node, targetNodeType types.NodeType, index int, args buildNodeArgs) ([]Node, bool) {
 	skip := true
 	if !isNeededNodeType(n.nodeType, targetNodeType) || !n.canBuildNode(v1node) {
 		return nodes, skip
@@ -297,10 +297,10 @@ func BuildNodes(nodeNames []string, targetNodeType types.NodeType, showMetric bo
 	return nodes, nil
 }
 
-func listRunningPods() ([]*v1.Pod, error) {
-	labelSelector := fmt.Sprintf("status.phase!=%v,status.phase!=%v", v1.PodFailed, v1.PodSucceeded)
-	var filterFunc = func(pod *v1.Pod) bool {
-		if pod.Status.Phase == v1.PodFailed || pod.Status.Phase == v1.PodSucceeded {
+func listRunningPods() ([]*corev1.Pod, error) {
+	labelSelector := fmt.Sprintf("status.phase!=%v,status.phase!=%v", corev1.PodFailed, corev1.PodSucceeded)
+	var filterFunc = func(pod *corev1.Pod) bool {
+		if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodSucceeded {
 			return false
 		}
 		return true
@@ -333,8 +333,8 @@ func getGPUMetricsByNodeName(nodeName string, metrics map[string]types.NodeGpuMe
 	return metrics[nodeName]
 }
 
-func getNodePods(node *v1.Node, pods []*v1.Pod) []*v1.Pod {
-	nodePods := []*v1.Pod{}
+func getNodePods(node *corev1.Node, pods []*corev1.Pod) []*corev1.Pod {
+	nodePods := []*corev1.Pod{}
 	for _, pod := range pods {
 		if pod.Spec.NodeName != node.Name {
 			continue

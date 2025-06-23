@@ -15,7 +15,7 @@
 package types
 
 import (
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const PROMETHEUS_INSTALL_DOC_URL = "https://github.com/kubeflow/arena/blob/master/docs/userguide/9-top-job-gpu-metric.md"
@@ -36,7 +36,7 @@ type PrometheusServer struct {
 	Port          string
 	Path          string
 	MetricList    []string
-	Service       *v1.Service
+	Service       *corev1.Service
 }
 
 var SUPPORT_PROMETHEUS_SERVERS = []*PrometheusServer{
@@ -118,16 +118,16 @@ type PodGpuMetric map[string]*GpuMetric
 type NodeGpuMetric map[string]*AdvancedGpuMetric
 
 type GpuMetric struct {
-	GpuDutyCycle   float64 `json:"gpuDutyCycle" yaml:"gpuDutyCycle"`
-	GpuMemoryUsed  float64 `json:"usedGPUMemory" yaml:"usedGPUMemory"`
+	GpuDutyCycle   float64 `json:"gpuDutyCycle"   yaml:"gpuDutyCycle"`
+	GpuMemoryUsed  float64 `json:"usedGPUMemory"  yaml:"usedGPUMemory"`
 	GpuMemoryTotal float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`
 }
 
 type AdvancedGpuMetric struct {
-	Id             string  `json:"id" yaml:"id"`
-	UUID           string  `json:"uuid" yaml:"uuid"`
-	GpuDutyCycle   float64 `json:"gpuDutyCycle" yaml:"gpuDutyCycle"`
-	GpuMemoryUsed  float64 `json:"usedGPUMemory" yaml:"usedGPUMemory"`
+	Id             string  `json:"id"             yaml:"id"`
+	UUID           string  `json:"uuid"           yaml:"uuid"`
+	GpuDutyCycle   float64 `json:"gpuDutyCycle"   yaml:"gpuDutyCycle"`
+	GpuMemoryUsed  float64 `json:"usedGPUMemory"  yaml:"usedGPUMemory"`
 	GpuMemoryTotal float64 `json:"totalGPUMemory" yaml:"totalGPUMemory"`
 	// PodName is combined with namespace and  pod name,like 'namespace/pod_name'
 	PodNames []string `json:"podNames" yaml:"podNames"`

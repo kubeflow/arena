@@ -23,9 +23,9 @@ import (
 	kservev1beta1 "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
 	kserveClient "github.com/kserve/kserve/pkg/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
-	appv1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -113,8 +113,8 @@ func NewK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset
 			log.Errorf("failed to create cacheClient, reason: %v", err)
 			return nil, err
 		}
-		_ = cacheClient.IndexField(context.TODO(), &v1.Pod{}, "spec.nodeName", func(o client.Object) []string {
-			if pod, ok := o.(*v1.Pod); ok {
+		_ = cacheClient.IndexField(context.TODO(), &corev1.Pod{}, "spec.nodeName", func(o client.Object) []string {
+			if pod, ok := o.(*corev1.Pod); ok {
 				return []string{pod.Spec.NodeName}
 			}
 			return []string{}
@@ -146,9 +146,9 @@ func (k *k8sResourceAccesser) GetCacheClient() cache.Cache {
 	return k.cacheClient
 }
 
-func (k *k8sResourceAccesser) ListPods(namespace string, filterLabels string, filterFields string, filterFunc func(*v1.Pod) bool) ([]*v1.Pod, error) {
-	pods := []*v1.Pod{}
-	podList := &v1.PodList{}
+func (k *k8sResourceAccesser) ListPods(namespace string, filterLabels string, filterFields string, filterFunc func(*corev1.Pod) bool) ([]*corev1.Pod, error) {
+	pods := []*corev1.Pod{}
+	podList := &corev1.PodList{}
 	labelSelector, err := parseLabelSelector(filterLabels)
 	if err != nil {
 		return nil, err
@@ -189,9 +189,9 @@ func (k *k8sResourceAccesser) ListPods(namespace string, filterLabels string, fi
 	return pods, nil
 }
 
-func (k *k8sResourceAccesser) ListStatefulSets(namespace string, filterLabels string) ([]*appv1.StatefulSet, error) {
-	statefulsets := []*appv1.StatefulSet{}
-	stsList := &appv1.StatefulSetList{}
+func (k *k8sResourceAccesser) ListStatefulSets(namespace string, filterLabels string) ([]*appsv1.StatefulSet, error) {
+	statefulsets := []*appsv1.StatefulSet{}
+	stsList := &appsv1.StatefulSetList{}
 	labelSelector, err := parseLabelSelector(filterLabels)
 	if err != nil {
 		return nil, err
@@ -222,9 +222,9 @@ func (k *k8sResourceAccesser) ListStatefulSets(namespace string, filterLabels st
 	return statefulsets, nil
 }
 
-func (k *k8sResourceAccesser) ListDeployments(namespace string, filterLabels string) ([]*appv1.Deployment, error) {
-	deployments := []*appv1.Deployment{}
-	deployList := &appv1.DeploymentList{}
+func (k *k8sResourceAccesser) ListDeployments(namespace string, filterLabels string) ([]*appsv1.Deployment, error) {
+	deployments := []*appsv1.Deployment{}
+	deployList := &appsv1.DeploymentList{}
 	labelSelector, err := parseLabelSelector(filterLabels)
 	if err != nil {
 		return nil, err
@@ -288,9 +288,9 @@ func (k *k8sResourceAccesser) ListBatchJobs(namespace string, filterLabels strin
 	return jobs, nil
 }
 
-func (k *k8sResourceAccesser) ListServices(namespace string, filterLabels string) ([]*v1.Service, error) {
-	services := []*v1.Service{}
-	serviceList := &v1.ServiceList{}
+func (k *k8sResourceAccesser) ListServices(namespace string, filterLabels string) ([]*corev1.Service, error) {
+	services := []*corev1.Service{}
+	serviceList := &corev1.ServiceList{}
 	labelSelector, err := parseLabelSelector(filterLabels)
 	if err != nil {
 		return nil, err
@@ -321,9 +321,9 @@ func (k *k8sResourceAccesser) ListServices(namespace string, filterLabels string
 	return services, nil
 }
 
-func (k *k8sResourceAccesser) ListConfigMaps(namespace string, filterLabels string) ([]*v1.ConfigMap, error) {
-	configmaps := []*v1.ConfigMap{}
-	configmapList := &v1.ConfigMapList{}
+func (k *k8sResourceAccesser) ListConfigMaps(namespace string, filterLabels string) ([]*corev1.ConfigMap, error) {
+	configmaps := []*corev1.ConfigMap{}
+	configmapList := &corev1.ConfigMapList{}
 	labelSelector, err := parseLabelSelector(filterLabels)
 	if err != nil {
 		return nil, err
@@ -354,9 +354,9 @@ func (k *k8sResourceAccesser) ListConfigMaps(namespace string, filterLabels stri
 	return configmaps, nil
 }
 
-func (k *k8sResourceAccesser) ListNodes(filterLabels string) ([]*v1.Node, error) {
-	nodeList := &v1.NodeList{}
-	nodes := []*v1.Node{}
+func (k *k8sResourceAccesser) ListNodes(filterLabels string) ([]*corev1.Node, error) {
+	nodeList := &corev1.NodeList{}
+	nodes := []*corev1.Node{}
 	labelSelector, err := parseLabelSelector(filterLabels)
 	if err != nil {
 		return nil, err
@@ -888,8 +888,8 @@ func (k *k8sResourceAccesser) GetLWSJob(lwsClient *lwsversioned.Clientset, names
 	return lwsJob, err
 }
 
-func (k *k8sResourceAccesser) GetService(namespace, name string) (*v1.Service, error) {
-	service := &v1.Service{}
+func (k *k8sResourceAccesser) GetService(namespace, name string) (*corev1.Service, error) {
+	service := &corev1.Service{}
 	var err error
 	if k.cacheEnabled {
 		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, service)
@@ -902,8 +902,8 @@ func (k *k8sResourceAccesser) GetService(namespace, name string) (*v1.Service, e
 	return service, nil
 }
 
-func (k *k8sResourceAccesser) GetEndpoints(namespace, name string) (*v1.Endpoints, error) {
-	endpoints := &v1.Endpoints{}
+func (k *k8sResourceAccesser) GetEndpoints(namespace, name string) (*corev1.Endpoints, error) {
+	endpoints := &corev1.Endpoints{}
 	var err error
 	if k.cacheEnabled {
 		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: name}, endpoints)
@@ -916,8 +916,8 @@ func (k *k8sResourceAccesser) GetEndpoints(namespace, name string) (*v1.Endpoint
 	return endpoints, nil
 }
 
-func (k *k8sResourceAccesser) GetNode(nodeName string) (*v1.Node, error) {
-	node := &v1.Node{}
+func (k *k8sResourceAccesser) GetNode(nodeName string) (*corev1.Node, error) {
+	node := &corev1.Node{}
 	var err error
 	if k.cacheEnabled {
 		err = k.cacheClient.Get(context.Background(), client.ObjectKey{Name: nodeName}, node)

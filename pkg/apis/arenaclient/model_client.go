@@ -56,7 +56,7 @@ func NewModelClient(namespace string, configer *config.ArenaConfiger) (*ModelCli
 		}
 		mlflowService := mlflowServices[0].DeepCopy()
 		if len(mlflowServices) > 1 {
-			log.Warnf("there are multiple mlflow services found, use %s/%s", mlflowService.ObjectMeta.Namespace, mlflowService.ObjectMeta.Name)
+			log.Warnf("there are multiple mlflow services found, use %s/%s", mlflowService.Namespace, mlflowService.Name)
 		}
 		mlflowClient = model.NewProxiedMlflowClient(configer, mlflowService, username, password)
 	}

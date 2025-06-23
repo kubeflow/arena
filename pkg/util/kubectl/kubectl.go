@@ -26,7 +26,7 @@ import (
 	kservev1beta1 "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
 	kserveClient "github.com/kserve/kserve/pkg/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	lwsv1 "sigs.k8s.io/lws/api/leaderworkerset/v1"
@@ -295,7 +295,7 @@ func SaveAppConfigMapToFile(name, key, namespace string) (fileName string, err e
 	fmt.Printf("%s", string(out))
 
 	if err != nil {
-		return fileName, fmt.Errorf("Failed to execute %s, %v with %v", "kubectl", args, err)
+		return fileName, fmt.Errorf("failed to execute %s, %v with %v", "kubectl", args, err)
 	}
 	return fileName, err
 }
@@ -345,7 +345,7 @@ func GetCrdNames() ([]string, error) {
 	return crdNames, nil
 }
 
-func GetDeployment(name, namespace string) (*v1.Deployment, error) {
+func GetDeployment(name, namespace string) (*appsv1.Deployment, error) {
 	arenaConfiger := config.GetArenaConfiger()
 	client := arenaConfiger.GetClientSet()
 
@@ -363,7 +363,7 @@ func GetLWSJob(name, namespace string) (*lwsv1.LeaderWorkerSet, error) {
 	return client.LeaderworkersetV1().LeaderWorkerSets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
-func UpdateDeployment(deploy *v1.Deployment) error {
+func UpdateDeployment(deploy *appsv1.Deployment) error {
 	arenaConfiger := config.GetArenaConfiger()
 	client := arenaConfiger.GetClientSet()
 

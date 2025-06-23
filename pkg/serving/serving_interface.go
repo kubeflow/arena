@@ -17,10 +17,10 @@ package serving
 import (
 	"time"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kubeflow/arena/pkg/apis/types"
-	appv1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,11 +37,11 @@ type ServingJob interface {
 	// Version returns the job version
 	Version() string
 	// Pods returns the job pods
-	Pods() []*v1.Pod
+	Pods() []*corev1.Pod
 	// Deployment returns the deployment
-	Deployment() *appv1.Deployment
+	Deployment() *appsv1.Deployment
 	// Service returns the job services
-	Services() []*v1.Service
+	Services() []*corev1.Service
 	// Age returns the job age
 	Age() time.Duration
 	// Get start time

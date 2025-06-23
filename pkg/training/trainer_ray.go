@@ -25,7 +25,7 @@ import (
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/ray-project/kuberay/ray-operator/pkg/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -41,8 +41,8 @@ const (
 type RayJob struct {
 	*BasicJobInfo
 	rayJob       *rayv1.RayJob
-	pods         []*v1.Pod // all the pods including statefulset and job
-	chiefPod     *v1.Pod   // the head pod
+	pods         []*corev1.Pod // all the pods including statefulset and job
+	chiefPod     *corev1.Pod   // the head pod
 	requestedGPU int64
 	allocatedGPU int64
 	trainerType  types.TrainingJobType // return trainer type: rayjob
@@ -61,7 +61,7 @@ func (rj *RayJob) Uid() string {
 }
 
 // Get the head Pod of the Job.
-func (rj *RayJob) ChiefPod() *v1.Pod {
+func (rj *RayJob) ChiefPod() *corev1.Pod {
 	return rj.chiefPod
 }
 
@@ -70,7 +70,7 @@ func (rj *RayJob) Trainer() types.TrainingJobType {
 }
 
 // Get all the pods of the Training Job
-func (rj *RayJob) AllPods() []*v1.Pod {
+func (rj *RayJob) AllPods() []*corev1.Pod {
 	return rj.pods
 }
 
@@ -117,13 +117,13 @@ func (rj *RayJob) Duration() time.Duration {
 	}
 
 	if !rayjob.Status.EndTime.IsZero() {
-		return rayjob.Status.EndTime.Time.Sub(rayjob.Status.StartTime.Time)
+		return rayjob.Status.EndTime.Sub(rayjob.Status.StartTime.Time)
 	}
 
 	if rj.GetStatus() == "FAILED" {
 		cond := getPodLatestCondition(rj.chiefPod)
 		if !cond.LastTransitionTime.IsZero() {
-			return cond.LastTransitionTime.Time.Sub(rayjob.CreationTimestamp.Time)
+			return cond.LastTransitionTime.Sub(rayjob.CreationTimestamp.Time)
 		} else {
 			log.Debugf("the latest condition's time is zero of pod %s", rj.chiefPod.Name)
 		}
@@ -156,11 +156,11 @@ func (rj *RayJob) GetJobDashboards(client *kubernetes.Clientset, namespace, aren
 	}
 
 	if dashboardURL == "" {
-		return urls, fmt.Errorf("No LOGVIEWER Installed.")
+		return urls, fmt.Errorf("no LOGVIEWER Installed")
 	}
 
 	if len(rj.chiefPod.Spec.Containers) == 0 {
-		return urls, fmt.Errorf("head pod is not ready!")
+		return urls, fmt.Errorf("head pod is not ready")
 	}
 
 	url := fmt.Sprintf("%s/#!/log/%s/%s/%s?namespace=%s\n",
@@ -315,7 +315,7 @@ func (rjt *RayJobTrainer) GetTrainingJob(name, namespace string) (TrainingJob, e
 
 }
 
-func (rjt *RayJobTrainer) isChiefPod(rayJob *rayv1.RayJob, item *v1.Pod) bool {
+func (rjt *RayJobTrainer) isChiefPod(rayJob *rayv1.RayJob, item *corev1.Pod) bool {
 	if val, ok := item.Labels[labelRayJobName]; ok && rayJob.Name == val {
 		return true
 	} else {
@@ -324,7 +324,7 @@ func (rjt *RayJobTrainer) isChiefPod(rayJob *rayv1.RayJob, item *v1.Pod) bool {
 }
 
 // Determine whether it is a pod of RayJobs submitted by Arena
-func (rjt *RayJobTrainer) isRayJobPod(name, ns string, pod *v1.Pod) bool {
+func (rjt *RayJobTrainer) isRayJobPod(name, ns string, pod *corev1.Pod) bool {
 	return utils.IsRayJobPod(name, ns, pod)
 }
 
@@ -369,8 +369,8 @@ func (rjt *RayJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) 
 }
 
 // filter out all pods and chief pod (head pod) of RayJob from pods in current system
-func getPodsOfRayJob(rjt *RayJobTrainer, rayJob *rayv1.RayJob, podList []*v1.Pod) ([]*v1.Pod, *v1.Pod) {
-	return getPodsOfTrainingJob(rayJob.Name, rayJob.Namespace, podList, rjt.isRayJobPod, func(pod *v1.Pod) bool {
+func getPodsOfRayJob(rjt *RayJobTrainer, rayJob *rayv1.RayJob, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
+	return getPodsOfTrainingJob(rayJob.Name, rayJob.Namespace, podList, rjt.isRayJobPod, func(pod *corev1.Pod) bool {
 		return rjt.isChiefPod(rayJob, pod)
 	})
 }

@@ -94,7 +94,7 @@ func (s *KFServingArgsBuilder) Build() error {
 
 func (s *KFServingArgsBuilder) validate() (err error) {
 	if s.args.StorageUri == "" && s.args.Image == "" {
-		return fmt.Errorf("storage uri and image can not be empty at the same time.")
+		return fmt.Errorf("storage uri and image can not be empty at the same time")
 	}
 	return nil
 }

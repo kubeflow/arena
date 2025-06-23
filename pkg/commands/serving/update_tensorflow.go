@@ -16,6 +16,7 @@ package serving
 
 import (
 	"fmt"
+
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/serving"
 

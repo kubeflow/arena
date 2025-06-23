@@ -25,7 +25,7 @@ import (
 	"github.com/kubeflow/arena/pkg/util"
 	"github.com/kubeflow/arena/pkg/workflow"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	lws_v1 "sigs.k8s.io/lws/api/leaderworkerset/v1"
@@ -126,7 +126,7 @@ func (p *DistributedServingProcesser) FilterServingJobs(namespace string, allNam
 
 	servingJobs := []ServingJob{}
 	for _, lws := range lwsList {
-		filterPods := []*v1.Pod{}
+		filterPods := []*corev1.Pod{}
 		for _, pod := range pods {
 			if lws.Labels[servingNameLabelKey] == pod.Labels[servingNameLabelKey] &&
 				lws.Labels[servingTypeLabelKey] == pod.Labels[servingTypeLabelKey] {
@@ -157,11 +157,11 @@ func (s *lwsJob) Uid() string {
 }
 
 func (s *lwsJob) Age() time.Duration {
-	return time.Since(s.lws.ObjectMeta.CreationTimestamp.Time)
+	return time.Since(s.lws.CreationTimestamp.Time)
 }
 
 func (s *lwsJob) StartTime() *metav1.Time {
-	return &s.lws.ObjectMeta.CreationTimestamp
+	return &s.lws.CreationTimestamp
 }
 
 func (s *lwsJob) RequestCPUs() float64 {
@@ -169,7 +169,7 @@ func (s *lwsJob) RequestCPUs() float64 {
 	size := s.lws.Spec.LeaderWorkerTemplate.Size
 	masterCPUs := 0.0
 	for _, c := range s.lws.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.CPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.CPUResourceName)]; ok {
 			masterCPUs += float64(val.Value())
 		}
 	}
@@ -177,7 +177,7 @@ func (s *lwsJob) RequestCPUs() float64 {
 	if size != nil && *size > 1 {
 		workerCPUs := 0.0
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.CPUResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.CPUResourceName)]; ok {
 				workerCPUs += float64(val.Value())
 			}
 		}
@@ -192,10 +192,10 @@ func (s *lwsJob) RequestGPUs() float64 {
 	size := s.lws.Spec.LeaderWorkerTemplate.Size
 	masterGPUs := 0.0
 	for _, c := range s.lws.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.NvidiaGPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.NvidiaGPUResourceName)]; ok {
 			masterGPUs += float64(val.Value())
 		}
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.AliyunGPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.AliyunGPUResourceName)]; ok {
 			masterGPUs += float64(val.Value())
 		}
 	}
@@ -203,12 +203,12 @@ func (s *lwsJob) RequestGPUs() float64 {
 	if size != nil && *size > 1 {
 		workerGPUs := 0.0
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.NvidiaGPUResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.NvidiaGPUResourceName)]; ok {
 				workerGPUs += float64(val.Value())
 			}
 		}
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.AliyunGPUResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.AliyunGPUResourceName)]; ok {
 				workerGPUs += float64(val.Value())
 			}
 		}
@@ -224,7 +224,7 @@ func (s *lwsJob) RequestGPUMemory() int {
 
 	masterGpuMemory := 0
 	for _, c := range s.lws.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUShareResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUShareResourceName)]; ok {
 			masterGpuMemory += int(val.Value())
 		}
 	}
@@ -233,7 +233,7 @@ func (s *lwsJob) RequestGPUMemory() int {
 	if size != nil && *size > 1 {
 		workerGpuMemory := 0
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUShareResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUShareResourceName)]; ok {
 				workerGpuMemory += int(val.Value())
 			}
 		}
@@ -250,7 +250,7 @@ func (s *lwsJob) RequestGPUCore() int {
 
 	masterGpuCore := 0
 	for _, c := range s.lws.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUCoreShareResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUCoreShareResourceName)]; ok {
 			masterGpuCore += int(val.Value())
 		}
 	}
@@ -259,7 +259,7 @@ func (s *lwsJob) RequestGPUCore() int {
 	if size != nil && *size > 1 {
 		workerGpuCore := 0
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
-			if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUCoreShareResourceName)]; ok {
+			if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUCoreShareResourceName)]; ok {
 				workerGpuCore += int(val.Value())
 			}
 		}

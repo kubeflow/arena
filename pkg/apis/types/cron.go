@@ -110,11 +110,11 @@ type CronInfo struct {
 }
 
 type CronHistoryInfo struct {
-	Name       string `json:"name" yaml:"name"`
-	Namespace  string `json:"namespace" yaml:"namespace"`
-	Group      string `json:"group" yaml:"group"`
-	Kind       string `json:"kind" yaml:"kind"`
-	Status     string `json:"status" yaml:"status"`
+	Name       string `json:"name"       yaml:"name"`
+	Namespace  string `json:"namespace"  yaml:"namespace"`
+	Group      string `json:"group"      yaml:"group"`
+	Kind       string `json:"kind"       yaml:"kind"`
+	Status     string `json:"status"     yaml:"status"`
 	CreateTime string `json:"createTime" yaml:"createTime"`
 	FinishTime string `json:"finishTime" yaml:"finishTime"`
 }

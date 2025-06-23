@@ -28,9 +28,7 @@ func Retry(attempts int, sleep time.Duration, callback func() error) (err error)
 		if err == nil {
 			log.Info("Exit the func successfully.")
 			return nil
-		} else if !(IsNeedWaitError(err) ||
-			IsConnectionRefusedError(err) ||
-			IsUnexpectedEOFError(err)) {
+		} else if !IsNeedWaitError(err) && !IsConnectionRefusedError(err) && !IsUnexpectedEOFError(err) {
 			log.Infof("Still need to wait for func, err:%s\n", err.Error())
 			return err
 		}
@@ -43,7 +41,7 @@ func Retry(attempts int, sleep time.Duration, callback func() error) (err error)
 
 		log.Infoln("Retrying after error:", err)
 	}
-	return fmt.Errorf("After %d attempts, last error: %s", attempts, err)
+	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
 func RetryDuring(duration time.Duration, sleep time.Duration, callback func() error) (err error) {
@@ -55,9 +53,7 @@ func RetryDuring(duration time.Duration, sleep time.Duration, callback func() er
 		if err == nil {
 			log.Infof("Exit the func successfully.")
 			return nil
-		} else if !(IsNeedWaitError(err) ||
-			IsConnectionRefusedError(err) ||
-			IsUnexpectedEOFError(err)) {
+		} else if !IsNeedWaitError(err) && !IsConnectionRefusedError(err) && !IsUnexpectedEOFError(err) {
 			log.Warnf("Unexpected err %v", err)
 			return err
 		} else {
@@ -66,7 +62,7 @@ func RetryDuring(duration time.Duration, sleep time.Duration, callback func() er
 
 		delta := time.Since(start)
 		if delta > duration {
-			return fmt.Errorf("After %d attempts (during %s), last error: %s", i, delta, err)
+			return fmt.Errorf("after %d attempts (during %s), last error: %s", i, delta, err)
 		}
 
 		time.Sleep(sleep)

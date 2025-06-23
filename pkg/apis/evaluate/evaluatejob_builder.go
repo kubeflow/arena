@@ -16,9 +16,10 @@ package evaluate
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/argsbuilder"
-	"strings"
 )
 
 type EvaluateJobBuilder struct {

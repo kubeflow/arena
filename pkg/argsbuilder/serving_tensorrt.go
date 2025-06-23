@@ -104,7 +104,7 @@ func (s *TensorRTServingArgsBuilder) Build() error {
 
 func (s *TensorRTServingArgsBuilder) validate() (err error) {
 	if s.args.Image == "" {
-		return fmt.Errorf("image must be specified.")
+		return fmt.Errorf("image must be specified")
 	}
 	if s.args.GPUCount == 0 {
 		return fmt.Errorf("--gpus must be specific at least 1 GPU")
@@ -119,5 +119,5 @@ func (s *TensorRTServingArgsBuilder) checkPortsIsOk() error {
 	case s.args.GrpcPort != 0:
 		return nil
 	}
-	return fmt.Errorf("all  ports are 0,invalid configuration.")
+	return fmt.Errorf("all ports are 0,invalid configuration")
 }

@@ -19,7 +19,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -61,14 +61,14 @@ func dashboard(k8sclient kubernetes.Interface, namespace string, name string) (s
 		return "", err
 	}
 	if len(ep.Subsets) < 1 {
-		return "", fmt.Errorf("Failed to find endpoint for dashboard %s in namespace %s", name, namespace)
+		return "", fmt.Errorf("failed to find endpoint for dashboard %s in namespace %s", name, namespace)
 	}
 	subset := ep.Subsets[0]
 	if len(subset.Addresses) < 1 {
-		return "", fmt.Errorf("Failed to find address for dashboard %s in namespace %s", name, namespace)
+		return "", fmt.Errorf("failed to find address for dashboard %s in namespace %s", name, namespace)
 	}
 	if len(subset.Ports) < 1 {
-		return "", fmt.Errorf("Failed to find port for dashboard %s in namespace %s", name, namespace)
+		return "", fmt.Errorf("failed to find port for dashboard %s in namespace %s", name, namespace)
 	}
 	port := subset.Ports[0].Port
 	ip := subset.Addresses[0].IP
@@ -76,7 +76,7 @@ func dashboard(k8sclient kubernetes.Interface, namespace string, name string) (s
 	return fmt.Sprintf("%s:%d", ip, port), nil
 }
 
-func GetJobDashboards(dashboard string, job *v1.Job, pods []corev1.Pod) []string {
+func GetJobDashboards(dashboard string, job *batchv1.Job, pods []corev1.Pod) []string {
 	urls := []string{}
 	for _, pod := range pods {
 		meta := pod.ObjectMeta
@@ -118,7 +118,7 @@ func dashboardFromLoadbalancer(k8sclient kubernetes.Interface, namespace string,
 		}
 	}
 
-	return "", fmt.Errorf("Ignore non load balacner svc for %s in namespace %s", name, namespace)
+	return "", fmt.Errorf("ignore non load balacner svc for %s in namespace %s", name, namespace)
 }
 
 // Get dashboard url if it's nodePort
@@ -150,7 +150,7 @@ func dashboardFromNodePort(k8sclient kubernetes.Interface, namespace string, nam
 				}
 			}
 			if !findReadyNode {
-				return "", fmt.Errorf("Failed to find the ready node for exporting dashboard.")
+				return "", fmt.Errorf("failed to find the ready node for exporting dashboard")
 			}
 			address := node.Status.Addresses[0].Address
 			return fmt.Sprintf("%s:%d", address, nodePort), nil
@@ -158,5 +158,5 @@ func dashboardFromNodePort(k8sclient kubernetes.Interface, namespace string, nam
 
 	}
 
-	return "", fmt.Errorf("Ignore non load balacner svc for %s in namespace %s", name, namespace)
+	return "", fmt.Errorf("ignore non load balacner svc for %s in namespace %s", name, namespace)
 }

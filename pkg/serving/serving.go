@@ -27,8 +27,8 @@ import (
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/util"
 	log "github.com/sirupsen/logrus"
-	appv1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -88,10 +88,10 @@ type servingJob struct {
 	namespace     string
 	servingType   types.ServingJobType
 	version       string
-	pods          []*v1.Pod
-	deployment    *appv1.Deployment
-	services      []*v1.Service
-	istioServices []*v1.Service
+	pods          []*corev1.Pod
+	deployment    *appsv1.Deployment
+	services      []*corev1.Service
+	istioServices []*corev1.Service
 }
 
 func (s *servingJob) Uid() string {
@@ -114,29 +114,29 @@ func (s *servingJob) Version() string {
 	return s.version
 }
 
-func (s *servingJob) Pods() []*v1.Pod {
+func (s *servingJob) Pods() []*corev1.Pod {
 	return s.pods
 }
 
-func (s *servingJob) Deployment() *appv1.Deployment {
+func (s *servingJob) Deployment() *appsv1.Deployment {
 	return s.deployment
 }
 
-func (s *servingJob) Services() []*v1.Service {
+func (s *servingJob) Services() []*corev1.Service {
 	return s.services
 }
 
 func (s *servingJob) IPAddress() string {
 	// 1.search istio gateway
 	for _, svc := range s.istioServices {
-		if svc.Spec.Type == v1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
+		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
 			return svc.Status.LoadBalancer.Ingress[0].IP
 		}
 	}
 	// 2.search ingress load balancer
 	ipAddress := "N/A"
 	for _, svc := range s.services {
-		if svc.Spec.Type == v1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
+		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
 			return svc.Status.LoadBalancer.Ingress[0].IP
 		}
 		// if the service is not we created,skip it
@@ -163,17 +163,17 @@ func (s *servingJob) IPAddress() string {
 }
 
 func (s *servingJob) Age() time.Duration {
-	return time.Since(s.deployment.ObjectMeta.CreationTimestamp.Time)
+	return time.Since(s.deployment.CreationTimestamp.Time)
 }
 
 func (s *servingJob) StartTime() *metav1.Time {
-	return &s.deployment.ObjectMeta.CreationTimestamp
+	return &s.deployment.CreationTimestamp
 }
 
 func (s *servingJob) Endpoints() []types.Endpoint {
 	endpoints := []types.Endpoint{}
 	for _, svc := range s.istioServices {
-		if svc.Spec.Type == v1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
+		if svc.Spec.Type == corev1.ServiceTypeLoadBalancer && len(svc.Status.LoadBalancer.Ingress) != 0 {
 			for _, p := range svc.Spec.Ports {
 				if p.Name == istioGatewayHTTPPortName {
 					endpoint := types.Endpoint{
@@ -230,7 +230,7 @@ func (s *servingJob) RequestCPUs() float64 {
 	podCPUs := 0.0
 
 	for _, c := range s.deployment.Spec.Template.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.CPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.CPUResourceName)]; ok {
 			podCPUs += float64(val.Value())
 		}
 	}
@@ -241,10 +241,10 @@ func (s *servingJob) RequestGPUs() float64 {
 	replicas := *s.deployment.Spec.Replicas
 	podGPUs := 0
 	for _, c := range s.deployment.Spec.Template.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.NvidiaGPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.NvidiaGPUResourceName)]; ok {
 			podGPUs += int(val.Value())
 		}
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.AliyunGPUResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.AliyunGPUResourceName)]; ok {
 			podGPUs += int(val.Value())
 		}
 	}
@@ -255,7 +255,7 @@ func (s *servingJob) RequestGPUMemory() int {
 	replicas := *s.deployment.Spec.Replicas
 	podGPUMemory := 0
 	for _, c := range s.deployment.Spec.Template.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUShareResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUShareResourceName)]; ok {
 			podGPUMemory += int(val.Value())
 		}
 	}
@@ -266,7 +266,7 @@ func (s *servingJob) RequestGPUCore() int {
 	replicas := *s.deployment.Spec.Replicas
 	podGPUCore := 0
 	for _, c := range s.deployment.Spec.Template.Spec.Containers {
-		if val, ok := c.Resources.Limits[v1.ResourceName(types.GPUCoreShareResourceName)]; ok {
+		if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUCoreShareResourceName)]; ok {
 			podGPUCore += int(val.Value())
 		}
 	}
@@ -285,7 +285,7 @@ func (s *servingJob) Instances() []types.ServingInstance {
 	instances := []types.ServingInstance{}
 	for index, pod := range s.pods {
 		status, totalContainers, restart, readyContainer := utils.DefinePodPhaseStatus(*pod)
-		age := util.ShortHumanDuration(time.Since(pod.ObjectMeta.CreationTimestamp.Time))
+		age := util.ShortHumanDuration(time.Since(pod.CreationTimestamp.Time))
 		gpuMemory := utils.GPUMemoryCountInPod(pod)
 		gpuCore := utils.GPUCoreCountInPod(pod)
 		gpus := getPodGPUs(pod, gpuMemory, index)
@@ -393,8 +393,8 @@ func (p *processer) FilterServingJobs(namespace string, allNamespace bool, label
 	istioGatewayServices := p.getIstioGatewayService()
 	servingJobs := []ServingJob{}
 	for _, deployment := range deployments {
-		filterPods := []*v1.Pod{}
-		filterServices := []*v1.Service{}
+		filterPods := []*corev1.Pod{}
+		filterServices := []*corev1.Service{}
 		for _, pod := range pods {
 			if p.isDeploymentPod(deployment, pod) {
 				filterPods = append(filterPods, pod)
@@ -420,7 +420,7 @@ func (p *processer) FilterServingJobs(namespace string, allNamespace bool, label
 	return servingJobs, nil
 }
 
-func (p *processer) isDeploymentPod(d *appv1.Deployment, pod *v1.Pod) bool {
+func (p *processer) isDeploymentPod(d *appsv1.Deployment, pod *corev1.Pod) bool {
 	if d.Namespace != pod.Namespace {
 		return false
 	}
@@ -436,7 +436,7 @@ func (p *processer) isDeploymentPod(d *appv1.Deployment, pod *v1.Pod) bool {
 	return true
 }
 
-func (p *processer) isDeploymentService(d *appv1.Deployment, svc *v1.Service) bool {
+func (p *processer) isDeploymentService(d *appsv1.Deployment, svc *corev1.Service) bool {
 	if d.Namespace != svc.Namespace {
 		return false
 	}
@@ -453,8 +453,8 @@ func (p *processer) isDeploymentService(d *appv1.Deployment, svc *v1.Service) bo
 
 }
 
-func (p *processer) getIstioGatewayService() []*v1.Service {
-	istioServices := []*v1.Service{}
+func (p *processer) getIstioGatewayService() []*corev1.Service {
+	istioServices := []*corev1.Service{}
 	if !p.useIstioGateway {
 		return istioServices
 	}
@@ -474,7 +474,7 @@ func (p *processer) ListServingJobs(namespace string, allNamespace bool) ([]Serv
 	return p.FilterServingJobs(namespace, allNamespace, selector)
 }
 
-func (p *processer) IsDeploymentPod(deployment *appv1.Deployment, pod *v1.Pod) bool {
+func (p *processer) IsDeploymentPod(deployment *appsv1.Deployment, pod *corev1.Pod) bool {
 	if deployment.Namespace != pod.Namespace {
 		return false
 	}
@@ -490,7 +490,7 @@ func (p *processer) IsDeploymentPod(deployment *appv1.Deployment, pod *v1.Pod) b
 	return true
 }
 
-func (p *processer) IsKnownDeployment(namespace, name, version string, deployment *appv1.Deployment) bool {
+func (p *processer) IsKnownDeployment(namespace, name, version string, deployment *appsv1.Deployment) bool {
 	if deployment.Namespace != namespace {
 		return false
 	}
@@ -509,7 +509,7 @@ func (p *processer) IsKnownDeployment(namespace, name, version string, deploymen
 	return true
 }
 
-func (p *processer) IsKnownService(namespace, name, version string, service *v1.Service) bool {
+func (p *processer) IsKnownService(namespace, name, version string, service *corev1.Service) bool {
 	if service.Namespace != namespace {
 		return false
 	}
@@ -557,19 +557,19 @@ func getNodeGPUMemory(nodeName string) float64 {
 //	return totalGPUCores / totalGPUs
 //}
 
-func getResourceOfGPUShareNode(node *v1.Node, resourceName string) float64 {
-	val, ok := node.Status.Capacity[v1.ResourceName(resourceName)]
+func getResourceOfGPUShareNode(node *corev1.Node, resourceName string) float64 {
+	val, ok := node.Status.Capacity[corev1.ResourceName(resourceName)]
 	if !ok {
 		return 0
 	}
 	return float64(val.Value())
 }
 
-func getPodGPUs(pod *v1.Pod, gpuMemory int, index int) float64 {
+func getPodGPUs(pod *corev1.Pod, gpuMemory int, index int) float64 {
 	if utils.IsCompletedPod(pod) {
 		return float64(0)
 	}
-	if pod.Status.Phase != v1.PodRunning {
+	if pod.Status.Phase != corev1.PodRunning {
 		return float64(0)
 	}
 	if len(pod.Spec.NodeName) == 0 {

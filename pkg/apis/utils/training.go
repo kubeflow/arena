@@ -16,10 +16,10 @@ package utils
 
 import (
 	"github.com/kubeflow/arena/pkg/apis/types"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
-func IsTensorFlowPod(name, ns string, pod *v1.Pod) bool {
+func IsTensorFlowPod(name, ns string, pod *corev1.Pod) bool {
 	// check the release name is matched tfjob name
 	createdBy := pod.Labels["createdBy"]
 	if createdBy != "" && createdBy == "Cron" {
@@ -51,7 +51,7 @@ func IsTensorFlowPod(name, ns string, pod *v1.Pod) bool {
 	}
 	return false
 }
-func IsPyTorchPod(name, ns string, pod *v1.Pod) bool {
+func IsPyTorchPod(name, ns string, pod *corev1.Pod) bool {
 	// check the release name is matched pytorchjob name
 	if pod.Labels["release"] != name {
 		return false
@@ -74,7 +74,7 @@ func IsPyTorchPod(name, ns string, pod *v1.Pod) bool {
 	return false
 }
 
-func IsRayJobPod(name, ns string, pod *v1.Pod) bool {
+func IsRayJobPod(name, ns string, pod *corev1.Pod) bool {
 	// determine whether the pod is a ray job pod
 	if pod.Labels["job-name"] == name {
 		return true
@@ -92,7 +92,7 @@ func IsRayJobPod(name, ns string, pod *v1.Pod) bool {
 	return true
 }
 
-func IsMPIPod(name, ns string, pod *v1.Pod) bool {
+func IsMPIPod(name, ns string, pod *corev1.Pod) bool {
 	// check the release name is matched mpijob name
 	if pod.Labels["release"] != name {
 		return false
@@ -111,7 +111,7 @@ func IsMPIPod(name, ns string, pod *v1.Pod) bool {
 	return true
 }
 
-func IsHorovodPod(name, ns string, pod *v1.Pod) bool {
+func IsHorovodPod(name, ns string, pod *corev1.Pod) bool {
 	if pod.Labels["release"] != name {
 		return false
 	}
@@ -124,7 +124,7 @@ func IsHorovodPod(name, ns string, pod *v1.Pod) bool {
 	return true
 }
 
-func IsVolcanoPod(name, ns string, pod *v1.Pod) bool {
+func IsVolcanoPod(name, ns string, pod *corev1.Pod) bool {
 	if pod.Labels["release"] != name {
 		return false
 	}
@@ -137,7 +137,7 @@ func IsVolcanoPod(name, ns string, pod *v1.Pod) bool {
 	return true
 }
 
-func IsETPod(name, ns string, pod *v1.Pod) bool {
+func IsETPod(name, ns string, pod *corev1.Pod) bool {
 	if pod.Labels["release"] != name {
 		return false
 	}
@@ -153,7 +153,7 @@ func IsETPod(name, ns string, pod *v1.Pod) bool {
 	return true
 }
 
-func IsSparkPod(name, ns string, item *v1.Pod) bool {
+func IsSparkPod(name, ns string, item *corev1.Pod) bool {
 	if item.Labels["release"] != name {
 		return false
 	}
@@ -166,7 +166,7 @@ func IsSparkPod(name, ns string, item *v1.Pod) bool {
 	return true
 }
 
-func IsDeepSpeedPod(name, ns string, pod *v1.Pod) bool {
+func IsDeepSpeedPod(name, ns string, pod *corev1.Pod) bool {
 	if pod.Labels["release"] != name {
 		return false
 	}

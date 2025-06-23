@@ -75,8 +75,8 @@ func setupKubeconfig(kubeconfig string) (string, error) {
 	// normalize path
 	kubeconfig = filepath.Clean(kubeconfig)
 	// change ~ to user home dir
-	kubeconfig = strings.Replace(kubeconfig, "~", currentUser.HomeDir, -1)
-	os.Setenv("KUBECONFIG", kubeconfig)
+	kubeconfig = strings.ReplaceAll(kubeconfig, "~", currentUser.HomeDir)
+	_ = os.Setenv("KUBECONFIG", kubeconfig)
 	// set env
 	_, err = os.Stat(kubeconfig)
 	return kubeconfig, err
