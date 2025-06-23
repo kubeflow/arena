@@ -43,7 +43,7 @@ KIND_VERSION ?= v0.23.0
 KIND_K8S_VERSION ?= v1.29.3
 ENVTEST_VERSION ?= release-0.18
 ENVTEST_K8S_VERSION ?= 1.29.3
-GOLANGCI_LINT_VERSION ?= v1.57.2
+GOLANGCI_LINT_VERSION ?= v2.1.6
 
 # Binaries
 ARENA ?= arena-v$(VERSION)-$(OS)-$(ARCH)
@@ -250,7 +250,7 @@ $(ARENA_INSTALLER_TARBALL): arena kubectl helm
 .PHONY: golangci-lint
 golangci-lint: $(LOCALBIN)/$(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(LOCALBIN)/$(GOLANGCI_LINT): $(LOCALBIN)
-	$(call go-install-tool,$(LOCALBIN)/$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
+	$(call go-install-tool,$(LOCALBIN)/$(GOLANGCI_LINT),github.com/golangci/golangci-lint/v2/cmd/golangci-lint,${GOLANGCI_LINT_VERSION})
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download setup-envtest locally if necessary.
