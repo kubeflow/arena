@@ -16,3 +16,6 @@ resources:
   limits:
     cpu: 200m
     memory: 2Gi
+
+# -- Tolerations for cron-operator pods.
+tolerations: []
