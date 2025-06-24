@@ -1,6 +1,24 @@
 # Changelog
 
-## [HEAD](https://github.com/kubeflow/arena/tree/v0.15.0) (2025-06-04)
+## [v0.15.1](https://github.com/kubeflow/arena/tree/v0.15.1) (2025-06-25)
+
+### Features
+
+- Add support for configuring tolerations ([#1337](https://github.com/kubeflow/arena/pull/1337) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Misc
+
+- Remove kubernetes artifacts ([#1329](https://github.com/kubeflow/arena/pull/1329) by [@ChenYi015](https://github.com/ChenYi015))
+- [CI] Add CI workflow for releasing Arena images ([#1340](https://github.com/kubeflow/arena/pull/1340) by [@ChenYi015](https://github.com/ChenYi015))
+- Update uninstall bash script ([#1335](https://github.com/kubeflow/arena/pull/1335) by [@ChenYi015](https://github.com/ChenYi015))
+- Fix golangci-lint issues ([#1341](https://github.com/kubeflow/arena/pull/1341) by [@ChenYi015](https://github.com/ChenYi015))
+- Bump golang version from 1.22.7 to 1.23.10 ([#1345](https://github.com/kubeflow/arena/pull/1345) by [@ChenYi015](https://github.com/ChenYi015))
+- chore(deps): bump github.com/prometheus/common from 0.60.1 to 0.65.0 ([#1343](https://github.com/kubeflow/arena/pull/1343) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump golang.org/x/crypto from 0.38.0 to 0.39.0 ([#1334](https://github.com/kubeflow/arena/pull/1334) by [@dependabot[bot]](https://github.com/apps/dependabot))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.15.0...v0.15.1)
+
+## [v0.15.0](https://github.com/kubeflow/arena/tree/v0.15.0) (2025-06-04)
 
 ### Features
 
