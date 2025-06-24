@@ -1,6 +1,6 @@
 module github.com/kubeflow/arena
 
-go 1.22.7
+go 1.23.10
 
 require (
 	github.com/go-resty/resty/v2 v2.16.5
