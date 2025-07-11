@@ -313,7 +313,7 @@ func (e *EvaluateJobArgsBuilder) setTolerations() error {
 		}
 		tolerationArg, err := parseTolerationString(taintKey)
 		if err != nil {
-			log.Debugf(err.Error())
+			log.Debug(err.Error())
 			continue
 		}
 		e.args.Tolerations = append(e.args.Tolerations, *tolerationArg)

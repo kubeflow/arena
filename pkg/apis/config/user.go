@@ -16,6 +16,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -81,7 +82,7 @@ func getUserNameByToken(kubeclient kubernetes.Interface, token string) (*string,
 	}
 
 	if result.Status.Error != "" {
-		return nil, fmt.Errorf(result.Status.Error)
+		return nil, errors.New(result.Status.Error)
 	}
 
 	return &result.Status.User.Username, nil

@@ -577,7 +577,7 @@ func (s *SubmitArgsBuilder) setTolerations() error {
 		}
 		tolerationArg, err := parseTolerationString(taintKey)
 		if err != nil {
-			log.Debugf(err.Error())
+			log.Debug(err.Error())
 			continue
 		}
 		s.args.Tolerations = append(s.args.Tolerations, *tolerationArg)

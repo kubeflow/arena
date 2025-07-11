@@ -164,7 +164,7 @@ func createOrUpdateDestinationRule(istioClient *rest.RESTClient, preprocessObjec
 		if err != nil {
 			return err
 		}
-		log.Debugf(string(newbody))
+		log.Debug(string(newbody))
 		return nil
 	}
 	log.Debugf("original destinationrule: %s", result2)
@@ -186,7 +186,7 @@ func createOrUpdateDestinationRule(istioClient *rest.RESTClient, preprocessObjec
 		log.Error(err)
 		return err
 	}
-	log.Debugf(string(newbody))
+	log.Debug(string(newbody))
 	return nil
 }
 
@@ -207,7 +207,7 @@ func createOrUpdateVirtualService(namespace string, istioClient *rest.RESTClient
 		if err != nil {
 			return err
 		}
-		log.Debugf(string(newbody))
+		log.Debug(string(newbody))
 		return nil
 	}
 	log.Debugf("original virtualservice: %s", result2)
@@ -227,7 +227,7 @@ func createOrUpdateVirtualService(namespace string, istioClient *rest.RESTClient
 		log.Error(err)
 		return err
 	}
-	log.Debugf(string(newbody))
+	log.Debug(string(newbody))
 	return nil
 }
 
