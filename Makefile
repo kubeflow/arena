@@ -40,7 +40,7 @@ ARENA_ARTIFACTS_CHART_PATH ?= $(CURRENT_DIR)/arena-artifacts
 # Versions
 GOLANG_VERSION=$(shell grep -e '^go ' go.mod | cut -d ' ' -f 2)
 KUBECTL_VERSION ?= v1.28.4
-HELM_VERSION ?= v3.13.3
+HELM_VERSION ?= $(shell grep -e 'helm.sh/helm/v3 ' go.mod | cut -d ' ' -f 2)
 HELM_UNITTEST_VERSION ?= 0.5.1
 KIND_VERSION ?= v0.23.0
 KIND_K8S_VERSION ?= v1.29.3
