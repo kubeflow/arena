@@ -15,6 +15,7 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
 
 	torchv1 "github.com/kubeflow/arena/pkg/operators/pytorch-operator/apis/pytorch/v1"
@@ -49,7 +50,7 @@ func ValidateV1PyTorchJobSpec(c *torchv1.PyTorchJobSpec) error {
 		for _, container := range value.Template.Spec.Containers {
 			if container.Image == "" {
 				msg := fmt.Sprintf("PyTorchJobSpec is not valid: Image is undefined in the container of %v", rType)
-				return fmt.Errorf(msg)
+				return errors.New(msg)
 			}
 			if container.Name == torchv1.DefaultContainerName {
 				defaultContainerPresent = true
@@ -58,7 +59,7 @@ func ValidateV1PyTorchJobSpec(c *torchv1.PyTorchJobSpec) error {
 		//Make sure there has at least one container named "pytorch"
 		if !defaultContainerPresent {
 			msg := fmt.Sprintf("PyTorchJobSpec is not valid: There is no container named %s in %v", torchv1.DefaultContainerName, rType)
-			return fmt.Errorf(msg)
+			return errors.New(msg)
 		}
 		if rType == torchv1.PyTorchReplicaTypeMaster {
 			masterExists = true

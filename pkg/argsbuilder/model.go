@@ -284,7 +284,7 @@ func (m *ModelArgsBuilder) setTolerations() error {
 		}
 		tolerationArg, err := parseTolerationString(taintKey)
 		if err != nil {
-			log.Debugf(err.Error())
+			log.Debug(err.Error())
 			continue
 		}
 		m.args.Tolerations = append(m.args.Tolerations, *tolerationArg)

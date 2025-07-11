@@ -15,6 +15,7 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -52,7 +53,7 @@ func validateBetaTwoReplicaSpecs(specs map[tfv1beta2.TFReplicaType]*commonv1beta
 			if container.Image == "" {
 				msg := fmt.Sprintf("TFJobSpec is not valid: Image is undefined in the container of %v", rType)
 				log.Error(msg)
-				return fmt.Errorf(msg)
+				return errors.New(msg)
 			}
 			if container.Name == tfv1beta2.DefaultContainerName {
 				numNamedTensorflow++
@@ -62,7 +63,7 @@ func validateBetaTwoReplicaSpecs(specs map[tfv1beta2.TFReplicaType]*commonv1beta
 		if numNamedTensorflow == 0 {
 			msg := fmt.Sprintf("TFJobSpec is not valid: There is no container named %s in %v", tfv1beta2.DefaultContainerName, rType)
 			log.Error(msg)
-			return fmt.Errorf(msg)
+			return errors.New(msg)
 		}
 	}
 	if foundChief > 1 {
@@ -101,7 +102,7 @@ func validateV1ReplicaSpecs(specs map[tfv1.TFReplicaType]*commonv1.ReplicaSpec) 
 			if container.Image == "" {
 				msg := fmt.Sprintf("TFJobSpec is not valid: Image is undefined in the container of %v", rType)
 				log.Error(msg)
-				return fmt.Errorf(msg)
+				return errors.New(msg)
 			}
 			if container.Name == tfv1.DefaultContainerName {
 				numNamedTensorflow++
@@ -111,14 +112,14 @@ func validateV1ReplicaSpecs(specs map[tfv1.TFReplicaType]*commonv1.ReplicaSpec) 
 		if numNamedTensorflow == 0 {
 			msg := fmt.Sprintf("TFJobSpec is not valid: There is no container named %s in %v", tfv1.DefaultContainerName, rType)
 			log.Error(msg)
-			return fmt.Errorf(msg)
+			return errors.New(msg)
 		}
 	}
 	if foundChief > 1 {
-		return fmt.Errorf("TFJobSpec is not valid: more than 1 chief/master found")
+		return errors.New("TFJobSpec is not valid: more than 1 chief/master found")
 	}
 	if foundEvaluator > 1 {
-		return fmt.Errorf("TFJobSpec is not valid: more than 1 evaluator found")
+		return errors.New("TFJobSpec is not valid: more than 1 evaluator found")
 	}
 	return nil
 }
