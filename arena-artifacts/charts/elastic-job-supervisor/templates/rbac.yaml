@@ -21,11 +21,7 @@ rules:
   - pods
   - events
   verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - '*'
 - apiGroups:
   - ""
   resources:
