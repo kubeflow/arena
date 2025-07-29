@@ -61,6 +61,17 @@ func (this *OutboundTrafficPolicy) UnmarshalJSON(b []byte) error {
 	return SidecarUnmarshaler.Unmarshal(bytes.NewReader(b), this)
 }
 
+// MarshalJSON is a custom marshaler for SidecarPort
+func (this *SidecarPort) MarshalJSON() ([]byte, error) {
+	str, err := SidecarMarshaler.MarshalToString(this)
+	return []byte(str), err
+}
+
+// UnmarshalJSON is a custom unmarshaler for SidecarPort
+func (this *SidecarPort) UnmarshalJSON(b []byte) error {
+	return SidecarUnmarshaler.Unmarshal(bytes.NewReader(b), this)
+}
+
 var (
 	SidecarMarshaler   = &jsonpb.Marshaler{}
 	SidecarUnmarshaler = &jsonpb.Unmarshaler{AllowUnknownFields: true}
