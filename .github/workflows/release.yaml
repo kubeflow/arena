@@ -146,7 +146,7 @@ jobs:
             type=semver,pattern={{version}},value=${{ env.VERSION }}
 
       - name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: /tmp/digests
           pattern: digests-*
@@ -225,7 +225,7 @@ jobs:
           echo "VERSION=${VERSION}" >> ${GITHUB_ENV}
 
       - name: Download arena installer tarballs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: arena-installer-${{ env.VERSION }}-{linux,darwin}-{amd64,arm64}
 
