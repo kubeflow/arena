@@ -50,6 +50,28 @@ func (this *TrafficPolicy_TunnelSettings) UnmarshalJSON(b []byte) error {
 	return DestinationRuleUnmarshaler.Unmarshal(bytes.NewReader(b), this)
 }
 
+// MarshalJSON is a custom marshaler for TrafficPolicy_ProxyProtocol
+func (this *TrafficPolicy_ProxyProtocol) MarshalJSON() ([]byte, error) {
+	str, err := DestinationRuleMarshaler.MarshalToString(this)
+	return []byte(str), err
+}
+
+// UnmarshalJSON is a custom unmarshaler for TrafficPolicy_ProxyProtocol
+func (this *TrafficPolicy_ProxyProtocol) UnmarshalJSON(b []byte) error {
+	return DestinationRuleUnmarshaler.Unmarshal(bytes.NewReader(b), this)
+}
+
+// MarshalJSON is a custom marshaler for TrafficPolicy_RetryBudget
+func (this *TrafficPolicy_RetryBudget) MarshalJSON() ([]byte, error) {
+	str, err := DestinationRuleMarshaler.MarshalToString(this)
+	return []byte(str), err
+}
+
+// UnmarshalJSON is a custom unmarshaler for TrafficPolicy_RetryBudget
+func (this *TrafficPolicy_RetryBudget) UnmarshalJSON(b []byte) error {
+	return DestinationRuleUnmarshaler.Unmarshal(bytes.NewReader(b), this)
+}
+
 // MarshalJSON is a custom marshaler for Subset
 func (this *Subset) MarshalJSON() ([]byte, error) {
 	str, err := DestinationRuleMarshaler.MarshalToString(this)
@@ -113,6 +135,17 @@ func (this *LoadBalancerSettings_ConsistentHashLB_HTTPCookie) MarshalJSON() ([]b
 
 // UnmarshalJSON is a custom unmarshaler for LoadBalancerSettings_ConsistentHashLB_HTTPCookie
 func (this *LoadBalancerSettings_ConsistentHashLB_HTTPCookie) UnmarshalJSON(b []byte) error {
+	return DestinationRuleUnmarshaler.Unmarshal(bytes.NewReader(b), this)
+}
+
+// MarshalJSON is a custom marshaler for WarmupConfiguration
+func (this *WarmupConfiguration) MarshalJSON() ([]byte, error) {
+	str, err := DestinationRuleMarshaler.MarshalToString(this)
+	return []byte(str), err
+}
+
+// UnmarshalJSON is a custom unmarshaler for WarmupConfiguration
+func (this *WarmupConfiguration) UnmarshalJSON(b []byte) error {
 	return DestinationRuleUnmarshaler.Unmarshal(bytes.NewReader(b), this)
 }
 
