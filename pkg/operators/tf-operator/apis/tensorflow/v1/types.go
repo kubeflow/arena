@@ -53,7 +53,8 @@ type TFJobSpec struct {
 
 	// Defines the policy for cleaning up pods after the TFJob completes.
 	// Defaults to Running.
-	CleanPodPolicy *common.CleanPodPolicy `json:"cleanPodPolicy,omitempty"`
+	RunPolicy *common.RunPolicy `json:"runPolicy,omitempty"`
+
 
 	// Defines the TTL for cleaning up finished TFJobs (temporary
 	// before kubernetes adds the cleanup controller).
