@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"github.com/onsi/ginkgo/v2/internal/parallel_support"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
-	"golang.org/x/net/context"
 )
 
 type Phase uint
@@ -20,7 +20,7 @@ const (
 	PhaseRun
 )
 
-var PROGRESS_REPORTER_DEADLING = 5 * time.Second
+const ProgressReporterDeadline = 5 * time.Second
 
 type Suite struct {
 	tree               *TreeNode
@@ -104,13 +104,13 @@ func (suite *Suite) BuildTree() error {
 	return nil
 }
 
-func (suite *Suite) Run(description string, suiteLabels Labels, suitePath string, failer *Failer, reporter reporters.Reporter, writer WriterInterface, outputInterceptor OutputInterceptor, interruptHandler interrupt_handler.InterruptHandlerInterface, client parallel_support.Client, progressSignalRegistrar ProgressSignalRegistrar, suiteConfig types.SuiteConfig) (bool, bool) {
+func (suite *Suite) Run(description string, suiteLabels Labels, suiteSemVerConstraints SemVerConstraints, suitePath string, failer *Failer, reporter reporters.Reporter, writer WriterInterface, outputInterceptor OutputInterceptor, interruptHandler interrupt_handler.InterruptHandlerInterface, client parallel_support.Client, progressSignalRegistrar ProgressSignalRegistrar, suiteConfig types.SuiteConfig) (bool, bool) {
 	if suite.phase != PhaseBuildTree {
 		panic("cannot run before building the tree = call suite.BuildTree() first")
 	}
 	ApplyNestedFocusPolicyToTree(suite.tree)
 	specs := GenerateSpecsFromTreeRoot(suite.tree)
-	specs, hasProgrammaticFocus := ApplyFocusToSpecs(specs, description, suiteLabels, suiteConfig)
+	specs, hasProgrammaticFocus := ApplyFocusToSpecs(specs, description, suiteLabels, suiteSemVerConstraints, suiteConfig)
 
 	suite.phase = PhaseRun
 	suite.client = client
@@ -127,7 +127,7 @@ func (suite *Suite) Run(description string, suiteLabels Labels, suitePath string
 
 	cancelProgressHandler := progressSignalRegistrar(suite.handleProgressSignal)
 
-	success := suite.runSpecs(description, suiteLabels, suitePath, hasProgrammaticFocus, specs)
+	success := suite.runSpecs(description, suiteLabels, suiteSemVerConstraints, suitePath, hasProgrammaticFocus, specs)
 
 	cancelProgressHandler()
 
@@ -370,7 +370,7 @@ func (suite *Suite) generateProgressReport(fullReport bool) types.ProgressReport
 	suite.selectiveLock.Lock()
 	defer suite.selectiveLock.Unlock()
 
-	deadline, cancel := context.WithTimeout(context.Background(), PROGRESS_REPORTER_DEADLING)
+	deadline, cancel := context.WithTimeout(context.Background(), ProgressReporterDeadline)
 	defer cancel()
 	var additionalReports []string
 	if suite.currentSpecContext != nil {
@@ -428,13 +428,14 @@ func (suite *Suite) processCurrentSpecReport() {
 	}
 }
 
-func (suite *Suite) runSpecs(description string, suiteLabels Labels, suitePath string, hasProgrammaticFocus bool, specs Specs) bool {
+func (suite *Suite) runSpecs(description string, suiteLabels Labels, suiteSemVerConstraints SemVerConstraints, suitePath string, hasProgrammaticFocus bool, specs Specs) bool {
 	numSpecsThatWillBeRun := specs.CountWithoutSkip()
 
 	suite.report = types.Report{
 		SuitePath:                 suitePath,
 		SuiteDescription:          description,
 		SuiteLabels:               suiteLabels,
+		SuiteSemVerConstraints:    suiteSemVerConstraints,
 		SuiteConfig:               suite.config,
 		SuiteHasProgrammaticFocus: hasProgrammaticFocus,
 		PreRunStats: types.PreRunStats{

@@ -55,6 +55,7 @@ type Node struct {
 	FlakeAttempts           int
 	MustPassRepeatedly      int
 	Labels                  Labels
+	SemVerConstraints       SemVerConstraints
 	PollProgressAfter       time.Duration
 	PollProgressInterval    time.Duration
 	NodeTimeout             time.Duration
@@ -84,8 +85,9 @@ const SuppressProgressReporting = suppressProgressReporting(true)
 type FlakeAttempts uint
 type MustPassRepeatedly uint
 type Offset uint
-type Done chan<- interface{} // Deprecated Done Channel for asynchronous testing
+type Done chan<- any // Deprecated Done Channel for asynchronous testing
 type Labels []string
+type SemVerConstraints []string
 type PollProgressInterval time.Duration
 type PollProgressAfter time.Duration
 type NodeTimeout time.Duration
@@ -96,23 +98,35 @@ func (l Labels) MatchesLabelFilter(query string) bool {
 	return types.MustParseLabelFilter(query)(l)
 }
 
-func UnionOfLabels(labels ...Labels) Labels {
-	out := Labels{}
-	seen := map[string]bool{}
-	for _, labelSet := range labels {
-		for _, label := range labelSet {
-			if !seen[label] {
-				seen[label] = true
-				out = append(out, label)
+func (svc SemVerConstraints) MatchesSemVerFilter(version string) bool {
+	return types.MustParseSemVerFilter(version)(svc)
+}
+
+func unionOf[S ~[]E, E comparable](slices ...S) S {
+	out := S{}
+	seen := map[E]bool{}
+	for _, slice := range slices {
+		for _, item := range slice {
+			if !seen[item] {
+				seen[item] = true
+				out = append(out, item)
 			}
 		}
 	}
 	return out
 }
 
-func PartitionDecorations(args ...interface{}) ([]interface{}, []interface{}) {
-	decorations := []interface{}{}
-	remainingArgs := []interface{}{}
+func UnionOfLabels(labels ...Labels) Labels {
+	return unionOf(labels...)
+}
+
+func UnionOfSemVerConstraints(semVerConstraints ...SemVerConstraints) SemVerConstraints {
+	return unionOf(semVerConstraints...)
+}
+
+func PartitionDecorations(args ...any) ([]any, []any) {
+	decorations := []any{}
+	remainingArgs := []any{}
 	for _, arg := range args {
 		if isDecoration(arg) {
 			decorations = append(decorations, arg)
@@ -123,7 +137,7 @@ func PartitionDecorations(args ...interface{}) ([]interface{}, []interface{}) {
 	return decorations, remainingArgs
 }
 
-func isDecoration(arg interface{}) bool {
+func isDecoration(arg any) bool {
 	switch t := reflect.TypeOf(arg); {
 	case t == nil:
 		return false
@@ -151,6 +165,8 @@ func isDecoration(arg interface{}) bool {
 		return true
 	case t == reflect.TypeOf(Labels{}):
 		return true
+	case t == reflect.TypeOf(SemVerConstraints{}):
+		return true
 	case t == reflect.TypeOf(PollProgressInterval(0)):
 		return true
 	case t == reflect.TypeOf(PollProgressAfter(0)):
@@ -168,7 +184,7 @@ func isDecoration(arg interface{}) bool {
 	}
 }
 
-func isSliceOfDecorations(slice interface{}) bool {
+func isSliceOfDecorations(slice any) bool {
 	vSlice := reflect.ValueOf(slice)
 	if vSlice.Len() == 0 {
 		return false
@@ -184,13 +200,14 @@ func isSliceOfDecorations(slice interface{}) bool {
 var contextType = reflect.TypeOf(new(context.Context)).Elem()
 var specContextType = reflect.TypeOf(new(SpecContext)).Elem()
 
-func NewNode(deprecationTracker *types.DeprecationTracker, nodeType types.NodeType, text string, args ...interface{}) (Node, []error) {
+func NewNode(deprecationTracker *types.DeprecationTracker, nodeType types.NodeType, text string, args ...any) (Node, []error) {
 	baseOffset := 2
 	node := Node{
 		ID:                   UniqueNodeID(),
 		NodeType:             nodeType,
 		Text:                 text,
 		Labels:               Labels{},
+		SemVerConstraints:    SemVerConstraints{},
 		CodeLocation:         types.NewCodeLocation(baseOffset),
 		NestingLevel:         -1,
 		PollProgressAfter:    -1,
@@ -207,7 +224,7 @@ func NewNode(deprecationTracker *types.DeprecationTracker, nodeType types.NodeTy
 
 	args = unrollInterfaceSlice(args)
 
-	remainingArgs := []interface{}{}
+	remainingArgs := []any{}
 	// First get the CodeLocation up-to-date
 	for _, arg := range args {
 		switch v := arg.(type) {
@@ -221,9 +238,10 @@ func NewNode(deprecationTracker *types.DeprecationTracker, nodeType types.NodeTy
 	}
 
 	labelsSeen := map[string]bool{}
+	semVerConstraintsSeen := map[string]bool{}
 	trackedFunctionError := false
 	args = remainingArgs
-	remainingArgs = []interface{}{}
+	remainingArgs = []any{}
 	// now process the rest of the args
 	for _, arg := range args {
 		switch t := reflect.TypeOf(arg); {
@@ -308,6 +326,18 @@ func NewNode(deprecationTracker *types.DeprecationTracker, nodeType types.NodeTy
 					labelsSeen[label] = true
 					label, err := types.ValidateAndCleanupLabel(label, node.CodeLocation)
 					node.Labels = append(node.Labels, label)
+					appendError(err)
+				}
+			}
+		case t == reflect.TypeOf(SemVerConstraints{}):
+			if !nodeType.Is(types.NodeTypesForContainerAndIt) {
+				appendError(types.GinkgoErrors.InvalidDecoratorForNodeType(node.CodeLocation, nodeType, "SemVerConstraint"))
+			}
+			for _, semVerConstraint := range arg.(SemVerConstraints) {
+				if !semVerConstraintsSeen[semVerConstraint] {
+					semVerConstraintsSeen[semVerConstraint] = true
+					semVerConstraint, err := types.ValidateAndCleanupSemVerConstraint(semVerConstraint, node.CodeLocation)
+					node.SemVerConstraints = append(node.SemVerConstraints, semVerConstraint)
 					appendError(err)
 				}
 			}
@@ -451,7 +481,7 @@ func NewNode(deprecationTracker *types.DeprecationTracker, nodeType types.NodeTy
 
 var doneType = reflect.TypeOf(make(Done))
 
-func extractBodyFunction(deprecationTracker *types.DeprecationTracker, cl types.CodeLocation, arg interface{}) (func(SpecContext), bool) {
+func extractBodyFunction(deprecationTracker *types.DeprecationTracker, cl types.CodeLocation, arg any) (func(SpecContext), bool) {
 	t := reflect.TypeOf(arg)
 	if t.NumOut() > 0 || t.NumIn() > 1 {
 		return nil, false
@@ -477,7 +507,7 @@ func extractBodyFunction(deprecationTracker *types.DeprecationTracker, cl types.
 
 var byteType = reflect.TypeOf([]byte{})
 
-func extractSynchronizedBeforeSuiteProc1Body(arg interface{}) (func(SpecContext) []byte, bool) {
+func extractSynchronizedBeforeSuiteProc1Body(arg any) (func(SpecContext) []byte, bool) {
 	t := reflect.TypeOf(arg)
 	v := reflect.ValueOf(arg)
 
@@ -505,7 +535,7 @@ func extractSynchronizedBeforeSuiteProc1Body(arg interface{}) (func(SpecContext)
 	}, hasContext
 }
 
-func extractSynchronizedBeforeSuiteAllProcsBody(arg interface{}) (func(SpecContext, []byte), bool) {
+func extractSynchronizedBeforeSuiteAllProcsBody(arg any) (func(SpecContext, []byte), bool) {
 	t := reflect.TypeOf(arg)
 	v := reflect.ValueOf(arg)
 	hasContext, hasByte := false, false
@@ -536,11 +566,11 @@ func extractSynchronizedBeforeSuiteAllProcsBody(arg interface{}) (func(SpecConte
 
 var errInterface = reflect.TypeOf((*error)(nil)).Elem()
 
-func NewCleanupNode(deprecationTracker *types.DeprecationTracker, fail func(string, types.CodeLocation), args ...interface{}) (Node, []error) {
+func NewCleanupNode(deprecationTracker *types.DeprecationTracker, fail func(string, types.CodeLocation), args ...any) (Node, []error) {
 	decorations, remainingArgs := PartitionDecorations(args...)
 	baseOffset := 2
 	cl := types.NewCodeLocation(baseOffset)
-	finalArgs := []interface{}{}
+	finalArgs := []any{}
 	for _, arg := range decorations {
 		switch t := reflect.TypeOf(arg); {
 		case t == reflect.TypeOf(Offset(0)):
@@ -824,6 +854,32 @@ func (n Nodes) UnionOfLabels() []string {
 	return out
 }
 
+func (n Nodes) SemVerConstraints() [][]string {
+	out := make([][]string, len(n))
+	for i := range n {
+		if n[i].SemVerConstraints == nil {
+			out[i] = []string{}
+		} else {
+			out[i] = []string(n[i].SemVerConstraints)
+		}
+	}
+	return out
+}
+
+func (n Nodes) UnionOfSemVerConstraints() []string {
+	out := []string{}
+	seen := map[string]bool{}
+	for i := range n {
+		for _, constraint := range n[i].SemVerConstraints {
+			if !seen[constraint] {
+				seen[constraint] = true
+				out = append(out, constraint)
+			}
+		}
+	}
+	return out
+}
+
 func (n Nodes) CodeLocations() []types.CodeLocation {
 	out := make([]types.CodeLocation, len(n))
 	for i := range n {
@@ -920,15 +976,15 @@ func (n Nodes) GetMaxMustPassRepeatedly() int {
 	return maxMustPassRepeatedly
 }
 
-func unrollInterfaceSlice(args interface{}) []interface{} {
+func unrollInterfaceSlice(args any) []any {
 	v := reflect.ValueOf(args)
 	if v.Kind() != reflect.Slice {
-		return []interface{}{args}
+		return []any{args}
 	}
-	out := []interface{}{}
+	out := []any{}
 	for i := 0; i < v.Len(); i++ {
 		el := reflect.ValueOf(v.Index(i).Interface())
-		if el.Kind() == reflect.Slice && el.Type() != reflect.TypeOf(Labels{}) {
+		if el.Kind() == reflect.Slice && el.Type() != reflect.TypeOf(Labels{}) && el.Type() != reflect.TypeOf(SemVerConstraints{}) {
 			out = append(out, unrollInterfaceSlice(el.Interface())...)
 		} else {
 			out = append(out, v.Index(i).Interface())
