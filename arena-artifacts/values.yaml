@@ -31,7 +31,7 @@ binary:
 tf:
   enabled: true
   image: acs/tf-operator
-  tag: aliyun-8d9ac19
+  tag: aliyun-f12d01e
   imagePullPolicy: IfNotPresent
   replicas: 1
   resources:
