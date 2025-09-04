@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.15.2](https://github.com/kubeflow/arena/tree/v0.15.2) (2025-09-03)
+
+### Bug Fixes
+
+- Fix: tfjob gets stuck in running state when succeeded pods are garbage collected ([#1370](https://github.com/kubeflow/arena/pull/1370) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Dependencies
+
+- Bump helm.sh/helm/v3 from 3.16.3 to 3.18.4 ([#1350](https://github.com/kubeflow/arena/pull/1350) by [@ChenYi015](https://github.com/ChenYi015))
+- chore(deps): bump golang.org/x/crypto from 0.39.0 to 0.40.0 ([#1351](https://github.com/kubeflow/arena/pull/1351) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/spf13/pflag from 1.0.6 to 1.0.7 ([#1352](https://github.com/kubeflow/arena/pull/1352) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/download-artifact from 4 to 5 ([#1356](https://github.com/kubeflow/arena/pull/1356) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/checkout from 4 to 5 ([#1359](https://github.com/kubeflow/arena/pull/1359) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/setup-java from 4 to 5 ([#1366](https://github.com/kubeflow/arena/pull/1366) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump helm.sh/helm/v3 from 3.18.4 to 3.18.6 ([#1364](https://github.com/kubeflow/arena/pull/1364) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/onsi/ginkgo/v2 from 2.22.0 to 2.25.2 ([#1369](https://github.com/kubeflow/arena/pull/1369) by [@dependabot[bot]](https://github.com/apps/dependabot))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.15.1...v0.15.2)
+
 ## [v0.15.1](https://github.com/kubeflow/arena/tree/v0.15.1) (2025-06-25)
 
 ### Features
