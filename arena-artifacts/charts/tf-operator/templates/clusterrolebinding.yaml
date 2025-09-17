@@ -1,0 +1,16 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tf-job-operator
+  labels:
+    app: tf-job-operator
+    kustomize.component: tf-job-operator
+    {{- include "arena.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tf-job-operator
+subjects:
+- kind: ServiceAccount
+  name: tf-job-operator
+  namespace: {{ .Release.Namespace }}
