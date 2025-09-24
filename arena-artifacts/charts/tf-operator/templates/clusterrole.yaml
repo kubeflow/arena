@@ -1,18 +1,33 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: tf-job-operator
+  name: {{ include "tf-operator.clusterRole.name" . }}
   labels:
-    app: tf-job-operator
-    kustomize.component: tf-job-operator
-    {{- include "arena.labels" . | nindent 4 }}
+    {{- include "tf-operator.labels" . | nindent 4 }}
+  annotations:
+    {{- include "tf-operator.annotations" . | nindent 4 }}
 rules:
 - apiGroups:
-  - tensorflow.org
-  - kubeflow.org
+  - ""
   resources:
-  - tfjobs
-  - tfjobs/status
+  - configmaps
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
   verbs:
   - create
   - delete
@@ -42,26 +57,11 @@ rules:
   - update
   - watch
 - apiGroups:
-  - batch
+  - tensorflow.org
+  - kubeflow.org
   resources:
-  - jobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - pods
-  - services
-  - endpoints
-  - persistentvolumeclaims
-  - events
+  - tfjobs
+  - tfjobs/status
   verbs:
   - create
   - delete

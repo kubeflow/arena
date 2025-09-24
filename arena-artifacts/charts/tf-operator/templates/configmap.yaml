@@ -1,11 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: tf-job-operator-config
+  name: {{ include "tf-operator.configMap.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    kustomize.component: tf-job-operator
-    {{- include "arena.labels" . | nindent 4 }}
+    {{- include "tf-operator.labels" . | nindent 4 }}
+  annotations:
+    {{- include "tf-operator.annotations" . | nindent 4 }}
 data:
   controller_config_file.yaml: |-
     {
