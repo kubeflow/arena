@@ -27,21 +27,53 @@ binary:
   tag: latest
   imagePullPolicy: IfNotPresent
 
-# tf-operator
+# tf-operator configurations.
 tf:
+  # -- Wether to enable tf-operator.
   enabled: true
-  image: acs/tf-operator
-  tag: aliyun-f12d01e
-  imagePullPolicy: IfNotPresent
+
+  # -- String to fully override release name.
+  fullnameOverride: tf-operator
+
+  # -- Extra labels to add to all resources.
+  labels: {}
+    # key1: value1
+    # key2: value2
+
+  # -- Annotations to add to all resources.
+  annotations: {}
+    # key1: value1
+    # key2: value2
+
+  # -- Replicas of deployment.
   replicas: 1
+
+  # Controller configurations.
+  controller:
+
+    # -- Number of workers for controller.
+    workers: 10
+
+    # -- QPS for controller.
+    qps: 10
+
+    # -- Maximum burst.
+    burst: 30
+
+  # -- Pod resource requests and limits.
   resources:
-    limits:
-      cpu: 2
-      memory: 8Gi
     requests:
       cpu: 100m
       memory: 256Mi
+    limits:
+      cpu: 2
+      memory: 8Gi
+
+  # -- Pod node selector.
   nodeSelector: {}
+
+  # -- Pod tolerations.
+  tolerations: []
 
 # tf-dashboard
 tfdashboard:

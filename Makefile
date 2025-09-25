@@ -41,7 +41,7 @@ ARENA_ARTIFACTS_CHART_PATH ?= $(CURRENT_DIR)/arena-artifacts
 GOLANG_VERSION=$(shell grep -e '^go ' go.mod | cut -d ' ' -f 2)
 KUBECTL_VERSION ?= v1.28.4
 HELM_VERSION ?= $(shell grep -e 'helm.sh/helm/v3 ' go.mod | cut -d ' ' -f 2)
-HELM_UNITTEST_VERSION ?= 0.5.1
+HELM_UNITTEST_VERSION ?= 1.0.1
 KIND_VERSION ?= v0.23.0
 KIND_K8S_VERSION ?= v1.29.3
 ENVTEST_VERSION ?= release-0.18
@@ -252,8 +252,9 @@ $(ARENA_INSTALLER_TARBALL): arena kubectl helm
 
 .PHONY: helm-unittest
 helm-unittest: helm-unittest-plugin ## Run Helm chart unittests.
-	set -x && $(LOCALBIN)/$(HELM) unittest $(ARENA_ARTIFACTS_CHART_PATH) --strict --file "tests/**/*_test.yaml" --chart-tests-path $(CURRENT_DIR)
-	
+	$(LOCALBIN)/$(HELM) unittest $(ARENA_ARTIFACTS_CHART_PATH) --strict --file="tests/**/*_test.yaml" --with-subchart=false
+	$(LOCALBIN)/$(HELM) unittest $(ARENA_ARTIFACTS_CHART_PATH)/charts/tf-operator --strict --file="tests/**/*_test.yaml" 
+
 ##@ Dependencies
 
 .PHONY: golangci-lint

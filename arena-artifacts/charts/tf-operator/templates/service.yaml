@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tf-operator.service.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tf-operator.labels" . | nindent 4 }}
+  annotations:
+    {{- include "tf-operator.annotations" . | nindent 4 }}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8443"
+    prometheus.io/path: /metrics
+spec:
+  ports:
+  - name: monitoring-port
+    port: 8443
+    targetPort: 8443
+  selector:
+    {{- include "tf-operator.selectorLabels" . | nindent 4 }}
+  type: ClusterIP

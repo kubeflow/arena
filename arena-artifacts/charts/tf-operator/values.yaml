@@ -2,5 +2,78 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# -- Replicas of tf-operator deployment.
+# -- String to partially override release name.
+nameOverride: ""
+
+# -- String to fully override release name.
+fullnameOverride: ""
+
+# Global configurations.
+global:
+
+  # -- Profile type of ACK cluster (e.g. `Default`, `Edge` and `Serverless`).
+  clusterProfile: Default
+
+  # -- Image registry.
+  imagePrefix: ""
+
+  # -- Pod node selector.
+  nodeSelector: {}
+
+  # -- Pod tolerations.
+  tolerations: []
+
+# -- Extra labels to add to all resources.
+labels: {}
+  # key1: value1
+  # key2: value2
+
+# -- Annotations to add to all resources.
+annotations: {}
+  # key1: value1
+  # key2: value2
+
+# Image configurations.
+image:
+
+  # -- Image registry.
+  registry: registry-cn-zhangjiakou.ack.aliyuncs.com
+
+  # -- Image repository.
+  repository: acs/tf-operator
+
+  # -- Image tag.
+  tag: 2cbb568
+
+  # -- Image pull policy.
+  pullPolicy: IfNotPresent
+
+# -- Replicas of deployment.
 replicas: 1
+
+# Controller configurations.
+controller:
+
+  # -- Number of workers for controller.
+  workers: 10
+
+  # -- QPS for controller.
+  qps: 10
+
+  # -- Maximum burst.
+  burst: 30
+
+# -- Pod resource requests and limits.
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 2
+    memory: 8Gi
+
+# -- Pod node selector.
+nodeSelector: {}
+
+# -- Pod tolerations.
+tolerations: []
