@@ -36,6 +36,7 @@ LOCALBIN ?= $(CURRENT_DIR)/bin
 TEMPDIR ?= $(CURRENT_DIR)/tmp
 # ARENA_ARTIFACTS
 ARENA_ARTIFACTS_CHART_PATH ?= $(CURRENT_DIR)/arena-artifacts
+ARENA_CHART_PATH ?= $(CURRENT_DIR)/arena-chart
 
 # Versions
 GOLANG_VERSION=$(shell grep -e '^go ' go.mod | cut -d ' ' -f 2)
@@ -253,6 +254,10 @@ $(ARENA_INSTALLER_TARBALL): arena kubectl helm
 .PHONY: helm-unittest
 helm-unittest: helm-unittest-plugin ## Run Helm chart unittests.
 	set -x && $(LOCALBIN)/$(HELM) unittest $(ARENA_ARTIFACTS_CHART_PATH) --strict --file "tests/**/*_test.yaml" --chart-tests-path $(CURRENT_DIR)
+	$(LOCALBIN)/$(HELM) unittest $(ARENA_CHART_PATH) --strict --file "tests/**/*_test.yaml" --with-subchart=false
+	for chart in $$(ls $(ARENA_CHART_PATH)/charts); do \
+		$(LOCALBIN)/$(HELM) unittest $(ARENA_CHART_PATH)/charts/$$chart --strict --file "tests/**/*_test.yaml"; \
+	done
 	
 ##@ Dependencies
 
