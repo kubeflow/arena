@@ -1,0 +1,101 @@
+{{- /*
+Copyright 2025 The Kubeflow authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/ -}}
+
+{{- if .Values.binary.enabled }}
+{{- if gt (int .Values.binary.masterCount) 0 }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "arena.installer.job.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "arena.labels" . | nindent 4 }}
+spec:
+  parallelism: {{ .Values.binary.masterCount }}
+  backoffLimit: {{ .Values.binary.retry }}
+  template:
+    metadata:
+      labels:
+        {{- include "arena.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: installer
+        image: {{ include "arena.installer.image" . }}
+        imagePullPolicy: {{ .Values.binary.image.pullPolicy | default .Values.global.image.pullPolicy |default "IfNotPresent" }}
+        command:
+        - bash
+        - -c
+        - |
+          rm -rf /usr/local/arena-installer/arena-installer
+          cp -a /root/arena-installer /usr/local/arena-installer
+          options='--only-binary --region-id {{ include "arena.installer.imageRegistry" . }}'
+          {{- if .Values.binary.hostNetwork }}
+          options="$options --host-network"
+          {{- end }}
+          {{- if .Values.binary.rdma }}
+          options="$options --rdma"
+          {{- end }}
+          nsenter -t 1 -i -p -n -u -m -- /usr/local/arena-installer/arena-installer/install.sh $options
+        volumeMounts:
+        - name: arena-installer
+          mountPath: /usr/local/arena-installer
+        - name: kube
+          mountPath: /root/.kube
+        securityContext:
+          privileged: true
+      volumes:
+      - name: arena-installer
+        hostPath:
+          type: DirectoryOrCreate
+          path: /usr/local/arena-installer
+      - name: kube
+        hostPath:
+          type: Directory
+          path: /root/.kube
+      hostNetwork: true
+      hostPID: true
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                {{- include "arena.selectorLabels" . | nindent 16 }}
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+        key: node-role.kubernetes.io/control-plane
+      - effect: NoSchedule
+        operator: Exists
+        key: node-role.kubernetes.io/master
+      - effect: NoSchedule
+        operator: Exists
+        key: node.cloudprovider.kubernetes.io/uninitialized
+      - key: node-role.alibabacloud.com/addon
+        operator: Exists
+        effect: NoSchedule
+      restartPolicy: Never
+{{- end }}
+{{- end }}

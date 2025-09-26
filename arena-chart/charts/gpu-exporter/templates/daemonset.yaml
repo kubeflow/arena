@@ -1,0 +1,70 @@
+{{- /*
+Copyright 2025 The Kubeflow authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/ -}}
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "gpu-exporter.daemonSet.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gpu-exporter.labels" . | nindent 4 }}
+  annotations:
+    {{- include "gpu-exporter.annotations" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "gpu-exporter.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "gpu-exporter.labels" . | nindent 8 }}
+      annotations:
+        {{- include "gpu-exporter.annotations" . | nindent 8 }}
+    spec:
+      containers:
+      - name: gpu-exporter
+        image: {{ include "gpu-exporter.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.image.pullPolicy | default "IfNotPresent" }}
+        env:
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-sock
+        ports:
+        - containerPort: 9445
+          name: http-metrics
+          protocol: TCP
+        {{- with .Values.resources }}
+        resources:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+        securityContext:
+          privileged: true
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+          type: File
+      hostPID: true
+      nodeSelector:
+        {{- include "gpu-exporter.nodeSelector" . | nindent 8 }}
+      tolerations:
+      {{- include "gpu-exporter.tolerations" . | nindent 6 }}
+      restartPolicy: Always
