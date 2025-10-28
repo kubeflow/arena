@@ -46,7 +46,7 @@ jobs:
         run: |
           make arena-installer OS=${{ matrix.os }} ARCH=${{ matrix.arch }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: arena-installer-${{ env.VERSION }}-${{ matrix.os }}-${{ matrix.arch }}
           path: arena-installer-${{ env.VERSION }}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
@@ -115,7 +115,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
