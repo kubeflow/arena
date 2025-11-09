@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tf-operator.deployment.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tf-operator.labels" . | nindent 4 }}
+  annotations:
+    {{- include "tf-operator.annotations" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "tf-operator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tf-operator.labels" . | nindent 8 }}
+      annotations:
+        {{- include "tf-operator.annotations" . | nindent 8 }}
+    spec:
+      containers:
+      - name: tf-operator
+        image: {{ include "tf-operator.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - /opt/kubeflow/tf-operator.v1
+        - --alsologtostderr
+        - -v=1
+        - --monitoring-port=8443
+        - --threadiness={{ .Values.controller.workers }}
+        - --qps={{ .Values.controller.qps }}
+        - --burst={{ .Values.controller.burst }}
+        env:
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+        {{- with .Values.resources }}
+        resources:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "tf-operator.configMap.name" . }}
+      nodeSelector:
+        {{- include "tf-operator.nodeSelector" . | nindent 8 }}
+      affinity:
+        {{- include "tf-operator.affinity" . | nindent 8 }}
+      tolerations:
+      {{- include "tf-operator.tolerations" . | nindent 6 }}
+      serviceAccountName: {{ include "tf-operator.serviceAccount.name" . }}
