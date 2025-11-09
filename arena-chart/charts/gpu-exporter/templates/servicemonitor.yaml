@@ -1,0 +1,22 @@
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "gpu-exporter.serviceMonitor.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "gpu-exporter.labels" . | nindent 4 }}
+  annotations:
+    {{- include "gpu-exporter.annotations" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "gpu-exporter.selectorLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  endpoints:
+  - port: http-metrics
+    interval: 45s
+    path: /metrics
+{{- end }}
