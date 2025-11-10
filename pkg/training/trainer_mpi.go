@@ -22,7 +22,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
-	"github.com/kubeflow/arena/pkg/operators/mpi-operator/client/clientset/versioned"
+	"github.com/kubeflow/training-operator/pkg/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -32,14 +32,13 @@ import (
 
 	"time"
 
-	v1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1"
 	common_v1 "github.com/kubeflow/training-operator/pkg/apis/kubeflow.org/v1"
 )
 
 // MPI Job Information
 type MPIJob struct {
 	*BasicJobInfo
-	mpijob       *v1.MPIJob
+	mpijob       *common_v1.MPIJob
 	chiefjob     *batchv1.Job
 	pods         []*corev1.Pod // all the pods including statefulset and job
 	chiefPod     *corev1.Pod   // the chief pod
@@ -353,10 +352,10 @@ func (tt *MPIJobTrainer) isChiefJob(job *batchv1.Job, name string, namespace str
 }
 
 func (tt *MPIJobTrainer) isChiefPod(item *corev1.Pod) bool {
-	if item.Labels["mpi_role_type"] != "launcher" {
+	if item.Labels["training.kubeflow.org/replica-type"] != "launcher" {
 		return false
 	}
-	log.Debugf("the mpijob %s with labels mpi_role_type=launcher", item.Name)
+	log.Debugf("the mpijob %s with labels training.kubeflow.org/replica-type=launcher", item.Name)
 	return true
 }
 
@@ -452,12 +451,6 @@ func (mj *MPIJob) isFailed() bool {
 }
 
 func (mj *MPIJob) isPending() bool {
-	// return false
-	if len(mj.chiefjob.Name) == 0 {
-		log.Debugf("The MPIJob is pending due to chiefJob is not ready")
-		return true
-	}
-
 	if len(mj.chiefPod.Name) == 0 || mj.chiefPod.Status.Phase == corev1.PodPending {
 		log.Debugf("The MPIJob is pending due to chiefPod is not ready")
 		return true
@@ -473,7 +466,7 @@ func (m *MPIJob) GetPriorityClass() string {
 }
 
 // filter out all pods and chief pod (master pod) of mpijob from pods in current system
-func getPodsOfMPIJob(tt *MPIJobTrainer, mpijob *v1.MPIJob, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
+func getPodsOfMPIJob(tt *MPIJobTrainer, mpijob *common_v1.MPIJob, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
 	return getPodsOfTrainingJob(mpijob.Name, mpijob.Namespace, podList, tt.isMPIPod, func(pod *corev1.Pod) bool {
 		return tt.isChiefPod(pod)
 	})
