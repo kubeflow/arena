@@ -5,13 +5,13 @@ package v1
 // RayClusterSpecApplyConfiguration represents an declarative configuration of the RayClusterSpec type for use
 // with apply.
 type RayClusterSpecApplyConfiguration struct {
-	Suspend                 *bool                                `json:"suspend,omitempty"`
+	HeadGroupSpec           *HeadGroupSpecApplyConfiguration     `json:"headGroupSpec,omitempty"`
+	WorkerGroupSpecs        []WorkerGroupSpecApplyConfiguration  `json:"workerGroupSpecs,omitempty"`
+	RayVersion              *string                              `json:"rayVersion,omitempty"`
+	EnableInTreeAutoscaling *bool                                `json:"enableInTreeAutoscaling,omitempty"`
 	AutoscalerOptions       *AutoscalerOptionsApplyConfiguration `json:"autoscalerOptions,omitempty"`
 	HeadServiceAnnotations  map[string]string                    `json:"headServiceAnnotations,omitempty"`
-	EnableInTreeAutoscaling *bool                                `json:"enableInTreeAutoscaling,omitempty"`
-	HeadGroupSpec           *HeadGroupSpecApplyConfiguration     `json:"headGroupSpec,omitempty"`
-	RayVersion              *string                              `json:"rayVersion,omitempty"`
-	WorkerGroupSpecs        []WorkerGroupSpecApplyConfiguration  `json:"workerGroupSpecs,omitempty"`
+	Suspend                 *bool                                `json:"suspend,omitempty"`
 }
 
 // RayClusterSpecApplyConfiguration constructs an declarative configuration of the RayClusterSpec type for use with
@@ -20,11 +20,40 @@ func RayClusterSpec() *RayClusterSpecApplyConfiguration {
 	return &RayClusterSpecApplyConfiguration{}
 }
 
-// WithSuspend sets the Suspend field in the declarative configuration to the given value
+// WithHeadGroupSpec sets the HeadGroupSpec field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Suspend field is set to the value of the last call.
-func (b *RayClusterSpecApplyConfiguration) WithSuspend(value bool) *RayClusterSpecApplyConfiguration {
-	b.Suspend = &value
+// If called multiple times, the HeadGroupSpec field is set to the value of the last call.
+func (b *RayClusterSpecApplyConfiguration) WithHeadGroupSpec(value *HeadGroupSpecApplyConfiguration) *RayClusterSpecApplyConfiguration {
+	b.HeadGroupSpec = value
+	return b
+}
+
+// WithWorkerGroupSpecs adds the given value to the WorkerGroupSpecs field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the WorkerGroupSpecs field.
+func (b *RayClusterSpecApplyConfiguration) WithWorkerGroupSpecs(values ...*WorkerGroupSpecApplyConfiguration) *RayClusterSpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithWorkerGroupSpecs")
+		}
+		b.WorkerGroupSpecs = append(b.WorkerGroupSpecs, *values[i])
+	}
+	return b
+}
+
+// WithRayVersion sets the RayVersion field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RayVersion field is set to the value of the last call.
+func (b *RayClusterSpecApplyConfiguration) WithRayVersion(value string) *RayClusterSpecApplyConfiguration {
+	b.RayVersion = &value
+	return b
+}
+
+// WithEnableInTreeAutoscaling sets the EnableInTreeAutoscaling field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the EnableInTreeAutoscaling field is set to the value of the last call.
+func (b *RayClusterSpecApplyConfiguration) WithEnableInTreeAutoscaling(value bool) *RayClusterSpecApplyConfiguration {
+	b.EnableInTreeAutoscaling = &value
 	return b
 }
 
@@ -50,39 +79,10 @@ func (b *RayClusterSpecApplyConfiguration) WithHeadServiceAnnotations(entries ma
 	return b
 }
 
-// WithEnableInTreeAutoscaling sets the EnableInTreeAutoscaling field in the declarative configuration to the given value
+// WithSuspend sets the Suspend field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the EnableInTreeAutoscaling field is set to the value of the last call.
-func (b *RayClusterSpecApplyConfiguration) WithEnableInTreeAutoscaling(value bool) *RayClusterSpecApplyConfiguration {
-	b.EnableInTreeAutoscaling = &value
-	return b
-}
-
-// WithHeadGroupSpec sets the HeadGroupSpec field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the HeadGroupSpec field is set to the value of the last call.
-func (b *RayClusterSpecApplyConfiguration) WithHeadGroupSpec(value *HeadGroupSpecApplyConfiguration) *RayClusterSpecApplyConfiguration {
-	b.HeadGroupSpec = value
-	return b
-}
-
-// WithRayVersion sets the RayVersion field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the RayVersion field is set to the value of the last call.
-func (b *RayClusterSpecApplyConfiguration) WithRayVersion(value string) *RayClusterSpecApplyConfiguration {
-	b.RayVersion = &value
-	return b
-}
-
-// WithWorkerGroupSpecs adds the given value to the WorkerGroupSpecs field in the declarative configuration
-// and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the WorkerGroupSpecs field.
-func (b *RayClusterSpecApplyConfiguration) WithWorkerGroupSpecs(values ...*WorkerGroupSpecApplyConfiguration) *RayClusterSpecApplyConfiguration {
-	for i := range values {
-		if values[i] == nil {
-			panic("nil value passed to WithWorkerGroupSpecs")
-		}
-		b.WorkerGroupSpecs = append(b.WorkerGroupSpecs, *values[i])
-	}
+// If called multiple times, the Suspend field is set to the value of the last call.
+func (b *RayClusterSpecApplyConfiguration) WithSuspend(value bool) *RayClusterSpecApplyConfiguration {
+	b.Suspend = &value
 	return b
 }

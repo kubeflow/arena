@@ -2,7 +2,6 @@ package ginkgo
 
 import (
 	"context"
-	"io"
 	"testing"
 
 	"github.com/onsi/ginkgo/v2/internal/testingtproxy"
@@ -70,8 +69,6 @@ type GinkgoTInterface interface {
 	Skipf(format string, args ...any)
 	Skipped() bool
 	TempDir() string
-	Attr(key, value string)
-	Output() io.Writer
 }
 
 /*
@@ -132,12 +129,6 @@ type GinkgoTBWrapper struct {
 
 func (g *GinkgoTBWrapper) Cleanup(f func()) {
 	g.GinkgoT.Cleanup(f)
-}
-func (g *GinkgoTBWrapper) Chdir(dir string) {
-	g.GinkgoT.Chdir(dir)
-}
-func (g *GinkgoTBWrapper) Context() context.Context {
-	return g.GinkgoT.Context()
 }
 func (g *GinkgoTBWrapper) Error(args ...any) {
 	g.GinkgoT.Error(args...)

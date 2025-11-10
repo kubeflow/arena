@@ -19,15 +19,15 @@ limitations under the License.
 // Package v1alpha1 contains API Schema definitions for the serving v1alpha1 API group
 // +k8s:openapi-gen=true
 // +kubebuilder:object:generate=true
-// +k8s:conversion-gen=kserve/pkg/apis/serving
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=serving.kserve.io
 package v1alpha1
 
 import (
-	"github.com/kserve/kserve/pkg/constants"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
+
+	"github.com/kserve/kserve/pkg/constants"
 )
 
 var (

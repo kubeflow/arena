@@ -53,13 +53,29 @@ func (rs *RevisionSpec) SetDefaults(ctx context.Context) {
 		rs.TimeoutSeconds = ptr.Int64(cfg.Defaults.RevisionTimeoutSeconds)
 	}
 
+	// Default IdleTimeoutSeconds only in case we have a non-zero default and the latter is not larger than the revision timeout.
+	// A zero default or a zero value set from the user or a nil value skips timer setup at the QP side.
+	if rs.IdleTimeoutSeconds == nil {
+		if cfg.Defaults.RevisionIdleTimeoutSeconds < *rs.TimeoutSeconds && cfg.Defaults.RevisionIdleTimeoutSeconds != 0 {
+			rs.IdleTimeoutSeconds = ptr.Int64(cfg.Defaults.RevisionIdleTimeoutSeconds)
+		}
+	}
+
+	// Default ResponseStartTimeoutSeconds only in case we have a non-zero default and the latter is not larger than the revision timeout.
+	// A zero default or a zero value set from the user or a nil value skips timer setup at the QP side.
+	if rs.ResponseStartTimeoutSeconds == nil {
+		if cfg.Defaults.RevisionResponseStartTimeoutSeconds < *rs.TimeoutSeconds && cfg.Defaults.RevisionResponseStartTimeoutSeconds != 0 {
+			rs.ResponseStartTimeoutSeconds = ptr.Int64(cfg.Defaults.RevisionResponseStartTimeoutSeconds)
+		}
+	}
+
 	// Default ContainerConcurrency based on our configmap.
 	if rs.ContainerConcurrency == nil {
 		rs.ContainerConcurrency = ptr.Int64(cfg.Defaults.ContainerConcurrency)
 	}
 
 	// Avoid clashes with user-supplied names when generating defaults.
-	containerNames := make(sets.String, len(rs.PodSpec.Containers)+len(rs.PodSpec.InitContainers))
+	containerNames := make(sets.Set[string], len(rs.PodSpec.Containers)+len(rs.PodSpec.InitContainers))
 	for idx := range rs.PodSpec.Containers {
 		containerNames.Insert(rs.PodSpec.Containers[idx].Name)
 	}
@@ -116,14 +132,16 @@ func (rs *RevisionSpec) applyDefault(ctx context.Context, container *corev1.Cont
 	// If there are multiple containers then default probes will be applied to the container where user specified PORT
 	// default probes will not be applied for non serving containers
 	if len(rs.PodSpec.Containers) == 1 || len(container.Ports) != 0 {
-		rs.applyProbes(container)
+		rs.applyUserContainerDefaultReadinessProbe(container)
 	}
+	rs.applyReadinessProbeDefaults(container)
+	rs.applyGRPCProbeDefaults(container)
 
 	if rs.PodSpec.EnableServiceLinks == nil && apis.IsInCreate(ctx) {
 		rs.PodSpec.EnableServiceLinks = cfg.Defaults.EnableServiceLinks
 	}
 
-	vNames := make(sets.String)
+	vNames := make(sets.Set[string])
 	for _, v := range rs.PodSpec.Volumes {
 		if v.EmptyDir != nil || v.PersistentVolumeClaim != nil {
 			vNames.Insert(v.Name)
@@ -137,7 +155,7 @@ func (rs *RevisionSpec) applyDefault(ctx context.Context, container *corev1.Cont
 	}
 }
 
-func (*RevisionSpec) applyProbes(container *corev1.Container) {
+func (*RevisionSpec) applyUserContainerDefaultReadinessProbe(container *corev1.Container) {
 	if container.ReadinessProbe == nil {
 		container.ReadinessProbe = &corev1.Probe{}
 	}
@@ -147,9 +165,13 @@ func (*RevisionSpec) applyProbes(container *corev1.Container) {
 		container.ReadinessProbe.GRPC == nil {
 		container.ReadinessProbe.TCPSocket = &corev1.TCPSocketAction{}
 	}
+}
 
-	if container.ReadinessProbe.GRPC != nil && container.ReadinessProbe.GRPC.Service == nil {
-		container.ReadinessProbe.GRPC.Service = ptr.String("")
+func (*RevisionSpec) applyReadinessProbeDefaults(container *corev1.Container) {
+	if container.ReadinessProbe == nil {
+		// Sidecars are allowed to not have a readiness-probe
+		// we do not want the defaults in that case.
+		return
 	}
 
 	if container.ReadinessProbe.SuccessThreshold == 0 {
@@ -164,6 +186,18 @@ func (*RevisionSpec) applyProbes(container *corev1.Container) {
 		if container.ReadinessProbe.TimeoutSeconds == 0 {
 			container.ReadinessProbe.TimeoutSeconds = 1
 		}
+	}
+}
+
+func (*RevisionSpec) applyGRPCProbeDefaults(container *corev1.Container) {
+	if container.ReadinessProbe != nil && container.ReadinessProbe.GRPC != nil && container.ReadinessProbe.GRPC.Service == nil {
+		container.ReadinessProbe.GRPC.Service = ptr.String("")
+	}
+	if container.LivenessProbe != nil && container.LivenessProbe.GRPC != nil && container.LivenessProbe.GRPC.Service == nil {
+		container.LivenessProbe.GRPC.Service = ptr.String("")
+	}
+	if container.StartupProbe != nil && container.StartupProbe.GRPC != nil && container.StartupProbe.GRPC.Service == nil {
+		container.StartupProbe.GRPC.Service = ptr.String("")
 	}
 }
 
@@ -222,7 +256,7 @@ func (rs *RevisionSpec) defaultSecurityContext(psc *corev1.PodSecurityContext, c
 	}
 }
 
-func applyDefaultContainerNames(containers []corev1.Container, containerNames sets.String, defaultContainerName string) {
+func applyDefaultContainerNames(containers []corev1.Container, containerNames sets.Set[string], defaultContainerName string) {
 	// Default container name based on ContainerNameFromTemplate value from configmap.
 	// In multi-container or init-container mode, add a numeric suffix, avoiding clashes with user-supplied names.
 	nextSuffix := 0

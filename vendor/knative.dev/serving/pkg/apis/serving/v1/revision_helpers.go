@@ -19,7 +19,6 @@ package v1
 import (
 	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	net "knative.dev/networking/pkg/apis/networking"
 	"knative.dev/pkg/kmeta"
@@ -72,6 +71,7 @@ const (
 // It is never nil and should be exactly the specified container if len(containers) == 1 or
 // if there are multiple containers it returns the container which has Ports
 // as guaranteed by validation.
+// Note: If you change this function, also update GetSidecarContainers.
 func (rs *RevisionSpec) GetContainer() *corev1.Container {
 	switch {
 	case len(rs.Containers) == 1:
@@ -85,6 +85,24 @@ func (rs *RevisionSpec) GetContainer() *corev1.Container {
 	}
 	// Should be unreachable post-validation, but here to ease testing.
 	return &corev1.Container{}
+}
+
+// GetSidecarContainers returns a slice of pointers to all sidecar containers.
+// If len(containers) == 1 OR only one container with a user-port exists, it will return an empty slice.
+// It is the "rest" of GetContainer.
+func (rs *RevisionSpec) GetSidecarContainers() []*corev1.Container {
+	sidecars := []*corev1.Container{}
+	if len(rs.Containers) == 1 {
+		return sidecars
+	}
+
+	for i, c := range rs.Containers {
+		if len(c.Ports) == 0 {
+			sidecars = append(sidecars, &rs.Containers[i])
+		}
+	}
+
+	return sidecars
 }
 
 // SetRoutingState sets the routingState label on this Revision and updates the
@@ -143,10 +161,4 @@ func (r *Revision) GetProtocol() net.ProtocolType {
 func (rs *RevisionStatus) IsActivationRequired() bool {
 	c := revisionCondSet.Manage(rs).GetCondition(RevisionConditionActive)
 	return c != nil && c.Status != corev1.ConditionTrue
-}
-
-// IsReplicaSetFailure returns true if the deployment replicaset failed to create
-func (rs *RevisionStatus) IsReplicaSetFailure(deploymentStatus *appsv1.DeploymentStatus) bool {
-	ds := serving.TransformDeploymentStatus(deploymentStatus)
-	return ds != nil && ds.GetCondition(serving.DeploymentConditionReplicaSetReady).IsFalse()
 }

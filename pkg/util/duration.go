@@ -16,12 +16,22 @@ package util
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 )
 
 const (
 	timeLayout = "2006-01-02 15:04:05"
 )
+
+var unitFactor = map[string]int64{
+	"s": 1,
+	"m": 60,
+	"h": 3600,
+	"d": 24 * 3600,
+	"y": 3600 * 24 * 365,
+}
 
 // ShortHumanDuration returns a succinct representation of the provided duration
 // with limited precision for consumption by humans.
@@ -46,4 +56,26 @@ func ShortHumanDuration(d time.Duration) string {
 
 func GetFormatTime(timestamp int64) string {
 	return time.Unix(timestamp, 0).Format(timeLayout)
+}
+
+func TransTimeStrToSeconds(duration string) (int64, error) {
+	var unit string
+	for k := range unitFactor {
+		if strings.HasSuffix(duration, k) {
+			unit = k
+			break
+		}
+	}
+
+	if unit == "" {
+		return 0, fmt.Errorf("invalid duration unit in %s", duration)
+	}
+
+	durationValue := strings.TrimSuffix(duration, unit)
+	durationSeconds, err := strconv.ParseInt(durationValue, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return durationSeconds * unitFactor[unit], nil
 }

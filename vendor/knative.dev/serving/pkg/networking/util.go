@@ -2,7 +2,7 @@ package networking
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 
 	"knative.dev/networking/pkg/apis/networking"
@@ -22,7 +22,7 @@ func GetHTTPOption(ctx context.Context, networkConfig *netcfg.Config, annotation
 		case netcfg.HTTPRedirected:
 			return netv1alpha1.HTTPOptionRedirected, nil
 		default:
-			return "", fmt.Errorf("incorrect http-protocol annotation: " + protocol)
+			return "", errors.New("incorrect http-protocol annotation: " + protocol)
 		}
 	}
 
@@ -43,4 +43,10 @@ func GetHTTPOption(ctx context.Context, networkConfig *netcfg.Config, annotation
 		logger.Warnf("http-protocol %s in config-network ConfigMap is not supported", httpProtocol)
 		return "", nil
 	}
+}
+
+// IsNetCertManagerControllerRequired returns true if we need the netCertManagerController running
+func IsNetCertManagerControllerRequired(netCfg *netcfg.Config) bool {
+	return netCfg.ExternalDomainTLS || netCfg.SystemInternalTLSEnabled() || (netCfg.ClusterLocalDomainTLS == netcfg.EncryptionEnabled) ||
+		netCfg.NamespaceWildcardCertSelector != nil
 }

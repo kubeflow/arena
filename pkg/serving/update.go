@@ -517,13 +517,15 @@ func findAndBuildInferenceService(args *types.UpdateKServeArgs) (*kservev1beta1.
 	}
 
 	if args.MinReplicas >= 0 {
-		inferenceService.Spec.Predictor.MinReplicas = &args.MinReplicas
+		MinReplicas := int32(args.MinReplicas)
+		inferenceService.Spec.Predictor.MinReplicas = &MinReplicas
 	}
 	if args.MaxReplicas > 0 {
-		inferenceService.Spec.Predictor.MaxReplicas = args.MaxReplicas
+		inferenceService.Spec.Predictor.MaxReplicas = int32(args.MaxReplicas)
 	}
 	if args.ScaleTarget > 0 {
-		inferenceService.Spec.Predictor.ScaleTarget = &args.ScaleTarget
+		ScaleTarget := int32(args.ScaleTarget)
+		inferenceService.Spec.Predictor.ScaleTarget = &ScaleTarget
 	}
 	if args.ScaleMetric != "" {
 		scaleMetric := kservev1beta1.ScaleMetric(args.ScaleMetric)

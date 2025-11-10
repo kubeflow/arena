@@ -66,6 +66,10 @@ func VolumeSourceMask(ctx context.Context, in *corev1.VolumeSource) *corev1.Volu
 		out.PersistentVolumeClaim = in.PersistentVolumeClaim
 	}
 
+	if cfg.Features.PodSpecVolumesHostPath != config.Disabled {
+		out.HostPath = in.HostPath
+	}
+
 	// Too many disallowed fields to list
 
 	return out
@@ -263,16 +267,21 @@ func PodSpecMask(ctx context.Context, in *corev1.PodSpec) *corev1.PodSpec {
 	if cfg.Features.PodSpecDNSConfig != config.Disabled {
 		out.DNSConfig = in.DNSConfig
 	}
-
+	if cfg.Features.PodSpecHostIPC != config.Disabled {
+		out.HostIPC = in.HostIPC
+	}
+	if cfg.Features.PodSpecHostPID != config.Disabled {
+		out.HostPID = in.HostPID
+	}
+	if cfg.Features.PodSpecHostNetwork != config.Disabled {
+		out.HostNetwork = in.HostNetwork
+	}
 	// Disallowed fields
 	// This list is unnecessary, but added here for clarity
 	out.RestartPolicy = ""
 	out.TerminationGracePeriodSeconds = nil
 	out.ActiveDeadlineSeconds = nil
 	out.NodeName = ""
-	out.HostNetwork = false
-	out.HostPID = false
-	out.HostIPC = false
 	out.Hostname = ""
 	out.Subdomain = ""
 	out.Priority = nil
@@ -305,6 +314,7 @@ func ContainerMask(in *corev1.Container) *corev1.Container {
 	out.ReadinessProbe = in.ReadinessProbe
 	out.Resources = in.Resources
 	out.SecurityContext = in.SecurityContext
+	out.StartupProbe = in.StartupProbe
 	out.TerminationMessagePath = in.TerminationMessagePath
 	out.TerminationMessagePolicy = in.TerminationMessagePolicy
 	out.VolumeMounts = in.VolumeMounts
@@ -379,7 +389,6 @@ func HandlerMask(in *corev1.ProbeHandler) *corev1.ProbeHandler {
 	out.GRPC = in.GRPC
 
 	return out
-
 }
 
 // ExecActionMask performs a _shallow_ copy of the Kubernetes ExecAction object to a new
@@ -463,7 +472,7 @@ func ContainerPortMask(in *corev1.ContainerPort) *corev1.ContainerPort {
 	out.Name = in.Name
 	out.Protocol = in.Protocol
 
-	//Disallowed fields
+	// Disallowed fields
 	// This list is unnecessary, but added here for clarity
 	out.HostIP = ""
 	out.HostPort = 0
@@ -542,7 +551,6 @@ func ConfigMapKeySelectorMask(in *corev1.ConfigMapKeySelector) *corev1.ConfigMap
 	out.LocalObjectReference = in.LocalObjectReference
 
 	return out
-
 }
 
 // SecretKeySelectorMask performs a _shallow_ copy of the Kubernetes SecretKeySelector object to a new
@@ -561,7 +569,6 @@ func SecretKeySelectorMask(in *corev1.SecretKeySelector) *corev1.SecretKeySelect
 	out.LocalObjectReference = in.LocalObjectReference
 
 	return out
-
 }
 
 // ConfigMapEnvSourceMask performs a _shallow_ copy of the Kubernetes ConfigMapEnvSource object to a new
@@ -579,7 +586,6 @@ func ConfigMapEnvSourceMask(in *corev1.ConfigMapEnvSource) *corev1.ConfigMapEnvS
 	out.LocalObjectReference = in.LocalObjectReference
 
 	return out
-
 }
 
 // SecretEnvSourceMask performs a _shallow_ copy of the Kubernetes SecretEnvSource object to a new
@@ -597,7 +603,6 @@ func SecretEnvSourceMask(in *corev1.SecretEnvSource) *corev1.SecretEnvSource {
 	out.LocalObjectReference = in.LocalObjectReference
 
 	return out
-
 }
 
 // EnvFromSourceMask performs a _shallow_ copy of the Kubernetes EnvFromSource object to a new
@@ -633,7 +638,6 @@ func ResourceRequirementsMask(in *corev1.ResourceRequirements) *corev1.ResourceR
 	out.Requests = in.Requests
 
 	return out
-
 }
 
 // PodSecurityContextMask performs a _shallow_ copy of the Kubernetes PodSecurityContext object into a new
@@ -704,10 +708,12 @@ func SecurityContextMask(ctx context.Context, in *corev1.SecurityContext) *corev
 	// SeccompProfile defaults to "unconstrained", but the safe values are
 	// "RuntimeDefault" or "Localhost" (with localhost path set)
 	out.SeccompProfile = in.SeccompProfile
-
+	// Only allow setting Privileged to false
+	if in.Privileged != nil && !*in.Privileged {
+		out.Privileged = in.Privileged
+	}
 	// Disallowed
 	// This list is unnecessary, but added here for clarity
-	out.Privileged = nil
 	out.SELinuxOptions = nil
 	out.ProcMount = nil
 
