@@ -25,8 +25,8 @@ func (c Command) Run(args []string, additionalArgs []string) {
 		AbortWithUsage(err.Error())
 	}
 	for _, arg := range args {
-		if len(arg) > 1 && strings.HasPrefix(arg, "-") {
-			AbortWith(types.GinkgoErrors.FlagAfterPositionalParameter().Error())
+		if strings.HasPrefix(arg, "-") {
+			AbortWith("Malformed arguments - make sure all flags appear {{bold}}after{{/}} the Ginkgo subcommand and {{bold}}before{{/}} your list of packages.\n{{gray}}e.g. 'ginkgo run -p my_package' is valid `ginkgo -p run my_package` is not.{{/}}")
 		}
 	}
 	c.Command(args, additionalArgs)

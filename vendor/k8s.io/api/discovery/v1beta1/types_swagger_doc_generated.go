@@ -56,6 +56,7 @@ func (EndpointConditions) SwaggerDoc() map[string]string {
 var map_EndpointHints = map[string]string{
 	"":         "EndpointHints provides hints describing how an endpoint should be consumed.",
 	"forZones": "forZones indicates the zone(s) this endpoint should be consumed by to enable topology aware routing. May contain a maximum of 8 entries.",
+	"forNodes": "forNodes indicates the node(s) this endpoint should be consumed by when using topology aware routing. May contain a maximum of 8 entries. This is an Alpha feature and is only used when the PreferSameTrafficDistribution feature gate is enabled.",
 }
 
 func (EndpointHints) SwaggerDoc() map[string]string {
@@ -64,7 +65,7 @@ func (EndpointHints) SwaggerDoc() map[string]string {
 
 var map_EndpointPort = map[string]string{
 	"":            "EndpointPort represents a Port used by an EndpointSlice",
-	"name":        "name represents the name of this port. All ports in an EndpointSlice must have a unique name. If the EndpointSlice is dervied from a Kubernetes service, this corresponds to the Service.ports[].name. Name must either be an empty string or pass DNS_LABEL validation: * must be no more than 63 characters long. * must consist of lower case alphanumeric characters or '-'. * must start and end with an alphanumeric character. Default is empty string.",
+	"name":        "name represents the name of this port. All ports in an EndpointSlice must have a unique name. If the EndpointSlice is derived from a Kubernetes service, this corresponds to the Service.ports[].name. Name must either be an empty string or pass DNS_LABEL validation: * must be no more than 63 characters long. * must consist of lower case alphanumeric characters or '-'. * must start and end with an alphanumeric character. Default is empty string.",
 	"protocol":    "protocol represents the IP protocol for this port. Must be UDP, TCP, or SCTP. Default is TCP.",
 	"port":        "port represents the port number of the endpoint. If this is not specified, ports are not restricted and must be interpreted in the context of the specific consumer.",
 	"appProtocol": "appProtocol represents the application protocol for this port. This field follows standard Kubernetes label syntax. Un-prefixed names are reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names). Non-standard protocols should use prefixed names such as mycompany.com/my-custom-protocol.",
@@ -94,6 +95,15 @@ var map_EndpointSliceList = map[string]string{
 
 func (EndpointSliceList) SwaggerDoc() map[string]string {
 	return map_EndpointSliceList
+}
+
+var map_ForNode = map[string]string{
+	"":     "ForNode provides information about which nodes should consume this endpoint.",
+	"name": "name represents the name of the node.",
+}
+
+func (ForNode) SwaggerDoc() map[string]string {
+	return map_ForNode
 }
 
 var map_ForZone = map[string]string{

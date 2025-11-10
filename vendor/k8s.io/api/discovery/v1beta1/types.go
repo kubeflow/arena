@@ -161,6 +161,13 @@ type EndpointHints struct {
 	// enable topology aware routing. May contain a maximum of 8 entries.
 	// +listType=atomic
 	ForZones []ForZone `json:"forZones,omitempty" protobuf:"bytes,1,name=forZones"`
+
+	// forNodes indicates the node(s) this endpoint should be consumed by when
+	// using topology aware routing. May contain a maximum of 8 entries.
+	// This is an Alpha feature and is only used when the PreferSameTrafficDistribution
+	// feature gate is enabled.
+	// +listType=atomic
+	ForNodes []ForNode `json:"forNodes,omitempty" protobuf:"bytes,2,name=forNodes"`
 }
 
 // ForZone provides information about which zones should consume this endpoint.
@@ -169,10 +176,16 @@ type ForZone struct {
 	Name string `json:"name" protobuf:"bytes,1,name=name"`
 }
 
+// ForNode provides information about which nodes should consume this endpoint.
+type ForNode struct {
+	// name represents the name of the node.
+	Name string `json:"name" protobuf:"bytes,1,name=name"`
+}
+
 // EndpointPort represents a Port used by an EndpointSlice
 type EndpointPort struct {
 	// name represents the name of this port. All ports in an EndpointSlice must have a unique name.
-	// If the EndpointSlice is dervied from a Kubernetes service, this corresponds to the Service.ports[].name.
+	// If the EndpointSlice is derived from a Kubernetes service, this corresponds to the Service.ports[].name.
 	// Name must either be an empty string or pass DNS_LABEL validation:
 	// * must be no more than 63 characters long.
 	// * must consist of lower case alphanumeric characters or '-'.

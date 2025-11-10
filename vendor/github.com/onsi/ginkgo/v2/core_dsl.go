@@ -187,20 +187,6 @@ func GinkgoLabelFilter() string {
 }
 
 /*
-GinkgoSemVerFilter() returns the semantic version filter configured for this suite via `--sem-ver-filter`.
-
-You can use this to manually check if a set of semantic version constraints would satisfy the filter via:
-
-	if (SemVerConstraint("> 2.6.0", "< 2.8.0").MatchesSemVerFilter(GinkgoSemVerFilter())) {
-		//...
-	}
-*/
-func GinkgoSemVerFilter() string {
-	suiteConfig, _ := GinkgoConfiguration()
-	return suiteConfig.SemVerFilter
-}
-
-/*
 PauseOutputInterception() pauses Ginkgo's output interception.  This is only relevant
 when running in parallel and output to stdout/stderr is being intercepted.  You generally
 don't need to call this function - however there are cases when Ginkgo's output interception
@@ -268,7 +254,7 @@ func RunSpecs(t GinkgoTestingT, description string, args ...any) bool {
 	}
 	defer global.PopClone()
 
-	suiteLabels, suiteSemVerConstraints, suiteAroundNodes := extractSuiteConfiguration(args)
+	suiteLabels := extractSuiteConfiguration(args)
 
 	var reporter reporters.Reporter
 	if suiteConfig.ParallelTotal == 1 {
@@ -311,7 +297,7 @@ func RunSpecs(t GinkgoTestingT, description string, args ...any) bool {
 	suitePath, err = filepath.Abs(suitePath)
 	exitIfErr(err)
 
-	passed, hasFocusedTests := global.Suite.Run(description, suiteLabels, suiteSemVerConstraints, suiteAroundNodes, suitePath, global.Failer, reporter, writer, outputInterceptor, interrupt_handler.NewInterruptHandler(client), client, internal.RegisterForProgressSignal, suiteConfig)
+	passed, hasFocusedTests := global.Suite.Run(description, suiteLabels, suitePath, global.Failer, reporter, writer, outputInterceptor, interrupt_handler.NewInterruptHandler(client), client, internal.RegisterForProgressSignal, suiteConfig)
 	outputInterceptor.Shutdown()
 
 	flagSet.ValidateDeprecations(deprecationTracker)
@@ -330,10 +316,8 @@ func RunSpecs(t GinkgoTestingT, description string, args ...any) bool {
 	return passed
 }
 
-func extractSuiteConfiguration(args []any) (Labels, SemVerConstraints, types.AroundNodes) {
+func extractSuiteConfiguration(args []any) Labels {
 	suiteLabels := Labels{}
-	suiteSemVerConstraints := SemVerConstraints{}
-	aroundNodes := types.AroundNodes{}
 	configErrors := []error{}
 	for _, arg := range args {
 		switch arg := arg.(type) {
@@ -343,10 +327,6 @@ func extractSuiteConfiguration(args []any) (Labels, SemVerConstraints, types.Aro
 			reporterConfig = arg
 		case Labels:
 			suiteLabels = append(suiteLabels, arg...)
-		case SemVerConstraints:
-			suiteSemVerConstraints = append(suiteSemVerConstraints, arg...)
-		case types.AroundNodeDecorator:
-			aroundNodes = append(aroundNodes, arg)
 		default:
 			configErrors = append(configErrors, types.GinkgoErrors.UnknownTypePassedToRunSpecs(arg))
 		}
@@ -362,7 +342,7 @@ func extractSuiteConfiguration(args []any) (Labels, SemVerConstraints, types.Aro
 		os.Exit(1)
 	}
 
-	return suiteLabels, suiteSemVerConstraints, aroundNodes
+	return suiteLabels
 }
 
 func getwd() (string, error) {
@@ -385,7 +365,7 @@ func PreviewSpecs(description string, args ...any) Report {
 	}
 	defer global.PopClone()
 
-	suiteLabels, suiteSemVerConstraints, suiteAroundNodes := extractSuiteConfiguration(args)
+	suiteLabels := extractSuiteConfiguration(args)
 	priorDryRun, priorParallelTotal, priorParallelProcess := suiteConfig.DryRun, suiteConfig.ParallelTotal, suiteConfig.ParallelProcess
 	suiteConfig.DryRun, suiteConfig.ParallelTotal, suiteConfig.ParallelProcess = true, 1, 1
 	defer func() {
@@ -403,7 +383,7 @@ func PreviewSpecs(description string, args ...any) Report {
 	suitePath, err = filepath.Abs(suitePath)
 	exitIfErr(err)
 
-	global.Suite.Run(description, suiteLabels, suiteSemVerConstraints, suiteAroundNodes, suitePath, global.Failer, reporter, writer, outputInterceptor, interrupt_handler.NewInterruptHandler(client), client, internal.RegisterForProgressSignal, suiteConfig)
+	global.Suite.Run(description, suiteLabels, suitePath, global.Failer, reporter, writer, outputInterceptor, interrupt_handler.NewInterruptHandler(client), client, internal.RegisterForProgressSignal, suiteConfig)
 
 	return global.Suite.GetPreviewReport()
 }
