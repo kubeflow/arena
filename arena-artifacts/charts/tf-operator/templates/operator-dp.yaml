@@ -28,7 +28,9 @@ spec:
         - --alsologtostderr
         - -v=1
         - --monitoring-port=8443
-        - --threadiness=4
+        - --threadiness={{ .Values.controller.workers }}
+        - --qps={{ .Values.controller.clientConnection.qps }}
+        - --burst={{ .Values.controller.clientConnection.burst }}
         env:
         - name: MY_POD_NAMESPACE
           valueFrom:
