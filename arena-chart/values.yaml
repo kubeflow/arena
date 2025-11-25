@@ -1,0 +1,270 @@
+#
+# Copyright 2025 The Kubeflow authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Default values for arena.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- String to partially override release name.
+nameOverride: ""
+
+# -- String to fully override release name.
+fullnameOverride: ""
+
+# Global configurations used by all charts.
+global:
+  # -- Profile type of ACK cluster (e.g. `Default`, `Edge` and `Serverless`).
+  clusterProfile: Default
+
+  image:
+    # -- Image registry.
+    registry: registry-cn-beijing.ack.aliyuncs.com
+
+    # -- Image pull policy.
+    pullPolicy: IfNotPresent
+
+  # -- Node selector.
+  nodeSelector: {}
+
+  # -- Tolerations.
+  tolerations: []
+
+  # -- The prefix of all images.
+  # @deprecated -- Please use `global.image.registry` instead. 
+  imagePrefix: ""
+
+# -- Extra labels to add to all resources.
+labels: {}
+  # key1: value1
+  # key2: value2
+
+# -- Annotations to add to all resources.
+annotations: {}
+  # key1: value1
+  # key2: value2
+
+# Binary installer configurations.
+binary:
+
+  # -- Whether to enable binary installer job.
+  enabled: false
+
+  # -- Number of master nodes.
+  masterCount: 3
+
+  # -- Number of retries.
+  retry: 3
+
+  # -- Whether to use host network.
+  hostNetwork: true
+
+  # -- Whether to enable RDMA.
+  rdma: true
+
+  image:
+
+    # -- Image registry.
+    # @default -- `global.image.registry` will be used if not set.
+    registry: ""
+
+    # -- Image repository.
+    repository: acs/arena-deploy-manager
+
+    # -- Image tag.
+    # @default -- The chart version will be used if not set.
+    tag: 0.15.2-aliyun-6853599
+
+    # -- Image pull policy.
+    # @default -- `global.image.pullPolicy` will be used if not set.
+    pullPolicy: ""
+
+# pytorch-operator configurations.
+pytorch-operator:
+
+  # -- Wether to enable pytorch-operator.
+  enabled: true
+
+  initContainerImage: kube-ai-registry.cn-shanghai.cr.aliyuncs.com/kube-ai/alpine:3.10.9
+
+  # Controller configurations.
+  controller:
+
+    # -- Number of workers for controller.
+    workers: 10
+
+  # -- Pod resource requests and limits.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 2
+      memory: 8Gi
+
+  # -- Pod node selector.
+  nodeSelector: {}
+
+  # -- Pod tolerations.
+  tolerations: []
+
+# tf-operator configurations.
+tf-operator:
+
+  # -- Wether to enable tf-operator.
+  enabled: true
+
+  # -- Extra labels to add to all resources.
+  labels: {}
+    # key1: value1
+    # key2: value2
+
+  # -- Annotations to add to all resources.
+  annotations: {}
+    # key1: value1
+    # key2: value2
+
+  # -- Replicas of deployment.
+  replicas: 1
+
+  # Controller configurations.
+  controller:
+
+    # -- Number of workers for controller.
+    workers: 10
+
+    # -- QPS for controller.
+    qps: 10
+
+    # -- Maximum burst.
+    burst: 30
+
+  # -- Pod resource requests and limits.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 2
+      memory: 8Gi
+
+# mpi-operator configurations.
+mpi-operator:
+
+  # -- Whether to enable mpi-operator.
+  enabled: true
+
+  # -- Pod resource requests and limits.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 2
+      memory: 8Gi
+  
+  # -- Pod node selector.
+  nodeSelector: {}
+
+  # -- Pod tolerations.
+  tolerations: []
+
+# et-operator configurations.
+et-operator:
+
+  # -- Whether to enable et-operator.
+  enabled: true
+
+  initContainerImage: kube-ai-registry.cn-shanghai.cr.aliyuncs.com/kube-ai/alpine:3.10.9
+
+  createSSHSecret: false
+
+  # -- Pod resource requests and limits.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 2
+      memory: 8Gi
+
+# cron-operator configurations.
+cron-operator:
+
+  # -- Whether to enable cron-operator.
+  enabled: true
+
+  # -- Whether to use host timezone in the container.
+  useHostTimezone: false
+
+  # -- Pod resource requests and limits.
+  resources:
+    limits:
+      cpu: 200m
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# tf-dashboard configurations.
+tf-dashboard:
+
+  # -- Whether to enable tf-dashboard.
+  enabled: true
+
+  # -- Pod resource requests and limits.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 2Gi
+
+  # -- Pod node selector.
+  nodeSelector: {}
+
+  # -- Pod tolerations.
+  tolerations: []
+
+# gpu-exporter configurations.
+gpu-exporter:
+
+  # -- Whether to enable gpu-exporter.
+  enabled: false
+
+  # -- Pod resource requests and limits.
+  resources:
+    requests:
+      cpu: 200m
+      memory: 50Mi
+    limits:
+      cpu: 300m
+      memory: 500Mi
+
+# elastic-job-supervisor configurations.
+elastic-job-supervisor:
+
+  # -- Whether to enable elastic-job-supervisor.
+  enabled: true
+
+  # -- Pod resource requests and limits.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 300Mi
+    limits:
+      cpu: 300m
+      memory: 500Mi
