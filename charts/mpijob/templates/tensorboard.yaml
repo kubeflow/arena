@@ -16,14 +16,14 @@ spec:
     matchLabels:
       app: {{ template "mpijob.name" . }}
       chart: {{ template "mpijob.chart" . }}
-      release: {{ .Release.Name }}
+      release: {{ .Release.Name }}-tensorboard
       role: tensorboard
   template:
     metadata:
       labels:
         app: {{ template "mpijob.name" . }}
         chart: {{ template "mpijob.chart" . }}
-        release: {{ .Release.Name }}
+        release: {{ .Release.Name }}-tensorboard
         role: tensorboard
     spec:
       {{- if .Values.priorityClassName }}
@@ -45,8 +45,12 @@ spec:
                   - {{ .Release.Name }}
               - key: statefulset.kubernetes.io/pod-name
                 operator: In
-                values: 
-                  - {{ .Release.Name }}-worker-0
+                values:
+                  {{ if eq (.Values.workers | int) 0 }}
+                    - {{ .Release.Name }}-launcher
+                  {{- else}}
+                    - {{ .Release.Name }}-worker-0
+                  {{- end}}
             topologyKey: kubernetes.io/hostname
       {{- if .Values.enablePodSecurityContext }}
       {{- if .Values.isNonRoot}}

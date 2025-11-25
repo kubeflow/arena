@@ -102,12 +102,14 @@ func IsMPIPod(name, ns string, pod *corev1.Pod) bool {
 		return false
 	}
 
-	if pod.Labels["group_name"] != "kubeflow.org" {
-		return false
-	}
 	if pod.Namespace != ns {
 		return false
 	}
+
+	if pod.Labels[OperatorNameLabel] == "mpijob-controller" {
+		return true
+	}
+
 	return true
 }
 

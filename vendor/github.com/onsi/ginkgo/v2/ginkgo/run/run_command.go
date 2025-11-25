@@ -107,7 +107,7 @@ OUTER_LOOP:
 		}
 
 		opc := internal.NewOrderedParallelCompiler(r.cliConfig.ComputedNumCompilers())
-		opc.StartCompiling(suites, r.goFlagsConfig, false)
+		opc.StartCompiling(suites, r.goFlagsConfig)
 
 	SUITE_LOOP:
 		for {
