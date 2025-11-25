@@ -35,14 +35,6 @@ jobs:
             exit 1
           fi
 
-      - name: Run go mod vendor
-        run: |
-          go mod vendor
-          if ! git diff --quiet; then
-            echo "Please run 'go mod vendor' to make vendored copy of dependencies"
-            exit 1
-          fi
-
       - name: Run go fmt check
         run: |
           make go-fmt
