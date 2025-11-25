@@ -1,5 +1,33 @@
 # Changelog
 
+## [HEAD](https://github.com/kubeflow/arena/tree/v0.15.3) (2025-11-25)
+
+### Deprecations
+
+- Deprecate apiextensions.k8s.io/v1beta1 CRD ([#1330](https://github.com/kubeflow/arena/pull/1330) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Features
+
+- feature(tf-operator): make workers, qps and burst configurable ([#1379](https://github.com/kubeflow/arena/pull/1379) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Dependencies
+
+- chore(deps): bump actions/stale from 9 to 10 ([#1374](https://github.com/kubeflow/arena/pull/1374) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/setup-go from 5 to 6 ([#1375](https://github.com/kubeflow/arena/pull/1375) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/setup-python from 5 to 6 ([#1376](https://github.com/kubeflow/arena/pull/1376) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/download-artifact from 5 to 6 ([#1383](https://github.com/kubeflow/arena/pull/1383) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/upload-artifact from 4 to 5 ([#1382](https://github.com/kubeflow/arena/pull/1382) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/containerd/containerd from 1.7.27 to 1.7.29 ([#1384](https://github.com/kubeflow/arena/pull/1384) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump golang.org/x/crypto from 0.41.0 to 0.45.0 ([#1388](https://github.com/kubeflow/arena/pull/1388) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/spf13/pflag from 1.0.7 to 1.0.10 ([#1372](https://github.com/kubeflow/arena/pull/1372) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump google.golang.org/protobuf from 1.36.7 to 1.36.10 ([#1381](https://github.com/kubeflow/arena/pull/1381) by [@dependabot[bot]](https://github.com/apps/dependabot))
+
+### Misc
+
+- Remove vendor directory ([#1387](https://github.com/kubeflow/arena/pull/1387) by [@ChenYi015](https://github.com/ChenYi015))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.15.2...v0.15.3)
+
 ## [v0.15.2](https://github.com/kubeflow/arena/tree/v0.15.2) (2025-09-03)
 
 ### Bug Fixes
