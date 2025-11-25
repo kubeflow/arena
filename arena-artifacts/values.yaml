@@ -31,9 +31,19 @@ binary:
 tf:
   enabled: true
   image: acs/tf-operator
-  tag: aliyun-f12d01e
+  tag: 2cbb568
   imagePullPolicy: IfNotPresent
   replicas: 1
+  # Controller configurations.
+  controller:
+    # -- Number of workers for controller.
+    workers: 10
+    # -- Client connection configurations.
+    clientConnection:
+      # -- QPS is the number of queries per second allowed for K8S api server connection.
+      qps: 10
+      # --  Burst allows extra queries to accumulate when a client is exceeding its rate.
+      burst: 30
   resources:
     limits:
       cpu: 2
