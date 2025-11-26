@@ -311,11 +311,11 @@ function operators() {
 function upgrade_crd() {
     # Upgrade tfjob crd if the following conditions are met.
     if (arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i "git-commit") &> /dev/null; then
-        old_version=$(arena-kubectl get crd tfjobs.kubeflow.org -oyaml |grep -i "git-commit")
-        new_version=$(cat $SCRIPT_DIR/arena-artifacts/crds/tf-operator/kubeflow.org_tfjobs_v1.yaml |grep -i "git-commit")
+        old_version=$(arena-kubectl get crd tfjobs.kubeflow.org -oyaml | grep -i "git-commit")
+        new_version=$(cat $SCRIPT_DIR/arena-artifacts/crds/kubeflow.org_tfjobs.yaml | grep -i "git-commit")
         if [[ ${old_version} != ${new_version} ]]; then
             echo "upgrade tfjob crd from ${old_version} to ${new_version}"
-            arena-kubectl replace -f $SCRIPT_DIR/arena-artifacts/crds/tf-operator/kubeflow.org_tfjobs_v1.yaml
+            arena-kubectl replace -f $SCRIPT_DIR/arena-artifacts/crds/kubeflow.org_tfjobs.yaml
         fi
     fi
 }
