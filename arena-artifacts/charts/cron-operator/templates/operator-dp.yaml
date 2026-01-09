@@ -30,6 +30,7 @@ spec:
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         args: 
         - --workloads=Cron
+        - --max-reconciles=10
         ports:
         - containerPort: 8443
           name: metrics
