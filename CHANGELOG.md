@@ -1,6 +1,23 @@
 # Changelog
 
-## [HEAD](https://github.com/kubeflow/arena/tree/v0.15.3) (2025-11-25)
+## [v0.15.4](https://github.com/kubeflow/arena/tree/v0.15.4) (2026-01-09)
+
+### Bug Fixes
+
+- Fix: install script does not work due to CRD files renaming ([#1391](https://github.com/kubeflow/arena/pull/1391) by [@ChenYi015](https://github.com/ChenYi015))
+- fix(cron-operator): reconcile worker hangs due to invalid cron expression ([#1398](https://github.com/kubeflow/arena/pull/1398) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Dependencies
+
+- chore(deps): bump actions/upload-artifact from 5 to 6 ([#1397](https://github.com/kubeflow/arena/pull/1397) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/checkout from 5 to 6 ([#1389](https://github.com/kubeflow/arena/pull/1389) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/download-artifact from 6 to 7 ([#1396](https://github.com/kubeflow/arena/pull/1396) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/spf13/viper from 1.10.0 to 1.21.0 ([#1394](https://github.com/kubeflow/arena/pull/1394) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/prometheus/client_golang from 1.22.0 to 1.23.2 ([#1393](https://github.com/kubeflow/arena/pull/1393) by [@dependabot[bot]](https://github.com/apps/dependabot))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.15.3...v0.15.4)
+
+## [v0.15.3](https://github.com/kubeflow/arena/tree/v0.15.3) (2025-11-25)
 
 ### Deprecations
 
