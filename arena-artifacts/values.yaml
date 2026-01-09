@@ -123,7 +123,7 @@ et:
 cron:
   enabled: true
   image: acs/cron-operator
-  tag: aliyun-0f570ce
+  tag: aliyun-7421146f
   imagePullPolicy: IfNotPresent
   replicas: 1
   # -- Whether to use host timezone in the container.
