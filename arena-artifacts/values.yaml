@@ -119,23 +119,35 @@ et:
   nodeSelector: {}
   initContainerImage: alpine:3.10
 
-# cron-operator
+# Configurations of cron-operator.
 cron:
+  # -- Whether to enable cron-operator.
   enabled: true
-  image: acs/cron-operator
-  tag: aliyun-7421146f
-  imagePullPolicy: IfNotPresent
+  image:
+    # -- Image repository.
+    repository: acs/cron-operator
+    # -- (Optional) Image tag.
+    tag: ""
+    # -- Image pull policy.
+    pullPolicy: IfNotPresent
+  # -- Number of cron-operator replicas.
   replicas: 1
-  # -- Whether to use host timezone in the container.
+  # -- Whether to use host timezone in cron-operator container.
   useHostTimezone: false
+  # -- Resource requests and limits for cron-operator container.
   resources:
-    limits:
-      cpu: 200m
-      memory: 2Gi
     requests:
       cpu: 100m
       memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 2Gi
+  # -- Node selector for cron-operator pods.
   nodeSelector: {}
+  # -- Affinity for cron-operator pods.
+  affinity: {}
+  # -- Tolerations for cron-operator pods.
+  tolerations: []
 
 # gpu-exporter
 exporter:
