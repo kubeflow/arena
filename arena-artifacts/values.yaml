@@ -90,7 +90,7 @@ mpi:
 pytorch:
   enabled: true
   image: acs/pytorch-operator
-  tag: e1235d0-aliyun
+  tag: 4598b3e-aliyun
   imagePullPolicy: IfNotPresent
   resources:
     limits:
