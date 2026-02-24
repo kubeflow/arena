@@ -32,13 +32,14 @@ import (
 
 	"time"
 
-	v1alpha1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1alpha1"
+	v1 "github.com/kubeflow/arena/pkg/operators/mpi-operator/apis/kubeflow/v1"
+	common_v1 "github.com/kubeflow/training-operator/pkg/apis/kubeflow.org/v1"
 )
 
 // MPI Job Information
 type MPIJob struct {
 	*BasicJobInfo
-	mpijob       *v1alpha1.MPIJob
+	mpijob       *v1.MPIJob
 	chiefjob     *batchv1.Job
 	pods         []*corev1.Pod // all the pods including statefulset and job
 	chiefPod     *corev1.Pod   // the chief pod
@@ -440,11 +441,11 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 
 func (mj *MPIJob) isSucceeded() bool {
 	// status.MPIJobLauncherStatusType
-	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherSucceeded
+	return mj.mpijob.Status.ReplicaStatuses[common_v1.MPIJobReplicaTypeLauncher].Succeeded == 1
 }
 
 func (mj *MPIJob) isFailed() bool {
-	return mj.mpijob.Status.LauncherStatus == v1alpha1.LauncherFailed
+	return mj.mpijob.Status.ReplicaStatuses[common_v1.MPIJobReplicaTypeLauncher].Failed == 1
 }
 
 func (mj *MPIJob) isPending() bool {
@@ -464,12 +465,12 @@ func (mj *MPIJob) isPending() bool {
 
 // Get PriorityClass
 func (m *MPIJob) GetPriorityClass() string {
-	// return ""
-	return m.mpijob.Spec.Template.Spec.PriorityClassName
+	return ""
+	// return m.mpijob.Spec.Template.Spec.PriorityClassName
 }
 
 // filter out all pods and chief pod (master pod) of mpijob from pods in current system
-func getPodsOfMPIJob(tt *MPIJobTrainer, mpijob *v1alpha1.MPIJob, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
+func getPodsOfMPIJob(tt *MPIJobTrainer, mpijob *v1.MPIJob, podList []*corev1.Pod) ([]*corev1.Pod, *corev1.Pod) {
 	return getPodsOfTrainingJob(mpijob.Name, mpijob.Namespace, podList, tt.isMPIPod, func(pod *corev1.Pod) bool {
 		return tt.isChiefPod(pod)
 	})
