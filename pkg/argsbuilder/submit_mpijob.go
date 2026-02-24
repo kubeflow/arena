@@ -77,6 +77,7 @@ func (s *SubmitMPIJobArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().BoolVar(&s.args.GPUTopology, "gputopology", false, "enable gpu topology scheduling")
 	command.Flags().BoolVar(&s.args.MountsOnLauncher, "mounts-on-launcher", false, "launcher also mounts pvc")
 	command.Flags().StringVar(&s.args.CleanPodPolicy, "clean-task-policy", "All", "How to clean tasks after Training is done, support None, Running, All.")
+	command.Flags().IntVar(&s.args.SlotsPerWorker, "worker-slots", 1, "The slot count for every worker.")
 }
 
 func (s *SubmitMPIJobArgsBuilder) PreBuild() error {

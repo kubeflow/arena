@@ -20,9 +20,6 @@ tensorboardImage: registry.cn-zhangjiakou.aliyuncs.com/acs/tensorflow:1.12.0-dev
 tensorboardImagePullpolicy: Always
 tensorboardServiceType: NodePort
 
-launcherOnMaster: false
-mountsOnLauncher: false
-
 retry: 0
 
 launcherResources: {}
@@ -64,3 +61,9 @@ podGroupMinAvailable: "1"
 # enable gpu topology scheduling
 gputopology: false
 gputopologyreplica: "1"
+
+# slot(process) numbers in every pod
+slotsPerWorker: 1
+
+# workers numbers
+workers: 1
