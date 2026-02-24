@@ -123,7 +123,7 @@ func (mj *MPIJob) Age() time.Duration {
 func (mj *MPIJob) Duration() time.Duration {
 	mpijob := mj.mpijob
 
-	if mpijob.CreationTimestamp.IsZero() {
+	if mpijob.CreationTimestamp.IsZero() || mj.mpijob.Status.ReplicaStatuses == nil {
 		return 0
 	}
 
@@ -441,6 +441,9 @@ func (tt *MPIJobTrainer) ListTrainingJobs(namespace string, allNamespace bool) (
 
 func (mj *MPIJob) isSucceeded() bool {
 	// status.MPIJobLauncherStatusType
+	if mj.mpijob.Status.ReplicaStatuses == nil {
+		return false
+	}
 	return mj.mpijob.Status.ReplicaStatuses[common_v1.MPIJobReplicaTypeLauncher].Succeeded == 1
 }
 
