@@ -33,4 +33,7 @@ type SubmitMPIJobArgs struct {
 
 	// clean-task-policy
 	CleanPodPolicy string `yaml:"cleanPodPolicy"`
+
+	// slot count for every worker
+	SlotsPerWorker int `yaml:"slotsPerWorker"`
 }

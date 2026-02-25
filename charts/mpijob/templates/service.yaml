@@ -20,6 +20,6 @@ spec:
   selector:
     app: {{ template "mpijob.name" . }}
     chart: {{ template "mpijob.chart" . }}
-    release: {{ .Release.Name }}
+    release: {{ .Release.Name }}-tensorboard
     role: tensorboard
 {{- end }}
