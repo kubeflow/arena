@@ -21,6 +21,8 @@
       - [5. Reduced attack surface](#5-reduced-attack-surface)
       - [6. Resource lifecycle](#6-resource-lifecycle)
     - [Detailed Component Comparison](#detailed-component-comparison)
+    - [Migration Notes](#migration-notes)
+      - [PyTorch: `worker.replicas` (v2) vs `--workers` (v1)](#pytorch-workerreplicas-v2-vs---workers-v1)
     - [Test Plan](#test-plan)
     - [Graduation Criteria](#graduation-criteria)
     - [Upgrade / Downgrade Strategy](#upgrade--downgrade-strategy)
@@ -36,7 +38,7 @@
 
 ## Summary
 
-Arena v2 is a complete architectural redesign of Arena, addressing fundamental limitations in v1 that made the tool difficult to maintain, extend, and use at scale. The redesign eliminates Helm dependencies, reduces code complexity, introduces YAML-first configuration, and replaces shell-outs with direct Kubernetes API calls.
+Arena v2 is a complete architectural redesign of Arena, addressing fundamental limitations in v1 that make the tool difficult to maintain, extend, and use at scale. The redesign eliminates Helm dependencies, reduces code complexity, introduces YAML-first configuration, and replaces shell-outs with direct Kubernetes API calls.
 
 ## Motivation
 
@@ -46,13 +48,13 @@ Arena v1, while functional, suffers from architectural decisions that create sig
 
 Arena v2 addresses fundamental architectural limitations in Arena v1:
 
-1. **Eliminate Helm dependency** — Generate K8s resources directly in Go, not through Helm chart rendering. This removes 24 Helm charts and the entire Helm Go SDK dependency tree.
+1. **Eliminate Helm dependency** — Generate K8s resources directly in Go, not through Helm chart rendering. This removes 23 Helm charts and the entire Helm Go SDK dependency tree.
 
-2. **YAML-first configuration** — v1 is flag-only (40+ CLI flags for a TFJob) and saves **final** helm chart values into configmap. v2 introduces a structured YAML schema where users can version, review, and reuse job configurations as code. CLI flags remain available for quick submissions.
+2. **YAML-first configuration** — v1 is flag-only (40+ CLI flags for a TFJob) and saves **final** Helm chart values into a ConfigMap. v2 introduces a structured YAML schema where users can version, review, and reuse job configurations as code. CLI flags remain available for quick submissions.
 
-3. **Reduce code complexity** — v1's training submission path spans thousands lines of Go code across `pkg/commands/`, `pkg/training/`, `pkg/argsbuilder/`, `pkg/apis/`, and `pkg/workflow/`.
+3. **Reduce code complexity** — v1's training submission path spans thousands of lines of Go code across `pkg/commands/`, `pkg/training/`, `pkg/argsbuilder/`, `pkg/apis/`, and `pkg/workflow/`.
 
-4. **Direct K8s API usage** — v1 submits jobs through a 6-step pipeline: serialize args → render Helm chart → save to temp file → create ConfigMap → shell out to `kubectl apply` → patch owner references. v2 keeps owner references patches and calls the K8s dynamic client API directly: `kc.CreateUnstructured(ctx, gvr, crd)`. No temp files, no shell-outs.
+4. **Direct K8s API usage** — v1 submits jobs through a 6-step pipeline: serialize args → render Helm chart → save to temp files → create ConfigMap → shell out to `kubectl apply` → patch owner references. v2 adds owner references to created resources and calls the K8s dynamic client API directly: `kc.CreateUnstructured(ctx, gvr, crd)`. No temp files, no shell-outs.
 
 5. **Type-agnostic CRD generation** — Use `unstructured.Unstructured` instead of operator-specific Go types. This decouples Arena from specific Training Operator API versions and makes the code resilient to operator upgrades.
 
@@ -70,14 +72,14 @@ Arena v2 adopts a modular architecture that separates concerns and reduces coupl
 
 ```
 cmd/arena-v2/main.go          → Entry point
-pkg/cli/                       → Cobra commands (root, run, get, list, delete, stop, resume, logs, submit, version, completion)
+pkg/cli/                       → Cobra commands (root, status, top, check, job, submit, version, completion)
 pkg/task/                      → Task data model, YAML loader, flag overrides
-pkg/provider/                  → Provider interface + implementations (PyTorchJob, TFJob, MPIJob)
+pkg/provider/                  → Provider interface + implementations (PyTorchJob, MPIJob)
 pkg/client/                    → K8s dynamic + typed client wrapper
 pkg/output/                    → Table formatting for CLI output
 ```
 
-**Provider Interface**: Each framework (PyTorchJob, TFJob, MPIJob) implements `provider.Provider`:
+**Provider Interface**: Each framework (PyTorchJob, MPIJob) implements `provider.Provider`:
 
 - `BuildCRD(task) → *unstructured.Unstructured` — Task spec to Operator CRD
 - `GetJobStatus()` / `GetPods()` / `GetLogPod()` — Read back status
@@ -97,11 +99,11 @@ As a platform engineer, I want to add support for a new training framework (e.g.
 
 **Story 3: Operator maintaining backward compatibility**
 
-As an operator maintaining existing CI/CD pipelines, I want to continue using `arena submit tfjob --name my-job --workers 4 --gpus 2 "python train.py"` without rewriting my automation scripts, while the platform team gradually adopts v2's YAML-based workflows.
+As a cluster operator maintaining existing CI/CD pipelines, I want to continue using `arena submit pytorchjob --name my-job --workers 4 --gpus 2 "python train.py"` without rewriting my automation scripts, while the platform team gradually adopts v2's YAML-based workflows.
 
 ### Notes/Constraints/Caveats
 
-- v2 is a separate project that lives in the `v2` branch and is built from scratch, it does not import any v1 packages.
+- v2 is a separate project that lives in the `v2` branch and is built from scratch. It does not import any v1 packages.
 - The `arena-v2` binary name is temporary for development. The final build target is `arena` — the `-v2` suffix is removed once v2 reaches feature parity.
 - v2's legacy `arena submit` command provides v1-style flag-based submission by mapping old flags to v2's internal `Task` model. Users can continue using v1 syntax without rewriting scripts.
 
@@ -111,11 +113,11 @@ As an operator maintaining existing CI/CD pipelines, I want to continue using `a
 
 #### 1. Simpler maintenance
 
-The tfjob Helm chart template in v1 is 1,323 lines of nested conditionals for PS/Worker/Chief/Evaluator roles. Every field must be duplicated across different blocks (node selectors, tolerations, volumes, init containers, security contexts). In v2, the same logic is a few hundred lines of Go that programmatically constructs corresponding CR fields maps.
+The tfjob Helm chart template in v1 is 1,323 lines of nested conditionals for PS/Worker/Chief/Evaluator roles. Every field must be duplicated across different blocks (node selectors, tolerations, volumes, init containers, security contexts). In v2, the same logic is a few hundred lines of Go that programmatically constructs corresponding CR field maps.
 
 #### 2. Faster iteration
 
-Adding a new field in v1 requires changes in 5 places: types struct, argsbuilder, Helm chart `values.yaml`, Helm chart template, and command file. In v2, adding a field requires updating the YAML schema, the Go struct definition, and the provider relative methods.
+Adding a new field in v1 requires changes in five places: types struct, argsbuilder, Helm chart `values.yaml`, Helm chart template, and command file. In v2, adding a field requires updating the YAML schema, the Go struct definition, and the provider's relevant methods.
 
 #### 3. Better user experience
 
@@ -131,13 +133,13 @@ v1 shells out to `helm` and `kubectl`, which requires these binaries in `PATH` a
 
 #### 6. Resource lifecycle
 
-A single `arena job run` submission creates multiple K8s resources: the Operator CRD (PyTorchJob/TFJob/MPIJob), optionally a TensorBoard Deployment+Service, and a ConfigMap storing the original YAML and generated manifest. In v1, these resources are tracked via a resource list in the ConfigMap and deleted through a 3-step pipeline (read ConfigMap → delete resources → delete ConfigMap), which risks resource leaks if the list is incomplete or the process crashes mid-delete.
+A single `arena job run` submission creates multiple K8s resources: the Operator CRD (PyTorchJob/MPIJob), optionally a TensorBoard Deployment+Service, and a ConfigMap storing the original YAML and generated manifest. In v1, these resources are tracked via a resource list in the ConfigMap and deleted through a 3-step pipeline (read ConfigMap → delete resources → delete ConfigMap), which risks resource leaks if the list is incomplete or the process crashes mid-delete.
 
-v2 adopts the same pattern: Deletion becomes a single operation and metadata storage (ConfigMap or a new CRD) respects training job CR `ttlSecondsAfterFinished`  — just deleting the top level resource will trigger K8s garbage collection to cascade-delete all owned resources. This eliminates resource leaks and simplifies `arena job delete` to one API call.
+v2 adopts a different pattern: deletion is simplified to a single operation. Deleting the top-level training job CR triggers K8s garbage collection to cascade-delete all owned resources. This eliminates resource leaks and simplifies `arena job delete` to a single API call. Likewise, all owned resources are cleaned up alongside the training job CR when its `ttlSecondsAfterFinished` expires.
 
 ```
 PyTorchJob CRD
-  ├── owns → ConfigMap "my-job" (stores original YAML, a new CRD could replace the native ConfigMap)
+  ├── owns → ConfigMap "my-job" (stores effective training job YAML; a new CRD could replace the native ConfigMap)
   ├── owns → TensorBoard Deployment
   └── owns → TensorBoard Service
 ```
@@ -148,16 +150,30 @@ PyTorchJob CRD
 |--------|----------|----------|
 | **Job submission** | Helm chart rendering + `kubectl apply` shell-out | Direct K8s dynamic client API |
 | **Configuration** | CLI flags only (no YAML) | YAML schema + CLI flags |
-| **Helm dependency** | Yes — `helm.sh/helm/v3` + 24 charts | No |
+| **Helm dependency** | Yes — `helm.sh/helm/v3` + 23 charts | No |
 | **kubectl dependency** | Yes — shells out to `kubectl apply/delete` | No — uses `client-go` directly |
-| **Training Go code** | thousands of lines | a few thousand lines |
-| **Helm charts** | 24 charts maintained alongside Go code | 0 |
+| **Training Go code** | thousands of lines | a few hundred lines |
+| **Helm charts** | 23 charts maintained alongside Go code | 0 |
 | **Temp files per submission** | 3 (values.yaml, rendered manifest, app-info) | 0 |
 | **Resource lifecycle** | 3-step delete (read ConfigMap → delete resources → delete ConfigMap) | 1-step delete (delete anchor resource → K8s GC cascades) |
-| **Per-role config (TFJob)** | 40+ CLI flags (e.g., `--worker-image`, `--ps-cpu`, `--chief-memory`) | `chief/ps` block in YAML with independent per-role declaration |
+| **Per-role config** | 40+ CLI flags (e.g., `--worker-image`, `--ps-cpu`, `--chief-memory`) | `chief/ps/evaluator/launcher/master/worker` block in YAML with independent per-role declaration |
 | **Adding a new operator** | Implement Go types + argsbuilder + command + Helm chart + chart template | Implement `provider.Provider` interface |
 | **Operator version coupling** | Tightly coupled — must update Go types when operator CRD API changes | Loosely coupled — `unstructured.Unstructured` is version-agnostic |
 | **Binary size** | Larger (Helm SDK + transitive deps) | Smaller (only `client-go` + `cobra`) |
+
+### Migration Notes
+
+#### PyTorch: `worker.replicas` (v2) vs `--workers` (v1)
+
+> **PyTorch-specific:** Only v1's PyTorch submit path subtracts the master from `--workers`.
+
+**Key difference:** v1's `--workers=N` includes the master (internally decremented by 1), while v2's `worker.replicas=N` excludes it — the master is always an additional Pod.
+
+**Migration formula:** `worker.replicas = --workers - 1`. Since `--workers` is always ≥ 1, when `--workers` is 1, `worker.replicas` would be 0, which violates the > 0 constraint. In this case, omit the worker block and specify the master block instead.
+
+In v2, the PyTorch master is fixed at 1 replica, inherits worker config by default if `master` block is omitted, and can be independently configured via the `master` block. **Total GPU-using replicas** = `worker.replicas + 1`.
+
+For framework-specific mappings across all providers, see the [worker.replicas → Provider Mapping](yaml-schema.md#workerreplicas--provider-mapping) section in the YAML schema specification.
 
 ### Test Plan
 
@@ -167,7 +183,7 @@ The test plan for Arena v2 includes:
 
 - YAML schema parsing and validation
 - Flag-to-YAML override merging logic
-- Provider CRD generation (PyTorchJob, TFJob, MPIJob)
+- Provider CRD generation (PyTorchJob, MPIJob)
 - K8s client wrapper error handling
 
 **Integration tests:**
@@ -188,39 +204,40 @@ The test plan for Arena v2 includes:
 **Alpha/MVP (Phase 1 - current):**
 
 - v1 remains the default for production use
-- Legacy arena `submit` command for backward compatibility
 - Core training submission (PyTorchJob, MPIJob) with YAML schema
-- Basic command (`arena version`, `arena help`)
-- Display cluster resource info（`arena top`）
-- Basic job manipulates and status queries (`arena job delete`, `arena job get`, `arena job list`, `arena job status`, `arena job logs`), using `arena job` prefix alias to support v1 `arena delete/get/list/status/logs` commands
+  - without `scheduling` semantics support
+- Basic commands (`arena version`, `arena help`)
+- Display cluster resource info (`arena top`)
+- Supports basic job manipulations and status queries (e.g., `arena job delete`, `arena job get`, `arena job list`, `arena job status`, `arena job logs`). The `arena job` prefix provides equivalent functionality to v1 `arena delete/get/list/status/logs` commands.
 - Add new sub-commands
   - `job`
-    - `run`，launch a training job from a YAML file and CLI flags
-    - `stop`, stop a running training job (operation, not YAML config)
-    - `resume`, resume a stopped training job (operation, not YAML config)
-  - `check`, check if cluster has already installed required CRD
+    - `run`, launch a training job from a YAML file
+    - `suspend`, suspend a running training job (operation, not YAML config)
+    - `resume`, resume a suspended training job (operation, not YAML config)
+  - `check`, check if the cluster has the required CRD installed
+- Dry-run mode for CRD inspection
 
 **Beta (Phase 2 - next):**
 
-- Dry-run mode for CRD inspection
-- Advanced features: `lifecycle` policies, `sync`/`init` containers
+- Legacy `arena submit` command for backward compatibility
+- Support `scheduling` semantics
 - Users begin migrating simple jobs to v2
 - Comprehensive CLI flag coverage matching v1 functionality
 - Output formats: JSON, YAML, wide
-- InferenceTask kind (RBG only)
+- InferenceTask kind (planned to use [RBG](https://github.com/sgl-project/rbg) for orchestration)
   - Add new sub-commands
     - `serve`
-- Add DeepSpeed support and example
-- TensorFlow provider
-- Ray provider (RayJob CRD)
+- Add DeepSpeed, TensorFlow, Ray support and examples
+- Support overriding stable YAML fields via CLI flags (such as `name`, `worker.replicas`, etc.)
 
 **Stable (Phase 3 - future):**
 
-- Platform agnostic configuration via `arena configure`
+- Support overriding the entire YAML schema via CLI flags
+- Platform-agnostic configuration via `arena configure`
 - v1 is deprecated but still maintained for bug fixes
 - Agent, evaluation, and benchmark task kinds
 - `arena migrate` tool for converting v1 flag-based invocations to v2 YAML files
-- Multi-model pipeline support
+- Add Horovod support and examples
 
 ### Upgrade / Downgrade Strategy
 
@@ -263,7 +280,7 @@ The test plan for Arena v2 includes:
 **How can this feature be enabled/disabled?**
 
 - v2 is a separate binary (`arena-v2`) during development, allowing users to opt-in
-- Once v2 reaches feature parity, it replaces the v1 binary (`arena`)
+- Once v2 reaches feature parity, it replaces the `arena` v1 binary
 - Users can continue using v1 by not installing v2
 
 **Can the feature be disabled once it has been enabled?**
@@ -276,7 +293,7 @@ The test plan for Arena v2 includes:
 
 **How will this be rolled out?**
 
-- v2 is developed in parallel with v1 on the `v2` branch
+- v2 is being developed in the `v2` branch, in parallel with v1
 - Users can test v2 in non-production environments first
 - Gradual adoption as v2 reaches feature parity with v1
 
@@ -288,7 +305,7 @@ The test plan for Arena v2 includes:
 
 **How will rollback work if something goes wrong?**
 
-- Users can revert to v1 binary at any time
+- Users can revert to the v1 binary at any time
 - v2 does not modify cluster state or v1 configuration
 - No data migration or rollback procedures required
 
@@ -302,7 +319,7 @@ The test plan for Arena v2 includes:
 
 **How can this feature be monitored?**
 
-- Kubernetes metrics for created CRDs (PyTorchJob, TFJob, MPIJob)
+- Kubernetes metrics for created CRDs (PyTorchJob, MPIJob)
 - Job completion/failure rates
 - Submission latency (time from CLI invocation to CRD creation)
 
@@ -312,7 +329,7 @@ The test plan for Arena v2 includes:
 
 - v2 depends only on `client-go` for Kubernetes API access
 - No dependency on Helm, kubectl, or external binaries
-- Requires Training Operator (or compatible operator) to be installed in the cluster
+- Training Operator and MPI Operator are mandatory. KubeRay will become a requirement when Ray support is added.
 
 **Are there any new dependencies introduced?**
 
@@ -352,6 +369,7 @@ The test plan for Arena v2 includes:
 
 - **Arena v1 codebase**: https://github.com/kubeflow/arena/tree/v0.15.4
 - **YAML schema specification**: `keps/arena-v2/yaml-schema.md` (YAML Schema section)
-- **CLI flag mapping**: `keps/arena-v2/cli-flag-mapping.md` (CLI Override Mapping section)
-- **Kubernetes Training Operator**: https://github.com/kubeflow/training-operator
+- **CLI flag mapping**: `keps/arena-v2/cli-flag-mapping.md`
+- **Kubeflow Trainer**: https://github.com/kubeflow/trainer/tree/release-1.9
+- **Kubeflow MPI Operator**: https://github.com/kubeflow/mpi-operator/tree/master
 - **client-go**: https://github.com/kubernetes/client-go
