@@ -43,12 +43,16 @@ func DeleteJob(name, namespace, trainingType string) error {
 	if err != nil {
 		log.Warnf("Failed to UninstallAppsWithAppInfoFile due to %v", err)
 		log.Warnln("manually delete the following resource:")
+		return err
 	}
 
+	// Manual deletion is required because serving, evaluation, and analysis job configmaps do not have an owner reference.
+	// Repeated deletion is idempotent because NotFound errors are ignored.
 	err = kubectl.DeleteAppConfigMap(jobName, namespace)
 	if err != nil {
 		log.Warningf("Delete configmap %s failed, please clean it manually due to %v.", jobName, err)
 		log.Warningf("Please run `kubectl delete -n %s cm %s`", namespace, jobName)
+		return err
 	}
 
 	return nil
@@ -125,7 +129,7 @@ func SubmitOps(name string, trainingType string, namespace string, values interf
 }
 
 /**
-*	Submit training job
+*	Submit training, serving, evaluation and analysis job
 **/
 
 func SubmitJob(name string, trainingType string, namespace string, values interface{}, chart string, options ...string) error {
