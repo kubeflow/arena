@@ -332,7 +332,7 @@ func UpdateKServe(args *types.UpdateKServeArgs) error {
 func UpdateDistributedServing(args *types.UpdateDistributedServingArgs) error {
 	lwsJob, err := findAndBuildLWSJob(args)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	if len(args.Annotations) > 0 {
