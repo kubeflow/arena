@@ -51,6 +51,7 @@ func (c *EvaluateClient) Namespace(namespace string) *EvaluateClient {
 
 // SubmitEvaluateJob submits a evaluate job
 func (c *EvaluateClient) SubmitEvaluateJob(job *apievaluate.EvaluateJob) error {
+	defer setContext(c.configer)()
 	args := job.Args().(*types.EvaluateJobArgs)
 
 	// generate uuid v4
@@ -78,10 +79,12 @@ func (c *EvaluateClient) SubmitEvaluateJob(job *apievaluate.EvaluateJob) error {
 }
 
 func (c *EvaluateClient) Get(name, namespace string) (*types.EvaluateJobInfo, error) {
+	defer setContext(c.configer)()
 	return evaluate.GetEvaluateJob(name, namespace)
 }
 
 func (c *EvaluateClient) GetAndPrint(name string, format string) error {
+	defer setContext(c.configer)()
 	outputFormat := utils.TransferPrintFormat(format)
 	if outputFormat == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
@@ -96,10 +99,12 @@ func (c *EvaluateClient) GetAndPrint(name string, format string) error {
 }
 
 func (c *EvaluateClient) List(allNamespaces bool) ([]*types.EvaluateJobInfo, error) {
+	defer setContext(c.configer)()
 	return evaluate.ListEvaluateJobs(c.namespace, allNamespaces)
 }
 
 func (c *EvaluateClient) ListAndPrint(allNamespaces bool, format string) error {
+	defer setContext(c.configer)()
 	outputFormat := utils.TransferPrintFormat(format)
 	if outputFormat == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
@@ -114,6 +119,7 @@ func (c *EvaluateClient) ListAndPrint(allNamespaces bool, format string) error {
 }
 
 func (c *EvaluateClient) Delete(names ...string) error {
+	defer setContext(c.configer)()
 	for _, name := range names {
 		err := evaluate.DeleteEvaluateJob(name, c.namespace)
 		if err != nil {

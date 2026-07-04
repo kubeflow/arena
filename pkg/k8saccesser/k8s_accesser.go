@@ -22,6 +22,7 @@ import (
 
 	kservev1beta1 "github.com/kserve/kserve/pkg/apis/serving/v1beta1"
 	kserveClient "github.com/kserve/kserve/pkg/client/clientset/versioned"
+	"github.com/kubeflow/arena/pkg/util/clientcontext"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -59,7 +60,7 @@ import (
 )
 
 var accesser *k8sResourceAccesser
-var once sync.Once
+var accesserMu sync.RWMutex
 
 func init() {
 	utilruntime.Must(tfv1.AddToScheme(scheme.Scheme))
@@ -73,17 +74,26 @@ func init() {
 }
 
 func InitK8sResourceAccesser(config *rest.Config, clientset *kubernetes.Clientset, isDaemonMode bool) error {
-	var err error
-	once.Do(func() {
-		accesser, err = NewK8sResourceAccesser(config, clientset, isDaemonMode)
-		if err == nil {
-			err = accesser.Run()
-		}
-	})
-	return err
+	acc, err := NewK8sResourceAccesser(config, clientset, isDaemonMode)
+	if err != nil {
+		return err
+	}
+	err = acc.Run()
+	if err != nil {
+		return err
+	}
+	accesserMu.Lock()
+	accesser = acc
+	accesserMu.Unlock()
+	return nil
 }
 
 func GetK8sResourceAccesser() *k8sResourceAccesser {
+	if active := clientcontext.GetActiveAccesser(); active != nil {
+		return active.(*k8sResourceAccesser)
+	}
+	accesserMu.RLock()
+	defer accesserMu.RUnlock()
 	return accesser
 }
 

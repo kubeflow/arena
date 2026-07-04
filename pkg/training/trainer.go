@@ -26,42 +26,44 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
+	"github.com/kubeflow/arena/pkg/util/clientcontext"
 	"github.com/kubeflow/arena/pkg/util/kubectl"
 )
 
-var trainers map[types.TrainingJobType]Trainer
-
-var once sync.Once
-
 func GetAllTrainers() map[types.TrainingJobType]Trainer {
-	once.Do(func() {
-		locker := new(sync.RWMutex)
-		trainers = map[types.TrainingJobType]Trainer{}
-		trainerInits := []func() Trainer{
-			NewTensorFlowJobTrainer,
-			NewPyTorchJobTrainer,
-			NewMPIJobTrainer,
-			NewETJobTrainer,
-			NewVolcanoJobTrainer,
-			NewSparkJobTrainer,
-			NewDeepSpeedJobTrainer,
-			NewRayJobTrainer,
-		}
-		var wg sync.WaitGroup
-		for _, initFunc := range trainerInits {
-			wg.Add(1)
-			f := initFunc
-			go func() {
-				defer wg.Done()
-				trainer := f()
-				locker.Lock()
-				trainers[trainer.Type()] = trainer
-				locker.Unlock()
-			}()
-		}
-		wg.Wait()
-	})
-	return trainers
+	configer := config.GetArenaConfiger()
+	if cached := clientcontext.GetConfigerTrainers(configer); cached != nil {
+		return cached.(map[types.TrainingJobType]Trainer)
+	}
+
+	locker := new(sync.Mutex)
+	localTrainers := map[types.TrainingJobType]Trainer{}
+	trainerInits := []func() Trainer{
+		NewTensorFlowJobTrainer,
+		NewPyTorchJobTrainer,
+		NewMPIJobTrainer,
+		NewETJobTrainer,
+		NewVolcanoJobTrainer,
+		NewSparkJobTrainer,
+		NewDeepSpeedJobTrainer,
+		NewRayJobTrainer,
+	}
+	var wg sync.WaitGroup
+	for _, initFunc := range trainerInits {
+		wg.Add(1)
+		f := initFunc
+		go func() {
+			defer wg.Done()
+			trainer := f()
+			locker.Lock()
+			localTrainers[trainer.Type()] = trainer
+			locker.Unlock()
+		}()
+	}
+	wg.Wait()
+
+	clientcontext.SetConfigerTrainers(configer, localTrainers)
+	return localTrainers
 }
 
 type orderedTrainingJob []TrainingJob

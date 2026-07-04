@@ -29,6 +29,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/config"
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
+	"github.com/kubeflow/arena/pkg/util/clientcontext"
 	"github.com/prometheus/common/model"
 	log "github.com/sirupsen/logrus"
 
@@ -55,10 +56,13 @@ func (t *arenaTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func GetPrometheusClient() promv1.API {
-	prometheusOnce.Do(func() {
-		globalPrometheusClient = getPrometheusClient(config.GetArenaConfiger().GetConfigsFromConfigFile())
-	})
-	return globalPrometheusClient
+	configer := config.GetArenaConfiger()
+	if cached := clientcontext.GetConfigerPrometheus(configer); cached != nil {
+		return cached.(promv1.API)
+	}
+	client := getPrometheusClient(configer.GetConfigsFromConfigFile())
+	clientcontext.SetConfigerPrometheus(configer, client)
+	return client
 }
 
 // address format should like: http://123.123.123.123:9000

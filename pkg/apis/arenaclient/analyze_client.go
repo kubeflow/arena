@@ -44,6 +44,7 @@ func (m *AnalyzeClient) Namespace(namespace string) *AnalyzeClient {
 }
 
 func (m *AnalyzeClient) Submit(job *apisanalyze.Job) error {
+	defer setContext(m.configer)()
 	switch job.Type() {
 	case types.ModelProfileJob:
 		args := job.Args().(*types.ModelProfileArgs)
@@ -62,6 +63,7 @@ func (m *AnalyzeClient) Submit(job *apisanalyze.Job) error {
 }
 
 func (m *AnalyzeClient) Get(jobType types.ModelJobType, name string) (*types.ModelJobInfo, error) {
+	defer setContext(m.configer)()
 	job, err := analyze.SearchModelJob(m.namespace, name, jobType)
 	if err != nil {
 		return nil, err
@@ -72,6 +74,7 @@ func (m *AnalyzeClient) Get(jobType types.ModelJobType, name string) (*types.Mod
 }
 
 func (m *AnalyzeClient) GetAndPrint(jobType types.ModelJobType, name string, format string) error {
+	defer setContext(m.configer)()
 	job, err := analyze.SearchModelJob(m.namespace, name, jobType)
 	if err != nil {
 		return err
@@ -82,6 +85,7 @@ func (m *AnalyzeClient) GetAndPrint(jobType types.ModelJobType, name string, for
 }
 
 func (m *AnalyzeClient) List(allNamespaces bool, jobType types.ModelJobType) ([]*types.ModelJobInfo, error) {
+	defer setContext(m.configer)()
 	jobs, err := analyze.ListModelJobs(m.namespace, allNamespaces, jobType)
 	if err != nil {
 		return nil, err
@@ -96,6 +100,7 @@ func (m *AnalyzeClient) List(allNamespaces bool, jobType types.ModelJobType) ([]
 }
 
 func (m *AnalyzeClient) ListAndPrint(allNamespaces bool, jobType types.ModelJobType, format string) error {
+	defer setContext(m.configer)()
 	jobs, err := analyze.ListModelJobs(m.namespace, allNamespaces, jobType)
 	if err != nil {
 		return err
@@ -106,6 +111,7 @@ func (m *AnalyzeClient) ListAndPrint(allNamespaces bool, jobType types.ModelJobT
 }
 
 func (m *AnalyzeClient) Delete(jobType types.ModelJobType, jobNames ...string) error {
+	defer setContext(m.configer)()
 	for _, jobName := range jobNames {
 		err := analyze.DeleteModelJob(m.namespace, jobName, jobType)
 		if err != nil {

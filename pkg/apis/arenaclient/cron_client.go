@@ -40,6 +40,7 @@ func NewCronClient(namespace string, configer *config.ArenaConfiger) *CronClient
 
 // Submit submits a training job
 func (c *CronClient) SubmitCronTrainingJob(job *apiscron.Job) error {
+	defer setContext(c.configer)()
 	switch job.Type() {
 	case types.CronTFTrainingJob:
 		args := job.Args().(*types.CronTFJobArgs)
@@ -59,11 +60,13 @@ func (c *CronClient) Namespace(namespace string) *CronClient {
 
 // List return all cron task
 func (c *CronClient) List(allNamespaces bool) ([]*types.CronInfo, error) {
+	defer setContext(c.configer)()
 	return cron.ListCrons(c.namespace, allNamespaces)
 }
 
 // ListAndPrint lists and prints the job informations
 func (c *CronClient) ListAndPrint(allNamespaces bool, format string) error {
+	defer setContext(c.configer)()
 	outputFormat := utils.TransferPrintFormat(format)
 	if outputFormat == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
@@ -77,10 +80,12 @@ func (c *CronClient) ListAndPrint(allNamespaces bool, format string) error {
 }
 
 func (c *CronClient) Get(name string) (*types.CronInfo, error) {
+	defer setContext(c.configer)()
 	return cron.GetCronInfo(name, c.namespace)
 }
 
 func (c *CronClient) GetAndPrint(name string, format string) error {
+	defer setContext(c.configer)()
 	outputFormat := utils.TransferPrintFormat(format)
 	if outputFormat == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
@@ -96,14 +101,17 @@ func (c *CronClient) GetAndPrint(name string, format string) error {
 }
 
 func (c *CronClient) Suspend(name string) error {
+	defer setContext(c.configer)()
 	return cron.SuspendCron(name, c.namespace, true)
 }
 
 func (c *CronClient) Resume(name string) error {
+	defer setContext(c.configer)()
 	return cron.SuspendCron(name, c.namespace, false)
 }
 
 func (c *CronClient) Delete(names ...string) error {
+	defer setContext(c.configer)()
 	for _, name := range names {
 		cronInfo, err := cron.GetCronInfo(name, c.namespace)
 		if err != nil {

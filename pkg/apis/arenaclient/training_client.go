@@ -59,6 +59,7 @@ func (t *TrainingJobClient) Namespace(namespace string) *TrainingJobClient {
 
 // Submit submits a training job
 func (t *TrainingJobClient) Submit(job *apistraining.Job) error {
+	defer setContext(t.configer)()
 	switch job.Type() {
 	case types.TFTrainingJob:
 		args := job.Args().(*types.SubmitTFJobArgs)
@@ -93,6 +94,7 @@ func (t *TrainingJobClient) Submit(job *apistraining.Job) error {
 
 // ScaleIn scales in job
 func (t *TrainingJobClient) ScaleIn(job *apistraining.Job) error {
+	defer setContext(t.configer)()
 	switch job.Type() {
 	case types.ETTrainingJob:
 		args := job.Args().(*types.ScaleInETJobArgs)
@@ -103,6 +105,7 @@ func (t *TrainingJobClient) ScaleIn(job *apistraining.Job) error {
 
 // ScaleOut scales out job
 func (t *TrainingJobClient) ScaleOut(job *apistraining.Job) error {
+	defer setContext(t.configer)()
 	switch job.Type() {
 	case types.ETTrainingJob:
 		args := job.Args().(*types.ScaleOutETJobArgs)
@@ -113,6 +116,7 @@ func (t *TrainingJobClient) ScaleOut(job *apistraining.Job) error {
 
 // Get returns a training job information
 func (t *TrainingJobClient) Get(jobName string, jobType types.TrainingJobType, showPrometheusMetric bool) (*types.TrainingJobInfo, error) {
+	defer setContext(t.configer)()
 	job, err := training.SearchTrainingJob(jobName, t.namespace, jobType)
 	if err != nil {
 		return nil, err
@@ -124,6 +128,7 @@ func (t *TrainingJobClient) Get(jobName string, jobType types.TrainingJobType, s
 
 // GetAndPrint print training job information
 func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJobType, format string, showEvent bool, showGPU bool) error {
+	defer setContext(t.configer)()
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
@@ -144,6 +149,7 @@ func (t *TrainingJobClient) GetAndPrint(jobName string, jobType types.TrainingJo
 
 // List returns all training jobs
 func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.TrainingJobType, showPrometheusMetric bool) ([]*types.TrainingJobInfo, error) {
+	defer setContext(t.configer)()
 	jobs, err := training.ListTrainingJobs(t.namespace, allNamespaces, trainingType)
 	if err != nil {
 		return nil, err
@@ -158,6 +164,7 @@ func (t *TrainingJobClient) List(allNamespaces bool, trainingType types.Training
 
 // ListAndPrint lists and prints the job informations
 func (t *TrainingJobClient) ListAndPrint(allNamespaces bool, format string, trainingType types.TrainingJobType) error {
+	defer setContext(t.configer)()
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
@@ -171,12 +178,14 @@ func (t *TrainingJobClient) ListAndPrint(allNamespaces bool, format string, trai
 
 // Logs returns the training job log
 func (t *TrainingJobClient) Logs(jobName string, jobType types.TrainingJobType, args *types.LogArgs) error {
+	defer setContext(t.configer)()
 	args.Namespace = t.namespace
 	args.JobName = jobName
 	return training.AcceptJobLog(jobName, jobType, args)
 }
 
 func (t *TrainingJobClient) Attach(jobName string, jobType types.TrainingJobType, args *podexec.AttachPodArgs) error {
+	defer setContext(t.configer)()
 	job, err := t.Get(jobName, jobType, false)
 	if err != nil {
 		return err
@@ -200,6 +209,7 @@ func (t *TrainingJobClient) Attach(jobName string, jobType types.TrainingJobType
 
 // Delete deletes the target training job
 func (t *TrainingJobClient) Delete(jobType types.TrainingJobType, jobNames ...string) error {
+	defer setContext(t.configer)()
 	for _, jobName := range jobNames {
 		err := training.DeleteTrainingJob(jobName, t.namespace, jobType)
 		if err != nil {
@@ -214,6 +224,7 @@ func (t *TrainingJobClient) Delete(jobType types.TrainingJobType, jobNames ...st
 
 // LogViewer returns the log viewer
 func (t *TrainingJobClient) LogViewer(jobName string, jobType types.TrainingJobType) ([]string, error) {
+	defer setContext(t.configer)()
 	job, err := training.SearchTrainingJob(jobName, t.namespace, jobType)
 	if err != nil {
 		return nil, err
@@ -223,9 +234,11 @@ func (t *TrainingJobClient) LogViewer(jobName string, jobType types.TrainingJobT
 
 // Prune cleans the not running training jobs
 func (t *TrainingJobClient) Prune(allNamespaces bool, since time.Duration) error {
+	defer setContext(t.configer)()
 	return training.PruneTrainingJobs(t.namespace, allNamespaces, since)
 }
 
 func (t *TrainingJobClient) Top(args []string, allNamespaces bool, jobType types.TrainingJobType, instanceName string, notStop bool, format types.FormatStyle) error {
+	defer setContext(t.configer)()
 	return training.TopTrainingJobs(args, t.namespace, allNamespaces, jobType, instanceName, notStop, format)
 }

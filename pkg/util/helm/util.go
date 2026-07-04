@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/kubeflow/arena/pkg/apis/config"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
@@ -37,6 +38,7 @@ const (
 func getActionConfig(namespace string) (*action.Configuration, error) {
 	envSettings := cli.New()
 	envSettings.SetNamespace(namespace)
+	envSettings.KubeConfig = config.GetArenaConfiger().GetKubeconfigPath()
 	actionConfig := &action.Configuration{}
 	err := actionConfig.Init(envSettings.RESTClientGetter(), envSettings.Namespace(), "", log.Debugf)
 	if err != nil {

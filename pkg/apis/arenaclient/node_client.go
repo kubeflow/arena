@@ -50,11 +50,13 @@ func (t *NodeClient) Namespace(namespace string) *NodeClient {
 
 // Details is used to serve api
 func (t *NodeClient) Details(nodeNames []string, nodeType types.NodeType, showMetric bool) (types.AllNodeInfo, error) {
+	defer setContext(t.configer)()
 	return topnode.ListNodeDetails(nodeNames, nodeType, showMetric)
 }
 
 // ListAndPrintNodes is used to display nodes informations
 func (t *NodeClient) ListAndPrintNodes(nodeNames []string, nodeType types.NodeType, format types.FormatStyle, details bool, notStop bool, showMetric bool) error {
+	defer setContext(t.configer)()
 	if format == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}

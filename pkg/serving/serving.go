@@ -26,6 +26,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/clientcontext"
 	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -48,39 +49,40 @@ const (
 	istioGatewayHTTPsPortName = "https"
 )
 
-var processers map[types.ServingJobType]Processer
-
-var once sync.Once
-
 func GetAllProcesser() map[types.ServingJobType]Processer {
-	once.Do(func() {
-		locker := new(sync.RWMutex)
-		processers = map[types.ServingJobType]Processer{}
-		processerInits := []func() Processer{
-			NewCustomServingProcesser,
-			NewKFServingProcesser,
-			NewKServeProcesser,
-			NewTensorflowServingProcesser,
-			NewTensorrtServingProcesser,
-			NewSeldonServingProcesser,
-			NewTritonServingProcesser,
-			NewDistributedServingProcesser,
-		}
-		var wg sync.WaitGroup
-		for _, initFunc := range processerInits {
-			wg.Add(1)
-			f := initFunc
-			go func() {
-				defer wg.Done()
-				p := f()
-				locker.Lock()
-				processers[p.Type()] = p
-				locker.Unlock()
-			}()
-		}
-		wg.Wait()
-	})
-	return processers
+	configer := config.GetArenaConfiger()
+	if cached := clientcontext.GetConfigerProcessers(configer); cached != nil {
+		return cached.(map[types.ServingJobType]Processer)
+	}
+
+	locker := new(sync.Mutex)
+	localProcessers := map[types.ServingJobType]Processer{}
+	processerInits := []func() Processer{
+		NewCustomServingProcesser,
+		NewKFServingProcesser,
+		NewKServeProcesser,
+		NewTensorflowServingProcesser,
+		NewTensorrtServingProcesser,
+		NewSeldonServingProcesser,
+		NewTritonServingProcesser,
+		NewDistributedServingProcesser,
+	}
+	var wg sync.WaitGroup
+	for _, initFunc := range processerInits {
+		wg.Add(1)
+		f := initFunc
+		go func() {
+			defer wg.Done()
+			p := f()
+			locker.Lock()
+			localProcessers[p.Type()] = p
+			locker.Unlock()
+		}()
+	}
+	wg.Wait()
+
+	clientcontext.SetConfigerProcessers(configer, localProcessers)
+	return localProcessers
 }
 
 type servingJob struct {

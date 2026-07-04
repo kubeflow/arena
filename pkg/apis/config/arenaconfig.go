@@ -25,6 +25,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/apis/types"
 	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/clientcontext"
 	config "github.com/kubeflow/arena/pkg/util/config"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -44,19 +45,29 @@ const (
 
 var arenaClient *ArenaConfiger
 var errInitArenaClient error
-
-var once sync.Once
+var configMu sync.Mutex
 
 // InitArenaConfiger initialize
 func InitArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
-	once.Do(func() {
-		arenaClient, errInitArenaClient = newArenaConfiger(args)
-	})
-	return arenaClient, errInitArenaClient
+	configMu.Lock()
+	defer configMu.Unlock()
+	configer, err := newArenaConfiger(args)
+	if err != nil {
+		errInitArenaClient = err
+		return nil, err
+	}
+	arenaClient = configer
+	errInitArenaClient = nil
+	return arenaClient, nil
 }
 
 // GetArenaConfiger returns the arena configer,it must be invoked after invoking function InitArenaConfiger(...)
 func GetArenaConfiger() *ArenaConfiger {
+	if active := clientcontext.GetActiveConfiger(); active != nil {
+		return active.(*ArenaConfiger)
+	}
+	configMu.Lock()
+	defer configMu.Unlock()
 	if arenaClient == nil {
 		err := fmt.Errorf("ArenaClient is not initialized,but you want to get it")
 		log.Errorf("Arena Client is not initialized,please use function InitArenaClient(...) to init it")
@@ -106,6 +117,10 @@ type ArenaConfiger struct {
 	clusterInstalledCRDs   []string
 	isolateUserInNamespace bool
 	tokenRetriever         *tokenRetriever
+	kubeconfig             string
+	customClients          map[string]interface{}
+	crdEnabledCache        map[string]bool
+	clientsMu              sync.Mutex
 }
 
 func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
@@ -162,6 +177,9 @@ func newArenaConfiger(args types.ArenaClientArgs) (*ArenaConfiger, error) {
 		adminUsers:             adminUsers,
 		isolateUserInNamespace: i,
 		tokenRetriever:         tr,
+		kubeconfig:             args.Kubeconfig,
+		customClients:          make(map[string]interface{}),
+		crdEnabledCache:        make(map[string]bool),
 	}, nil
 
 }
@@ -227,6 +245,42 @@ func (a *ArenaConfiger) IsAdminUser() bool {
 		}
 	}
 	return false
+}
+
+func (a *ArenaConfiger) GetKubeconfigPath() string {
+	return a.kubeconfig
+}
+
+func (a *ArenaConfiger) GetCustomClient(key string, initFunc func(restConfig *rest.Config) (interface{}, error)) (interface{}, error) {
+	a.clientsMu.Lock()
+	defer a.clientsMu.Unlock()
+	if a.customClients == nil {
+		a.customClients = make(map[string]interface{})
+	}
+	if client, ok := a.customClients[key]; ok {
+		return client, nil
+	}
+	client, err := initFunc(a.restConfig)
+	if err != nil {
+		return nil, err
+	}
+	a.customClients[key] = client
+	return client, nil
+}
+
+func (a *ArenaConfiger) IsCRDEnabled(crdName string) bool {
+	a.clientsMu.Lock()
+	defer a.clientsMu.Unlock()
+	if a.crdEnabledCache == nil {
+		a.crdEnabledCache = make(map[string]bool)
+	}
+	if enabled, ok := a.crdEnabledCache[crdName]; ok {
+		return enabled
+	}
+	_, err := a.apiExtensionClientset.ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), crdName, metav1.GetOptions{})
+	enabled := err == nil
+	a.crdEnabledCache[crdName] = enabled
+	return enabled
 }
 
 func getGlobalConfigFromConfigmap(namespace string, client *kubernetes.Clientset) map[string]string {

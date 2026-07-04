@@ -42,5 +42,6 @@ func (d *DataClient) Namespace(namespace string) *DataClient {
 }
 
 func (d *DataClient) ListAndPrintDataVolumes(namespace string, allNamespaces bool) error {
+	defer setContext(d.configer)()
 	return datahouse.DisplayDataVolumes(namespace, allNamespaces)
 }

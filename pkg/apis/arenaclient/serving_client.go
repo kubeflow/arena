@@ -51,6 +51,7 @@ func (t *ServingJobClient) Namespace(namespace string) *ServingJobClient {
 
 // Submit submits a serving job
 func (t *ServingJobClient) Submit(job *apiserving.Job) error {
+	defer setContext(t.configer)()
 	switch job.Type() {
 	case types.TFServingJob:
 		args := job.Args().(*types.TensorFlowServingArgs)
@@ -82,6 +83,7 @@ func (t *ServingJobClient) Submit(job *apiserving.Job) error {
 
 // Get returns a serving job information
 func (t *ServingJobClient) Get(jobName, version string, jobType types.ServingJobType) (*types.ServingJobInfo, error) {
+	defer setContext(t.configer)()
 	job, err := serving.SearchServingJob(t.namespace, jobName, version, jobType)
 	if err != nil {
 		return nil, err
@@ -92,6 +94,7 @@ func (t *ServingJobClient) Get(jobName, version string, jobType types.ServingJob
 
 // GetAndPrint print serving job information
 func (t *ServingJobClient) GetAndPrint(jobName, version string, jobType types.ServingJobType, format string) error {
+	defer setContext(t.configer)()
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
@@ -109,6 +112,7 @@ func (t *ServingJobClient) GetAndPrint(jobName, version string, jobType types.Se
 
 // List returns all serving jobs
 func (t *ServingJobClient) List(allNamespaces bool, servingType types.ServingJobType) ([]*types.ServingJobInfo, error) {
+	defer setContext(t.configer)()
 	jobs, err := serving.ListServingJobs(t.namespace, allNamespaces, servingType)
 	if err != nil {
 		return nil, err
@@ -123,6 +127,7 @@ func (t *ServingJobClient) List(allNamespaces bool, servingType types.ServingJob
 
 // ListAndPrint lists and prints the job informations
 func (t *ServingJobClient) ListAndPrint(allNamespaces bool, servingType types.ServingJobType, format string) error {
+	defer setContext(t.configer)()
 	if utils.TransferPrintFormat(format) == types.UnknownFormat {
 		return fmt.Errorf("unknown output format,only support:[wide|json|yaml]")
 	}
@@ -136,12 +141,14 @@ func (t *ServingJobClient) ListAndPrint(allNamespaces bool, servingType types.Se
 
 // Logs returns the serving job log
 func (t *ServingJobClient) Logs(jobName, version string, jobType types.ServingJobType, args *types.LogArgs) error {
+	defer setContext(t.configer)()
 	args.Namespace = t.namespace
 	args.JobName = jobName
 	return serving.AcceptJobLog(jobName, version, jobType, args)
 }
 
 func (t *ServingJobClient) Attach(jobName, version string, jobType types.ServingJobType, args *podexec.AttachPodArgs) error {
+	defer setContext(t.configer)()
 	job, err := t.Get(jobName, version, jobType)
 	if err != nil {
 		return err
@@ -171,6 +178,7 @@ func (t *ServingJobClient) Attach(jobName, version string, jobType types.Serving
 
 // Delete deletes the target serving job
 func (t *ServingJobClient) Delete(jobType types.ServingJobType, version string, jobNames ...string) error {
+	defer setContext(t.configer)()
 	for _, jobName := range jobNames {
 		err := serving.DeleteServingJob(t.namespace, jobName, version, jobType)
 		if err != nil {
@@ -182,6 +190,7 @@ func (t *ServingJobClient) Delete(jobType types.ServingJobType, version string, 
 
 // Update update a serving job
 func (t *ServingJobClient) Update(job *apiserving.Job) error {
+	defer setContext(t.configer)()
 	switch job.Type() {
 	case types.TFServingJob:
 		args := job.Args().(*types.UpdateTensorFlowServingArgs)
@@ -203,6 +212,7 @@ func (t *ServingJobClient) Update(job *apiserving.Job) error {
 }
 
 func (t *ServingJobClient) TrafficRouterSplit(args *types.TrafficRouterSplitArgs) error {
+	defer setContext(t.configer)()
 	return serving.RunTrafficRouterSplit(args.Namespace, args)
 }
 

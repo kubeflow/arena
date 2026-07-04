@@ -37,6 +37,7 @@ type ModelClient struct {
 }
 
 func NewModelClient(namespace string, configer *config.ArenaConfiger) (*ModelClient, error) {
+	defer setContext(configer)()
 	trackingUri := os.Getenv("MLFLOW_TRACKING_URI")
 	username := os.Getenv("MLFLOW_TRACKING_USERNAME")
 	password := os.Getenv("MLFLOW_TRACKING_PASSWORD")
@@ -78,6 +79,7 @@ func NewModelClient(namespace string, configer *config.ArenaConfiger) (*ModelCli
 }
 
 func searchModelVersionByJobLabels(namespace string, configer *config.ArenaConfiger, labels map[string]string) *types.ModelVersion {
+	defer setContext(configer)()
 	var mv *types.ModelVersion
 	modelName := labels["modelName"]
 	modelVersion := labels["modelVersion"]

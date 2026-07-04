@@ -22,6 +22,7 @@ import (
 	"github.com/kubeflow/arena/pkg/apis/utils"
 	"github.com/kubeflow/arena/pkg/k8saccesser"
 	"github.com/kubeflow/arena/pkg/util"
+	"github.com/kubeflow/arena/pkg/util/clientcontext"
 )
 
 // ArenaClient is a client which includes operations:
@@ -64,10 +65,19 @@ func NewArenaClient(args types.ArenaClientArgs) (*ArenaClient, error) {
 	if err := k8saccesser.InitK8sResourceAccesser(configer.GetRestConfig(), configer.GetClientSet(), configer.IsDaemonMode()); err != nil {
 		return client, err
 	}
+	clientcontext.AssociateConfigerAndAccesser(configer, k8saccesser.GetK8sResourceAccesser())
 	client.arenaConfiger = configer
 	// the namespace may be updated
 	client.namespace = configer.GetNamespace()
 	return client, err
+}
+
+func setContext(configer *config.ArenaConfiger) func() {
+	acc := clientcontext.GetAssociatedAccesser(configer)
+	clientcontext.SetCurrentContext(configer, acc)
+	return func() {
+		clientcontext.ClearCurrentContext()
+	}
 }
 
 // Training returns the Training Job Client

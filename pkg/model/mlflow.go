@@ -83,39 +83,36 @@ func NewMlflowClient(trackingUri, username, password string) *MlflowClient {
 
 // Create a MLflow client proxied by Kubernetes api server
 func NewProxiedMlflowClient(configr *config.ArenaConfiger, service *corev1.Service, username string, password string) *MlflowClient {
-	once.Do(func() {
-		namespace := service.Namespace
-		name := service.Name
-		port := 5000
-		if len(service.Spec.Ports) > 0 {
-			port = int(service.Spec.Ports[0].Port)
-		}
-		restClient := configr.GetClientSet().CoreV1().RESTClient().(*rest.RESTClient)
-		baseUrl := restClient.Get().
-			Resource("services").
-			Namespace(namespace).
-			Name(fmt.Sprintf("%s:%d", name, port)).
-			SubResource("proxy").
-			URL().
-			String()
+	namespace := service.Namespace
+	name := service.Name
+	port := 5000
+	if len(service.Spec.Ports) > 0 {
+		port = int(service.Spec.Ports[0].Port)
+	}
+	restClient := configr.GetClientSet().CoreV1().RESTClient().(*rest.RESTClient)
+	baseUrl := restClient.Get().
+		Resource("services").
+		Namespace(namespace).
+		Name(fmt.Sprintf("%s:%d", name, port)).
+		SubResource("proxy").
+		URL().
+		String()
 
-		restyClient := resty.New().
-			SetTransport(restClient.Client.Transport).
-			SetBaseURL(baseUrl).
-			SetHeader("Content-Type", "application/json").
-			SetHeader("Accept", "application/json").
-			SetDisableWarn(true)
+	restyClient := resty.New().
+		SetTransport(restClient.Client.Transport).
+		SetBaseURL(baseUrl).
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Accept", "application/json").
+		SetDisableWarn(true)
 
-		if username != "" && password != "" {
-			// api-server proxy will strip out authorization header, see https://github.com/kubernetes/kubernetes/issues/38775
-			log.Warn("proxied mlflow client currently does not support basic authentication")
-		}
+	if username != "" && password != "" {
+		// api-server proxy will strip out authorization header, see https://github.com/kubernetes/kubernetes/issues/38775
+		log.Warn("proxied mlflow client currently does not support basic authentication")
+	}
 
-		defaultProxiedMlflowClient = &MlflowClient{
-			RestyClient: restyClient,
-		}
-	})
-	return defaultProxiedMlflowClient
+	return &MlflowClient{
+		RestyClient: restyClient,
+	}
 }
 
 func (c *MlflowClient) CheckHealth() (bool, error) {
