@@ -197,7 +197,11 @@ The test plan for Arena v2 includes:
 - Submit real training jobs to a test cluster
 - Verify CRD structure matches operator expectations
 - Test job lifecycle (submit → running → completed/failed)
-- Validate per-role configuration (worker vs master vs PS)
+- Validate per-role configuration (worker vs. master vs. launcher)
+  - PyTorch job with only `master` specified (`worker` omitted; single-node mode)
+  - PyTorch job with both `worker` and `master` specified (multi-node mode)
+  - MPI job using default CPU-only launcher (no explicit `launcher` block)
+  - MPI job with both `worker` and `launcher` specified
 
 ### Graduation Criteria
 
@@ -224,7 +228,7 @@ The test plan for Arena v2 includes:
 - Users begin migrating simple jobs to v2
 - Comprehensive CLI flag coverage matching v1 functionality
 - Output formats: JSON, YAML, wide
-- InferenceTask kind (planned to use [RBG](https://github.com/sgl-project/rbg) for orchestration)
+- InferenceTask kind (planned to leverage [RBG](https://github.com/sgl-project/rbg) for serving orchestration)
   - Add new sub-commands
     - `serve`
 - Add DeepSpeed, TensorFlow, Ray support and examples

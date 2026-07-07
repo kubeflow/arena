@@ -46,7 +46,7 @@ envs:                                # Optional. Common envs.
   NCCL_IB_DISABLE: "0"
 
 # ─── Scale ───
-worker:                             # Required for non-PyTorch frameworks
+worker:                             # Required for MPI-based frameworks
   replicas: 4                       # Required if the worker block is present. Must be > 0 if specified.
   envs:                             # Optional
     NCCL_DEBUG: DEBUG               # Merges with top-level envs (worker value overrides)
@@ -55,9 +55,8 @@ worker:                             # Required for non-PyTorch frameworks
     cpu: 32
     memory: 128Gi
 
-# Other fields, such as launcher, chief, ps, or evaluator, may be available depending on the framework. 
-# Settings for replicas, resources, and environment variables may vary accordingly. 
-# Please refer to the framework-specific configuration documentation for more details.
+# For framework-specific role blocks (launcher, chief, ps, evaluator) and their default behaviors,
+# see the framework-specific configuration section below.
 master:                             # Only valid for PyTorch. Required if the worker block is omitted.
   replicas: 1                       # Optional. Master replicas must be 1.
   envs:                             # Optional
@@ -170,7 +169,7 @@ lifecycle:                           # Optional
   active_deadline: 2h                # Max active duration
   ttl_after_finished: 7d             # Auto-delete after this duration
   backoff_limit: 6                   # Max restart count
-  success_policy: ChiefWorker        # ChiefWorker | AllWorkers (TFJob only)
+  success_policy: ChiefWorker        # ChiefWorker | AllWorkers (TFJob only; ignored for other frameworks in Alpha, will be rejected by validation in Beta)
 
 # ─── Runtime ───
 # inject into all pods 
@@ -198,7 +197,7 @@ logging:                             # Optional
 
 ### resources
 
-Fields under `worker.resources` are all **scalar** values, applied identically to both `requests` and `limits` (**Guaranteed QoS**).
+Fields under `worker.resources` are all **scalar** values, applied identically to both `requests` and `limits`. When both `cpu` and `memory` are specified, this guarantees the **Guaranteed QoS** class; GPU-only specs without CPU/memory do not qualify for Guaranteed QoS in Kubernetes.
 
 ```yaml
 worker:
@@ -208,7 +207,7 @@ worker:
     memory: 128Gi
 ```
 
-**Implementation**: When building the CRD, user-specified scalar values are written to both `requests` and `limits` in the Pod spec with identical values, ensuring K8s assigns the Guaranteed QoS class.
+**Implementation**: When building the CRD, user-specified scalar values are written to both `requests` and `limits` in the Pod spec with identical values. K8s assigns the Guaranteed QoS class only when both CPU and memory are specified with equal requests and limits.
 
 **Why Guaranteed only**: Training workloads are long-running, GPU-intensive jobs that require stable resource guarantees. Burstable QoS (requests < limits) leads to priority eviction under node contention, which is unsuitable for training scenarios.
 
@@ -306,16 +305,16 @@ worker:     # Required
 framework:
   name: tensorflow
 
-worker:     # Required
+worker:     # Optional if another role block is specified. If this block is omitted, no pods will be created.
   ...
 
-chief:      # Optional. If this block is omitted, no pods will be created.
+chief:      # Optional if another role block is specified. If this block is omitted, no pods will be created.
   ...
 
-ps:         # Optional. If this block is omitted, no pods will be created.
+ps:         # Optional if another role block is specified. If this block is omitted, no pods will be created.
   ...
 
-evaluator:  # Optional. If this block is omitted, no pods will be created.
+evaluator:  # Optional if another role block is specified. If this block is omitted, no pods will be created.
   ...
 
 ```
@@ -345,6 +344,20 @@ launcher:   # Optional. Defaults to a CPU-only configuration (replicas fixed to 
   ...
 ```
 
+**GPU-using** roles vary by training framework, as shown in the framework-specific mapping table below.
+
+| Framework | GPU-using roles | Notes |
+|---|---|---|
+| pytorch | master/worker | master inherits worker's image, resources, and envs by default; replicas fixed to 1 |
+| mpi | worker | launcher does not use GPU, does not inherit worker's config |
+| tensorflow | worker/chief/evaluator | chief/ps/evaluator do not inherit worker's config |
+| deepspeed | worker | launcher does not use GPU, does not inherit worker's config |
+| horovod | worker | launcher does not use GPU, does not inherit worker's config |
+
+**MPI/DeepSpeed/Horovod Launchers do not inherit worker's config by default** — the Provider automatically sets independent resource config for the Launcher (typically no GPU) during CRD generation, avoiding GPU waste on Launcher pods.
+
+**PyTorch Master vs Worker**: Master inherits the worker's image, resources, and envs by default. Master replica count is fixed at 1; **total GPU-using replicas** = `worker.replicas + 1`.
+
 ### lifecycle (Job Lifecycle Policies)
 
 ```yaml
@@ -353,7 +366,7 @@ lifecycle:
   active_deadline: 2h                # Max wall-clock duration → activeDeadlineSeconds
   ttl_after_finished: 7d             # Auto-delete Job after this duration → ttlSecondsAfterFinished
   backoff_limit: 6                   # Max restart count → backoffLimit
-  success_policy: ChiefWorker        # ChiefWorker | AllWorkers (TFJob only)
+  success_policy: ChiefWorker        # ChiefWorker | AllWorkers (TFJob only; ignored for other frameworks in Alpha, will be rejected by validation in Beta)
 ```
 
 `clean_pod_policy` controls which pods the Operator deletes after job completion:
@@ -437,22 +450,6 @@ arena job suspend <name>      # Suspend task
 arena job resume <name>    # Resume task
 ```
 
-### worker Field Semantics
-
-`worker` represents the **GPU-using worker nodes** in a training job. Its framework-specific mapping is shown below:
-
-| Framework | worker mapping | Uses GPU | Notes |
-|---|---|---|---|
-| pytorch | Worker | Yes | Master defaults to use the same config as Worker except for replicas |
-| tensorflow | Worker | Yes | Chief/PS/Evaluator do not inherit worker's config |
-| mpi | Worker | Yes | Launcher does not use GPU, does not inherit worker's config |
-| deepspeed | Worker | Yes | Launcher does not use GPU, does not inherit worker's config |
-| horovod | Worker | Yes | Launcher does not use GPU, does not inherit worker's config |
-
-**MPI/DeepSpeed/Horovod Launchers do not inherit worker's config by default** — the Provider automatically sets independent resource config for the Launcher (typically no GPU) during CRD generation, avoiding GPU waste on Launcher pods.
-
-**PyTorch Master vs Worker**: Master runs as Worker. Master replica count is fixed at 1; **total GPU-using replicas** = `worker.replicas + 1`.
-
 ### sync & init (Code/Data Injection)
 
 **`sync` — high-level data/code injection (sugar for initContainer):**
@@ -489,6 +486,25 @@ sync:
 ```
 
 Each entry creates an initContainer and volumes inherited from `storages`. The `mounts` field overrides these inherited configurations by name, and the final volumes are mounted at `mount_path` in both the initContainer and main container across all pods.
+
+**Override-by-name example:**
+
+```yaml
+storages:
+  - name: dataset
+    mount_path: /data                # Default mount path from storages
+    pvc: dataset-pvc
+
+sync:
+  - git: https://github.com/org/code.git
+    local_path: /code
+    mounts:
+    - name: dataset                  # Matches storages entry → overrides mount_path to /dataset
+      mount_path: /dataset
+    - name: code                     # No matching storages entry → a new emptyDir volume is appended
+      tmp: 1Gi
+      mount_path: /code
+```
 
 **`init` — generic initContainer injection:**
 

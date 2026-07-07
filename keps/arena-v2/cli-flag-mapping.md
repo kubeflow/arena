@@ -5,7 +5,7 @@ This document maps all arena v1 training CLI flags to arena v2 YAML schema cover
 **Scope:** v1 `arena submit` flags → v2 `arena job run` YAML schema
 **Source of truth:** arena v2 YAML Schema + arena v1 CLI
 
-> **Note:** v2 CLI flag-to-YAML override mechanism will be designed separately as a generic `--set`-style approach (similar to Helm). This document tracks v1 flag → v2 YAML schema coverage only.
+> **Note:** v2 CLI flag-to-YAML override mechanism will be designed separately as a generic `--set`-style approach (similar to Helm). This document tracks v1 flag → v2 YAML schema coverage and implementation status.
 
 ---
 
@@ -16,16 +16,16 @@ This document maps all arena v1 training CLI flags to arena v2 YAML schema cover
 | Identity | ✅ name, labels, annotations, namespace | — |
 | Resources | ✅ cpu, memory, nvidia.com/gpu, extended resources (`--device`) | — |
 | Scheduling | ✅ node_selector, tolerations, priority, priority_class_name, gang, scheduler_name, affinity (policy/constraint/target/rules), queue | not yet implemented |
-| Data | ✅ storages (PVC, hostPath, tmp, shm, configmap, secret) | — |
+| Data | ✅ storages (PVC, hostpath, tmp, shm, configmap, secret) | — |
 | Env | ✅ envs (plain/secretKeyRef/configMapKeyRef) | — |
 | Execution | ✅ restart, image_pull_policy, image_pull_secrets, shell, working_dir | — |
 | Lifecycle | ✅ clean_pod_policy, active_deadline, ttl_after_finished, backoff_limit, success_policy | — |
 | Sync | ✅ sync (git/rsync/hdfs) | — |
-| Model | ❌ | — |
+| Model | ❌ |  not planned |
 | TFJob roles | ✅ | provider not yet implemented |
 | MPIJob | ✅ mounts_on_launcher, run_launcher_as_worker, slots_per_worker | — |
 | PyTorch | ✅ nproc_per_node | — |
-| Horovod | ✅ | provider not yet implemented |
+| Horovod | ✅ cpu, memory | ❌ `--ssh-port` not in schema (always use port 22); provider not yet implemented |
 | DeepSpeed | ✅ | provider not yet implemented |
 | Ray | ✅ (framework placeholder only) | provider not yet implemented |
 
@@ -181,7 +181,7 @@ This document maps all arena v1 training CLI flags to arena v2 YAML schema cover
 |---------|---------|--------|
 | `--cpu` | `worker.resources.cpu` | ✅ |
 | `--memory` | `worker.resources.memory` | ✅ |
-| `--gputopology` | `worker.resources`, `labels` | ✅ |
+| `--gputopology` | `host_network` + `worker.resources` + `labels` (`gpu-topology` / `gpu-topology-replica`) | ✅ |
 | `--mounts-on-launcher` | `framework.options.mounts_on_launcher` | ✅ |
 | (no v1 flag) | `framework.options.run_launcher_as_worker` | ✅ (YAML field exists, no v1 equivalent) |
 | (no v1 flag) | `framework.options.slots_per_worker` | ✅ (YAML field exists, no v1 equivalent) |
