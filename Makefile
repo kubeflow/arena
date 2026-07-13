@@ -250,7 +250,54 @@ $(ARENA_INSTALLER_TARBALL): arena kubectl helm rbgctl
 	cp uninstall.sh $(TEMPDIR)/$(ARENA_INSTALLER)/bin/arena-uninstall && \
 	tar -zcf $(ARENA_INSTALLER).tar.gz -C $(TEMPDIR) $(ARENA_INSTALLER) && \
 	echo "Successfully saved arena installer to $(ARENA_INSTALLER).tar.gz."
-	
+
+##@ Arena v2
+
+# Version info injected via ldflags at build time
+V2_LDFLAGS := -X ${PACKAGE}/pkg/cli.version=${VERSION} \
+  -X ${PACKAGE}/pkg/cli.gitCommit=${GIT_SHORT_COMMIT} \
+  -X ${PACKAGE}/pkg/cli.buildDate=${BUILD_DATE}
+
+.PHONY: arena-v2
+arena-v2: $(LOCALBIN) ## Build arena v2 CLI for current platform.
+	@echo "Building arena v2 CLI..."
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags '$(V2_LDFLAGS)' -o $(LOCALBIN)/arena-v2 ./cmd/arena-v2/
+
+.PHONY: v2-test
+v2-test: ## Run arena v2 unit tests.
+	@echo "Running arena v2 unit tests..."
+	go test ./pkg/cli/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/output/ -v
+
+.PHONY: v2-vet
+v2-vet: ## Run go vet on arena v2 packages.
+	@echo "Running go vet on arena v2 packages..."
+	go vet ./pkg/cli/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/output/ ./cmd/arena-v2/
+
+.PHONY: v2-integration-test
+v2-integration-test: ## Run arena v2 integration tests (no cluster required).
+	@echo "Running arena v2 integration tests..."
+	go test -tags integration ./pkg/cli/ -run TestIntegration -v -timeout 5m
+
+.PHONY: v2-install
+v2-install: ## Install arena v2 CLI to GOBIN.
+	@echo "Installing arena v2 CLI to $(GOBIN)..."
+	go install -ldflags '$(V2_LDFLAGS)' ./cmd/arena-v2/
+
+.PHONY: v2-e2e-setup
+v2-e2e-setup: ## Download Kubeflow Training Operator and MPI Operator CRDs for v2 e2e tests.
+	@mkdir -p test/e2e/crds
+	@echo "Downloading Kubeflow Training Operator CRDs..."
+	@curl -sL https://raw.githubusercontent.com/kubeflow/trainer/v1.9.3/manifests/base/crds/kubeflow.org_pytorchjobs.yaml -o test/e2e/crds/pytorchjobs.yaml
+	@curl -sL https://raw.githubusercontent.com/kubeflow/trainer/v1.9.3/manifests/base/crds/kubeflow.org_tfjobs.yaml -o test/e2e/crds/tfjobs.yaml
+	@echo "Downloading Kubeflow MPI Operator CRDs..."
+	@curl -sL https://raw.githubusercontent.com/kubeflow/mpi-operator/v0.8.0/manifests/base/kubeflow.org_mpijobs.yaml -o test/e2e/crds/mpijobs.yaml
+	@echo "CRDs downloaded to test/e2e/crds/"
+
+.PHONY: v2-e2e-test
+v2-e2e-test: v2-e2e-setup arena-v2 ## Run arena v2 e2e tests (requires real K8s cluster).
+	@echo "Running arena v2 e2e tests..."
+	go test -tags v2e2e ./test/e2e/ -v -ginkgo.v -timeout 30m
+
 ##@ Helm
 
 .PHONY: helm-unittest

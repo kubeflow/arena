@@ -17,9 +17,15 @@ __pycache__/
 # Go
 cover.out
 
+# v2 e2e test CRDs (downloaded via make v2-e2e-setup)
+test/e2e/crds/
+
 # IDE files
 .idea/
 .vscode/
 
 # MacOS
 .DS_Store
+
+.claude
+arena-v2
