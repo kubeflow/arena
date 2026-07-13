@@ -708,6 +708,7 @@ func TestCommandsRegistered(t *testing.T) {
 	}
 	assert.Contains(t, names, "list")
 	assert.Contains(t, names, "get")
+	assert.Contains(t, names, "delete")
 	assert.Contains(t, names, "submit")
 	assert.Contains(t, names, "run")
 }
