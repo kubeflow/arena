@@ -1,0 +1,222 @@
+package cli
+
+import (
+	"context"
+	"fmt"
+
+	"gopkg.in/yaml.v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/kubeflow/arena/pkg/client"
+	"github.com/kubeflow/arena/pkg/constants"
+	"github.com/kubeflow/arena/pkg/provider"
+	"github.com/kubeflow/arena/pkg/task"
+)
+
+// createJobResources creates auxiliary resources after the main CRD is created.
+// It creates a ConfigMap anchor with ownerReferences pointing to the CRD,
+// and optionally creates TensorBoard Deployment and Service resources.
+func createJobResources(ctx context.Context, crd *unstructured.Unstructured, t *task.Task, k8sClient *client.Client) error {
+	// Re-fetch CRD to get UID assigned by the API server
+	created, err := k8sClient.Get(ctx, crd.GetKind(), crd.GetNamespace(), crd.GetName())
+	if err != nil {
+		return fmt.Errorf("failed to re-fetch CRD for UID: %w", err)
+	}
+
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         crd.GetAPIVersion(),
+		Kind:               crd.GetKind(),
+		Name:               crd.GetName(),
+		UID:                created.GetUID(),
+		BlockOwnerDeletion: ptrBool(true),
+		Controller:         ptrBool(true),
+	}
+
+	// Create ConfigMap anchor storing the arena-v2.yaml task configuration
+	yamlContent, err := yaml.Marshal(t)
+	if err != nil {
+		return fmt.Errorf("failed to marshal task configuration: %w", err)
+	}
+	cm := buildConfigMap(crd.GetName(), crd.GetNamespace(), string(yamlContent), ownerRef)
+	if err := k8sClient.Create(ctx, cm); err != nil {
+		return fmt.Errorf("failed to create ConfigMap: %w", err)
+	}
+
+	// Create TensorBoard resources if enabled
+	if t.Logging.TensorBoard != nil && t.Logging.TensorBoard.Enabled {
+		if err := createTensorBoardResources(ctx, crd, t, k8sClient, ownerRef); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// createTensorBoardResources creates a TensorBoard Deployment and Service
+// with ownerReferences pointing to the main training job CRD.
+func createTensorBoardResources(ctx context.Context, crd *unstructured.Unstructured, t *task.Task, k8sClient *client.Client, ownerRef metav1.OwnerReference) error {
+	tbName := crd.GetName() + "-tensorboard"
+	tbImage := constants.DefaultTensorBoardImage
+	if t.Logging.TensorBoard.Image != "" {
+		tbImage = t.Logging.TensorBoard.Image
+	}
+	logDir := t.Logging.TensorBoard.LogDir
+
+	deploy := buildTensorBoardDeployment(tbName, crd.GetName(), crd.GetNamespace(), tbImage, logDir, t, ownerRef)
+	if err := k8sClient.Create(ctx, deploy); err != nil {
+		return fmt.Errorf("failed to create TensorBoard Deployment: %w", err)
+	}
+
+	svc := buildTensorBoardService(tbName, crd.GetName(), crd.GetNamespace(), ownerRef)
+	if err := k8sClient.Create(ctx, svc); err != nil {
+		return fmt.Errorf("failed to create TensorBoard Service: %w", err)
+	}
+
+	return nil
+}
+
+// buildConfigMap creates a ConfigMap that stores the arena-v2.yaml task
+// configuration. The ConfigMap has an ownerReference to the CRD so that
+// deleting the CRD cascades to remove it via K8s garbage collection.
+func buildConfigMap(name, namespace, yamlContent string, ownerRef metav1.OwnerReference) *unstructured.Unstructured {
+	cm := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "ConfigMap",
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"data": map[string]interface{}{
+				"arena-v2.yaml": yamlContent,
+			},
+		},
+	}
+	cm.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+	return cm
+}
+
+// buildTensorBoardDeployment creates a TensorBoard Deployment with a single
+// replica running the TensorBoard server. All task storages are injected as
+// volumes; when TensorBoardConfig.Mounts is set, only the listed storages
+// receive volumeMounts (with mount fields overriding storage defaults).
+func buildTensorBoardDeployment(name, jobName, namespace, image, logDir string, t *task.Task, ownerRef metav1.OwnerReference) *unstructured.Unstructured {
+	labels := tensorBoardPodLabels(jobName)
+
+	// tensorboard compatibility
+	args := []interface{}{"--host", "0.0.0.0"}
+	if logDir != "" {
+		args = append(args, "--logdir", logDir)
+	}
+
+	container := map[string]interface{}{
+		"name":  "tensorboard",
+		"image": image,
+		"command": []interface{}{
+			"tensorboard",
+		},
+		"args": args,
+		"ports": []interface{}{
+			map[string]interface{}{
+				"containerPort": int64(constants.DefaultTensorBoardPort),
+			},
+		},
+	}
+
+	// Build volumes and volumeMounts from task storages, respecting the
+	// optional TensorBoard mounts override (identical to sync/init behavior):
+	// - No storages: empty volumes and volumeMounts
+	// - Storages, no mounts field: inject all storages (volumes + volumeMounts)
+	// - Storages + mounts field: all storages become volumes, but only the
+	//   mounted storages get volumeMounts (mount fields override storage defaults)
+	var tbVolumes []interface{}
+	var tbVolumeMounts []interface{}
+	if t != nil && len(t.Storages) > 0 {
+		allVolumes, _ := provider.BuildVolumes(t)
+		tbVolumes = allVolumes
+
+		var tbMounts []task.Mount
+		if t.Logging.TensorBoard != nil {
+			tbMounts = t.Logging.TensorBoard.Mounts
+		}
+		tbVolumeMounts = provider.ResolveContainerMounts(tbMounts, t)
+	}
+	if len(tbVolumeMounts) > 0 {
+		container["volumeMounts"] = tbVolumeMounts
+	}
+
+	podSpec := map[string]interface{}{
+		"containers": []interface{}{container},
+	}
+	if len(tbVolumes) > 0 {
+		podSpec["volumes"] = tbVolumes
+	}
+
+	deploy := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "apps/v1",
+			"kind":       "Deployment",
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"spec": map[string]interface{}{
+				"replicas": int64(1),
+				"selector": map[string]interface{}{
+					"matchLabels": labels,
+				},
+				"template": map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"labels": labels,
+					},
+					"spec": podSpec,
+				},
+			},
+		},
+	}
+	deploy.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+	return deploy
+}
+
+// buildTensorBoardService creates a Service exposing the TensorBoard
+// Deployment on port 6006.
+func buildTensorBoardService(name, jobName, namespace string, ownerRef metav1.OwnerReference) *unstructured.Unstructured {
+	svc := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Service",
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"spec": map[string]interface{}{
+				"selector": tensorBoardPodLabels(jobName),
+				"ports": []interface{}{
+					map[string]interface{}{
+						"port":       int64(constants.DefaultTensorBoardPort),
+						"targetPort": int64(constants.DefaultTensorBoardPort),
+					},
+				},
+			},
+		},
+	}
+	svc.SetOwnerReferences([]metav1.OwnerReference{ownerRef})
+	return svc
+}
+
+// tensorBoardPodLabels returns the pod labels used by a TensorBoard Deployment
+// and matched by its Service selector. The jobName value enables direct lookup
+// of a TensorBoard by training job name.
+func tensorBoardPodLabels(jobName string) map[string]interface{} {
+	return map[string]interface{}{
+		constants.LabelComponent:    constants.ComponentTensorBoard,
+		constants.LabelArenaJobName: jobName,
+	}
+}
+
+// ptrBool returns a pointer to a bool value.
+func ptrBool(b bool) *bool {
+	return &b
+}
+
