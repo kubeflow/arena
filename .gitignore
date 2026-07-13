@@ -28,4 +28,4 @@ test/e2e/crds/
 .DS_Store
 
 .claude
-arena-v2
+/arena-v2
