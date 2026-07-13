@@ -7,20 +7,23 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	outputpkg "github.com/kubeflow/arena/pkg/output"
 )
 
-var _ = Describe("TensorFlow Job", func() {
+var _ = Describe("PyTorch Job", func() {
 	var (
 		jobName   string
 		namespace string
 	)
 
 	BeforeEach(func() {
-		jobName = fmt.Sprintf("v2-tf-%d", GinkgoRandomSeed())
+		jobName = fmt.Sprintf("v2-pytorch-%d", GinkgoRandomSeed())
 		namespace = "default"
 	})
 
 	AfterEach(func() {
+		// Cleanup: delete the job if it exists
 		var out bytes.Buffer
 		delCmd := exec.Command(arenaV2Bin, "job", "delete", jobName,
 			"--namespace", namespace)
@@ -33,11 +36,11 @@ var _ = Describe("TensorFlow Job", func() {
 		var out bytes.Buffer
 		var err error
 
-		By("Submitting a TensorFlow job")
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "tensorflow",
+		By("Submitting a PyTorch job")
+		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "tensorflow:2.15",
+			"--image", "pytorch:2.1",
 			"--workers", "2",
 			"python train.py",
 		)
@@ -47,13 +50,14 @@ var _ = Describe("TensorFlow Job", func() {
 		Expect(err).NotTo(HaveOccurred(), "submit output: %s", out.String())
 		out.Reset()
 
-		By("Listing jobs")
+		By("Listing jobs and verifying the job appears")
 		listCmd := exec.Command(arenaV2Bin, "job", "list",
-			"--namespace", namespace)
+			"--namespace", namespace,
+			"-o", string(outputpkg.FormatJSON))
 		listCmd.Stdout = &out
 		listCmd.Stderr = &out
 		err = listCmd.Run()
-		Expect(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred(), "list output: %s", out.String())
 		Expect(out.String()).To(ContainSubstring(jobName))
 		out.Reset()
 
@@ -63,7 +67,7 @@ var _ = Describe("TensorFlow Job", func() {
 		getCmd.Stdout = &out
 		getCmd.Stderr = &out
 		err = getCmd.Run()
-		Expect(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred(), "get output: %s", out.String())
 		out.Reset()
 
 		By("Deleting the job")
@@ -72,6 +76,6 @@ var _ = Describe("TensorFlow Job", func() {
 		delCmd.Stdout = &out
 		delCmd.Stderr = &out
 		err = delCmd.Run()
-		Expect(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred(), "delete output: %s", out.String())
 	})
 })
