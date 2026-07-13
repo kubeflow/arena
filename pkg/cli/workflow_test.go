@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/fake"
@@ -201,5 +202,49 @@ func TestWorkflow_ErrorPaths(t *testing.T) {
 	})
 }
 
-// TestWorkflow_SuspendAndResumeRoundtrip lives in PR6 (cli-extended) because
-// it tests suspendJob/resumeJob which are defined in suspend.go/resume.go.
+// TestWorkflow_SuspendAndResumeRoundtrip verifies suspend then resume round-trip.
+func TestWorkflow_SuspendAndResumeRoundtrip(t *testing.T) {
+	yamlContent := "name: roundtrip\nframework:\n  name: pytorch\n"
+	cm := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "ConfigMap",
+			"metadata":   map[string]interface{}{"name": "roundtrip", "namespace": "default"},
+			"data":       map[string]interface{}{"arena-v2.yaml": yamlContent},
+		},
+	}
+	job := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "kubeflow.org/v1",
+			"kind":       "PyTorchJob",
+			"metadata":   map[string]interface{}{"name": "roundtrip", "namespace": "default"},
+			"spec":       map[string]interface{}{"runPolicy": map[string]interface{}{}},
+		},
+	}
+	scheme := runtime.NewScheme()
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme,
+		map[schema.GroupVersionResource]string{
+			{Group: "", Version: "v1", Resource: "configmaps"}:              "ConfigMapList",
+			{Group: "kubeflow.org", Version: "v1", Resource: "pytorchjobs"}: "PyTorchJobList",
+		}, cm, job)
+	k8sClient := client.NewClientForInterface(fakeClient)
+	ctx := context.Background()
+
+	// Suspend the job
+	jobType, err := suspendJob(ctx, k8sClient, "default", "roundtrip")
+	require.NoError(t, err)
+	assert.Equal(t, "PyTorchJob", jobType)
+
+	updated, _ := k8sClient.Get(ctx, "PyTorchJob", "default", "roundtrip")
+	suspend, _, _ := unstructured.NestedBool(updated.Object, "spec", "runPolicy", "suspend")
+	assert.True(t, suspend, "job should be suspended after suspend")
+
+	// Resume the job
+	jobType, err = resumeJob(ctx, k8sClient, "default", "roundtrip")
+	require.NoError(t, err)
+	assert.Equal(t, "PyTorchJob", jobType)
+
+	updated, _ = k8sClient.Get(ctx, "PyTorchJob", "default", "roundtrip")
+	suspend, _, _ = unstructured.NestedBool(updated.Object, "spec", "runPolicy", "suspend")
+	assert.False(t, suspend, "job should be running after resume")
+}
