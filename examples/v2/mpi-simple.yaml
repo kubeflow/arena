@@ -1,0 +1,15 @@
+version: 0.1.0
+name: mpi-example
+image: openmpi:4.1
+framework:
+  name: mpi
+  options:
+    slots_per_worker: 4
+    mpi_implementation: OpenMPI
+    launcher_creation_policy: AtStartup
+worker:
+  replicas: 4
+  resources:
+    cpu: "2"
+    memory: "8Gi"
+run: mpirun -n 16 python train.py

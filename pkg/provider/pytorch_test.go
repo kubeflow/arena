@@ -6,6 +6,7 @@ import (
 	"github.com/kubeflow/arena/pkg/task"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestPyTorchBuildCRD(t *testing.T) {
@@ -432,4 +433,119 @@ func TestPyTorchBuildCRDMasterOnly(t *testing.T) {
 	masterReqs := masterRes["requests"].(map[string]interface{})
 	assert.Equal(t, "1", masterReqs["nvidia.com/gpu"])
 	assert.Equal(t, "4", masterReqs["cpu"])
+}
+
+func TestPyTorchPerRoleRunOverride(t *testing.T) {
+	tk := &task.Task{
+		Name:  "pytorch-override",
+		Image: "pytorch:1.13",
+		Run:   "python train.py",
+		Framework: task.Framework{
+			Name: "pytorch",
+		},
+		Worker: &task.Worker{
+			Replicas: 2,
+			Run:      "python worker_train.py",
+		},
+		Master: &task.RoleConfig{
+			Run: "python master_train.py",
+		},
+	}
+
+	provider := &PyTorchProvider{}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["pytorchReplicaSpecs"].(map[string]interface{})
+
+	// Master should use its own run override
+	master := replicaSpecs["Master"].(map[string]interface{})
+	masterTemplate := master["template"].(map[string]interface{})
+	masterSpec := masterTemplate["spec"].(map[string]interface{})
+	masterContainers := masterSpec["containers"].([]interface{})
+	masterContainer := masterContainers[0].(map[string]interface{})
+	assert.Equal(t, []interface{}{"python master_train.py"}, masterContainer["args"])
+
+	// Worker should use its own run override
+	worker := replicaSpecs["Worker"].(map[string]interface{})
+	workerTemplate := worker["template"].(map[string]interface{})
+	workerSpec := workerTemplate["spec"].(map[string]interface{})
+	workerContainers := workerSpec["containers"].([]interface{})
+	workerContainer := workerContainers[0].(map[string]interface{})
+	assert.Equal(t, []interface{}{"python worker_train.py"}, workerContainer["args"])
+}
+
+func TestPyTorchMasterInheritsWorkerRun(t *testing.T) {
+	tk := &task.Task{
+		Name:  "pytorch-inherit",
+		Image: "pytorch:1.13",
+		Run:   "python train.py",
+		Framework: task.Framework{
+			Name: "pytorch",
+		},
+		Worker: &task.Worker{
+			Replicas: 2,
+			Run:      "python worker_train.py",
+		},
+		// Master not configured — inherits from Worker
+	}
+
+	provider := &PyTorchProvider{}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["pytorchReplicaSpecs"].(map[string]interface{})
+
+	// Master should inherit Worker's run
+	master := replicaSpecs["Master"].(map[string]interface{})
+	masterTemplate := master["template"].(map[string]interface{})
+	masterSpec := masterTemplate["spec"].(map[string]interface{})
+	masterContainers := masterSpec["containers"].([]interface{})
+	masterContainer := masterContainers[0].(map[string]interface{})
+	assert.Equal(t, []interface{}{"python worker_train.py"}, masterContainer["args"])
+
+	// Worker should use its own run
+	worker := replicaSpecs["Worker"].(map[string]interface{})
+	workerTemplate := worker["template"].(map[string]interface{})
+	workerSpec := workerTemplate["spec"].(map[string]interface{})
+	workerContainers := workerSpec["containers"].([]interface{})
+	workerContainer := workerContainers[0].(map[string]interface{})
+	assert.Equal(t, []interface{}{"python worker_train.py"}, workerContainer["args"])
+}
+
+func TestPyTorchMasterOnlyRunOverride(t *testing.T) {
+	tk := &task.Task{
+		Name:  "pytorch-master-only",
+		Image: "pytorch:1.13",
+		Run:   "python train.py",
+		Framework: task.Framework{
+			Name: "pytorch",
+		},
+		Master: &task.RoleConfig{
+			Run: "python master_only.py",
+		},
+	}
+
+	provider := &PyTorchProvider{}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["pytorchReplicaSpecs"].(map[string]interface{})
+
+	master := replicaSpecs["Master"].(map[string]interface{})
+	masterTemplate := master["template"].(map[string]interface{})
+	masterSpec := masterTemplate["spec"].(map[string]interface{})
+	masterContainers := masterSpec["containers"].([]interface{})
+	masterContainer := masterContainers[0].(map[string]interface{})
+	assert.Equal(t, []interface{}{"python master_only.py"}, masterContainer["args"])
+}
+
+func TestPyTorchBuildRBAC(t *testing.T) {
+	provider := &PyTorchProvider{}
+	resources, err := provider.BuildRBAC(&task.Task{}, metav1.OwnerReference{})
+	require.NoError(t, err)
+	assert.Nil(t, resources)
 }
