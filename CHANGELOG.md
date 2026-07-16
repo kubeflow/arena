@@ -1,5 +1,41 @@
 # Changelog
 
+## [v0.15.5](https://github.com/kubeflow/arena/tree/v0.15.5) (2026-07-14)
+
+### Bug Fixes
+
+- fix(pytorch-operator): update pytorch-operator image tag to 2845db5-aliyun ([#1456](https://github.com/kubeflow/arena/pull/1456) by [@vicoooo26](https://github.com/vicoooo26))
+- fix(workflow): make job deletion idempotent ([#1440](https://github.com/kubeflow/arena/pull/1440) by [@vicoooo26](https://github.com/vicoooo26))
+- fix: add ownerReferences to resources created by arena ([#1407](https://github.com/kubeflow/arena/pull/1407) by [@FAUST-BENCHOU](https://github.com/FAUST-BENCHOU))
+- fix(pytorch-operator): update pytorch-operator image tag to 4598b3e-aliyun ([#1406](https://github.com/kubeflow/arena/pull/1406) by [@ChenYi015](https://github.com/ChenYi015))
+
+### Features
+
+- feat(cli): add sub-command 'arena llm' as proxy to kubectl-rbg ([#1437](https://github.com/kubeflow/arena/pull/1437) by [@diw-zw](https://github.com/diw-zw))
+
+### Dependencies
+
+- chore(deps): bump golang.org/x/net from 0.48.0 to 0.55.0 ([#1448](https://github.com/kubeflow/arena/pull/1448) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump docker/metadata-action from 5 to 6 ([#1447](https://github.com/kubeflow/arena/pull/1447) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump golang from 1.23.10 to 1.26.5 ([#1446](https://github.com/kubeflow/arena/pull/1446), [#1453](https://github.com/kubeflow/arena/pull/1453) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump golang.org/x/crypto from 0.51.0 to 0.52.0 ([#1455](https://github.com/kubeflow/arena/pull/1455) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump actions/checkout from 6 to 7 ([#1449](https://github.com/kubeflow/arena/pull/1449) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/containerd/containerd from 1.7.29 to 1.7.33 ([#1444](https://github.com/kubeflow/arena/pull/1444) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump docker/setup-qemu-action from 3 to 4 ([#1428](https://github.com/kubeflow/arena/pull/1428) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/prometheus/common from 0.66.1 to 0.67.5 ([#1401](https://github.com/kubeflow/arena/pull/1401) by [@dependabot[bot]](https://github.com/apps/dependabot))
+- chore(deps): bump github.com/spf13/cobra from 1.9.1 to 1.10.2 ([#1400](https://github.com/kubeflow/arena/pull/1400) by [@dependabot[bot]](https://github.com/apps/dependabot))
+
+### Misc
+
+- kep: update arena v2 proposal ([#1443](https://github.com/kubeflow/arena/pull/1443) by [@vicoooo26](https://github.com/vicoooo26))
+- kep: add arena v2 proposal ([#1441](https://github.com/kubeflow/arena/pull/1441) by [@vicoooo26](https://github.com/vicoooo26))
+- Update installer: package rbgctl into installer ([#1438](https://github.com/kubeflow/arena/pull/1438) by [@diw-zw](https://github.com/diw-zw))
+- build(docker): update TensorFlow MNIST example Dockerfile ([#1409](https://github.com/kubeflow/arena/pull/1409) by [@ChenYi015](https://github.com/ChenYi015))
+- build(docker): update PyTorch MNIST example Dockerfile ([#1408](https://github.com/kubeflow/arena/pull/1408) by [@ChenYi015](https://github.com/ChenYi015))
+- Add TensorFlow MNIST example ([#1405](https://github.com/kubeflow/arena/pull/1405) by [@ChenYi015](https://github.com/ChenYi015))
+
+[Full Changelog](https://github.com/kubeflow/arena/compare/v0.15.4...v0.15.5)
+
 ## [v0.15.4](https://github.com/kubeflow/arena/tree/v0.15.4) (2026-01-09)
 
 ### Bug Fixes
