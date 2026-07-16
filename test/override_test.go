@@ -29,6 +29,7 @@ func TestSubmitOverrideFlow(t *testing.T) {
 	}
 	task.ApplyOverrides(taskObj, flags)
 
+	taskObj.SetDefaults()
 	require.NoError(t, task.Validate(taskObj))
 
 	assert.Equal(t, "my-pytorch-job", taskObj.Name)
