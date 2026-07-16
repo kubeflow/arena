@@ -1,0 +1,28 @@
+# TFJob with Chief, PS, and Evaluator roles
+# Demonstrates all three optional roles for TensorFlow training.
+version: 0.1.0
+name: tf-distributed
+framework:
+  name: tensorflow
+image: docker.io/tensorflow/tensorflow:2.15.0
+run: python train.py
+
+worker:
+  replicas: 4
+  resources:
+    nvidia.com/gpu: 2
+
+chief:
+  resources:
+    cpu: "2"
+    memory: 4Gi
+
+ps:
+  replicas: 2
+  resources:
+    cpu: "4"
+    memory: 16Gi
+
+evaluator:
+  resources:
+    nvidia.com/gpu: 1

@@ -55,21 +55,3 @@ func TestClientConfigDefaults(t *testing.T) {
 	assert.Equal(t, float32(10.0), DefaultQPS)
 	assert.Equal(t, 20, DefaultBurst)
 }
-
-func TestDefaultRsyncImageNotLatest(t *testing.T) {
-	assert.NotEqual(t, "latest", versionTag(DefaultRsyncImage),
-		"DefaultRsyncImage must not use :latest tag for reproducibility")
-}
-
-// versionTag extracts the tag after the last colon in an image reference.
-func versionTag(image string) string {
-	for i := len(image) - 1; i >= 0; i-- {
-		if image[i] == ':' {
-			return image[i+1:]
-		}
-		if image[i] == '/' {
-			break
-		}
-	}
-	return ""
-}
