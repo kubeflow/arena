@@ -1,0 +1,21 @@
+# PyTorch with Master role overrides
+# The master role gets different resources/envs than workers.
+version: 0.1.0
+name: pytorch-distributed
+framework:
+  name: pytorch
+image: pytorch:2.1
+run: python train.py --distributed
+
+worker:
+  replicas: 4
+  resources:
+    nvidia.com/gpu: 1
+  envs:
+    NCCL_DEBUG: INFO
+
+master:
+  resources:
+    nvidia.com/gpu: 1
+  envs:
+    ROLE: master

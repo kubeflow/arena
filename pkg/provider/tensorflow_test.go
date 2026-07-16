@@ -6,6 +6,7 @@ import (
 	"github.com/kubeflow/arena/pkg/task"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestTensorFlowBuildCRD(t *testing.T) {
@@ -422,6 +423,57 @@ func TestTensorFlowProviderImplementsInterface(t *testing.T) {
 	var _ Provider = &TensorFlowProvider{}
 }
 
+func TestTensorFlowPerRoleRunOverride(t *testing.T) {
+	tk := &task.Task{
+		Name:  "tf-override",
+		Image: "tensorflow:2.15",
+		Run:   "python train.py",
+		Framework: task.Framework{
+			Name: "tensorflow",
+		},
+		Worker: &task.Worker{
+			Replicas: 2,
+			Run:      "python worker_train.py",
+		},
+		Chief: &task.RoleConfig{
+			Run: "python chief_train.py",
+		},
+		PS: &task.RoleConfig{
+			Replicas: 1,
+			Run:      "python serve_ps.py",
+		},
+	}
+
+	provider := &TensorFlowProvider{}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["tfReplicaSpecs"].(map[string]interface{})
+
+	// Worker uses its own run override
+	worker := replicaSpecs["Worker"].(map[string]interface{})
+	workerContainer := extractContainer(t, worker)
+	assert.Equal(t, []interface{}{"python worker_train.py"}, workerContainer["args"])
+
+	// Chief uses its own run override
+	chief := replicaSpecs["Chief"].(map[string]interface{})
+	chiefContainer := extractContainer(t, chief)
+	assert.Equal(t, []interface{}{"python chief_train.py"}, chiefContainer["args"])
+
+	// PS uses its own run override
+	ps := replicaSpecs["PS"].(map[string]interface{})
+	psContainer := extractContainer(t, ps)
+	assert.Equal(t, []interface{}{"python serve_ps.py"}, psContainer["args"])
+}
+
+func extractContainer(t *testing.T, replicaSpec map[string]interface{}) map[string]interface{} {
+	t.Helper()
+	template := replicaSpec["template"].(map[string]interface{})
+	podSpec := template["spec"].(map[string]interface{})
+	containers := podSpec["containers"].([]interface{})
+	return containers[0].(map[string]interface{})
+}
 
 func TestTensorFlowBuildCRDNoEvaluatorWhenNil(t *testing.T) {
 	tk := &task.Task{
@@ -504,4 +556,11 @@ func TestTensorFlowBuildCRDChiefNoInheritWorker(t *testing.T) {
 	assert.Equal(t, "from-chief", envMap["CHIEF_VAR"])
 	_, hasWorkerVar := envMap["WORKER_VAR"]
 	assert.False(t, hasWorkerVar, "chief should not inherit worker envs")
+}
+
+func TestTensorFlowBuildRBAC(t *testing.T) {
+	provider := &TensorFlowProvider{}
+	resources, err := provider.BuildRBAC(&task.Task{}, metav1.OwnerReference{})
+	require.NoError(t, err)
+	assert.Nil(t, resources)
 }

@@ -768,3 +768,131 @@ func TestMPIProvider_BuildCRD_EmptyAPIVersion(t *testing.T) {
 	}
 }
 
+func TestMPIWorkerNoRunInjection(t *testing.T) {
+	tk := &task.Task{
+		Name:  "mpi-no-worker-run",
+		Image: "openmpi:4.1",
+		Run:   "mpirun -np 4 ./train",
+		Framework: task.Framework{
+			Name: "mpi",
+		},
+		Worker: &task.Worker{Replicas: 2},
+	}
+
+	provider := &MPIProvider{APIVersion: MPIAPIVersionV2beta1}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+
+	// Worker should NOT have command or args
+	worker := replicaSpecs["Worker"].(map[string]interface{})
+	workerTemplate := worker["template"].(map[string]interface{})
+	workerSpec := workerTemplate["spec"].(map[string]interface{})
+	containers := workerSpec["containers"].([]interface{})
+	workerContainer := containers[0].(map[string]interface{})
+
+	_, hasCommand := workerContainer["command"]
+	assert.False(t, hasCommand, "MPI worker should not have command")
+	_, hasArgs := workerContainer["args"]
+	assert.False(t, hasArgs, "MPI worker should not have args")
+
+	// Launcher should still have command and args
+	launcher := replicaSpecs["Launcher"].(map[string]interface{})
+	launcherTemplate := launcher["template"].(map[string]interface{})
+	launcherSpec := launcherTemplate["spec"].(map[string]interface{})
+	launcherContainers := launcherSpec["containers"].([]interface{})
+	launcherContainer := launcherContainers[0].(map[string]interface{})
+
+	assert.Equal(t, []interface{}{"/bin/sh", "-c"}, launcherContainer["command"])
+	assert.Equal(t, []interface{}{"mpirun -np 4 ./train"}, launcherContainer["args"])
+}
+
+func TestMPILauncherRunOverride(t *testing.T) {
+	tk := &task.Task{
+		Name:  "mpi-launcher-override",
+		Image: "openmpi:4.1",
+		Run:   "mpirun -np 4 ./train",
+		Framework: task.Framework{
+			Name: "mpi",
+		},
+		Worker: &task.Worker{Replicas: 2},
+		Launcher: &task.RoleConfig{
+			Run: "mpirun -np 4 --bind-to none python train.py",
+		},
+	}
+
+	provider := &MPIProvider{APIVersion: MPIAPIVersionV2beta1}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+
+	// Launcher should use its own run override
+	launcher := replicaSpecs["Launcher"].(map[string]interface{})
+	launcherTemplate := launcher["template"].(map[string]interface{})
+	launcherSpec := launcherTemplate["spec"].(map[string]interface{})
+	containers := launcherSpec["containers"].([]interface{})
+	container := containers[0].(map[string]interface{})
+
+	assert.Equal(t, []interface{}{"mpirun -np 4 --bind-to none python train.py"}, container["args"])
+}
+
+func TestMPIBuildLauncherSpecInjectsDefaultSA(t *testing.T) {
+	tk := &task.Task{
+		Name:      "mpi-sa-test",
+		Image:     "openmpi:4.1",
+		Run:       "mpirun ./train",
+		Namespace: "default",
+		Framework: task.Framework{Name: "mpi"},
+		Worker: &task.Worker{
+			Replicas: 2,
+			Resources: task.Resources{
+				"nvidia.com/gpu": "1",
+			},
+		},
+	}
+
+	provider := &MPIProvider{APIVersion: MPIAPIVersionV2beta1}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+	launcher := replicaSpecs["Launcher"].(map[string]interface{})
+	template := launcher["template"].(map[string]interface{})
+	podSpec := template["spec"].(map[string]interface{})
+
+	assert.Equal(t, "mpi-sa-test-launcher", podSpec["serviceAccountName"])
+}
+
+func TestMPIBuildLauncherSpecRespectsUserSA(t *testing.T) {
+	tk := &task.Task{
+		Name:           "mpi-user-sa",
+		Image:          "openmpi:4.1",
+		Run:            "mpirun ./train",
+		Namespace:      "default",
+		ServiceAccount: "my-custom-sa",
+		Framework:      task.Framework{Name: "mpi"},
+		Worker: &task.Worker{
+			Replicas: 2,
+			Resources: task.Resources{
+				"nvidia.com/gpu": "1",
+			},
+		},
+	}
+
+	provider := &MPIProvider{APIVersion: MPIAPIVersionV2beta1}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+	launcher := replicaSpecs["Launcher"].(map[string]interface{})
+	template := launcher["template"].(map[string]interface{})
+	podSpec := template["spec"].(map[string]interface{})
+
+	assert.Equal(t, "my-custom-sa", podSpec["serviceAccountName"])
+}

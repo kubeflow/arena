@@ -1,0 +1,16 @@
+version: 0.1.0
+name: pytorch-standalone
+image: pytorch/pytorch:1.13-cuda11.6-cudnn8-runtime
+framework:
+  name: pytorch
+  options:
+    nproc_per_node: auto
+master:
+  replicas: 1
+  resources:
+    nvidia.com/gpu: "1"
+    cpu: "2"
+    memory: "8Gi"
+envs:
+  NCCL_DEBUG: INFO
+run: python train.py --epochs 10
