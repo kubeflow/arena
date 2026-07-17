@@ -1,5 +1,6 @@
 # TFJob with Chief, PS, and Evaluator roles
 # Demonstrates all three optional roles for TensorFlow training.
+# IMPORTANT: Replace the image below with your own training image.
 version: 0.1.0
 name: tf-distributed
 framework:

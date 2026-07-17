@@ -1,5 +1,6 @@
 # PyTorch with Master role overrides
 # The master role gets different resources/envs than workers.
+# IMPORTANT: Replace the image below with your own training image.
 version: 0.1.0
 name: pytorch-distributed
 framework:

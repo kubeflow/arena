@@ -1,3 +1,4 @@
+# IMPORTANT: Replace the image below with your own training image.
 version: 0.1.0
 name: pytorch-example
 image: docker.io/pytorch/pytorch:1.13-cuda11.6-cudnn8-runtime
