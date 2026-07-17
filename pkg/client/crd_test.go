@@ -183,6 +183,14 @@ func TestClient_ResolveMPIVersion(t *testing.T) {
 			}),
 			wantErr: "MPIJob CRD has no storage version configured",
 		},
+		{
+			name: "unsupported storage version",
+			crd: buildFakeMPICRD([]CRDVersionInfo{
+				{Name: "v1", Served: true, Storage: false},
+				{Name: "v3alpha1", Served: true, Storage: true},
+			}),
+			wantErr: "not supported",
+		},
 	}
 
 	for _, tt := range tests {
