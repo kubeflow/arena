@@ -120,7 +120,13 @@ Use --set to override YAML fields with Helm-style dot-notation paths.`,
 
 		// Create auxiliary resources (ConfigMap anchor, TensorBoard)
 		if err := createJobResources(cmdContext(cmd), crd, t, k8sClient, p); err != nil {
-			log.Error(err, "failed to create auxiliary resources", "name", crd.GetName())
+			// Best-effort cleanup: delete the CRD so we don't leave an orphaned job
+			log.Warning("auxiliary resource creation failed, cleaning up CRD",
+				"kind", crd.GetKind(), "name", crd.GetName(), "error", err.Error())
+			if delErr := k8sClient.Delete(cmdContext(cmd), crd.GetKind(), ns, t.Name); delErr != nil {
+				log.Warning("failed to clean up CRD after partial failure",
+					"kind", crd.GetKind(), "name", crd.GetName(), "error", delErr.Error())
+			}
 			return err
 		}
 
