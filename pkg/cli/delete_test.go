@@ -273,7 +273,7 @@ func TestDeleteCmd_DeletesMPIJobViaFakeClient(t *testing.T) {
 	kind, err := detectJobType(context.Background(), k8sClient, "default", "del-mpi-job")
 	assert.NoError(t, err)
 	assert.Equal(t, "MPIJob", kind)
-	assert.Equal(t, "v2beta1", k8sClient.MPIVersion, "MPIVersion should be resolved by detectJobType")
+	assert.Equal(t, "v2beta1", k8sClient.GetMPIVersion(), "MPIVersion should be resolved by detectJobType")
 
 	// Delete should succeed — this was the original bug
 	err = k8sClient.Delete(context.Background(), "MPIJob", "default", "del-mpi-job")
