@@ -188,10 +188,18 @@ func extractReady(obj *unstructured.Unstructured) int {
 }
 
 // extractPods builds synthetic pod info entries from the aggregate replica
-// counts in the CRD status. Kubeflow training operators store only aggregate
-// counts (active, succeeded, failed) in replicaStatuses — not individual pod
-// entries — so we synthesize pod names and statuses from these counters.
-// This serves as a fallback when real pods cannot be queried via the API.
+// counts (active, succeeded, failed) in the CRD status.replicaStatuses.
+//
+// Kubeflow training operators store only aggregate counts per role in
+// replicaStatuses — not individual pod entries. This function synthesizes
+// pod names (e.g. "Worker-0", "Worker-1") and maps them to statuses derived
+// from the counters.
+//
+// IMPORTANT: This is a fallback of last resort. The primary pod discovery path
+// is getRealPods (in get.go), which queries actual pods via the Kubernetes API
+// using a label selector. Synthetic pod names do not correspond to real pod
+// names and should only be displayed when the API query fails or returns no
+// results (e.g. insufficient RBAC permissions, API server unreachable).
 func extractPods(obj *unstructured.Unstructured) []client.PodInfo {
 	replicaStatuses, found, err := unstructured.NestedMap(obj.Object, "status", "replicaStatuses")
 	if err != nil || !found {

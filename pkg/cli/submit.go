@@ -8,6 +8,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
+	"github.com/kubeflow/arena/pkg/log"
 	"github.com/kubeflow/arena/pkg/provider"
 	"github.com/kubeflow/arena/pkg/task"
 )
@@ -167,6 +168,13 @@ Trailing arguments after -- are used as the run command.`,
 
 		// Create auxiliary resources (ConfigMap anchor, TensorBoard)
 		if err := createJobResources(cmdContext(cmd), crd, t, k8sClient, p); err != nil {
+			// Best-effort cleanup: delete the CRD so we don't leave an orphaned job
+			log.Warning("auxiliary resource creation failed, cleaning up CRD",
+				"kind", crd.GetKind(), "name", crd.GetName(), "error", err.Error())
+			if delErr := k8sClient.Delete(cmdContext(cmd), crd.GetKind(), ns, t.Name); delErr != nil {
+				log.Warning("failed to clean up CRD after partial failure",
+					"kind", crd.GetKind(), "name", crd.GetName(), "error", delErr.Error())
+			}
 			return err
 		}
 

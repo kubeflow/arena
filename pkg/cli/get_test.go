@@ -266,13 +266,12 @@ func TestPodDisplayStatus(t *testing.T) {
 	}
 }
 
-func TestGetRealPods_ReturnsErrorOnBadConfig(t *testing.T) {
+func TestGetRealPods_ReturnsNilOnBadConfig(t *testing.T) {
 	orig := kubeconfig
 	defer func() { kubeconfig = orig }()
 
 	kubeconfig = "/nonexistent/kubeconfig"
 
-	pods, err := getRealPods(context.Background(), "default", "app=test")
-	assert.Error(t, err, "getRealPods should return error when config loading fails")
-	assert.Nil(t, pods, "getRealPods should return nil pods on error")
+	pods := getRealPods(context.Background(), "default", "app=test")
+	assert.Nil(t, pods, "getRealPods should return nil pods when config loading fails (errors are logged)")
 }
