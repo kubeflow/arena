@@ -340,15 +340,40 @@ func (e *EnvValue) UnmarshalYAML(node *yaml.Node) error {
 		if err := node.Decode(&raw); err != nil {
 			return fmt.Errorf("envs: failed to decode mapping: %w", err)
 		}
-		if sName, ok := raw["secret"]; ok {
-			e.Secret = &EnvFrom{Name: sName, Key: raw["key"]}
+
+		_, hasSecret := raw["secret"]
+		_, hasConfigMap := raw["configmap"]
+
+		if hasSecret && hasConfigMap {
+			return fmt.Errorf("envs: mapping must specify exactly one of 'secret' or 'configmap', not both")
+		}
+		if !hasSecret && !hasConfigMap {
+			return fmt.Errorf("envs: mapping must contain 'secret' or 'configmap' key")
+		}
+
+		if hasSecret {
+			name := raw["secret"]
+			key := raw["key"]
+			if name == "" {
+				return fmt.Errorf("envs: secret name must not be empty")
+			}
+			if key == "" {
+				return fmt.Errorf("envs: key must not be empty for secret reference %q", name)
+			}
+			e.Secret = &EnvFrom{Name: name, Key: key}
 			return nil
 		}
-		if cName, ok := raw["configmap"]; ok {
-			e.ConfigMap = &EnvFrom{Name: cName, Key: raw["key"]}
-			return nil
+
+		name := raw["configmap"]
+		key := raw["key"]
+		if name == "" {
+			return fmt.Errorf("envs: configmap name must not be empty")
 		}
-		return fmt.Errorf("envs: mapping must contain 'secret' or 'configmap' key")
+		if key == "" {
+			return fmt.Errorf("envs: key must not be empty for configmap reference %q", name)
+		}
+		e.ConfigMap = &EnvFrom{Name: name, Key: key}
+		return nil
 	}
 	return fmt.Errorf("envs: unsupported value type (kind=%d)", node.Kind)
 }

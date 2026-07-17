@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"k8s.io/klog/v2"
 )
@@ -36,31 +37,21 @@ func Debug(msg string, keysAndValues ...interface{}) {
 }
 
 // Warning logs a warning message with optional key-value pairs.
-// Note: klog v2 does not provide WarningS or WarningSDepth (structured
-// warning APIs), so we manually format key-value pairs into a readable
-// "key=value" string and pass it to WarningDepth.
+// klog v2 does not provide a structured warning API (WarningS/WarningSDepth),
+// so key-value pairs are formatted as "key=value" and appended to the message
+// for consistency with Info and Error structured output.
 func Warning(msg string, keysAndValues ...interface{}) {
 	if len(keysAndValues) == 0 {
 		klog.WarningDepth(1, msg)
 		return
 	}
 
-	// Format key-value pairs as "key=value"
-	var formatted string
-	for i := 0; i < len(keysAndValues); i += 2 {
-		if i+1 < len(keysAndValues) {
-			key := fmt.Sprint(keysAndValues[i])
-			value := fmt.Sprint(keysAndValues[i+1])
-			formatted += fmt.Sprintf(", %s=%s", key, value)
-		}
+	var b strings.Builder
+	b.WriteString(msg)
+	for i := 0; i+1 < len(keysAndValues); i += 2 {
+		fmt.Fprintf(&b, " %v=%v", keysAndValues[i], keysAndValues[i+1])
 	}
-
-	// Trim leading ", "
-	if len(formatted) > 2 {
-		formatted = formatted[2:]
-	}
-
-	klog.WarningDepth(1, fmt.Sprintf("%s: %s", msg, formatted))
+	klog.WarningDepth(1, b.String())
 }
 
 // SetVerbosity configures the klog verbosity level on the provided FlagSet.
