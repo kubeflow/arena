@@ -11,6 +11,7 @@
 
 ### Features
 
+- feat(arena-artifacts): mount init container ConfigMap into pytorch-operator ([#1473](https://github.com/kubeflow/arena/pull/1473) by [@vicoooo26](https://github.com/vicoooo26))
 - feat(cli): add sub-command 'arena llm' as proxy to kubectl-rbg ([#1437](https://github.com/kubeflow/arena/pull/1437) by [@diw-zw](https://github.com/diw-zw))
 
 ### Dependencies
