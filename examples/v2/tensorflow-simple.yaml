@@ -1,3 +1,4 @@
+# IMPORTANT: Replace the image below with your own training image.
 version: 0.1.0
 name: tensorflow-example
 image: docker.io/tensorflow/tensorflow:2.15.0-gpu

@@ -1,6 +1,8 @@
+# IMPORTANT: Replace the image below with your own training image.
+# Use a fully qualified registry path, e.g. docker.io/your-org/your-image:tag.
 version: 0.1.0
 name: mpi-example
-image: docker.io/openmpi:4.1
+image: docker.io/mpioperator/mpi-test:openmpi-4.1.0
 framework:
   name: mpi
   options:
