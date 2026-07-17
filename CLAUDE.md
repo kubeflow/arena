@@ -16,7 +16,7 @@ Arena v2 eliminates Helm dependencies, reduces code complexity, and adds YAML-fi
 
 ## Build & Test
 
-Use bazel to build Arena v2 cli, every single build and test action must add into makefile.
+Use `go build` or `make arena-v2` to build the Arena v2 CLI. Every build and test action must be added to the Makefile.
 
 ```bash
 # Build the v2 binary

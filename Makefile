@@ -75,15 +75,24 @@ TRAINER_SHA ?= c77ee3ff4d21aa8e5027580d83361c1a426ee789
 # mpi-operator v0.8.0
 MPI_OPERATOR_SHA ?= 101db144e019e1de65aaded07745e9d805c2852a
 
+# Expected SHA256 checksums for the pinned CRD versions above.
+# Update these when bumping TRAINER_SHA or MPI_OPERATOR_SHA.
+PYTORCHJOBS_SHA256 ?= eb80e57a984cdc7ceefaaf3fc561e21b673c30cbb58589f2389528d2b2760d22
+TFJOBS_SHA256 ?= 1fea6d2d9d3fec4697db322d4490be67b0d616478f42566e4c48ae865130a8c8
+MPIJOBS_SHA256 ?= 78b0131f931fcc8d99f6ce0407281f41b62527e443ec691d26d9634b390ad3bb
+
 .PHONY: v2-e2e-setup
 v2-e2e-setup: ## Download Kubeflow Training Operator and MPI Operator CRDs for v2 e2e tests.
 	@mkdir -p test/e2e/crds
 	@echo "Downloading Kubeflow Training Operator CRDs..."
-	@curl -fsSL https://raw.githubusercontent.com/kubeflow/trainer/$(TRAINER_SHA)/manifests/base/crds/kubeflow.org_pytorchjobs.yaml -o test/e2e/crds/pytorchjobs.yaml
-	@curl -fsSL https://raw.githubusercontent.com/kubeflow/trainer/$(TRAINER_SHA)/manifests/base/crds/kubeflow.org_tfjobs.yaml -o test/e2e/crds/tfjobs.yaml
+	@curl --fail -sSL https://raw.githubusercontent.com/kubeflow/trainer/$(TRAINER_SHA)/manifests/base/crds/kubeflow.org_pytorchjobs.yaml -o test/e2e/crds/pytorchjobs.yaml
+	@echo "$(PYTORCHJOBS_SHA256)  test/e2e/crds/pytorchjobs.yaml" | shasum -a 256 --check --quiet || { echo "ERROR: pytorchjobs.yaml checksum mismatch"; exit 1; }
+	@curl --fail -sSL https://raw.githubusercontent.com/kubeflow/trainer/$(TRAINER_SHA)/manifests/base/crds/kubeflow.org_tfjobs.yaml -o test/e2e/crds/tfjobs.yaml
+	@echo "$(TFJOBS_SHA256)  test/e2e/crds/tfjobs.yaml" | shasum -a 256 --check --quiet || { echo "ERROR: tfjobs.yaml checksum mismatch"; exit 1; }
 	@echo "Downloading Kubeflow MPI Operator CRDs..."
-	@curl -fsSL https://raw.githubusercontent.com/kubeflow/mpi-operator/$(MPI_OPERATOR_SHA)/manifests/base/kubeflow.org_mpijobs.yaml -o test/e2e/crds/mpijobs.yaml
-	@echo "CRDs downloaded to test/e2e/crds/"
+	@curl --fail -sSL https://raw.githubusercontent.com/kubeflow/mpi-operator/$(MPI_OPERATOR_SHA)/manifests/base/kubeflow.org_mpijobs.yaml -o test/e2e/crds/mpijobs.yaml
+	@echo "$(MPIJOBS_SHA256)  test/e2e/crds/mpijobs.yaml" | shasum -a 256 --check --quiet || { echo "ERROR: mpijobs.yaml checksum mismatch"; exit 1; }
+	@echo "CRDs downloaded and verified in test/e2e/crds/"
 
 .PHONY: v2-e2e-test
 v2-e2e-test: v2-e2e-setup arena-v2 ## Run arena v2 e2e tests (requires real K8s cluster).
