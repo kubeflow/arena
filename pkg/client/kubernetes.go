@@ -14,6 +14,11 @@ import (
 )
 
 // Client wraps the Kubernetes dynamic client for working with training job CRDs.
+//
+// Concurrency: Client is NOT safe for concurrent use. The mpiVersion field is a
+// mutable cache populated by ResolveMPIVersion. If multiple goroutines share a
+// Client, external synchronization is required. In typical Arena CLI usage a
+// single Client is created per command invocation, so this is not a concern.
 type Client struct {
 	dynamicClient dynamic.Interface
 	mpiVersion    string // cached MPIJob API version, set by ResolveMPIVersion
@@ -139,16 +144,15 @@ func (c *Client) Delete(ctx context.Context, kind, namespace, name string) error
 	return nil
 }
 
-// GetCRDObject retrieves a cluster-scoped CRD object by name.
-// Only works for apiextensions.k8s.io/v1 resources (e.g., CustomResourceDefinition).
-// Note: pluralization uses a naive "kind + s" approach which is correct for
-// CustomResourceDefinition → customresourcedefinitions but would not work for
-// irregular plurals. If this function is extended for other kinds, use a lookup table.
-func (c *Client) GetCRDObject(ctx context.Context, kind, name string) (*unstructured.Unstructured, error) {
+// GetCRDObject retrieves a cluster-scoped CustomResourceDefinition object by name.
+// Only works for apiextensions.k8s.io/v1 CustomResourceDefinition resources.
+// The resource name is hardcoded because this method exists solely for querying
+// CRD metadata (e.g., spec.versions) and is never used for other apiextensions kinds.
+func (c *Client) GetCRDObject(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    "apiextensions.k8s.io",
 		Version:  "v1",
-		Resource: strings.ToLower(kind) + "s",
+		Resource: "customresourcedefinitions",
 	}
 	return c.dynamicClient.Resource(gvr).Get(ctx, name, v1.GetOptions{})
 }
@@ -196,8 +200,13 @@ var coreResources = map[string]string{
 // kindToGVR maps a known training job kind to its GVR.
 // Core K8s resources (ConfigMap, Pod, etc.) use the empty group.
 // MPIJob uses the resolved mpiVersion from the Client; all other kubeflow kinds use v1.
-// Note: PyTorchJob and TFJob currently always use v1 in the Training Operator,
-// so hardcoding constants.KubeflowVersion ("v1") is correct for these frameworks.
+//
+// Why v1 is safe for PyTorchJob and TFJob: The Kubeflow Training Operator has
+// shipped only "v1" as the storage version for PyTorchJob and TFJob since the
+// operator reached GA. Unlike MPIJob (which has v1 and v2beta1 variants), these
+// two frameworks have a stable, single-version API contract. If a future Operator
+// release introduces a new version, extend this function to perform runtime
+// detection similar to ResolveMPIVersion.
 func (c *Client) kindToGVR(kind string) (schema.GroupVersionResource, error) {
 	version := constants.KubeflowVersion
 	if kind == constants.KindMPIJob {

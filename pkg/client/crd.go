@@ -88,6 +88,11 @@ func parseCRDVersions(obj *unstructured.Unstructured) ([]CRDVersionInfo, error) 
 
 // ResolveMPIVersion queries the MPIJob CRD and caches the storage version in c.mpiVersion.
 // Returns immediately if mpiVersion is already set (cached).
+//
+// This is a one-time detection: once resolved, the version is never re-queried.
+// The cached value persists for the lifetime of the Client. This is intentional
+// because CRD versions do not change during a single CLI invocation. If you need
+// to force re-detection, create a new Client or call SetMPIVersion("").
 func (c *Client) ResolveMPIVersion(ctx context.Context) error {
 	if c.mpiVersion != "" {
 		return nil // cached
