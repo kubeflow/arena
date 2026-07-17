@@ -365,6 +365,10 @@ func buildSchedulingPolicy(t *task.Task) map[string]interface{} {
 // totalReplicas returns the sum of replicas across all roles defined in the task.
 // Constrained roles (master, chief, launcher, evaluator) contribute 1 when present.
 // Unconstrained roles (worker, ps) contribute their configured replica count.
+// Implicit roles that providers always create are also counted:
+//   - MPI-family frameworks (mpi, horovod, deepspeed) always create a launcher (1 replica)
+//     even when t.Launcher is nil.
+//   - PyTorch always creates a master (1 replica) when worker is present, even when t.Master is nil.
 func totalReplicas(t *task.Task) int64 {
 	var total int64
 	if t.Worker != nil {
@@ -385,7 +389,26 @@ func totalReplicas(t *task.Task) int64 {
 	if t.Launcher != nil {
 		total++
 	}
+
+	// Account for implicit roles that providers always create even when the
+	// corresponding task section is nil. Without these corrections, gang
+	// scheduling minAvailable would undercount the actual pod total.
+	if t.Launcher == nil && isMPIFamily(t) {
+		total++ // MPI-family providers always create a 1-replica launcher
+	}
+	if t.Master == nil && t.Worker != nil && t.Framework.Name == constants.FrameworkPyTorch {
+		total++ // PyTorch provider always creates a 1-replica master when worker is present
+	}
+
 	return total
+}
+
+// isMPIFamily reports whether the task uses an MPI-family framework
+// (mpi, horovod, or deepspeed), all of which share the launcher/worker split.
+func isMPIFamily(t *task.Task) bool {
+	return t.Framework.Name == constants.FrameworkMPI ||
+		t.Framework.Name == constants.FrameworkHorovod ||
+		t.Framework.Name == constants.FrameworkDeepSpeed
 }
 
 // buildAffinity creates a K8s Affinity map from the task's Affinity settings.
