@@ -28,6 +28,14 @@ type pathSegment struct {
 	isArr bool
 }
 
+// pathSegment represents a single segment in a dotted key path.
+// It can be either a map key (isArr=false) or an array index (isArr=true).
+type pathSegment struct {
+	key   string
+	index int
+	isArr bool
+}
+
 // ApplySetOverrides merges Helm-style --set expressions into raw YAML bytes.
 // Each expression uses dot-notation paths: "worker.replicas=4", "envs.KEY=val".
 // Single-quoted segments preserve dots literally, e.g.
