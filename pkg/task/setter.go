@@ -68,7 +68,7 @@ func ApplySetOverrides(yamlData []byte, expressions []string) ([]byte, error) {
 // Example:
 //
 //	"worker.resources.'nvidia.com/gpu'=4"
-//	→ "worker.resources.__QK_0__=4", {"__QK_0__": "nvidia.com/gpu"}
+//	→ "worker.resources.__ARENA_QK_0__=4", {"__ARENA_QK_0__": "nvidia.com/gpu"}
 func preprocessQuotedKeys(expr string) (string, map[string]string, error) {
 	// Only preprocess quoted segments in the key portion (before the first '=').
 	// Values after '=' must not be touched — quotes there are literal user data.
@@ -116,42 +116,65 @@ func preprocessQuotedKeys(expr string) (string, map[string]string, error) {
 // restoreQuotedKeys walks a map produced by strvals.ParseInto and replaces any
 // placeholder keys with the original quoted content from the mapping. It
 // recurses into nested maps so that placeholders at any depth are restored.
+//
+// To avoid mutating the map during range iteration, it rebuilds the map into a
+// fresh copy and then replaces the original map's contents.
 func restoreQuotedKeys(m map[string]interface{}, quotedKeys map[string]string) {
-	// Collect replacements first to avoid mutating the map during iteration.
-	replacements := make(map[string]string)
-	for key := range m {
-		// Exact match: the entire key is a placeholder.
-		if originalKey, isPlaceholder := quotedKeys[key]; isPlaceholder {
-			replacements[key] = originalKey
-			continue
-		}
-		// Substring match: the placeholder is part of a larger key.
-		// This happens when a quoted segment is adjacent to unquoted text,
-		// e.g., "foo'bar.baz'qux" → key "foo__ARENA_QK_0__qux".
-		for ph, orig := range quotedKeys {
-			if strings.Contains(key, ph) {
-				replacements[key] = strings.ReplaceAll(key, ph, orig)
-				break
-			}
-		}
-	}
-	for oldKey, newKey := range replacements {
-		m[newKey] = m[oldKey]
-		delete(m, oldKey)
-	}
+	rebuilt := rebuildMap(m, quotedKeys)
 
-	// Recurse into nested maps and arrays.
-	for _, val := range m {
+	// Clear the original map and copy rebuilt entries back in place so that
+	// callers who hold a reference to m see the updated contents.
+	for k := range m {
+		delete(m, k)
+	}
+	for k, v := range rebuilt {
+		m[k] = v
+	}
+}
+
+// rebuildMap creates a new map with all placeholder keys resolved.
+// It recurses into nested maps and array-element maps.
+func rebuildMap(m map[string]interface{}, quotedKeys map[string]string) map[string]interface{} {
+	result := make(map[string]interface{}, len(m))
+	for key, val := range m {
+		realKey := resolveKey(key, quotedKeys)
+
+		// Recurse into nested maps.
 		if nested, ok := val.(map[string]interface{}); ok {
 			restoreQuotedKeys(nested, quotedKeys)
+			result[realKey] = nested
+			continue
 		}
+
+		// Recurse into array elements that are maps.
 		if arr, ok := val.([]interface{}); ok {
 			for _, elem := range arr {
 				if nested, ok := elem.(map[string]interface{}); ok {
 					restoreQuotedKeys(nested, quotedKeys)
 				}
 			}
+			result[realKey] = arr
+			continue
+		}
+
+		result[realKey] = val
+	}
+	return result
+}
+
+// resolveKey replaces any placeholder substrings in key with the original
+// quoted content. It first checks for an exact placeholder match, then falls
+// back to substring replacement for keys where strvals embedded a placeholder
+// inside a larger path segment (e.g., "foo__ARENA_QK_0__qux" → "foobar.bazqux").
+func resolveKey(key string, quotedKeys map[string]string) string {
+	if orig, ok := quotedKeys[key]; ok {
+		return orig
+	}
+	for ph, orig := range quotedKeys {
+		if strings.Contains(key, ph) {
+			return strings.ReplaceAll(key, ph, orig)
 		}
 	}
+	return key
 }
 
