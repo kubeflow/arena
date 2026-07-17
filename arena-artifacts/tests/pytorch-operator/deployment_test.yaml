@@ -112,3 +112,46 @@ tests:
       - key: key4
         operator: Exists
         effect: NoSchedule
+
+- it: Should pass init-container-image flag with the configured image
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].name
+      value: pytorch-operator
+  - contains:
+      path: spec.template.spec.containers[0].command
+      content: --init-container-image=alpine:3.22.2
+
+- it: Should mount init container template ConfigMap at /etc/config read-only
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].name
+      value: pytorch-operator
+  - equal:
+      path: spec.template.spec.containers[0].volumeMounts[0].mountPath
+      value: /etc/config
+  - equal:
+      path: spec.template.spec.containers[0].volumeMounts[0].name
+      value: init-container-template
+  - equal:
+      path: spec.template.spec.containers[0].volumeMounts[0].readOnly
+      value: true
+
+- it: Should reference pytorch-init-container-template ConfigMap in volumes
+  asserts:
+  - equal:
+      path: spec.template.spec.volumes[0].name
+      value: init-container-template
+  - equal:
+      path: spec.template.spec.volumes[0].configMap.name
+      value: pytorch-init-container-template
+
+- it: Should not mount ConfigMap or volumes when initContainerTemplateEnabled is false
+  set:
+    pytorch:
+      initContainerTemplateEnabled: false
+  asserts:
+  - notExists:
+      path: spec.template.spec.containers[0].volumeMounts
+  - notExists:
+      path: spec.template.spec.volumes

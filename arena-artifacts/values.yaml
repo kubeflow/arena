@@ -100,7 +100,18 @@ pytorch:
       cpu: 100m
       memory: 256Mi
   nodeSelector: {}
-  initContainerImage: alpine:3.10
+  initContainerImage: alpine:3.22.2
+  initContainerTemplateEnabled: true
+  initContainerImagePullPolicy: IfNotPresent
+  initContainerResources:
+    limits:
+      cpu: 100m
+      memory: 20Mi
+    requests:
+      cpu: 50m
+      memory: 10Mi
+  initContainerMaxTries: 150
+  initContainerSleepSeconds: 2
 
 # et-operator
 et:
@@ -117,7 +128,7 @@ et:
       cpu: 100m
       memory: 256Mi
   nodeSelector: {}
-  initContainerImage: alpine:3.10
+  initContainerImage: alpine:3.22.2
 
 # cron-operator
 cron:

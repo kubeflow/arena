@@ -1,0 +1,18 @@
+{{- if .Values.initContainerTemplateEnabled -}}
+{{- $defaultResources := dict "limits" (dict "cpu" "100m" "memory" "20Mi") "requests" (dict "cpu" "50m" "memory" "10Mi") -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pytorch-init-container-template
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "arena.labels" . | nindent 4 }}
+data:
+  initContainer.yaml: |
+    - name: init-pytorch
+      image: {{"{{"}}.InitContainerImage{{"}}"}}
+      imagePullPolicy: {{ .Values.initContainerImagePullPolicy | default "IfNotPresent" }}
+      resources:
+        {{- toYaml (.Values.initContainerResources | default $defaultResources) | nindent 8 }}
+      command: ['sh', '-c', 'err=1;for i in $(seq {{ .Values.initContainerMaxTries | default 150 }}); do if getent hosts {{"{{"}}.MasterAddr{{"}}"}}; then err=0 && break; fi;echo waiting for master; sleep {{ .Values.initContainerSleepSeconds | default 2 }}; done; exit $err']
+{{- end -}}
