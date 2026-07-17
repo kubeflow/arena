@@ -185,7 +185,7 @@ framework:
 			{Group: "kubeflow.org", Version: "v2beta1", Resource: "mpijobs"}: "MPIJobList",
 		}, cm, job)
 	k8sClient := client.NewClientForInterface(fakeClient)
-	k8sClient.MPIVersion = "v2beta1"
+	k8sClient.SetMPIVersion("v2beta1")
 
 	jobType, err := suspendJob(context.Background(), k8sClient, "default", "mpi-job")
 	assert.NoError(t, err)

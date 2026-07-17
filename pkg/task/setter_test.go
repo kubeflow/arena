@@ -460,3 +460,228 @@ func TestApplySetOverrides_StrvalsParseError(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse --set")
 }
+
+// Tests for standalone parser functions
+
+func TestParseKeyPath(t *testing.T) {
+	tests := []struct {
+		name    string
+		path    string
+		want    []pathSegment
+		wantErr bool
+	}{
+		{
+			name: "simple key",
+			path: "name",
+			want: []pathSegment{{key: "name"}},
+		},
+		{
+			name: "dotted path",
+			path: "worker.replicas",
+			want: []pathSegment{{key: "worker"}, {key: "replicas"}},
+		},
+		{
+			name: "deeply nested",
+			path: "scheduling.gang.enabled",
+			want: []pathSegment{{key: "scheduling"}, {key: "gang"}, {key: "enabled"}},
+		},
+		{
+			name: "array index",
+			path: "storages[0]",
+			want: []pathSegment{{key: "storages"}, {index: 0, isArr: true}},
+		},
+		{
+			name: "array index with key",
+			path: "storages[0].name",
+			want: []pathSegment{{key: "storages"}, {index: 0, isArr: true}, {key: "name"}},
+		},
+		{
+			name: "multiple array indices",
+			path: "matrix[0][1]",
+			want: []pathSegment{{key: "matrix"}, {index: 0, isArr: true}, {index: 1, isArr: true}},
+		},
+		{
+			name: "complex path",
+			path: "a.b[0].c[1].d",
+			want: []pathSegment{
+				{key: "a"}, {key: "b"}, {index: 0, isArr: true},
+				{key: "c"}, {index: 1, isArr: true}, {key: "d"},
+			},
+		},
+		{
+			name:    "unclosed bracket",
+			path:    "a[0",
+			wantErr: true,
+		},
+		{
+			name:    "invalid array index",
+			path:    "a[abc]",
+			wantErr: true,
+		},
+		{
+			name:    "negative array index",
+			path:    "a[-1]",
+			wantErr: true,
+		},
+		{
+			name: "placeholder key",
+			path: "__QK_0__",
+			want: []pathSegment{{key: "__QK_0__"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseKeyPath(tt.path)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestCoerceValue(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  interface{}
+	}{
+		{"true", "true", true},
+		{"false", "false", false},
+		{"null", "null", nil},
+		{"positive int", "42", 42},
+		{"negative int", "-1", -1},
+		{"zero", "0", 0},
+		{"string", "hello", "hello"},
+		{"string with spaces", "hello world", "hello world"},
+		{"resource quantity", "16Gi", "16Gi"},
+		{"empty string", "", ""},
+		{"string with equals", "a=b", "a=b"},
+		{"leading zero", "007", 7}, // strconv.Atoi accepts leading zeros
+		{"float-like", "1.5", "1.5"},   // not parsed as int
+		{"True capital", "True", "True"},
+		{"FALSE capital", "FALSE", "FALSE"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := coerceValue(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestPreprocessQuotedKeys(t *testing.T) {
+	tests := []struct {
+		name       string
+		expr       string
+		wantExpr   string
+		wantKeys   map[string]string
+		wantErr    bool
+		errContain string
+	}{
+		{
+			name:     "no quotes",
+			expr:     "a.b.c=value",
+			wantExpr: "a.b.c=value",
+			wantKeys: map[string]string{},
+		},
+		{
+			name:     "single quoted key",
+			expr:     "a.'b.c'.d=value",
+			wantExpr: "a.__QK_0__.d=value",
+			wantKeys: map[string]string{"__QK_0__": "b.c"},
+		},
+		{
+			name:     "quoted key with slash",
+			expr:     "worker.resources.'nvidia.com/gpu'=4",
+			wantExpr: "worker.resources.__QK_0__=4",
+			wantKeys: map[string]string{"__QK_0__": "nvidia.com/gpu"},
+		},
+		{
+			name:     "multiple quoted keys",
+			expr:     "'a.b'.'c.d'=value",
+			wantExpr: "__QK_0__.__QK_1__=value",
+			wantKeys: map[string]string{"__QK_0__": "a.b", "__QK_1__": "c.d"},
+		},
+		{
+			name:     "quotes in value ignored",
+			expr:     "key='value.with.dots'",
+			wantExpr: "key='value.with.dots'",
+			wantKeys: map[string]string{},
+		},
+		{
+			name:       "mismatched quote",
+			expr:       "'abc.def=value",
+			wantErr:    true,
+			errContain: "mismatched single quote",
+		},
+		{
+			name:       "empty quoted segment",
+			expr:       "a.''.b=value",
+			wantErr:    true,
+			errContain: "empty quoted segment",
+		},
+		{
+			name:     "no equals sign",
+			expr:     "a.'b.c'",
+			wantExpr: "a.__QK_0__",
+			wantKeys: map[string]string{"__QK_0__": "b.c"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotExpr, gotKeys, err := preprocessQuotedKeys(tt.expr)
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.errContain != "" {
+					assert.Contains(t, err.Error(), tt.errContain)
+				}
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantExpr, gotExpr)
+			assert.Equal(t, tt.wantKeys, gotKeys)
+		})
+	}
+}
+
+func TestApplySetOverrides_ArrayCreation(t *testing.T) {
+	yamlData := []byte("name: test\n")
+	result, err := ApplySetOverrides(yamlData, []string{"items[0]=first"})
+	require.NoError(t, err)
+
+	var m map[string]interface{}
+	require.NoError(t, yaml.Unmarshal(result, &m))
+	items := m["items"].([]interface{})
+	assert.Equal(t, 1, len(items))
+	assert.Equal(t, "first", items[0])
+}
+
+func TestApplySetOverrides_ArrayGapFilledWithNil(t *testing.T) {
+	yamlData := []byte("name: test\n")
+	result, err := ApplySetOverrides(yamlData, []string{"items[2]=third"})
+	require.NoError(t, err)
+
+	var m map[string]interface{}
+	require.NoError(t, yaml.Unmarshal(result, &m))
+	items := m["items"].([]interface{})
+	assert.Equal(t, 3, len(items))
+	assert.Nil(t, items[0])
+	assert.Nil(t, items[1])
+	assert.Equal(t, "third", items[2])
+}
+
+func TestApplySetOverrides_NullValue(t *testing.T) {
+	yamlData := []byte("name: test\nimage: pytorch:2.1\n")
+	result, err := ApplySetOverrides(yamlData, []string{"image=null"})
+	require.NoError(t, err)
+
+	var m map[string]interface{}
+	require.NoError(t, yaml.Unmarshal(result, &m))
+	assert.Nil(t, m["image"])
+}

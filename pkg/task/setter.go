@@ -2,16 +2,24 @@ package task
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
-	"helm.sh/helm/v3/pkg/strvals"
 )
 
 // quotedKeyPrefix is the placeholder prefix used for single-quoted key segments
-// in --set expressions. Quoted segments are extracted before strvals parsing
+// in --set expressions. Quoted segments are extracted before parsing
 // (which treats all dots as path separators) and restored afterwards.
 const quotedKeyPrefix = "__QK_"
+
+// pathSegment represents a single segment in a dotted key path.
+// It can be either a map key (isArr=false) or an array index (isArr=true).
+type pathSegment struct {
+	key   string
+	index int
+	isArr bool
+}
 
 // ApplySetOverrides merges Helm-style --set expressions into raw YAML bytes.
 // Each expression uses dot-notation paths: "worker.replicas=4", "envs.KEY=val".
@@ -42,7 +50,7 @@ func ApplySetOverrides(yamlData []byte, expressions []string) ([]byte, error) {
 			return nil, fmt.Errorf("failed to parse --set %q: %w", expr, err)
 		}
 
-		if err := strvals.ParseInto(processed, base); err != nil {
+		if err := parseInto(processed, base); err != nil {
 			return nil, fmt.Errorf("failed to parse --set %q: %w", expr, err)
 		}
 
@@ -58,8 +66,231 @@ func ApplySetOverrides(yamlData []byte, expressions []string) ([]byte, error) {
 	return merged, nil
 }
 
+// parseInto parses a --set expression and applies it to the base map.
+// The expression format is: key.path=value
+// where key.path can contain dots (.) for nested keys and [N] for array indices.
+func parseInto(expr string, base map[string]interface{}) error {
+	// Find the first '='
+	eqIdx := strings.IndexByte(expr, '=')
+	if eqIdx < 0 {
+		return fmt.Errorf("no '=' found in expression")
+	}
+
+	keyPart := expr[:eqIdx]
+	valuePart := expr[eqIdx+1:]
+
+	if keyPart == "" {
+		return fmt.Errorf("empty key")
+	}
+
+	// Parse the key path into segments
+	segments, err := parseKeyPath(keyPart)
+	if err != nil {
+		return err
+	}
+
+	if len(segments) == 0 {
+		return fmt.Errorf("empty key path")
+	}
+
+	// Coerce the value to the appropriate type
+	value := coerceValue(valuePart)
+
+	// Set the value at the path
+	return setValueAtPath(base, segments, value)
+}
+
+// parseKeyPath parses a dotted key path like "a.b[0].c" into segments.
+func parseKeyPath(path string) ([]pathSegment, error) {
+	var segments []pathSegment
+	var current strings.Builder
+
+	i := 0
+	for i < len(path) {
+		c := path[i]
+		switch c {
+		case '.':
+			if current.Len() > 0 {
+				segments = append(segments, pathSegment{key: current.String()})
+				current.Reset()
+			}
+			i++
+		case '[':
+			// Save current key segment if any
+			if current.Len() > 0 {
+				segments = append(segments, pathSegment{key: current.String()})
+				current.Reset()
+			}
+			// Find closing ']'
+			j := i + 1
+			for j < len(path) && path[j] != ']' {
+				j++
+			}
+			if j >= len(path) {
+				return nil, fmt.Errorf("unclosed '[' in path %q", path)
+			}
+			idxStr := path[i+1 : j]
+			idx, err := strconv.Atoi(idxStr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid array index %q in path %q", idxStr, path)
+			}
+			if idx < 0 {
+				return nil, fmt.Errorf("negative array index %d in path %q", idx, path)
+			}
+			segments = append(segments, pathSegment{index: idx, isArr: true})
+			i = j + 1
+			// Skip trailing '.' after ']'
+			if i < len(path) && path[i] == '.' {
+				i++
+			}
+		default:
+			current.WriteByte(c)
+			i++
+		}
+	}
+
+	if current.Len() > 0 {
+		segments = append(segments, pathSegment{key: current.String()})
+	}
+
+	return segments, nil
+}
+
+// setValueAtPath sets a value in a nested map/slice structure at the given path.
+func setValueAtPath(base map[string]interface{}, segments []pathSegment, value interface{}) error {
+	if len(segments) == 0 {
+		return fmt.Errorf("empty path")
+	}
+
+	// Handle the simple case: single key, no arrays
+	if len(segments) == 1 && !segments[0].isArr {
+		base[segments[0].key] = value
+		return nil
+	}
+
+	// Navigate through all segments except the last, building the container chain
+	current := interface{}(base)
+
+	for i := 0; i < len(segments)-1; i++ {
+		seg := segments[i]
+		nextSeg := segments[i+1]
+
+		if seg.isArr {
+			// Current should be a slice
+			arr, ok := current.([]interface{})
+			if !ok {
+				return fmt.Errorf("expected array at index %d, got %T", seg.index, current)
+			}
+			// Ensure index exists
+			for len(arr) <= seg.index {
+				arr = append(arr, nil)
+			}
+			// Create next level if nil
+			if arr[seg.index] == nil {
+				if nextSeg.isArr {
+					arr[seg.index] = []interface{}{}
+				} else {
+					arr[seg.index] = make(map[string]interface{})
+				}
+			}
+			current = arr[seg.index]
+		} else {
+			// Current should be a map
+			m, ok := current.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("expected map at key %q, got %T", seg.key, current)
+			}
+			// Create next level if nil
+			if m[seg.key] == nil {
+				if nextSeg.isArr {
+					m[seg.key] = []interface{}{}
+				} else {
+					m[seg.key] = make(map[string]interface{})
+				}
+			}
+			current = m[seg.key]
+		}
+	}
+
+	// Now set the final value
+	lastSeg := segments[len(segments)-1]
+	if lastSeg.isArr {
+		arr, ok := current.([]interface{})
+		if !ok {
+			return fmt.Errorf("expected array at index %d, got %T", lastSeg.index, current)
+		}
+		for len(arr) <= lastSeg.index {
+			arr = append(arr, nil)
+		}
+		arr[lastSeg.index] = value
+		// Update the slice in its parent
+		updateSliceInParent(base, segments[:len(segments)-1], arr)
+	} else {
+		m, ok := current.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("expected map at key %q, got %T", lastSeg.key, current)
+		}
+		m[lastSeg.key] = value
+	}
+
+	return nil
+}
+
+// updateSliceInParent updates a slice reference in its parent container.
+// This is needed because append() may return a new slice header.
+func updateSliceInParent(base map[string]interface{}, parentSegments []pathSegment, newSlice []interface{}) {
+	if len(parentSegments) == 0 {
+		return
+	}
+
+	// Navigate to the parent of the slice
+	current := interface{}(base)
+	for i := 0; i < len(parentSegments)-1; i++ {
+		seg := parentSegments[i]
+		if seg.isArr {
+			arr := current.([]interface{})
+			current = arr[seg.index]
+		} else {
+			m := current.(map[string]interface{})
+			current = m[seg.key]
+		}
+	}
+
+	// Update the slice in the last parent
+	lastParentSeg := parentSegments[len(parentSegments)-1]
+	if lastParentSeg.isArr {
+		arr := current.([]interface{})
+		arr[lastParentSeg.index] = newSlice
+	} else {
+		m := current.(map[string]interface{})
+		m[lastParentSeg.key] = newSlice
+	}
+}
+
+// coerceValue converts a string value to the appropriate Go type.
+// - "true"/"false" → bool
+// - "null" → nil
+// - Valid integers → int
+// - Otherwise → string
+func coerceValue(s string) interface{} {
+	if s == "true" {
+		return true
+	}
+	if s == "false" {
+		return false
+	}
+	if s == "null" {
+		return nil
+	}
+	// Try to parse as integer
+	if i, err := strconv.Atoi(s); err == nil {
+		return i
+	}
+	return s
+}
+
 // preprocessQuotedKeys scans a --set expression for single-quoted segments and
-// replaces each with a dot-free placeholder so that strvals.ParseInto does not
+// replaces each with a dot-free placeholder so that parsing does not
 // split them on dots. It returns the processed expression and a mapping from
 // placeholder to the original quoted content.
 //
@@ -111,7 +342,7 @@ func preprocessQuotedKeys(expr string) (string, map[string]string, error) {
 	return result.String(), quotedKeys, nil
 }
 
-// restoreQuotedKeys walks a map produced by strvals.ParseInto and replaces any
+// restoreQuotedKeys walks a map produced by parsing and replaces any
 // placeholder keys with the original quoted content from the mapping. It
 // recurses into nested maps so that placeholders at any depth are restored.
 //
@@ -175,4 +406,3 @@ func resolveKey(key string, quotedKeys map[string]string) string {
 	}
 	return key
 }
-

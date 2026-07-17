@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
@@ -49,15 +50,25 @@ var topJobCmd = &cobra.Command{
 		var allJobs []client.JobStatus
 		anySucceeded := false
 		failedKindCount := 0
+		notFoundKindCount := 0
+		var apiErrors []string
 		for _, kind := range supportedJobKinds {
 			if kind == constants.KindMPIJob && !mpiAvailable {
 				continue
 			}
 			jobs, err := k8sClient.List(cmdContext(cmd), kind, ns, V2LabelSelector)
 			if err != nil {
-				apiVer, _ := k8sClient.KindToAPIVersion(kind) // best-effort for logging
-				log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
-				failedKindCount++
+				if apierrors.IsNotFound(err) {
+					// CRD not installed — not an error, just skip silently
+					notFoundKindCount++
+					log.Warning("CRD not installed", "kind", kind)
+				} else {
+					// Real API error (permission, network, etc.) — track and report
+					apiVer, _ := k8sClient.KindToAPIVersion(kind) // best-effort for logging
+					log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
+					apiErrors = append(apiErrors, fmt.Sprintf("%s: %s", kind, err.Error()))
+					failedKindCount++
+				}
 				continue
 			}
 			anySucceeded = true
@@ -73,8 +84,8 @@ var topJobCmd = &cobra.Command{
 			}
 		}
 
-		// If no kinds were listed successfully, surface the failure to the user
-		// rather than showing a misleading "No jobs found" message.
+		// If all kinds failed with API errors (not just missing CRDs), return
+		// a clear error so the user understands the issue.
 		if !anySucceeded && failedKindCount > 0 {
 			return fmt.Errorf("failed to list any job types; checked %d kind(s) — check permissions or cluster connectivity", failedKindCount)
 		}
@@ -91,7 +102,10 @@ var topJobCmd = &cobra.Command{
 		// understand the results may be incomplete.
 		if failedKindCount > 0 && anySucceeded {
 			fmt.Fprintf(cmd.ErrOrStderr(),
-				"\nWarning: failed to list %d job type(s); results may be incomplete\n", failedKindCount)
+				"\nWarning: failed to list %d job type(s) due to API errors; results may be incomplete:\n", failedKindCount)
+			for _, e := range apiErrors {
+				fmt.Fprintf(cmd.ErrOrStderr(), "  - %s\n", e)
+			}
 		}
 		return nil
 	},

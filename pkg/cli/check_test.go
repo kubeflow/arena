@@ -110,7 +110,7 @@ func TestGetCRDVersions_NotFound(t *testing.T) {
 	k8sClient := client.NewClientForInterface(fakeClient)
 
 	versions, err := k8sClient.GetCRDVersions(context.Background(), "pytorchjobs.kubeflow.org")
-	require.NoError(t, err)
+	require.ErrorIs(t, err, client.ErrCRDNotFound)
 	assert.Nil(t, versions)
 }
 
@@ -231,10 +231,10 @@ func TestCheckCmd_SomeCRDsMissing(t *testing.T) {
 	assert.Equal(t, "v1", client.FindStorageVersion(pyVersions))
 
 	tfVersions, err := k8sClient.GetCRDVersions(ctx, "tfjobs.kubeflow.org")
-	require.NoError(t, err)
+	require.ErrorIs(t, err, client.ErrCRDNotFound)
 	assert.Nil(t, tfVersions)
 
 	mpiVersions, err := k8sClient.GetCRDVersions(ctx, "mpijobs.kubeflow.org")
-	require.NoError(t, err)
+	require.ErrorIs(t, err, client.ErrCRDNotFound)
 	assert.Nil(t, mpiVersions)
 }
