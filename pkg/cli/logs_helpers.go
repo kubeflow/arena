@@ -2,6 +2,7 @@ package cli
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeflow/arena/pkg/constants"
 )
@@ -14,6 +15,20 @@ func podBelongsToJob(pod *corev1.Pod, jobName string) bool {
 		return false
 	}
 	return labels[constants.LabelJobName] == jobName
+}
+
+// buildTFJobFallbackSelector constructs the label selector for the TFJob
+// worker-0 pod, used as a fallback when the chief selector returns no pods
+// (chief is optional in TFJob). Uses metav1.LabelSelector for consistent
+// label value escaping.
+func buildTFJobFallbackSelector(jobName string) string {
+	return metav1.FormatLabelSelector(&metav1.LabelSelector{
+		MatchLabels: map[string]string{
+			constants.LabelJobName:      jobName,
+			constants.LabelReplicaType:  constants.ReplicaRoleWorker,
+			constants.LabelReplicaIndex: "0",
+		},
+	})
 }
 
 // containerExists checks if a container exists in the pod spec.

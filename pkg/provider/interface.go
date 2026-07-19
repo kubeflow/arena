@@ -31,6 +31,19 @@ type Provider interface {
 	GetJobPodSelector(jobName string) string
 }
 
+// buildLabelSelector constructs a Kubernetes label selector string from the
+// given label key-value pairs using metav1.LabelSelector +
+// metav1.FormatLabelSelector. This ensures label values are handled through
+// the structured Kubernetes API rather than raw string interpolation, so
+// escaping is applied consistently if values ever come from a less
+// constrained source.
+func buildLabelSelector(matchLabels map[string]string) string {
+	selector := &metav1.LabelSelector{
+		MatchLabels: matchLabels,
+	}
+	return metav1.FormatLabelSelector(selector)
+}
+
 // toInterfaceSlice converts a []string to []interface{} so that the values can
 // be stored in an unstructured.Unstructured object (which requires JSON-compatible types).
 func toInterfaceSlice(ss []string) []interface{} {

@@ -17,16 +17,18 @@ func (p *TensorFlowProvider) GetJobType() string {
 }
 
 // GetLogPodSelector returns the label selector for the chief pod.
-// Note: jobName is used directly as a label value and must conform to
-// Kubernetes label value constraints (max 63 chars, alphanumeric, -, _, .).
+// Uses metav1.LabelSelector for consistent label value escaping.
 func (p *TensorFlowProvider) GetLogPodSelector(jobName string) string {
-	return fmt.Sprintf("%s=%s,%s=%s",
-		constants.LabelJobName, jobName,
-		constants.LabelReplicaType, constants.ReplicaRoleChief)
+	return buildLabelSelector(map[string]string{
+		constants.LabelJobName:     jobName,
+		constants.LabelReplicaType: constants.ReplicaRoleChief,
+	})
 }
 
 func (p *TensorFlowProvider) GetJobPodSelector(jobName string) string {
-	return fmt.Sprintf("%s=%s", constants.LabelJobName, jobName)
+	return buildLabelSelector(map[string]string{
+		constants.LabelJobName: jobName,
+	})
 }
 
 func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, error) {

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kubeflow/arena/pkg/constants"
 )
@@ -610,4 +611,315 @@ func TestLogsCmd_BufferConfiguration(t *testing.T) {
 		f := logsCmd.Flags().Lookup(flagName)
 		require.NotNil(t, f, "expected flag %s to be registered", flagName)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Provider selector validation and pod-matching tests
+// ---------------------------------------------------------------------------
+
+// TestProviderLogPodSelectorsAreValid verifies that every provider's
+// GetLogPodSelector returns a string that can be parsed as a valid
+// Kubernetes label selector.
+func TestProviderLogPodSelectorsAreValid(t *testing.T) {
+	frameworks := []string{
+		constants.FrameworkPyTorch,
+		constants.FrameworkTensorFlow,
+		constants.FrameworkMPI,
+		constants.FrameworkHorovod,
+		constants.FrameworkDeepSpeed,
+	}
+
+	for _, fw := range frameworks {
+		t.Run(fw, func(t *testing.T) {
+			p, err := getProvider(fw)
+			require.NoError(t, err)
+
+			selector := p.GetLogPodSelector("my-training-job")
+			parsed, err := labels.Parse(selector)
+			require.NoError(t, err, "selector %q should be parseable", selector)
+			assert.NotNil(t, parsed)
+		})
+	}
+}
+
+// TestProviderLogPodSelectorsMatchCorrectPods verifies that the label
+// selector produced by each provider correctly matches a pod that carries
+// the expected labels (job-name + replica-type).
+func TestProviderLogPodSelectorsMatchCorrectPods(t *testing.T) {
+	tests := []struct {
+		name      string
+		framework string
+		jobName   string
+		role      string
+	}{
+		{"pytorch matches master pod", constants.FrameworkPyTorch, "pt-job", constants.ReplicaRoleMaster},
+		{"tensorflow matches chief pod", constants.FrameworkTensorFlow, "tf-job", constants.ReplicaRoleChief},
+		{"mpi matches launcher pod", constants.FrameworkMPI, "mpi-job", constants.ReplicaRoleLauncher},
+		{"horovod matches launcher pod", constants.FrameworkHorovod, "hvd-job", constants.ReplicaRoleLauncher},
+		{"deepspeed matches launcher pod", constants.FrameworkDeepSpeed, "ds-job", constants.ReplicaRoleLauncher},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, err := getProvider(tt.framework)
+			require.NoError(t, err)
+
+			selectorStr := p.GetLogPodSelector(tt.jobName)
+			selector, err := labels.Parse(selectorStr)
+			require.NoError(t, err)
+
+			// Pod with correct labels should match
+			matchingPod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: tt.jobName + "-pod",
+					Labels: map[string]string{
+						constants.LabelJobName:     tt.jobName,
+						constants.LabelReplicaType: tt.role,
+					},
+				},
+			}
+			assert.True(t, selector.Matches(labels.Set(matchingPod.Labels)),
+				"selector %q should match pod with labels %v", selectorStr, matchingPod.Labels)
+		})
+	}
+}
+
+// TestProviderLogPodSelectorsRejectWrongPods verifies that selectors do not
+// match pods whose labels do not satisfy the selector requirements.
+func TestProviderLogPodSelectorsRejectWrongPods(t *testing.T) {
+	p, err := getProvider(constants.FrameworkPyTorch)
+	require.NoError(t, err)
+
+	selectorStr := p.GetLogPodSelector("my-job")
+	selector, err := labels.Parse(selectorStr)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name  string
+		pod   *corev1.Pod
+		match bool
+	}{
+		{
+			name: "wrong job name",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						constants.LabelJobName:     "other-job",
+						constants.LabelReplicaType: constants.ReplicaRoleMaster,
+					},
+				},
+			},
+			match: false,
+		},
+		{
+			name: "wrong replica type",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						constants.LabelJobName:     "my-job",
+						constants.LabelReplicaType: constants.ReplicaRoleWorker,
+					},
+				},
+			},
+			match: false,
+		},
+		{
+			name: "missing replica type label",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						constants.LabelJobName: "my-job",
+					},
+				},
+			},
+			match: false,
+		},
+		{
+			name: "nil labels",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{},
+			},
+			match: false,
+		},
+		{
+			name: "correct labels match",
+			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						constants.LabelJobName:     "my-job",
+						constants.LabelReplicaType: constants.ReplicaRoleMaster,
+					},
+				},
+			},
+			match: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := selector.Matches(labels.Set(tt.pod.Labels))
+			assert.Equal(t, tt.match, got)
+		})
+	}
+}
+
+// TestProviderJobPodSelectors verifies that GetJobPodSelector returns a
+// valid selector that matches all pods belonging to a job (regardless of
+// replica type) and rejects pods from other jobs.
+func TestProviderJobPodSelectors(t *testing.T) {
+	frameworks := []string{
+		constants.FrameworkPyTorch,
+		constants.FrameworkTensorFlow,
+		constants.FrameworkMPI,
+	}
+
+	for _, fw := range frameworks {
+		t.Run(fw, func(t *testing.T) {
+			p, err := getProvider(fw)
+			require.NoError(t, err)
+
+			selectorStr := p.GetJobPodSelector("shared-job")
+			selector, err := labels.Parse(selectorStr)
+			require.NoError(t, err)
+
+			// Any pod with the right job-name label should match, regardless of role
+			for _, role := range []string{
+				constants.ReplicaRoleMaster,
+				constants.ReplicaRoleChief,
+				constants.ReplicaRoleLauncher,
+				constants.ReplicaRoleWorker,
+			} {
+				podLabels := labels.Set{
+					constants.LabelJobName:     "shared-job",
+					constants.LabelReplicaType: role,
+				}
+				assert.True(t, selector.Matches(podLabels),
+					"job pod selector should match pod with role %s", role)
+			}
+
+			// Pod from a different job should not match
+			otherPodLabels := labels.Set{
+				constants.LabelJobName:     "other-job",
+				constants.LabelReplicaType: constants.ReplicaRoleMaster,
+			}
+			assert.False(t, selector.Matches(otherPodLabels),
+				"job pod selector should not match pod from a different job")
+		})
+	}
+}
+
+// TestTFJobFallbackSelector validates that the TFJob fallback selector is
+// a valid Kubernetes label selector with the expected three label
+// requirements (job-name, replica-type=worker, replica-index=0).
+func TestTFJobFallbackSelector(t *testing.T) {
+	selectorStr := buildTFJobFallbackSelector("tf-job-1")
+
+	// Must be parseable
+	selector, err := labels.Parse(selectorStr)
+	require.NoError(t, err, "fallback selector %q must be parseable", selectorStr)
+
+	// Must contain all three label requirements
+	assert.Contains(t, selectorStr, constants.LabelJobName+"=tf-job-1")
+	assert.Contains(t, selectorStr, constants.LabelReplicaType+"="+constants.ReplicaRoleWorker)
+	assert.Contains(t, selectorStr, constants.LabelReplicaIndex+"=0")
+
+	// Must match a worker-0 pod for the right job
+	worker0Labels := labels.Set{
+		constants.LabelJobName:      "tf-job-1",
+		constants.LabelReplicaType:  constants.ReplicaRoleWorker,
+		constants.LabelReplicaIndex: "0",
+	}
+	assert.True(t, selector.Matches(worker0Labels),
+		"fallback selector should match worker-0 pod")
+}
+
+// TestTFJobFallbackSelectorRejectsWrongPods verifies that the fallback
+// selector does not match pods that are not worker-0 of the specified job.
+func TestTFJobFallbackSelectorRejectsWrongPods(t *testing.T) {
+	selectorStr := buildTFJobFallbackSelector("tf-job-1")
+	selector, err := labels.Parse(selectorStr)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name   string
+		labels labels.Set
+		match  bool
+	}{
+		{
+			name: "worker-1 (wrong index)",
+			labels: labels.Set{
+				constants.LabelJobName:      "tf-job-1",
+				constants.LabelReplicaType:  constants.ReplicaRoleWorker,
+				constants.LabelReplicaIndex: "1",
+			},
+			match: false,
+		},
+		{
+			name: "chief pod (wrong role)",
+			labels: labels.Set{
+				constants.LabelJobName:      "tf-job-1",
+				constants.LabelReplicaType:  constants.ReplicaRoleChief,
+				constants.LabelReplicaIndex: "0",
+			},
+			match: false,
+		},
+		{
+			name: "worker-0 of different job",
+			labels: labels.Set{
+				constants.LabelJobName:      "other-job",
+				constants.LabelReplicaType:  constants.ReplicaRoleWorker,
+				constants.LabelReplicaIndex: "0",
+			},
+			match: false,
+		},
+		{
+			name: "missing replica-index",
+			labels: labels.Set{
+				constants.LabelJobName:     "tf-job-1",
+				constants.LabelReplicaType: constants.ReplicaRoleWorker,
+			},
+			match: false,
+		},
+		{
+			name: "empty labels",
+			labels: labels.Set{},
+			match: false,
+		},
+		{
+			name: "correct worker-0",
+			labels: labels.Set{
+				constants.LabelJobName:      "tf-job-1",
+				constants.LabelReplicaType:  constants.ReplicaRoleWorker,
+				constants.LabelReplicaIndex: "0",
+			},
+			match: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := selector.Matches(tt.labels)
+			assert.Equal(t, tt.match, got)
+		})
+	}
+}
+
+// TestProviderSelectorsWithJobNameWithDashes verifies that job names
+// containing common Kubernetes name characters (dashes) produce valid
+// selectors that correctly match pods.
+func TestProviderSelectorsWithJobNameWithDashes(t *testing.T) {
+	p, err := getProvider(constants.FrameworkPyTorch)
+	require.NoError(t, err)
+
+	jobName := "my-training-job-2024"
+	selectorStr := p.GetLogPodSelector(jobName)
+	selector, err := labels.Parse(selectorStr)
+	require.NoError(t, err)
+
+	podLabels := labels.Set{
+		constants.LabelJobName:     jobName,
+		constants.LabelReplicaType: constants.ReplicaRoleMaster,
+	}
+	assert.True(t, selector.Matches(podLabels),
+		"selector should match pod with dashed job name")
 }

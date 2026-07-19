@@ -119,10 +119,7 @@ Examples:
 			// For TFJob, if chief selector found zero pods, fall back to worker replica
 			// (chief is conditional in TFJob; when absent, worker is the primary log target)
 			if len(pods.Items) == 0 && jobKind == constants.KindTFJob {
-				fallbackSelector := fmt.Sprintf("%s=%s,%s=%s,%s=%s",
-					constants.LabelJobName, name,
-					constants.LabelReplicaType, constants.ReplicaRoleWorker,
-					constants.LabelReplicaIndex, "0")
+				fallbackSelector := buildTFJobFallbackSelector(name)
 				pods, err = clientset.CoreV1().Pods(ns).List(
 					cmdContext(cmd),
 					metav1.ListOptions{
