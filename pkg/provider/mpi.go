@@ -72,16 +72,18 @@ func (p *MPIProvider) GetJobType() string {
 }
 
 // GetLogPodSelector returns the label selector for the launcher pod.
-// Note: jobName is used directly as a label value and must conform to
-// Kubernetes label value constraints (max 63 chars, alphanumeric, -, _, .).
+// Uses metav1.LabelSelector for consistent label value escaping.
 func (p *MPIProvider) GetLogPodSelector(jobName string) string {
-	return fmt.Sprintf("%s=%s,%s=%s",
-		constants.LabelJobName, jobName,
-		constants.LabelReplicaType, constants.ReplicaRoleLauncher)
+	return buildLabelSelector(map[string]string{
+		constants.LabelJobName:     jobName,
+		constants.LabelReplicaType: constants.ReplicaRoleLauncher,
+	})
 }
 
 func (p *MPIProvider) GetJobPodSelector(jobName string) string {
-	return fmt.Sprintf("%s=%s", constants.LabelJobName, jobName)
+	return buildLabelSelector(map[string]string{
+		constants.LabelJobName: jobName,
+	})
 }
 
 func (p *MPIProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, error) {
