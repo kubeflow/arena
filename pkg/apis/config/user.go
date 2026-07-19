@@ -16,10 +16,12 @@ package config
 
 import (
 	"context"
-	"errors"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"os"
 
+	log "github.com/sirupsen/logrus"
 	authenticationapi "k8s.io/api/authentication/v1"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +40,21 @@ func getUserName(namespace string, clientConfig clientcmd.ClientConfig, restConf
 		return &userName, nil
 	}
 	if tc.HasCertAuth() {
+		// Prefer asking the API server who we are (same as `kubectl auth whoami`).
+		// Historically this branch hard-coded "kubecfg:certauth:admin", which is wrong for
+		// per-user client certificates (e.g. ACK RAM X509 kubeconfigs whose CN is the RAM UID).
+		if userName, err := getUserNameBySelfSubjectReview(clientSet); err == nil {
+			return userName, nil
+		} else {
+			log.Debugf("SelfSubjectReview failed for cert auth, falling back to certificate CN: %v", err)
+		}
+		// Offline fallback: Kubernetes maps the certificate CommonName to the username.
+		if userName, err := getUserNameFromClientCertificate(restConfig); err == nil {
+			return userName, nil
+		} else {
+			log.Debugf("failed to parse client certificate CN, falling back to legacy username: %v", err)
+		}
+		// Preserve legacy behavior for unusual certificate setups.
 		userName := "kubecfg:certauth:admin"
 		return &userName, nil
 	}
@@ -82,10 +99,55 @@ func getUserNameByToken(kubeclient kubernetes.Interface, token string) (*string,
 	}
 
 	if result.Status.Error != "" {
-		return nil, errors.New(result.Status.Error)
+		return nil, fmt.Errorf("%s", result.Status.Error)
 	}
 
 	return &result.Status.User.Username, nil
+}
+
+func getUserNameBySelfSubjectReview(kubeclient kubernetes.Interface) (*string, error) {
+	result, err := kubeclient.AuthenticationV1().SelfSubjectReviews().Create(
+		context.TODO(),
+		&authenticationapi.SelfSubjectReview{},
+		metav1.CreateOptions{},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if result.Status.UserInfo.Username == "" {
+		return nil, fmt.Errorf("SelfSubjectReview returned empty username")
+	}
+	return &result.Status.UserInfo.Username, nil
+}
+
+func getUserNameFromClientCertificate(restConfig *rest.Config) (*string, error) {
+	var certPEM []byte
+	switch {
+	case len(restConfig.CertData) > 0:
+		certPEM = restConfig.CertData
+	case restConfig.CertFile != "":
+		var err error
+		certPEM, err = os.ReadFile(restConfig.CertFile)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("no client certificate data or file configured")
+	}
+
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return nil, fmt.Errorf("failed to decode client certificate PEM")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	if cert.Subject.CommonName == "" {
+		return nil, fmt.Errorf("client certificate has empty CommonName")
+	}
+	userName := cert.Subject.CommonName
+	return &userName, nil
 }
 
 func createSubjectRulesReviews(namespace string, kubeclient kubernetes.Interface) error {
