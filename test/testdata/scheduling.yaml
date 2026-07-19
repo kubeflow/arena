@@ -2,7 +2,7 @@ version: 0.1.0
 name: test-features
 framework:
   name: pytorch
-image: pytorch:2.1
+image: docker.io/library/pytorch:2.1
 run: python train.py
 worker:
   replicas: 2
@@ -23,7 +23,7 @@ scheduling:
             values: ["A100"]
 init:
   - name: setup-logs
-    image: busybox
+    image: docker.io/library/busybox
     run: mkdir -p /workspace/logs
 sync:
   - git: https://github.com/kubeflow/training-operator.git

@@ -2,7 +2,7 @@ version: 0.1.0
 name: test-configmap
 framework:
   name: pytorch
-image: pytorch/pytorch:2.1
+image: docker.io/pytorch/pytorch:2.1
 run: cat /etc/config/settings.yaml
 worker:
   replicas: 1
