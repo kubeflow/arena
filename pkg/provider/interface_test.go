@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,6 +97,27 @@ func TestBuildSchedulingPolicyGang(t *testing.T) {
 	minAvail, ok = sp["minAvailable"]
 	assert.True(t, ok, "gang=true should set minAvailable")
 	assert.Equal(t, int64(4), minAvail, "minAvailable should equal total replicas (3 workers + 1 master)")
+
+	// Gang enabled with MPI framework and no explicit launcher: the MPI provider
+	// always creates a 1-replica launcher even when t.Launcher is nil, so
+	// minAvailable must equal workers + 1 (implicit launcher).
+	ttMPI := &task.Task{
+		Framework: task.Framework{Name: constants.FrameworkMPI},
+		Scheduling: task.Scheduling{
+			Gang: task.GangConfig{Enabled: true},
+		},
+		Worker: &task.Worker{Replicas: 3},
+	}
+
+	sp = buildSchedulingPolicy(ttMPI)
+	require.NotNil(t, sp)
+
+	minAvail, ok = sp["minAvailable"]
+	assert.True(t, ok, "gang=true should set minAvailable")
+	assert.Equal(t, int64(4), minAvail, "minAvailable should equal workers + 1 (3 workers + 1 implicit launcher)")
+
+	// Also verify totalReplicas directly for the implicit launcher case.
+	assert.Equal(t, int64(4), totalReplicas(ttMPI), "totalReplicas should count implicit launcher for MPI")
 }
 
 func TestBuildSchedulingPolicyGangFalse(t *testing.T) {
