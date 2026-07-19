@@ -37,9 +37,13 @@ func Debug(msg string, keysAndValues ...interface{}) {
 }
 
 // Warning logs a warning message with optional key-value pairs.
-// klog v2 does not provide a structured warning API (WarningS/WarningSDepth),
-// so key-value pairs are formatted as "key=value" and appended to the message
-// for consistency with Info and Error structured output.
+//
+// klog v2 does not export a structured warning API (WarningS/WarningSDepth),
+// unlike InfoS and ErrorS. To keep warnings parseable by log aggregation
+// tools, we manually format key-value pairs as "key=value" segments and
+// pass the combined string to WarningDepth. Odd-length key-value slices
+// (a caller bug) include the orphaned key with an empty value rather than
+// being silently dropped.
 func Warning(msg string, keysAndValues ...interface{}) {
 	if len(keysAndValues) == 0 {
 		klog.WarningDepth(1, msg)
@@ -48,8 +52,13 @@ func Warning(msg string, keysAndValues ...interface{}) {
 
 	var b strings.Builder
 	b.WriteString(msg)
-	for i := 0; i+1 < len(keysAndValues); i += 2 {
-		fmt.Fprintf(&b, " %v=%v", keysAndValues[i], keysAndValues[i+1])
+	for i := 0; i < len(keysAndValues); i += 2 {
+		b.WriteByte(' ')
+		fmt.Fprintf(&b, "%v", keysAndValues[i])
+		if i+1 < len(keysAndValues) {
+			b.WriteByte('=')
+			fmt.Fprintf(&b, "%v", keysAndValues[i+1])
+		}
 	}
 	klog.WarningDepth(1, b.String())
 }
