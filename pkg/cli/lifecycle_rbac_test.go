@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic/fake"
+	ktesting "k8s.io/client-go/testing"
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/provider"
@@ -233,4 +235,54 @@ func TestCreateJobResources_NilRBACProvider(t *testing.T) {
 	// No ServiceAccount should exist (PyTorch provider returns nil RBAC)
 	_, err = k8sClient.Get(context.Background(), "ServiceAccount", namespace, jobName+"-launcher")
 	assert.Error(t, err, "no ServiceAccount should be created for non-MPI providers")
+}
+
+// TestCreateJobResources_RollbackOnFailure verifies that when an auxiliary
+// resource creation fails, all previously created resources are rolled back
+// (best-effort deletion) so no orphaned resources remain in the cluster.
+// This addresses the PR review comment about createJobResources leaving the
+// CRD orphaned if ConfigMap/RBAC/TensorBoard creation fails.
+func TestCreateJobResources_RollbackOnFailure(t *testing.T) {
+	const (
+		jobName    = "rollback-test-job"
+		namespace  = "default"
+		mpiVersion = "v2beta1"
+		uid        = "uid-rollback-1"
+	)
+
+	mpiJob := seedMPIJobCRD(jobName, namespace, mpiVersion, uid)
+
+	scheme := runtime.NewScheme()
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(
+		scheme, rbacListKinds(mpiVersion), mpiJob)
+
+	// Make ServiceAccount creation fail to trigger rollback of the ConfigMap.
+	// The ConfigMap is created first, then RBAC resources — so when the SA
+	// create fails, the rollback must delete the already-created ConfigMap.
+	fakeClient.PrependReactor(
+		"create", "serviceaccounts",
+		func(ktesting.Action) (bool, runtime.Object, error) {
+			return true, nil, fmt.Errorf("simulated RBAC creation failure")
+		},
+	)
+
+	k8sClient := client.NewClientForInterface(fakeClient)
+	k8sClient.SetMPIVersion(mpiVersion)
+
+	tk := &task.Task{
+		Name:      jobName,
+		Namespace: namespace,
+		Framework: task.Framework{Name: "mpi"},
+		Worker:    &task.Worker{Replicas: 2},
+	}
+	p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
+
+	err := createJobResources(context.Background(), mpiJob, tk, k8sClient, p)
+	require.Error(t, err, "createJobResources should fail when RBAC creation fails")
+
+	// The ConfigMap was created before the failure, so it must have been
+	// rolled back (deleted) to avoid leaving an orphaned resource.
+	_, err = k8sClient.Get(context.Background(), "ConfigMap", namespace, jobName)
+	assert.Error(t, err,
+		"ConfigMap should have been rolled back after RBAC creation failure")
 }

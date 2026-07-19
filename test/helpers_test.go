@@ -25,7 +25,7 @@ func newFakeK8sClient(t *testing.T) *client.Client {
 	}
 	fakeDynamic := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds)
 	c := client.NewClientForInterface(fakeDynamic)
-	c.MPIVersion = "v1"
+	c.SetMPIVersion("v1")
 	return c
 }
 
