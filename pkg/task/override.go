@@ -97,8 +97,8 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 		return err
 	}
 
-	if v, ok := flags["run"].(string); ok && v != "" {
-		t.Run = v
+	if err := setStr("run", &t.Run); err != nil {
+		return err
 	}
 
 	// Scale + Resources — auto-create Worker only when overrides target it
@@ -291,8 +291,14 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 		return err
 	}
 
-	if v, ok := flags["backoff-limit"].(int); ok && v >= 0 {
-		t.Lifecycle.BackoffLimit = &v
+	if v, exists := flags["backoff-limit"]; exists {
+		n, ok := v.(int)
+		if !ok {
+			return fmt.Errorf("flag %q: expected int, got %T", "backoff-limit", v)
+		}
+		if n >= 0 {
+			t.Lifecycle.BackoffLimit = &n
+		}
 	}
 
 	// Runtime

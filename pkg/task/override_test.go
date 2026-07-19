@@ -230,6 +230,22 @@ func TestApplyOverrides_WrongTypeReturnsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "flag \"priority\"")
 	assert.Contains(t, err.Error(), "expected int")
 
+	// Pass wrong type for run (int instead of string)
+	err = ApplyOverrides(task, map[string]interface{}{
+		"run": 12345,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "flag \"run\"")
+	assert.Contains(t, err.Error(), "expected string")
+
+	// Pass wrong type for backoff-limit (string instead of int)
+	err = ApplyOverrides(task, map[string]interface{}{
+		"backoff-limit": "not-an-int",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "flag \"backoff-limit\"")
+	assert.Contains(t, err.Error(), "expected int")
+
 	// Name should be unchanged
 	assert.Equal(t, "original", task.Name)
 }
