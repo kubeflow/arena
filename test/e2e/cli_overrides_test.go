@@ -35,7 +35,7 @@ var _ = Describe("get --details", func() {
 		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "pytorch:2.1",
+			"--image", "docker.io/library/pytorch:2.1",
 			"--workers", "2",
 			"python train.py")
 		submitCmd.Stdout = &out
@@ -84,7 +84,7 @@ var _ = Describe("CLI overrides", func() {
 	It("should override YAML values with CLI flags in run -f", func() {
 		yamlContent := fmt.Sprintf(`version: 0.1.0
 name: %s
-image: pytorch:2.1
+image: docker.io/library/pytorch:2.1
 framework:
   name: pytorch
 worker:
@@ -114,7 +114,7 @@ run: python train.py
 	It("should override framework options via CLI", func() {
 		yamlContent := fmt.Sprintf(`version: 0.1.0
 name: %s
-image: pytorch:2.1
+image: docker.io/library/pytorch:2.1
 framework:
   name: pytorch
 worker:

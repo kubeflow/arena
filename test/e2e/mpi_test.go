@@ -115,14 +115,14 @@ var _ = Describe("MPI-based Jobs", func() {
 	}
 
 	It("MPI job lifecycle", func() {
-		frameworkLifecycle("mpi", "mpi:latest")
+		frameworkLifecycle("mpi", "docker.io/library/mpi:latest")
 	})
 
 	It("Horovod job lifecycle", func() {
-		frameworkLifecycle("horovod", "horovod:latest")
+		frameworkLifecycle("horovod", "docker.io/library/horovod:latest")
 	})
 
 	It("DeepSpeed job lifecycle", func() {
-		frameworkLifecycle("deepspeed", "deepspeed:latest")
+		frameworkLifecycle("deepspeed", "docker.io/library/deepspeed:latest")
 	})
 })
