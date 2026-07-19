@@ -123,3 +123,19 @@ func TestWarning_LogsMessage(t *testing.T) {
 	assert.Contains(t, buf.String(), "resource")
 	assert.Contains(t, buf.String(), "configmap")
 }
+
+func TestWarning_OddLengthKeysAndValues(t *testing.T) {
+	flags := flag.NewFlagSet("test", flag.ContinueOnError)
+	Init(flags)
+	resetKlogState(t, flags)
+
+	buf := captureOutput(t, flags)
+
+	// Odd-length: orphaned key "extra" should appear in output, not be silently dropped
+	Warning("warning message", "key", "value", "extra")
+	klog.Flush()
+
+	assert.Contains(t, buf.String(), "warning message")
+	assert.Contains(t, buf.String(), "key=value")
+	assert.Contains(t, buf.String(), "extra")
+}
