@@ -316,7 +316,7 @@ func TestBuildSyncInitContainers_HDFS(t *testing.T) {
 	if result[0]["name"] != "arena-sync-0" {
 		t.Errorf("expected name=arena-sync-0, got %v", result[0]["name"])
 	}
-	if result[0]["image"] != "apache/hadoop:3.5.0" {
+	if result[0]["image"] != "docker.io/apache/hadoop:3.5.0" {
 		t.Errorf("expected default hdfs image, got %v", result[0]["image"])
 	}
 	cmd := result[0]["command"].([]interface{})
