@@ -17,7 +17,7 @@ func TestEndToEndPyTorchFlow(t *testing.T) {
 	require.NoError(t, err, "LoadFromFile should succeed for pytorch-simple.yaml")
 
 	assert.Equal(t, "pytorch-example", taskObj.Name)
-	assert.Equal(t, "pytorch/pytorch:1.13-cuda11.6-cudnn8-runtime", taskObj.Image)
+	assert.Equal(t, "docker.io/pytorch/pytorch:1.13-cuda11.6-cudnn8-runtime", taskObj.Image)
 	assert.Equal(t, "pytorch", taskObj.Framework.Name)
 	assert.Equal(t, 4, taskObj.Worker.Replicas)
 

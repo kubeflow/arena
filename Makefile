@@ -51,12 +51,12 @@ arena-v2: $(LOCALBIN) ## Build arena v2 CLI for current platform.
 .PHONY: v2-test
 v2-test: ## Run arena v2 unit tests.
 	@echo "Running arena v2 unit tests..."
-	go test $(V2_PACKAGES) -v
+	go test $(V2_PACKAGES) ./test/ -v
 
 .PHONY: v2-vet
 v2-vet: ## Run go vet on arena v2 packages.
 	@echo "Running go vet on arena v2 packages..."
-	go vet $(V2_ALL_PACKAGES)
+	go vet $(V2_ALL_PACKAGES) ./test/
 
 .PHONY: v2-integration-test
 v2-integration-test: ## Run arena v2 integration tests (no cluster required).

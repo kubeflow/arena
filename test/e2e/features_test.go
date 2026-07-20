@@ -34,7 +34,7 @@ var _ = Describe("Phase 2 features", Pending, func() {
 		By("Submitting a job with advanced features")
 		var out bytes.Buffer
 		runCmd := exec.Command(arenaV2Bin, "job", "run", "-f",
-			filepath.Join("..", "testdata", "features.yaml"),
+			filepath.Join("..", "testdata", "scheduling.yaml"),
 			"--namespace", namespace)
 		runCmd.Stdout = &out
 		runCmd.Stderr = &out
