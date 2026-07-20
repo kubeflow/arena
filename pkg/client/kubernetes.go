@@ -68,14 +68,14 @@ func NewClientForInterface(client dynamic.Interface) *Client {
 }
 
 // Create submits an unstructured CRD to the cluster.
+// The GVR is derived from the object's own GroupVersionKind, which the provider
+// sets correctly for every resource type (training CRDs, RBAC, ConfigMaps, etc.).
+// This handles arbitrary resource kinds without requiring a static mapping.
 func (c *Client) Create(ctx context.Context, crd *unstructured.Unstructured) error {
-	gvr, err := c.kindToGVR(crd.GetKind())
-	if err != nil {
-		return fmt.Errorf("failed to create %s %s: %w", crd.GetKind(), crd.GetName(), err)
-	}
+	gvr := getGVR(crd)
 	namespace := crd.GetNamespace()
 
-	_, err = c.dynamicClient.Resource(gvr).Namespace(namespace).Create(
+	_, err := c.dynamicClient.Resource(gvr).Namespace(namespace).Create(
 		ctx,
 		crd,
 		v1.CreateOptions{},
@@ -187,6 +187,16 @@ var coreResources = map[string]string{
 	"PersistentVolumeClaim": "persistentvolumeclaims",
 }
 
+// nonCoreResources maps K8s kinds that belong to non-empty API groups
+// (rbac, apps, etc.) to their GroupVersionResource. This is used by
+// kindToGVR for Get/Delete/Patch/List operations that receive only a kind
+// string and cannot derive the GVR from an unstructured object.
+var nonCoreResources = map[string]schema.GroupVersionResource{
+	"Role":        {Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"},
+	"RoleBinding": {Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "rolebindings"},
+	"Deployment":  {Group: "apps", Version: "v1", Resource: "deployments"},
+}
+
 // kindToGVR maps a known training job kind to its GVR.
 // Core K8s resources (ConfigMap, Pod, etc.) use the empty group.
 // MPIJob uses the resolved mpiVersion from the Client; all other kubeflow kinds use v1.
@@ -218,6 +228,11 @@ func (c *Client) kindToGVR(kind string) (schema.GroupVersionResource, error) {
 			Version:  "v1",
 			Resource: resource,
 		}, nil
+	}
+
+	// Check if it's a non-core K8s resource (rbac, apps, etc.).
+	if gvr, ok := nonCoreResources[kind]; ok {
+		return gvr, nil
 	}
 
 	return schema.GroupVersionResource{
