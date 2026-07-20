@@ -69,10 +69,13 @@ func NewClientForInterface(client dynamic.Interface) *Client {
 
 // Create submits an unstructured CRD to the cluster.
 func (c *Client) Create(ctx context.Context, crd *unstructured.Unstructured) error {
-	gvr := getGVR(crd)
+	gvr, err := c.kindToGVR(crd.GetKind())
+	if err != nil {
+		return fmt.Errorf("failed to create %s %s: %w", crd.GetKind(), crd.GetName(), err)
+	}
 	namespace := crd.GetNamespace()
 
-	_, err := c.dynamicClient.Resource(gvr).Namespace(namespace).Create(
+	_, err = c.dynamicClient.Resource(gvr).Namespace(namespace).Create(
 		ctx,
 		crd,
 		v1.CreateOptions{},
@@ -142,19 +145,6 @@ func (c *Client) Delete(ctx context.Context, kind, namespace, name string) error
 		return fmt.Errorf("failed to delete %s %s: %w", kind, name, err)
 	}
 	return nil
-}
-
-// GetCRDObject retrieves a cluster-scoped CustomResourceDefinition object by name.
-// Only works for apiextensions.k8s.io/v1 CustomResourceDefinition resources.
-// The resource name is hardcoded because this method exists solely for querying
-// CRD metadata (e.g., spec.versions) and is never used for other apiextensions kinds.
-func (c *Client) GetCRDObject(ctx context.Context, name string) (*unstructured.Unstructured, error) {
-	gvr := schema.GroupVersionResource{
-		Group:    "apiextensions.k8s.io",
-		Version:  "v1",
-		Resource: "customresourcedefinitions",
-	}
-	return c.dynamicClient.Resource(gvr).Get(ctx, name, v1.GetOptions{})
 }
 
 // Patch applies a JSON merge patch to a CRD.

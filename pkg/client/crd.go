@@ -14,8 +14,8 @@ import (
 // ErrCRDNotFound is returned when the requested CRD does not exist in the cluster.
 var ErrCRDNotFound = errors.New("CRD not found")
 
-// mpiSupportedVersions lists the MPIJob API versions that Arena supports.
-var mpiSupportedVersions = []string{"v1", "v2beta1"}
+// MPISupportedVersions lists the MPIJob API versions that Arena supports.
+var MPISupportedVersions = []string{"v1", "v2beta1"}
 
 // crdGVR is the GroupVersionResource for CustomResourceDefinition objects.
 var crdGVR = schema.GroupVersionResource{
@@ -112,18 +112,18 @@ func (c *Client) ResolveMPIVersion(ctx context.Context) error {
 	}
 
 	// Validate the resolved version is one we support.
-	if !isMPIVersionSupported(storageVersion) {
+	if !IsMPIVersionSupported(storageVersion) {
 		return fmt.Errorf("MPIJob storage version %q is not supported, supported versions: %v",
-			storageVersion, mpiSupportedVersions)
+			storageVersion, MPISupportedVersions)
 	}
 
 	c.mpiVersion = storageVersion
 	return nil
 }
 
-// isMPIVersionSupported reports whether version is in the supported set.
-func isMPIVersionSupported(version string) bool {
-	for _, v := range mpiSupportedVersions {
+// IsMPIVersionSupported reports whether version is in the supported set.
+func IsMPIVersionSupported(version string) bool {
+	for _, v := range MPISupportedVersions {
 		if v == version {
 			return true
 		}
