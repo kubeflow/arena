@@ -396,7 +396,7 @@ func TestFrameworkToKind(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.framework, func(t *testing.T) {
-			got := frameworkToKind(tt.framework)
+			got := FrameworkToKind(tt.framework)
 			assert.Equal(t, tt.want, got)
 		})
 	}

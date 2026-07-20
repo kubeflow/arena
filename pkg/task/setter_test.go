@@ -525,8 +525,8 @@ func TestParseKeyPath(t *testing.T) {
 		},
 		{
 			name: "placeholder key",
-			path: "__QK_0__",
-			want: []pathSegment{{key: "__QK_0__"}},
+			path: "__ARENA_QK_0__",
+			want: []pathSegment{{key: "__ARENA_QK_0__"}},
 		},
 	}
 
@@ -592,20 +592,20 @@ func TestPreprocessQuotedKeys(t *testing.T) {
 		{
 			name:     "single quoted key",
 			expr:     "a.'b.c'.d=value",
-			wantExpr: "a.__QK_0__.d=value",
-			wantKeys: map[string]string{"__QK_0__": "b.c"},
+			wantExpr: "a.__ARENA_QK_0__.d=value",
+			wantKeys: map[string]string{"__ARENA_QK_0__": "b.c"},
 		},
 		{
 			name:     "quoted key with slash",
 			expr:     "worker.resources.'nvidia.com/gpu'=4",
-			wantExpr: "worker.resources.__QK_0__=4",
-			wantKeys: map[string]string{"__QK_0__": "nvidia.com/gpu"},
+			wantExpr: "worker.resources.__ARENA_QK_0__=4",
+			wantKeys: map[string]string{"__ARENA_QK_0__": "nvidia.com/gpu"},
 		},
 		{
 			name:     "multiple quoted keys",
 			expr:     "'a.b'.'c.d'=value",
-			wantExpr: "__QK_0__.__QK_1__=value",
-			wantKeys: map[string]string{"__QK_0__": "a.b", "__QK_1__": "c.d"},
+			wantExpr: "__ARENA_QK_0__.__ARENA_QK_1__=value",
+			wantKeys: map[string]string{"__ARENA_QK_0__": "a.b", "__ARENA_QK_1__": "c.d"},
 		},
 		{
 			name:     "quotes in value ignored",
@@ -628,8 +628,8 @@ func TestPreprocessQuotedKeys(t *testing.T) {
 		{
 			name:     "no equals sign",
 			expr:     "a.'b.c'",
-			wantExpr: "a.__QK_0__",
-			wantKeys: map[string]string{"__QK_0__": "b.c"},
+			wantExpr: "a.__ARENA_QK_0__",
+			wantKeys: map[string]string{"__ARENA_QK_0__": "b.c"},
 		},
 	}
 

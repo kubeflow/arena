@@ -50,7 +50,6 @@ var topJobCmd = &cobra.Command{
 		var allJobs []client.JobStatus
 		anySucceeded := false
 		failedKindCount := 0
-		notFoundKindCount := 0
 		var apiErrors []string
 		for _, kind := range supportedJobKinds {
 			if kind == constants.KindMPIJob && !mpiAvailable {
@@ -60,7 +59,6 @@ var topJobCmd = &cobra.Command{
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					// CRD not installed — not an error, just skip silently
-					notFoundKindCount++
 					log.Warning("CRD not installed", "kind", kind)
 				} else {
 					// Real API error (permission, network, etc.) — track and report
