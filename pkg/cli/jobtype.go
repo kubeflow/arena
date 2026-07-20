@@ -38,7 +38,7 @@ func detectJobType(ctx context.Context, k8sClient *client.Client, namespace, nam
 			if yamlContent, ok := data["arena-v2.yaml"].(string); ok && yamlContent != "" {
 				var t task.Task
 				if unmarshalErr := yaml.Unmarshal([]byte(yamlContent), &t); unmarshalErr == nil && t.Framework.Name != "" {
-					kind := frameworkToKind(t.Framework.Name)
+					kind := FrameworkToKind(t.Framework.Name)
 					if kind != "" {
 						if kind == constants.KindMPIJob && !mpiAvailable {
 							return "", fmt.Errorf("job %q is an MPIJob but MPIJob CRD is not installed", name)
@@ -100,20 +100,6 @@ func checkJobExists(ctx context.Context, k8sClient *client.Client, namespace, na
 // using the standard Kubernetes apierrors.IsNotFound() function.
 func isNotFoundError(err error) bool {
 	return apierrors.IsNotFound(err)
-}
-
-// frameworkToKind maps a framework name to its CRD kind.
-func frameworkToKind(framework string) string {
-	switch framework {
-	case constants.FrameworkPyTorch:
-		return constants.KindPyTorchJob
-	case constants.FrameworkTensorFlow, "tf":
-		return constants.KindTFJob
-	case constants.FrameworkMPI, constants.FrameworkHorovod, constants.FrameworkDeepSpeed:
-		return constants.KindMPIJob
-	default:
-		return ""
-	}
 }
 
 // getNestedMap safely extracts a nested map from an unstructured object.

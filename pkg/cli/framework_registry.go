@@ -47,7 +47,7 @@ func FrameworkToKind(framework string) string {
 	switch framework {
 	case constants.FrameworkPyTorch:
 		return constants.KindPyTorchJob
-	case constants.FrameworkTensorFlow:
+	case constants.FrameworkTensorFlow, "tf":
 		return constants.KindTFJob
 	case constants.FrameworkMPI, constants.FrameworkHorovod, constants.FrameworkDeepSpeed:
 		return constants.KindMPIJob
