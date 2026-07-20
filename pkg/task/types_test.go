@@ -1581,3 +1581,64 @@ ps:
 	assert.Equal(t, "python worker_train.py", task.Worker.Run)
 	assert.Equal(t, "python serve_ps.py", task.PS.Run)
 }
+
+func TestValidate_DuplicateStorageNames(t *testing.T) {
+	task := &Task{
+		Name:      "t",
+		Image:     "x:1",
+		Run:       "train",
+		Framework: Framework{Name: "pytorch"},
+		Worker:    &Worker{Replicas: 1},
+		Storages: []Storage{
+			{Name: "data", PVC: "pvc-1", MountPath: "/data1"},
+			{Name: "data", PVC: "pvc-2", MountPath: "/data2"},
+		},
+	}
+	err := Validate(task)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "duplicate storage name")
+	assert.Contains(t, err.Error(), "data")
+}
+
+func TestEnvValue_ReuseResetsFields(t *testing.T) {
+	var e EnvValue
+
+	err := yaml.Unmarshal([]byte(`{secret: my-secret, key: token}`), &e)
+	require.NoError(t, err)
+	require.NotNil(t, e.Secret)
+	assert.Equal(t, "my-secret", e.Secret.Name)
+
+	err = yaml.Unmarshal([]byte(`"plain-value"`), &e)
+	require.NoError(t, err)
+	assert.Equal(t, "plain-value", e.Value)
+	assert.Nil(t, e.Secret, "Secret field should be nil after reusing EnvValue for a plain string")
+	assert.Nil(t, e.ConfigMap, "ConfigMap field should be nil after reusing EnvValue for a plain string")
+}
+
+func TestEnvValue_BothSecretAndConfigMap(t *testing.T) {
+	var e EnvValue
+	err := yaml.Unmarshal([]byte(`{secret: my-secret, configmap: my-cm, key: token}`), &e)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exactly one of 'secret' or 'configmap'")
+}
+
+func TestEnvValue_EmptyKeyForSecretAndConfigMap(t *testing.T) {
+	tests := []struct {
+		name string
+		yaml string
+		err  string
+	}{
+		{"secret without key", `{secret: my-secret}`, "key must not be empty for secret reference"},
+		{"configmap without key", `{configmap: my-cm}`, "key must not be empty for configmap reference"},
+		{"secret with empty key", `{secret: my-secret, key: ""}`, "key must not be empty for secret reference"},
+		{"configmap with empty key", `{configmap: my-cm, key: ""}`, "key must not be empty for configmap reference"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var e EnvValue
+			err := yaml.Unmarshal([]byte(tt.yaml), &e)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.err)
+		})
+	}
+}
