@@ -207,6 +207,10 @@ var coreResources = map[string]string{
 // two frameworks have a stable, single-version API contract. If a future Operator
 // release introduces a new version, extend this function to perform runtime
 // detection similar to ResolveMPIVersion.
+//
+// TODO: track a follow-up issue to extend runtime CRD version detection
+// (ResolveMPIVersion pattern) to PyTorchJob and TFJob so the client adapts
+// automatically if the Training Operator ships a new storage version.
 func (c *Client) kindToGVR(kind string) (schema.GroupVersionResource, error) {
 	version := constants.KubeflowVersion
 	if kind == constants.KindMPIJob {
