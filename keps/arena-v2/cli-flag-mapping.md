@@ -114,7 +114,7 @@ This document maps all arena v1 training CLI flags to arena v2 YAML schema cover
 |---------|------|---------|---------|--------|
 | `--sync-mode` | string | `""` | `sync[].git/rsync/hdfs` (type key) | ✅ |
 | `--sync-source` | string | `""` | `sync[].git/rsync/hdfs` (value) | ✅ |
-| `--sync-image` | string | `""` | `sync[].<git/rsync/hdfs>.image` | ✅ |
+| `--sync-image` | string | `""` | `sync[].image` | ✅ |
 
 ---
 

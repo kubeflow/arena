@@ -169,7 +169,7 @@ lifecycle:                           # Optional
   active_deadline: 2h                # Max active duration
   ttl_after_finished: 7d             # Auto-delete after this duration
   backoff_limit: 6                   # Max restart count
-  success_policy: ChiefWorker        # ChiefWorker | AllWorkers (TFJob only; ignored for other frameworks in Alpha, will be rejected by validation in Beta)
+  success_policy: ChiefWorker        # "" (default) | AllWorkers (TFJob only). ChiefWorker is accepted as an alias for "" for backwards compatibility.
 
 # ─── Runtime ───
 # inject into all pods 
@@ -366,7 +366,7 @@ lifecycle:
   active_deadline: 2h                # Max wall-clock duration → activeDeadlineSeconds
   ttl_after_finished: 7d             # Auto-delete Job after this duration → ttlSecondsAfterFinished
   backoff_limit: 6                   # Max restart count → backoffLimit
-  success_policy: ChiefWorker        # ChiefWorker | AllWorkers (TFJob only; ignored for other frameworks in Alpha, will be rejected by validation in Beta)
+  success_policy: ChiefWorker        # "" (default) | AllWorkers (TFJob only). ChiefWorker is accepted as an alias for "" for backwards compatibility.
 ```
 
 `clean_pod_policy` controls which pods the Operator deletes after job completion:

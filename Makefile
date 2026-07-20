@@ -61,7 +61,7 @@ v2-vet: ## Run go vet on arena v2 packages.
 .PHONY: v2-integration-test
 v2-integration-test: ## Run arena v2 integration tests (no cluster required).
 	@echo "Running arena v2 integration tests..."
-	go test -tags integration ./pkg/cli/ -run TestIntegration -v -timeout 5m
+	go test -tags integration $(V2_PACKAGES) -run TestIntegration -v -timeout 5m
 
 .PHONY: v2-install
 v2-install: ## Install arena v2 CLI to GOBIN.

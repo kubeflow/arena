@@ -53,7 +53,7 @@ go test ./pkg/task/ ./pkg/provider/ ./pkg/client/ -v
 
 6. **Do NOT create a server component.** Arena v2 is client-only (like kubectl). All cluster interaction goes through the K8s API.
 
-7. **Do NOT use the `arena-v2` binary name in committed code paths.** The build target is `arena` — the `-v2` suffix is temporary for development alongside v1.
+7. **The build target is `arena-v2`.** The `-v2` suffix distinguishes the new CLI from the v1 `arena` binary during the transition period. Use `arena-v2` consistently in Makefile targets, build scripts, and documentation.
 
 8. **Do NOT commit the compiled binary.** Add `arena-v2` to `.gitignore` if needed.
 
