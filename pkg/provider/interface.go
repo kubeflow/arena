@@ -885,13 +885,21 @@ func buildEnvWithOverrides(defaults map[string]string, userEnvs map[string]task.
 		}
 	}
 
-	// Output: merged plain values + ref envs
+	// Output: merged plain values (sorted for deterministic output) + ref envs (sorted by name)
 	var result []map[string]interface{}
-	for k, v := range merged {
+	mergedKeys := make([]string, 0, len(merged))
+	for k := range merged {
+		mergedKeys = append(mergedKeys, k)
+	}
+	sort.Strings(mergedKeys)
+	for _, k := range mergedKeys {
 		result = append(result, map[string]interface{}{
-			"name": k, "value": v,
+			"name": k, "value": merged[k],
 		})
 	}
+	sort.Slice(refEnvs, func(i, j int) bool {
+		return refEnvs[i]["name"].(string) < refEnvs[j]["name"].(string)
+	})
 	result = append(result, refEnvs...)
 	return result
 }
@@ -954,17 +962,14 @@ func buildResources(r task.Resources) map[string]interface{} {
 }
 
 // buildContainer creates a container spec with the run+shell model.
-func buildContainer(name, image string, t *task.Task, roleEnvs map[string]task.EnvValue, run string) map[string]interface{} {
+func buildContainer(name, image string, t *task.Task, resources task.Resources, roleEnvs map[string]task.EnvValue, run string) map[string]interface{} {
 	container := map[string]interface{}{
 		"name":  name,
 		"image": image,
 	}
 
 	// Resources
-	var res map[string]interface{}
-	if t.Worker != nil {
-		res = buildResources(t.Worker.Resources)
-	}
+	res := buildResources(resources)
 	if res != nil {
 		container["resources"] = res
 	}

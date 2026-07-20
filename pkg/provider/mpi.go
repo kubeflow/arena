@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,9 +16,6 @@ const (
 	MPIAPIVersionV2beta1 = constants.MPIVersionV2beta1
 	MPIAPIVersionV1      = constants.KubeflowVersion
 )
-
-// mpiSupportedVersions lists all MPIJob CRD versions arena can construct.
-var mpiSupportedVersions = []string{MPIAPIVersionV2beta1, MPIAPIVersionV1}
 
 // MPI implementations
 const (
@@ -51,20 +49,11 @@ type MPIProvider struct {
 	APIVersion string
 }
 
-// isMPIVersionSupported checks if a version is in the supported set.
-func isMPIVersionSupported(version string) bool {
-	for _, v := range mpiSupportedVersions {
-		if v == version {
-			return true
-		}
-	}
-	return false
-}
-
 // MPISupportedVersions returns the list of supported MPIJob CRD versions.
-// Exported for use by the CLI layer.
+// Exported for use by the CLI layer. Delegates to the client package to
+// maintain a single source of truth for supported versions.
 func MPISupportedVersions() []string {
-	return mpiSupportedVersions
+	return client.MPISupportedVersions
 }
 
 func (p *MPIProvider) GetJobType() string {
@@ -94,9 +83,9 @@ func (p *MPIProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, error)
 		return nil, fmt.Errorf("MPIProvider.APIVersion must be set before calling BuildCRD")
 	}
 
-	if !isMPIVersionSupported(version) {
+	if !client.IsMPIVersionSupported(version) {
 		return nil, fmt.Errorf("unsupported MPI API version: %s (arena supports: %s)",
-			version, strings.Join(mpiSupportedVersions, ", "))
+			version, strings.Join(client.MPISupportedVersions, ", "))
 	}
 
 	return p.buildMPICRD(t, version)
@@ -265,7 +254,7 @@ func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map
 // MPI workers run as SSH daemons for the launcher to dispatch commands to.
 // They must not receive the user's run command — only the launcher executes it.
 func (p *MPIProvider) buildWorkerReplicaSpec(t *task.Task, replicas int64, restartPolicy string) (map[string]interface{}, error) {
-	container := buildContainer(constants.FrameworkMPI, t.Image, t, t.Worker.Envs, "")
+	container := buildContainer(constants.FrameworkMPI, t.Image, t, t.Worker.Resources, t.Worker.Envs, "")
 	podSpec, err := buildPodSpec(t, container, true)
 	if err != nil {
 		return nil, err
