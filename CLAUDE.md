@@ -23,20 +23,21 @@ Use `go build` or `make arena-v2` to build the Arena v2 CLI. Every build and tes
 go build -o bin/arena-v2 ./cmd/arena-v2/
 
 # Build with version info
-go build -ldflags "-X github.com/kubeflow/arena/pkg/cli.versionGitCommit=$(git rev-parse --short HEAD) \
-  -X github.com/kubeflow/arena/pkg/cli.versionBuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+go build -ldflags "-X github.com/kubeflow/arena/pkg/cli.version=$(cat VERSION 2>/dev/null || echo 0.0.0-dev) \
+  -X github.com/kubeflow/arena/pkg/cli.gitCommit=$(git rev-parse --short HEAD) \
+  -X github.com/kubeflow/arena/pkg/cli.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   -o bin/arena-v2 ./cmd/arena-v2/
 
 # Vet all v2 packages
-go vet ./pkg/cli/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/output/ ./cmd/arena-v2/
+go vet ./pkg/constants/ ./pkg/log/ ./pkg/cli/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/output/ ./cmd/arena-v2/
 
 # Dry-run test (no cluster required)
 ./bin/arena-v2 job run -f examples/v2/pytorch-train.yaml --dry-run
 ./bin/arena-v2 submit pytorch --name test --image pytorch:2.1 --gpus 2 --dry-run
 ./bin/arena-v2 submit pytorch --name test --image pytorch:2.1 --dry-run "python train.py"
 
-# Run tests (when added)
-go test ./pkg/task/ ./pkg/provider/ ./pkg/client/ -v
+# Run tests
+go test ./pkg/constants/ ./pkg/log/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/cli/ ./pkg/output/ -v
 ```
 
 ## DO NOT

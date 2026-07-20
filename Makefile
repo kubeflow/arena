@@ -32,7 +32,7 @@ help: ## Display this help.
 ##@ Arena v2
 
 # Shared package lists for v2 targets
-V2_PACKAGES := ./pkg/cli/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/output/
+V2_PACKAGES := ./pkg/constants/ ./pkg/log/ ./pkg/cli/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/output/
 V2_ALL_PACKAGES := $(V2_PACKAGES) ./cmd/arena-v2/
 
 # Version info injected via ldflags at build time
