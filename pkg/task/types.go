@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/constants"
@@ -469,8 +470,8 @@ func Validate(t *Task) error {
 	if t.Framework.Name == constants.FrameworkPyTorch && t.Framework.Options.NprocPerNode != "" {
 		v := t.Framework.Options.NprocPerNode
 		if v != "auto" && v != "gpu" && v != "cpu" {
-			var n int
-			if _, err := fmt.Sscanf(v, "%d", &n); err != nil || n < 1 {
+			n, err := strconv.Atoi(v)
+			if err != nil || n < 1 {
 				return fmt.Errorf("pytorch nproc_per_node must be 'auto', 'gpu', 'cpu', or a positive integer, got %q", v)
 			}
 		}

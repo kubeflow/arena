@@ -11,7 +11,9 @@ import (
 // quotedKeyPrefix is the placeholder prefix used for single-quoted key segments
 // in --set expressions. Quoted segments are extracted before strvals parsing
 // (which treats all dots as path separators) and restored afterwards.
-const quotedKeyPrefix = "__QK_"
+// The prefix is intentionally long and unique to minimize collision risk with
+// real YAML keys that might contain a similar substring.
+const quotedKeyPrefix = "__ARENA_QK_"
 
 // ApplySetOverrides merges Helm-style --set expressions into raw YAML bytes.
 // Each expression uses dot-notation paths: "worker.replicas=4", "envs.KEY=val".
@@ -115,34 +117,35 @@ func preprocessQuotedKeys(expr string) (string, map[string]string, error) {
 // placeholder keys with the original quoted content from the mapping. It
 // recurses into nested maps so that placeholders at any depth are restored.
 func restoreQuotedKeys(m map[string]interface{}, quotedKeys map[string]string) {
-	for key, val := range m {
-		// Replace the key itself if it is a placeholder.
-		originalKey, isPlaceholder := quotedKeys[key]
-		if isPlaceholder {
-			m[originalKey] = val
-			delete(m, key)
-			key = originalKey
-		} else {
-			// Check whether the key contains a placeholder substring
-			// (can happen when strvals uses the placeholder as-is).
-			for ph, orig := range quotedKeys {
-				if strings.Contains(key, ph) {
-					newKey := strings.ReplaceAll(key, ph, orig)
-					m[newKey] = val
-					delete(m, key)
-					key = newKey
-					break
-				}
+	// Collect replacements first to avoid mutating the map during iteration.
+	replacements := make(map[string]string)
+	for key := range m {
+		// Exact match: the entire key is a placeholder.
+		if originalKey, isPlaceholder := quotedKeys[key]; isPlaceholder {
+			replacements[key] = originalKey
+			continue
+		}
+		// Substring match: the placeholder is part of a larger key.
+		// This happens when a quoted segment is adjacent to unquoted text,
+		// e.g., "foo'bar.baz'qux" → key "foo__ARENA_QK_0__qux".
+		for ph, orig := range quotedKeys {
+			if strings.Contains(key, ph) {
+				replacements[key] = strings.ReplaceAll(key, ph, orig)
+				break
 			}
 		}
+	}
+	for oldKey, newKey := range replacements {
+		m[newKey] = m[oldKey]
+		delete(m, oldKey)
+	}
 
-		// Recurse into nested maps.
-		if nested, ok := m[key].(map[string]interface{}); ok {
+	// Recurse into nested maps and arrays.
+	for _, val := range m {
+		if nested, ok := val.(map[string]interface{}); ok {
 			restoreQuotedKeys(nested, quotedKeys)
 		}
-
-		// Recurse into array elements that are maps.
-		if arr, ok := m[key].([]interface{}); ok {
+		if arr, ok := val.([]interface{}); ok {
 			for _, elem := range arr {
 				if nested, ok := elem.(map[string]interface{}); ok {
 					restoreQuotedKeys(nested, quotedKeys)
