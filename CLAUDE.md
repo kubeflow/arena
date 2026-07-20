@@ -3,7 +3,7 @@
 ## Project Overview
 
 Arena v2 is a lightweight CLI for submitting AI training/inference tasks to Kubernetes.
-It directly generates Operator CRDs (PyTorchJob, TFJob, MPIJob) and related resources without Helm dependencies.
+It directly generates Operator CRDs (PyTorchJob, TFJob, MPIJob) and related resources without Helm chart rendering.
 
 - **Module**: `github.com/kubeflow/arena`
 - **Branch**: `v2`
@@ -12,7 +12,7 @@ It directly generates Operator CRDs (PyTorchJob, TFJob, MPIJob) and related reso
 
 ## Why Arena v2
 
-Arena v2 eliminates Helm dependencies, reduces code complexity, and adds YAML-first configuration. See [keps/arena-v2/README.md](keps/arena-v2/README.md) for the full design rationale, v1 vs v2 technical comparison, and upgrade path.
+Arena v2 eliminates the Helm chart rendering pipeline, reduces code complexity, and adds YAML-first configuration. See [keps/arena-v2/README.md](keps/arena-v2/README.md) for the full design rationale, v1 vs v2 technical comparison, and upgrade path.
 
 ## Build & Test
 
@@ -43,7 +43,7 @@ go test ./pkg/task/ ./pkg/provider/ ./pkg/client/ -v
 
 1. **Do NOT modify v1 code.** Old Arena code lives in `cmd/arena/`, `pkg/commands/`, `pkg/apis/`, `pkg/training/`, `pkg/serving/`, `pkg/argsbuilder/`. Leave it untouched. All v2 work goes in the new packages listed above.
 
-2. **Do NOT add Helm as a dependency.** The entire point of v2 is eliminating Helm. CRDs are built as Go structs → `unstructured.Unstructured`. Never use `helm.sh/helm/v3` in v2 code paths.
+2. **Do NOT use Helm chart rendering.** Arena v2 eliminates the Helm chart rendering pipeline from v1 — CRDs are built as Go structs → `unstructured.Unstructured`. The `helm.sh/helm/v3/pkg/strvals` package is explicitly permitted as the underlying implementation for the `--set` expression parser, since it is a lightweight, self-contained utility that does not pull in the Helm chart engine or template rendering.
 
 3. **Do NOT import v1 packages from v2 code.** v2 packages (`pkg/cli`, `pkg/task`, `pkg/provider`, `pkg/client`, `pkg/output`) must be self-contained. No imports from `pkg/commands`, `pkg/apis`, `pkg/training`, etc.
 
