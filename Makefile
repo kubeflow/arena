@@ -51,12 +51,12 @@ arena-v2: $(LOCALBIN) ## Build arena v2 CLI for current platform.
 .PHONY: v2-test
 v2-test: ## Run arena v2 unit tests.
 	@echo "Running arena v2 unit tests..."
-	go test $(V2_PACKAGES) -v
+	go test $(V2_PACKAGES) ./test/ -v
 
 .PHONY: v2-vet
 v2-vet: ## Run go vet on arena v2 packages.
 	@echo "Running go vet on arena v2 packages..."
-	go vet $(V2_ALL_PACKAGES)
+	go vet $(V2_ALL_PACKAGES) ./test/
 
 .PHONY: v2-integration-test
 v2-integration-test: ## Run arena v2 integration tests (no cluster required).
@@ -68,8 +68,10 @@ v2-install: ## Install arena v2 CLI to GOBIN.
 	@echo "Installing arena v2 CLI to $(GOBIN)..."
 	go install -ldflags '$(V2_LDFLAGS)' ./cmd/arena-v2/
 
-# Portable SHA-256 checksum command: Linux uses sha256sum, macOS/BSD uses shasum.
-ifeq ($(shell command -v sha256sum 2>/dev/null),)
+# Portable SHA-256 checksum command.
+# macOS ships a BSD sha256sum that can't read checksums from stdin pipes,
+# so use shasum on Darwin and sha256sum everywhere else.
+ifeq ($(shell uname -s 2>/dev/null),Darwin)
 SHA256CMD := shasum -a 256
 else
 SHA256CMD := sha256sum

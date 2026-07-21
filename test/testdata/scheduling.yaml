@@ -1,0 +1,33 @@
+version: 0.1.0
+name: test-features
+framework:
+  name: pytorch
+image: docker.io/library/pytorch:2.1
+run: python train.py
+worker:
+  replicas: 2
+  resources:
+    nvidia.com/gpu: 1
+scheduling:
+  gang:
+    enabled: true
+  queue: high-priority
+  priority_class_name: premium
+  affinity:
+    target: node
+    policy: binpack
+    rules:
+      - match_expressions:
+          - key: gpu-type
+            operator: In
+            values: ["A100"]
+init:
+  - name: setup-logs
+    image: docker.io/library/busybox
+    run: mkdir -p /workspace/logs
+sync:
+  - git: https://github.com/kubeflow/training-operator.git
+    branch: main
+    local_path: /workspace/code
+envs:
+  NCCL_DEBUG: INFO

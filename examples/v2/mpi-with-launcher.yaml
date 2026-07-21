@@ -1,0 +1,19 @@
+# MPIJob with Launcher role overrides
+# The launcher coordinates distributed training across workers.
+# IMPORTANT: Replace the image below with your own training image.
+version: 0.1.0
+name: mpi-training
+framework:
+  name: mpi
+image: docker.io/mpioperator/mpi-test:openmpi-4.1.0
+run: mpirun -np 16 python train.py
+
+worker:
+  replicas: 4
+  resources:
+    nvidia.com/gpu: 4
+
+launcher:
+  resources:
+    cpu: "2"
+    memory: 4Gi
