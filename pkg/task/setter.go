@@ -15,6 +15,11 @@ import (
 // real YAML keys that might contain a similar substring.
 const quotedKeyPrefix = "__ARENA_QK_"
 
+// MaxIndex is the maximum array index allowed in --set expressions.
+// This prevents accidental huge slice allocations from typos like
+// items[999999999]=x, which would otherwise OOM the process.
+const MaxIndex = 65536
+
 // pathSegment represents a single segment in a dotted key path.
 // It can be either a map key (isArr=false) or an array index (isArr=true).
 type pathSegment struct {
@@ -138,6 +143,9 @@ func parseKeyPath(path string) ([]pathSegment, error) {
 			}
 			if idx < 0 {
 				return nil, fmt.Errorf("negative array index %d in path %q", idx, path)
+			}
+			if idx >= MaxIndex {
+				return nil, fmt.Errorf("array index %d exceeds maximum %d in path %q", idx, MaxIndex, path)
 			}
 			segments = append(segments, pathSegment{index: idx, isArr: true})
 			i = j + 1
@@ -270,15 +278,16 @@ func updateSliceInParent(base map[string]interface{}, parentSegments []pathSegme
 }
 
 // coerceValue converts a string value to the appropriate Go type.
-// - "true"/"false" → bool
-// - "null" → nil
+// - "true"/"True"/"TRUE" etc. → bool (case-insensitive, matches Helm strvals)
+// - "false"/"False"/"FALSE" etc. → bool
+// - "null" → nil (exact match only)
 // - Valid integers → int
 // - Otherwise → string
 func coerceValue(s string) interface{} {
-	if s == "true" {
+	if strings.EqualFold(s, "true") {
 		return true
 	}
-	if s == "false" {
+	if strings.EqualFold(s, "false") {
 		return false
 	}
 	if s == "null" {

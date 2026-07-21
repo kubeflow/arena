@@ -524,6 +524,11 @@ func TestParseKeyPath(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "index exceeds MaxIndex",
+			path:    "a[65536]",
+			wantErr: true,
+		},
+		{
 			name: "placeholder key",
 			path: "__ARENA_QK_0__",
 			want: []pathSegment{{key: "__ARENA_QK_0__"}},
@@ -561,9 +566,13 @@ func TestCoerceValue(t *testing.T) {
 		{"empty string", "", ""},
 		{"string with equals", "a=b", "a=b"},
 		{"leading zero", "007", 7}, // strconv.Atoi accepts leading zeros
-		{"float-like", "1.5", "1.5"},   // not parsed as int
-		{"True capital", "True", "True"},
-		{"FALSE capital", "FALSE", "FALSE"},
+		{"float-like", "1.5", "1.5"}, // not parsed as int
+		{"True capital", "True", true},
+		{"FALSE capital", "FALSE", false},
+		{"TRUE all caps", "TRUE", true},
+		{"False mixed", "False", false},
+		{"Null capital", "Null", "Null"}, // null is exact-match only
+		{"NULL all caps", "NULL", "NULL"},
 	}
 
 	for _, tt := range tests {
@@ -703,4 +712,22 @@ func TestApplySetOverrides_OverwriteExistingQuotedKey(t *testing.T) {
 		resources := worker["resources"].(map[string]interface{})
 		assert.Equal(t, 2, resources["nvidia.com/gpu"], "iteration %d: override should win", i)
 	}
+}
+
+func TestApplySetOverrides_MaxIndexExceeded(t *testing.T) {
+	yamlData := []byte("name: test\n")
+	_, err := ApplySetOverrides(yamlData, []string{"items[65536]=value"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds maximum")
+}
+
+func TestApplySetOverrides_CaseInsensitiveBool(t *testing.T) {
+	yamlData := []byte("name: test\n")
+	result, err := ApplySetOverrides(yamlData, []string{"flag=True", "other=FALSE"})
+	require.NoError(t, err)
+
+	var m map[string]interface{}
+	require.NoError(t, yaml.Unmarshal(result, &m))
+	assert.Equal(t, true, m["flag"])
+	assert.Equal(t, false, m["other"])
 }
