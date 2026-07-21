@@ -19,3 +19,27 @@ resources:
 
 # -- Tolerations for cron-operator pods.
 tolerations: []
+
+# -- Liveness probe configuration.
+# The operator pod will be restarted if the liveness probe fails.
+livenessProbe:
+  # -- Number of seconds after the container has started before liveness probes are initiated.
+  initialDelaySeconds: 15
+  # -- How often (in seconds) to perform the probe.
+  periodSeconds: 30
+  # -- Number of seconds after which the probe times out.
+  timeoutSeconds: 3
+  # -- Minimum consecutive failures for the probe to be considered failed.
+  failureThreshold: 3
+
+# -- Readiness probe configuration.
+# The operator pod will not receive traffic if the readiness probe fails.
+readinessProbe:
+  # -- Number of seconds after the container has started before readiness probes are initiated.
+  initialDelaySeconds: 10
+  # -- How often (in seconds) to perform the probe.
+  periodSeconds: 15
+  # -- Number of seconds after which the probe times out.
+  timeoutSeconds: 3
+  # -- Minimum consecutive failures for the probe to be considered failed.
+  failureThreshold: 3
