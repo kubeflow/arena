@@ -42,7 +42,7 @@ var topJobCmd = &cobra.Command{
 
 		mpiAvailable := true
 		if err := k8sClient.ResolveMPIVersion(cmdContext(cmd)); err != nil {
-			log.Warning("MPIJob CRD not available", "error", err.Error())
+			log.Debug("MPIJob CRD not available", "error", err.Error())
 			mpiAvailable = false
 		}
 
@@ -59,7 +59,7 @@ var topJobCmd = &cobra.Command{
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					// CRD not installed — not an error, just skip silently
-					log.Warning("CRD not installed", "kind", kind)
+					log.Debug("CRD not installed", "kind", kind)
 				} else {
 					// Real API error (permission, network, etc.) — track and report
 					apiVer, _ := k8sClient.KindToAPIVersion(kind) // best-effort for logging

@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/duration"
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
@@ -33,7 +35,7 @@ var listCmd = &cobra.Command{
 
 		mpiAvailable := true
 		if err := k8sClient.ResolveMPIVersion(cmdContext(cmd)); err != nil {
-			log.Warning("MPIJob CRD not available", "error", err.Error())
+			log.Debug("MPIJob CRD not available", "error", err.Error())
 			mpiAvailable = false
 		}
 
@@ -45,8 +47,12 @@ var listCmd = &cobra.Command{
 			}
 			jobs, err := k8sClient.List(cmdContext(cmd), kind, ns, V2LabelSelector)
 			if err != nil {
-				apiVer, _ := k8sClient.KindToAPIVersion(kind) // best-effort for logging
-				log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
+				if apierrors.IsNotFound(err) {
+					log.Debug("CRD not installed", "kind", kind)
+				} else {
+					apiVer, _ := k8sClient.KindToAPIVersion(kind) // best-effort for logging
+					log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
+				}
 				continue
 			}
 			for _, job := range jobs {
@@ -249,18 +255,7 @@ func formatAge(creationTime time.Time) string {
 	if creationTime.IsZero() {
 		return "<unknown>"
 	}
-
-	d := time.Since(creationTime)
-	switch {
-	case d < time.Minute:
-		return fmt.Sprintf("%ds", int(d.Seconds()))
-	case d < time.Hour:
-		return fmt.Sprintf("%dm", int(d.Minutes()))
-	case d < 24*time.Hour:
-		return fmt.Sprintf("%dh", int(d.Hours()))
-	default:
-		return fmt.Sprintf("%dd", int(d.Hours()/24))
-	}
+	return duration.HumanDuration(time.Since(creationTime))
 }
 
 func init() {

@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
@@ -492,44 +491,6 @@ func TestBuildNodeSelectorTerms_MatchFields(t *testing.T) {
 	vals := field["values"].([]string)
 	if len(vals) != 1 || vals[0] != "node-1" {
 		t.Errorf("unexpected matchField values: %v", vals)
-	}
-}
-
-func TestParseDuration_ValidInputs(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected time.Duration
-	}{
-		{"1h", time.Hour},
-		{"30m", 30 * time.Minute},
-		{"10s", 10 * time.Second},
-		{"2d", 2 * 24 * time.Hour},
-		{"1.5d", time.Duration(1.5 * 24 * float64(time.Hour))},
-		{"", 0},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			result, err := parseDuration(tt.input)
-			require.NoError(t, err)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestParseDuration_InvalidInputs(t *testing.T) {
-	tests := []string{
-		"two hours",
-		"abc",
-		"1x",
-	}
-
-	for _, input := range tests {
-		t.Run(input, func(t *testing.T) {
-			_, err := parseDuration(input)
-			assert.Error(t, err, "parseDuration should return error for invalid input: %s", input)
-			assert.Contains(t, err.Error(), "invalid duration")
-		})
 	}
 }
 

@@ -6,10 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
-	"github.com/kubeflow/arena/pkg/log"
-	"github.com/kubeflow/arena/pkg/provider"
 	"github.com/kubeflow/arena/pkg/task"
 )
 
@@ -113,71 +110,7 @@ Trailing arguments after -- are used as the run command.`,
 			}
 		}
 
-		// Get provider
-		p, err := getProvider(framework)
-		if err != nil {
-			return err
-		}
-
-		// Create K8s client early for version detection
-		k8sClient, err := client.NewClient(kubeconfig, kubeContext)
-		if err != nil {
-			return fmt.Errorf("failed to create K8s client: %w", err)
-		}
-
-		// For MPI-family frameworks, detect cluster version
-		if isMPIFamily(framework) {
-			if mpiP, ok := p.(*provider.MPIProvider); ok {
-				version, err := resolveMPIAPIVersion(cmdContext(cmd), k8sClient)
-				if err != nil {
-					return err
-				}
-				mpiP.APIVersion = version
-			}
-		}
-
-		// Build CRD
-		crd, err := p.BuildCRD(t)
-		if err != nil {
-			return fmt.Errorf("failed to build CRD: %w", err)
-		}
-
-		// Set namespace from resolved value
-		ns := resolveNS(t.Namespace)
-		crd.SetNamespace(ns)
-		t.Namespace = ns
-
-		setFrameworkLabel(crd, originalFramework(args[0]))
-
-		// Dry-run: print and exit
-		if submitDryRun {
-			return printDryRun(crd, t)
-		}
-
-		// Check if job already exists
-		if err := checkJobExists(cmdContext(cmd), k8sClient, ns, t.Name); err != nil {
-			return err
-		}
-
-		// Submit to cluster
-		if err := k8sClient.Create(cmdContext(cmd), crd); err != nil {
-			return fmt.Errorf("failed to submit job: %w", err)
-		}
-
-		// Create auxiliary resources (ConfigMap anchor, TensorBoard)
-		if err := createJobResources(cmdContext(cmd), crd, t, k8sClient, p); err != nil {
-			// Best-effort cleanup: delete the CRD so we don't leave an orphaned job
-			log.Warning("auxiliary resource creation failed, cleaning up CRD",
-				"kind", crd.GetKind(), "name", crd.GetName(), "error", err.Error())
-			if delErr := k8sClient.Delete(cmdContext(cmd), crd.GetKind(), ns, t.Name); delErr != nil {
-				log.Warning("failed to clean up CRD after partial failure",
-					"kind", crd.GetKind(), "name", crd.GetName(), "error", delErr.Error())
-			}
-			return err
-		}
-
-		fmt.Printf("Job %s submitted successfully\n", t.Name)
-		return nil
+		return submitCRD(cmdContext(cmd), t, originalFramework(args[0]), submitDryRun)
 	},
 }
 

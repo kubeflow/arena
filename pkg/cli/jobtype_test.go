@@ -417,54 +417,6 @@ func TestCheckJobExists_OwnerReferences(t *testing.T) {
 	}
 }
 
-// TestIsNotFoundError verifies that isNotFoundError uses apierrors.IsNotFound().
-func TestIsNotFoundError(t *testing.T) {
-	cmGVR := schema.GroupResource{Group: "", Resource: "configmaps"}
-
-	tests := []struct {
-		name     string
-		err      error
-		expected bool
-	}{
-		{
-			name:     "nil error",
-			err:      nil,
-			expected: false,
-		},
-		{
-			name:     "Kubernetes NotFound error",
-			err:      apierrors.NewNotFound(cmGVR, "test"),
-			expected: true,
-		},
-		{
-			name:     "unrelated error",
-			err:      fmt.Errorf("connection refused"),
-			expected: false,
-		},
-		{
-			name:     "permission denied",
-			err:      fmt.Errorf("forbidden: User cannot get resource"),
-			expected: false,
-		},
-		{
-			name:     "wrapped NotFound error",
-			err:      fmt.Errorf("failed to get ConfigMap test: %w", apierrors.NewNotFound(cmGVR, "test")),
-			expected: true,
-		},
-		{
-			name:     "InternalError is not NotFound",
-			err:      apierrors.NewInternalError(fmt.Errorf("etcd unavailable")),
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, isNotFoundError(tt.err))
-		})
-	}
-}
-
 // TestDetectJobType_V1Job_PyTorch verifies that a CRD without the
 // arena.io/framework label is identified as a v1 job.
 func TestDetectJobType_V1Job_PyTorch(t *testing.T) {

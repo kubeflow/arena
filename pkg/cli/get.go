@@ -7,7 +7,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeflow/arena/pkg/client"
@@ -77,12 +79,12 @@ var getCmd = &cobra.Command{
 		if getDetails {
 			cm, err := k8sClient.Get(cmdContext(cmd), "ConfigMap", ns, name)
 			if err != nil {
-				if !isNotFoundError(err) {
+				if !apierrors.IsNotFound(err) {
 					return fmt.Errorf("failed to get ConfigMap: %w", err)
 				}
 				// ConfigMap not found, skip configuration display
 			} else {
-				data, found, err := getNestedMap(cm.Object, "data")
+				data, found, err := unstructured.NestedMap(cm.Object, "data")
 				if err == nil && found {
 					yamlContent, ok := data["arena-v2.yaml"].(string)
 					if ok && yamlContent != "" {

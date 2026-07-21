@@ -265,7 +265,10 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 
 	if tolerations, ok := flags["toleration"].([]string); ok {
 		for _, tol := range tolerations {
-			parsed := parseTolerationFlag(tol)
+			parsed, err := parseTolerationFlag(tol)
+			if err != nil {
+				return err
+			}
 			if parsed != nil {
 				t.Scheduling.Tolerations = append(t.Scheduling.Tolerations, *parsed)
 			}
@@ -421,10 +424,11 @@ func splitKV(s string) (string, string) {
 // parseTolerationFlag parses a CLI toleration string into a Toleration.
 // Format: key=value:effect (e.g., "gpu=true:NoSchedule")
 // Or:     key:effect (e.g., "node.kubernetes.io/not-ready:NoExecute")
-// Returns nil for invalid/unparseable input.
-func parseTolerationFlag(s string) *Toleration {
+// Returns nil if s is empty. Returns an error if the input is non-empty but
+// the toleration key cannot be parsed.
+func parseTolerationFlag(s string) (*Toleration, error) {
 	if s == "" {
-		return nil
+		return nil, nil
 	}
 
 	tol := &Toleration{}
@@ -449,8 +453,8 @@ func parseTolerationFlag(s string) *Toleration {
 	}
 
 	if tol.Key == "" {
-		return nil
+		return nil, fmt.Errorf("invalid toleration %q: key is required", s)
 	}
 
-	return tol
+	return tol, nil
 }

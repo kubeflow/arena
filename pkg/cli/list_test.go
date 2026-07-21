@@ -525,7 +525,7 @@ func TestExtractJobStatus(t *testing.T) {
 	assert.Equal(t, "Running", result.Status)
 	assert.Equal(t, 2, result.Replicas)
 	assert.Equal(t, 2, result.Ready)
-	assert.Equal(t, "2h", result.Age)
+	assert.Equal(t, "120m", result.Age)
 }
 
 func TestExtractPods(t *testing.T) {

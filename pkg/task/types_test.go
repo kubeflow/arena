@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -286,6 +287,9 @@ func TestValidateLifecycleDurations(t *testing.T) {
 	}{
 		{"valid active_deadline", Lifecycle{ActiveDeadline: "30s"}, ""},
 		{"valid ttl", Lifecycle{TTLAfterFinished: "1h"}, ""},
+		{"valid active_deadline with day suffix", Lifecycle{ActiveDeadline: "7d"}, ""},
+		{"valid ttl with day suffix", Lifecycle{TTLAfterFinished: "2d"}, ""},
+		{"valid fractional day", Lifecycle{ActiveDeadline: "1.5d"}, ""},
 		{"invalid active_deadline", Lifecycle{ActiveDeadline: "abc"}, "invalid active_deadline"},
 		{"invalid ttl", Lifecycle{TTLAfterFinished: "xyz"}, "invalid ttl_after_finished"},
 	}
@@ -1681,6 +1685,44 @@ func TestEnvValue_EmptyKeyForSecretAndConfigMap(t *testing.T) {
 			err := yaml.Unmarshal([]byte(tt.yaml), &e)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.err)
+		})
+	}
+}
+
+func TestParseDuration_ValidInputs(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected time.Duration
+	}{
+		{"1h", time.Hour},
+		{"30m", 30 * time.Minute},
+		{"10s", 10 * time.Second},
+		{"2d", 2 * 24 * time.Hour},
+		{"1.5d", time.Duration(1.5 * 24 * float64(time.Hour))},
+		{"", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result, err := ParseDuration(tt.input)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestParseDuration_InvalidInputs(t *testing.T) {
+	tests := []string{
+		"two hours",
+		"abc",
+		"1x",
+	}
+
+	for _, input := range tests {
+		t.Run(input, func(t *testing.T) {
+			_, err := ParseDuration(input)
+			assert.Error(t, err, "ParseDuration should return error for invalid input: %s", input)
+			assert.Contains(t, err.Error(), "invalid duration")
 		})
 	}
 }

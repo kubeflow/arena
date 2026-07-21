@@ -4,6 +4,7 @@ package output
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"gopkg.in/yaml.v3"
 
@@ -91,16 +92,16 @@ func calculateWidths(headers []string, rows [][]string, maxCaps map[string]int) 
 	return widths
 }
 
-// truncate shortens s to maxLen characters, appending "..." when truncation occurs.
+// truncate shortens s to maxLen visible characters, appending "..." when truncation occurs.
 // If maxLen <= 3 the string is hard-cut without a marker.
 func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
+	if utf8.RuneCountInString(s) <= maxLen {
 		return s
 	}
 	if maxLen <= 3 {
-		return s[:maxLen]
+		return string([]rune(s)[:maxLen])
 	}
-	return s[:maxLen-3] + "..."
+	return string([]rune(s)[:maxLen-3]) + "..."
 }
 
 // renderRow formats a single table row, truncating each cell to the corresponding width

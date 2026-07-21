@@ -23,7 +23,7 @@ var checkCmd = &cobra.Command{
 		}
 
 		if err := k8sClient.ResolveMPIVersion(cmdContext(cmd)); err != nil {
-			log.Warning("MPIJob CRD not available", "error", err.Error())
+			log.Debug("MPIJob CRD not available", "error", err.Error())
 		}
 
 		kinds := []string{constants.KindPyTorchJob, constants.KindTFJob, constants.KindMPIJob}

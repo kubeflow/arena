@@ -3,9 +3,9 @@ package provider
 import (
 	"fmt"
 	"os"
+	"path"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
@@ -311,7 +311,7 @@ func buildRunPolicy(t *task.Task) (map[string]interface{}, error) {
 		policy["cleanPodPolicy"] = t.Lifecycle.CleanPodPolicy
 	}
 	if t.Lifecycle.ActiveDeadline != "" {
-		d, err := parseDuration(t.Lifecycle.ActiveDeadline)
+		d, err := task.ParseDuration(t.Lifecycle.ActiveDeadline)
 		if err != nil {
 			return nil, fmt.Errorf("invalid active_deadline: %w", err)
 		}
@@ -320,7 +320,7 @@ func buildRunPolicy(t *task.Task) (map[string]interface{}, error) {
 		}
 	}
 	if t.Lifecycle.TTLAfterFinished != "" {
-		d, err := parseDuration(t.Lifecycle.TTLAfterFinished)
+		d, err := task.ParseDuration(t.Lifecycle.TTLAfterFinished)
 		if err != nil {
 			return nil, fmt.Errorf("invalid ttl_after_finished: %w", err)
 		}
@@ -918,14 +918,7 @@ func buildEnvWithOverrides(defaults map[string]string, userEnvs map[string]task.
 // extractGitProjectName extracts project name from git URL.
 // Example: "https://github.com/kubeflow/training-operator.git" -> "training-operator"
 func extractGitProjectName(gitURL string) string {
-	// Remove trailing .git if present
-	name := strings.TrimSuffix(gitURL, ".git")
-	// Extract last path component
-	parts := strings.Split(name, "/")
-	if len(parts) > 0 {
-		return parts[len(parts)-1]
-	}
-	return "repo"
+	return path.Base(strings.TrimSuffix(gitURL, ".git"))
 }
 
 // buildMetadata creates a metadata map with name, namespace, labels, and annotations.
@@ -1107,29 +1100,4 @@ func buildRoleReplicaSpec(containerName string, t *task.Task, resources task.Res
 		"restartPolicy": restartPolicy,
 		"template":      template,
 	}, nil
-}
-
-// parseDuration handles durations like "7d", "2h", "30m", "10s".
-// Returns an error if the input cannot be parsed.
-func parseDuration(s string) (time.Duration, error) {
-	if s == "" {
-		return 0, nil
-	}
-	s = strings.TrimSpace(s)
-
-	// Handle day suffix "d"
-	if strings.HasSuffix(s, "d") {
-		numStr := strings.TrimSuffix(s, "d")
-		var days float64
-		if _, err := fmt.Sscanf(numStr, "%f", &days); err == nil {
-			return time.Duration(days * 24 * float64(time.Hour)), nil
-		}
-		return 0, fmt.Errorf("invalid duration format: %s", s)
-	}
-
-	d, err := time.ParseDuration(s)
-	if err != nil {
-		return 0, fmt.Errorf("invalid duration %q: %w", s, err)
-	}
-	return d, nil
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
+	"github.com/kubeflow/arena/pkg/log"
 	"github.com/kubeflow/arena/pkg/provider"
 	"github.com/kubeflow/arena/pkg/task"
 )
@@ -106,4 +107,72 @@ func isMPIVersionSupportedByProvider(version string) bool {
 		}
 	}
 	return false
+}
+
+// submitCRD handles the common CRD submission flow shared by `submit` and `run`:
+// provider lookup, MPI version detection, CRD build, namespace resolution,
+// dry-run, existence check, cluster submit, and auxiliary resource creation
+// with rollback on failure.
+func submitCRD(ctx context.Context, t *task.Task, frameworkLabel string, dryRun bool) error {
+	p, err := getProvider(t.Framework.Name)
+	if err != nil {
+		return err
+	}
+
+	k8sClient, err := client.NewClient(kubeconfig, kubeContext)
+	if err != nil {
+		return fmt.Errorf("failed to create K8s client: %w", err)
+	}
+
+	if isMPIFamily(t.Framework.Name) {
+		if mpiP, ok := p.(*provider.MPIProvider); ok {
+			version, err := resolveMPIAPIVersion(ctx, k8sClient)
+			if err != nil {
+				return err
+			}
+			mpiP.APIVersion = version
+		}
+	}
+
+	log.Debug("building CRD", "framework", t.Framework.Name)
+	crd, err := p.BuildCRD(t)
+	if err != nil {
+		return fmt.Errorf("failed to build CRD: %w", err)
+	}
+
+	ns := resolveNS(t.Namespace)
+	crd.SetNamespace(ns)
+	t.Namespace = ns
+	setFrameworkLabel(crd, frameworkLabel)
+
+	log.Debug("CRD built", "kind", crd.GetKind(), "name", crd.GetName(), "namespace", ns)
+
+	if dryRun {
+		log.Info("dry-run mode, not submitting")
+		return printDryRun(crd, t)
+	}
+
+	log.Debug("checking if job exists", "name", t.Name, "namespace", ns)
+	if err := checkJobExists(ctx, k8sClient, ns, t.Name); err != nil {
+		return err
+	}
+
+	log.Debug("submitting job", "kind", crd.GetKind(), "name", crd.GetName(), "namespace", ns)
+	if err := k8sClient.Create(ctx, crd); err != nil {
+		return fmt.Errorf("failed to submit job: %w", err)
+	}
+
+	log.Debug("creating auxiliary resources", "name", crd.GetName())
+	if err := createJobResources(ctx, crd, t, k8sClient, p); err != nil {
+		log.Warning("auxiliary resource creation failed, cleaning up CRD",
+			"kind", crd.GetKind(), "name", crd.GetName(), "error", err.Error())
+		if delErr := k8sClient.Delete(ctx, crd.GetKind(), ns, t.Name); delErr != nil {
+			log.Warning("failed to clean up CRD after partial failure",
+				"kind", crd.GetKind(), "name", crd.GetName(), "error", delErr.Error())
+		}
+		return err
+	}
+
+	fmt.Printf("Job %s submitted successfully\n", t.Name)
+	return nil
 }

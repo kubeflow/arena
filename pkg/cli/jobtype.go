@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"gopkg.in/yaml.v3"
 
 	"github.com/kubeflow/arena/pkg/client"
@@ -26,14 +27,14 @@ func detectJobType(ctx context.Context, k8sClient *client.Client, namespace, nam
 	// return MPIJob, including the Phase 1 fast path.
 	mpiAvailable := true
 	if err := k8sClient.ResolveMPIVersion(ctx); err != nil {
-		log.Warning("MPIJob CRD not available", "error", err.Error())
+		log.Debug("MPIJob CRD not available", "error", err.Error())
 		mpiAvailable = false
 	}
 
 	// Phase 1: ConfigMap anchor (v2 fast path)
 	cm, err := k8sClient.Get(ctx, "ConfigMap", namespace, name)
 	if err == nil {
-		data, found, _ := getNestedMap(cm.Object, "data")
+		data, found, _ := unstructured.NestedMap(cm.Object, "data")
 		if found {
 			if yamlContent, ok := data["arena-v2.yaml"].(string); ok && yamlContent != "" {
 				var t task.Task
@@ -78,7 +79,7 @@ func detectJobType(ctx context.Context, k8sClient *client.Client, namespace, nam
 func checkJobExists(ctx context.Context, k8sClient *client.Client, namespace, name string) error {
 	cm, err := k8sClient.Get(ctx, "ConfigMap", namespace, name)
 	if err != nil {
-		if isNotFoundError(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 		return fmt.Errorf("failed to check if job exists: %w", err)
@@ -94,40 +95,4 @@ func checkJobExists(ctx context.Context, k8sClient *client.Client, namespace, na
 
 	// ConfigMap exists but no recognized ownerReference (abnormal)
 	return fmt.Errorf("job %q already exists", name)
-}
-
-// isNotFoundError checks if an error indicates a resource was not found
-// using the standard Kubernetes apierrors.IsNotFound() function.
-func isNotFoundError(err error) bool {
-	return apierrors.IsNotFound(err)
-}
-
-// getNestedMap safely extracts a nested map from an unstructured object.
-func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, bool, error) {
-	val, found, err := nestedFieldNoCopy(obj, fields...)
-	if !found || err != nil {
-		return nil, found, err
-	}
-
-	m, ok := val.(map[string]interface{})
-	if !ok {
-		return nil, false, fmt.Errorf("%v is not a map", fields)
-	}
-	return m, true, nil
-}
-
-// nestedFieldNoCopy returns the value at the specified path without copying.
-func nestedFieldNoCopy(obj map[string]interface{}, fields ...string) (interface{}, bool, error) {
-	var val interface{} = obj
-	for _, field := range fields {
-		m, ok := val.(map[string]interface{})
-		if !ok {
-			return nil, false, fmt.Errorf("%v is not a map", field)
-		}
-		val, ok = m[field]
-		if !ok {
-			return nil, false, nil
-		}
-	}
-	return val, true, nil
 }

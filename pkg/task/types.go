@@ -413,6 +413,32 @@ func validateVersion(t *Task) error {
 	return nil
 }
 
+// ParseDuration parses a duration string with optional day suffix.
+// Supports standard Go duration formats ("2h", "30m", "10s") plus day suffix "d"
+// (e.g., "7d", "1.5d") which is useful for Kubernetes job deadlines.
+func ParseDuration(s string) (time.Duration, error) {
+	if s == "" {
+		return 0, nil
+	}
+	s = strings.TrimSpace(s)
+
+	// Handle day suffix "d"
+	if strings.HasSuffix(s, "d") {
+		numStr := strings.TrimSuffix(s, "d")
+		var days float64
+		if _, err := fmt.Sscanf(numStr, "%f", &days); err == nil {
+			return time.Duration(days * 24 * float64(time.Hour)), nil
+		}
+		return 0, fmt.Errorf("invalid duration format: %s", s)
+	}
+
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return 0, fmt.Errorf("invalid duration %q: %w", s, err)
+	}
+	return d, nil
+}
+
 // SetDefaults fills in zero-value fields with their default values.
 // Call this before Validate to ensure the Task is fully populated.
 func (t *Task) SetDefaults() {
@@ -460,14 +486,14 @@ func Validate(t *Task) error {
 	}
 
 	if t.Lifecycle.ActiveDeadline != "" {
-		if _, err := time.ParseDuration(t.Lifecycle.ActiveDeadline); err != nil {
-			return fmt.Errorf("invalid active_deadline: %q (must be a valid duration like 30s, 5m, 1h)", t.Lifecycle.ActiveDeadline)
+		if _, err := ParseDuration(t.Lifecycle.ActiveDeadline); err != nil {
+			return fmt.Errorf("invalid active_deadline: %q (must be a valid duration like 30s, 5m, 1h, or 7d)", t.Lifecycle.ActiveDeadline)
 		}
 	}
 
 	if t.Lifecycle.TTLAfterFinished != "" {
-		if _, err := time.ParseDuration(t.Lifecycle.TTLAfterFinished); err != nil {
-			return fmt.Errorf("invalid ttl_after_finished: %q (must be a valid duration like 30s, 5m, 1h)", t.Lifecycle.TTLAfterFinished)
+		if _, err := ParseDuration(t.Lifecycle.TTLAfterFinished); err != nil {
+			return fmt.Errorf("invalid ttl_after_finished: %q (must be a valid duration like 30s, 5m, 1h, or 7d)", t.Lifecycle.TTLAfterFinished)
 		}
 	}
 
