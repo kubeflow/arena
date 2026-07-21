@@ -415,7 +415,7 @@ func isMPIFamily(t *task.Task) bool {
 // Supports two modes:
 // - Policy mode: policy×constraint generates podAffinity/podAntiAffinity or nodeAffinity (requires rules for node)
 // - Rules mode: custom rules applied to pod or node affinity based on target
-// When policy is set but rules is empty, returns nil (extension point for future default rules).
+// When policy is set but rules is empty, returns an error.
 func buildAffinity(a *task.Affinity, jobName string) (map[string]interface{}, error) {
 	if a == nil {
 		return nil, nil
@@ -436,7 +436,7 @@ func buildAffinity(a *task.Affinity, jobName string) (map[string]interface{}, er
 			applyNodeRules(affinity, a)
 		}
 	} else if a.Policy != "" {
-		_ = jobName
+		return nil, fmt.Errorf("affinity policy %q requires at least one rule", a.Policy)
 	}
 
 	if len(affinity) == 0 {
@@ -962,7 +962,7 @@ func buildResources(r task.Resources) map[string]interface{} {
 }
 
 // buildContainer creates a container spec with the run+shell model.
-func buildContainer(name, image string, t *task.Task, resources task.Resources, roleEnvs map[string]task.EnvValue, run string) map[string]interface{} {
+func buildContainer(name, image string, t *task.Task, resources task.Resources, roleEnvs map[string]task.EnvValue, run string, mounts []task.Mount) map[string]interface{} {
 	container := map[string]interface{}{
 		"name":  name,
 		"image": image,
@@ -987,10 +987,10 @@ func buildContainer(name, image string, t *task.Task, resources task.Resources, 
 		container["env"] = envVars
 	}
 
-	// Volume mounts (from storages only — sync volumes live in storages now)
-	_, mounts := BuildVolumes(t)
-	if len(mounts) > 0 {
-		container["volumeMounts"] = mounts
+	// Volume mounts (resolved via ResolveContainerMounts for per-container override support)
+	containerMounts := ResolveContainerMounts(mounts, t)
+	if len(containerMounts) > 0 {
+		container["volumeMounts"] = containerMounts
 	}
 
 	// Image pull policy

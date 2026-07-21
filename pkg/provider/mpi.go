@@ -254,7 +254,7 @@ func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map
 // MPI workers run as SSH daemons for the launcher to dispatch commands to.
 // They must not receive the user's run command — only the launcher executes it.
 func (p *MPIProvider) buildWorkerReplicaSpec(t *task.Task, replicas int64, restartPolicy string) (map[string]interface{}, error) {
-	container := buildContainer(constants.FrameworkMPI, t.Image, t, t.Worker.Resources, t.Worker.Envs, "")
+	container := buildContainer(constants.FrameworkMPI, t.Image, t, t.Worker.Resources, t.Worker.Envs, "", nil)
 	podSpec, err := buildPodSpec(t, container, true)
 	if err != nil {
 		return nil, err
