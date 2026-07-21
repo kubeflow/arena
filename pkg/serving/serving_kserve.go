@@ -207,7 +207,7 @@ func (s *kserveJob) IPAddress() string {
 func (s *kserveJob) RequestCPUs() float64 {
 	var result float64
 	for _, dp := range s.inferenceDeployments {
-		replicas := *dp.Spec.Replicas
+		replicas := int32PtrVal(dp.Spec.Replicas, 1)
 		podCPUs := 0.0
 		for _, c := range dp.Spec.Template.Spec.Containers {
 			if val, ok := c.Resources.Limits[corev1.ResourceName(types.CPUResourceName)]; ok {
@@ -222,7 +222,7 @@ func (s *kserveJob) RequestCPUs() float64 {
 func (s *kserveJob) RequestGPUs() float64 {
 	var result float64
 	for _, dp := range s.inferenceDeployments {
-		replicas := *dp.Spec.Replicas
+		replicas := int32PtrVal(dp.Spec.Replicas, 1)
 		podGPUs := 0
 		for _, c := range dp.Spec.Template.Spec.Containers {
 			if val, ok := c.Resources.Limits[corev1.ResourceName(types.NvidiaGPUResourceName)]; ok {
@@ -240,7 +240,7 @@ func (s *kserveJob) RequestGPUs() float64 {
 func (s *kserveJob) RequestGPUMemory() int {
 	var result int
 	for _, dp := range s.inferenceDeployments {
-		replicas := *dp.Spec.Replicas
+		replicas := int32PtrVal(dp.Spec.Replicas, 1)
 		podGPUMemory := 0
 		for _, c := range dp.Spec.Template.Spec.Containers {
 			if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUShareResourceName)]; ok {
@@ -255,7 +255,7 @@ func (s *kserveJob) RequestGPUMemory() int {
 func (s *kserveJob) RequestGPUCore() int {
 	var result int
 	for _, dp := range s.inferenceDeployments {
-		replicas := *dp.Spec.Replicas
+		replicas := int32PtrVal(dp.Spec.Replicas, 1)
 		podGPUCore := 0
 		for _, c := range dp.Spec.Template.Spec.Containers {
 			if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUCoreShareResourceName)]; ok {

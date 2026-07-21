@@ -97,3 +97,13 @@ func ValidateJobsBeforeSubmiting(jobs []ServingJob, name string) error {
 	}
 	return nil
 }
+
+// int32PtrVal safely dereferences a *int32 pointer, returning defaultVal if p is nil.
+// This is used to guard against nil Spec.Replicas in Deployment and LeaderWorkerSet specs,
+// which can be nil when replicas are managed by an autoscaler (e.g., HPA, KEDA).
+func int32PtrVal(p *int32, defaultVal int32) int32 {
+	if p == nil {
+		return defaultVal
+	}
+	return *p
+}

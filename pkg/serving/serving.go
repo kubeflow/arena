@@ -95,6 +95,9 @@ type servingJob struct {
 }
 
 func (s *servingJob) Uid() string {
+	if s.deployment == nil {
+		return ""
+	}
 	return string(s.deployment.UID)
 }
 
@@ -163,10 +166,16 @@ func (s *servingJob) IPAddress() string {
 }
 
 func (s *servingJob) Age() time.Duration {
+	if s.deployment == nil {
+		return 0
+	}
 	return time.Since(s.deployment.CreationTimestamp.Time)
 }
 
 func (s *servingJob) StartTime() *metav1.Time {
+	if s.deployment == nil {
+		return &metav1.Time{}
+	}
 	return &s.deployment.CreationTimestamp
 }
 
@@ -226,7 +235,10 @@ func (s *servingJob) RequestCPUs() float64 {
 	//}
 	//return cpus
 
-	replicas := *s.deployment.Spec.Replicas
+	if s.deployment == nil {
+		return 0
+	}
+	replicas := int32PtrVal(s.deployment.Spec.Replicas, 1)
 	podCPUs := 0.0
 
 	for _, c := range s.deployment.Spec.Template.Spec.Containers {
@@ -238,7 +250,10 @@ func (s *servingJob) RequestCPUs() float64 {
 }
 
 func (s *servingJob) RequestGPUs() float64 {
-	replicas := *s.deployment.Spec.Replicas
+	if s.deployment == nil {
+		return 0
+	}
+	replicas := int32PtrVal(s.deployment.Spec.Replicas, 1)
 	podGPUs := 0
 	for _, c := range s.deployment.Spec.Template.Spec.Containers {
 		if val, ok := c.Resources.Limits[corev1.ResourceName(types.NvidiaGPUResourceName)]; ok {
@@ -252,7 +267,10 @@ func (s *servingJob) RequestGPUs() float64 {
 }
 
 func (s *servingJob) RequestGPUMemory() int {
-	replicas := *s.deployment.Spec.Replicas
+	if s.deployment == nil {
+		return 0
+	}
+	replicas := int32PtrVal(s.deployment.Spec.Replicas, 1)
 	podGPUMemory := 0
 	for _, c := range s.deployment.Spec.Template.Spec.Containers {
 		if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUShareResourceName)]; ok {
@@ -263,7 +281,10 @@ func (s *servingJob) RequestGPUMemory() int {
 }
 
 func (s *servingJob) RequestGPUCore() int {
-	replicas := *s.deployment.Spec.Replicas
+	if s.deployment == nil {
+		return 0
+	}
+	replicas := int32PtrVal(s.deployment.Spec.Replicas, 1)
 	podGPUCore := 0
 	for _, c := range s.deployment.Spec.Template.Spec.Containers {
 		if val, ok := c.Resources.Limits[corev1.ResourceName(types.GPUCoreShareResourceName)]; ok {
@@ -274,10 +295,16 @@ func (s *servingJob) RequestGPUCore() int {
 }
 
 func (s *servingJob) AvailableInstances() int {
+	if s.deployment == nil {
+		return 0
+	}
 	return int(s.deployment.Status.AvailableReplicas)
 }
 
 func (s *servingJob) DesiredInstances() int {
+	if s.deployment == nil {
+		return 0
+	}
 	return int(s.deployment.Status.Replicas)
 }
 
@@ -332,6 +359,9 @@ func (s *servingJob) Convert2JobInfo() types.ServingJobInfo {
 }
 
 func (s *servingJob) GetLabels() map[string]string {
+	if s.deployment == nil {
+		return map[string]string{}
+	}
 	return s.deployment.Labels
 }
 

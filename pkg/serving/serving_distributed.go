@@ -153,19 +153,31 @@ func (p *DistributedServingProcesser) FilterServingJobs(namespace string, allNam
 }
 
 func (s *lwsJob) Uid() string {
+	if s.lws == nil {
+		return ""
+	}
 	return string(s.lws.UID)
 }
 
 func (s *lwsJob) Age() time.Duration {
+	if s.lws == nil {
+		return 0
+	}
 	return time.Since(s.lws.CreationTimestamp.Time)
 }
 
 func (s *lwsJob) StartTime() *metav1.Time {
+	if s.lws == nil {
+		return &metav1.Time{}
+	}
 	return &s.lws.CreationTimestamp
 }
 
 func (s *lwsJob) RequestCPUs() float64 {
-	replicas := s.lws.Spec.Replicas
+	if s.lws == nil {
+		return 0
+	}
+	replicas := int32PtrVal(s.lws.Spec.Replicas, 1)
 	size := s.lws.Spec.LeaderWorkerTemplate.Size
 	masterCPUs := 0.0
 	for _, c := range s.lws.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers {
@@ -173,7 +185,7 @@ func (s *lwsJob) RequestCPUs() float64 {
 			masterCPUs += float64(val.Value())
 		}
 	}
-	result := masterCPUs * float64(*replicas)
+	result := masterCPUs * float64(replicas)
 	if size != nil && *size > 1 {
 		workerCPUs := 0.0
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
@@ -182,13 +194,16 @@ func (s *lwsJob) RequestCPUs() float64 {
 			}
 		}
 		workerCPUs *= float64((*size) - 1)
-		result += float64(*replicas) * workerCPUs
+		result += float64(replicas) * workerCPUs
 	}
 	return result
 }
 
 func (s *lwsJob) RequestGPUs() float64 {
-	replicas := s.lws.Spec.Replicas
+	if s.lws == nil {
+		return 0
+	}
+	replicas := int32PtrVal(s.lws.Spec.Replicas, 1)
 	size := s.lws.Spec.LeaderWorkerTemplate.Size
 	masterGPUs := 0.0
 	for _, c := range s.lws.Spec.LeaderWorkerTemplate.LeaderTemplate.Spec.Containers {
@@ -199,7 +214,7 @@ func (s *lwsJob) RequestGPUs() float64 {
 			masterGPUs += float64(val.Value())
 		}
 	}
-	result := masterGPUs * float64(*replicas)
+	result := masterGPUs * float64(replicas)
 	if size != nil && *size > 1 {
 		workerGPUs := 0.0
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
@@ -213,13 +228,16 @@ func (s *lwsJob) RequestGPUs() float64 {
 			}
 		}
 		workerGPUs *= float64((*size) - 1)
-		result += float64(*replicas) * workerGPUs
+		result += float64(replicas) * workerGPUs
 	}
 	return result
 }
 
 func (s *lwsJob) RequestGPUMemory() int {
-	replicas := s.lws.Spec.Replicas
+	if s.lws == nil {
+		return 0
+	}
+	replicas := int32PtrVal(s.lws.Spec.Replicas, 1)
 	size := s.lws.Spec.LeaderWorkerTemplate.Size
 
 	masterGpuMemory := 0
@@ -229,7 +247,7 @@ func (s *lwsJob) RequestGPUMemory() int {
 		}
 	}
 
-	result := masterGpuMemory * int(*replicas)
+	result := masterGpuMemory * int(replicas)
 	if size != nil && *size > 1 {
 		workerGpuMemory := 0
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
@@ -238,14 +256,17 @@ func (s *lwsJob) RequestGPUMemory() int {
 			}
 		}
 		workerGpuMemory *= int((*size) - 1)
-		result += int(*replicas) * workerGpuMemory
+		result += int(replicas) * workerGpuMemory
 	}
 
 	return result
 }
 
 func (s *lwsJob) RequestGPUCore() int {
-	replicas := s.lws.Spec.Replicas
+	if s.lws == nil {
+		return 0
+	}
+	replicas := int32PtrVal(s.lws.Spec.Replicas, 1)
 	size := s.lws.Spec.LeaderWorkerTemplate.Size
 
 	masterGpuCore := 0
@@ -255,7 +276,7 @@ func (s *lwsJob) RequestGPUCore() int {
 		}
 	}
 
-	result := masterGpuCore * int(*replicas)
+	result := masterGpuCore * int(replicas)
 	if size != nil && *size > 1 {
 		workerGpuCore := 0
 		for _, c := range s.lws.Spec.LeaderWorkerTemplate.WorkerTemplate.Spec.Containers {
@@ -264,21 +285,30 @@ func (s *lwsJob) RequestGPUCore() int {
 			}
 		}
 		workerGpuCore *= int((*size) - 1)
-		result += int(*replicas) * workerGpuCore
+		result += int(replicas) * workerGpuCore
 	}
 
 	return result
 }
 
 func (s *lwsJob) DesiredInstances() int {
+	if s.lws == nil {
+		return 0
+	}
 	return int(s.lws.Status.Replicas)
 }
 
 func (s *lwsJob) AvailableInstances() int {
+	if s.lws == nil {
+		return 0
+	}
 	return int(s.lws.Status.ReadyReplicas)
 }
 
 func (s *lwsJob) GetLabels() map[string]string {
+	if s.lws == nil {
+		return map[string]string{}
+	}
 	return s.lws.Labels
 }
 
