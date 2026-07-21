@@ -45,4 +45,16 @@ spec:
           name: pytorch-operator
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.initContainerTemplateEnabled }}
+          volumeMounts:
+            - mountPath: /etc/config
+              name: init-container-template
+              readOnly: true
+          {{- end }}
       serviceAccountName: pytorch-operator
+      {{- if .Values.initContainerTemplateEnabled }}
+      volumes:
+        - name: init-container-template
+          configMap:
+            name: pytorch-init-container-template
+      {{- end }}
