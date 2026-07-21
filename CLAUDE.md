@@ -44,7 +44,7 @@ go test ./pkg/constants/ ./pkg/log/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./
 
 1. **Do NOT modify v1 code.** Old Arena code lives in `cmd/arena/`, `pkg/commands/`, `pkg/apis/`, `pkg/training/`, `pkg/serving/`, `pkg/argsbuilder/`. Leave it untouched. All v2 work goes in the new packages listed above.
 
-2. **Do NOT use Helm chart rendering.** Arena v2 eliminates the Helm chart rendering pipeline from v1 — CRDs are built as Go structs → `unstructured.Unstructured`. The `helm.sh/helm/v3/pkg/strvals` package is explicitly permitted as the underlying implementation for the `--set` expression parser, since it is a lightweight, self-contained utility that does not pull in the Helm chart engine or template rendering.
+2. **Do NOT use Helm chart rendering.** Arena v2 eliminates the Helm chart rendering pipeline from v1 — CRDs are built as Go structs → `unstructured.Unstructured`.
 
 3. **Do NOT import v1 packages from v2 code.** v2 packages (`pkg/cli`, `pkg/task`, `pkg/provider`, `pkg/client`, `pkg/output`) must be self-contained. No imports from `pkg/commands`, `pkg/apis`, `pkg/training`, etc.
 
