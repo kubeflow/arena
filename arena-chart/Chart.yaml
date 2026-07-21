@@ -1,0 +1,69 @@
+#
+# Copyright 2025 The Kubeflow authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+apiVersion: v2
+
+name: arena
+
+description: A Helm chart for installing arena dependencies.
+
+type: application
+
+kubeVersion: ">=1.16.0-0"
+
+version: 0.15.2
+
+appVersion: 0.15.2
+
+keywords:
+- AI
+- Machine Learning
+- Deep Learning
+- Model Training
+- Model Serving
+
+home: https://github.com/kubeflow/arena
+
+dependencies:
+- name: pytorch-operator
+  repository: file://charts/pytorch-operator
+  condition: pytorch-operator.enabled,global.pytorch-operator.enabled
+- name: tf-operator
+  repository: file://charts/tf-operator
+  condition: tf-operator.enabled,global.tf-operator.enabled
+- name: mpi-operator
+  repository: file://charts/mpi-operator
+  condition: mpi-operator.enabled,global.mpi-operator.enabled
+- name: et-operator
+  repository: file://charts/et-operator
+  condition: et-operator.enabled,global.et-operator.enabled
+- name: cron-operator
+  repository: file://charts/cron-operator
+  condition: cron-operator.enabled,global.cron-operator.enabled
+- name: tf-dashboard
+  repository: file://charts/tf-dashboard
+  condition: tf-dashboard.enabled,global.tf-dashboard.enabled
+- name: elastic-job-supervisor
+  repository: file://charts/elastic-job-supervisor
+  condition: elastic-job-supervisor.enabled,global.elastic-job-supervisor.enabled
+- name: gpu-exporter
+  repository: file://charts/gpu-exporter
+  condition: gpu-exporter.enabled,global.gpu-exporter.enabled
+
+maintainers:
+- name: ChenYi015
+  email: github@chenyicn.net
+  url: https://github.com/ChenYi015

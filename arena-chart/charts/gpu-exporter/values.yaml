@@ -1,0 +1,85 @@
+#
+# Copyright 2025 The Kubeflow authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Default values for gpu-exporter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- String to partially override release name.
+nameOverride: ""
+
+# -- String to fully override release name.
+fullnameOverride: ""
+
+# Global configurations.
+global:
+
+  # -- Profile type of ACK cluster (e.g. `Default`, `Edge` and `Serverless`).
+  clusterProfile: Default
+
+  image:
+    # -- Image registry.
+    registry: registry-cn-beijing.ack.aliyuncs.com
+
+    # -- Image pull policy.
+    pullPolicy: IfNotPresent
+
+  # -- Node selector.
+  nodeSelector: {}
+
+  # -- Tolerations.
+  tolerations: []
+
+  # -- The prefix of all images.
+  # @deprecated -- Please use `global.image.registry` instead. 
+  imagePrefix: ""
+
+# -- Extra labels to add to all resources.
+labels: {}
+  # key1: value1
+  # key2: value2
+
+# -- Annotations to add to all resources.
+annotations: {}
+  # key1: value1
+  # key2: value2
+
+# Image configurations.
+image:
+
+  # -- Image registry.
+  # @default `global.image.registry` will be used if not set.
+  registry: ""
+
+  # -- Image repository.
+  repository: acs/gpu-prometheus-exporter
+
+  # -- Image tag.
+  # @default -- The chart appVersion will be used if not set.
+  tag: v1.0.1-b2c2f9b
+
+  # -- Image pull policy.
+  # @default -- `global.image.pullPolicy` will be used if not set.
+  pullPolicy: ""
+
+# -- Pod resource requests and limits.
+resources: {}
+
+# -- Pod node selector.
+nodeSelector: {}
+
+# -- Pod tolerations.
+tolerations: []

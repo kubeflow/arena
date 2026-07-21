@@ -1,0 +1,3 @@
+global:
+  image:
+    registry: registry-us-east-1.ack.aliyuncs.com

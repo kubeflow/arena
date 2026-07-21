@@ -43,7 +43,7 @@ import (
 )
 
 const (
-	ReleaseName      = "arena-artifacts"
+	ReleaseName      = "arena"
 	ReleaseNamespace = "arena-system"
 
 	WaitTimeout = 5 * time.Minute
@@ -69,7 +69,7 @@ var _ = BeforeSuite(func() {
 	By("Bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
-			filepath.Join("..", "..", "arena-artifacts", "crds"),
+			filepath.Join("..", "..", "arena-chart", "crds"),
 		},
 		ErrorIfCRDPathMissing: true,
 
@@ -112,7 +112,7 @@ var _ = BeforeSuite(func() {
 	installAction.CreateNamespace = true
 	installAction.Wait = true
 	installAction.Timeout = WaitTimeout
-	chartPath := filepath.Join("..", "..", "arena-artifacts")
+	chartPath := filepath.Join("..", "..", "arena-chart")
 	chart, err := loader.Load(chartPath)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(chart).NotTo(BeNil())

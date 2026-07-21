@@ -1,0 +1,58 @@
+#
+# Copyright 2025 The Kubeflow authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+suite: Test pytorch-operator Service
+
+templates:
+- service.yaml
+
+release:
+  name: pytorch-operator
+  namespace: pytorch-operator
+
+tests:
+- it: Should create Service by default
+  asserts:
+  - containsDocument:
+      apiVersion: v1
+      kind: Service
+      name: pytorch-operator
+
+- it: Should add extra labels if `labels` is set
+  set:
+    labels:
+      key1: value1
+      key2: value2
+  asserts:
+  - equal:
+      path: metadata.labels["key1"]
+      value: value1
+  - equal:
+      path: metadata.labels["key2"]
+      value: value2
+
+- it: Should add extra annotations if `annotations` is set
+  set:
+    annotations:
+      key1: value1
+      key2: value2
+  asserts:
+  - equal:
+      path: metadata.annotations["key1"]
+      value: value1
+  - equal:
+      path: metadata.annotations["key2"]
+      value: value2

@@ -1,0 +1,69 @@
+{{- /*
+Copyright 2025 The Kubeflow authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/ -}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "elastic-job-supervisor.deployment.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "elastic-job-supervisor.labels" . | nindent 4 }}
+  annotations:
+    {{- include "elastic-job-supervisor.annotations" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "elastic-job-supervisor.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "elastic-job-supervisor.labels" . | nindent 8 }}
+      annotations:
+        {{- include "elastic-job-supervisor.annotations" . | nindent 8 }}
+    spec:
+      containers:
+      - name: elastic-job-supervisor
+        image: {{ include "elastic-job-supervisor.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.image.pullPolicy | default "IfNotPresent" }}
+        command:
+        - /job-supervisor
+        env:
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        {{- with .Values.resources }}
+        resources:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+        securityContext:
+          seccompProfile:
+            type: RuntimeDefault
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- include "elastic-job-supervisor.nodeSelector" . | nindent 8 }}
+      affinity:
+        {{- include "elastic-job-supervisor.affinity" . | nindent 8 }}
+      tolerations:
+      {{- include "elastic-job-supervisor.tolerations" . | nindent 6 }}
+      restartPolicy: Always
+      serviceAccountName: {{ include "elastic-job-supervisor.serviceAccount.name" . }}
+      terminationGracePeriodSeconds: 30
