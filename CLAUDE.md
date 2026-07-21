@@ -1,0 +1,63 @@
+# Arena v2 — AI Workload CLI for Kubernetes
+
+## Project Overview
+
+Arena v2 is a lightweight CLI for submitting AI training/inference tasks to Kubernetes.
+It directly generates Operator CRDs (PyTorchJob, TFJob, MPIJob) and related resources without Helm chart rendering.
+
+- **Module**: `github.com/kubeflow/arena`
+- **Branch**: `v2`
+- **Entry point**: `cmd/arena-v2/main.go`
+- **Existing v1 code Branch**: `v0.15.4` (do NOT modify)
+
+## Why Arena v2
+
+Arena v2 eliminates the Helm chart rendering pipeline, reduces code complexity, and adds YAML-first configuration. See [keps/arena-v2/README.md](keps/arena-v2/README.md) for the full design rationale, v1 vs v2 technical comparison, and upgrade path.
+
+## Build & Test
+
+Use `go build` or `make arena-v2` to build the Arena v2 CLI. Every build and test action must be added to the Makefile.
+
+```bash
+# Build the v2 binary
+go build -o bin/arena-v2 ./cmd/arena-v2/
+
+# Build with version info
+go build -ldflags "-X github.com/kubeflow/arena/pkg/cli.version=$(cat VERSION 2>/dev/null || echo 0.0.0-dev) \
+  -X github.com/kubeflow/arena/pkg/cli.gitCommit=$(git rev-parse --short HEAD) \
+  -X github.com/kubeflow/arena/pkg/cli.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  -o bin/arena-v2 ./cmd/arena-v2/
+
+# Vet all v2 packages
+go vet ./pkg/constants/ ./pkg/log/ ./pkg/cli/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/output/ ./cmd/arena-v2/
+
+# Dry-run test (no cluster required)
+./bin/arena-v2 job run -f examples/v2/pytorch-train.yaml --dry-run
+./bin/arena-v2 submit pytorch --name test --image pytorch:2.1 --gpus 2 --dry-run
+./bin/arena-v2 submit pytorch --name test --image pytorch:2.1 --dry-run "python train.py"
+
+# Run tests
+go test ./pkg/constants/ ./pkg/log/ ./pkg/task/ ./pkg/provider/ ./pkg/client/ ./pkg/cli/ ./pkg/output/ -v
+```
+
+## DO NOT
+
+1. **Do NOT modify v1 code.** Old Arena code lives in `cmd/arena/`, `pkg/commands/`, `pkg/apis/`, `pkg/training/`, `pkg/serving/`, `pkg/argsbuilder/`. Leave it untouched. All v2 work goes in the new packages listed above.
+
+2. **Do NOT use Helm chart rendering.** Arena v2 eliminates the Helm chart rendering pipeline from v1 — CRDs are built as Go structs → `unstructured.Unstructured`.
+
+3. **Do NOT import v1 packages from v2 code.** v2 packages (`pkg/constants`, `pkg/log`, `pkg/cli`, `pkg/task`, `pkg/provider`, `pkg/client`, `pkg/output`) must be self-contained. No imports from `pkg/commands`, `pkg/apis`, `pkg/training`, etc.
+
+4. **Do NOT use Kubeflow Training Operator Go types directly.** Use `unstructured.Unstructured` for CRD construction. This avoids a hard dependency on specific Operator API versions and makes the code resilient to Operator upgrades.
+
+5. **Do NOT add cloud provider SDKs.** Arena v2 is K8s-native only. No AWS/GCP/Azure SDK imports.
+
+6. **Do NOT create a server component.** Arena v2 is client-only (like kubectl). All cluster interaction goes through the K8s API.
+
+7. **The build target is `arena-v2`.** The `-v2` suffix distinguishes the new CLI from the v1 `arena` binary during the transition period. Use `arena-v2` consistently in Makefile targets, build scripts, and documentation.
+
+8. **Do NOT commit the compiled binary.** Add `arena-v2` to `.gitignore` if needed.
+
+9. **Do NOT break the `submit` legacy compat.** The `arena submit <type> --flags` interface must remain backward compatible with old Arena usage patterns.
+
+10. **Do NOT add Docker/container runtime dependencies.** Arena v2 creates K8s resources only; it does not build or push container images.
