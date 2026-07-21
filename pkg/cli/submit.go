@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
 )
@@ -55,6 +56,7 @@ var (
 	submitMountsOnLauncher   bool
 	submitAffinityPolicy     string
 	submitAffinityConstraint string
+	submitAffinityTarget     string
 	submitSuccessPolicy      string
 	submitDryRun             bool
 	submitQueue              string
@@ -72,11 +74,12 @@ Trailing arguments after -- are used as the run command.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		framework := normalizeFramework(args[0])
 		if framework == "" {
-			return fmt.Errorf("unsupported framework type: %s (must be pytorch, tensorflow, mpi, horovod, deepspeed, or ray)", args[0])
+			return fmt.Errorf("unsupported framework type: %q (must be pytorch, tensorflow, mpi, horovod, deepspeed, or ray)",
+				args[0])
 		}
 
 		// Trailing args after -- become the run command
-		var trailingArgs []string
+		trailingArgs := []string{}
 		if len(args) > 1 {
 			trailingArgs = args[1:]
 		}
@@ -88,7 +91,9 @@ Trailing arguments after -- are used as the run command.`,
 		flags := buildSubmitFlags()
 
 		// Apply overrides
-		task.ApplyOverrides(t, flags)
+		if err := task.ApplyOverrides(t, flags); err != nil {
+			return fmt.Errorf("failed to apply overrides: %w", err)
+		}
 
 		// Validate
 		t.SetDefaults()
@@ -110,7 +115,17 @@ Trailing arguments after -- are used as the run command.`,
 			}
 		}
 
-		return submitCRD(cmdContext(cmd), t, originalFramework(args[0]), submitDryRun)
+		var (
+			k8sClient *client.Client
+			err       error
+		)
+		if !submitDryRun {
+			k8sClient, err = client.NewClient(kubeconfig, kubeContext)
+			if err != nil {
+				return fmt.Errorf("failed to create K8s client: %w", err)
+			}
+		}
+		return submitCRD(cmdContext(cmd), k8sClient, t, originalFramework(args[0]), submitDryRun)
 	},
 }
 
@@ -158,14 +173,6 @@ func buildSubmitTask(framework string, trailingArgs []string) *task.Task {
 
 	return t
 }
-
-// normalizeFramework maps various type aliases to canonical framework names.
-func normalizeFramework(s string) string { return NormalizeFramework(s) }
-
-// originalFramework returns the user's original framework string, normalized to a canonical lowercase form.
-// Unlike normalizeFramework (which collapses horovod/deepspeed to mpi for provider dispatch),
-// this preserves the user's original intent for the arena.io/framework CRD label.
-func originalFramework(s string) string { return OriginalFramework(s) }
 
 // buildSubmitFlags builds the overrides map from all submit flag values.
 func buildSubmitFlags() map[string]interface{} {
@@ -237,6 +244,9 @@ func buildSubmitFlags() map[string]interface{} {
 	}
 	if submitAffinityConstraint != "" {
 		flags["affinity-constraint"] = submitAffinityConstraint
+	}
+	if submitAffinityTarget != "" {
+		flags["affinity-target"] = submitAffinityTarget
 	}
 	if submitQueue != "" {
 		flags["queue"] = submitQueue
@@ -328,6 +338,14 @@ func buildSubmitFlags() map[string]interface{} {
 	}
 	if submitGPUTopology {
 		flags["gpu-topology"] = submitGPUTopology
+		flags["host-network"] = true
+		var labels []string
+		if existing, ok := flags["label"].([]string); ok {
+			labels = existing
+		} else {
+			labels = []string{}
+		}
+		flags["label"] = append(labels, "gpu-topology=true", "gpu-topology-replica=true")
 	}
 	if submitMountsOnLauncher {
 		flags["mounts-on-launcher"] = submitMountsOnLauncher
@@ -366,6 +384,7 @@ func init() {
 	submitCmd.Flags().StringVar(&submitSchedulerName, "scheduler-name", "", "custom scheduler name")
 	submitCmd.Flags().StringVar(&submitAffinityPolicy, "affinity-policy", "", "affinity policy")
 	submitCmd.Flags().StringVar(&submitAffinityConstraint, "affinity-constraint", "", "affinity constraint")
+	submitCmd.Flags().StringVar(&submitAffinityTarget, "affinity-target", "", "affinity target (pod or node)")
 	submitCmd.Flags().StringVar(&submitQueue, "queue", "", "scheduling queue name")
 
 	// Lifecycle
@@ -392,7 +411,7 @@ func init() {
 	submitCmd.Flags().StringVar(&submitGPUType, "gpu-type", "", "GPU type (sets node selector nvidia.com/gpu.product)")
 
 	// Logging / TensorBoard
-	submitCmd.Flags().BoolVar(&submitTensorBoard, "tensorboard", false, "enable TensorBoard sidecar")
+	submitCmd.Flags().BoolVar(&submitTensorBoard, "tensorboard", false, "enable TensorBoard sidecar (TensorBoard has no built-in authentication)")
 	submitCmd.Flags().StringVar(&submitTBLogDir, "tensorboard-logdir", "", "TensorBoard log directory")
 	submitCmd.Flags().StringVar(&submitTBImage, "tensorboard-image", "", "TensorBoard container image")
 
@@ -406,7 +425,7 @@ func init() {
 
 	// Framework-specific: MPI
 	submitCmd.Flags().IntVar(&submitSlotsPerWorker, "slots-per-worker", 0, "MPI: slots per worker")
-	submitCmd.Flags().BoolVar(&submitGPUTopology, "gpu-topology", false, "MPI: enable GPU topology annotation")
+	submitCmd.Flags().BoolVar(&submitGPUTopology, "gpu-topology", false, "MPI: enable GPU topology (sets host networking, gpu-topology/gpu-topology-replica labels, and MPI annotation)")
 	submitCmd.Flags().BoolVar(&submitMountsOnLauncher, "mounts-on-launcher", false, "MPI: mount volumes on launcher")
 
 	// Dry-run
@@ -415,5 +434,5 @@ func init() {
 	_ = submitCmd.MarkFlagRequired("name")
 	_ = submitCmd.MarkFlagRequired("image")
 
-	jobCmd.AddCommand(submitCmd)
+	rootCmd.AddCommand(submitCmd)
 }

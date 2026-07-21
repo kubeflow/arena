@@ -524,7 +524,7 @@ func TestParseKeyPath(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "index exceeds MaxIndex",
+			name:    "index exceeds maxIndex",
 			path:    "a[65536]",
 			wantErr: true,
 		},
@@ -565,7 +565,7 @@ func TestCoerceValue(t *testing.T) {
 		{"resource quantity", "16Gi", "16Gi"},
 		{"empty string", "", ""},
 		{"string with equals", "a=b", "a=b"},
-		{"leading zero", "007", 7}, // strconv.Atoi accepts leading zeros
+		{"leading zero", "007", 7},   // strconv.Atoi accepts leading zeros
 		{"float-like", "1.5", "1.5"}, // not parsed as int
 		{"True capital", "True", true},
 		{"FALSE capital", "FALSE", false},
@@ -714,7 +714,7 @@ func TestApplySetOverrides_OverwriteExistingQuotedKey(t *testing.T) {
 	}
 }
 
-func TestApplySetOverrides_MaxIndexExceeded(t *testing.T) {
+func TestApplySetOverrides_maxIndexExceeded(t *testing.T) {
 	yamlData := []byte("name: test\n")
 	_, err := ApplySetOverrides(yamlData, []string{"items[65536]=value"})
 	require.Error(t, err)

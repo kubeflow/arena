@@ -70,7 +70,7 @@ run: python train.py
 		spec := crd["spec"].(map[string]interface{})
 		runPolicy, ok := spec["runPolicy"].(map[string]interface{})
 		Expect(ok).To(BeTrue(), "spec.runPolicy should exist")
-		Expect(runPolicy["activeDeadlineSeconds"]).To(Equal(int64(604800)))
+		Expect(runPolicy["activeDeadlineSeconds"]).To(BeNumerically("==", 604800))
 	})
 
 	It("should override scheduling.gang.enabled", func() {
@@ -81,7 +81,7 @@ run: python train.py
 		Expect(ok).To(BeTrue(), "spec.runPolicy should exist")
 		schedulingPolicy, ok := runPolicy["schedulingPolicy"].(map[string]interface{})
 		Expect(ok).To(BeTrue(), "runPolicy.schedulingPolicy should exist")
-		Expect(schedulingPolicy["minAvailable"]).NotTo(BeNil())
+		Expect(schedulingPolicy["minAvailable"]).To(BeNumerically("==", 3))
 	})
 
 	It("should override labels", func() {
@@ -113,5 +113,85 @@ run: python train.py
 			}
 		}
 		Expect(found).To(BeTrue(), "env NCCL_DEBUG=INFO not found")
+	})
+
+	It("should override TF job fields via --set", func() {
+		baseTFYAML := fmt.Sprintf(`version: 0.1.0
+name: %s
+image: docker.io/library/tensorflow:2.15
+framework:
+  name: tensorflow
+worker:
+  replicas: 2
+run: python train.py
+`, jobName)
+
+		var err error
+		yamlPath, err = createTempYAML(baseTFYAML)
+		Expect(err).NotTo(HaveOccurred())
+
+		args := []string{"job", "run", "-f", yamlPath, "--namespace", namespace, "--dry-run",
+			"--set", "worker.replicas=3",
+			"--set", "name=tf-override"}
+
+		var stdout, stderr bytes.Buffer
+		cmd := exec.Command(arenaV2Bin, args...)
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		err = cmd.Run()
+		Expect(err).NotTo(HaveOccurred(), "run --set output: %s", stderr.String())
+
+		var parsed map[string]interface{}
+		Expect(json.Unmarshal(stdout.Bytes(), &parsed)).NotTo(HaveOccurred())
+
+		Expect(parsed["kind"]).To(Equal("TFJob"))
+		metadata := parsed["metadata"].(map[string]interface{})
+		Expect(metadata["name"]).To(Equal("tf-override"))
+
+		spec := parsed["spec"].(map[string]interface{})
+		replicaSpecs := spec["tfReplicaSpecs"].(map[string]interface{})
+		worker := replicaSpecs["Worker"].(map[string]interface{})
+		Expect(worker["replicas"]).To(BeNumerically("==", 3))
+	})
+
+	It("should override MPI job fields via --set", func() {
+		baseMPIYAML := fmt.Sprintf(`version: 0.1.0
+name: %s
+image: docker.io/library/openmpi:4.1
+framework:
+  name: mpi
+worker:
+  replicas: 4
+run: mpirun train
+`, jobName)
+
+		var err error
+		yamlPath, err = createTempYAML(baseMPIYAML)
+		Expect(err).NotTo(HaveOccurred())
+
+		args := []string{"job", "run", "-f", yamlPath, "--namespace", namespace, "--dry-run",
+			"--set", "worker.replicas=2",
+			"--set", "scheduling.queue=default"}
+
+		var stdout, stderr bytes.Buffer
+		cmd := exec.Command(arenaV2Bin, args...)
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		err = cmd.Run()
+		Expect(err).NotTo(HaveOccurred(), "run --set output: %s", stderr.String())
+
+		var parsed map[string]interface{}
+		Expect(json.Unmarshal(stdout.Bytes(), &parsed)).NotTo(HaveOccurred())
+
+		Expect(parsed["kind"]).To(Equal("MPIJob"))
+
+		spec := parsed["spec"].(map[string]interface{})
+		replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+		worker := replicaSpecs["Worker"].(map[string]interface{})
+		Expect(worker["replicas"]).To(BeNumerically("==", 2))
+
+		runPolicy := spec["runPolicy"].(map[string]interface{})
+		schedulingPolicy := runPolicy["schedulingPolicy"].(map[string]interface{})
+		Expect(schedulingPolicy["queue"]).To(Equal("default"))
 	})
 })

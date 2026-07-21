@@ -3,6 +3,8 @@ package cli
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 
@@ -21,12 +23,17 @@ var rootCmd = &cobra.Command{
 	Use:   "arena",
 	Short: "Arena v2 - AI workload CLI for Kubernetes",
 	Long:  `Arena v2 is a lightweight CLI for submitting AI training jobs to Kubernetes.`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.SetVerbosity(flag.CommandLine, verbose)
+	PersistentPreRun: func(_ *cobra.Command, _ []string) {
+		if err := log.SetVerbosity(flag.CommandLine, verbose); err != nil {
+			log.Warning("failed to set verbosity", "error", err.Error())
+		}
 	},
 }
 
 func Execute() error {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	rootCmd.SetContext(ctx)
 	return rootCmd.Execute()
 }
 
@@ -34,6 +41,9 @@ func Execute() error {
 // It is primarily used for integration testing where the CLI needs to be
 // invoked programmatically with specific flags and subcommands.
 func ExecuteWithArgs(args []string) error {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	rootCmd.SetContext(ctx)
 	rootCmd.SetArgs(args)
 	return rootCmd.Execute()
 }
@@ -49,7 +59,6 @@ func init() {
 
 	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
-	rootCmd.SetContext(context.Background())
 
 	rootCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", "", "path to kubeconfig file")
 	rootCmd.PersistentFlags().StringVar(&kubeContext, "context", "", "kubeconfig context to use")

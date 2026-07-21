@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -12,7 +13,7 @@ import (
 func parseResourceValue(obj map[string]interface{}, fields ...string) (int64, error) {
 	val, found, err := unstructured.NestedFieldNoCopy(obj, fields...)
 	if err != nil || !found {
-		return 0, fmt.Errorf("not found")
+		return 0, errors.New("not found")
 	}
 
 	switch v := val.(type) {

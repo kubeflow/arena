@@ -43,7 +43,7 @@ func TestNormalizeFramework_Registry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, NormalizeFramework(tt.input))
+			assert.Equal(t, tt.expected, normalizeFramework(tt.input))
 		})
 	}
 }
@@ -79,7 +79,7 @@ func TestOriginalFramework_Registry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, OriginalFramework(tt.input))
+			assert.Equal(t, tt.expected, originalFramework(tt.input))
 		})
 	}
 }
@@ -102,7 +102,7 @@ func TestFrameworkToKind_Registry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, FrameworkToKind(tt.framework))
+			assert.Equal(t, tt.expected, frameworkToKind(tt.framework))
 		})
 	}
 }
@@ -116,13 +116,13 @@ func TestKindToFramework_Registry(t *testing.T) {
 		{"PyTorchJob", "PyTorchJob", "pytorch"},
 		{"TFJob", "TFJob", "tensorflow"},
 		{"MPIJob", "MPIJob", "mpi"},
-		{"unknown kind", "UnknownJob", ""},
+		{"unknown kind", "UnknownJob", "unknownjob"},
 		{"empty", "", ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, KindToFramework(tt.kind))
+			assert.Equal(t, tt.expected, kindToFramework(tt.kind))
 		})
 	}
 }
@@ -144,7 +144,7 @@ func TestIsMPIFamily_Registry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, IsMPIFamily(tt.framework))
+			assert.Equal(t, tt.expected, isMPIFamily(tt.framework))
 		})
 	}
 }

@@ -60,30 +60,44 @@ func TestBuildLauncherRole(t *testing.T) {
 	rules, found, err := unstructured.NestedSlice(role.Object, "rules")
 	require.NoError(t, err)
 	assert.True(t, found)
-	require.Len(t, rules, 2)
+	require.Len(t, rules, 3, "3 workers should produce 3 rules (pods list/watch, pods get, pods/exec)")
 
-	// Rule 1: get/list/watch on pods
+	// Rule 1: list/watch on pods (namespace-wide)
 	rule1 := rules[0].(map[string]interface{})
 	verbs1, _ := rule1["verbs"].([]interface{})
-	assert.Contains(t, verbs1, "get")
 	assert.Contains(t, verbs1, "list")
 	assert.Contains(t, verbs1, "watch")
+	assert.NotContains(t, verbs1, "get", "get must be split into its own resourceNames-restricted rule")
 	apiGroups1, _ := rule1["apiGroups"].([]interface{})
 	assert.Contains(t, apiGroups1, "")
 	resources1, _ := rule1["resources"].([]interface{})
 	assert.Contains(t, resources1, "pods")
+	_, hasResourceNames1 := rule1["resourceNames"]
+	assert.False(t, hasResourceNames1, "list/watch rule must be namespace-wide")
 
-	// Rule 2: create on pods/exec with resourceNames
+	// Rule 2: get on pods with resourceNames (least-privilege)
 	rule2 := rules[1].(map[string]interface{})
 	verbs2, _ := rule2["verbs"].([]interface{})
-	assert.Contains(t, verbs2, "create")
+	assert.Contains(t, verbs2, "get")
 	resources2, _ := rule2["resources"].([]interface{})
-	assert.Contains(t, resources2, "pods/exec")
-	resourceNames, _ := rule2["resourceNames"].([]interface{})
-	require.Len(t, resourceNames, 3)
-	assert.Equal(t, "test-job-worker-0", resourceNames[0])
-	assert.Equal(t, "test-job-worker-1", resourceNames[1])
-	assert.Equal(t, "test-job-worker-2", resourceNames[2])
+	assert.Contains(t, resources2, "pods")
+	getResourceNames, _ := rule2["resourceNames"].([]interface{})
+	require.Len(t, getResourceNames, 3)
+	assert.Equal(t, "test-job-worker-0", getResourceNames[0])
+	assert.Equal(t, "test-job-worker-1", getResourceNames[1])
+	assert.Equal(t, "test-job-worker-2", getResourceNames[2])
+
+	// Rule 3: create on pods/exec with resourceNames
+	rule3 := rules[2].(map[string]interface{})
+	verbs3, _ := rule3["verbs"].([]interface{})
+	assert.Contains(t, verbs3, "create")
+	resources3, _ := rule3["resources"].([]interface{})
+	assert.Contains(t, resources3, "pods/exec")
+	execResourceNames, _ := rule3["resourceNames"].([]interface{})
+	require.Len(t, execResourceNames, 3)
+	assert.Equal(t, "test-job-worker-0", execResourceNames[0])
+	assert.Equal(t, "test-job-worker-1", execResourceNames[1])
+	assert.Equal(t, "test-job-worker-2", execResourceNames[2])
 }
 
 func TestBuildLauncherRoleZeroWorkers(t *testing.T) {
@@ -320,11 +334,23 @@ func TestBuildLauncherRole_SingleWorker(t *testing.T) {
 	rules, found, err := unstructured.NestedSlice(role.Object, "rules")
 	require.NoError(t, err)
 	assert.True(t, found)
-	require.Len(t, rules, 2, "1 worker should produce 2 rules (pods + pods/exec)")
+	require.Len(t, rules, 3, "1 worker should produce 3 rules (pods list/watch, pods get, pods/exec)")
 
-	// pods/exec rule should have exactly 1 resourceName
+	// Rule 2: get on pods with resourceNames
+	ruleGet := rules[1].(map[string]interface{})
+	getResourceNames, _ := ruleGet["resourceNames"].([]interface{})
+	require.Len(t, getResourceNames, 1)
+	assert.Equal(t, "single-worker-job-worker-0", getResourceNames[0])
+
+	// Rule 3: pods/exec rule should have exactly 1 resourceName
 	rule2 := rules[1].(map[string]interface{})
 	resourceNames, _ := rule2["resourceNames"].([]interface{})
 	require.Len(t, resourceNames, 1)
 	assert.Equal(t, "single-worker-job-worker-0", resourceNames[0])
+
+	// pods/exec rule (rule 3)
+	rule3 := rules[2].(map[string]interface{})
+	execResourceNames, _ := rule3["resourceNames"].([]interface{})
+	require.Len(t, execResourceNames, 1)
+	assert.Equal(t, "single-worker-job-worker-0", execResourceNames[0])
 }

@@ -16,7 +16,7 @@ func TestValidateVersion(t *testing.T) {
 		return &Task{
 			Name: "test", Image: "img:1", Run: "echo",
 			Framework: Framework{Name: "pytorch"},
-			Worker: &Worker{Replicas: 1},
+			Worker:    &Worker{Replicas: 1},
 		}
 	}
 
@@ -54,13 +54,13 @@ func TestValidateVersionDefault(t *testing.T) {
 	task := &Task{
 		Name: "test", Image: "img:1", Run: "echo",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 	}
 	task.SetDefaults()
 	err := Validate(task)
 	require.NoError(t, err)
-	if task.Version != DefaultSchemaVersion {
-		t.Errorf("expected version %q, got %q", DefaultSchemaVersion, task.Version)
+	if task.Version != defaultSchemaVersion {
+		t.Errorf("expected version %q, got %q", defaultSchemaVersion, task.Version)
 	}
 }
 
@@ -258,11 +258,53 @@ func TestValidateRunRequired(t *testing.T) {
 		Name:      "t",
 		Image:     "x:1",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 	}
 	err := Validate(task)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "run is required")
+}
+
+func TestValidateNameFormat(t *testing.T) {
+	tests := []struct {
+		name      string
+		taskName  string
+		namespace string
+		wantErr   bool
+		errSubstr string
+	}{
+		{"valid name", "my-job", "", false, ""},
+		{"valid name with numbers", "test123", "", false, ""},
+		{"valid single char", "a", "", false, ""},
+		{"valid namespace", "my-job", "default", false, ""},
+		{"uppercase rejected", "My-Job", "", true, "invalid name"},
+		{"space rejected", "my job", "", true, "invalid name"},
+		{"underscore rejected", "my_job", "", true, "invalid name"},
+		{"leading hyphen rejected", "-job", "", true, "invalid name"},
+		{"trailing hyphen rejected", "job-", "", true, "invalid name"},
+		{"too long rejected", strings.Repeat("a", 64), "", true, "invalid name"},
+		{"invalid namespace", "my-job", "My-Ns", true, "invalid namespace"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &Task{
+				Name:      tt.taskName,
+				Namespace: tt.namespace,
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+			}
+			err := Validate(task)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errSubstr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestValidateSuccessPolicy(t *testing.T) {
@@ -271,7 +313,7 @@ func TestValidateSuccessPolicy(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Lifecycle: Lifecycle{SuccessPolicy: "ChiefWorker"},
 	}
 	err := Validate(task)
@@ -474,7 +516,7 @@ func TestValidateMPIImplementation(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "mpi", Options: FrameworkConfig{MPIImplementation: "Unknown"}},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 	}
 	err := Validate(task)
 	require.Error(t, err)
@@ -487,7 +529,7 @@ func TestValidateMPILauncherCreationPolicy(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "mpi", Options: FrameworkConfig{LauncherCreationPolicy: "Invalid"}},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 	}
 	err := Validate(task)
 	require.Error(t, err)
@@ -515,7 +557,7 @@ func TestValidateAffinityRulesRequiresTarget(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Scheduling: Scheduling{
 			Affinity: &Affinity{
 				Rules: []AffinityRule{
@@ -535,7 +577,7 @@ func TestValidateAffinityInvalidTarget(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Scheduling: Scheduling{
 			Affinity: &Affinity{
 				Target: "invalid",
@@ -554,7 +596,7 @@ func TestValidateAffinityPolicyWithNodeRequiresRules(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Scheduling: Scheduling{
 			Affinity: &Affinity{
 				Target: "node",
@@ -573,7 +615,7 @@ func TestValidateAffinityInvalidPolicy(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Scheduling: Scheduling{
 			Affinity: &Affinity{
 				Target: "pod",
@@ -592,7 +634,7 @@ func TestValidateAffinityInvalidConstraint(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Scheduling: Scheduling{
 			Affinity: &Affinity{
 				Target:     "pod",
@@ -612,12 +654,12 @@ func TestValidateAffinityValidConfigurations(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Scheduling: Scheduling{
 			Affinity: &Affinity{
 				Target: "pod",
 				Policy: "spread",
-				Rules:  []AffinityRule{{TopologyKey: "kubernetes.io/hostname"}},
+				Rules:  []AffinityRule{{TopologyKey: "kubernetes.io/hostname", Weight: 50}},
 			},
 		},
 	}
@@ -629,11 +671,113 @@ func TestValidateAffinityValidConfigurations(t *testing.T) {
 		Target: "node",
 		Policy: "binpack",
 		Rules: []AffinityRule{
-			{MatchExpressions: []MatchExpression{{Key: "gpu", Operator: "In", Values: []string{"A100"}}}},
+			{MatchExpressions: []MatchExpression{{Key: "gpu", Operator: "In", Values: []string{"A100"}}}, Weight: 50},
 		},
 	}
 	err = Validate(task)
 	require.NoError(t, err)
+
+	// Valid: required constraint does not require weight
+	task.Scheduling.Affinity = &Affinity{
+		Target:     "pod",
+		Policy:     "spread",
+		Constraint: "required",
+		Rules:      []AffinityRule{{TopologyKey: "kubernetes.io/hostname"}},
+	}
+	err = Validate(task)
+	require.NoError(t, err)
+
+	// Valid: none policy with rules is allowed (no-op in buildAffinity)
+	task.Scheduling.Affinity = &Affinity{
+		Target: "pod",
+		Policy: "none",
+		Rules:  []AffinityRule{{TopologyKey: "kubernetes.io/hostname"}},
+	}
+	err = Validate(task)
+	require.NoError(t, err)
+}
+
+func TestValidateAffinityWeight(t *testing.T) {
+	tests := []struct {
+		name       string
+		constraint string
+		weight     int
+		wantErr    bool
+		errSubstr  string
+	}{
+		{"preferred valid weight", "preferred", 50, false, ""},
+		{"preferred default valid weight", "", 50, false, ""},
+		{"preferred weight zero", "preferred", 0, true, "weight must be 1-100"},
+		{"preferred weight too high", "preferred", 101, true, "weight must be 1-100"},
+		{"required ignores weight zero", "required", 0, false, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Scheduling: Scheduling{
+					Affinity: &Affinity{
+						Target:     "pod",
+						Policy:     "spread",
+						Constraint: tt.constraint,
+						Rules:      []AffinityRule{{TopologyKey: "kubernetes.io/hostname", Weight: tt.weight}},
+					},
+				},
+			}
+			err := Validate(task)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errSubstr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateTolerations(t *testing.T) {
+	tests := []struct {
+		name      string
+		tol       Toleration
+		wantErr   bool
+		errSubstr string
+	}{
+		{"valid Equal operator", Toleration{Key: "gpu", Operator: "Equal", Value: "true", Effect: "NoSchedule"}, false, ""},
+		{"valid Exists operator", Toleration{Key: "gpu", Operator: "Exists", Effect: "NoSchedule"}, false, ""},
+		{"valid no operator", Toleration{Key: "gpu", Effect: "NoSchedule"}, false, ""},
+		{"valid no effect", Toleration{Key: "gpu", Operator: "Equal", Value: "true"}, false, ""},
+		{"invalid operator", Toleration{Key: "gpu", Operator: "Invalid", Effect: "NoSchedule"}, true, "invalid operator"},
+		{"invalid effect", Toleration{Key: "gpu", Operator: "Equal", Value: "true", Effect: "BadEffect"}, true, "invalid effect"},
+		{"Exists with value", Toleration{Key: "gpu", Operator: "Exists", Value: "true", Effect: "NoSchedule"}, true, "Exists operator must not have a value"},
+		{"valid with toleration seconds", Toleration{Key: "gpu", Operator: "Equal", Value: "true", Effect: "NoExecute", TolerationSeconds: &[]int64{300}[0]}, false, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Scheduling: Scheduling{
+					Tolerations: []Toleration{tt.tol},
+				},
+			}
+			err := Validate(task)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errSubstr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestValidateSyncMustSpecifySource(t *testing.T) {
@@ -642,7 +786,7 @@ func TestValidateSyncMustSpecifySource(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Sync:      []SyncEntry{{Branch: "main"}}, // no git, rsync, or hdfs
 	}
 	err := Validate(task)
@@ -656,7 +800,7 @@ func TestValidateSyncOnlyOneSource(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Sync:      []SyncEntry{{Git: "https://github.com/example/repo.git", Rsync: "server::path"}},
 	}
 	err := Validate(task)
@@ -857,7 +1001,7 @@ func TestValidateRoleFrameworkSpecific(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "tensorflow"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Master:    &RoleConfig{},
 	}
 	err := Validate(task)
@@ -870,7 +1014,7 @@ func TestValidateRoleFrameworkSpecific(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Chief:     &RoleConfig{},
 	}
 	err = Validate(task)
@@ -883,7 +1027,7 @@ func TestValidateRoleFrameworkSpecific(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		PS:        &RoleConfig{Replicas: 1},
 	}
 	err = Validate(task)
@@ -896,7 +1040,7 @@ func TestValidateRoleFrameworkSpecific(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Evaluator: &RoleConfig{},
 	}
 	err = Validate(task)
@@ -909,7 +1053,7 @@ func TestValidateRoleFrameworkSpecific(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Launcher:  &RoleConfig{},
 	}
 	err = Validate(task)
@@ -924,7 +1068,7 @@ func TestValidateRoleFrameworkSpecificValid(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Master:    &RoleConfig{},
 	}
 	err := Validate(task)
@@ -936,7 +1080,7 @@ func TestValidateRoleFrameworkSpecificValid(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "tensorflow"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Chief:     &RoleConfig{},
 	}
 	err = Validate(task)
@@ -948,7 +1092,7 @@ func TestValidateRoleFrameworkSpecificValid(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "mpi"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Launcher:  &RoleConfig{},
 	}
 	err = Validate(task)
@@ -957,8 +1101,8 @@ func TestValidateRoleFrameworkSpecificValid(t *testing.T) {
 
 func TestValidateConstrainedRolesReplicas(t *testing.T) {
 	tests := []struct {
-		name     string
-		task     *Task
+		name        string
+		task        *Task
 		errContains string
 	}{
 		{
@@ -968,7 +1112,7 @@ func TestValidateConstrainedRolesReplicas(t *testing.T) {
 				Image:     "x:1",
 				Run:       "train",
 				Framework: Framework{Name: "pytorch"},
-				Worker: &Worker{Replicas: 1},
+				Worker:    &Worker{Replicas: 1},
 				Master:    &RoleConfig{Replicas: 2},
 			},
 			errContains: "master role is constrained to replicas=1",
@@ -980,7 +1124,7 @@ func TestValidateConstrainedRolesReplicas(t *testing.T) {
 				Image:     "x:1",
 				Run:       "train",
 				Framework: Framework{Name: "tensorflow"},
-				Worker: &Worker{Replicas: 1},
+				Worker:    &Worker{Replicas: 1},
 				Chief:     &RoleConfig{Replicas: 3},
 			},
 			errContains: "chief role is constrained to replicas=1",
@@ -992,7 +1136,7 @@ func TestValidateConstrainedRolesReplicas(t *testing.T) {
 				Image:     "x:1",
 				Run:       "train",
 				Framework: Framework{Name: "mpi"},
-				Worker: &Worker{Replicas: 1},
+				Worker:    &Worker{Replicas: 1},
 				Launcher:  &RoleConfig{Replicas: 2},
 			},
 			errContains: "launcher role is constrained to replicas=1",
@@ -1004,7 +1148,7 @@ func TestValidateConstrainedRolesReplicas(t *testing.T) {
 				Image:     "x:1",
 				Run:       "train",
 				Framework: Framework{Name: "tensorflow"},
-				Worker: &Worker{Replicas: 1},
+				Worker:    &Worker{Replicas: 1},
 				Evaluator: &RoleConfig{Replicas: 5},
 			},
 			errContains: "evaluator role is constrained to replicas=1",
@@ -1026,7 +1170,7 @@ func TestValidateConstrainedRolesReplicasZeroAllowed(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		Master:    &RoleConfig{Replicas: 0},
 	}
 	err := Validate(task)
@@ -1045,7 +1189,7 @@ func TestValidatePSReplicas(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "tensorflow"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		PS:        &RoleConfig{Replicas: 0},
 	}
 	err := Validate(task)
@@ -1064,7 +1208,7 @@ func TestValidatePSReplicasNegative(t *testing.T) {
 		Image:     "x:1",
 		Run:       "train",
 		Framework: Framework{Name: "tensorflow"},
-		Worker: &Worker{Replicas: 1},
+		Worker:    &Worker{Replicas: 1},
 		PS:        &RoleConfig{Replicas: -1},
 	}
 	err := Validate(task)
@@ -1130,7 +1274,7 @@ func TestValidateWorkerNilTensorFlow(t *testing.T) {
 	}
 	err := Validate(task)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "worker is required for tensorflow")
+	assert.Contains(t, err.Error(), `worker is required for "tensorflow"`)
 }
 
 func TestValidateWorkerNilMPI(t *testing.T) {
@@ -1143,7 +1287,7 @@ func TestValidateWorkerNilMPI(t *testing.T) {
 	}
 	err := Validate(task)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "worker is required for mpi")
+	assert.Contains(t, err.Error(), `worker is required for "mpi"`)
 }
 
 func TestStorage_Validate(t *testing.T) {

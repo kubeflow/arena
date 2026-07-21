@@ -83,6 +83,13 @@ const (
 	CleanPodPolicyAll     = "All"
 )
 
+// SuccessPolicy values for TFJob, mirroring upstream kubeflow.org/v1.
+const (
+	SuccessPolicyDefault          = "" // chief worker (default)
+	SuccessPolicyAllWorkers       = "AllWorkers"
+	SuccessPolicyChiefWorkerAlias = "ChiefWorker" // backward-compatible alias for ""
+)
+
 // Job status values.
 const (
 	JobStatusPending   = "Pending"

@@ -57,7 +57,7 @@ func suspendJob(ctx context.Context, k8sClient *client.Client, namespace, name s
 
 	err = k8sClient.Patch(ctx, jobType, namespace, name, patchBytes)
 	if err != nil {
-		return "", fmt.Errorf("failed to suspend %s %s: %w", jobType, name, err)
+		return "", fmt.Errorf("failed to suspend %s %q: %w", jobType, name, err)
 	}
 
 	return jobType, nil

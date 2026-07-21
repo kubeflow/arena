@@ -15,7 +15,7 @@ import (
 func resetKlogState(t *testing.T, flags *flag.FlagSet) {
 	t.Helper()
 	t.Cleanup(func() {
-		flags.Set("v", "0")
+		_ = flags.Set("v", "0")
 		klog.SetOutput(os.Stderr)
 	})
 }
@@ -24,7 +24,7 @@ func resetKlogState(t *testing.T, flags *flag.FlagSet) {
 // It disables logtostderr so output goes to the buffer instead of stderr.
 func captureOutput(t *testing.T, flags *flag.FlagSet) *bytes.Buffer {
 	t.Helper()
-	flags.Set("logtostderr", "false")
+	_ = flags.Set("logtostderr", "false")
 	var buf bytes.Buffer
 	klog.SetOutput(&buf)
 	return &buf
@@ -91,7 +91,7 @@ func TestDebug_OnlyLogsWhenVerbose(t *testing.T) {
 	resetKlogState(t, flags)
 
 	// Ensure verbosity is 0
-	flags.Set("v", "0")
+	_ = flags.Set("v", "0")
 	buf := captureOutput(t, flags)
 
 	Debug("debug message")
@@ -101,7 +101,7 @@ func TestDebug_OnlyLogsWhenVerbose(t *testing.T) {
 
 	// Now set high verbosity and verify debug logs
 	buf.Reset()
-	flags.Set("v", "2")
+	_ = flags.Set("v", "2")
 
 	Debug("debug message")
 	klog.Flush()
@@ -114,14 +114,14 @@ func TestWarning_LogsMessage(t *testing.T) {
 	Init(flags)
 	resetKlogState(t, flags)
 
-	buf := captureOutput(t, flags)
+	var buf bytes.Buffer
+	output = &buf
+	t.Cleanup(func() { output = os.Stderr })
 
 	Warning("warning message", "resource", "configmap")
-	klog.Flush()
 
-	assert.Contains(t, buf.String(), "warning message")
-	assert.Contains(t, buf.String(), "resource")
-	assert.Contains(t, buf.String(), "configmap")
+	assert.Contains(t, buf.String(), "Warning: warning message")
+	assert.Contains(t, buf.String(), "resource=configmap")
 }
 
 func TestWarning_OddLengthKeysAndValues(t *testing.T) {
@@ -129,13 +129,28 @@ func TestWarning_OddLengthKeysAndValues(t *testing.T) {
 	Init(flags)
 	resetKlogState(t, flags)
 
-	buf := captureOutput(t, flags)
+	var buf bytes.Buffer
+	output = &buf
+	t.Cleanup(func() { output = os.Stderr })
 
-	// Odd-length: orphaned key "extra" should appear in output, not be silently dropped
 	Warning("warning message", "key", "value", "extra")
-	klog.Flush()
 
-	assert.Contains(t, buf.String(), "warning message")
+	assert.Contains(t, buf.String(), "Warning: warning message")
 	assert.Contains(t, buf.String(), "key=value")
 	assert.Contains(t, buf.String(), "extra")
+}
+
+func TestWarning_EscapesNewlines(t *testing.T) {
+	flags := flag.NewFlagSet("test", flag.ContinueOnError)
+	Init(flags)
+	resetKlogState(t, flags)
+
+	var buf bytes.Buffer
+	output = &buf
+	t.Cleanup(func() { output = os.Stderr })
+
+	Warning("msg", "key", "value\nFAKE LOG")
+
+	assert.Contains(t, buf.String(), "value\\nFAKE LOG")
+	assert.NotContains(t, buf.String(), "value\nFAKE LOG")
 }

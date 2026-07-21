@@ -11,10 +11,34 @@ import (
 )
 
 var _ = Describe("Error paths", func() {
-	var namespace string
+	var (
+		namespace string
+		jobName   string
+	)
 
 	BeforeEach(func() {
 		namespace = "default"
+		jobName = ""
+	})
+
+	AfterEach(func() {
+		if jobName == "" {
+			return
+		}
+		var out bytes.Buffer
+		// Try arena-v2 delete first (handles v2 jobs)
+		delCmd := exec.Command(arenaV2Bin, "job", "delete", jobName,
+			"--namespace", namespace)
+		delCmd.Stdout = &out
+		delCmd.Stderr = &out
+		_ = delCmd.Run()
+		// Also try kubectl delete (handles raw v1 PyTorchJobs)
+		kubectlCmd := exec.Command("kubectl", "delete", "pytorchjob", jobName,
+			"-n", namespace, "--ignore-not-found")
+		kubectlCmd.Stdout = &out
+		kubectlCmd.Stderr = &out
+		_ = kubectlCmd.Run()
+		jobName = ""
 	})
 
 	It("should error when --file is missing", func() {
@@ -70,7 +94,7 @@ run: python train.py
 
 	It("should error on unsupported framework via submit", func() {
 		var out bytes.Buffer
-		cmd := exec.Command(arenaV2Bin, "job", "submit", "jax",
+		cmd := exec.Command(arenaV2Bin, "submit", "jax",
 			"--name", "no-such-framework",
 			"--namespace", namespace,
 			"--image", "x:1",
@@ -83,11 +107,11 @@ run: python train.py
 	})
 
 	It("should error on duplicate job name", func() {
-		jobName := fmt.Sprintf("v2-dup-%d", GinkgoRandomSeed())
+		jobName = fmt.Sprintf("v2-dup-%d", GinkgoRandomSeed())
 
 		By("Submitting the job first time")
 		var out bytes.Buffer
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/busybox:1.36",
@@ -99,16 +123,8 @@ run: python train.py
 		Expect(err).NotTo(HaveOccurred(), "first submit output: %s", out.String())
 		out.Reset()
 
-		defer func() {
-			delCmd := exec.Command(arenaV2Bin, "job", "delete", jobName,
-				"--namespace", namespace)
-			delCmd.Stdout = &out
-			delCmd.Stderr = &out
-			_ = delCmd.Run()
-		}()
-
 		By("Submitting the same job name again")
-		submitCmd2 := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd2 := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/busybox:1.36",
@@ -133,7 +149,7 @@ run: python train.py
 	})
 
 	It("should detect v1 jobs", func() {
-		jobName := fmt.Sprintf("v2-v1detect-%d", GinkgoRandomSeed())
+		jobName = fmt.Sprintf("v2-v1detect-%d", GinkgoRandomSeed())
 
 		By("Creating a raw v1 PyTorchJob without arena.io/framework label")
 		v1YAML := fmt.Sprintf(`apiVersion: kubeflow.org/v1
@@ -162,14 +178,6 @@ spec:
 		err := kubectlCmd.Run()
 		Expect(err).NotTo(HaveOccurred(), "kubectl apply output: %s", out.String())
 		out.Reset()
-
-		defer func() {
-			delCmd := exec.Command("kubectl", "delete", "pytorchjob", jobName,
-				"-n", namespace, "--ignore-not-found")
-			delCmd.Stdout = &out
-			delCmd.Stderr = &out
-			_ = delCmd.Run()
-		}()
 
 		By("Getting the v1 job — should error")
 		getCmd := exec.Command(arenaV2Bin, "job", "get", jobName,

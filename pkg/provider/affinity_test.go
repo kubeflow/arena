@@ -241,3 +241,124 @@ func TestBuildAffinity_PreferredInvalidWeight_ReturnsError(t *testing.T) {
 		t.Errorf("error should mention valid range, got: %v", err)
 	}
 }
+
+func TestBuildAffinity_NonePolicySkipsRules(t *testing.T) {
+	a := &task.Affinity{
+		Policy: "none",
+		Target: "pod",
+		Rules: []task.AffinityRule{
+			{
+				TopologyKey: "kubernetes.io/hostname",
+				Weight:      50,
+				MatchLabels: map[string]string{"app": "test"},
+			},
+		},
+	}
+	result, err := buildAffinity(a, "test-job")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != nil {
+		t.Errorf("expected nil for policy=none even with rules, got %v", result)
+	}
+}
+
+func TestBuildAffinity_NodeTargetSpreadNegatesOperators(t *testing.T) {
+	a := &task.Affinity{
+		Target: "node",
+		Policy: "spread",
+		Rules: []task.AffinityRule{
+			{
+				MatchExpressions: []task.MatchExpression{
+					{Key: "gpu-type", Operator: "In", Values: []string{"A100"}},
+				},
+				MatchLabels: map[string]string{"zone": "us-east-1"},
+			},
+		},
+	}
+	result, err := buildAffinity(a, "test-job")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	nodeAffinity, ok := result["nodeAffinity"].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected nodeAffinity")
+	}
+	preferred, ok := nodeAffinity["preferredDuringSchedulingIgnoredDuringExecution"].([]interface{})
+	if !ok || len(preferred) != 1 {
+		t.Fatalf("expected 1 preferred term, got %v", nodeAffinity)
+	}
+	term, ok := preferred[0].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected term to be a map")
+	}
+	exprs, ok := term["matchExpressions"].([]interface{})
+	if !ok {
+		t.Fatal("expected matchExpressions")
+	}
+	for _, e := range exprs {
+		expr, ok := e.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		op, _ := expr["operator"].(string)
+		if op == "In" {
+			t.Errorf("expected In to be negated to NotIn for spread policy, got In")
+		}
+	}
+}
+
+func TestBuildAffinity_NodeTargetBinpackPreservesOperators(t *testing.T) {
+	a := &task.Affinity{
+		Target: "node",
+		Policy: "binpack",
+		Rules: []task.AffinityRule{
+			{
+				MatchExpressions: []task.MatchExpression{
+					{Key: "gpu-type", Operator: "In", Values: []string{"A100"}},
+				},
+			},
+		},
+	}
+	result, err := buildAffinity(a, "test-job")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	nodeAffinity, ok := result["nodeAffinity"].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected nodeAffinity")
+	}
+	preferred, ok := nodeAffinity["preferredDuringSchedulingIgnoredDuringExecution"].([]interface{})
+	if !ok || len(preferred) != 1 {
+		t.Fatalf("expected 1 preferred term, got %v", nodeAffinity)
+	}
+	term, ok := preferred[0].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected term to be a map")
+	}
+	exprs, ok := term["matchExpressions"].([]interface{})
+	if !ok {
+		t.Fatal("expected matchExpressions")
+	}
+	found := false
+	for _, e := range exprs {
+		expr, ok := e.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if op, _ := expr["operator"].(string); op == "In" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected In operator to be preserved for binpack policy")
+	}
+}

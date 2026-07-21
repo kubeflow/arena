@@ -7,6 +7,7 @@
 package e2e_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -25,11 +26,6 @@ func TestArenaV2(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	crdDir := "crds"
-	if _, err := os.Stat(crdDir); os.IsNotExist(err) {
-		Fail(fmt.Sprintf("CRD directory not found: %s — run `make v2-e2e-setup` first", crdDir))
-	}
-
 	localBin := filepath.Join("..", "..", "bin", "arena-v2")
 	if p, err := exec.LookPath(localBin); err == nil {
 		arenaV2Bin = p
@@ -37,6 +33,36 @@ var _ = BeforeSuite(func() {
 		arenaV2Bin = p
 	} else {
 		Fail("arena-v2 binary not found in bin/ or PATH — run `make arena-v2` first")
+	}
+})
+
+var _ = AfterSuite(func() {
+	// Sweep any leaked arena-v2 jobs and test resources.
+	// Individual AfterEach blocks should handle cleanup, but this
+	// catches anything that leaked due to mid-test failures.
+	var out bytes.Buffer
+
+	// Delete all PyTorchJobs, TFJobs, and MPIJobs with arena.io/framework label
+	for _, resource := range []string{"pytorchjob", "tfjob", "mpijob"} {
+		cmd := exec.Command("kubectl", "delete", resource,
+			"-l", "arena.io/framework",
+			"-n", "default", "--ignore-not-found")
+		cmd.Stdout = &out
+		cmd.Stderr = &out
+		_ = cmd.Run()
+	}
+
+	// Clean up storage test prerequisites
+	for _, resource := range []string{
+		"configmap/app-config",
+		"secret/db-credentials",
+		"secret/ssh-keys",
+	} {
+		cmd := exec.Command("kubectl", "delete", resource,
+			"-n", "default", "--ignore-not-found")
+		cmd.Stdout = &out
+		cmd.Stderr = &out
+		_ = cmd.Run()
 	}
 })
 

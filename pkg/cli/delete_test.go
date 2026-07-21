@@ -146,7 +146,7 @@ framework:
 worker:
   replicas: 1
 `
-	err := os.WriteFile(tmpFile, []byte(content), 0644)
+	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	orig := kubeconfig
@@ -202,7 +202,7 @@ framework:
 worker:
   replicas: 1
 `
-	err := os.WriteFile(tmpFile, []byte(content), 0644)
+	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	origFile := deleteFile

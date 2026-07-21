@@ -57,7 +57,7 @@ func resumeJob(ctx context.Context, k8sClient *client.Client, namespace, name st
 
 	err = k8sClient.Patch(ctx, jobType, namespace, name, patchBytes)
 	if err != nil {
-		return "", fmt.Errorf("failed to resume %s %s: %w", jobType, name, err)
+		return "", fmt.Errorf("failed to resume %s %q: %w", jobType, name, err)
 	}
 
 	return jobType, nil

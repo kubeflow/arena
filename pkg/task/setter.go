@@ -1,6 +1,7 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,17 +9,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// quotedKeyPrefix is the placeholder prefix used for single-quoted key segments
-// in --set expressions. Quoted segments are extracted before parsing
-// (which treats all dots as path separators) and restored afterwards.
-// The prefix is intentionally long and unique to minimize collision risk with
-// real YAML keys that might contain a similar substring.
+// quotedKeyPrefix is a unique placeholder for single-quoted --set key segments to prevent dot-splitting.
 const quotedKeyPrefix = "__ARENA_QK_"
 
-// MaxIndex is the maximum array index allowed in --set expressions.
+// maxIndex is the maximum array index allowed in --set expressions.
 // This prevents accidental huge slice allocations from typos like
 // items[999999999]=x, which would otherwise OOM the process.
-const MaxIndex = 65536
+const maxIndex = 65536
 
 // pathSegment represents a single segment in a dotted key path.
 // It can be either a map key (isArr=false) or an array index (isArr=true).
@@ -80,14 +77,14 @@ func parseInto(expr string, base map[string]interface{}) error {
 	// Find the first '='
 	eqIdx := strings.IndexByte(expr, '=')
 	if eqIdx < 0 {
-		return fmt.Errorf("no '=' found in expression")
+		return errors.New("no '=' found in expression")
 	}
 
 	keyPart := expr[:eqIdx]
 	valuePart := expr[eqIdx+1:]
 
 	if keyPart == "" {
-		return fmt.Errorf("empty key")
+		return errors.New("empty key")
 	}
 
 	// Parse the key path into segments
@@ -97,7 +94,7 @@ func parseInto(expr string, base map[string]interface{}) error {
 	}
 
 	if len(segments) == 0 {
-		return fmt.Errorf("empty key path")
+		return errors.New("empty key path")
 	}
 
 	// Coerce the value to the appropriate type
@@ -109,7 +106,7 @@ func parseInto(expr string, base map[string]interface{}) error {
 
 // parseKeyPath parses a dotted key path like "a.b[0].c" into segments.
 func parseKeyPath(path string) ([]pathSegment, error) {
-	var segments []pathSegment
+	segments := make([]pathSegment, 0)
 	var current strings.Builder
 
 	i := 0
@@ -144,8 +141,8 @@ func parseKeyPath(path string) ([]pathSegment, error) {
 			if idx < 0 {
 				return nil, fmt.Errorf("negative array index %d in path %q", idx, path)
 			}
-			if idx >= MaxIndex {
-				return nil, fmt.Errorf("array index %d exceeds maximum %d in path %q", idx, MaxIndex, path)
+			if idx >= maxIndex {
+				return nil, fmt.Errorf("array index %d exceeds maximum %d in path %q", idx, maxIndex, path)
 			}
 			segments = append(segments, pathSegment{index: idx, isArr: true})
 			i = j + 1
@@ -169,7 +166,7 @@ func parseKeyPath(path string) ([]pathSegment, error) {
 // setValueAtPath sets a value in a nested map/slice structure at the given path.
 func setValueAtPath(base map[string]interface{}, segments []pathSegment, value interface{}) error {
 	if len(segments) == 0 {
-		return fmt.Errorf("empty path")
+		return errors.New("empty path")
 	}
 
 	// Handle the simple case: single key, no arrays
@@ -181,7 +178,7 @@ func setValueAtPath(base map[string]interface{}, segments []pathSegment, value i
 	// Navigate through all segments except the last, building the container chain
 	current := interface{}(base)
 
-	for i := 0; i < len(segments)-1; i++ {
+	for i := range segments[:len(segments)-1] {
 		seg := segments[i]
 		nextSeg := segments[i+1]
 
@@ -205,7 +202,9 @@ func setValueAtPath(base map[string]interface{}, segments []pathSegment, value i
 			}
 			// Write back the slice in case append grew it (append may return a
 			// new slice header that is not reflected in the parent container).
-			updateSliceInParent(base, segments[:i], arr)
+			if err := updateSliceInParent(base, segments[:i], arr); err != nil {
+				return err
+			}
 			current = arr[seg.index]
 		} else {
 			// Current should be a map
@@ -237,7 +236,9 @@ func setValueAtPath(base map[string]interface{}, segments []pathSegment, value i
 		}
 		arr[lastSeg.index] = value
 		// Update the slice in its parent
-		updateSliceInParent(base, segments[:len(segments)-1], arr)
+		if err := updateSliceInParent(base, segments[:len(segments)-1], arr); err != nil {
+			return err
+		}
 	} else {
 		m, ok := current.(map[string]interface{})
 		if !ok {
@@ -251,20 +252,26 @@ func setValueAtPath(base map[string]interface{}, segments []pathSegment, value i
 
 // updateSliceInParent updates a slice reference in its parent container.
 // This is needed because append() may return a new slice header.
-func updateSliceInParent(base map[string]interface{}, parentSegments []pathSegment, newSlice []interface{}) {
+func updateSliceInParent(base map[string]interface{}, parentSegments []pathSegment, newSlice []interface{}) error {
 	if len(parentSegments) == 0 {
-		return
+		return nil
 	}
 
 	// Navigate to the parent of the slice
 	current := interface{}(base)
-	for i := 0; i < len(parentSegments)-1; i++ {
+	for i := range parentSegments[:len(parentSegments)-1] {
 		seg := parentSegments[i]
 		if seg.isArr {
-			arr := current.([]interface{})
+			arr, ok := current.([]interface{})
+			if !ok {
+				return fmt.Errorf("expected array at path segment, got %T", current)
+			}
 			current = arr[seg.index]
 		} else {
-			m := current.(map[string]interface{})
+			m, ok := current.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("expected map at path segment, got %T", current)
+			}
 			current = m[seg.key]
 		}
 	}
@@ -272,12 +279,19 @@ func updateSliceInParent(base map[string]interface{}, parentSegments []pathSegme
 	// Update the slice in the last parent
 	lastParentSeg := parentSegments[len(parentSegments)-1]
 	if lastParentSeg.isArr {
-		arr := current.([]interface{})
+		arr, ok := current.([]interface{})
+		if !ok {
+			return fmt.Errorf("expected array at path segment, got %T", current)
+		}
 		arr[lastParentSeg.index] = newSlice
 	} else {
-		m := current.(map[string]interface{})
+		m, ok := current.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("expected map at path segment, got %T", current)
+		}
 		m[lastParentSeg.key] = newSlice
 	}
+	return nil
 }
 
 // coerceValue converts a string value to the appropriate Go type.
@@ -303,15 +317,7 @@ func coerceValue(s string) interface{} {
 	return s
 }
 
-// preprocessQuotedKeys scans a --set expression for single-quoted segments and
-// replaces each with a dot-free placeholder so that parsing does not
-// split them on dots. It returns the processed expression and a mapping from
-// placeholder to the original quoted content.
-//
-// Example:
-//
-//	"worker.resources.'nvidia.com/gpu'=4"
-//	→ "worker.resources.__ARENA_QK_0__=4", {"__ARENA_QK_0__": "nvidia.com/gpu"}
+// preprocessQuotedKeys replaces single-quoted segments with placeholders before parsing, returning a restore mapping.
 func preprocessQuotedKeys(expr string) (string, map[string]string, error) {
 	// Only preprocess quoted segments in the key portion (before the first '=').
 	// Values after '=' must not be touched — quotes there are literal user data.
@@ -329,42 +335,34 @@ func preprocessQuotedKeys(expr string) (string, map[string]string, error) {
 	i := 0
 
 	for i < len(keyPart) {
-		if keyPart[i] == '\'' {
-			// Find the closing quote (starting after the opening quote).
-			end := strings.IndexByte(keyPart[i+1:], '\'')
-			if end == -1 {
-				return "", nil, fmt.Errorf("mismatched single quote in expression %q", expr)
-			}
-			// Content between the quotes.
-			content := keyPart[i+1 : i+1+end]
-			if content == "" {
-				return "", nil, fmt.Errorf("empty quoted segment in expression %q", expr)
-			}
-
-			placeholder := fmt.Sprintf("%s%d%s", quotedKeyPrefix, counter, "__")
-			counter++
-			quotedKeys[placeholder] = content
-			result.WriteString(placeholder)
-			i = i + 1 + end + 1 // advance past the closing quote
-		} else {
+		if keyPart[i] != '\'' {
 			result.WriteByte(keyPart[i])
 			i++
+			continue
 		}
+		// Find the closing quote (starting after the opening quote).
+		end := strings.IndexByte(keyPart[i+1:], '\'')
+		if end == -1 {
+			return "", nil, fmt.Errorf("mismatched single quote in expression %q", expr)
+		}
+		// Content between the quotes.
+		content := keyPart[i+1 : i+1+end]
+		if content == "" {
+			return "", nil, fmt.Errorf("empty quoted segment in expression %q", expr)
+		}
+
+		placeholder := quotedKeyPrefix + strconv.Itoa(counter) + "__"
+		counter++
+		quotedKeys[placeholder] = content
+		result.WriteString(placeholder)
+		i = i + 1 + end + 1 // advance past the closing quote
 	}
 
 	result.WriteString(valueSuffix)
 	return result.String(), quotedKeys, nil
 }
 
-// restoreQuotedKeys walks a map produced by parsing and replaces any
-// placeholder keys with the original quoted content from the mapping. It
-// recurses into nested maps and array-element maps so that placeholders at
-// any depth are restored.
-//
-// It mutates the map in place. When a placeholder key resolves to a real key
-// that already exists (e.g., --set overwrites an existing "nvidia.com/gpu"),
-// the placeholder's value overwrites the original. This ensures --set
-// overrides take precedence regardless of Go's randomized map iteration order.
+// restoreQuotedKeys recursively replaces placeholder keys with their original quoted content.
 func restoreQuotedKeys(m map[string]interface{}, quotedKeys map[string]string) {
 	for key, val := range m {
 		realKey := resolveKey(key, quotedKeys)

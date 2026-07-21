@@ -20,7 +20,7 @@ Usage:
   arena completion powershell > arena.ps1`,
 	ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
 	Args:      cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		switch args[0] {
 		case "bash":
 			return rootCmd.GenBashCompletion(os.Stdout)
@@ -31,7 +31,7 @@ Usage:
 		case "powershell":
 			return rootCmd.GenPowerShellCompletionWithDesc(os.Stdout)
 		default:
-			return fmt.Errorf("unsupported shell: %s (must be bash, zsh, fish, or powershell)", args[0])
+			return fmt.Errorf("unsupported shell: %q (must be bash, zsh, fish, or powershell)", args[0])
 		}
 	},
 }

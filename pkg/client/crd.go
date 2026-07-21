@@ -12,7 +12,7 @@ import (
 )
 
 // ErrCRDNotFound is returned when the requested CRD does not exist in the cluster.
-var ErrCRDNotFound = errors.New("CRD not found")
+var ErrCRDNotFound = errors.New("crd not found")
 
 // MPISupportedVersions lists the MPIJob API versions that Arena supports.
 var MPISupportedVersions = []string{"v1", "v2beta1"}
@@ -57,6 +57,50 @@ func (c *Client) GetCRDVersions(ctx context.Context, crdName string) ([]CRDVersi
 	return parseCRDVersions(obj)
 }
 
+// ResolveMPIVersion queries the MPIJob CRD and caches the storage version for the Client's lifetime.
+func (c *Client) ResolveMPIVersion(ctx context.Context) error {
+	c.mu.RLock()
+	cached := c.mpiVersion
+	c.mu.RUnlock()
+	if cached != "" {
+		return nil // cached
+	}
+
+	versions, err := c.GetCRDVersions(ctx, "mpijobs.kubeflow.org")
+	if err != nil {
+		if errors.Is(err, ErrCRDNotFound) {
+			return fmt.Errorf("mpijob crd not found in cluster: %w", ErrCRDNotFound)
+		}
+		return fmt.Errorf("failed to get MPIJob CRD versions: %w", err)
+	}
+
+	storageVersion := FindStorageVersion(versions)
+	if storageVersion == "" {
+		return errors.New("mpijob crd has no storage version configured")
+	}
+
+	// Validate the resolved version is one we support.
+	if !IsMPIVersionSupported(storageVersion) {
+		return fmt.Errorf("mpijob storage version %q is not supported, supported versions: %v",
+			storageVersion, MPISupportedVersions)
+	}
+
+	c.mu.Lock()
+	c.mpiVersion = storageVersion
+	c.mu.Unlock()
+	return nil
+}
+
+// IsMPIVersionSupported reports whether version is in the supported set.
+func IsMPIVersionSupported(version string) bool {
+	for _, v := range MPISupportedVersions {
+		if v == version {
+			return true
+		}
+	}
+	return false
+}
+
 // parseCRDVersions extracts version info from a CRD unstructured object.
 // Returns an empty slice if the CRD has no spec.versions field.
 func parseCRDVersions(obj *unstructured.Unstructured) ([]CRDVersionInfo, error) {
@@ -84,49 +128,4 @@ func parseCRDVersions(obj *unstructured.Unstructured) ([]CRDVersionInfo, error) 
 		})
 	}
 	return result, nil
-}
-
-// ResolveMPIVersion queries the MPIJob CRD and caches the storage version in c.mpiVersion.
-// Returns immediately if mpiVersion is already set (cached).
-//
-// This is a one-time detection: once resolved, the version is never re-queried.
-// The cached value persists for the lifetime of the Client. This is intentional
-// because CRD versions do not change during a single CLI invocation. If you need
-// to force re-detection, create a new Client or call SetMPIVersion("").
-func (c *Client) ResolveMPIVersion(ctx context.Context) error {
-	if c.mpiVersion != "" {
-		return nil // cached
-	}
-
-	versions, err := c.GetCRDVersions(ctx, "mpijobs.kubeflow.org")
-	if err != nil {
-		if errors.Is(err, ErrCRDNotFound) {
-			return fmt.Errorf("MPIJob CRD not found in cluster")
-		}
-		return fmt.Errorf("failed to get MPIJob CRD versions: %w", err)
-	}
-
-	storageVersion := FindStorageVersion(versions)
-	if storageVersion == "" {
-		return fmt.Errorf("MPIJob CRD has no storage version configured")
-	}
-
-	// Validate the resolved version is one we support.
-	if !IsMPIVersionSupported(storageVersion) {
-		return fmt.Errorf("MPIJob storage version %q is not supported, supported versions: %v",
-			storageVersion, MPISupportedVersions)
-	}
-
-	c.mpiVersion = storageVersion
-	return nil
-}
-
-// IsMPIVersionSupported reports whether version is in the supported set.
-func IsMPIVersionSupported(version string) bool {
-	for _, v := range MPISupportedVersions {
-		if v == version {
-			return true
-		}
-	}
-	return false
 }

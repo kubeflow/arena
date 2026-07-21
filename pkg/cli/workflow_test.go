@@ -67,9 +67,9 @@ func TestWorkflow_SubmitAndDetect(t *testing.T) {
 	assert.Equal(t, "PyTorchJob", kind)
 }
 
-// TestWorkflow_FrameworkLabelPreservation verifies that mpi, horovod, and
+// TestWorkflow_frameworkLabelPreservation verifies that mpi, horovod, and
 // deepspeed all produce MPIJob CRDs but retain distinct framework labels.
-func TestWorkflow_FrameworkLabelPreservation(t *testing.T) {
+func TestWorkflow_frameworkLabelPreservation(t *testing.T) {
 	frameworks := []struct {
 		name     string
 		expected string
@@ -95,7 +95,7 @@ func TestWorkflow_FrameworkLabelPreservation(t *testing.T) {
 			setFrameworkLabel(crd, fw.name)
 
 			assert.Equal(t, "MPIJob", crd.GetKind(), "all three frameworks should produce MPIJob")
-			assert.Equal(t, fw.expected, crd.GetLabels()[FrameworkLabel],
+			assert.Equal(t, fw.expected, crd.GetLabels()[frameworkLabel],
 				"framework label should preserve original name %q", fw.name)
 		})
 	}
@@ -145,7 +145,7 @@ func TestWorkflow_DryRunOutputValidation(t *testing.T) {
 			assert.Equal(t, tt.kind, parsed["kind"])
 			metadata := parsed["metadata"].(map[string]interface{})
 			labels := metadata["labels"].(map[string]interface{})
-			assert.Equal(t, tt.framework, labels[FrameworkLabel])
+			assert.Equal(t, tt.framework, labels[frameworkLabel])
 		})
 	}
 }

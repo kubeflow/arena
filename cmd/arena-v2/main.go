@@ -30,7 +30,7 @@ func formatError(err error, debug bool) string {
 		sb.WriteString("\nFull error chain:\n")
 		current := err
 		for current != nil {
-			sb.WriteString(fmt.Sprintf("  - %v\n", current))
+			fmt.Fprintf(&sb, "  - %v\n", current)
 			current = errors.Unwrap(current)
 		}
 	}

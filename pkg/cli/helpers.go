@@ -31,7 +31,7 @@ func printCRD(crd *unstructured.Unstructured) error {
 // Each resource is printed as indented JSON separated by "---" for readability.
 func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
 	if err := printCRD(crd); err != nil {
-		return err
+		return fmt.Errorf("failed to print CRD: %w", err)
 	}
 
 	// Print TensorBoard resources if enabled
@@ -53,16 +53,29 @@ func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
 			Controller:         ptrBool(true),
 		}
 
-		deploy := buildTensorBoardDeployment(tbName, crd.GetName(), crd.GetNamespace(), tbImage, logDir, t, ownerRef)
+		deploy := buildTensorBoardDeployment(
+			tbName,
+			crd.GetName(),
+			crd.GetNamespace(),
+			tbImage,
+			logDir,
+			t,
+			ownerRef,
+		)
 		fmt.Println("---")
 		if err := printCRD(deploy); err != nil {
-			return err
+			return fmt.Errorf("failed to print TensorBoard Deployment: %w", err)
 		}
 
-		svc := buildTensorBoardService(tbName, crd.GetName(), crd.GetNamespace(), ownerRef)
+		svc := buildTensorBoardService(
+			tbName,
+			crd.GetName(),
+			crd.GetNamespace(),
+			ownerRef,
+		)
 		fmt.Println("---")
 		if err := printCRD(svc); err != nil {
-			return err
+			return fmt.Errorf("failed to print TensorBoard Service: %w", err)
 		}
 	}
 
@@ -72,17 +85,29 @@ func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
 // resolveNS resolves the effective namespace using the 4-level priority chain:
 // CLI -n flag > YAML namespace > kubeconfig context namespace > "default".
 func resolveNS(yamlNamespace string) string {
-	if namespace != "" {
-		return namespace
+	ns := namespace
+	if ns == "" {
+		ns = yamlNamespace
 	}
-	if yamlNamespace != "" {
-		return yamlNamespace
+	if ns == "" {
+		ns = client.ResolveNamespace(kubeconfig, kubeContext, "")
 	}
-	return client.ResolveNamespace(kubeconfig, kubeContext, "")
+	if isSystemNamespace(ns) {
+		log.Warning("creating resources in system namespace — ensure this is intentional", "namespace", ns)
+	}
+	return ns
 }
 
-// isMPIFamily returns true if the framework uses the MPIJob CRD.
-func isMPIFamily(framework string) bool { return IsMPIFamily(framework) }
+// isSystemNamespace returns true for Kubernetes system namespaces where
+// creating user resources is typically unintended.
+func isSystemNamespace(ns string) bool {
+	switch ns {
+	case "kube-system", "kube-public", "kube-node-lease":
+		return true
+	default:
+		return false
+	}
+}
 
 // resolveMPIAPIVersion detects the cluster's MPIJob storage version.
 // Returns the storage version if supported, or an error.
@@ -111,26 +136,25 @@ func isMPIVersionSupportedByProvider(version string) bool {
 
 // submitCRD handles the common CRD submission flow shared by `submit` and `run`:
 // provider lookup, MPI version detection, CRD build, namespace resolution,
-// dry-run, existence check, cluster submit, and auxiliary resource creation
-// with rollback on failure.
-func submitCRD(ctx context.Context, t *task.Task, frameworkLabel string, dryRun bool) error {
+// dry-run, existence check, RBAC pre-creation, CRD submit, and auxiliary
+// resource finalisation (ConfigMap + ownerRef patching) with rollback on failure.
+func submitCRD(ctx context.Context, k8sClient *client.Client, t *task.Task, frameworkLabel string, dryRun bool) error {
 	p, err := getProvider(t.Framework.Name)
 	if err != nil {
 		return err
 	}
 
-	k8sClient, err := client.NewClient(kubeconfig, kubeContext)
-	if err != nil {
-		return fmt.Errorf("failed to create K8s client: %w", err)
-	}
-
 	if isMPIFamily(t.Framework.Name) {
 		if mpiP, ok := p.(*provider.MPIProvider); ok {
-			version, err := resolveMPIAPIVersion(ctx, k8sClient)
-			if err != nil {
-				return err
+			if k8sClient != nil {
+				version, err := resolveMPIAPIVersion(ctx, k8sClient)
+				if err != nil {
+					return err
+				}
+				mpiP.APIVersion = version
+			} else {
+				mpiP.APIVersion = provider.MPIAPIVersionV1
 			}
-			mpiP.APIVersion = version
 		}
 	}
 
@@ -141,6 +165,7 @@ func submitCRD(ctx context.Context, t *task.Task, frameworkLabel string, dryRun 
 	}
 
 	ns := resolveNS(t.Namespace)
+	log.Debug("resolved target namespace", "namespace", ns)
 	crd.SetNamespace(ns)
 	t.Namespace = ns
 	setFrameworkLabel(crd, frameworkLabel)
@@ -157,20 +182,29 @@ func submitCRD(ctx context.Context, t *task.Task, frameworkLabel string, dryRun 
 		return err
 	}
 
+	// Pre-create RBAC resources before CRD so they exist when the
+	// operator reconciles the CRD (eliminates pod startup race).
+	log.Debug("pre-creating RBAC resources", "name", t.Name)
+	rbacResources, err := preCreateRBAC(ctx, t, k8sClient, p)
+	if err != nil {
+		return fmt.Errorf("failed to pre-create RBAC resources: %w", err)
+	}
+
 	log.Debug("submitting job", "kind", crd.GetKind(), "name", crd.GetName(), "namespace", ns)
 	if err := k8sClient.Create(ctx, crd); err != nil {
+		rollback(ctx, k8sClient, rbacResources)
 		return fmt.Errorf("failed to submit job: %w", err)
 	}
 
-	log.Debug("creating auxiliary resources", "name", crd.GetName())
-	if err := createJobResources(ctx, crd, t, k8sClient, p); err != nil {
-		log.Warning("auxiliary resource creation failed, cleaning up CRD",
-			"kind", crd.GetKind(), "name", crd.GetName(), "error", err.Error())
+	log.Debug("finalizing auxiliary resources", "name", crd.GetName())
+	if err := finalizeJobResources(ctx, crd, t, k8sClient, p, rbacResources); err != nil {
+		log.Debug("rolling back after auxiliary resource failure", "kind", crd.GetKind(), "name", crd.GetName())
+		rollback(ctx, k8sClient, rbacResources)
 		if delErr := k8sClient.Delete(ctx, crd.GetKind(), ns, t.Name); delErr != nil {
 			log.Warning("failed to clean up CRD after partial failure",
 				"kind", crd.GetKind(), "name", crd.GetName(), "error", delErr.Error())
 		}
-		return err
+		return fmt.Errorf("failed to create auxiliary resources: %w", err)
 	}
 
 	fmt.Printf("Job %s submitted successfully\n", t.Name)

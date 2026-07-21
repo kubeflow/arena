@@ -37,7 +37,7 @@ func captureStdout(t *testing.T, fn func()) string {
 	outCh := make(chan string, 1)
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		_, _ = io.Copy(&buf, r)
 		outCh <- buf.String()
 	}()
 
@@ -53,7 +53,7 @@ func captureStdout(t *testing.T, fn func()) string {
 // --- Validate() tests ---
 
 func TestValidateAcceptsValidFormats(t *testing.T) {
-	formats := []OutputFormat{FormatTable, FormatWide, FormatJSON, FormatYAML}
+	formats := []Format{FormatTable, FormatWide, FormatJSON, FormatYAML}
 	for _, f := range formats {
 		err := f.Validate()
 		assert.Nil(t, err, "expected nil error for format %q", f)
@@ -61,7 +61,7 @@ func TestValidateAcceptsValidFormats(t *testing.T) {
 }
 
 func TestValidateRejectsInvalidFormat(t *testing.T) {
-	err := OutputFormat("csv").Validate()
+	err := Format("csv").Validate()
 	assert.NotNil(t, err, "expected error for invalid format csv")
 	if err != nil {
 		msg := err.Error()

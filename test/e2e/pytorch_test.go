@@ -41,7 +41,7 @@ var _ = Describe("PyTorch Job", func() {
 		var err error
 
 		By("Submitting a PyTorch job")
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",

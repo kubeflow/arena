@@ -2,6 +2,8 @@ package cli
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -124,5 +126,30 @@ func TestResolveMPIAPIVersion_CRDNotFound(t *testing.T) {
 
 	_, err := resolveMPIAPIVersion(context.Background(), k8sClient)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "MPIJob CRD not found")
+	assert.Contains(t, err.Error(), "mpijob crd not found")
+}
+
+// newFakeK8sClient creates a fake K8s client with PyTorchJob, TFJob, and MPIJob
+// GVRs pre-registered for Create/Get/List/Delete operations.
+func newFakeK8sClient(t *testing.T) *client.Client {
+	t.Helper()
+	scheme := runtime.NewScheme()
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "kubeflow.org", Version: "v1", Resource: "pytorchjobs"}:  "PyTorchJobList",
+		{Group: "kubeflow.org", Version: "v1", Resource: "tfjobs"}:       "TFJobList",
+		{Group: "kubeflow.org", Version: "v1", Resource: "mpijobs"}:      "MPIJobList",
+		{Group: "kubeflow.org", Version: "v2beta1", Resource: "mpijobs"}: "MPIJobList",
+	}
+	fakeDynamic := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds)
+	c := client.NewClientForInterface(fakeDynamic)
+	c.SetMPIVersion("v1")
+	return c
+}
+
+// examplesDir resolves the path to examples/v2 relative to pkg/cli/.
+func examplesDir(t *testing.T) string {
+	t.Helper()
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	return filepath.Join(wd, "..", "..", "examples", "v2")
 }

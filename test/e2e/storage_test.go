@@ -3,12 +3,89 @@ package e2e_test
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"os/exec"
-	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
+
+const prereqConfigMapYAML = `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+data:
+  settings.yaml: |
+    model: resnet50
+    batch_size: 32
+    epochs: 10
+`
+
+const prereqSecretYAML = `apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+  namespace: default
+type: Opaque
+stringData:
+  username: admin
+  password: test-password
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ssh-keys
+  namespace: default
+type: Opaque
+stringData:
+  id_rsa: |
+    -----BEGIN RSA PRIVATE KEY-----
+    fake-key-for-e2e-testing-only
+    -----END RSA PRIVATE KEY-----
+`
+
+const configmapJobYAML = `version: 0.1.0
+name: test-configmap
+framework:
+  name: pytorch
+image: docker.io/pytorch/pytorch:2.1
+run: cat /etc/config/settings.yaml
+worker:
+  replicas: 1
+  resources:
+    cpu: 1
+    memory: 1Gi
+storages:
+  - name: configs
+    configmap: app-config
+    mount_path: /etc/config
+  - name: single-file
+    configmap: app-config
+    key: settings.yaml
+    mount_path: /app/settings.yaml
+`
+
+const secretJobYAML = `version: 0.1.0
+name: test-secret
+framework:
+  name: pytorch
+image: docker.io/pytorch/pytorch:2.1
+run: test -f /root/.ssh/id_rsa && echo "secret mounted ok"
+worker:
+  replicas: 1
+  resources:
+    cpu: 1
+    memory: 1Gi
+storages:
+  - name: creds
+    secret: db-credentials
+    mount_path: /secrets
+  - name: ssh-key
+    secret: ssh-keys
+    key: id_rsa
+    mount_path: /root/.ssh/id_rsa
+`
 
 var _ = Describe("Storage volume mounts", func() {
 	var namespace string
@@ -21,9 +98,8 @@ var _ = Describe("Storage volume mounts", func() {
 		BeforeEach(func() {
 			// Create the prerequisite ConfigMap
 			var out bytes.Buffer
-			cmd := exec.Command("kubectl", "apply", "-f",
-				filepath.Join("..", "testdata", "prereq-configmap.yaml"),
-				"-n", namespace)
+			cmd := exec.Command("kubectl", "apply", "-f", "-")
+			cmd.Stdin = bytes.NewReader([]byte(prereqConfigMapYAML))
 			cmd.Stdout = &out
 			cmd.Stderr = &out
 			Expect(cmd.Run()).NotTo(HaveOccurred(),
@@ -50,10 +126,13 @@ var _ = Describe("Storage volume mounts", func() {
 
 		It("should mount ConfigMap as volumes with correct paths", func() {
 			By("Submitting a job with ConfigMap storages")
+			yamlPath, err := createTempYAML(configmapJobYAML)
+			Expect(err).NotTo(HaveOccurred())
+			defer os.Remove(yamlPath)
+
 			var out bytes.Buffer
 			runCmd := exec.Command(arenaV2Bin, "job", "run", "-f",
-				filepath.Join("..", "testdata", "configmap.yaml"),
-				"--namespace", namespace)
+				yamlPath, "--namespace", namespace)
 			runCmd.Stdout = &out
 			runCmd.Stderr = &out
 			Expect(runCmd.Run()).NotTo(HaveOccurred(),
@@ -115,9 +194,8 @@ var _ = Describe("Storage volume mounts", func() {
 		BeforeEach(func() {
 			// Create the prerequisite Secrets
 			var out bytes.Buffer
-			cmd := exec.Command("kubectl", "apply", "-f",
-				filepath.Join("..", "testdata", "prereq-secret.yaml"),
-				"-n", namespace)
+			cmd := exec.Command("kubectl", "apply", "-f", "-")
+			cmd.Stdin = bytes.NewReader([]byte(prereqSecretYAML))
 			cmd.Stdout = &out
 			cmd.Stderr = &out
 			Expect(cmd.Run()).NotTo(HaveOccurred(),
@@ -145,10 +223,13 @@ var _ = Describe("Storage volume mounts", func() {
 
 		It("should mount Secrets as volumes with correct paths", func() {
 			By("Submitting a job with Secret storages")
+			yamlPath, err := createTempYAML(secretJobYAML)
+			Expect(err).NotTo(HaveOccurred())
+			defer os.Remove(yamlPath)
+
 			var out bytes.Buffer
 			runCmd := exec.Command(arenaV2Bin, "job", "run", "-f",
-				filepath.Join("..", "testdata", "secret.yaml"),
-				"--namespace", namespace)
+				yamlPath, "--namespace", namespace)
 			runCmd.Stdout = &out
 			runCmd.Stderr = &out
 			Expect(runCmd.Run()).NotTo(HaveOccurred(),

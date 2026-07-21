@@ -30,7 +30,7 @@ var _ = Describe("TensorBoard", func() {
 
 	It("should include TensorBoard resources in submit dry-run", func() {
 		var stdout, stderr bytes.Buffer
-		cmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		cmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",

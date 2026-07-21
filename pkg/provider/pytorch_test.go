@@ -203,7 +203,7 @@ func TestPyTorchGetJobType(t *testing.T) {
 	assert.Equal(t, "PyTorchJob", provider.GetJobType())
 }
 
-func TestPyTorchProviderImplementsInterface(t *testing.T) {
+func TestPyTorchProviderImplementsInterface(_ *testing.T) {
 	var _ Provider = &PyTorchProvider{}
 }
 

@@ -1,6 +1,7 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -8,14 +9,16 @@ import (
 	"time"
 
 	"github.com/kubeflow/arena/pkg/constants"
+
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // versionRegex validates MAJOR.MINOR.PATCH format for schema versions.
 var versionRegex = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 
-// DefaultSchemaVersion is the schema version used when none is specified.
-const DefaultSchemaVersion = "0.1.0"
+// defaultSchemaVersion is the schema version used when none is specified.
+const defaultSchemaVersion = "0.1.0"
 
 // knownSchemaVersions maps MAJOR.MINOR to whether the CLI can parse that schema.
 var knownSchemaVersions = map[string]bool{
@@ -37,7 +40,7 @@ var (
 	imagePullPolicies   = map[string]bool{"Always": true, "IfNotPresent": true, "Never": true}
 	successPolicies     = map[string]bool{"ChiefWorker": true, "AllWorkers": true}
 	mpiImplementations  = map[string]bool{"OpenMPI": true, "Intel": true, "MPICH": true}
-	launcherPolicies     = map[string]bool{"AtStartup": true, "WaitForWorkersReady": true}
+	launcherPolicies    = map[string]bool{"AtStartup": true, "WaitForWorkersReady": true}
 	affinityPolicies    = map[string]bool{"spread": true, "binpack": true, "none": true}
 	affinityConstraints = map[string]bool{"preferred": true, "required": true}
 )
@@ -67,11 +70,11 @@ type Task struct {
 	Worker *Worker `yaml:"worker,omitempty"`
 
 	// Optional roles — provider-specific
-	Master    *RoleConfig `yaml:"master,omitempty"`      // PyTorch
-	Chief     *RoleConfig `yaml:"chief,omitempty"`       // TFJob
-	PS        *RoleConfig `yaml:"ps,omitempty"`          // TFJob
-	Evaluator *RoleConfig `yaml:"evaluator,omitempty"`   // TFJob
-	Launcher  *RoleConfig `yaml:"launcher,omitempty"`    // MPIJob
+	Master    *RoleConfig `yaml:"master,omitempty"`    // PyTorch
+	Chief     *RoleConfig `yaml:"chief,omitempty"`     // TFJob
+	PS        *RoleConfig `yaml:"ps,omitempty"`        // TFJob
+	Evaluator *RoleConfig `yaml:"evaluator,omitempty"` // TFJob
+	Launcher  *RoleConfig `yaml:"launcher,omitempty"`  // MPIJob
 
 	// Sync & Init
 	Sync []SyncEntry     `yaml:"sync,omitempty"`
@@ -163,10 +166,11 @@ type Scheduling struct {
 
 // Toleration mirrors the K8s toleration spec.
 type Toleration struct {
-	Key      string `yaml:"key,omitempty"`
-	Operator string `yaml:"operator,omitempty"`
-	Value    string `yaml:"value,omitempty"`
-	Effect   string `yaml:"effect,omitempty"`
+	Key               string `yaml:"key,omitempty"`
+	Operator          string `yaml:"operator,omitempty"`
+	Value             string `yaml:"value,omitempty"`
+	Effect            string `yaml:"effect,omitempty"`
+	TolerationSeconds *int64 `yaml:"toleration_seconds,omitempty"`
 }
 
 // Affinity uses orthogonal policy x constraint x target dimensions.
@@ -242,9 +246,9 @@ type Storage struct {
 
 // Validate checks that the Storage entry has a name, mount path, and exactly
 // one storage type declared.
-func (s Storage) Validate() error {
+func (s *Storage) Validate() error {
 	if s.Name == "" {
-		return fmt.Errorf("storage name must not be empty")
+		return errors.New("storage name must not be empty")
 	}
 	if s.MountPath == "" {
 		return fmt.Errorf("storage %q: mountPath must not be empty", s.Name)
@@ -254,15 +258,15 @@ func (s Storage) Validate() error {
 		name string
 		val  string
 	}{
-		{"pvc", s.PVC},
-		{"shm", s.SHM},
-		{"tmp", s.Tmp},
-		{"hostpath", s.HostPath},
-		{"configmap", s.ConfigMap},
-		{"secret", s.Secret},
+		{name: "pvc", val: s.PVC},
+		{name: "shm", val: s.SHM},
+		{name: "tmp", val: s.Tmp},
+		{name: "hostpath", val: s.HostPath},
+		{name: "configmap", val: s.ConfigMap},
+		{name: "secret", val: s.Secret},
 	}
 
-	var set []string
+	set := make([]string, 0, 6)
 	for _, t := range types {
 		if t.val != "" {
 			set = append(set, t.name)
@@ -278,7 +282,10 @@ func (s Storage) Validate() error {
 		return fmt.Errorf("storage %q: cannot specify multiple storage types (%s)", s.Name, strings.Join(set, ", "))
 	}
 
-	if s.Key != "" && s.ConfigMap == "" && s.Secret == "" {
+	hasKey := s.Key != ""
+	hasConfigMap := s.ConfigMap != ""
+	hasSecret := s.Secret != ""
+	if hasKey && !hasConfigMap && !hasSecret {
 		return fmt.Errorf("storage %q: key can only be used with configmap or secret", s.Name)
 	}
 
@@ -347,17 +354,17 @@ func (e *EnvValue) UnmarshalYAML(node *yaml.Node) error {
 		_, hasConfigMap := raw["configmap"]
 
 		if hasSecret && hasConfigMap {
-			return fmt.Errorf("envs: mapping must specify exactly one of 'secret' or 'configmap', not both")
+			return errors.New("envs: mapping must specify exactly one of 'secret' or 'configmap', not both")
 		}
 		if !hasSecret && !hasConfigMap {
-			return fmt.Errorf("envs: mapping must contain 'secret' or 'configmap' key")
+			return errors.New("envs: mapping must contain 'secret' or 'configmap' key")
 		}
 
 		if hasSecret {
 			name := raw["secret"]
 			key := raw["key"]
 			if name == "" {
-				return fmt.Errorf("envs: secret name must not be empty")
+				return errors.New("envs: secret name must not be empty")
 			}
 			if key == "" {
 				return fmt.Errorf("envs: key must not be empty for secret reference %q", name)
@@ -369,7 +376,7 @@ func (e *EnvValue) UnmarshalYAML(node *yaml.Node) error {
 		name := raw["configmap"]
 		key := raw["key"]
 		if name == "" {
-			return fmt.Errorf("envs: configmap name must not be empty")
+			return errors.New("envs: configmap name must not be empty")
 		}
 		if key == "" {
 			return fmt.Errorf("envs: key must not be empty for configmap reference %q", name)
@@ -383,7 +390,7 @@ func (e *EnvValue) UnmarshalYAML(node *yaml.Node) error {
 // MarshalYAML produces the canonical form for serialization.
 func (e EnvValue) MarshalYAML() (interface{}, error) {
 	if e.Secret != nil && e.ConfigMap != nil {
-		return nil, fmt.Errorf("envs: cannot set both secret and configmap on the same EnvValue")
+		return nil, errors.New("envs: cannot set both secret and configmap on the same EnvValue")
 	}
 	if e.Secret != nil {
 		return map[string]string{"secret": e.Secret.Name, "key": e.Secret.Key}, nil
@@ -408,7 +415,7 @@ func validateVersion(t *Task) error {
 	parts := strings.Split(t.Version, ".")
 	majorMinor := parts[0] + "." + parts[1]
 	if !knownSchemaVersions[majorMinor] {
-		return fmt.Errorf("version %s is newer than supported (current: 0.1.x). Upgrade arena CLI or use version: 0.1.0", t.Version)
+		return fmt.Errorf("version %q is newer than supported (current: 0.1.x)", t.Version)
 	}
 	return nil
 }
@@ -429,7 +436,7 @@ func ParseDuration(s string) (time.Duration, error) {
 		if _, err := fmt.Sscanf(numStr, "%f", &days); err == nil {
 			return time.Duration(days * 24 * float64(time.Hour)), nil
 		}
-		return 0, fmt.Errorf("invalid duration format: %s", s)
+		return 0, fmt.Errorf("invalid duration format: %q (expected a number followed by 'd', e.g. '7d')", s)
 	}
 
 	d, err := time.ParseDuration(s)
@@ -443,42 +450,103 @@ func ParseDuration(s string) (time.Duration, error) {
 // Call this before Validate to ensure the Task is fully populated.
 func (t *Task) SetDefaults() {
 	if t.Version == "" {
-		t.Version = DefaultSchemaVersion
+		t.Version = defaultSchemaVersion
 	}
 }
 
 // Validate checks that the Task has all required fields and valid values.
 func Validate(t *Task) error {
+	var errs []error
+	errs = append(errs, validateIdentity(t))
+	errs = append(errs, validateFramework(t))
+	errs = append(errs, validateLifecycle(t))
+	errs = append(errs, validateScheduling(t))
+	errs = append(errs, validateSync(t))
+	errs = append(errs, validateRoles(t))
+	errs = append(errs, validateStorages(t))
+	return errors.Join(errs...)
+}
+
+// validateIdentity validates version, name, image, and run.
+func validateIdentity(t *Task) error {
 	if err := validateVersion(t); err != nil {
 		return err
 	}
 	if t.Name == "" {
-		return fmt.Errorf("name is required")
+		return errors.New("name is required")
+	}
+	if errs := validation.IsDNS1123Label(t.Name); len(errs) > 0 {
+		return fmt.Errorf("invalid name %q: %s", t.Name, strings.Join(errs, ", "))
 	}
 	if t.Image == "" {
-		return fmt.Errorf("image is required")
+		return errors.New("image is required")
 	}
 	if t.Run == "" {
-		return fmt.Errorf("run is required")
+		return errors.New("run is required")
 	}
+	if t.Namespace != "" {
+		if errs := validation.IsDNS1123Label(t.Namespace); len(errs) > 0 {
+			return fmt.Errorf("invalid namespace %q: %s", t.Namespace, strings.Join(errs, ", "))
+		}
+	}
+	return nil
+}
 
+// validateFramework validates framework name, worker requirements, and framework-specific options.
+func validateFramework(t *Task) error {
 	if !validFrameworks[t.Framework.Name] {
-		return fmt.Errorf("unsupported framework: %s (must be pytorch, tensorflow, mpi, horovod, deepspeed, or ray)", t.Framework.Name)
+		return fmt.Errorf("unsupported framework: %q (must be pytorch, tensorflow, mpi, horovod, deepspeed, or ray)", t.Framework.Name)
 	}
 
 	if t.Worker == nil {
 		if t.Framework.Name != constants.FrameworkPyTorch {
-			return fmt.Errorf("worker is required for %s framework", t.Framework.Name)
+			return fmt.Errorf("worker is required for %q framework", t.Framework.Name)
 		}
 		if t.Master == nil {
-			return fmt.Errorf("pytorch requires worker or master (at least one must be specified)")
+			return errors.New("pytorch requires worker or master (at least one must be specified)")
 		}
-	} else {
-		if t.Worker.Replicas < 1 {
-			return fmt.Errorf("worker.replicas must be > 0, got %d", t.Worker.Replicas)
+	} else if t.Worker.Replicas < 1 {
+		return fmt.Errorf("worker.replicas must be > 0, got %d", t.Worker.Replicas)
+	}
+
+	if t.Framework.Name == constants.FrameworkPyTorch && t.Framework.Options.NprocPerNode != "" {
+		v := t.Framework.Options.NprocPerNode
+		switch v {
+		case "auto", "gpu", "cpu":
+			// valid
+		default:
+			if n, err := strconv.Atoi(v); err != nil || n < 1 {
+				return fmt.Errorf("pytorch nproc_per_node must be 'auto', 'gpu', 'cpu', or a positive integer, got %q", v)
+			}
 		}
 	}
 
+	if t.Lifecycle.SuccessPolicy != "" && t.Framework.Name != constants.FrameworkTensorFlow {
+		return errors.New("success_policy is only valid for tensorflow framework")
+	}
+	if t.Lifecycle.SuccessPolicy != "" {
+		if !successPolicies[t.Lifecycle.SuccessPolicy] {
+			return fmt.Errorf("invalid success_policy: %q (must be ChiefWorker or AllWorkers)", t.Lifecycle.SuccessPolicy)
+		}
+	}
+
+	if t.Framework.Name == constants.FrameworkMPI {
+		if t.Framework.Options.MPIImplementation != "" {
+			if !mpiImplementations[t.Framework.Options.MPIImplementation] {
+				return fmt.Errorf("invalid mpi_implementation: %q (must be OpenMPI, Intel, or MPICH)", t.Framework.Options.MPIImplementation)
+			}
+		}
+		if t.Framework.Options.LauncherCreationPolicy != "" {
+			if !launcherPolicies[t.Framework.Options.LauncherCreationPolicy] {
+				return fmt.Errorf("invalid launcher_creation_policy: %q (must be AtStartup or WaitForWorkersReady)", t.Framework.Options.LauncherCreationPolicy)
+			}
+		}
+	}
+	return nil
+}
+
+// validateLifecycle validates activeDeadline, ttlAfterFinished, restartPolicy, cleanPodPolicy, and imagePullPolicy.
+func validateLifecycle(t *Task) error {
 	if t.Lifecycle.CleanPodPolicy != "" {
 		if !cleanPodPolicies[t.Lifecycle.CleanPodPolicy] {
 			return fmt.Errorf("invalid clean_pod_policy: %q (must be None, Running, or All)", t.Lifecycle.CleanPodPolicy)
@@ -505,51 +573,27 @@ func Validate(t *Task) error {
 
 	if t.ImagePullPolicy != "" {
 		if !imagePullPolicies[t.ImagePullPolicy] {
-			return fmt.Errorf("invalid image_pull_policy: %q", t.ImagePullPolicy)
+			return fmt.Errorf("invalid image_pull_policy: %q (must be Always, IfNotPresent, or Never)", t.ImagePullPolicy)
 		}
 	}
+	return nil
+}
 
-	if t.Framework.Name == constants.FrameworkPyTorch && t.Framework.Options.NprocPerNode != "" {
-		v := t.Framework.Options.NprocPerNode
-		if v != "auto" && v != "gpu" && v != "cpu" {
-			n, err := strconv.Atoi(v)
-			if err != nil || n < 1 {
-				return fmt.Errorf("pytorch nproc_per_node must be 'auto', 'gpu', 'cpu', or a positive integer, got %q", v)
-			}
-		}
-	}
-
-	if t.Lifecycle.SuccessPolicy != "" && t.Framework.Name != constants.FrameworkTensorFlow {
-		return fmt.Errorf("success_policy is only valid for tensorflow framework")
-	}
-	if t.Lifecycle.SuccessPolicy != "" {
-		if !successPolicies[t.Lifecycle.SuccessPolicy] {
-			return fmt.Errorf("invalid success_policy: %q (must be ChiefWorker or AllWorkers)", t.Lifecycle.SuccessPolicy)
-		}
-	}
-
-	if t.Framework.Name == constants.FrameworkMPI {
-		if t.Framework.Options.MPIImplementation != "" {
-			if !mpiImplementations[t.Framework.Options.MPIImplementation] {
-				return fmt.Errorf("invalid mpi_implementation: %q (must be OpenMPI, Intel, or MPICH)", t.Framework.Options.MPIImplementation)
-			}
-		}
-		if t.Framework.Options.LauncherCreationPolicy != "" {
-			if !launcherPolicies[t.Framework.Options.LauncherCreationPolicy] {
-				return fmt.Errorf("invalid launcher_creation_policy: %q (must be AtStartup or WaitForWorkersReady)", t.Framework.Options.LauncherCreationPolicy)
-			}
-		}
-	}
-
-	// Affinity validation
+// validateScheduling validates scheduler, queue, priorityClassName, gang, affinity, tolerations, and nodeSelector.
+func validateScheduling(t *Task) error {
 	if a := t.Scheduling.Affinity; a != nil {
 		// rules requires target
 		if len(a.Rules) > 0 && a.Target == "" {
-			return fmt.Errorf("affinity.target is required when affinity.rules is specified")
+			return errors.New("affinity.target is required when affinity.rules is specified")
 		}
 		// target valid values
-		if a.Target != "" && a.Target != "pod" && a.Target != "node" {
-			return fmt.Errorf("affinity.target must be 'pod' or 'node', got %q", a.Target)
+		if a.Target != "" {
+			switch a.Target {
+			case "pod", "node":
+				// valid
+			default:
+				return fmt.Errorf("affinity.target must be 'pod' or 'node', got %q", a.Target)
+			}
 		}
 		// policy validation
 		if a.Policy != "" && a.Policy != "none" {
@@ -566,21 +610,69 @@ func Validate(t *Task) error {
 				return fmt.Errorf("affinity.constraint must be 'preferred' or 'required', got %q", a.Constraint)
 			}
 		}
+		// weight validation: preferred mode requires weight 1-100 (skip for 'none' policy)
+		if a.Policy != "none" {
+			constraint := a.Constraint
+			if constraint == "" {
+				constraint = "preferred"
+			}
+			if constraint == "preferred" {
+				for i, rule := range a.Rules {
+					if rule.Weight < 1 || rule.Weight > 100 {
+						return fmt.Errorf("affinity rule[%d]: weight must be 1-100 for preferred scheduling, got %d", i, rule.Weight)
+					}
+				}
+			}
+		}
+	}
+	// toleration validation
+	for i, tol := range t.Scheduling.Tolerations {
+		if tol.Operator != "" && tol.Operator != "Equal" && tol.Operator != "Exists" {
+			return fmt.Errorf("toleration[%d]: invalid operator %q (must be Equal or Exists)", i, tol.Operator)
+		}
+		if tol.Effect != "" && tol.Effect != "NoSchedule" && tol.Effect != "PreferNoSchedule" && tol.Effect != "NoExecute" {
+			return fmt.Errorf("toleration[%d]: invalid effect %q (must be NoSchedule, PreferNoSchedule, or NoExecute)", i, tol.Effect)
+		}
+		if tol.Operator == "Exists" && tol.Value != "" {
+			return fmt.Errorf("toleration[%d]: Exists operator must not have a value", i)
+		}
+	}
+	return nil
+}
+
+// validateStorages validates storage names, duplicates, and individual storage entries.
+func validateStorages(t *Task) error {
+	var errs []error
+	storageMap := make(map[string]Storage, len(t.Storages))
+	for _, st := range t.Storages {
+		if st.Name == "" {
+			errs = append(errs, errors.New("storages: storage name must not be empty"))
+			continue
+		}
+		if _, exists := storageMap[st.Name]; exists {
+			errs = append(errs, fmt.Errorf("storages: duplicate storage name %q", st.Name))
+			continue
+		}
+		storageMap[st.Name] = st
 	}
 
-	// Sync validation
+	for i := range t.Storages {
+		if err := (&t.Storages[i]).Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("storages: %w", err))
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// validateSync validates sync entries and TensorBoard mount references.
+func validateSync(t *Task) error {
 	// Build storage lookup once (O(M)) before iterating sync entries (O(N)),
 	// so the combined validation is O(N+M) rather than O(N*M).
 	storageMap := make(map[string]Storage, len(t.Storages))
 	for _, st := range t.Storages {
-		if st.Name == "" {
-			return fmt.Errorf("storages: storage name must not be empty")
-		}
-		if _, exists := storageMap[st.Name]; exists {
-			return fmt.Errorf("storages: duplicate storage name %q", st.Name)
-		}
 		storageMap[st.Name] = st
 	}
+
 	for i, s := range t.Sync {
 		count := 0
 		if s.Git != "" {
@@ -640,40 +732,40 @@ func Validate(t *Task) error {
 			}
 		}
 	}
+	return nil
+}
 
-	// Role validation: framework-specific roles are only valid for their respective frameworks.
-	// This prevents users from specifying invalid role combinations (e.g., chief with pytorch).
-	// Each role maps to a specific Operator CRD replica type, and mismatched roles would
-	// produce CRDs that the Operator cannot reconcile.
+// validateRoles validates master, chief, launcher, evaluator, and PS roles.
+func validateRoles(t *Task) error {
+	// Framework-specific roles are validated against their respective frameworks.
 	if t.Master != nil && t.Framework.Name != constants.FrameworkPyTorch {
-		return fmt.Errorf("master role is only valid for pytorch framework")
+		return errors.New("master role is only valid for pytorch framework")
 	}
 	if t.Chief != nil && t.Framework.Name != constants.FrameworkTensorFlow {
-		return fmt.Errorf("chief role is only valid for tensorflow framework")
+		return errors.New("chief role is only valid for tensorflow framework")
 	}
 	if t.PS != nil && t.Framework.Name != constants.FrameworkTensorFlow {
-		return fmt.Errorf("ps role is only valid for tensorflow framework")
+		return errors.New("ps role is only valid for tensorflow framework")
 	}
 	if t.Evaluator != nil && t.Framework.Name != constants.FrameworkTensorFlow {
-		return fmt.Errorf("evaluator role is only valid for tensorflow framework")
+		return errors.New("evaluator role is only valid for tensorflow framework")
 	}
-	// Launcher is shared across MPI-family frameworks (mpi, horovod, deepspeed),
-	// all of which use an MPIJob-style CRD with a launcher/worker split.
-	if t.Launcher != nil && t.Framework.Name != constants.FrameworkMPI && t.Framework.Name != constants.FrameworkHorovod && t.Framework.Name != constants.FrameworkDeepSpeed {
-		return fmt.Errorf("launcher role is only valid for mpi, horovod, and deepspeed frameworks")
+	isMPIFamily := t.Framework.Name == constants.FrameworkMPI ||
+		t.Framework.Name == constants.FrameworkHorovod ||
+		t.Framework.Name == constants.FrameworkDeepSpeed
+	if t.Launcher != nil && !isMPIFamily {
+		return errors.New("launcher role is only valid for mpi, horovod, and deepspeed frameworks")
 	}
 
-	// Constrained roles have a fixed replica count of 1 in the Operator CRD.
-	// Replicas=0 means the field was not set (Go zero value) and is treated as unset.
-	// Only master, chief, launcher, and evaluator are constrained; ps is unconstrained.
+	// Constrained roles (master, chief, launcher, evaluator) are limited to replicas=1.
 	constrained := []struct {
 		name string
 		role *RoleConfig
 	}{
-		{"master", t.Master},
-		{"chief", t.Chief},
-		{"launcher", t.Launcher},
-		{"evaluator", t.Evaluator},
+		{name: "master", role: t.Master},
+		{name: "chief", role: t.Chief},
+		{name: "launcher", role: t.Launcher},
+		{name: "evaluator", role: t.Evaluator},
 	}
 	for _, c := range constrained {
 		if c.role != nil && c.role.Replicas > 1 {
@@ -681,20 +773,10 @@ func Validate(t *Task) error {
 		}
 	}
 
-	// PS (parameter server) is unconstrained: it can have any number of replicas,
-	// but must have at least 1 if the section is present (replicas=0 means unset,
-	// which would create a zero-replica PS deployment — an invalid configuration).
+	// PS is unconstrained but requires at least 1 replica if present.
 	if t.PS != nil && t.PS.Replicas < 1 {
 		return fmt.Errorf("ps.replicas must be > 0, got %d", t.PS.Replicas)
 	}
-
-	// Storage validation
-	for _, s := range t.Storages {
-		if err := s.Validate(); err != nil {
-			return fmt.Errorf("storages: %w", err)
-		}
-	}
-
 	return nil
 }
 

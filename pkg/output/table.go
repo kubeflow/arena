@@ -3,12 +3,14 @@ package output
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/kubeflow/arena/pkg/client"
+	"github.com/kubeflow/arena/pkg/log"
 )
 
 // maxJobListWidths caps column widths in the job list table to prevent excessively wide output.
@@ -68,67 +70,6 @@ func NewTableRenderer() *TableRenderer {
 	return &TableRenderer{}
 }
 
-// calculateWidths determines the display width for each column by inspecting all cell values,
-// expanding each column to fit the widest content it contains, capped by maxCaps where defined.
-func calculateWidths(headers []string, rows [][]string, maxCaps map[string]int) []int {
-	widths := make([]int, len(headers))
-	for i, h := range headers {
-		widths[i] = len(h)
-		if cap, ok := maxCaps[h]; ok {
-			widths[i] = min(widths[i], cap)
-		}
-	}
-	for _, row := range rows {
-		for i, cell := range row {
-			cellLen := len(cell)
-			if cap, ok := maxCaps[headers[i]]; ok {
-				cellLen = min(cellLen, cap)
-			}
-			if cellLen > widths[i] {
-				widths[i] = cellLen
-			}
-		}
-	}
-	return widths
-}
-
-// truncate shortens s to maxLen visible characters, appending "..." when truncation occurs.
-// If maxLen <= 3 the string is hard-cut without a marker.
-func truncate(s string, maxLen int) string {
-	if utf8.RuneCountInString(s) <= maxLen {
-		return s
-	}
-	if maxLen <= 3 {
-		return string([]rune(s)[:maxLen])
-	}
-	return string([]rune(s)[:maxLen-3]) + "..."
-}
-
-// renderRow formats a single table row, truncating each cell to the corresponding width
-// and left-padding with spaces so columns align.
-func renderRow(cells []string, widths []int) string {
-	var parts []string
-	for i, cell := range cells {
-		truncated := truncate(cell, widths[i])
-		parts = append(parts, fmt.Sprintf("%-*s", widths[i], truncated))
-	}
-	return strings.Join(parts, " ") + "\n"
-}
-
-// indentLines prefixes every non-empty line of s with prefix, preserving the
-// line structure (including trailing newlines) so the indented block aligns
-// under a section header. Empty lines are left untouched to avoid introducing
-// trailing whitespace.
-func indentLines(s, prefix string) string {
-	lines := strings.Split(s, "\n")
-	for i, line := range lines {
-		if line != "" {
-			lines[i] = prefix + line
-		}
-	}
-	return strings.Join(lines, "\n")
-}
-
 // RenderJobList renders a table of job statuses with columns: NAME, STATUS, REPLICAS, AGE.
 // Column widths expand dynamically to fit content, up to the caps defined in maxJobListWidths.
 // Returns "No jobs found" when the input slice is nil or empty.
@@ -138,7 +79,7 @@ func (r *TableRenderer) RenderJobList(jobs []client.JobStatus) string {
 	}
 
 	headers := []string{"NAME", "STATUS", "REPLICAS", "AGE"}
-	var rows [][]string
+	rows := make([][]string, 0, len(jobs))
 	for _, job := range jobs {
 		rows = append(rows, []string{
 			job.Name, job.Status, fmt.Sprintf("%d/%d", job.Ready, job.Replicas), job.Age,
@@ -163,11 +104,11 @@ func (r *TableRenderer) RenderJobListWide(jobs []client.JobStatus) string {
 	}
 
 	headers := []string{"NAME", "NAMESPACE", "STATUS", "APIVERSION", "FRAMEWORK", "GPU", "REPLICAS", "AGE"}
-	var rows [][]string
+	rows := make([][]string, 0, len(jobs))
 	for _, job := range jobs {
 		rows = append(rows, []string{
 			job.Name, job.Namespace, job.Status, job.APIVersion, job.Framework,
-			fmt.Sprintf("%d", job.GPURequested),
+			strconv.Itoa(job.GPURequested),
 			fmt.Sprintf("%d/%d", job.Ready, job.Replicas), job.Age,
 		})
 	}
@@ -189,10 +130,10 @@ func (r *TableRenderer) RenderTopJob(jobs []client.JobStatus) string {
 	}
 
 	headers := []string{"NAME", "STATUS", "GPU_REQUESTED", "REPLICAS", "AGE"}
-	var rows [][]string
+	rows := make([][]string, 0, len(jobs))
 	for _, job := range jobs {
 		rows = append(rows, []string{
-			job.Name, job.Status, fmt.Sprintf("%d", job.GPURequested),
+			job.Name, job.Status, strconv.Itoa(job.GPURequested),
 			fmt.Sprintf("%d/%d", job.Ready, job.Replicas), job.Age,
 		})
 	}
@@ -215,11 +156,11 @@ func (r *TableRenderer) RenderTopJobWide(jobs []client.JobStatus) string {
 	}
 
 	headers := []string{"NAME", "NAMESPACE", "STATUS", "APIVERSION", "FRAMEWORK", "GPU_REQUESTED", "REPLICAS", "AGE"}
-	var rows [][]string
+	rows := make([][]string, 0, len(jobs))
 	for _, job := range jobs {
 		rows = append(rows, []string{
 			job.Name, job.Namespace, job.Status, job.APIVersion, job.Framework,
-			fmt.Sprintf("%d", job.GPURequested),
+			strconv.Itoa(job.GPURequested),
 			fmt.Sprintf("%d/%d", job.Ready, job.Replicas), job.Age,
 		})
 	}
@@ -239,17 +180,17 @@ func (r *TableRenderer) RenderTopJobWide(jobs []client.JobStatus) string {
 func (r *TableRenderer) RenderJobDetail(info *client.JobInfo) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("Name:      %s\n", info.Status.Name))
-	sb.WriteString(fmt.Sprintf("Namespace: %s\n", info.Status.Namespace))
-	sb.WriteString(fmt.Sprintf("Status:    %s\n", info.Status.Status))
-	sb.WriteString(fmt.Sprintf("Replicas:  %d/%d\n", info.Status.Ready, info.Status.Replicas))
-	sb.WriteString(fmt.Sprintf("Age:       %s\n", info.Status.Age))
+	sb.WriteString("Name:      " + info.Status.Name + "\n")
+	sb.WriteString("Namespace: " + info.Status.Namespace + "\n")
+	sb.WriteString("Status:    " + info.Status.Status + "\n")
+	fmt.Fprintf(&sb, "Replicas:  %d/%d\n", info.Status.Ready, info.Status.Replicas)
+	fmt.Fprintf(&sb, "Age:       %s\n", info.Status.Age)
 
 	if len(info.Pods) > 0 {
 		sb.WriteString("\nPods:\n")
 
 		headers := []string{"NAME", "STATUS", "IP", "NODE"}
-		var rows [][]string
+		rows := make([][]string, 0, len(info.Pods))
 		for _, pod := range info.Pods {
 			rows = append(rows, []string{pod.Name, pod.Status, pod.IP, pod.Node})
 		}
@@ -267,10 +208,79 @@ func (r *TableRenderer) RenderJobDetail(info *client.JobInfo) string {
 	if info.Configuration != nil {
 		sb.WriteString("\nConfiguration:\n")
 		yamlData, err := yaml.Marshal(info.Configuration)
-		if err == nil {
+		if err != nil {
+			log.Debug("failed to marshal job configuration for display", "error", err.Error())
+		} else {
 			sb.WriteString(indentLines(string(yamlData), "  "))
 		}
 	}
 
 	return sb.String()
+}
+
+// calculateWidths determines the display width for each column by inspecting all cell values,
+// expanding each column to fit the widest content it contains, capped by maxCaps where defined.
+func calculateWidths(headers []string, rows [][]string, maxCaps map[string]int) []int {
+	widths := make([]int, len(headers))
+	for i, h := range headers {
+		widths[i] = len(h)
+		if maxWidth, ok := maxCaps[h]; ok {
+			widths[i] = min(widths[i], maxWidth)
+		}
+	}
+	for _, row := range rows {
+		for i, cell := range row {
+			if i >= len(headers) {
+				break
+			}
+			cellLen := len(cell)
+			if maxWidth, ok := maxCaps[headers[i]]; ok {
+				cellLen = min(cellLen, maxWidth)
+			}
+			if cellLen > widths[i] {
+				widths[i] = cellLen
+			}
+		}
+	}
+	return widths
+}
+
+// truncate shortens s to maxLen visible characters, appending "..." when truncation occurs.
+// If maxLen <= 3 the string is hard-cut without a marker.
+func truncate(s string, maxLen int) string {
+	if utf8.RuneCountInString(s) <= maxLen {
+		return s
+	}
+	if maxLen <= 3 {
+		return string([]rune(s)[:maxLen])
+	}
+	return string([]rune(s)[:maxLen-3]) + "..."
+}
+
+// renderRow formats a single table row, truncating each cell to the corresponding width
+// and left-padding with spaces so columns align.
+func renderRow(cells []string, widths []int) string {
+	parts := make([]string, 0, len(cells))
+	for i, cell := range cells {
+		if i >= len(widths) {
+			break
+		}
+		truncated := truncate(cell, widths[i])
+		parts = append(parts, fmt.Sprintf("%-*s", widths[i], truncated))
+	}
+	return strings.Join(parts, " ") + "\n"
+}
+
+// indentLines prefixes every non-empty line of s with prefix, preserving the
+// line structure (including trailing newlines) so the indented block aligns
+// under a section header. Empty lines are left untouched to avoid introducing
+// trailing whitespace.
+func indentLines(s, prefix string) string {
+	lines := strings.Split(s, "\n")
+	for i, line := range lines {
+		if line != "" {
+			lines[i] = prefix + line
+		}
+	}
+	return strings.Join(lines, "\n")
 }

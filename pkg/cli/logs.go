@@ -3,7 +3,6 @@ package cli
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
+	"github.com/kubeflow/arena/pkg/log"
 )
 
 var (
@@ -164,9 +164,13 @@ Examples:
 		req := clientset.CoreV1().Pods(ns).GetLogs(podName, logOptions)
 		stream, err := req.Stream(cmdContext(cmd))
 		if err != nil {
-			return fmt.Errorf("failed to stream logs from pod %s: %w", podName, err)
+			return fmt.Errorf("failed to stream logs from pod %q: %w", podName, err)
 		}
-		defer stream.Close()
+		defer func() {
+			if err := stream.Close(); err != nil {
+				log.Debug("error closing log stream", "error", err.Error())
+			}
+		}()
 
 		scanner := bufio.NewScanner(stream)
 		// Increase buffer from default 64KB to 1MB — training logs can emit
@@ -176,7 +180,7 @@ Examples:
 			fmt.Println(scanner.Text())
 		}
 
-		if err := scanner.Err(); err != nil && err != io.EOF {
+		if err := scanner.Err(); err != nil {
 			return fmt.Errorf("error reading log stream: %w", err)
 		}
 

@@ -38,7 +38,7 @@ var _ = Describe("TensorFlow Job", func() {
 		var err error
 
 		By("Submitting a TensorFlow job")
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "tensorflow",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "tensorflow",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/tensorflow:2.15",

@@ -29,7 +29,7 @@ var getCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Validate format
-		if err := outputpkg.OutputFormat(outputFormat).Validate(); err != nil {
+		if err := outputpkg.Format(outputFormat).Validate(); err != nil {
 			return err
 		}
 
@@ -48,11 +48,11 @@ var getCmd = &cobra.Command{
 
 		job, err := k8sClient.Get(cmdContext(cmd), jobKind, ns, name)
 		if err != nil {
-			return fmt.Errorf("failed to get %s %s: %w", jobKind, name, err)
+			return err
 		}
 
 		status := extractJobStatus(job, jobKind)
-		if fw, ok := job.GetLabels()[FrameworkLabel]; ok && fw != "" {
+		if fw, ok := job.GetLabels()[frameworkLabel]; ok && fw != "" {
 			status.Framework = fw
 		} else {
 			status.Framework = kindToFramework(jobKind)
@@ -61,7 +61,7 @@ var getCmd = &cobra.Command{
 
 		// Get real pods via typed client using provider selector
 		p, pErr := providerForKind(jobKind)
-		var podList []client.PodInfo
+		podList := make([]client.PodInfo, 0)
 		if pErr == nil {
 			selector := p.GetJobPodSelector(name)
 			podList = getRealPods(cmdContext(cmd), ns, selector)
@@ -78,18 +78,21 @@ var getCmd = &cobra.Command{
 
 		if getDetails {
 			cm, err := k8sClient.Get(cmdContext(cmd), "ConfigMap", ns, name)
-			if err != nil {
-				if !apierrors.IsNotFound(err) {
-					return fmt.Errorf("failed to get ConfigMap: %w", err)
+			if err != nil && !apierrors.IsNotFound(err) {
+				return fmt.Errorf("failed to get ConfigMap: %w", err)
+			}
+			if err == nil {
+				data, found, dErr := unstructured.NestedMap(cm.Object, "data")
+				if dErr != nil {
+					log.Warning("failed to read ConfigMap data", "namespace", ns, "name", name, "error", dErr.Error())
 				}
-				// ConfigMap not found, skip configuration display
-			} else {
-				data, found, err := unstructured.NestedMap(cm.Object, "data")
-				if err == nil && found {
+				if dErr == nil && found {
 					yamlContent, ok := data["arena-v2.yaml"].(string)
 					if ok && yamlContent != "" {
 						var config task.Task
-						if err := yaml.Unmarshal([]byte(yamlContent), &config); err == nil {
+						if uErr := yaml.Unmarshal([]byte(yamlContent), &config); uErr != nil {
+							log.Warning("failed to unmarshal task config", "namespace", ns, "name", name, "error", uErr.Error())
+						} else {
 							info.Configuration = &config
 						}
 					}
@@ -101,7 +104,7 @@ var getCmd = &cobra.Command{
 		opts := outputpkg.RenderOptions{
 			TableFn: func() string { return renderer.RenderJobDetail(info) },
 		}
-		if err := outputpkg.OutputFormat(outputFormat).Render(info, opts); err != nil {
+		if err := outputpkg.Format(outputFormat).Render(info, opts); err != nil {
 			return err
 		}
 		return nil
@@ -133,7 +136,7 @@ func providerForKind(kind string) (provider.Provider, error) {
 func getRealPods(ctx context.Context, namespace, selector string) []client.PodInfo {
 	config, err := client.LoadRestConfig(kubeconfig, kubeContext)
 	if err != nil {
-		log.Warning("failed to load REST config for pod lookup", "error", err.Error())
+		log.Warning("failed to load REST config for pod lookup", "kubeconfig", kubeconfig, "context", kubeContext, "error", err.Error())
 		return nil
 	}
 	clientset, err := kubernetes.NewForConfig(config)
@@ -154,7 +157,7 @@ func getRealPods(ctx context.Context, namespace, selector string) []client.PodIn
 		return nil
 	}
 
-	var result []client.PodInfo
+	result := make([]client.PodInfo, 0, len(pods.Items))
 	for _, pod := range pods.Items {
 		result = append(result, client.PodInfo{
 			Name:   pod.Name,

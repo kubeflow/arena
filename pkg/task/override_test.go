@@ -406,3 +406,172 @@ func TestApplyOverrides_TolerationInvalid(t *testing.T) {
 	// Empty/invalid tolerations should be skipped
 	assert.Empty(t, task.Scheduling.Tolerations)
 }
+
+func TestApplyOverrides_TolerationWithSeconds(t *testing.T) {
+	task := &Task{
+		Name:  "test",
+		Image: "test:latest",
+		Run:   "echo hi",
+	}
+
+	flags := map[string]interface{}{
+		"toleration": []string{"gpu=true:NoExecute:300"},
+	}
+
+	err := ApplyOverrides(task, flags)
+	require.NoError(t, err)
+
+	require.Len(t, task.Scheduling.Tolerations, 1)
+	tol := task.Scheduling.Tolerations[0]
+	assert.Equal(t, "gpu", tol.Key)
+	assert.Equal(t, "Equal", tol.Operator)
+	assert.Equal(t, "true", tol.Value)
+	assert.Equal(t, "NoExecute", tol.Effect)
+	require.NotNil(t, tol.TolerationSeconds)
+	assert.Equal(t, int64(300), *tol.TolerationSeconds)
+}
+
+func TestApplyOverrides_TolerationExistsWithSeconds(t *testing.T) {
+	task := &Task{
+		Name:  "test",
+		Image: "test:latest",
+		Run:   "echo hi",
+	}
+
+	flags := map[string]interface{}{
+		"toleration": []string{"node.kubernetes.io/not-ready:NoExecute:60"},
+	}
+
+	err := ApplyOverrides(task, flags)
+	require.NoError(t, err)
+
+	require.Len(t, task.Scheduling.Tolerations, 1)
+	tol := task.Scheduling.Tolerations[0]
+	assert.Equal(t, "node.kubernetes.io/not-ready", tol.Key)
+	assert.Equal(t, "Exists", tol.Operator)
+	assert.Equal(t, "", tol.Value)
+	assert.Equal(t, "NoExecute", tol.Effect)
+	require.NotNil(t, tol.TolerationSeconds)
+	assert.Equal(t, int64(60), *tol.TolerationSeconds)
+}
+
+func TestApplyOverrides_TolerationBackwardCompatible(t *testing.T) {
+	task := &Task{
+		Name:  "test",
+		Image: "test:latest",
+		Run:   "echo hi",
+	}
+
+	flags := map[string]interface{}{
+		"toleration": []string{"gpu=true:NoSchedule"},
+	}
+
+	err := ApplyOverrides(task, flags)
+	require.NoError(t, err)
+
+	require.Len(t, task.Scheduling.Tolerations, 1)
+	tol := task.Scheduling.Tolerations[0]
+	assert.Equal(t, "gpu", tol.Key)
+	assert.Equal(t, "NoSchedule", tol.Effect)
+	assert.Nil(t, tol.TolerationSeconds)
+}
+
+func TestApplyOverrides_TolerationInvalidSeconds(t *testing.T) {
+	task := &Task{
+		Name:  "test",
+		Image: "test:latest",
+		Run:   "echo hi",
+	}
+
+	flags := map[string]interface{}{
+		"toleration": []string{"gpu=true:NoExecute:abc"},
+	}
+
+	err := ApplyOverrides(task, flags)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "toleration seconds must be an integer")
+}
+
+func TestApplyOverrides_TolerationNegativeSeconds(t *testing.T) {
+	task := &Task{
+		Name:  "test",
+		Image: "test:latest",
+		Run:   "echo hi",
+	}
+
+	flags := map[string]interface{}{
+		"toleration": []string{"gpu=true:NoExecute:-1"},
+	}
+
+	err := ApplyOverrides(task, flags)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "non-negative")
+}
+
+func TestApplyOverrides_TolerationExtraSegments(t *testing.T) {
+	task := &Task{
+		Name:  "test",
+		Image: "test:latest",
+		Run:   "echo hi",
+	}
+
+	flags := map[string]interface{}{
+		"toleration": []string{"gpu=true:NoExecute:300:extra"},
+	}
+
+	err := ApplyOverrides(task, flags)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "toleration seconds must be an integer")
+}
+
+func TestApplyOverrides_PytorchSingleNodeGpus_RoutesToMaster(t *testing.T) {
+	task := &Task{Master: &RoleConfig{}}
+	err := ApplyOverrides(task, map[string]interface{}{"gpus": 1})
+	require.NoError(t, err)
+	assert.Nil(t, task.Worker, "Worker should remain nil for single-node PyTorch")
+	require.NotNil(t, task.Master)
+	assert.Equal(t, "1", task.Master.Resources["nvidia.com/gpu"])
+}
+
+func TestApplyOverrides_PytorchSingleNodeCPUMem_RoutesToMaster(t *testing.T) {
+	task := &Task{Master: &RoleConfig{}}
+	err := ApplyOverrides(task, map[string]interface{}{
+		"cpus": "4",
+		"mem":  "16Gi",
+	})
+	require.NoError(t, err)
+	assert.Nil(t, task.Worker, "Worker should remain nil for single-node PyTorch")
+	require.NotNil(t, task.Master)
+	assert.Equal(t, "4", task.Master.Resources["cpu"])
+	assert.Equal(t, "16Gi", task.Master.Resources["memory"])
+}
+
+func TestApplyOverrides_PytorchSingleNodeDevice_RoutesToMaster(t *testing.T) {
+	task := &Task{Master: &RoleConfig{}}
+	err := ApplyOverrides(task, map[string]interface{}{
+		"device": []string{"amd.com/gpu=1"},
+	})
+	require.NoError(t, err)
+	assert.Nil(t, task.Worker, "Worker should remain nil for single-node PyTorch")
+	require.NotNil(t, task.Master)
+	assert.Equal(t, "1", task.Master.Resources["amd.com/gpu"])
+}
+
+func TestApplyOverrides_MultiNodeGpus_RoutesToWorker(t *testing.T) {
+	task := &Task{Worker: &Worker{Replicas: 2}}
+	err := ApplyOverrides(task, map[string]interface{}{"gpus": 2})
+	require.NoError(t, err)
+	assert.Nil(t, task.Master, "Master should remain nil for multi-node")
+	require.NotNil(t, task.Worker)
+	assert.Equal(t, 2, task.Worker.Replicas)
+	assert.Equal(t, "2", task.Worker.Resources["nvidia.com/gpu"])
+}
+
+func TestApplyOverrides_NoWorkerNoMaster_GpusCreatesWorkerWithReplicas1(t *testing.T) {
+	task := &Task{}
+	err := ApplyOverrides(task, map[string]interface{}{"gpus": 1})
+	require.NoError(t, err)
+	require.NotNil(t, task.Worker, "Worker should be auto-created")
+	assert.Equal(t, 1, task.Worker.Replicas, "auto-created Worker should have Replicas=1")
+	assert.Equal(t, "1", task.Worker.Resources["nvidia.com/gpu"])
+}

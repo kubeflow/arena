@@ -28,29 +28,37 @@ func buildLauncherServiceAccount(saName, jobName, namespace string, ownerRef met
 	return sa
 }
 
-// buildLauncherRole creates a Role granting the launcher permission to get/list/watch
-// pods and exec into specific worker pods. The pods/exec permission is restricted
-// to worker pod names via resourceNames (least-privilege). When workerReplicas is 0,
-// the pods/exec rule is omitted entirely because an empty resourceNames list would
-// grant exec on ALL pods (the opposite of least-privilege).
+// buildLauncherRole creates a least-privilege Role for the launcher; list/watch are namespace-wide, get/exec are restricted to worker pod names.
 func buildLauncherRole(jobName, namespace string, workerReplicas int, ownerRef metav1.OwnerReference) *unstructured.Unstructured {
+	// list/watch must be namespace-wide (K8s RBAC cannot restrict them with
+	// resourceNames). When there are no workers, get is also namespace-wide
+	// because there are no specific pod names to restrict it to.
+	podVerbs := []interface{}{"list", "watch"}
+	if workerReplicas == 0 {
+		podVerbs = []interface{}{"get", "list", "watch"}
+	}
+
 	rules := []interface{}{
 		map[string]interface{}{
-			"verbs":     []interface{}{"get", "list", "watch"},
+			"verbs":     podVerbs,
 			"apiGroups": []interface{}{""},
 			"resources": []interface{}{"pods"},
 		},
 	}
 
 	if workerReplicas > 0 {
-		// Pod names follow the training-operator convention: <jobName>-<replicaType>-<index>.
-		// The MPI operator creates worker pods named <jobName>-worker-0, <jobName>-worker-1, etc.
-		// This must stay in sync with the operator's naming scheme; if the operator changes
-		// its naming convention, this list will need to be updated accordingly.
+		// Pod names follow the training-operator convention: <jobName>-worker-<index>.
 		podNames := make([]interface{}, workerReplicas)
 		for i := 0; i < workerReplicas; i++ {
 			podNames[i] = fmt.Sprintf("%s-worker-%d", jobName, i)
 		}
+		// Restrict the get verb to specific worker pod names (least-privilege).
+		rules = append(rules, map[string]interface{}{
+			"verbs":         []interface{}{"get"},
+			"apiGroups":     []interface{}{""},
+			"resources":     []interface{}{"pods"},
+			"resourceNames": podNames,
+		})
 		rules = append(rules, map[string]interface{}{
 			"verbs":         []interface{}{"create"},
 			"apiGroups":     []interface{}{""},

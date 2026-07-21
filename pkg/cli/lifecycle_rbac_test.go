@@ -21,15 +21,15 @@ import (
 )
 
 // rbacListKinds returns the GVR-to-ListKind mapping needed to register
-// all resource types that createJobResources may create: ConfigMap,
-// ServiceAccount, Role, RoleBinding, and the MPIJob CRD itself.
+// all resource types that preCreateRBAC and finalizeJobResources may create:
+// ConfigMap, ServiceAccount, Role, RoleBinding, and the MPIJob CRD itself.
 func rbacListKinds(mpiVersion string) map[schema.GroupVersionResource]string {
 	return map[schema.GroupVersionResource]string{
-		{Group: "", Version: "v1", Resource: "configmaps"}:                          "ConfigMapList",
-		{Group: "", Version: "v1", Resource: "serviceaccounts"}:                     "ServiceAccountList",
-		{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}:       "RoleList",
+		{Group: "", Version: "v1", Resource: "configmaps"}:                            "ConfigMapList",
+		{Group: "", Version: "v1", Resource: "serviceaccounts"}:                       "ServiceAccountList",
+		{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}:        "RoleList",
 		{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "rolebindings"}: "RoleBindingList",
-		{Group: "kubeflow.org", Version: mpiVersion, Resource: "mpijobs"}:            "MPIJobList",
+		{Group: "kubeflow.org", Version: mpiVersion, Resource: "mpijobs"}:             "MPIJobList",
 	}
 }
 
@@ -45,11 +45,10 @@ func seedMPIJobCRD(name, namespace, mpiVersion, uid string) *unstructured.Unstru
 	return crd
 }
 
-// TestCreateJobResources_CreatesRBACResources verifies that createJobResources
-// creates the ConfigMap anchor and all three RBAC resources (ServiceAccount,
-// Role, RoleBinding) with correct names, namespaces, and ownerReferences
-// pointing back to the MPIJob CRD.
-func TestCreateJobResources_CreatesRBACResources(t *testing.T) {
+// TestPreCreateAndFinalize_CreatesRBACResources verifies the full new flow:
+// preCreateRBAC creates RBAC without ownerRef, then finalizeJobResources
+// patches ownerRef and creates ConfigMap.
+func TestPreCreateAndFinalize_CreatesRBACResources(t *testing.T) {
 	const (
 		jobName    = "test-mpi-job"
 		namespace  = "default"
@@ -72,7 +71,13 @@ func TestCreateJobResources_CreatesRBACResources(t *testing.T) {
 	}
 	p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
 
-	err := createJobResources(context.Background(), mpiJob, tk, k8sClient, p)
+	// Step 1: Pre-create RBAC (no ownerRef)
+	rbacResources, err := preCreateRBAC(context.Background(), tk, k8sClient, p)
+	require.NoError(t, err)
+	assert.Len(t, rbacResources, 3)
+
+	// Step 2: Finalize (creates ConfigMap + patches ownerRef)
+	err = finalizeJobResources(context.Background(), mpiJob, tk, k8sClient, p, rbacResources)
 	require.NoError(t, err)
 
 	// Verify ConfigMap was created
@@ -80,14 +85,13 @@ func TestCreateJobResources_CreatesRBACResources(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "ConfigMap", cm.GetKind())
 
-	// Verify ServiceAccount was created with correct name and namespace
+	// Verify ServiceAccount with ownerRef
 	sa, err := k8sClient.Get(context.Background(), "ServiceAccount", namespace, jobName+"-launcher")
 	require.NoError(t, err)
 	assert.Equal(t, "ServiceAccount", sa.GetKind())
 	assert.Equal(t, namespace, sa.GetNamespace())
 
-	// Role and RoleBinding use rbac.authorization.k8s.io group, which
-	// kindToGVR doesn't map — access them via the fake client directly.
+	// Role and RoleBinding via fake client directly
 	roleGVR := schema.GroupVersionResource{
 		Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles",
 	}
@@ -99,13 +103,11 @@ func TestCreateJobResources_CreatesRBACResources(t *testing.T) {
 		context.Background(), jobName+"-launcher", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "Role", role.GetKind())
-	assert.Equal(t, namespace, role.GetNamespace())
 
 	rb, err := fakeClient.Resource(rbGVR).Namespace(namespace).Get(
 		context.Background(), jobName+"-launcher", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "RoleBinding", rb.GetKind())
-	assert.Equal(t, namespace, rb.GetNamespace())
 
 	// Verify ownerReferences on all RBAC resources point to the MPIJob
 	for _, obj := range []*unstructured.Unstructured{sa, role, rb} {
@@ -118,7 +120,7 @@ func TestCreateJobResources_CreatesRBACResources(t *testing.T) {
 		assert.True(t, *refs[0].Controller)
 	}
 
-	// Verify RoleBinding subject has correct namespace and SA name
+	// Verify RoleBinding subject
 	subjects, found, err := unstructured.NestedSlice(rb.Object, "subjects")
 	require.NoError(t, err)
 	require.True(t, found)
@@ -129,11 +131,9 @@ func TestCreateJobResources_CreatesRBACResources(t *testing.T) {
 	assert.Equal(t, namespace, subject["namespace"])
 }
 
-// TestCreateJobResources_NamespacePropagation is a regression test for the
-// critical bug where t.Namespace was not set after resolving the namespace
-// in submit.go/run.go. When t.Namespace is correctly propagated (as the fix
-// ensures), the RoleBinding subject namespace must match the CRD namespace.
-func TestCreateJobResources_NamespacePropagation(t *testing.T) {
+// TestPreCreateRBAC_NamespacePropagation verifies that namespace propagation
+// works correctly in the new flow.
+func TestPreCreateRBAC_NamespacePropagation(t *testing.T) {
 	tests := []struct {
 		name      string
 		namespace string
@@ -147,16 +147,12 @@ func TestCreateJobResources_NamespacePropagation(t *testing.T) {
 			jobName := "ns-test-job"
 			mpiVersion := "v2beta1"
 
-			mpiJob := seedMPIJobCRD(jobName, tt.namespace, mpiVersion, "uid-ns-1")
-
 			scheme := runtime.NewScheme()
 			fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(
-				scheme, rbacListKinds(mpiVersion), mpiJob)
+				scheme, rbacListKinds(mpiVersion))
 			k8sClient := client.NewClientForInterface(fakeClient)
 			k8sClient.SetMPIVersion(mpiVersion)
 
-			// Simulate the fix: t.Namespace is set to the resolved namespace
-			// before calling createJobResources (as submit.go/run.go do).
 			tk := &task.Task{
 				Name:      jobName,
 				Namespace: tt.namespace,
@@ -165,10 +161,10 @@ func TestCreateJobResources_NamespacePropagation(t *testing.T) {
 			}
 			p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
 
-			err := createJobResources(context.Background(), mpiJob, tk, k8sClient, p)
+			_, err := preCreateRBAC(context.Background(), tk, k8sClient, p)
 			require.NoError(t, err)
 
-			// Verify RoleBinding subject namespace matches CRD namespace
+			// Verify RoleBinding subject namespace matches
 			rbGVR := schema.GroupVersionResource{
 				Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "rolebindings",
 			}
@@ -183,7 +179,7 @@ func TestCreateJobResources_NamespacePropagation(t *testing.T) {
 			assert.Equal(t, tt.namespace, subject["namespace"],
 				"RoleBinding subject namespace must match CRD namespace")
 
-			// Verify SA also in the correct namespace
+			// Verify SA in the correct namespace
 			sa, err := k8sClient.Get(context.Background(), "ServiceAccount", tt.namespace, jobName+"-launcher")
 			require.NoError(t, err)
 			assert.Equal(t, tt.namespace, sa.GetNamespace())
@@ -191,14 +187,282 @@ func TestCreateJobResources_NamespacePropagation(t *testing.T) {
 	}
 }
 
-// TestCreateJobResources_NilRBACProvider verifies that a provider returning
-// nil RBAC resources (e.g. PyTorchProvider) does not cause errors and the
-// ConfigMap is still created.
-func TestCreateJobResources_NilRBACProvider(t *testing.T) {
+// TestPreCreateRBAC_RollbackOnFailure verifies that when an RBAC resource
+// creation fails, previously created RBAC resources are rolled back.
+func TestPreCreateRBAC_RollbackOnFailure(t *testing.T) {
 	const (
-		jobName    = "pytorch-job"
+		jobName    = "rollback-pre-rbac"
 		namespace  = "default"
-		uid        = "pt-uid-456"
+		mpiVersion = "v2beta1"
+	)
+
+	scheme := runtime.NewScheme()
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(
+		scheme, rbacListKinds(mpiVersion))
+
+	// Make RoleBinding CreateOrUpdate fail by failing on the "create" action
+	// for rolebindings (the 3rd resource: SA succeeds, Role succeeds, RB fails).
+	fakeClient.PrependReactor(
+		"create", "rolebindings",
+		func(ktesting.Action) (bool, runtime.Object, error) {
+			return true, nil, fmt.Errorf("simulated RoleBinding creation failure")
+		},
+	)
+
+	k8sClient := client.NewClientForInterface(fakeClient)
+	k8sClient.SetMPIVersion(mpiVersion)
+
+	tk := &task.Task{
+		Name:      jobName,
+		Namespace: namespace,
+		Framework: task.Framework{Name: "mpi"},
+		Worker:    &task.Worker{Replicas: 2},
+	}
+	p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
+
+	_, err := preCreateRBAC(context.Background(), tk, k8sClient, p)
+	require.Error(t, err, "preCreateRBAC should fail when RoleBinding creation fails")
+
+	// ServiceAccount was created before the failure, so it must have been
+	// rolled back (deleted).
+	_, err = k8sClient.Get(context.Background(), "ServiceAccount", namespace, jobName+"-launcher")
+	assert.Error(t, err,
+		"ServiceAccount should have been rolled back after RoleBinding creation failure")
+
+	// Verify Role was also rolled back
+	roleGVR := schema.GroupVersionResource{
+		Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles",
+	}
+	_, err = fakeClient.Resource(roleGVR).Namespace(namespace).Get(
+		context.Background(), jobName+"-launcher", metav1.GetOptions{})
+	assert.Error(t, err, "Role should have been rolled back after RoleBinding creation failure")
+}
+
+// TestPreCreateRBAC_CreatesResources verifies that preCreateRBAC creates
+// ServiceAccount, Role, and RoleBinding without ownerReferences (ownerRef
+// is patched later by finalizeJobResources after CRD creation).
+func TestPreCreateRBAC_CreatesResources(t *testing.T) {
+	const (
+		jobName    = "pre-rbac-job"
+		namespace  = "default"
+		mpiVersion = "v2beta1"
+	)
+
+	scheme := runtime.NewScheme()
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, rbacListKinds(mpiVersion))
+	k8sClient := client.NewClientForInterface(fakeClient)
+	k8sClient.SetMPIVersion(mpiVersion)
+
+	tk := &task.Task{
+		Name:      jobName,
+		Namespace: namespace,
+		Framework: task.Framework{Name: "mpi"},
+		Worker:    &task.Worker{Replicas: 2},
+	}
+	p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
+
+	resources, err := preCreateRBAC(context.Background(), tk, k8sClient, p)
+	require.NoError(t, err)
+	assert.Len(t, resources, 3)
+
+	// Verify ServiceAccount exists and has no ownerReferences
+	sa, err := k8sClient.Get(context.Background(), "ServiceAccount", namespace, jobName+"-launcher")
+	require.NoError(t, err)
+	assert.Empty(t, sa.GetOwnerReferences(), "preCreateRBAC should not set ownerReferences")
+
+	// Verify Role exists and has no ownerReferences
+	roleGVR := schema.GroupVersionResource{
+		Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles",
+	}
+	role, err := fakeClient.Resource(roleGVR).Namespace(namespace).Get(
+		context.Background(), jobName+"-launcher", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Empty(t, role.GetOwnerReferences(), "Role should have no ownerReferences")
+
+	// Verify RoleBinding exists and has no ownerReferences
+	rbGVR := schema.GroupVersionResource{
+		Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "rolebindings",
+	}
+	rb, err := fakeClient.Resource(rbGVR).Namespace(namespace).Get(
+		context.Background(), jobName+"-launcher", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Empty(t, rb.GetOwnerReferences(), "RoleBinding should have no ownerReferences")
+}
+
+// TestPreCreateRBAC_NilRBACProvider verifies that a provider returning nil
+// RBAC resources (e.g. PyTorchProvider) returns an empty resource list.
+func TestPreCreateRBAC_NilRBACProvider(t *testing.T) {
+	const (
+		jobName   = "pytorch-pre-rbac"
+		namespace = "default"
+	)
+
+	scheme := runtime.NewScheme()
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "", Version: "v1", Resource: "configmaps"}:              "ConfigMapList",
+		{Group: "kubeflow.org", Version: "v1", Resource: "pytorchjobs"}: "PyTorchJobList",
+	}
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds)
+	k8sClient := client.NewClientForInterface(fakeClient)
+
+	tk := &task.Task{
+		Name:      jobName,
+		Namespace: namespace,
+		Framework: task.Framework{Name: "pytorch"},
+		Worker:    &task.Worker{Replicas: 2},
+	}
+	p := &provider.PyTorchProvider{}
+
+	resources, err := preCreateRBAC(context.Background(), tk, k8sClient, p)
+	require.NoError(t, err)
+	assert.Empty(t, resources)
+}
+
+// TestPreCreateRBAC_UpdatesStaleResources verifies that preCreateRBAC
+// updates existing RBAC resources with current content (create-or-update).
+func TestPreCreateRBAC_UpdatesStaleResources(t *testing.T) {
+	const (
+		jobName    = "stale-rbac-job"
+		namespace  = "default"
+		mpiVersion = "v2beta1"
+	)
+
+	scheme := runtime.NewScheme()
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, rbacListKinds(mpiVersion))
+	k8sClient := client.NewClientForInterface(fakeClient)
+	k8sClient.SetMPIVersion(mpiVersion)
+
+	// First call: create with 2 workers
+	tk2 := &task.Task{
+		Name:      jobName,
+		Namespace: namespace,
+		Framework: task.Framework{Name: "mpi"},
+		Worker:    &task.Worker{Replicas: 2},
+	}
+	p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
+
+	_, err := preCreateRBAC(context.Background(), tk2, k8sClient, p)
+	require.NoError(t, err)
+
+	// Verify Role has 2 worker pod names in the get rule
+	roleGVR := schema.GroupVersionResource{
+		Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles",
+	}
+	role, err := fakeClient.Resource(roleGVR).Namespace(namespace).Get(
+		context.Background(), jobName+"-launcher", metav1.GetOptions{})
+	require.NoError(t, err)
+	getRule, _, err := unstructured.NestedSlice(role.Object, "rules")
+	require.NoError(t, err)
+	// With 2 workers: 3 rules (list/watch pods, get pods by name, create pods/exec by name)
+	assert.Len(t, getRule, 3)
+
+	// Second call: update with 4 workers
+	tk4 := &task.Task{
+		Name:      jobName,
+		Namespace: namespace,
+		Framework: task.Framework{Name: "mpi"},
+		Worker:    &task.Worker{Replicas: 4},
+	}
+
+	_, err = preCreateRBAC(context.Background(), tk4, k8sClient, p)
+	require.NoError(t, err)
+
+	// Verify Role now has 4 worker pod names
+	role, err = fakeClient.Resource(roleGVR).Namespace(namespace).Get(
+		context.Background(), jobName+"-launcher", metav1.GetOptions{})
+	require.NoError(t, err)
+	rules, _, err := unstructured.NestedSlice(role.Object, "rules")
+	require.NoError(t, err)
+	// The get-by-name rule should now have 4 resourceNames
+	var getByNameRule map[string]interface{}
+	for _, r := range rules {
+		rule := r.(map[string]interface{})
+		verbs, _ := rule["verbs"].([]interface{})
+		if len(verbs) == 1 && verbs[0] == "get" {
+			getByNameRule = rule
+			break
+		}
+	}
+	require.NotNil(t, getByNameRule, "should find get-by-name rule")
+	resourceNames, _ := getByNameRule["resourceNames"].([]interface{})
+	assert.Len(t, resourceNames, 4, "Role should have 4 worker pod names after update")
+}
+
+// TestFinalizeJobResources_PatchesOwnerRef verifies that finalizeJobResources
+// creates the ConfigMap with ownerRef and patches ownerRef onto RBAC resources
+// that were pre-created by preCreateRBAC.
+func TestFinalizeJobResources_PatchesOwnerRef(t *testing.T) {
+	const (
+		jobName    = "finalize-job"
+		namespace  = "default"
+		mpiVersion = "v2beta1"
+		uid        = "finalize-uid-123"
+	)
+
+	mpiJob := seedMPIJobCRD(jobName, namespace, mpiVersion, uid)
+
+	scheme := runtime.NewScheme()
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, rbacListKinds(mpiVersion), mpiJob)
+	k8sClient := client.NewClientForInterface(fakeClient)
+	k8sClient.SetMPIVersion(mpiVersion)
+
+	tk := &task.Task{
+		Name:      jobName,
+		Namespace: namespace,
+		Framework: task.Framework{Name: "mpi"},
+		Worker:    &task.Worker{Replicas: 2},
+	}
+	p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
+
+	// Pre-create RBAC (simulates preCreateRBAC step)
+	rbacResources, err := preCreateRBAC(context.Background(), tk, k8sClient, p)
+	require.NoError(t, err)
+
+	// Verify RBAC has no ownerRef before finalize
+	sa, err := k8sClient.Get(context.Background(), "ServiceAccount", namespace, jobName+"-launcher")
+	require.NoError(t, err)
+	assert.Empty(t, sa.GetOwnerReferences(), "SA should have no ownerRef before finalize")
+
+	// Finalize
+	err = finalizeJobResources(context.Background(), mpiJob, tk, k8sClient, p, rbacResources)
+	require.NoError(t, err)
+
+	// Verify ConfigMap has ownerRef at creation
+	cm, err := k8sClient.Get(context.Background(), "ConfigMap", namespace, jobName)
+	require.NoError(t, err)
+	cmRefs := cm.GetOwnerReferences()
+	require.Len(t, cmRefs, 1)
+	assert.Equal(t, "MPIJob", cmRefs[0].Kind)
+	assert.Equal(t, uid, string(cmRefs[0].UID))
+
+	// Verify RBAC resources now have ownerRef patched
+	sa, err = k8sClient.Get(context.Background(), "ServiceAccount", namespace, jobName+"-launcher")
+	require.NoError(t, err)
+	saRefs := sa.GetOwnerReferences()
+	require.Len(t, saRefs, 1)
+	assert.Equal(t, "MPIJob", saRefs[0].Kind)
+	assert.Equal(t, uid, string(saRefs[0].UID))
+
+	// Verify Role has ownerRef
+	roleGVR := schema.GroupVersionResource{
+		Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles",
+	}
+	role, err := fakeClient.Resource(roleGVR).Namespace(namespace).Get(
+		context.Background(), jobName+"-launcher", metav1.GetOptions{})
+	require.NoError(t, err)
+	roleRefs := role.GetOwnerReferences()
+	require.Len(t, roleRefs, 1)
+	assert.Equal(t, uid, string(roleRefs[0].UID))
+}
+
+// TestFinalizeJobResources_NilRBACProvider verifies that finalizeJobResources
+// works correctly when the provider returns no RBAC resources (e.g. PyTorch).
+// It should still create the ConfigMap with ownerRef.
+func TestFinalizeJobResources_NilRBACProvider(t *testing.T) {
+	const (
+		jobName   = "pytorch-finalize"
+		namespace = "default"
+		uid       = "pt-finalize-uid"
 	)
 
 	crd := &unstructured.Unstructured{}
@@ -224,50 +488,134 @@ func TestCreateJobResources_NilRBACProvider(t *testing.T) {
 	}
 	p := &provider.PyTorchProvider{}
 
-	err := createJobResources(context.Background(), crd, tk, k8sClient, p)
+	// Empty RBAC resources (PyTorch provider returns nil)
+	err := finalizeJobResources(context.Background(), crd, tk, k8sClient, p, nil)
 	require.NoError(t, err)
 
-	// ConfigMap should still be created
+	// ConfigMap should be created with ownerRef
 	cm, err := k8sClient.Get(context.Background(), "ConfigMap", namespace, jobName)
 	require.NoError(t, err)
-	assert.Equal(t, "ConfigMap", cm.GetKind())
-
-	// No ServiceAccount should exist (PyTorch provider returns nil RBAC)
-	_, err = k8sClient.Get(context.Background(), "ServiceAccount", namespace, jobName+"-launcher")
-	assert.Error(t, err, "no ServiceAccount should be created for non-MPI providers")
+	refs := cm.GetOwnerReferences()
+	require.Len(t, refs, 1)
+	assert.Equal(t, "PyTorchJob", refs[0].Kind)
+	assert.Equal(t, uid, string(refs[0].UID))
 }
 
-// TestCreateJobResources_RollbackOnFailure verifies that when an auxiliary
-// resource creation fails, all previously created resources are rolled back
-// (best-effort deletion) so no orphaned resources remain in the cluster.
-// This addresses the PR review comment about createJobResources leaving the
-// CRD orphaned if ConfigMap/RBAC/TensorBoard creation fails.
-func TestCreateJobResources_RollbackOnFailure(t *testing.T) {
+// TestFinalizeJobResources_TensorBoard verifies that finalizeJobResources
+// creates TensorBoard Deployment and Service with ownerReferences pointing
+// to the CRD when TensorBoard is enabled.
+func TestFinalizeJobResources_TensorBoard(t *testing.T) {
 	const (
-		jobName    = "rollback-test-job"
+		jobName    = "tb-finalize-job"
 		namespace  = "default"
 		mpiVersion = "v2beta1"
-		uid        = "uid-rollback-1"
+		uid        = "tb-finalize-uid-123"
+	)
+
+	mpiJob := seedMPIJobCRD(jobName, namespace, mpiVersion, uid)
+
+	// listKinds includes deployments and services for TensorBoard resources
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "", Version: "v1", Resource: "configmaps"}:                            "ConfigMapList",
+		{Group: "", Version: "v1", Resource: "services"}:                              "ServiceList",
+		{Group: "", Version: "v1", Resource: "serviceaccounts"}:                       "ServiceAccountList",
+		{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}:        "RoleList",
+		{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "rolebindings"}: "RoleBindingList",
+		{Group: "apps", Version: "v1", Resource: "deployments"}:                       "DeploymentList",
+		{Group: "kubeflow.org", Version: mpiVersion, Resource: "mpijobs"}:             "MPIJobList",
+	}
+
+	scheme := runtime.NewScheme()
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, mpiJob)
+	k8sClient := client.NewClientForInterface(fakeClient)
+	k8sClient.SetMPIVersion(mpiVersion)
+
+	tk := &task.Task{
+		Name:      jobName,
+		Namespace: namespace,
+		Framework: task.Framework{Name: "mpi"},
+		Worker:    &task.Worker{Replicas: 2},
+		Logging: task.Logging{
+			TensorBoard: &task.TensorBoardConfig{
+				Enabled: true,
+				Image:   "tensorflow/tensorflow:2.21.0",
+				LogDir:  "/logs/tb",
+			},
+		},
+	}
+	p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
+
+	// Step 1: Pre-create RBAC (no ownerRef)
+	rbacResources, err := preCreateRBAC(context.Background(), tk, k8sClient, p)
+	require.NoError(t, err)
+
+	// Step 2: Finalize (creates ConfigMap, patches ownerRef, creates TensorBoard)
+	err = finalizeJobResources(context.Background(), mpiJob, tk, k8sClient, p, rbacResources)
+	require.NoError(t, err)
+
+	// Verify TensorBoard Deployment was created with ownerRef
+	deployGVR := schema.GroupVersionResource{
+		Group: "apps", Version: "v1", Resource: "deployments",
+	}
+	tbName := jobName + "-tensorboard"
+	deploy, err := fakeClient.Resource(deployGVR).Namespace(namespace).Get(
+		context.Background(), tbName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "Deployment", deploy.GetKind())
+	assert.Equal(t, tbName, deploy.GetName())
+
+	deployRefs := deploy.GetOwnerReferences()
+	require.Len(t, deployRefs, 1)
+	assert.Equal(t, "MPIJob", deployRefs[0].Kind)
+	assert.Equal(t, jobName, deployRefs[0].Name)
+	assert.Equal(t, uid, string(deployRefs[0].UID))
+	assert.True(t, *deployRefs[0].BlockOwnerDeletion)
+	assert.True(t, *deployRefs[0].Controller)
+
+	// Verify TensorBoard Service was created with ownerRef
+	svcGVR := schema.GroupVersionResource{
+		Group: "", Version: "v1", Resource: "services",
+	}
+	svc, err := fakeClient.Resource(svcGVR).Namespace(namespace).Get(
+		context.Background(), tbName, metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "Service", svc.GetKind())
+	assert.Equal(t, tbName, svc.GetName())
+
+	svcRefs := svc.GetOwnerReferences()
+	require.Len(t, svcRefs, 1)
+	assert.Equal(t, "MPIJob", svcRefs[0].Kind)
+	assert.Equal(t, jobName, svcRefs[0].Name)
+	assert.Equal(t, uid, string(svcRefs[0].UID))
+	assert.True(t, *svcRefs[0].BlockOwnerDeletion)
+	assert.True(t, *svcRefs[0].Controller)
+}
+
+// TestFinalizeJobResources_RollbackOnPatchFailure verifies that when
+// patching ownerReferences onto an RBAC resource fails, finalizeJobResources
+// rolls back the ConfigMap it created and returns an error.
+func TestFinalizeJobResources_RollbackOnPatchFailure(t *testing.T) {
+	const (
+		jobName    = "rollback-patch-job"
+		namespace  = "default"
+		mpiVersion = "v2beta1"
+		uid        = "rollback-patch-uid-123"
 	)
 
 	mpiJob := seedMPIJobCRD(jobName, namespace, mpiVersion, uid)
 
 	scheme := runtime.NewScheme()
-	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(
-		scheme, rbacListKinds(mpiVersion), mpiJob)
-
-	// Make ServiceAccount creation fail to trigger rollback of the ConfigMap.
-	// The ConfigMap is created first, then RBAC resources — so when the SA
-	// create fails, the rollback must delete the already-created ConfigMap.
-	fakeClient.PrependReactor(
-		"create", "serviceaccounts",
-		func(ktesting.Action) (bool, runtime.Object, error) {
-			return true, nil, fmt.Errorf("simulated RBAC creation failure")
-		},
-	)
-
+	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, rbacListKinds(mpiVersion), mpiJob)
 	k8sClient := client.NewClientForInterface(fakeClient)
 	k8sClient.SetMPIVersion(mpiVersion)
+
+	// Make the patch action on rolebindings fail
+	fakeClient.PrependReactor(
+		"patch", "rolebindings",
+		func(ktesting.Action) (bool, runtime.Object, error) {
+			return true, nil, fmt.Errorf("simulated patch failure on rolebindings")
+		},
+	)
 
 	tk := &task.Task{
 		Name:      jobName,
@@ -277,12 +625,15 @@ func TestCreateJobResources_RollbackOnFailure(t *testing.T) {
 	}
 	p := &provider.MPIProvider{APIVersion: provider.MPIAPIVersionV2beta1}
 
-	err := createJobResources(context.Background(), mpiJob, tk, k8sClient, p)
-	require.Error(t, err, "createJobResources should fail when RBAC creation fails")
+	// Step 1: Pre-create RBAC (no ownerRef)
+	rbacResources, err := preCreateRBAC(context.Background(), tk, k8sClient, p)
+	require.NoError(t, err)
 
-	// The ConfigMap was created before the failure, so it must have been
-	// rolled back (deleted) to avoid leaving an orphaned resource.
+	// Step 2: Finalize should fail because patching rolebindings fails
+	err = finalizeJobResources(context.Background(), mpiJob, tk, k8sClient, p, rbacResources)
+	require.Error(t, err, "finalizeJobResources should return an error when patch fails")
+
+	// Verify the ConfigMap was rolled back (deleted)
 	_, err = k8sClient.Get(context.Background(), "ConfigMap", namespace, jobName)
-	assert.Error(t, err,
-		"ConfigMap should have been rolled back after RBAC creation failure")
+	assert.Error(t, err, "ConfigMap should have been rolled back after patch failure")
 }

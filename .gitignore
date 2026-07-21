@@ -24,9 +24,6 @@ go.work.sum
 coverage.txt
 /arena-v2
 
-# v2 e2e test CRDs (downloaded via make v2-e2e-setup)
-test/e2e/crds/
-
 # IDE
 .idea/
 .vscode/

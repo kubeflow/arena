@@ -3,11 +3,15 @@ package log
 import (
 	"flag"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 
 	"k8s.io/klog/v2"
 )
+
+var output io.Writer = os.Stderr
 
 // Init initializes the logging system with the given flag set.
 // It registers klog flags and configures verbosity based on the -v flag.
@@ -36,31 +40,25 @@ func Debug(msg string, keysAndValues ...interface{}) {
 	klog.V(1).InfoS(msg, keysAndValues...)
 }
 
-// Warning logs a warning message with optional key-value pairs.
-//
-// klog v2 does not export a structured warning API (WarningS/WarningSDepth),
-// unlike InfoS and ErrorS. To keep warnings parseable by log aggregation
-// tools, we manually format key-value pairs as "key=value" segments and
-// pass the combined string to WarningDepth. Odd-length key-value slices
-// (a caller bug) include the orphaned key with an empty value rather than
-// being silently dropped.
+// Warning logs a warning message to stderr in a clean CLI format
+// (no klog timestamp or file:line prefix).
 func Warning(msg string, keysAndValues ...interface{}) {
-	if len(keysAndValues) == 0 {
-		klog.WarningDepth(1, msg)
-		return
-	}
-
 	var b strings.Builder
+	b.WriteString("Warning: ")
 	b.WriteString(msg)
 	for i := 0; i < len(keysAndValues); i += 2 {
 		b.WriteByte(' ')
 		fmt.Fprintf(&b, "%v", keysAndValues[i])
 		if i+1 < len(keysAndValues) {
 			b.WriteByte('=')
-			fmt.Fprintf(&b, "%v", keysAndValues[i+1])
+			val := fmt.Sprintf("%v", keysAndValues[i+1])
+			val = strings.ReplaceAll(val, "\n", "\\n")
+			val = strings.ReplaceAll(val, "\r", "\\r")
+			b.WriteString(val)
 		}
 	}
-	klog.WarningDepth(1, b.String())
+	b.WriteByte('\n')
+	fmt.Fprint(output, b.String())
 }
 
 // SetVerbosity configures the klog verbosity level on the provided FlagSet.

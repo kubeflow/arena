@@ -5,19 +5,20 @@ import (
 
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // PyTorch replica types
 const (
-	PyTorchReplicaTypeMaster = "Master"
-	PyTorchReplicaTypeWorker = "Worker"
+	pyTorchReplicaTypeMaster = "Master"
+	pyTorchReplicaTypeWorker = "Worker"
 )
 
 // PyTorch spec field names
 const (
-	PyTorchFieldNprocPerNode = "nprocPerNode"
+	pyTorchFieldNprocPerNode = "nprocPerNode"
 )
 
 // PyTorchProvider generates PyTorchJob CRDs.
@@ -44,7 +45,7 @@ func (p *PyTorchProvider) GetJobPodSelector(jobName string) string {
 
 func (p *PyTorchProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, error) {
 	if t.Framework.Name != constants.FrameworkPyTorch {
-		return nil, fmt.Errorf("PyTorchProvider requires framework.name=%s, got %s", constants.FrameworkPyTorch, t.Framework.Name)
+		return nil, fmt.Errorf("pytorch provider requires framework.name=%s, got %q", constants.FrameworkPyTorch, t.Framework.Name)
 	}
 
 	restartPolicy := constants.RestartPolicyOnFailure
@@ -56,18 +57,36 @@ func (p *PyTorchProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, er
 
 	if t.Worker == nil {
 		// Master-only mode: single-node training
-		masterSpec, err := buildRoleReplicaSpec(constants.FrameworkPyTorch, t, t.Master.Resources, t.Master.Envs, 1, restartPolicy, true, effectiveRun(t, t.Master.Run))
+		masterSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
+			ContainerName:  constants.FrameworkPyTorch,
+			Task:           t,
+			Resources:      t.Master.Resources,
+			Envs:           t.Master.Envs,
+			Replicas:       1,
+			RestartPolicy:  restartPolicy,
+			IncludeVolumes: true,
+			Run:            effectiveRun(t, t.Master.Run),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build master replica spec: %w", err)
 		}
-		replicaSpecs[PyTorchReplicaTypeMaster] = masterSpec
+		replicaSpecs[pyTorchReplicaTypeMaster] = masterSpec
 	} else {
 		// Worker present: always generate Worker replicaSpec
-		workerSpec, err := buildRoleReplicaSpec(constants.FrameworkPyTorch, t, t.Worker.Resources, t.Worker.Envs, int64(t.Worker.Replicas), restartPolicy, true, effectiveRun(t, t.Worker.Run))
+		workerSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
+			ContainerName:  constants.FrameworkPyTorch,
+			Task:           t,
+			Resources:      t.Worker.Resources,
+			Envs:           t.Worker.Envs,
+			Replicas:       int64(t.Worker.Replicas),
+			RestartPolicy:  restartPolicy,
+			IncludeVolumes: true,
+			Run:            effectiveRun(t, t.Worker.Run),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build worker replica spec: %w", err)
 		}
-		replicaSpecs[PyTorchReplicaTypeWorker] = workerSpec
+		replicaSpecs[pyTorchReplicaTypeWorker] = workerSpec
 
 		// Master: inherit from worker if not explicitly configured
 		var masterResources task.Resources
@@ -83,11 +102,20 @@ func (p *PyTorchProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, er
 			masterRun = t.Worker.Run
 		}
 
-		masterSpec, err := buildRoleReplicaSpec(constants.FrameworkPyTorch, t, masterResources, masterEnvs, 1, restartPolicy, true, effectiveRun(t, masterRun))
+		masterSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
+			ContainerName:  constants.FrameworkPyTorch,
+			Task:           t,
+			Resources:      masterResources,
+			Envs:           masterEnvs,
+			Replicas:       1,
+			RestartPolicy:  restartPolicy,
+			IncludeVolumes: true,
+			Run:            effectiveRun(t, masterRun),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build master replica spec: %w", err)
 		}
-		replicaSpecs[PyTorchReplicaTypeMaster] = masterSpec
+		replicaSpecs[pyTorchReplicaTypeMaster] = masterSpec
 	}
 
 	spec := map[string]interface{}{
@@ -95,7 +123,7 @@ func (p *PyTorchProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, er
 	}
 
 	if t.Framework.Options.NprocPerNode != "" {
-		spec[PyTorchFieldNprocPerNode] = t.Framework.Options.NprocPerNode
+		spec[pyTorchFieldNprocPerNode] = t.Framework.Options.NprocPerNode
 	}
 
 	runPolicy, err := buildRunPolicy(t)
@@ -119,6 +147,6 @@ func (p *PyTorchProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, er
 }
 
 // BuildRBAC returns nil — PyTorchJob does not require auxiliary RBAC resources.
-func (p *PyTorchProvider) BuildRBAC(t *task.Task, ownerRef metav1.OwnerReference) ([]*unstructured.Unstructured, error) {
+func (p *PyTorchProvider) BuildRBAC(_ *task.Task, _ metav1.OwnerReference) ([]*unstructured.Unstructured, error) {
 	return nil, nil
 }

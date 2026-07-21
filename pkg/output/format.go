@@ -7,15 +7,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// OutputFormat represents a CLI output format (table, wide, json, or yaml).
-type OutputFormat string
+// Format represents a CLI output format (table, wide, json, or yaml).
+type Format string
 
 // Supported output formats.
 const (
-	FormatTable OutputFormat = "table"
-	FormatWide  OutputFormat = "wide"
-	FormatJSON  OutputFormat = "json"
-	FormatYAML  OutputFormat = "yaml"
+	FormatTable Format = "table"
+	FormatWide  Format = "wide"
+	FormatJSON  Format = "json"
+	FormatYAML  Format = "yaml"
 )
 
 // FormatSupported is the comma-separated list of supported format names,
@@ -28,23 +28,23 @@ const FormatHelpText = "Output format: " + FormatSupported
 // DefaultFormat is the format used when the user does not pass -o/--output.
 const DefaultFormat = FormatTable
 
-// Validate returns nil when the format is one of the supported values,
-// otherwise an error whose message names the offending value and lists the
-// supported formats.
-func (f OutputFormat) Validate() error {
-	switch f {
-	case FormatTable, FormatWide, FormatJSON, FormatYAML:
-		return nil
-	}
-	return fmt.Errorf("invalid output format: %q (supported: %s)", f, FormatSupported)
-}
-
 // RenderOptions carries the callbacks used by the table-based render paths.
 // TableFn is required for table and wide (fallback) rendering. WideFn, when
 // non-nil, is preferred for the wide format.
 type RenderOptions struct {
 	TableFn func() string
 	WideFn  func() string
+}
+
+// Validate returns nil when the format is one of the supported values,
+// otherwise an error whose message names the offending value and lists the
+// supported formats.
+func (f Format) Validate() error {
+	switch f {
+	case FormatTable, FormatWide, FormatJSON, FormatYAML:
+		return nil
+	}
+	return fmt.Errorf("invalid output format: %q (supported: %s)", f, FormatSupported)
 }
 
 // Render dispatches to the appropriate rendering path for this format.
@@ -55,7 +55,7 @@ type RenderOptions struct {
 //     trailing newline).
 //   - Wide:  calls WideFn when non-nil, otherwise falls back to TableFn.
 //   - Table: calls TableFn.
-func (f OutputFormat) Render(data interface{}, opts RenderOptions) error {
+func (f Format) Render(data interface{}, opts RenderOptions) error {
 	switch f {
 	case FormatJSON:
 		b, err := json.MarshalIndent(data, "", "  ")

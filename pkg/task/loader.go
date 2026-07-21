@@ -11,7 +11,7 @@ import (
 func LoadFromFile(path string) (*Task, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file %s: %w", path, err)
+		return nil, fmt.Errorf("failed to read file %q: %w", path, err)
 	}
 	return LoadFromBytes(data)
 }

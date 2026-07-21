@@ -179,7 +179,7 @@ func TestExtractGPURequested_EmptySpec(t *testing.T) {
 	assert.Equal(t, 0, gpu)
 }
 
-func TestTopJobCmd_FrameworkLabelFromCRD(t *testing.T) {
+func TestTopJobCmd_frameworkLabelFromCRD(t *testing.T) {
 	// Verify that when a CRD has the arena.io/framework label, it takes
 	// precedence over kindToFramework mapping.
 	job := &unstructured.Unstructured{
@@ -190,13 +190,13 @@ func TestTopJobCmd_FrameworkLabelFromCRD(t *testing.T) {
 				"name":      "test",
 				"namespace": "default",
 				"labels": map[string]interface{}{
-					FrameworkLabel: "deepspeed",
+					frameworkLabel: "deepspeed",
 				},
 			},
 		},
 	}
 	labels := job.GetLabels()
-	fw, ok := labels[FrameworkLabel]
+	fw, ok := labels[frameworkLabel]
 	assert.True(t, ok)
 	assert.Equal(t, "deepspeed", fw)
 }

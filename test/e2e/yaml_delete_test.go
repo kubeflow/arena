@@ -37,7 +37,7 @@ var _ = Describe("delete -f (delete from YAML file)", func() {
 
 	It("should delete a job using YAML file", func() {
 		var out bytes.Buffer
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",

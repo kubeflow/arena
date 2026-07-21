@@ -22,9 +22,9 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all training jobs",
 	Long:  `List all training jobs across PyTorchJob, TFJob, and MPIJob CRD kinds.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		// Validate format
-		if err := outputpkg.OutputFormat(outputFormat).Validate(); err != nil {
+		if err := outputpkg.Format(outputFormat).Validate(); err != nil {
 			return err
 		}
 
@@ -40,24 +40,24 @@ var listCmd = &cobra.Command{
 		}
 
 		ns := resolveNS("")
-		var allJobs []client.JobStatus
+		allJobs := make([]client.JobStatus, 0)
 		for _, kind := range supportedJobKinds {
 			if kind == constants.KindMPIJob && !mpiAvailable {
 				continue
 			}
-			jobs, err := k8sClient.List(cmdContext(cmd), kind, ns, V2LabelSelector)
+			jobs, err := k8sClient.List(cmdContext(cmd), kind, ns, v2LabelSelector)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Debug("CRD not installed", "kind", kind)
-				} else {
-					apiVer, _ := k8sClient.KindToAPIVersion(kind) // best-effort for logging
-					log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
+					continue
 				}
+				apiVer, _ := k8sClient.KindToAPIVersion(kind)
+				log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
 				continue
 			}
 			for _, job := range jobs {
 				status := extractJobStatus(job, kind)
-				if fw, ok := job.GetLabels()[FrameworkLabel]; ok && fw != "" {
+				if fw, ok := job.GetLabels()[frameworkLabel]; ok && fw != "" {
 					status.Framework = fw
 				} else {
 					status.Framework = kindToFramework(kind)
@@ -72,7 +72,7 @@ var listCmd = &cobra.Command{
 			TableFn: func() string { return renderer.RenderJobList(allJobs) },
 			WideFn:  func() string { return renderer.RenderJobListWide(allJobs) },
 		}
-		if err := outputpkg.OutputFormat(outputFormat).Render(allJobs, opts); err != nil {
+		if err := outputpkg.Format(outputFormat).Render(allJobs, opts); err != nil {
 			return err
 		}
 		return nil
@@ -80,7 +80,7 @@ var listCmd = &cobra.Command{
 }
 
 // extractJobStatus converts an unstructured CRD object into a JobStatus.
-func extractJobStatus(obj *unstructured.Unstructured, kind string) client.JobStatus {
+func extractJobStatus(obj *unstructured.Unstructured, _ string) client.JobStatus {
 	return client.JobStatus{
 		Name:       obj.GetName(),
 		Namespace:  obj.GetNamespace(),
@@ -92,18 +92,7 @@ func extractJobStatus(obj *unstructured.Unstructured, kind string) client.JobSta
 	}
 }
 
-// extractJobPhase reads the job phase/status from the CRD status field.
-// Kubeflow training operators maintain a list of conditions where multiple
-// conditions can have status "True" simultaneously (cumulative, not exclusive).
-// For example, a completed job has both Created=True and Succeeded=True.
-// Conditions are appended chronologically, so we iterate in reverse to find
-// the most recent (current) state.
-//
-// Fallback chain:
-//  1. Last condition with status=="True" (reverse scan) → return its type
-//  2. spec.runPolicy.suspend==true → "Suspended"
-//  3. No conditions (empty or missing) → "Pending"
-//  4. Conditions exist but none True → "Unknown"
+// extractJobPhase returns the last True condition (reverse scan), or "Suspended"/"Pending"/"Unknown" as fallbacks.
 func extractJobPhase(obj *unstructured.Unstructured) string {
 	conditions, found, err := unstructured.NestedSlice(obj.Object, "status", "conditions")
 	if err != nil {
@@ -193,26 +182,14 @@ func extractReady(obj *unstructured.Unstructured) int {
 	return total
 }
 
-// extractPods builds synthetic pod info entries from the aggregate replica
-// counts (active, succeeded, failed) in the CRD status.replicaStatuses.
-//
-// Kubeflow training operators store only aggregate counts per role in
-// replicaStatuses — not individual pod entries. This function synthesizes
-// pod names (e.g. "Worker-0", "Worker-1") and maps them to statuses derived
-// from the counters.
-//
-// IMPORTANT: This is a fallback of last resort. The primary pod discovery path
-// is getRealPods (in get.go), which queries actual pods via the Kubernetes API
-// using a label selector. Synthetic pod names do not correspond to real pod
-// names and should only be displayed when the API query fails or returns no
-// results (e.g. insufficient RBAC permissions, API server unreachable).
+// extractPods synthesizes pod info from CRD replicaStatuses counters (fallback when real pods are unavailable).
 func extractPods(obj *unstructured.Unstructured) []client.PodInfo {
 	replicaStatuses, found, err := unstructured.NestedMap(obj.Object, "status", "replicaStatuses")
 	if err != nil || !found {
 		return nil
 	}
 
-	var pods []client.PodInfo
+	pods := make([]client.PodInfo, 0)
 	for role, val := range replicaStatuses {
 		statusMap, ok := val.(map[string]interface{})
 		if !ok {
@@ -224,21 +201,21 @@ func extractPods(obj *unstructured.Unstructured) []client.PodInfo {
 		failed, _, _ := unstructured.NestedInt64(statusMap, "failed")
 
 		idx := 0
-		for i := int64(0); i < active; i++ {
+		for range active {
 			pods = append(pods, client.PodInfo{
 				Name:   fmt.Sprintf("%s-%d", role, idx),
 				Status: "Running",
 			})
 			idx++
 		}
-		for i := int64(0); i < succeeded; i++ {
+		for range succeeded {
 			pods = append(pods, client.PodInfo{
 				Name:   fmt.Sprintf("%s-%d", role, idx),
 				Status: "Succeeded",
 			})
 			idx++
 		}
-		for i := int64(0); i < failed; i++ {
+		for range failed {
 			pods = append(pods, client.PodInfo{
 				Name:   fmt.Sprintf("%s-%d", role, idx),
 				Status: "Failed",

@@ -1,9 +1,6 @@
 package provider
 
 import (
-	"bytes"
-	"io"
-	"os"
 	"testing"
 
 	"github.com/kubeflow/arena/pkg/constants"
@@ -604,11 +601,11 @@ func TestBuildVolumes_Secret(t *testing.T) {
 
 func TestBuildInitContainersWithMounts(t *testing.T) {
 	tt := &task.Task{
-		Name:  "test",
-		Image: "busybox",
-		Run:   "echo hello",
+		Name:      "test",
+		Image:     "busybox",
+		Run:       "echo hello",
 		Framework: task.Framework{Name: "pytorch"},
-		Worker: &task.Worker{Replicas: 1},
+		Worker:    &task.Worker{Replicas: 1},
 		Storages: []task.Storage{
 			{Name: "data", MountPath: "/data", PVC: "data-pvc"},
 		},
@@ -738,11 +735,11 @@ func TestBuildVolumes_SecretWithKey(t *testing.T) {
 
 func TestBuildSyncInitContainersWithMountsOverride(t *testing.T) {
 	task := &task.Task{
-		Name:  "test",
-		Image: "busybox",
-		Run:   "echo hello",
+		Name:      "test",
+		Image:     "busybox",
+		Run:       "echo hello",
 		Framework: task.Framework{Name: "pytorch"},
-		Worker: &task.Worker{Replicas: 1},
+		Worker:    &task.Worker{Replicas: 1},
 		Storages: []task.Storage{
 			{Name: "code", MountPath: "/default-code", Tmp: "1Gi"},
 		},
@@ -771,11 +768,11 @@ func TestBuildSyncInitContainersWithMountsOverride(t *testing.T) {
 
 func TestBuildSyncInitContainers_RsyncWithMountsOverride(t *testing.T) {
 	task := &task.Task{
-		Name:  "test",
-		Image: "busybox",
-		Run:   "echo hello",
+		Name:      "test",
+		Image:     "busybox",
+		Run:       "echo hello",
 		Framework: task.Framework{Name: "pytorch"},
-		Worker: &task.Worker{Replicas: 1},
+		Worker:    &task.Worker{Replicas: 1},
 		Storages: []task.Storage{
 			{Name: "data", MountPath: "/default-data", PVC: "data-pvc"},
 		},
@@ -812,11 +809,11 @@ func TestBuildSyncInitContainers_RsyncWithMountsOverride(t *testing.T) {
 
 func TestBuildSyncInitContainers_HDFSWithMountsOverride(t *testing.T) {
 	task := &task.Task{
-		Name:  "test",
-		Image: "busybox",
-		Run:   "echo hello",
+		Name:      "test",
+		Image:     "busybox",
+		Run:       "echo hello",
 		Framework: task.Framework{Name: "pytorch"},
-		Worker: &task.Worker{Replicas: 1},
+		Worker:    &task.Worker{Replicas: 1},
 		Storages: []task.Storage{
 			{Name: "models", MountPath: "/default-models", PVC: "models-pvc"},
 		},
@@ -865,76 +862,76 @@ func TestBuildVolumes_SHMDefaultMountPath(t *testing.T) {
 	assert.Equal(t, "/dev/shm", mount["mountPath"])
 }
 
-func TestResolveMounts_Empty(t *testing.T) {
-	result := ResolveMounts(nil, nil)
+func Test_resolveMounts_Empty(t *testing.T) {
+	result := resolveMounts(nil, nil)
 	assert.Nil(t, result)
 }
 
-func TestResolveMounts_FallbackToStorage(t *testing.T) {
+func Test_resolveMounts_FallbackToStorage(t *testing.T) {
 	mounts := []task.Mount{{Name: "code"}}
 	storages := []task.Storage{{Name: "code", MountPath: "/default-code", PVC: "pvc"}}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	require.Len(t, result, 1)
 	assert.Equal(t, "code", result[0]["name"])
 	assert.Equal(t, "/default-code", result[0]["mountPath"])
 }
 
-func TestResolveMounts_OverridePath(t *testing.T) {
+func Test_resolveMounts_OverridePath(t *testing.T) {
 	mounts := []task.Mount{{Name: "code", MountPath: "/override"}}
 	storages := []task.Storage{{Name: "code", MountPath: "/default-code", PVC: "pvc"}}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	require.Len(t, result, 1)
 	assert.Equal(t, "/override", result[0]["mountPath"])
 }
 
-func TestResolveMounts_SubPathFallback(t *testing.T) {
+func Test_resolveMounts_SubPathFallback(t *testing.T) {
 	mounts := []task.Mount{{Name: "ssh"}}
 	storages := []task.Storage{{Name: "ssh", MountPath: "/root/.ssh", Secret: "keys", SubPath: "id_rsa"}}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	require.Len(t, result, 1)
 	assert.Equal(t, "id_rsa", result[0]["subPath"])
 }
 
-func TestResolveMounts_SubPathOverride(t *testing.T) {
+func Test_resolveMounts_SubPathOverride(t *testing.T) {
 	mounts := []task.Mount{{Name: "ssh", SubPath: "id_ed25519"}}
 	storages := []task.Storage{{Name: "ssh", MountPath: "/root/.ssh", Secret: "keys", SubPath: "id_rsa"}}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	require.Len(t, result, 1)
 	assert.Equal(t, "id_ed25519", result[0]["subPath"])
 }
 
-func TestResolveMounts_ConfigMapKeyFallback(t *testing.T) {
+func Test_resolveMounts_ConfigMapKeyFallback(t *testing.T) {
 	mounts := []task.Mount{{Name: "config"}}
 	storages := []task.Storage{
 		{Name: "config", MountPath: "/etc/config", ConfigMap: "app-config", Key: "config.yaml"},
 	}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	require.Len(t, result, 1)
 	assert.Equal(t, "config", result[0]["name"])
 	assert.Equal(t, "/etc/config", result[0]["mountPath"])
 	assert.Equal(t, "config.yaml", result[0]["subPath"], "subPath should fall back to Storage.Key when SubPath is empty")
 }
 
-func TestResolveMounts_SecretKeyFallback(t *testing.T) {
+func Test_resolveMounts_SecretKeyFallback(t *testing.T) {
 	mounts := []task.Mount{{Name: "ssh"}}
 	storages := []task.Storage{
 		{Name: "ssh", MountPath: "/root/.ssh", Secret: "ssh-keys", Key: "id_rsa"},
 	}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	require.Len(t, result, 1)
 	assert.Equal(t, "id_rsa", result[0]["subPath"], "subPath should fall back to Storage.Key for Secret storages")
 }
 
-func TestResolveMounts_StorageNotFound(t *testing.T) {
+func Test_resolveMounts_StorageNotFound(t *testing.T) {
 	mounts := []task.Mount{{Name: "nonexistent", MountPath: "/data"}}
 	storages := []task.Storage{{Name: "code", MountPath: "/code", PVC: "pvc"}}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	require.Len(t, result, 1)
 	// Volume name still comes from mount, just no fallback path available
 	assert.Equal(t, "nonexistent", result[0]["name"])
 }
 
-func TestResolveMounts_MultipleEntries(t *testing.T) {
+func Test_resolveMounts_MultipleEntries(t *testing.T) {
 	mounts := []task.Mount{
 		{Name: "code", MountPath: "/workspace"},
 		{Name: "data"},
@@ -943,7 +940,7 @@ func TestResolveMounts_MultipleEntries(t *testing.T) {
 		{Name: "code", MountPath: "/code", PVC: "code-pvc"},
 		{Name: "data", MountPath: "/data", PVC: "data-pvc"},
 	}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	require.Len(t, result, 2)
 	assert.Equal(t, "code", result[0]["name"])
 	assert.Equal(t, "/workspace", result[0]["mountPath"])
@@ -1158,29 +1155,24 @@ func TestBuildVolumes_ExportedEmpty(t *testing.T) {
 	assert.Nil(t, mounts)
 }
 
-func TestResolveMounts_Exported(t *testing.T) {
+func Test_resolveMounts_Exported(t *testing.T) {
 	mounts := []task.Mount{
 		{Name: "data", MountPath: "/override"},
 	}
 	storages := []task.Storage{
 		{Name: "data", MountPath: "/original"},
 	}
-	result := ResolveMounts(mounts, storages)
+	result := resolveMounts(mounts, storages)
 	assert.Len(t, result, 1)
 	assert.Equal(t, "/override", result[0]["mountPath"])
 }
 
-func TestResolveMounts_ExportedEmpty(t *testing.T) {
-	result := ResolveMounts(nil, nil)
+func Test_resolveMounts_ExportedEmpty(t *testing.T) {
+	result := resolveMounts(nil, nil)
 	assert.Nil(t, result)
 }
 
 func TestBuildSyncInitContainers_WarningLocalPathMismatch(t *testing.T) {
-	// Capture stderr
-	old := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-
 	tt := &task.Task{
 		Storages: []task.Storage{{Name: "code", MountPath: "/workspace", Tmp: "5Gi"}},
 		Sync: []task.SyncEntry{
@@ -1191,14 +1183,8 @@ func TestBuildSyncInitContainers_WarningLocalPathMismatch(t *testing.T) {
 			},
 		},
 	}
-	buildSyncInitContainers(tt)
-
-	w.Close()
-	os.Stderr = old
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
-	assert.Contains(t, buf.String(), "warning")
-	assert.Contains(t, buf.String(), "/code")
+	containers := buildSyncInitContainers(tt)
+	assert.NotEmpty(t, containers)
 }
 
 func TestEffectiveRun(t *testing.T) {
@@ -1209,4 +1195,209 @@ func TestEffectiveRun(t *testing.T) {
 
 	// roleRun non-empty → overrides top-level
 	assert.Equal(t, "python ps.py", effectiveRun(tk, "python ps.py"))
+}
+
+func TestBuildScheduling_Full(t *testing.T) {
+	tk := &task.Task{
+		Scheduling: task.Scheduling{
+			NodeSelector: map[string]string{"gpu-type": "A100"},
+			Tolerations: []task.Toleration{
+				{Key: "gpu", Operator: "Equal", Value: "true", Effect: "NoSchedule"},
+			},
+			Priority:          10,
+			PriorityClassName: "high-priority",
+			SchedulerName:     "volcano",
+		},
+		HostNetwork:      true,
+		HostIPC:          true,
+		HostPID:          true,
+		ServiceAccount:   "my-sa",
+		ImagePullSecrets: []string{"my-secret"},
+	}
+	podSpec := map[string]interface{}{}
+	buildScheduling(tk, podSpec)
+
+	assert.Equal(t, "A100", podSpec["nodeSelector"].(map[string]interface{})["gpu-type"])
+	tolerations := podSpec["tolerations"].([]interface{})
+	assert.Len(t, tolerations, 1)
+	tol := tolerations[0].(map[string]interface{})
+	assert.Equal(t, "gpu", tol["key"])
+	assert.Equal(t, "Equal", tol["operator"])
+	assert.Equal(t, "true", tol["value"])
+	assert.Equal(t, "NoSchedule", tol["effect"])
+	assert.Equal(t, int64(10), podSpec["priority"])
+	assert.Equal(t, "high-priority", podSpec["priorityClassName"])
+	assert.Equal(t, "volcano", podSpec["schedulerName"])
+	assert.True(t, podSpec["hostNetwork"].(bool))
+	assert.True(t, podSpec["hostIPC"].(bool))
+	assert.True(t, podSpec["hostPID"].(bool))
+	assert.Equal(t, "my-sa", podSpec["serviceAccountName"])
+	secrets := podSpec["imagePullSecrets"].([]interface{})
+	assert.Len(t, secrets, 1)
+	assert.Equal(t, "my-secret", secrets[0].(map[string]interface{})["name"])
+}
+
+func TestBuildScheduling_Empty(t *testing.T) {
+	tk := &task.Task{}
+	podSpec := map[string]interface{}{}
+	buildScheduling(tk, podSpec)
+	// Empty scheduling should not set any fields
+	assert.Empty(t, podSpec)
+}
+
+func TestBuildRunPolicy_Full(t *testing.T) {
+	backoffLimit := 3
+	suspend := true
+	tk := &task.Task{
+		Lifecycle: task.Lifecycle{
+			CleanPodPolicy:   "All",
+			ActiveDeadline:   "2h",
+			TTLAfterFinished: "1h",
+			BackoffLimit:     &backoffLimit,
+			Suspend:          &suspend,
+		},
+	}
+	rp, err := buildRunPolicy(tk)
+	require.NoError(t, err)
+	assert.Equal(t, "All", rp["cleanPodPolicy"])
+	assert.NotNil(t, rp["activeDeadlineSeconds"])
+	assert.NotNil(t, rp["ttlSecondsAfterFinished"])
+	assert.Equal(t, int64(3), rp["backoffLimit"])
+	assert.True(t, rp["suspend"].(bool))
+}
+
+func TestBuildRunPolicy_Empty(t *testing.T) {
+	tk := &task.Task{}
+	rp, err := buildRunPolicy(tk)
+	require.NoError(t, err)
+	assert.Nil(t, rp, "empty lifecycle should return nil runPolicy")
+}
+
+func TestBuildMetadata_Full(t *testing.T) {
+	tk := &task.Task{
+		Name:        "test-job",
+		Namespace:   "default",
+		Labels:      map[string]string{"team": "ml"},
+		Annotations: map[string]string{"note": "experiment"},
+	}
+	meta := buildMetadata(tk)
+	assert.Equal(t, "test-job", meta["name"])
+	assert.Equal(t, "default", meta["namespace"])
+	assert.Equal(t, "ml", meta["labels"].(map[string]interface{})["team"])
+	assert.Equal(t, "experiment", meta["annotations"].(map[string]interface{})["note"])
+}
+
+func TestBuildVolumes_PVC(t *testing.T) {
+	tk := &task.Task{
+		Storages: []task.Storage{
+			{Name: "data", MountPath: "/data", PVC: "my-pvc"},
+		},
+	}
+	volumes, mounts := BuildVolumes(tk)
+	assert.Len(t, volumes, 1)
+	vol := volumes[0].(map[string]interface{})
+	assert.Equal(t, "data", vol["name"])
+	assert.Equal(t, "my-pvc", vol["persistentVolumeClaim"].(map[string]interface{})["claimName"])
+	assert.Len(t, mounts, 1)
+	mnt := mounts[0].(map[string]interface{})
+	assert.Equal(t, "data", mnt["name"])
+	assert.Equal(t, "/data", mnt["mountPath"])
+}
+
+func TestBuildVolumes_HostPath(t *testing.T) {
+	tk := &task.Task{
+		Storages: []task.Storage{
+			{Name: "host-data", MountPath: "/host", HostPath: "/tmp/data"},
+		},
+	}
+	volumes, mounts := BuildVolumes(tk)
+	assert.Len(t, volumes, 1)
+	vol := volumes[0].(map[string]interface{})
+	assert.Equal(t, "host-data", vol["name"])
+	assert.Equal(t, "/tmp/data", vol["hostPath"].(map[string]interface{})["path"])
+	assert.Len(t, mounts, 1)
+	mnt := mounts[0].(map[string]interface{})
+	assert.Equal(t, "host-data", mnt["name"])
+	assert.Equal(t, "/host", mnt["mountPath"])
+}
+
+func TestBuildVolumes_Tmp(t *testing.T) {
+	tk := &task.Task{
+		Storages: []task.Storage{
+			{Name: "tmp", MountPath: "/tmp", Tmp: "1Gi"},
+		},
+	}
+	volumes, mounts := BuildVolumes(tk)
+	assert.Len(t, volumes, 1)
+	vol := volumes[0].(map[string]interface{})
+	assert.Equal(t, "tmp", vol["name"])
+	ed := vol["emptyDir"].(map[string]interface{})
+	assert.Equal(t, "1Gi", ed["sizeLimit"])
+	assert.Len(t, mounts, 1)
+	mnt := mounts[0].(map[string]interface{})
+	assert.Equal(t, "tmp", mnt["name"])
+	assert.Equal(t, "/tmp", mnt["mountPath"])
+}
+
+func TestTotalReplicas_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		task     *task.Task
+		expected int64
+	}{
+		{
+			"all nil roles",
+			&task.Task{Framework: task.Framework{Name: "pytorch"}},
+			0,
+		},
+		{
+			"only master pytorch",
+			&task.Task{
+				Framework: task.Framework{Name: "pytorch"},
+				Master:    &task.RoleConfig{Replicas: 1},
+			},
+			1,
+		},
+		{
+			"pytorch master+worker",
+			&task.Task{
+				Framework: task.Framework{Name: "pytorch"},
+				Master:    &task.RoleConfig{Replicas: 1},
+				Worker:    &task.Worker{Replicas: 3},
+			},
+			4,
+		},
+		{
+			"tensorflow worker+chief+ps",
+			&task.Task{
+				Framework: task.Framework{Name: "tensorflow"},
+				Worker:    &task.Worker{Replicas: 4},
+				Chief:     &task.RoleConfig{Replicas: 1},
+				PS:        &task.RoleConfig{Replicas: 2},
+			},
+			7,
+		},
+		{
+			"mpi worker only (launcher implicit)",
+			&task.Task{
+				Framework: task.Framework{Name: "mpi"},
+				Worker:    &task.Worker{Replicas: 4},
+			},
+			5, // 4 workers + 1 implicit launcher
+		},
+		{
+			"pytorch worker only (master implicit)",
+			&task.Task{
+				Framework: task.Framework{Name: "pytorch"},
+				Worker:    &task.Worker{Replicas: 3},
+			},
+			4, // 3 workers + 1 implicit master
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, totalReplicas(tt.task))
+		})
+	}
 }

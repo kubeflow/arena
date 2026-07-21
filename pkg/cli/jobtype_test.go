@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -293,7 +294,7 @@ func TestCheckJobExists_DistinguishesNotFoundFromAPIError(t *testing.T) {
 
 	// Inject an InternalError reactor so Get("configmaps", ...) returns a 500-style API error.
 	apiErr := apierrors.NewInternalError(fmt.Errorf("etcd unavailable"))
-	fakeClient.PrependReactor("get", "configmaps", func(action k8stesting.Action) (bool, runtime.Object, error) {
+	fakeClient.PrependReactor("get", "configmaps", func(_ k8stesting.Action) (bool, runtime.Object, error) {
 		return true, nil, apiErr
 	})
 
@@ -317,7 +318,7 @@ func TestCheckJobExists_DistinguishesNotFoundFromForbiddenError(t *testing.T) {
 	// Inject a Forbidden error.
 	cmGVR := schema.GroupResource{Group: "", Resource: "configmaps"}
 	forbiddenErr := apierrors.NewForbidden(cmGVR, "some-job", fmt.Errorf("User cannot get resource"))
-	fakeClient.PrependReactor("get", "configmaps", func(action k8stesting.Action) (bool, runtime.Object, error) {
+	fakeClient.PrependReactor("get", "configmaps", func(_ k8stesting.Action) (bool, runtime.Object, error) {
 		return true, nil, forbiddenErr
 	})
 
@@ -443,7 +444,7 @@ func TestDetectJobType_V1Job_PyTorch(t *testing.T) {
 	k8sClient := client.NewClientForInterface(fakeClient)
 
 	_, err := detectJobType(context.Background(), k8sClient, "default", "v1-job")
-	assert.ErrorIs(t, err, ErrV1Job)
+	assert.ErrorIs(t, err, errV1Job)
 }
 
 // TestDetectJobType_V1Job_TFJob verifies v1 detection for TFJob kind.
@@ -470,7 +471,7 @@ func TestDetectJobType_V1Job_TFJob(t *testing.T) {
 	k8sClient := client.NewClientForInterface(fakeClient)
 
 	_, err := detectJobType(context.Background(), k8sClient, "default", "v1-tf-job")
-	assert.ErrorIs(t, err, ErrV1Job)
+	assert.ErrorIs(t, err, errV1Job)
 }
 
 // TestDetectJobType_V1Job_MPIJob verifies v1 detection for MPIJob kind.
@@ -498,7 +499,7 @@ func TestDetectJobType_V1Job_MPIJob(t *testing.T) {
 	k8sClient.SetMPIVersion("v2beta1")
 
 	_, err := detectJobType(context.Background(), k8sClient, "default", "v1-mpi-job")
-	assert.ErrorIs(t, err, ErrV1Job)
+	assert.ErrorIs(t, err, errV1Job)
 }
 
 // TestDetectJobType_V2CRDWithoutConfigMap verifies that a CRD with the
@@ -713,4 +714,27 @@ func TestDetectJobType_EmptyFrameworkNameFallsThrough(t *testing.T) {
 	_, err := detectJobType(context.Background(), k8sClient, "default", "empty-fw-job")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
+}
+
+func TestDuplicateJobCreationFails(t *testing.T) {
+	ctx := context.Background()
+	k8sClient := newFakeK8sClient(t)
+
+	crd := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "kubeflow.org/v1",
+			"kind":       "PyTorchJob",
+			"metadata": map[string]interface{}{
+				"name":      "dup-job",
+				"namespace": "default",
+			},
+			"spec": map[string]interface{}{},
+		},
+	}
+
+	require.NoError(t, k8sClient.Create(ctx, crd))
+
+	err := k8sClient.Create(ctx, crd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already exists")
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -149,10 +150,10 @@ func newFakeCRDClient(objects ...*unstructured.Unstructured) *Client {
 
 func TestClient_ResolveMPIVersion(t *testing.T) {
 	tests := []struct {
-		name          string
-		crd           *unstructured.Unstructured
-		wantVersion   string
-		wantErr       string
+		name        string
+		crd         *unstructured.Unstructured
+		wantVersion string
+		wantErr     string
 	}{
 		{
 			name: "storage version v2beta1",
@@ -173,7 +174,7 @@ func TestClient_ResolveMPIVersion(t *testing.T) {
 		{
 			name:    "CRD not found",
 			crd:     nil, // no CRD object seeded
-			wantErr: "MPIJob CRD not found in cluster",
+			wantErr: "mpijob crd not found in cluster",
 		},
 		{
 			name: "no storage version configured",
@@ -181,7 +182,7 @@ func TestClient_ResolveMPIVersion(t *testing.T) {
 				{Name: "v1", Served: true, Storage: false},
 				{Name: "v2beta1", Served: true, Storage: false},
 			}),
-			wantErr: "MPIJob CRD has no storage version configured",
+			wantErr: "mpijob crd has no storage version configured",
 		},
 		{
 			name: "unsupported storage version",
@@ -231,4 +232,12 @@ func TestClient_ResolveMPIVersion_Caching(t *testing.T) {
 	err = c.ResolveMPIVersion(context.Background())
 	assert.NoError(t, err)
 	assert.Equal(t, "cached-value", c.mpiVersion, "second call should use cached value")
+}
+
+func TestClient_ResolveMPIVersion_PreservesSentinel(t *testing.T) {
+	c := newFakeCRDClient() // no CRD seeded
+	err := c.ResolveMPIVersion(context.Background())
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrCRDNotFound)
+	assert.ErrorContains(t, err, "mpijob crd not found in cluster")
 }

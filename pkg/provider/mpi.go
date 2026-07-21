@@ -1,12 +1,14 @@
 package provider
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -19,27 +21,26 @@ const (
 
 // MPI implementations
 const (
-	MPIImplementationOpenMPI = "OpenMPI"
-	MPIImplementationIntel   = "Intel"
-	MPIImplementationMPICH   = "MPICH"
+	mpiImplementationOpenMPI = "OpenMPI"
+	mpiImplementationIntel   = "Intel"
 )
 
 // Launcher creation policies
 const (
-	LauncherCreationPolicyAtStartup           = "AtStartup"
-	LauncherCreationPolicyWaitForWorkersReady = "WaitForWorkersReady"
+	launcherCreationPolicyAtStartup           = "AtStartup"
+	launcherCreationPolicyWaitForWorkersReady = "WaitForWorkersReady"
 )
 
 // MPI replica types
 const (
-	MPIReplicaTypeLauncher = "Launcher"
-	MPIReplicaTypeWorker   = "Worker"
+	mpiReplicaTypeLauncher = "Launcher"
+	mpiReplicaTypeWorker   = "Worker"
 )
 
 // MPI default values
 const (
-	MPIDefaultSlotsPerWorker   = int64(1)
-	MPIDefaultSSHAuthMountPath = "/root/.ssh"
+	mpiDefaultSlotsPerWorker   = int64(1)
+	mpiDefaultSSHAuthMountPath = "/root/.ssh"
 )
 
 // MPIProvider generates MPIJob CRDs.
@@ -47,13 +48,6 @@ type MPIProvider struct {
 	// APIVersion is the MPIJob CRD version to use (e.g. "v2beta1", "v1").
 	// Must be set by the CLI layer after cluster detection before calling BuildCRD.
 	APIVersion string
-}
-
-// MPISupportedVersions returns the list of supported MPIJob CRD versions.
-// Exported for use by the CLI layer. Delegates to the client package to
-// maintain a single source of truth for supported versions.
-func MPISupportedVersions() []string {
-	return client.MPISupportedVersions
 }
 
 func (p *MPIProvider) GetJobType() string {
@@ -76,13 +70,16 @@ func (p *MPIProvider) GetJobPodSelector(jobName string) string {
 }
 
 func (p *MPIProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, error) {
-	if t.Framework.Name != constants.FrameworkMPI && t.Framework.Name != constants.FrameworkHorovod && t.Framework.Name != constants.FrameworkDeepSpeed {
-		return nil, fmt.Errorf("MPIProvider requires framework.name=mpi, horovod, or deepspeed, got %s", t.Framework.Name)
+	switch t.Framework.Name {
+	case constants.FrameworkMPI, constants.FrameworkHorovod, constants.FrameworkDeepSpeed:
+		// OK
+	default:
+		return nil, fmt.Errorf("mpi provider requires framework.name=mpi, horovod, or deepspeed, got %q", t.Framework.Name)
 	}
 
 	version := p.APIVersion
 	if version == "" {
-		return nil, fmt.Errorf("MPIProvider.APIVersion must be set before calling BuildCRD")
+		return nil, errors.New("mpi provider apiversion is not set")
 	}
 
 	if !client.IsMPIVersionSupported(version) {
@@ -122,6 +119,30 @@ func (p *MPIProvider) BuildRBAC(t *task.Task, ownerRef metav1.OwnerReference) ([
 // buildMPICRD generates an MPIJob CRD for the given API version.
 // v1 and v2beta1 share the core structure; v2beta1 has additional top-level fields.
 func (p *MPIProvider) buildMPICRD(t *task.Task, apiVersion string) (*unstructured.Unstructured, error) {
+	// Work on a copy to avoid mutating the caller's task (GPUTopology sets HostNetwork and Labels).
+	tCopy := *t
+	if t.Labels != nil {
+		tCopy.Labels = make(map[string]string, len(t.Labels))
+		for k, v := range t.Labels {
+			tCopy.Labels[k] = v
+		}
+	}
+	t = &tCopy
+
+	// GPUTopology implies host networking and topology labels per cli-flag-mapping.md.
+	if t.Framework.Options.GPUTopology {
+		t.HostNetwork = true
+		if t.Labels == nil {
+			t.Labels = map[string]string{}
+		}
+		if _, exists := t.Labels["gpu-topology"]; !exists {
+			t.Labels["gpu-topology"] = "true"
+		}
+		if _, exists := t.Labels["gpu-topology-replica"]; !exists {
+			t.Labels["gpu-topology-replica"] = "true"
+		}
+	}
+
 	restartPolicy := constants.RestartPolicyOnFailure
 	if t.Restart != "" {
 		restartPolicy = t.Restart
@@ -136,22 +157,22 @@ func (p *MPIProvider) buildMPICRD(t *task.Task, apiVersion string) (*unstructure
 		return nil, fmt.Errorf("failed to build worker replica spec: %w", err)
 	}
 
-	slotsPerWorker := MPIDefaultSlotsPerWorker
+	slotsPerWorker := mpiDefaultSlotsPerWorker
 	if t.Framework.Options.SlotsPerWorker > 0 {
 		slotsPerWorker = int64(t.Framework.Options.SlotsPerWorker)
 	}
 
-	mpiImplementation := MPIImplementationOpenMPI
+	mpiImplementation := mpiImplementationOpenMPI
 	if t.Framework.Options.MPIImplementation != "" {
 		mpiImplementation = t.Framework.Options.MPIImplementation
 	}
 
-	launcherCreationPolicy := LauncherCreationPolicyAtStartup
+	launcherCreationPolicy := launcherCreationPolicyAtStartup
 	if t.Framework.Options.LauncherCreationPolicy != "" {
 		launcherCreationPolicy = t.Framework.Options.LauncherCreationPolicy
 	}
 
-	sshAuthMountPath := MPIDefaultSSHAuthMountPath
+	sshAuthMountPath := mpiDefaultSSHAuthMountPath
 	if t.Framework.Options.SSHAuthMountPath != "" {
 		sshAuthMountPath = t.Framework.Options.SSHAuthMountPath
 	}
@@ -159,8 +180,8 @@ func (p *MPIProvider) buildMPICRD(t *task.Task, apiVersion string) (*unstructure
 	spec := map[string]interface{}{
 		"slotsPerWorker": slotsPerWorker,
 		"mpiReplicaSpecs": map[string]interface{}{
-			MPIReplicaTypeLauncher: launcherSpec,
-			MPIReplicaTypeWorker:   workerSpec,
+			mpiReplicaTypeLauncher: launcherSpec,
+			mpiReplicaTypeWorker:   workerSpec,
 		},
 	}
 
@@ -215,23 +236,33 @@ func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map
 	var envs map[string]task.EnvValue
 	var launcherRun string
 
-	if t.Launcher != nil {
+	switch {
+	case t.Launcher != nil:
 		// Launcher explicitly configured: use its own config only
 		resources = t.Launcher.Resources
 		envs = t.Launcher.Envs
 		launcherRun = t.Launcher.Run
-	} else if t.Framework.Options.RunLauncherAsWorker {
+	case t.Framework.Options.RunLauncherAsWorker:
 		// No launcher config + run_launcher_as_worker: inherit from worker
 		resources = t.Worker.Resources
 		envs = t.Worker.Envs
-	} else {
+	default:
 		// No launcher config + no run_launcher_as_worker: CPU-only
 		resources = nil
 		envs = nil
 	}
 
 	includeVolumes := t.Framework.Options.MountsOnLauncher
-	spec, err := buildRoleReplicaSpec(constants.FrameworkMPI, t, resources, envs, 1, restartPolicy, includeVolumes, effectiveRun(t, launcherRun))
+	spec, err := buildRoleReplicaSpec(replicaSpecOptions{
+		ContainerName:  constants.FrameworkMPI,
+		Task:           t,
+		Resources:      resources,
+		Envs:           envs,
+		Replicas:       1,
+		RestartPolicy:  restartPolicy,
+		IncludeVolumes: includeVolumes,
+		Run:            effectiveRun(t, launcherRun),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +271,7 @@ func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map
 	// Use unstructured helpers for safe nested access instead of raw type assertions.
 	if t.ServiceAccount == "" {
 		if _, found, err := unstructured.NestedMap(spec, "template", "spec"); err != nil || !found {
-			return nil, fmt.Errorf("launcher spec missing template.spec field")
+			return nil, errors.New("launcher spec missing template.spec field")
 		}
 		if err := unstructured.SetNestedField(spec, t.Name+"-launcher", "template", "spec", "serviceAccountName"); err != nil {
 			return nil, fmt.Errorf("failed to set serviceAccountName on launcher spec: %w", err)
@@ -254,7 +285,15 @@ func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map
 // MPI workers run as SSH daemons for the launcher to dispatch commands to.
 // They must not receive the user's run command — only the launcher executes it.
 func (p *MPIProvider) buildWorkerReplicaSpec(t *task.Task, replicas int64, restartPolicy string) (map[string]interface{}, error) {
-	container := buildContainer(constants.FrameworkMPI, t.Image, t, t.Worker.Resources, t.Worker.Envs, "", nil)
+	container := buildContainer(containerOptions{
+		Name:      constants.FrameworkMPI,
+		Image:     t.Image,
+		Task:      t,
+		Resources: t.Worker.Resources,
+		RoleEnvs:  t.Worker.Envs,
+		Run:       "",
+		Mounts:    nil,
+	})
 	podSpec, err := buildPodSpec(t, container, true)
 	if err != nil {
 		return nil, err
@@ -269,4 +308,11 @@ func (p *MPIProvider) buildWorkerReplicaSpec(t *task.Task, replicas int64, resta
 		"restartPolicy": restartPolicy,
 		"template":      template,
 	}, nil
+}
+
+// MPISupportedVersions returns the list of supported MPIJob CRD versions.
+// Exported for use by the CLI layer. Delegates to the client package to
+// maintain a single source of truth for supported versions.
+func MPISupportedVersions() []string {
+	return client.MPISupportedVersions
 }

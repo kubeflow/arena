@@ -2,61 +2,94 @@ package task
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/kubeflow/arena/pkg/constants"
 )
 
+// setStrFlag sets a string flag value into the target if the flag exists
+// and the value is a non-empty string.
+func setStrFlag(flags map[string]interface{}, flag string, target *string) error {
+	v, exists := flags[flag]
+	if !exists {
+		return nil
+	}
+	s, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("flag %q: expected string, got %T", flag, v)
+	}
+	if s != "" {
+		*target = s
+	}
+	return nil
+}
+
+// setIntFlag sets an int flag value into the target if the flag exists
+// and the value is a positive int.
+func setIntFlag(flags map[string]interface{}, flag string, target *int) error {
+	v, exists := flags[flag]
+	if !exists {
+		return nil
+	}
+	n, ok := v.(int)
+	if !ok {
+		return fmt.Errorf("flag %q: expected int, got %T", flag, v)
+	}
+	if n > 0 {
+		*target = n
+	}
+	return nil
+}
+
+// setBoolFlag sets a bool flag value into the target if the flag exists.
+func setBoolFlag(flags map[string]interface{}, flag string, target *bool) error {
+	v, exists := flags[flag]
+	if !exists {
+		return nil
+	}
+	b, ok := v.(bool)
+	if !ok {
+		return fmt.Errorf("flag %q: expected bool, got %T", flag, v)
+	}
+	*target = b
+	return nil
+}
+
 // ApplyOverrides applies flag-based overrides to a Task struct.
 // Flag keys match the CLI flag names (without the leading --).
 // Returns an error when a flag value has an unexpected type.
 func ApplyOverrides(t *Task, flags map[string]interface{}) error {
-	setStr := func(flag string, target *string) error {
-		v, exists := flags[flag]
-		if !exists {
-			return nil
-		}
-		s, ok := v.(string)
-		if !ok {
-			return fmt.Errorf("flag %q: expected string, got %T", flag, v)
-		}
-		if s != "" {
-			*target = s
-		}
-		return nil
-	}
-	setInt := func(flag string, target *int) error {
-		v, exists := flags[flag]
-		if !exists {
-			return nil
-		}
-		n, ok := v.(int)
-		if !ok {
-			return fmt.Errorf("flag %q: expected int, got %T", flag, v)
-		}
-		if n > 0 {
-			*target = n
-		}
-		return nil
-	}
-	setBool := func(flag string, target *bool) error {
-		v, exists := flags[flag]
-		if !exists {
-			return nil
-		}
-		b, ok := v.(bool)
-		if !ok {
-			return fmt.Errorf("flag %q: expected bool, got %T", flag, v)
-		}
-		*target = b
-		return nil
-	}
-
-	// Identity
-	if err := setStr("name", &t.Name); err != nil {
+	if err := applyIdentityOverrides(t, flags); err != nil {
 		return err
 	}
-	if err := setStr("namespace", &t.Namespace); err != nil {
+	if err := applyResourceOverrides(t, flags); err != nil {
+		return err
+	}
+	if err := applySchedulingOverrides(t, flags); err != nil {
+		return err
+	}
+	if err := applyLifecycleOverrides(t, flags); err != nil {
+		return err
+	}
+	if err := applyRuntimeOverrides(t, flags); err != nil {
+		return err
+	}
+	if err := applyLoggingOverrides(t, flags); err != nil {
+		return err
+	}
+	if err := applyFrameworkOverrides(t, flags); err != nil {
+		return err
+	}
+	return nil
+}
+
+// applyIdentityOverrides handles name, namespace, labels, annotations, and framework name.
+func applyIdentityOverrides(t *Task, flags map[string]interface{}) error {
+	if err := setStrFlag(flags, "name", &t.Name); err != nil {
+		return err
+	}
+	if err := setStrFlag(flags, "namespace", &t.Namespace); err != nil {
 		return err
 	}
 
@@ -83,29 +116,45 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 		}
 	}
 
-	// Task
-	if err := setStr("framework", &t.Framework.Name); err != nil {
+	if err := setStrFlag(flags, "framework", &t.Framework.Name); err != nil {
 		return err
 	}
-	if err := setStr("image", &t.Image); err != nil {
-		return err
-	}
-	if err := setStr("working-dir", &t.WorkingDir); err != nil {
-		return err
-	}
-	if err := setStr("shell", &t.Shell); err != nil {
+	return nil
+}
+
+// applyResourceOverrides handles image, workers, gpus, gpu-type, cpus, memory,
+// shm, device, envs, data, data-dir, and config-file.
+func applyResourceOverrides(t *Task, flags map[string]interface{}) error {
+	if err := setStrFlag(flags, "image", &t.Image); err != nil {
 		return err
 	}
 
-	if err := setStr("run", &t.Run); err != nil {
-		return err
-	}
-
-	// Scale + Resources — auto-create Worker only when overrides target it
 	ensureWorker := func() {
 		if t.Worker == nil {
 			t.Worker = &Worker{}
 		}
+	}
+
+	// ensureResourceTarget returns the Resources map that resource overrides
+	// should be applied to. When Worker exists, it returns Worker.Resources.
+	// When Worker is nil but Master exists (single-node PyTorch), it returns
+	// Master.Resources. Otherwise it creates a Worker with Replicas=1.
+	ensureResourceTarget := func() Resources {
+		if t.Worker != nil {
+			if t.Worker.Resources == nil {
+				t.Worker.Resources = Resources{}
+			}
+			return t.Worker.Resources
+		}
+		if t.Master != nil {
+			if t.Master.Resources == nil {
+				t.Master.Resources = Resources{}
+			}
+			return t.Master.Resources
+		}
+		t.Worker = &Worker{Replicas: 1}
+		t.Worker.Resources = Resources{}
+		return t.Worker.Resources
 	}
 
 	// Scale
@@ -113,7 +162,7 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 		ensureWorker()
 		n, ok := v.(int)
 		if !ok {
-			return fmt.Errorf("flag \"workers\": expected int, got %T", v)
+			return fmt.Errorf("flag %q: expected int, got %T", "workers", v)
 		}
 		if n > 0 {
 			t.Worker.Replicas = n
@@ -122,11 +171,8 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 
 	// Resources
 	if gpus, ok := flags["gpus"].(int); ok && gpus > 0 {
-		ensureWorker()
-		if t.Worker.Resources == nil {
-			t.Worker.Resources = Resources{}
-		}
-		t.Worker.Resources["nvidia.com/gpu"] = fmt.Sprintf("%d", gpus)
+		target := ensureResourceTarget()
+		target["nvidia.com/gpu"] = strconv.Itoa(gpus)
 	}
 	if gpuType, ok := flags["gpu-type"].(string); ok && gpuType != "" {
 		if t.Scheduling.NodeSelector == nil {
@@ -136,18 +182,12 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 	}
 
 	if v, ok := flags["cpus"].(string); ok && v != "" {
-		ensureWorker()
-		if t.Worker.Resources == nil {
-			t.Worker.Resources = Resources{}
-		}
-		t.Worker.Resources["cpu"] = v
+		target := ensureResourceTarget()
+		target["cpu"] = v
 	}
 	if v, ok := flags["mem"].(string); ok && v != "" {
-		ensureWorker()
-		if t.Worker.Resources == nil {
-			t.Worker.Resources = Resources{}
-		}
-		t.Worker.Resources["memory"] = v
+		target := ensureResourceTarget()
+		target["memory"] = v
 	}
 
 	if shm, ok := flags["shm"].(string); ok && shm != "" {
@@ -159,14 +199,11 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 	}
 
 	if devices, ok := flags["device"].([]string); ok {
-		ensureWorker()
-		if t.Worker.Resources == nil {
-			t.Worker.Resources = Resources{}
-		}
+		target := ensureResourceTarget()
 		for _, d := range devices {
 			k, v := splitKV(d)
 			if k != "" {
-				t.Worker.Resources[k] = v
+				target[k] = v
 			}
 		}
 	}
@@ -225,18 +262,22 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 			}
 		}
 	}
+	return nil
+}
 
-	// Scheduling
-	if err := setInt("priority", &t.Scheduling.Priority); err != nil {
+// applySchedulingOverrides handles scheduler, queue, priority, gang, affinity,
+// selector, and toleration.
+func applySchedulingOverrides(t *Task, flags map[string]interface{}) error {
+	if err := setIntFlag(flags, "priority", &t.Scheduling.Priority); err != nil {
 		return err
 	}
-	if err := setStr("priority-class-name", &t.Scheduling.PriorityClassName); err != nil {
+	if err := setStrFlag(flags, "priority-class-name", &t.Scheduling.PriorityClassName); err != nil {
 		return err
 	}
-	if err := setBool("gang", &t.Scheduling.Gang.Enabled); err != nil {
+	if err := setBoolFlag(flags, "gang", &t.Scheduling.Gang.Enabled); err != nil {
 		return err
 	}
-	if err := setStr("scheduler-name", &t.Scheduling.SchedulerName); err != nil {
+	if err := setStrFlag(flags, "scheduler-name", &t.Scheduling.SchedulerName); err != nil {
 		return err
 	}
 
@@ -275,22 +316,25 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 		}
 	}
 
-	// Queue
-	if err := setStr("queue", &t.Scheduling.Queue); err != nil {
+	if err := setStrFlag(flags, "queue", &t.Scheduling.Queue); err != nil {
 		return err
 	}
+	return nil
+}
 
-	// Lifecycle
-	if err := setStr("clean-pod-policy", &t.Lifecycle.CleanPodPolicy); err != nil {
+// applyLifecycleOverrides handles clean-pod-policy, active-deadline,
+// ttl-after-finished, success-policy, and backoff-limit.
+func applyLifecycleOverrides(t *Task, flags map[string]interface{}) error {
+	if err := setStrFlag(flags, "clean-pod-policy", &t.Lifecycle.CleanPodPolicy); err != nil {
 		return err
 	}
-	if err := setStr("active-deadline", &t.Lifecycle.ActiveDeadline); err != nil {
+	if err := setStrFlag(flags, "active-deadline", &t.Lifecycle.ActiveDeadline); err != nil {
 		return err
 	}
-	if err := setStr("ttl-after-finished", &t.Lifecycle.TTLAfterFinished); err != nil {
+	if err := setStrFlag(flags, "ttl-after-finished", &t.Lifecycle.TTLAfterFinished); err != nil {
 		return err
 	}
-	if err := setStr("success-policy", &t.Lifecycle.SuccessPolicy); err != nil {
+	if err := setStrFlag(flags, "success-policy", &t.Lifecycle.SuccessPolicy); err != nil {
 		return err
 	}
 
@@ -303,32 +347,48 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 			t.Lifecycle.BackoffLimit = &n
 		}
 	}
+	return nil
+}
 
-	// Runtime
-	if err := setStr("image-pull-policy", &t.ImagePullPolicy); err != nil {
+// applyRuntimeOverrides handles run, shell, working-dir, image-pull-policy,
+// service-account, restart, host-network, host-ipc, host-pid, and image-pull-secret.
+func applyRuntimeOverrides(t *Task, flags map[string]interface{}) error {
+	if err := setStrFlag(flags, "run", &t.Run); err != nil {
 		return err
 	}
-	if err := setStr("service-account", &t.ServiceAccount); err != nil {
+	if err := setStrFlag(flags, "shell", &t.Shell); err != nil {
 		return err
 	}
-	if err := setStr("restart", &t.Restart); err != nil {
+	if err := setStrFlag(flags, "working-dir", &t.WorkingDir); err != nil {
 		return err
 	}
-	if err := setBool("host-network", &t.HostNetwork); err != nil {
+	if err := setStrFlag(flags, "image-pull-policy", &t.ImagePullPolicy); err != nil {
 		return err
 	}
-	if err := setBool("host-ipc", &t.HostIPC); err != nil {
+	if err := setStrFlag(flags, "service-account", &t.ServiceAccount); err != nil {
 		return err
 	}
-	if err := setBool("host-pid", &t.HostPID); err != nil {
+	if err := setStrFlag(flags, "restart", &t.Restart); err != nil {
+		return err
+	}
+	if err := setBoolFlag(flags, "host-network", &t.HostNetwork); err != nil {
+		return err
+	}
+	if err := setBoolFlag(flags, "host-ipc", &t.HostIPC); err != nil {
+		return err
+	}
+	if err := setBoolFlag(flags, "host-pid", &t.HostPID); err != nil {
 		return err
 	}
 
 	if secrets, ok := flags["image-pull-secret"].([]string); ok {
 		t.ImagePullSecrets = append(t.ImagePullSecrets, secrets...)
 	}
+	return nil
+}
 
-	// Logging — direct assignment for tensorboard fields
+// applyLoggingOverrides handles tensorboard, tensorboard-logdir, and tensorboard-image.
+func applyLoggingOverrides(t *Task, flags map[string]interface{}) error {
 	if v, ok := flags["tensorboard"].(bool); ok {
 		if t.Logging.TensorBoard == nil {
 			t.Logging.TensorBoard = &TensorBoardConfig{}
@@ -347,18 +407,22 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 		}
 		t.Logging.TensorBoard.Image = v
 	}
+	return nil
+}
 
-	// Framework-specific options
-	if err := setStr("nproc-per-node", &t.Framework.Options.NprocPerNode); err != nil {
+// applyFrameworkOverrides handles nproc-per-node, slots-per-worker, gpu-topology,
+// mounts-on-launcher, chief, evaluator, and ps-count.
+func applyFrameworkOverrides(t *Task, flags map[string]interface{}) error {
+	if err := setStrFlag(flags, "nproc-per-node", &t.Framework.Options.NprocPerNode); err != nil {
 		return err
 	}
-	if err := setInt("slots-per-worker", &t.Framework.Options.SlotsPerWorker); err != nil {
+	if err := setIntFlag(flags, "slots-per-worker", &t.Framework.Options.SlotsPerWorker); err != nil {
 		return err
 	}
-	if err := setBool("gpu-topology", &t.Framework.Options.GPUTopology); err != nil {
+	if err := setBoolFlag(flags, "gpu-topology", &t.Framework.Options.GPUTopology); err != nil {
 		return err
 	}
-	if err := setBool("mounts-on-launcher", &t.Framework.Options.MountsOnLauncher); err != nil {
+	if err := setBoolFlag(flags, "mounts-on-launcher", &t.Framework.Options.MountsOnLauncher); err != nil {
 		return err
 	}
 
@@ -379,7 +443,6 @@ func ApplyOverrides(t *Task, flags map[string]interface{}) error {
 		}
 		t.PS.Replicas = v
 	}
-
 	return nil
 }
 
@@ -433,13 +496,8 @@ func parseTolerationFlag(s string) (*Toleration, error) {
 
 	tol := &Toleration{}
 
-	// Split by : to separate key=value from effect
-	colonIdx := strings.LastIndex(s, ":")
-	keyValue := s
-	if colonIdx >= 0 {
-		keyValue = s[:colonIdx]
-		tol.Effect = s[colonIdx+1:]
-	}
+	parts := strings.SplitN(s, ":", 3)
+	keyValue := parts[0]
 
 	// Split by = to separate key from value
 	eqIdx := strings.Index(keyValue, "=")
@@ -454,6 +512,20 @@ func parseTolerationFlag(s string) (*Toleration, error) {
 
 	if tol.Key == "" {
 		return nil, fmt.Errorf("invalid toleration %q: key is required", s)
+	}
+
+	if len(parts) >= 2 {
+		tol.Effect = parts[1]
+	}
+	if len(parts) >= 3 {
+		seconds, err := strconv.ParseInt(parts[2], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid toleration %q: toleration seconds must be an integer, got %q", s, parts[2])
+		}
+		if seconds < 0 {
+			return nil, fmt.Errorf("invalid toleration %q: toleration seconds must be non-negative", s)
+		}
+		tol.TolerationSeconds = &seconds
 	}
 
 	return tol, nil

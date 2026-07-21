@@ -2,8 +2,11 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +15,48 @@ import (
 	"github.com/kubeflow/arena/pkg/provider"
 	"github.com/kubeflow/arena/pkg/task"
 )
+
+const configmapYAML = `version: 0.1.0
+name: test-configmap
+framework:
+  name: pytorch
+image: docker.io/pytorch/pytorch:2.1
+run: cat /etc/config/settings.yaml
+worker:
+  replicas: 1
+  resources:
+    cpu: 1
+    memory: 1Gi
+storages:
+  - name: configs
+    configmap: app-config
+    mount_path: /etc/config
+  - name: single-file
+    configmap: app-config
+    key: settings.yaml
+    mount_path: /app/settings.yaml
+`
+
+const secretYAML = `version: 0.1.0
+name: test-secret
+framework:
+  name: pytorch
+image: docker.io/pytorch/pytorch:2.1
+run: test -f /root/.ssh/id_rsa && echo "secret mounted ok"
+worker:
+  replicas: 1
+  resources:
+    cpu: 1
+    memory: 1Gi
+storages:
+  - name: creds
+    secret: db-credentials
+    mount_path: /secrets
+  - name: ssh-key
+    secret: ssh-keys
+    key: id_rsa
+    mount_path: /root/.ssh/id_rsa
+`
 
 func TestGetProvider(t *testing.T) {
 	tests := []struct {
@@ -67,7 +112,7 @@ func TestRunCmd_InvalidFile(t *testing.T) {
 func TestRunCmd_InvalidYAML(t *testing.T) {
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "invalid.yaml")
-	err := os.WriteFile(tmpFile, []byte("not: valid: yaml: {{{"), 0644)
+	err := os.WriteFile(tmpFile, []byte("not: valid: yaml: {{{"), 0600)
 	require.NoError(t, err)
 
 	original := runFile
@@ -89,7 +134,7 @@ framework:
 worker:
   replicas: 1
 `
-	err := os.WriteFile(tmpFile, []byte(content), 0644)
+	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	original := runFile
@@ -112,7 +157,7 @@ framework:
 worker:
   replicas: 1
 `
-	err := os.WriteFile(tmpFile, []byte(content), 0644)
+	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	original := runFile
@@ -134,7 +179,7 @@ framework:
 worker:
   replicas: 2
 `
-	err := os.WriteFile(tmpFile, []byte(content), 0644)
+	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	originalFile := runFile
@@ -172,7 +217,7 @@ func TestRunCmd_RegisteredWithJobCmd(t *testing.T) {
 	assert.True(t, found, "run command should be registered with job command")
 }
 
-func TestRunCmd_FrameworkLabelInjected(t *testing.T) {
+func TestRunCmd_frameworkLabelInjected(t *testing.T) {
 	tests := []struct {
 		name      string
 		framework string
@@ -189,7 +234,7 @@ func TestRunCmd_FrameworkLabelInjected(t *testing.T) {
 			tmpDir := t.TempDir()
 			tmpFile := filepath.Join(tmpDir, "test.yaml")
 			content := "name: test-" + tt.framework + "\nimage: some-image\nrun: echo hello\nframework:\n  name: " + tt.framework + "\nworker:\n  replicas: 1\n"
-			err := os.WriteFile(tmpFile, []byte(content), 0644)
+			err := os.WriteFile(tmpFile, []byte(content), 0600)
 			require.NoError(t, err)
 
 			tk, err := task.LoadFromFile(tmpFile)
@@ -209,7 +254,7 @@ func TestRunCmd_FrameworkLabelInjected(t *testing.T) {
 			setFrameworkLabel(crd, tk.Framework.Name)
 
 			labels := crd.GetLabels()
-			assert.Equal(t, tt.framework, labels[FrameworkLabel],
+			assert.Equal(t, tt.framework, labels[frameworkLabel],
 				"framework label should be %q for framework %q", tt.framework, tt.framework)
 		})
 	}
@@ -219,7 +264,7 @@ func TestRunCmd_DryRunJSONOutput(t *testing.T) {
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "valid.yaml")
 	content := "name: dry-json-test\nimage: pytorch:1.13\nrun: python train.py\nframework:\n  name: pytorch\nworker:\n  replicas: 2\n"
-	err := os.WriteFile(tmpFile, []byte(content), 0644)
+	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	tk, err := task.LoadFromFile(tmpFile)
@@ -246,14 +291,14 @@ func TestRunCmd_DryRunJSONOutput(t *testing.T) {
 
 	labels, ok := metadata["labels"].(map[string]interface{})
 	assert.True(t, ok)
-	assert.Equal(t, "pytorch", labels[FrameworkLabel])
+	assert.Equal(t, "pytorch", labels[frameworkLabel])
 }
 
 func TestRunCmd_NamespaceSetOnCRD(t *testing.T) {
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "ns.yaml")
 	content := "name: ns-test\nimage: pytorch:1.13\nrun: echo hello\nframework:\n  name: pytorch\nworker:\n  replicas: 1\n"
-	err := os.WriteFile(tmpFile, []byte(content), 0644)
+	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
 	tk, err := task.LoadFromFile(tmpFile)
@@ -280,7 +325,7 @@ func writeTestYAML(t *testing.T, content string) string {
 	t.Helper()
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "test.yaml")
-	err := os.WriteFile(tmpFile, []byte(content), 0644)
+	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 	return tmpFile
 }
@@ -590,7 +635,7 @@ worker:
 	// Empty APIVersion must now produce an error (no default fallback)
 	_, err = p.BuildCRD(tk)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "APIVersion must be set")
+	assert.Contains(t, err.Error(), "apiversion is not set")
 
 	// After setting APIVersion, BuildCRD succeeds with v2beta1
 	mpiP.APIVersion = provider.MPIAPIVersionV2beta1
@@ -728,4 +773,249 @@ worker:
 	assert.Equal(t, "MPIJob", crd.GetKind())
 	assert.Equal(t, "kubeflow.org/v2beta1", crd.GetAPIVersion())
 	assert.Equal(t, "mpi-overridden", crd.GetName())
+}
+
+func TestStorageConfigMap(t *testing.T) {
+	taskObj, err := task.LoadFromBytes([]byte(configmapYAML))
+	require.NoError(t, err, "LoadFromBytes should succeed for configmap YAML")
+
+	assert.Equal(t, "test-configmap", taskObj.Name)
+	require.Len(t, taskObj.Storages, 2, "configmap.yaml should define 2 storages")
+
+	p, err := getProvider(taskObj.Framework.Name)
+	require.NoError(t, err)
+
+	crd, err := p.BuildCRD(taskObj)
+	require.NoError(t, err)
+	assert.Equal(t, "PyTorchJob", crd.GetKind())
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["pytorchReplicaSpecs"].(map[string]interface{})
+	master := replicaSpecs["Master"].(map[string]interface{})
+	template := master["template"].(map[string]interface{})
+	podSpec := template["spec"].(map[string]interface{})
+
+	volumes := podSpec["volumes"].([]interface{})
+	require.Len(t, volumes, 2, "should have 2 volumes")
+
+	volMap := make(map[string]map[string]interface{})
+	for _, v := range volumes {
+		vol := v.(map[string]interface{})
+		volMap[vol["name"].(string)] = vol
+	}
+
+	cm1, ok := volMap["configs"]
+	require.True(t, ok, "volume 'configs' should exist")
+	cmSpec := cm1["configMap"].(map[string]interface{})
+	assert.Equal(t, "app-config", cmSpec["name"])
+
+	cm2, ok := volMap["single-file"]
+	require.True(t, ok, "volume 'single-file' should exist")
+	cmSpec2 := cm2["configMap"].(map[string]interface{})
+	assert.Equal(t, "app-config", cmSpec2["name"])
+
+	containers := podSpec["containers"].([]interface{})
+	container := containers[0].(map[string]interface{})
+	mounts := container["volumeMounts"].([]interface{})
+	require.Len(t, mounts, 2, "should have 2 volumeMounts")
+
+	mountMap := make(map[string]map[string]interface{})
+	for _, m := range mounts {
+		mnt := m.(map[string]interface{})
+		mountMap[mnt["name"].(string)] = mnt
+	}
+
+	m1, ok := mountMap["configs"]
+	require.True(t, ok, "mount 'configs' should exist")
+	assert.Equal(t, "/etc/config", m1["mountPath"])
+	_, hasSubPath1 := m1["subPath"]
+	assert.False(t, hasSubPath1, "mount 'configs' should not have subPath (no key set)")
+
+	m2, ok := mountMap["single-file"]
+	require.True(t, ok, "mount 'single-file' should exist")
+	assert.Equal(t, "/app/settings.yaml", m2["mountPath"])
+	assert.Equal(t, "settings.yaml", m2["subPath"], "mount 'single-file' should have subPath = key")
+}
+
+func TestStorageSecret(t *testing.T) {
+	taskObj, err := task.LoadFromBytes([]byte(secretYAML))
+	require.NoError(t, err, "LoadFromBytes should succeed for secret YAML")
+
+	assert.Equal(t, "test-secret", taskObj.Name)
+	require.Len(t, taskObj.Storages, 2, "secret.yaml should define 2 storages")
+
+	p, err := getProvider(taskObj.Framework.Name)
+	require.NoError(t, err)
+
+	crd, err := p.BuildCRD(taskObj)
+	require.NoError(t, err)
+	assert.Equal(t, "PyTorchJob", crd.GetKind())
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["pytorchReplicaSpecs"].(map[string]interface{})
+	master := replicaSpecs["Master"].(map[string]interface{})
+	template := master["template"].(map[string]interface{})
+	podSpec := template["spec"].(map[string]interface{})
+
+	volumes := podSpec["volumes"].([]interface{})
+	require.Len(t, volumes, 2, "should have 2 volumes")
+
+	volMap := make(map[string]map[string]interface{})
+	for _, v := range volumes {
+		vol := v.(map[string]interface{})
+		volMap[vol["name"].(string)] = vol
+	}
+
+	s1, ok := volMap["creds"]
+	require.True(t, ok, "volume 'creds' should exist")
+	sSpec := s1["secret"].(map[string]interface{})
+	assert.Equal(t, "db-credentials", sSpec["secretName"])
+
+	s2, ok := volMap["ssh-key"]
+	require.True(t, ok, "volume 'ssh-key' should exist")
+	sSpec2 := s2["secret"].(map[string]interface{})
+	assert.Equal(t, "ssh-keys", sSpec2["secretName"])
+
+	containers := podSpec["containers"].([]interface{})
+	container := containers[0].(map[string]interface{})
+	mounts := container["volumeMounts"].([]interface{})
+	require.Len(t, mounts, 2, "should have 2 volumeMounts")
+
+	mountMap := make(map[string]map[string]interface{})
+	for _, m := range mounts {
+		mnt := m.(map[string]interface{})
+		mountMap[mnt["name"].(string)] = mnt
+	}
+
+	m1, ok := mountMap["creds"]
+	require.True(t, ok, "mount 'creds' should exist")
+	assert.Equal(t, "/secrets", m1["mountPath"])
+	_, hasSubPath1 := m1["subPath"]
+	assert.False(t, hasSubPath1, "mount 'creds' should not have subPath (no key set)")
+
+	m2, ok := mountMap["ssh-key"]
+	require.True(t, ok, "mount 'ssh-key' should exist")
+	assert.Equal(t, "/root/.ssh/id_rsa", m2["mountPath"])
+	assert.Equal(t, "id_rsa", m2["subPath"], "mount 'ssh-key' should have subPath = key")
+}
+
+func TestErrorChain_UnwrapDepth(t *testing.T) {
+	_, err := task.LoadFromFile("/nonexistent/cli-error-test.yaml")
+	require.Error(t, err)
+
+	errMsg := err.Error()
+	assert.Contains(t, errMsg, "failed to read file")
+	assert.Contains(t, errMsg, "cli-error-test.yaml")
+
+	var chain []string
+	current := err
+	for current != nil {
+		chain = append(chain, current.Error())
+		current = errors.Unwrap(current)
+	}
+	assert.GreaterOrEqual(t, len(chain), 2, "CLI error chain should have at least 2 levels")
+}
+
+func TestErrorChain_OSErrorReachable(t *testing.T) {
+	_, err := task.LoadFromFile("/nonexistent/file.yaml")
+	require.Error(t, err)
+
+	var chain []string
+	current := err
+	for current != nil {
+		chain = append(chain, current.Error())
+		current = errors.Unwrap(current)
+	}
+
+	require.GreaterOrEqual(t, len(chain), 2, "error chain should have at least 2 levels")
+	assert.Contains(t, chain[0], "failed to read file", "outermost error should describe the file read failure")
+
+	foundOSError := false
+	for _, msg := range chain[1:] {
+		if strings.Contains(msg, "no such file") || strings.Contains(msg, "does not exist") {
+			foundOSError = true
+			break
+		}
+	}
+	assert.True(t, foundOSError, "error chain should include the underlying OS error")
+}
+
+func TestErrorChain_ThreeLevelWrapping(t *testing.T) {
+	innerErr := errors.New("connection refused")
+	wrappedErr := fmt.Errorf("failed to connect: %w", innerErr)
+	outerErr := fmt.Errorf("failed to create client: %w", wrappedErr)
+
+	basicMsg := fmt.Sprintf("Error: %s", outerErr.Error())
+	assert.Contains(t, basicMsg, "Error: failed to create client")
+	assert.Contains(t, basicMsg, "failed to connect")
+	assert.Contains(t, basicMsg, "connection refused")
+
+	var chain []string
+	current := outerErr
+	for current != nil {
+		chain = append(chain, current.Error())
+		current = errors.Unwrap(current)
+	}
+	assert.Equal(t, 3, len(chain), "error chain should have 3 levels")
+	assert.Contains(t, chain[0], "failed to create client")
+	assert.Contains(t, chain[1], "failed to connect")
+	assert.Contains(t, chain[2], "connection refused")
+}
+
+func TestLoadFromBytesRoundTrip(t *testing.T) {
+	yamlData := `
+name: full-task
+image: pytorch/pytorch:2.1
+framework:
+  name: pytorch
+  options:
+    nproc_per_node: "auto"
+worker:
+  replicas: 8
+  resources:
+    nvidia.com/gpu: "4"
+    cpu: "8"
+    memory: "32Gi"
+envs:
+  NCCL_DEBUG: INFO
+  SECRET_KEY:
+    secret: my-secret
+    key: api-key
+labels:
+  team: ml-platform
+annotations:
+  description: large-scale training
+run: python train.py --epochs 100
+`
+	taskObj, err := task.LoadFromBytes([]byte(yamlData))
+	require.NoError(t, err)
+
+	assert.Equal(t, "full-task", taskObj.Name)
+	assert.Equal(t, "pytorch/pytorch:2.1", taskObj.Image)
+	assert.Equal(t, "pytorch", taskObj.Framework.Name)
+	assert.Equal(t, "auto", taskObj.Framework.Options.NprocPerNode)
+	assert.Equal(t, 8, taskObj.Worker.Replicas)
+	assert.Equal(t, "4", taskObj.Worker.Resources["nvidia.com/gpu"])
+	assert.Equal(t, "8", taskObj.Worker.Resources["cpu"])
+	assert.Equal(t, "32Gi", taskObj.Worker.Resources["memory"])
+
+	assert.Equal(t, "INFO", taskObj.Envs["NCCL_DEBUG"].Value)
+	require.NotNil(t, taskObj.Envs["SECRET_KEY"].Secret)
+	assert.Equal(t, "my-secret", taskObj.Envs["SECRET_KEY"].Secret.Name)
+	assert.Equal(t, "api-key", taskObj.Envs["SECRET_KEY"].Secret.Key)
+
+	assert.Equal(t, "ml-platform", taskObj.Labels["team"])
+	assert.Equal(t, "large-scale training", taskObj.Annotations["description"])
+
+	p := &provider.PyTorchProvider{}
+	crd, err := p.BuildCRD(taskObj)
+	require.NoError(t, err)
+	assert.Equal(t, "PyTorchJob", crd.GetKind())
+	assert.Equal(t, "full-task", crd.GetName())
+}
+
+func TestLoadFromBytesInvalidYAMLMessage(t *testing.T) {
+	_, err := task.LoadFromBytes([]byte("{{invalid yaml content"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse YAML")
 }

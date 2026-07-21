@@ -1,0 +1,53 @@
+name: Integration Test
+
+on:
+  - push
+  - pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.actor }}
+  cancel-in-progress: true
+
+jobs:
+  build-arena-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Run go mod tidy check
+        run: |
+          go mod tidy
+          if ! git diff --quiet; then
+            echo "Please run 'go mod tidy' to add missing and remove unused dependencies"
+            exit 1
+          fi
+
+      - name: Run gofmt check
+        run: |
+          make v2-fmt
+          if ! git diff --quiet; then
+            echo "Please run 'make v2-fmt' to format the code"
+            exit 1
+          fi
+
+      - name: Run go vet check
+        run: |
+          make v2-vet
+
+      - name: Run golangci-lint
+        run: |
+          make v2-lint
+
+      - name: Run Go unit tests
+        run: |
+          make v2-test
+
+      - name: Build arena-v2 binary
+        run: |
+          make arena-v2

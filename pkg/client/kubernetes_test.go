@@ -2,21 +2,25 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	ktesting "k8s.io/client-go/testing"
 )
 
 func newFakeClient() *Client {
 	scheme := runtime.NewScheme()
 	listKinds := map[schema.GroupVersionResource]string{
-		{Group: "kubeflow.org", Version: "v1", Resource: "pytorchjobs"}:      "PyTorchJobList",
-		{Group: "kubeflow.org", Version: "v1", Resource: "tfjobs"}:           "TFJobList",
-		{Group: "kubeflow.org", Version: "v2beta1", Resource: "mpijobs"}:     "MPIJobList",
+		{Group: "kubeflow.org", Version: "v1", Resource: "pytorchjobs"}:  "PyTorchJobList",
+		{Group: "kubeflow.org", Version: "v1", Resource: "tfjobs"}:       "TFJobList",
+		{Group: "kubeflow.org", Version: "v2beta1", Resource: "mpijobs"}: "MPIJobList",
 	}
 	fakeDynamic := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds)
 	return &Client{dynamicClient: fakeDynamic, mpiVersion: "v2beta1"}
@@ -205,7 +209,7 @@ func TestClient_kindToGVR(t *testing.T) {
 			mpiVersion: "",
 			kind:       "MPIJob",
 			wantErr:    true,
-			errMsg:     "MPIJob version not resolved",
+			errMsg:     "mpijob version not resolved",
 		},
 		{
 			name:       "PyTorchJob uses hardcoded v1",
@@ -344,4 +348,215 @@ func TestClient_KindToAPIVersion(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestClientUpdate(t *testing.T) {
+	client := newFakeClient()
+	crd := newPyTorchJobCRD("update-test-job", "default")
+	err := client.Create(context.Background(), crd)
+	require.NoError(t, err)
+
+	// Modify and update
+	updated := newPyTorchJobCRD("update-test-job", "default")
+	updated.Object["spec"] = map[string]interface{}{
+		"pytorchReplicaSpecs": map[string]interface{}{
+			"Worker": map[string]interface{}{
+				"replicas": int64(4),
+			},
+		},
+	}
+	err = client.Update(context.Background(), updated)
+	require.NoError(t, err)
+
+	// Verify the update was applied
+	obj, err := client.Get(context.Background(), "PyTorchJob", "default", "update-test-job")
+	require.NoError(t, err)
+	replicas, found, err := unstructured.NestedMap(obj.Object, "spec", "pytorchReplicaSpecs", "Worker")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, int64(4), replicas["replicas"])
+}
+
+func TestClientUpdateNotFound(t *testing.T) {
+	client := newFakeClient()
+	crd := newPyTorchJobCRD("nonexistent", "default")
+	err := client.Update(context.Background(), crd)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "not found")
+}
+
+func TestClientUpdatePropagatesReactorError(t *testing.T) {
+	// Use a reactor to simulate a server-side error during update.
+	fakeClient := newFakeClient()
+	fakeDyn := fakeClient.dynamicClient.(*dynamicfake.FakeDynamicClient)
+	wantErr := fmt.Errorf("simulated conflict")
+	fakeDyn.PrependReactor("update", "pytorchjobs", func(action ktesting.Action) (bool, runtime.Object, error) {
+		return true, nil, wantErr
+	})
+
+	// Create the object first so the Get inside Update succeeds.
+	crd := newPyTorchJobCRD("reactor-test-job", "default")
+	err := fakeClient.Create(context.Background(), crd)
+	require.NoError(t, err)
+
+	// Now Update should fail with the reactor error.
+	err = fakeClient.Update(context.Background(), crd)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "simulated conflict")
+}
+
+func TestClientUpdateSetsResourceVersionFromServer(t *testing.T) {
+	client := newFakeClient()
+	fakeDyn := client.dynamicClient.(*dynamicfake.FakeDynamicClient)
+
+	// Add a reactor to set resourceVersion on create, simulating real K8s behavior.
+	fakeDyn.PrependReactor("create", "pytorchjobs", func(action ktesting.Action) (bool, runtime.Object, error) {
+		createAction := action.(ktesting.CreateAction)
+		obj := createAction.GetObject().(*unstructured.Unstructured)
+		obj.SetResourceVersion("1000")
+		return false, obj, nil // return false to let the default reactor also run
+	})
+
+	crd := newPyTorchJobCRD("rv-test-job", "default")
+	err := client.Create(context.Background(), crd)
+	require.NoError(t, err)
+
+	// Get the server-assigned resourceVersion
+	existing, err := client.Get(context.Background(), "PyTorchJob", "default", "rv-test-job")
+	require.NoError(t, err)
+	serverRV := existing.GetResourceVersion()
+	require.NotEmpty(t, serverRV)
+
+	// Update should use the server's resourceVersion, not the caller's.
+	// The caller's object has no resourceVersion set.
+	require.Empty(t, crd.GetResourceVersion(), "caller object should not have resourceVersion set")
+
+	err = client.Update(context.Background(), crd)
+	require.NoError(t, err)
+}
+
+func TestClientCreateOrUpdate_Create(t *testing.T) {
+	client := newFakeClient()
+	crd := newPyTorchJobCRD("cou-create-test", "default")
+
+	err := client.CreateOrUpdate(context.Background(), crd)
+	require.NoError(t, err)
+
+	obj, err := client.Get(context.Background(), "PyTorchJob", "default", "cou-create-test")
+	require.NoError(t, err)
+	require.Equal(t, "cou-create-test", obj.GetName())
+}
+
+func TestClientCreateOrUpdate_Update(t *testing.T) {
+	client := newFakeClient()
+
+	// Create initial resource
+	crd := newPyTorchJobCRD("cou-update-test", "default")
+	err := client.Create(context.Background(), crd)
+	require.NoError(t, err)
+
+	// CreateOrUpdate with modified content
+	updated := newPyTorchJobCRD("cou-update-test", "default")
+	updated.Object["spec"] = map[string]interface{}{
+		"pytorchReplicaSpecs": map[string]interface{}{
+			"Worker": map[string]interface{}{
+				"replicas": int64(8),
+			},
+		},
+	}
+	err = client.CreateOrUpdate(context.Background(), updated)
+	require.NoError(t, err)
+
+	// Verify the update was applied
+	obj, err := client.Get(context.Background(), "PyTorchJob", "default", "cou-update-test")
+	require.NoError(t, err)
+	replicas, found, err := unstructured.NestedMap(obj.Object, "spec", "pytorchReplicaSpecs", "Worker")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, int64(8), replicas["replicas"])
+}
+
+func TestClientCreateOrUpdate_ConflictRetry(t *testing.T) {
+	scheme := runtime.NewScheme()
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "kubeflow.org", Version: "v1", Resource: "pytorchjobs"}: "PyTorchJobList",
+	}
+	fakeDynamic := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds)
+	k8sClient := &Client{dynamicClient: fakeDynamic, mpiVersion: "v1"}
+
+	// Create initial resource
+	crd := newPyTorchJobCRD("conflict-test", "default")
+	err := k8sClient.Create(context.Background(), crd)
+	require.NoError(t, err)
+
+	// Modified version to update
+	updated := newPyTorchJobCRD("conflict-test", "default")
+	updated.Object["spec"] = map[string]interface{}{
+		"pytorchReplicaSpecs": map[string]interface{}{
+			"Worker": map[string]interface{}{
+				"replicas": int64(4),
+			},
+		},
+	}
+
+	// First update returns conflict, second succeeds
+	updateAttempts := 0
+	fakeDynamic.PrependReactor("update", "pytorchjobs", func(a ktesting.Action) (bool, runtime.Object, error) {
+		updateAttempts++
+		if updateAttempts == 1 {
+			return true, nil, apierrors.NewConflict(
+				schema.GroupResource{Group: "kubeflow.org", Resource: "pytorchjobs"},
+				"conflict-test",
+				fmt.Errorf("the object has been modified"),
+			)
+		}
+		return false, nil, nil
+	})
+
+	err = k8sClient.CreateOrUpdate(context.Background(), updated)
+	require.NoError(t, err)
+	require.Equal(t, 2, updateAttempts, "should have attempted update twice (1 conflict + 1 success)")
+
+	// Verify the update was applied
+	obj, err := k8sClient.Get(context.Background(), "PyTorchJob", "default", "conflict-test")
+	require.NoError(t, err)
+	replicas, found, err := unstructured.NestedMap(obj.Object, "spec", "pytorchReplicaSpecs", "Worker")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, int64(4), replicas["replicas"])
+}
+
+func TestClientPatchOwnerReferences(t *testing.T) {
+	client := newFakeClient()
+	crd := newPyTorchJobCRD("ownerref-test", "default")
+	err := client.Create(context.Background(), crd)
+	require.NoError(t, err)
+
+	ownerRef := metav1.OwnerReference{
+		APIVersion: "kubeflow.org/v1",
+		Kind:       "PyTorchJob",
+		Name:       "parent-job",
+		UID:        "uid-123",
+	}
+	err = client.PatchOwnerReferences(context.Background(), "PyTorchJob", "default", "ownerref-test", []metav1.OwnerReference{ownerRef})
+	require.NoError(t, err)
+
+	obj, err := client.Get(context.Background(), "PyTorchJob", "default", "ownerref-test")
+	require.NoError(t, err)
+	refs := obj.GetOwnerReferences()
+	require.Len(t, refs, 1)
+	require.Equal(t, "parent-job", refs[0].Name)
+	require.Equal(t, "uid-123", string(refs[0].UID))
+}
+
+func TestClientPatchOwnerReferencesNotFound(t *testing.T) {
+	client := newFakeClient()
+	ownerRef := metav1.OwnerReference{
+		APIVersion: "kubeflow.org/v1",
+		Kind:       "PyTorchJob",
+		Name:       "parent-job",
+		UID:        "uid-123",
+	}
+	err := client.PatchOwnerReferences(context.Background(), "PyTorchJob", "default", "nonexistent", []metav1.OwnerReference{ownerRef})
+	require.Error(t, err)
 }

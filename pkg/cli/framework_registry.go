@@ -6,8 +6,8 @@ import (
 	"github.com/kubeflow/arena/pkg/constants"
 )
 
-// NormalizeFramework maps framework aliases to canonical names.
-func NormalizeFramework(s string) string {
+// normalizeFramework maps framework aliases to canonical names.
+func normalizeFramework(s string) string {
 	switch strings.ToLower(s) {
 	case constants.FrameworkPyTorch, "pytorchjob":
 		return constants.FrameworkPyTorch
@@ -22,8 +22,8 @@ func NormalizeFramework(s string) string {
 	}
 }
 
-// OriginalFramework preserves the user's original framework choice for labeling.
-func OriginalFramework(s string) string {
+// originalFramework preserves the user's original framework choice for labeling.
+func originalFramework(s string) string {
 	switch strings.ToLower(s) {
 	case constants.FrameworkPyTorch, "pytorchjob":
 		return constants.FrameworkPyTorch
@@ -42,8 +42,8 @@ func OriginalFramework(s string) string {
 	}
 }
 
-// FrameworkToKind maps a canonical framework name to its CRD kind.
-func FrameworkToKind(framework string) string {
+// frameworkToKind maps a canonical framework name to its CRD kind.
+func frameworkToKind(framework string) string {
 	switch framework {
 	case constants.FrameworkPyTorch:
 		return constants.KindPyTorchJob
@@ -56,8 +56,9 @@ func FrameworkToKind(framework string) string {
 	}
 }
 
-// KindToFramework maps a CRD kind to its canonical framework name.
-func KindToFramework(kind string) string {
+// kindToFramework maps a CRD kind to its canonical framework name.
+// For unrecognized kinds, it returns the lowercased kind as a fallback.
+func kindToFramework(kind string) string {
 	switch kind {
 	case constants.KindPyTorchJob:
 		return constants.FrameworkPyTorch
@@ -66,12 +67,12 @@ func KindToFramework(kind string) string {
 	case constants.KindMPIJob:
 		return constants.FrameworkMPI
 	default:
-		return ""
+		return strings.ToLower(kind)
 	}
 }
 
-// IsMPIFamily returns true if the framework uses the MPIJob CRD.
-func IsMPIFamily(framework string) bool {
+// isMPIFamily returns true if the framework uses the MPIJob CRD.
+func isMPIFamily(framework string) bool {
 	return framework == constants.FrameworkMPI ||
 		framework == constants.FrameworkHorovod ||
 		framework == constants.FrameworkDeepSpeed

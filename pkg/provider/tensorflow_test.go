@@ -419,7 +419,7 @@ func TestTensorFlowBuildCRDWithRoleEnvOverrides(t *testing.T) {
 	assert.False(t, hasWorkerVar, "chief should not inherit worker envs")
 }
 
-func TestTensorFlowProviderImplementsInterface(t *testing.T) {
+func TestTensorFlowProviderImplementsInterface(_ *testing.T) {
 	var _ Provider = &TensorFlowProvider{}
 }
 

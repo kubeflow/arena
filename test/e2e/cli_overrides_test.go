@@ -32,7 +32,7 @@ var _ = Describe("get --details", func() {
 
 	It("should show detailed job information", func() {
 		var out bytes.Buffer
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",

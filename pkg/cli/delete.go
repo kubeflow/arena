@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -20,20 +21,22 @@ var deleteCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var name string
 
+		var yamlNS string
 		if deleteFile != "" {
 			// Load from file
 			t, err := task.LoadFromFile(deleteFile)
 			if err != nil {
-				return fmt.Errorf("failed to load file %s: %w", deleteFile, err)
+				return fmt.Errorf("failed to load file %q: %w", deleteFile, err)
 			}
 			name = t.Name
 			if name == "" {
-				return fmt.Errorf("file %s does not specify a job name", deleteFile)
+				return fmt.Errorf("file %q does not specify a job name", deleteFile)
 			}
+			yamlNS = t.Namespace
 		} else if len(args) > 0 {
 			name = args[0]
 		} else {
-			return fmt.Errorf("either job name or -f flag is required")
+			return errors.New("either job name or -f flag is required")
 		}
 
 		k8sClient, err := client.NewClient(kubeconfig, kubeContext)
@@ -41,7 +44,7 @@ var deleteCmd = &cobra.Command{
 			return fmt.Errorf("failed to create K8s client: %w", err)
 		}
 
-		ns := resolveNS("")
+		ns := resolveNS(yamlNS)
 		jobType, err := detectJobType(cmdContext(cmd), k8sClient, ns, name)
 		if err != nil {
 			return err
@@ -49,7 +52,7 @@ var deleteCmd = &cobra.Command{
 
 		err = k8sClient.Delete(cmdContext(cmd), jobType, ns, name)
 		if err != nil {
-			return fmt.Errorf("failed to delete %s %s: %w", jobType, name, err)
+			return err
 		}
 		fmt.Printf("%s/%s deleted\n", strings.ToLower(jobType), name)
 		return nil

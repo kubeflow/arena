@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -16,20 +17,25 @@ var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "Verify that required CRDs are installed in the cluster",
 	Long:  `Check whether the Kubeflow training operator CRDs (PyTorchJob, TFJob, MPIJob) are installed and accessible in the cluster.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		k8sClient, err := client.NewClient(kubeconfig, kubeContext)
 		if err != nil {
 			return fmt.Errorf("failed to create K8s client: %w", err)
 		}
 
+		mpiAvailable := true
 		if err := k8sClient.ResolveMPIVersion(cmdContext(cmd)); err != nil {
 			log.Debug("MPIJob CRD not available", "error", err.Error())
+			mpiAvailable = false
 		}
 
 		kinds := []string{constants.KindPyTorchJob, constants.KindTFJob, constants.KindMPIJob}
 		allOk := true
 
 		for _, kind := range kinds {
+			if kind == constants.KindMPIJob && !mpiAvailable {
+				continue
+			}
 			crdName := crdObjectName(kind)
 			if crdName == "" {
 				continue
@@ -67,7 +73,7 @@ var checkCmd = &cobra.Command{
 		}
 
 		if !allOk {
-			return fmt.Errorf("one or more CRDs are not installed or incompatible")
+			return errors.New("one or more CRDs are not installed or incompatible")
 		}
 
 		return nil
@@ -80,7 +86,7 @@ func formatCRDVersions(versions []client.CRDVersionInfo) string {
 	if len(versions) == 0 {
 		return ""
 	}
-	var parts []string
+	parts := make([]string, 0, len(versions))
 	for _, v := range versions {
 		flags := []string{}
 		if v.Served {

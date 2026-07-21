@@ -89,7 +89,7 @@ framework:
 	scheme := runtime.NewScheme()
 	fakeClient := fake.NewSimpleDynamicClientWithCustomListKinds(scheme,
 		map[schema.GroupVersionResource]string{
-			{Group: "", Version: "v1", Resource: "configmaps"}:                "ConfigMapList",
+			{Group: "", Version: "v1", Resource: "configmaps"}:              "ConfigMapList",
 			{Group: "kubeflow.org", Version: "v1", Resource: "pytorchjobs"}: "PyTorchJobList",
 		}, cm, job)
 	k8sClient := client.NewClientForInterface(fakeClient)

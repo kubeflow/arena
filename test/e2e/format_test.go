@@ -24,7 +24,7 @@ var _ = Describe("Output Formats", func() {
 		namespace = "default"
 
 		var out bytes.Buffer
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",

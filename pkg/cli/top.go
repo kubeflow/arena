@@ -29,9 +29,9 @@ Available Commands:
 var topJobCmd = &cobra.Command{
 	Use:   "job",
 	Short: "Display Resource (GPU) usage of jobs.",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		// Validate format
-		if err := outputpkg.OutputFormat(topOutputFormat).Validate(); err != nil {
+		if err := outputpkg.Format(topOutputFormat).Validate(); err != nil {
 			return err
 		}
 
@@ -47,32 +47,32 @@ var topJobCmd = &cobra.Command{
 		}
 
 		ns := resolveNS("")
-		var allJobs []client.JobStatus
+		allJobs := make([]client.JobStatus, 0)
 		anySucceeded := false
 		failedKindCount := 0
-		var apiErrors []string
+		apiErrors := make([]string, 0)
 		for _, kind := range supportedJobKinds {
 			if kind == constants.KindMPIJob && !mpiAvailable {
 				continue
 			}
-			jobs, err := k8sClient.List(cmdContext(cmd), kind, ns, V2LabelSelector)
+			jobs, err := k8sClient.List(cmdContext(cmd), kind, ns, v2LabelSelector)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					// CRD not installed — not an error, just skip silently
 					log.Debug("CRD not installed", "kind", kind)
-				} else {
-					// Real API error (permission, network, etc.) — track and report
-					apiVer, _ := k8sClient.KindToAPIVersion(kind) // best-effort for logging
-					log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
-					apiErrors = append(apiErrors, fmt.Sprintf("%s: %s", kind, err.Error()))
-					failedKindCount++
+					continue
 				}
+				// Real API error (permission, network, etc.) — track and report
+				apiVer, _ := k8sClient.KindToAPIVersion(kind)
+				log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
+				apiErrors = append(apiErrors, fmt.Sprintf("%s: %s", kind, err.Error()))
+				failedKindCount++
 				continue
 			}
 			anySucceeded = true
 			for _, job := range jobs {
 				status := extractJobStatus(job, kind)
-				if fw, ok := job.GetLabels()[FrameworkLabel]; ok && fw != "" {
+				if fw, ok := job.GetLabels()[frameworkLabel]; ok && fw != "" {
 					status.Framework = fw
 				} else {
 					status.Framework = kindToFramework(kind)
@@ -85,7 +85,7 @@ var topJobCmd = &cobra.Command{
 		// If all kinds failed with API errors (not just missing CRDs), return
 		// a clear error so the user understands the issue.
 		if !anySucceeded && failedKindCount > 0 {
-			return fmt.Errorf("failed to list any job types; checked %d kind(s) — check permissions or cluster connectivity", failedKindCount)
+			return fmt.Errorf("failed to list any job types; checked %d kind(s)", failedKindCount)
 		}
 
 		renderer := &outputpkg.TableRenderer{}
@@ -93,7 +93,7 @@ var topJobCmd = &cobra.Command{
 			TableFn: func() string { return renderer.RenderTopJob(allJobs) },
 			WideFn:  func() string { return renderer.RenderTopJobWide(allJobs) },
 		}
-		if err := outputpkg.OutputFormat(topOutputFormat).Render(allJobs, opts); err != nil {
+		if err := outputpkg.Format(topOutputFormat).Render(allJobs, opts); err != nil {
 			return err
 		}
 		// Warn the user when some job types could not be listed so they

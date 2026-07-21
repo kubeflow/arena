@@ -34,7 +34,7 @@ var _ = Describe("Suspend and Resume", func() {
 		var out bytes.Buffer
 
 		By("Submitting a PyTorch job")
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/busybox:1.36",

@@ -174,7 +174,7 @@ func TestMPIGetJobType(t *testing.T) {
 	assert.Equal(t, "MPIJob", provider.GetJobType())
 }
 
-func TestMPIProviderImplementsInterface(t *testing.T) {
+func TestMPIProviderImplementsInterface(_ *testing.T) {
 	var _ Provider = &MPIProvider{APIVersion: MPIAPIVersionV2beta1}
 }
 
@@ -380,14 +380,14 @@ func TestMPIBuildCRDV2beta1Default(t *testing.T) {
 	spec := crd.Object["spec"].(map[string]interface{})
 	assert.Equal(t, int64(4), spec["slotsPerWorker"])
 	assert.Equal(t, false, spec["runLauncherAsWorker"])
-	assert.Equal(t, MPIImplementationOpenMPI, spec["mpiImplementation"])
-	assert.Equal(t, LauncherCreationPolicyAtStartup, spec["launcherCreationPolicy"])
-	assert.Equal(t, MPIDefaultSSHAuthMountPath, spec["sshAuthMountPath"])
+	assert.Equal(t, mpiImplementationOpenMPI, spec["mpiImplementation"])
+	assert.Equal(t, launcherCreationPolicyAtStartup, spec["launcherCreationPolicy"])
+	assert.Equal(t, mpiDefaultSSHAuthMountPath, spec["sshAuthMountPath"])
 
 	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
-	launcher := replicaSpecs[MPIReplicaTypeLauncher].(map[string]interface{})
+	launcher := replicaSpecs[mpiReplicaTypeLauncher].(map[string]interface{})
 	assert.Equal(t, int64(1), launcher["replicas"])
-	worker := replicaSpecs[MPIReplicaTypeWorker].(map[string]interface{})
+	worker := replicaSpecs[mpiReplicaTypeWorker].(map[string]interface{})
 	assert.Equal(t, int64(4), worker["replicas"])
 }
 
@@ -415,8 +415,8 @@ func TestMPIBuildCRDV2beta1IntelMPI(t *testing.T) {
 	assert.Equal(t, "kubeflow.org/v2beta1", crd.GetAPIVersion())
 
 	spec := crd.Object["spec"].(map[string]interface{})
-	assert.Equal(t, MPIImplementationIntel, spec["mpiImplementation"])
-	assert.Equal(t, LauncherCreationPolicyWaitForWorkersReady, spec["launcherCreationPolicy"])
+	assert.Equal(t, mpiImplementationIntel, spec["mpiImplementation"])
+	assert.Equal(t, launcherCreationPolicyWaitForWorkersReady, spec["launcherCreationPolicy"])
 	assert.Equal(t, "/custom/.ssh", spec["sshAuthMountPath"])
 	assert.Equal(t, int64(2), spec["slotsPerWorker"])
 }
@@ -449,7 +449,7 @@ func TestMPIBuildCRDV2beta1RunLauncherAsWorker(t *testing.T) {
 
 	// Launcher SHOULD have GPU resources when runLauncherAsWorker=true
 	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
-	launcher := replicaSpecs[MPIReplicaTypeLauncher].(map[string]interface{})
+	launcher := replicaSpecs[mpiReplicaTypeLauncher].(map[string]interface{})
 	launcherTemplate := launcher["template"].(map[string]interface{})
 	launcherPodSpec := launcherTemplate["spec"].(map[string]interface{})
 	launcherContainers := launcherPodSpec["containers"].([]interface{})
@@ -763,8 +763,8 @@ func TestMPIProvider_BuildCRD_EmptyAPIVersion(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for empty APIVersion")
 	}
-	if !strings.Contains(err.Error(), "APIVersion must be set") {
-		t.Errorf("error = %v, want contain 'APIVersion must be set'", err)
+	if !strings.Contains(err.Error(), "apiversion is not set") {
+		t.Errorf("error = %v, want contain 'apiversion is not set'", err)
 	}
 }
 
@@ -895,4 +895,41 @@ func TestMPIBuildLauncherSpecRespectsUserSA(t *testing.T) {
 	podSpec := template["spec"].(map[string]interface{})
 
 	assert.Equal(t, "my-custom-sa", podSpec["serviceAccountName"])
+}
+
+func TestMPIBuildCRD_DoesNotMutateInput(t *testing.T) {
+	tk := &task.Task{
+		Name:  "mpi-gpu-topo",
+		Image: "openmpi:4.1",
+		Run:   "mpirun ./train",
+		Framework: task.Framework{
+			Name: "mpi",
+			Options: task.FrameworkConfig{
+				GPUTopology: true,
+			},
+		},
+		Worker: &task.Worker{
+			Replicas: 2,
+			Resources: task.Resources{
+				"nvidia.com/gpu": "1",
+			},
+		},
+		Labels: map[string]string{
+			"team":     "ml",
+			"priority": "high",
+		},
+	}
+
+	originalHostNetwork := tk.HostNetwork
+	originalLabels := make(map[string]string, len(tk.Labels))
+	for k, v := range tk.Labels {
+		originalLabels[k] = v
+	}
+
+	provider := &MPIProvider{APIVersion: MPIAPIVersionV1}
+	_, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	assert.Equal(t, originalHostNetwork, tk.HostNetwork, "input Task.HostNetwork must not be mutated")
+	assert.Equal(t, originalLabels, tk.Labels, "input Task.Labels must not be mutated")
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -33,7 +34,7 @@ func (p *TensorFlowProvider) GetJobPodSelector(jobName string) string {
 
 func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, error) {
 	if t.Framework.Name != constants.FrameworkTensorFlow {
-		return nil, fmt.Errorf("TensorFlowProvider requires framework.name=%s, got %s", constants.FrameworkTensorFlow, t.Framework.Name)
+		return nil, fmt.Errorf("tensorflow provider requires framework.name=%s, got %q", constants.FrameworkTensorFlow, t.Framework.Name)
 	}
 
 	restartPolicy := constants.RestartPolicyOnFailure
@@ -44,7 +45,16 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 	replicaSpecs := map[string]interface{}{}
 
 	// Worker: always present (validated)
-	workerSpec, err := buildRoleReplicaSpec(constants.FrameworkTensorFlow, t, t.Worker.Resources, t.Worker.Envs, int64(t.Worker.Replicas), restartPolicy, true, effectiveRun(t, t.Worker.Run))
+	workerSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
+		ContainerName:  constants.FrameworkTensorFlow,
+		Task:           t,
+		Resources:      t.Worker.Resources,
+		Envs:           t.Worker.Envs,
+		Replicas:       int64(t.Worker.Replicas),
+		RestartPolicy:  restartPolicy,
+		IncludeVolumes: true,
+		Run:            effectiveRun(t, t.Worker.Run),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to build worker replica spec: %w", err)
 	}
@@ -52,7 +62,16 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 
 	// Chief: only if section present
 	if t.Chief != nil {
-		chiefSpec, err := buildRoleReplicaSpec(constants.FrameworkTensorFlow, t, t.Chief.Resources, t.Chief.Envs, 1, restartPolicy, true, effectiveRun(t, t.Chief.Run))
+		chiefSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
+			ContainerName:  constants.FrameworkTensorFlow,
+			Task:           t,
+			Resources:      t.Chief.Resources,
+			Envs:           t.Chief.Envs,
+			Replicas:       1,
+			RestartPolicy:  restartPolicy,
+			IncludeVolumes: true,
+			Run:            effectiveRun(t, t.Chief.Run),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build chief replica spec: %w", err)
 		}
@@ -62,7 +81,16 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 	// PS: only if section present, uses own config only
 	// Validator guarantees PS.Replicas >= 1.
 	if t.PS != nil {
-		psSpec, err := buildRoleReplicaSpec(constants.FrameworkTensorFlow, t, t.PS.Resources, t.PS.Envs, int64(t.PS.Replicas), restartPolicy, true, effectiveRun(t, t.PS.Run))
+		psSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
+			ContainerName:  constants.FrameworkTensorFlow,
+			Task:           t,
+			Resources:      t.PS.Resources,
+			Envs:           t.PS.Envs,
+			Replicas:       int64(t.PS.Replicas),
+			RestartPolicy:  restartPolicy,
+			IncludeVolumes: true,
+			Run:            effectiveRun(t, t.PS.Run),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build PS replica spec: %w", err)
 		}
@@ -71,7 +99,16 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 
 	// Evaluator: only if section present, uses own config only
 	if t.Evaluator != nil {
-		evalSpec, err := buildRoleReplicaSpec(constants.FrameworkTensorFlow, t, t.Evaluator.Resources, t.Evaluator.Envs, 1, restartPolicy, true, effectiveRun(t, t.Evaluator.Run))
+		evalSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
+			ContainerName:  constants.FrameworkTensorFlow,
+			Task:           t,
+			Resources:      t.Evaluator.Resources,
+			Envs:           t.Evaluator.Envs,
+			Replicas:       1,
+			RestartPolicy:  restartPolicy,
+			IncludeVolumes: true,
+			Run:            effectiveRun(t, t.Evaluator.Run),
+		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build evaluator replica spec: %w", err)
 		}
@@ -107,6 +144,6 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 }
 
 // BuildRBAC returns nil — TFJob does not require auxiliary RBAC resources.
-func (p *TensorFlowProvider) BuildRBAC(t *task.Task, ownerRef metav1.OwnerReference) ([]*unstructured.Unstructured, error) {
+func (p *TensorFlowProvider) BuildRBAC(_ *task.Task, _ metav1.OwnerReference) ([]*unstructured.Unstructured, error) {
 	return nil, nil
 }

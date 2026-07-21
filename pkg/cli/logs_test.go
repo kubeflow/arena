@@ -287,7 +287,7 @@ func TestGetAvailableContainers(t *testing.T) {
 			pod: &corev1.Pod{
 				Spec: corev1.PodSpec{},
 			},
-			want: nil,
+			want: []string{},
 		},
 		{
 			name: "multiple init containers",
@@ -396,7 +396,7 @@ func TestFrameworkToKind(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.framework, func(t *testing.T) {
-			got := FrameworkToKind(tt.framework)
+			got := frameworkToKind(tt.framework)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -881,9 +881,9 @@ func TestTFJobFallbackSelectorRejectsWrongPods(t *testing.T) {
 			match: false,
 		},
 		{
-			name: "empty labels",
+			name:   "empty labels",
 			labels: labels.Set{},
-			match: false,
+			match:  false,
 		},
 		{
 			name: "correct worker-0",

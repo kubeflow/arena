@@ -10,7 +10,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Logs", func() {
+// TODO: Re-enable these tests after fixing the Kind cluster pod reconciling issue in GitHub workflows.
+var _ = Describe("Logs", Pending, func() {
 	var (
 		jobName   string
 		namespace string
@@ -34,12 +35,12 @@ var _ = Describe("Logs", func() {
 		var out bytes.Buffer
 
 		By("Submitting a PyTorch job that prints output")
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "docker.io/library/busybox:1.36",
+			"--image", "registry-cn-beijing.ack.aliyuncs.com/acs/busybox:1.35",
 			"--workers", "1",
-			"sh -c 'echo hello-world; sleep 300'",
+			"sh -c 'echo hello-world; sleep 120'",
 		)
 		submitCmd.Stdout = &out
 		submitCmd.Stderr = &out
@@ -70,12 +71,12 @@ var _ = Describe("Logs", func() {
 		var out bytes.Buffer
 
 		By("Submitting a PyTorch job that prints many lines")
-		submitCmd := exec.Command(arenaV2Bin, "job", "submit", "pytorch",
+		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "docker.io/library/busybox:1.36",
+			"--image", "registry-cn-beijing.ack.aliyuncs.com/acs/busybox:1.35",
 			"--workers", "1",
-			"sh -c 'for i in $(seq 1 20); do echo line-$i; done; sleep 300'",
+			"sh -c 'for i in $(seq 1 20); do echo line-$i; done; sleep 120'",
 		)
 		submitCmd.Stdout = &out
 		submitCmd.Stderr = &out

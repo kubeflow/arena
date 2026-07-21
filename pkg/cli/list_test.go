@@ -1,14 +1,19 @@
 package cli
 
 import (
+	"context"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/kubeflow/arena/pkg/client"
+	"github.com/kubeflow/arena/pkg/provider"
+	"github.com/kubeflow/arena/pkg/task"
 )
 
 func TestExtractJobPhase(t *testing.T) {
@@ -701,8 +706,14 @@ func TestCommandsRegistered(t *testing.T) {
 	}
 	assert.Contains(t, names, "list")
 	assert.Contains(t, names, "get")
-	assert.Contains(t, names, "submit")
 	assert.Contains(t, names, "run")
+
+	// submit is a top-level command, not under job
+	rootNames := []string{}
+	for _, cmd := range rootCmd.Commands() {
+		rootNames = append(rootNames, cmd.Name())
+	}
+	assert.Contains(t, rootNames, "submit")
 }
 
 func TestListCmd_LogsWarningsForCRDFailures(t *testing.T) {
@@ -757,4 +768,64 @@ func TestExtractJobStatus_FullObject(t *testing.T) {
 		Ready:      0,
 		Age:        formatAge(now.Time),
 	}, status)
+}
+
+func TestMultipleJobsAcrossFrameworks(t *testing.T) {
+	ctx := context.Background()
+	k8sClient := newFakeK8sClient(t)
+
+	examples := []struct {
+		file      string
+		framework string
+		kind      string
+		name      string
+	}{
+		{"pytorch-simple.yaml", "pytorch", "PyTorchJob", "pytorch-example"},
+		{"tensorflow-simple.yaml", "tensorflow", "TFJob", "tensorflow-example"},
+		{"mpi-simple.yaml", "mpi", "MPIJob", "mpi-example"},
+	}
+
+	for _, ex := range examples {
+		yamlPath := filepath.Join(examplesDir(t), ex.file)
+		taskObj, err := task.LoadFromFile(yamlPath)
+		require.NoError(t, err)
+
+		p, err := getProvider(ex.framework)
+		require.NoError(t, err)
+
+		if ex.framework == "mpi" {
+			mpiP, ok := p.(*provider.MPIProvider)
+			require.True(t, ok)
+			mpiP.APIVersion = "v1"
+		}
+
+		crd, err := p.BuildCRD(taskObj)
+		require.NoError(t, err)
+		crd.SetNamespace("default")
+
+		err = k8sClient.Create(ctx, crd)
+		require.NoError(t, err)
+	}
+
+	for _, ex := range examples {
+		jobs, err := k8sClient.List(ctx, ex.kind, "default", "")
+		require.NoError(t, err)
+		require.Len(t, jobs, 1, "expected 1 %s", ex.kind)
+		assert.Equal(t, ex.name, jobs[0].GetName())
+	}
+
+	// Delete TFJob, verify others are unaffected
+	require.NoError(t, k8sClient.Delete(ctx, "TFJob", "default", "tensorflow-example"))
+
+	tfJobs, err := k8sClient.List(ctx, "TFJob", "default", "")
+	require.NoError(t, err)
+	assert.Empty(t, tfJobs)
+
+	ptJobs, err := k8sClient.List(ctx, "PyTorchJob", "default", "")
+	require.NoError(t, err)
+	assert.Len(t, ptJobs, 1)
+
+	mpiJobs, err := k8sClient.List(ctx, "MPIJob", "default", "")
+	require.NoError(t, err)
+	assert.Len(t, mpiJobs, 1)
 }

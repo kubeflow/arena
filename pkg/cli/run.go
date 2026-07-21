@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/log"
 	"github.com/kubeflow/arena/pkg/provider"
@@ -23,9 +25,9 @@ var runCmd = &cobra.Command{
 	Short: "Submit a training job from YAML file",
 	Long: `Submit a training job to Kubernetes by loading a YAML specification file.
 Use --set to override YAML fields with Helm-style dot-notation paths.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		if runFile == "" {
-			return fmt.Errorf("--file is required")
+			return errors.New("--file is required")
 		}
 
 		log.Debug("loading task from file", "file", runFile)
@@ -33,7 +35,7 @@ Use --set to override YAML fields with Helm-style dot-notation paths.`,
 		// Read raw YAML
 		yamlData, err := os.ReadFile(runFile)
 		if err != nil {
-			return fmt.Errorf("failed to read file %s: %w", runFile, err)
+			return fmt.Errorf("failed to read file %q: %w", runFile, err)
 		}
 
 		// Apply --set overrides on raw YAML before parsing
@@ -45,13 +47,19 @@ Use --set to override YAML fields with Helm-style dot-notation paths.`,
 		// Parse merged YAML into Task
 		t, err := task.LoadFromBytes(mergedData)
 		if err != nil {
-			log.Error(err, "failed to load task", "file", runFile)
 			return fmt.Errorf("failed to load task: %w", err)
 		}
 
 		log.Debug("task loaded", "name", t.Name, "framework", t.Framework.Name)
 
-		return submitCRD(cmdContext(cmd), t, t.Framework.Name, runDryRun)
+		var k8sClient *client.Client
+		if !runDryRun {
+			k8sClient, err = client.NewClient(kubeconfig, kubeContext)
+			if err != nil {
+				return fmt.Errorf("failed to create K8s client: %w", err)
+			}
+		}
+		return submitCRD(cmdContext(cmd), k8sClient, t, t.Framework.Name, runDryRun)
 	},
 }
 
@@ -65,9 +73,9 @@ func getProvider(frameworkName string) (provider.Provider, error) {
 	case constants.FrameworkMPI, constants.FrameworkHorovod, constants.FrameworkDeepSpeed:
 		return &provider.MPIProvider{}, nil
 	case constants.FrameworkRay:
-		return nil, fmt.Errorf("ray provider is not yet implemented")
+		return nil, errors.New("ray provider is not yet implemented")
 	default:
-		return nil, fmt.Errorf("unsupported framework: %s", frameworkName)
+		return nil, fmt.Errorf("unsupported framework: %q", frameworkName)
 	}
 }
 

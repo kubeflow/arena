@@ -39,7 +39,7 @@ func TestSetFrameworkLabel_NilLabels(t *testing.T) {
 	setFrameworkLabel(crd, "pytorch")
 
 	labels := crd.GetLabels()
-	assert.Equal(t, "pytorch", labels[FrameworkLabel])
+	assert.Equal(t, "pytorch", labels[frameworkLabel])
 }
 
 func TestSetFrameworkLabel_ExistingLabels(t *testing.T) {
@@ -60,7 +60,7 @@ func TestSetFrameworkLabel_ExistingLabels(t *testing.T) {
 	setFrameworkLabel(crd, "horovod")
 
 	labels := crd.GetLabels()
-	assert.Equal(t, "horovod", labels[FrameworkLabel])
+	assert.Equal(t, "horovod", labels[frameworkLabel])
 	assert.Equal(t, "my-training", labels["app"], "existing labels should be preserved")
 }
 
@@ -73,7 +73,7 @@ func TestSetFrameworkLabel_OverwriteExisting(t *testing.T) {
 				"name":      "test",
 				"namespace": "default",
 				"labels": map[string]interface{}{
-					FrameworkLabel: "mpi",
+					frameworkLabel: "mpi",
 				},
 			},
 		},
@@ -81,7 +81,7 @@ func TestSetFrameworkLabel_OverwriteExisting(t *testing.T) {
 
 	setFrameworkLabel(crd, "deepspeed")
 
-	assert.Equal(t, "deepspeed", crd.GetLabels()[FrameworkLabel])
+	assert.Equal(t, "deepspeed", crd.GetLabels()[frameworkLabel])
 }
 
 func TestSetFrameworkLabel_AllFrameworks(t *testing.T) {
@@ -95,6 +95,6 @@ func TestSetFrameworkLabel_AllFrameworks(t *testing.T) {
 			},
 		}
 		setFrameworkLabel(crd, fw)
-		assert.Equal(t, fw, crd.GetLabels()[FrameworkLabel], "framework %q should be set", fw)
+		assert.Equal(t, fw, crd.GetLabels()[frameworkLabel], "framework %q should be set", fw)
 	}
 }

@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +15,10 @@ import (
 	"github.com/kubeflow/arena/pkg/provider"
 	"github.com/kubeflow/arena/pkg/task"
 )
+
+// secretPattern matches environment variable names that commonly hold sensitive
+// values (tokens, keys, secrets, passwords, credentials).
+var secretPattern = regexp.MustCompile(`(?i)(token|key|secret|password|credential)`)
 
 // createdResource tracks a single resource that was successfully created,
 // so it can be rolled back on partial failure.
@@ -35,12 +40,57 @@ func rollback(ctx context.Context, k8sClient *client.Client, created []createdRe
 	}
 }
 
-// createJobResources creates auxiliary resources after the main CRD is created.
-// It creates a ConfigMap anchor with ownerReferences pointing to the CRD,
-// and optionally creates TensorBoard Deployment and Service resources.
-// If any auxiliary resource creation fails, previously created resources
-// are rolled back (best-effort deletion).
-func createJobResources(ctx context.Context, crd *unstructured.Unstructured, t *task.Task, k8sClient *client.Client, p provider.Provider) error {
+// isLikelySecretKey returns true if the given env var name matches common
+// secret-naming patterns, suggesting the value should use a secretKeyRef
+// instead of being stored in plaintext.
+func isLikelySecretKey(name string) bool {
+	return secretPattern.MatchString(name)
+}
+
+// preCreateRBAC creates or updates RBAC resources before the CRD is submitted.
+// Resources are created without ownerReferences — these are patched onto
+// the resources by finalizeJobResources after the CRD exists and its UID is known.
+// Returns the list of created/updated resources for rollback tracking and
+// ownerReference patching.
+func preCreateRBAC(
+	ctx context.Context,
+	t *task.Task,
+	k8sClient *client.Client,
+	p provider.Provider,
+) ([]createdResource, error) {
+	rbacResources, err := p.BuildRBAC(t, metav1.OwnerReference{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to build RBAC resources: %w", err)
+	}
+
+	var created []createdResource
+	for _, r := range rbacResources {
+		r.SetNamespace(t.Namespace)
+		r.SetOwnerReferences(nil)
+		if err := k8sClient.CreateOrUpdate(ctx, r); err != nil {
+			rollback(ctx, k8sClient, created)
+			return nil, err
+		}
+		created = append(created, createdResource{
+			kind:      r.GetKind(),
+			namespace: r.GetNamespace(),
+			name:      r.GetName(),
+		})
+	}
+	return created, nil
+}
+
+// finalizeJobResources creates the ConfigMap anchor, patches ownerReferences
+// onto pre-created RBAC resources, and creates TensorBoard resources if enabled.
+// Called after the CRD has been submitted so its UID is available for ownerReferences.
+func finalizeJobResources(
+	ctx context.Context,
+	crd *unstructured.Unstructured,
+	t *task.Task,
+	k8sClient *client.Client,
+	p provider.Provider,
+	rbacResources []createdResource,
+) error {
 	// Re-fetch CRD to get UID assigned by the API server
 	created, err := k8sClient.Get(ctx, crd.GetKind(), crd.GetNamespace(), crd.GetName())
 	if err != nil {
@@ -56,48 +106,56 @@ func createJobResources(ctx context.Context, crd *unstructured.Unstructured, t *
 		Controller:         ptrBool(true),
 	}
 
-	var createdResources []createdResource
+	createdResources := make([]createdResource, 0)
 
-	// Create ConfigMap anchor storing the arena-v2.yaml task configuration
+	// SEC-7: Warn about env vars that look like secrets but are stored in
+	// plaintext in the ConfigMap.
+	for k, v := range t.Envs {
+		if isLikelySecretKey(k) && v.Value != "" && v.Secret == nil {
+			log.Warning("env var looks like a secret but is stored in plaintext in ConfigMap",
+				"key", k, "hint", "use secretKeyRef instead")
+		}
+	}
+
+	// Create ConfigMap anchor with ownerRef at creation time
 	yamlContent, err := yaml.Marshal(t)
 	if err != nil {
 		return fmt.Errorf("failed to marshal task configuration: %w", err)
 	}
-	cm := buildConfigMap(crd.GetName(), crd.GetNamespace(), string(yamlContent), ownerRef)
-	if err := k8sClient.Create(ctx, cm); err != nil {
+	cm := buildConfigMap(
+		crd.GetName(),
+		crd.GetNamespace(),
+		string(yamlContent),
+		ownerRef,
+	)
+	if err := k8sClient.CreateOrUpdate(ctx, cm); err != nil {
 		return fmt.Errorf("failed to create ConfigMap: %w", err)
 	}
 	createdResources = append(createdResources, createdResource{
 		kind: "ConfigMap", namespace: crd.GetNamespace(), name: crd.GetName(),
 	})
 
-	// Create RBAC resources if the provider produces any
-	rbacResources, err := p.BuildRBAC(t, ownerRef)
-	if err != nil {
-		rollback(ctx, k8sClient, createdResources)
-		return fmt.Errorf("failed to build RBAC resources: %w", err)
-	}
+	// Patch ownerReferences onto pre-created RBAC resources
 	for _, r := range rbacResources {
-		r.SetNamespace(crd.GetNamespace())
-		if err := k8sClient.Create(ctx, r); err != nil {
+		if err := k8sClient.PatchOwnerReferences(
+			ctx, r.kind, r.namespace, r.name, []metav1.OwnerReference{ownerRef},
+		); err != nil {
 			rollback(ctx, k8sClient, createdResources)
-			return err
+			return fmt.Errorf("failed to patch ownerReference onto %s %q: %w", r.kind, r.name, err)
 		}
-		createdResources = append(createdResources, createdResource{
-			kind: r.GetKind(), namespace: r.GetNamespace(), name: r.GetName(),
-		})
+		createdResources = append(createdResources, r)
 	}
 
 	// Create TensorBoard resources if enabled
 	if t.Logging.TensorBoard != nil && t.Logging.TensorBoard.Enabled {
+		log.Warning("TensorBoard has no built-in authentication; the UI will be accessible to any pod with network access to this namespace",
+			"port", constants.DefaultTensorBoardPort)
 		tbResources, err := createTensorBoardResources(ctx, crd, t, k8sClient, ownerRef)
 		if err != nil {
-			// Roll back both TensorBoard resources (if any were created) and prior resources
 			rollback(ctx, k8sClient, tbResources)
 			rollback(ctx, k8sClient, createdResources)
 			return err
 		}
-		createdResources = append(createdResources, tbResources...)
 	}
 
 	return nil
@@ -106,7 +164,13 @@ func createJobResources(ctx context.Context, crd *unstructured.Unstructured, t *
 // createTensorBoardResources creates a TensorBoard Deployment and Service
 // with ownerReferences pointing to the main training job CRD.
 // Returns the list of successfully created resources for rollback purposes.
-func createTensorBoardResources(ctx context.Context, crd *unstructured.Unstructured, t *task.Task, k8sClient *client.Client, ownerRef metav1.OwnerReference) ([]createdResource, error) {
+func createTensorBoardResources(
+	ctx context.Context,
+	crd *unstructured.Unstructured,
+	t *task.Task,
+	k8sClient *client.Client,
+	ownerRef metav1.OwnerReference,
+) ([]createdResource, error) {
 	tbName := crd.GetName() + "-tensorboard"
 	tbImage := constants.DefaultTensorBoardImage
 	if t.Logging.TensorBoard.Image != "" {
@@ -114,18 +178,31 @@ func createTensorBoardResources(ctx context.Context, crd *unstructured.Unstructu
 	}
 	logDir := t.Logging.TensorBoard.LogDir
 
-	var created []createdResource
+	created := make([]createdResource, 0, 2)
 
-	deploy := buildTensorBoardDeployment(tbName, crd.GetName(), crd.GetNamespace(), tbImage, logDir, t, ownerRef)
-	if err := k8sClient.Create(ctx, deploy); err != nil {
+	deploy := buildTensorBoardDeployment(
+		tbName,
+		crd.GetName(),
+		crd.GetNamespace(),
+		tbImage,
+		logDir,
+		t,
+		ownerRef,
+	)
+	if err := k8sClient.CreateOrUpdate(ctx, deploy); err != nil {
 		return created, fmt.Errorf("failed to create TensorBoard Deployment: %w", err)
 	}
 	created = append(created, createdResource{
 		kind: "Deployment", namespace: crd.GetNamespace(), name: tbName,
 	})
 
-	svc := buildTensorBoardService(tbName, crd.GetName(), crd.GetNamespace(), ownerRef)
-	if err := k8sClient.Create(ctx, svc); err != nil {
+	svc := buildTensorBoardService(
+		tbName,
+		crd.GetName(),
+		crd.GetNamespace(),
+		ownerRef,
+	)
+	if err := k8sClient.CreateOrUpdate(ctx, svc); err != nil {
 		return created, fmt.Errorf("failed to create TensorBoard Service: %w", err)
 	}
 	created = append(created, createdResource{
@@ -160,10 +237,13 @@ func buildConfigMap(name, namespace, yamlContent string, ownerRef metav1.OwnerRe
 // replica running the TensorBoard server. All task storages are injected as
 // volumes; when TensorBoardConfig.Mounts is set, only the listed storages
 // receive volumeMounts (with mount fields overriding storage defaults).
-func buildTensorBoardDeployment(name, jobName, namespace, image, logDir string, t *task.Task, ownerRef metav1.OwnerReference) *unstructured.Unstructured {
+func buildTensorBoardDeployment(
+	name, jobName, namespace, image, logDir string,
+	t *task.Task,
+	ownerRef metav1.OwnerReference,
+) *unstructured.Unstructured {
 	labels := tensorBoardPodLabels(jobName)
 
-	// tensorboard compatibility
 	args := []interface{}{"--host", "0.0.0.0"}
 	if logDir != "" {
 		args = append(args, "--logdir", logDir)
@@ -189,8 +269,8 @@ func buildTensorBoardDeployment(name, jobName, namespace, image, logDir string, 
 	// - Storages, no mounts field: inject all storages (volumes + volumeMounts)
 	// - Storages + mounts field: all storages become volumes, but only the
 	//   mounted storages get volumeMounts (mount fields override storage defaults)
-	var tbVolumes []interface{}
-	var tbVolumeMounts []interface{}
+	tbVolumes := []interface{}{}
+	tbVolumeMounts := []interface{}{}
 	if t != nil && len(t.Storages) > 0 {
 		allVolumes, _ := provider.BuildVolumes(t)
 		tbVolumes = allVolumes
@@ -240,7 +320,10 @@ func buildTensorBoardDeployment(name, jobName, namespace, image, logDir string, 
 
 // buildTensorBoardService creates a Service exposing the TensorBoard
 // Deployment on port 6006.
-func buildTensorBoardService(name, jobName, namespace string, ownerRef metav1.OwnerReference) *unstructured.Unstructured {
+func buildTensorBoardService(
+	name, jobName, namespace string,
+	ownerRef metav1.OwnerReference,
+) *unstructured.Unstructured {
 	svc := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "v1",
