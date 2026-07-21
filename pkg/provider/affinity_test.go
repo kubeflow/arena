@@ -29,19 +29,17 @@ func TestBuildAffinity_Empty(t *testing.T) {
 }
 
 func TestBuildAffinity_PolicyOnlyNoRules(t *testing.T) {
-	// Policy without rules is an extension point (not implemented yet)
-	// Should return nil
+	// Policy without rules should return an error
 	a := &task.Affinity{
 		Policy: "spread",
 		Target: "pod",
 	}
 	result, err := buildAffinity(a, "test-job")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if err == nil {
+		t.Fatalf("expected error for policy without rules, got result: %v", result)
 	}
-	// Currently returns nil (extension point for future default rules)
 	if result != nil {
-		t.Errorf("expected nil for policy without rules (extension point), got %v", result)
+		t.Errorf("expected nil result on error, got %v", result)
 	}
 }
 

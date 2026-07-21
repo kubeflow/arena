@@ -278,6 +278,38 @@ func TestValidateSuccessPolicy(t *testing.T) {
 	assert.Contains(t, err.Error(), "success_policy is only valid for tensorflow")
 }
 
+func TestValidateLifecycleDurations(t *testing.T) {
+	tests := []struct {
+		name    string
+		life    Lifecycle
+		wantErr string
+	}{
+		{"valid active_deadline", Lifecycle{ActiveDeadline: "30s"}, ""},
+		{"valid ttl", Lifecycle{TTLAfterFinished: "1h"}, ""},
+		{"invalid active_deadline", Lifecycle{ActiveDeadline: "abc"}, "invalid active_deadline"},
+		{"invalid ttl", Lifecycle{TTLAfterFinished: "xyz"}, "invalid ttl_after_finished"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Lifecycle: tt.life,
+			}
+			err := Validate(task)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestEffectiveShell(t *testing.T) {
 	tests := []struct {
 		shell    string
@@ -1620,6 +1652,16 @@ func TestEnvValue_BothSecretAndConfigMap(t *testing.T) {
 	err := yaml.Unmarshal([]byte(`{secret: my-secret, configmap: my-cm, key: token}`), &e)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exactly one of 'secret' or 'configmap'")
+}
+
+func TestEnvValue_MarshalYAML_BothSecretAndConfigMap(t *testing.T) {
+	e := EnvValue{
+		Secret:    &EnvFrom{Name: "my-secret", Key: "token"},
+		ConfigMap: &EnvFrom{Name: "my-cm", Key: "host"},
+	}
+	_, err := e.MarshalYAML()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot set both secret and configmap")
 }
 
 func TestEnvValue_EmptyKeyForSecretAndConfigMap(t *testing.T) {

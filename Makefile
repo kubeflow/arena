@@ -68,8 +68,10 @@ v2-install: ## Install arena v2 CLI to GOBIN.
 	@echo "Installing arena v2 CLI to $(GOBIN)..."
 	go install -ldflags '$(V2_LDFLAGS)' ./cmd/arena-v2/
 
-# Portable SHA-256 checksum command: Linux uses sha256sum, macOS/BSD uses shasum.
-ifeq ($(shell command -v sha256sum 2>/dev/null),)
+# Portable SHA-256 checksum command.
+# macOS ships a BSD sha256sum that can't read checksums from stdin pipes,
+# so use shasum on Darwin and sha256sum everywhere else.
+ifeq ($(shell uname -s 2>/dev/null),Darwin)
 SHA256CMD := shasum -a 256
 else
 SHA256CMD := sha256sum

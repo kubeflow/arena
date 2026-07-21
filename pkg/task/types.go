@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kubeflow/arena/pkg/constants"
 	"gopkg.in/yaml.v3"
@@ -381,6 +382,9 @@ func (e *EnvValue) UnmarshalYAML(node *yaml.Node) error {
 
 // MarshalYAML produces the canonical form for serialization.
 func (e EnvValue) MarshalYAML() (interface{}, error) {
+	if e.Secret != nil && e.ConfigMap != nil {
+		return nil, fmt.Errorf("envs: cannot set both secret and configmap on the same EnvValue")
+	}
 	if e.Secret != nil {
 		return map[string]string{"secret": e.Secret.Name, "key": e.Secret.Key}, nil
 	}
@@ -452,6 +456,18 @@ func Validate(t *Task) error {
 	if t.Lifecycle.CleanPodPolicy != "" {
 		if !cleanPodPolicies[t.Lifecycle.CleanPodPolicy] {
 			return fmt.Errorf("invalid clean_pod_policy: %q (must be None, Running, or All)", t.Lifecycle.CleanPodPolicy)
+		}
+	}
+
+	if t.Lifecycle.ActiveDeadline != "" {
+		if _, err := time.ParseDuration(t.Lifecycle.ActiveDeadline); err != nil {
+			return fmt.Errorf("invalid active_deadline: %q (must be a valid duration like 30s, 5m, 1h)", t.Lifecycle.ActiveDeadline)
+		}
+	}
+
+	if t.Lifecycle.TTLAfterFinished != "" {
+		if _, err := time.ParseDuration(t.Lifecycle.TTLAfterFinished); err != nil {
+			return fmt.Errorf("invalid ttl_after_finished: %q (must be a valid duration like 30s, 5m, 1h)", t.Lifecycle.TTLAfterFinished)
 		}
 	}
 
