@@ -346,56 +346,39 @@ func preprocessQuotedKeys(expr string) (string, map[string]string, error) {
 
 // restoreQuotedKeys walks a map produced by parsing and replaces any
 // placeholder keys with the original quoted content from the mapping. It
-// recurses into nested maps so that placeholders at any depth are restored.
+// recurses into nested maps and array-element maps so that placeholders at
+// any depth are restored.
 //
-// To avoid mutating the map during range iteration, it rebuilds the map into a
-// fresh copy and then replaces the original map's contents.
+// It mutates the map in place. When a placeholder key resolves to a real key
+// that already exists (e.g., --set overwrites an existing "nvidia.com/gpu"),
+// the placeholder's value overwrites the original. This ensures --set
+// overrides take precedence regardless of Go's randomized map iteration order.
 func restoreQuotedKeys(m map[string]interface{}, quotedKeys map[string]string) {
-	rebuilt := rebuildMap(m, quotedKeys)
-
-	// Clear the original map and copy rebuilt entries back in place so that
-	// callers who hold a reference to m see the updated contents.
-	for k := range m {
-		delete(m, k)
-	}
-	for k, v := range rebuilt {
-		m[k] = v
-	}
-}
-
-// rebuildMap creates a new map with all placeholder keys resolved.
-// It recurses into nested maps and array-element maps.
-func rebuildMap(m map[string]interface{}, quotedKeys map[string]string) map[string]interface{} {
-	result := make(map[string]interface{}, len(m))
 	for key, val := range m {
 		realKey := resolveKey(key, quotedKeys)
+		if realKey != key {
+			m[realKey] = val
+			delete(m, key)
+		}
 
-		// Recurse into nested maps.
 		if nested, ok := val.(map[string]interface{}); ok {
 			restoreQuotedKeys(nested, quotedKeys)
-			result[realKey] = nested
 			continue
 		}
 
-		// Recurse into array elements that are maps.
 		if arr, ok := val.([]interface{}); ok {
 			for _, elem := range arr {
 				if nested, ok := elem.(map[string]interface{}); ok {
 					restoreQuotedKeys(nested, quotedKeys)
 				}
 			}
-			result[realKey] = arr
-			continue
 		}
-
-		result[realKey] = val
 	}
-	return result
 }
 
 // resolveKey replaces any placeholder substrings in key with the original
 // quoted content. It first checks for an exact placeholder match, then falls
-// back to substring replacement for keys where strvals embedded a placeholder
+// back to substring replacement for keys where a placeholder was embedded
 // inside a larger path segment (e.g., "foo__ARENA_QK_0__qux" → "foobar.bazqux").
 func resolveKey(key string, quotedKeys map[string]string) string {
 	if orig, ok := quotedKeys[key]; ok {

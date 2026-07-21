@@ -685,3 +685,22 @@ func TestApplySetOverrides_NullValue(t *testing.T) {
 	require.NoError(t, yaml.Unmarshal(result, &m))
 	assert.Nil(t, m["image"])
 }
+
+func TestApplySetOverrides_OverwriteExistingQuotedKey(t *testing.T) {
+	// Regression test: when the YAML already contains a key with dots (e.g.
+	// nvidia.com/gpu: 1) and --set uses a quoted key to overwrite it, the
+	// restoreQuotedKeys function must ensure the new value wins regardless of
+	// Go's randomized map iteration order. Before the fix, the old value
+	// would win ~50% of the time.
+	yamlData := []byte("worker:\n  resources:\n    nvidia.com/gpu: 1\n")
+	for i := 0; i < 100; i++ {
+		result, err := ApplySetOverrides(yamlData, []string{"worker.resources.'nvidia.com/gpu'=2"})
+		require.NoError(t, err)
+
+		var m map[string]interface{}
+		require.NoError(t, yaml.Unmarshal(result, &m))
+		worker := m["worker"].(map[string]interface{})
+		resources := worker["resources"].(map[string]interface{})
+		assert.Equal(t, 2, resources["nvidia.com/gpu"], "iteration %d: override should win", i)
+	}
+}
