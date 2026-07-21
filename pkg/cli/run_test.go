@@ -660,7 +660,7 @@ func TestRunCmd_SetOverrideTypeMismatch(t *testing.T) {
 
 	err := runCmd.RunE(runCmd, nil)
 	assert.Error(t, err)
-	// strvals stores "notanint" as a string; YAML unmarshal into int field fails
+	// The --set parser stores "notanint" as a string; YAML unmarshal into int field fails
 	// during LoadFromBytes, which wraps the error.
 	assert.Contains(t, err.Error(), "failed to load task")
 }

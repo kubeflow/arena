@@ -240,7 +240,7 @@ func TestApplySetOverrides_ResourceQuantityWithSlash(t *testing.T) {
 	worker := m["worker"].(map[string]interface{})
 	resources := worker["resources"].(map[string]interface{})
 	assert.Equal(t, "2", resources["cpu"])
-	// strvals treats the dot in nvidia.com as a path separator, producing
+	// The parser treats the dot in nvidia.com as a path separator, producing
 	// resources.nvidia["com/gpu"]=4 rather than resources["nvidia.com/gpu"]=4.
 	// This validates that the slash in com/gpu is preserved as a key segment.
 	nvidia := resources["nvidia"].(map[string]interface{})
@@ -431,7 +431,7 @@ func TestApplySetOverrides_BooleanValueType(t *testing.T) {
 	sched := m["scheduling"].(map[string]interface{})
 	gang := sched["gang"].(map[string]interface{})
 	assert.Equal(t, true, gang["enabled"])
-	assert.IsType(t, true, gang["enabled"], "strvals should parse 'true' as bool, not string")
+	assert.IsType(t, true, gang["enabled"], "coerceValue should parse 'true' as bool, not string")
 }
 
 func TestApplySetOverrides_EmptyValue(t *testing.T) {
@@ -454,7 +454,7 @@ func TestApplySetOverrides_QuotedKeyAdjacentToUnquoted(t *testing.T) {
 	assert.Equal(t, "value", m["foobar.bazqux"])
 }
 
-func TestApplySetOverrides_StrvalsParseError(t *testing.T) {
+func TestApplySetOverrides_ParseError(t *testing.T) {
 	yamlData := []byte("name: test\n")
 	_, err := ApplySetOverrides(yamlData, []string{"foo[abc]=value"})
 	require.Error(t, err)
