@@ -61,16 +61,18 @@ func (p *MPIProvider) GetJobType() string {
 }
 
 // GetLogPodSelector returns the label selector for the launcher pod.
-// Note: jobName is used directly as a label value and must conform to
-// Kubernetes label value constraints (max 63 chars, alphanumeric, -, _, .).
+// Uses metav1.LabelSelector for consistent label value escaping.
 func (p *MPIProvider) GetLogPodSelector(jobName string) string {
-	return fmt.Sprintf("%s=%s,%s=%s",
-		constants.LabelJobName, jobName,
-		constants.LabelReplicaType, constants.ReplicaRoleLauncher)
+	return buildLabelSelector(map[string]string{
+		constants.LabelJobName:     jobName,
+		constants.LabelReplicaType: constants.ReplicaRoleLauncher,
+	})
 }
 
 func (p *MPIProvider) GetJobPodSelector(jobName string) string {
-	return fmt.Sprintf("%s=%s", constants.LabelJobName, jobName)
+	return buildLabelSelector(map[string]string{
+		constants.LabelJobName: jobName,
+	})
 }
 
 func (p *MPIProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, error) {
@@ -234,17 +236,15 @@ func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map
 		return nil, err
 	}
 
-	// Inject launcher SA if user hasn't specified one
+	// Inject launcher SA if user hasn't specified one.
+	// Use unstructured helpers for safe nested access instead of raw type assertions.
 	if t.ServiceAccount == "" {
-		template, ok := spec["template"].(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("launcher spec missing template field")
+		if _, found, err := unstructured.NestedMap(spec, "template", "spec"); err != nil || !found {
+			return nil, fmt.Errorf("launcher spec missing template.spec field")
 		}
-		podSpec, ok := template["spec"].(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("launcher template spec missing spec field")
+		if err := unstructured.SetNestedField(spec, t.Name+"-launcher", "template", "spec", "serviceAccountName"); err != nil {
+			return nil, fmt.Errorf("failed to set serviceAccountName on launcher spec: %w", err)
 		}
-		podSpec["serviceAccountName"] = t.Name + "-launcher"
 	}
 
 	return spec, nil

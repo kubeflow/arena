@@ -29,17 +29,17 @@ func TestBuildAffinity_Empty(t *testing.T) {
 }
 
 func TestBuildAffinity_PolicyOnlyNoRules(t *testing.T) {
-	// Policy without rules should return an error
+	// Policy without rules is a no-op in buildAffinity; task.Validate rejects this configuration.
 	a := &task.Affinity{
 		Policy: "spread",
 		Target: "pod",
 	}
 	result, err := buildAffinity(a, "test-job")
-	if err == nil {
-		t.Fatalf("expected error for policy without rules, got result: %v", result)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if result != nil {
-		t.Errorf("expected nil result on error, got %v", result)
+		t.Errorf("expected nil result for policy without rules, got %v", result)
 	}
 }
 

@@ -527,12 +527,11 @@ func Validate(t *Task) error {
 		}
 		// policy validation
 		if a.Policy != "" && a.Policy != "none" {
-			// policy + node target requires rules (no default node labels to match)
-			if a.Target == "node" && len(a.Rules) == 0 {
-				return fmt.Errorf("affinity.policy with target: node requires rules (no default node labels)")
-			}
 			if !affinityPolicies[a.Policy] {
 				return fmt.Errorf("affinity.policy must be 'spread', 'binpack', or 'none', got %q", a.Policy)
+			}
+			if len(a.Rules) == 0 {
+				return fmt.Errorf("affinity.policy %q requires at least one rule", a.Policy)
 			}
 		}
 		// constraint validation

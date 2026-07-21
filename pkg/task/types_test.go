@@ -560,7 +560,7 @@ func TestValidateAffinityPolicyWithNodeRequiresRules(t *testing.T) {
 	}
 	err := Validate(task)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "affinity.policy with target: node requires rules")
+	assert.Contains(t, err.Error(), "requires at least one rule")
 }
 
 func TestValidateAffinityInvalidPolicy(t *testing.T) {

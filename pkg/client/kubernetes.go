@@ -271,5 +271,7 @@ func pluralize(kind string) string {
 	if r, ok := coreResources[kind]; ok {
 		return r
 	}
+	// Best-effort fallback for unknown kinds; not reliable for arbitrary K8s resources
+	// (e.g., "Policy" -> "policys"). Arena only uses known kinds above.
 	return strings.ToLower(kind) + "s"
 }

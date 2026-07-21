@@ -10,18 +10,18 @@ const (
 
 	// DefaultRsyncImage is the rsync image used to copy a remote directory
 	// into the training pod via rsync.
-	DefaultRsyncImage = "instrumentisto/rsync-ssh:3.18"
+	DefaultRsyncImage = "docker.io/instrumentisto/rsync-ssh:3.18"
 
 	// DefaultHDFSImage is the Hadoop image used to copy files from HDFS
 	// into the training pod.
-	DefaultHDFSImage = "apache/hadoop:3.5.0"
+	DefaultHDFSImage = "docker.io/apache/hadoop:3.5.0"
 )
 
 // Default images for auxiliary services.
 const (
 	// DefaultTensorBoardImage is the image used for the auto-created
 	// TensorBoard Deployment when the user does not supply one.
-	DefaultTensorBoardImage = "tensorflow/tensorflow:2.21.0"
+	DefaultTensorBoardImage = "docker.io/tensorflow/tensorflow:2.21.0"
 )
 
 // Default shell interpreter.

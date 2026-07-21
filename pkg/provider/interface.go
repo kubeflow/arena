@@ -31,6 +31,19 @@ type Provider interface {
 	GetJobPodSelector(jobName string) string
 }
 
+// buildLabelSelector constructs a Kubernetes label selector string from the
+// given label key-value pairs using metav1.LabelSelector +
+// metav1.FormatLabelSelector. This ensures label values are handled through
+// the structured Kubernetes API rather than raw string interpolation, so
+// escaping is applied consistently if values ever come from a less
+// constrained source.
+func buildLabelSelector(matchLabels map[string]string) string {
+	selector := &metav1.LabelSelector{
+		MatchLabels: matchLabels,
+	}
+	return metav1.FormatLabelSelector(selector)
+}
+
 // toInterfaceSlice converts a []string to []interface{} so that the values can
 // be stored in an unstructured.Unstructured object (which requires JSON-compatible types).
 func toInterfaceSlice(ss []string) []interface{} {
@@ -413,9 +426,9 @@ func isMPIFamily(t *task.Task) bool {
 
 // buildAffinity creates a K8s Affinity map from the task's Affinity settings.
 // Supports two modes:
-// - Policy mode: policy×constraint generates podAffinity/podAntiAffinity or nodeAffinity (requires rules for node)
+// - Policy mode: policy×constraint generates podAffinity/podAntiAffinity or nodeAffinity (requires rules)
 // - Rules mode: custom rules applied to pod or node affinity based on target
-// When policy is set but rules is empty, returns an error.
+// Policy without rules is a no-op; task.Validate rejects that configuration.
 func buildAffinity(a *task.Affinity, jobName string) (map[string]interface{}, error) {
 	if a == nil {
 		return nil, nil
@@ -435,8 +448,6 @@ func buildAffinity(a *task.Affinity, jobName string) (map[string]interface{}, er
 		case "node":
 			applyNodeRules(affinity, a)
 		}
-	} else if a.Policy != "" {
-		return nil, fmt.Errorf("affinity policy %q requires at least one rule", a.Policy)
 	}
 
 	if len(affinity) == 0 {
