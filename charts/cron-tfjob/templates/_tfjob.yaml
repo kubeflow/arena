@@ -222,13 +222,13 @@ spec:
                 value: "{{ $value }}"
             {{- end }}
             {{- if eq "git" $syncMode }}
-              - name: GIT_SYNC_REPO
+              - name: GITSYNC_REPO
                 value: {{ .Values.tfjob.syncSource}}
               - name: GIT_SYNC_DEST
                 value: {{ .Values.tfjob.syncGitProjectName}}
-              - name: GIT_SYNC_ROOT
+              - name: GITSYNC_ROOT
                 value: /code
-              - name: GIT_SYNC_ONE_TIME
+              - name: GITSYNC_ONE_TIME
                 value: "true"
             {{- end }}
             volumeMounts:
@@ -531,13 +531,13 @@ spec:
                 value: "{{ $value }}"
             {{- end }}
             {{- if eq "git" $syncMode }}
-              - name: GIT_SYNC_REPO
+              - name: GITSYNC_REPO
                 value: {{ .Values.tfjob.syncSource}}
               - name: GIT_SYNC_DEST
                 value: {{ .Values.tfjob.syncGitProjectName}}
-              - name: GIT_SYNC_ROOT
+              - name: GITSYNC_ROOT
                 value: /code
-              - name: GIT_SYNC_ONE_TIME
+              - name: GITSYNC_ONE_TIME
                 value: "true"
             {{- end }}
             volumeMounts:
@@ -859,13 +859,13 @@ spec:
                 value: "{{ $value }}"
             {{- end }}
             {{- if eq "git" $syncMode }}
-              - name: GIT_SYNC_REPO
+              - name: GITSYNC_REPO
                 value: {{ .Values.tfjob.syncSource}}
               - name: GIT_SYNC_DEST
                 value: {{ .Values.tfjob.syncGitProjectName}}
-              - name: GIT_SYNC_ROOT
+              - name: GITSYNC_ROOT
                 value: /code
-              - name: GIT_SYNC_ONE_TIME
+              - name: GITSYNC_ONE_TIME
                 value: "true"
             {{- end }}
             volumeMounts:
@@ -1146,13 +1146,13 @@ spec:
                 value: "{{ $value }}"
             {{- end }}
             {{- if eq "git" $syncMode }}
-              - name: GIT_SYNC_REPO
+              - name: GITSYNC_REPO
                 value: {{ .Values.tfjob.syncSource}}
               - name: GIT_SYNC_DEST
                 value: {{ .Values.tfjob.syncGitProjectName}}
-              - name: GIT_SYNC_ROOT
+              - name: GITSYNC_ROOT
                 value: /code
-              - name: GIT_SYNC_ONE_TIME
+              - name: GITSYNC_ONE_TIME
                 value: "true"
             {{- end }}
             volumeMounts:
