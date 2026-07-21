@@ -16,9 +16,7 @@ package config
 import (
 	"os"
 	"os/user"
-	"path"
 	"path/filepath"
-	"strings"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -26,14 +24,17 @@ import (
 )
 
 func initKubeClient(kubeconfig string) (clientcmd.ClientConfig, *rest.Config, *kubernetes.Clientset, error) {
-	var err error
-	kubeconfig, err = setupKubeconfig(kubeconfig)
+	loadingRules, err := buildClientConfigLoadingRules(kubeconfig)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	loadingRules.ExplicitPath = kubeconfig
-	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
+	if loadingRules.ExplicitPath != "" {
+		// Keep KUBECONFIG in sync so Arena's kubectl subprocesses inherit the
+		// explicitly selected kubeconfig.
+		if err := os.Setenv("KUBECONFIG", loadingRules.ExplicitPath); err != nil {
+			return nil, nil, nil, err
+		}
+	}
 	overrides := clientcmd.ConfigOverrides{}
 	clientConfig := clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
 	// create rest config
@@ -51,33 +52,39 @@ func initKubeClient(kubeconfig string) (clientcmd.ClientConfig, *rest.Config, *k
 	return clientConfig, restConfig, clientset, nil
 }
 
-func setupKubeconfig(kubeconfig string) (string, error) {
-	// if kubeconfig is null and env "KUBECONFIG" is not null
-	// read kubeconfig from env
+func buildClientConfigLoadingRules(kubeconfig string) (*clientcmd.ClientConfigLoadingRules, error) {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
+
+	// When kubeconfig is empty, leave ExplicitPath unset so client-go merges
+	// the files listed in KUBECONFIG using its native loading precedence.
+	if kubeconfig != "" {
+		explicitPath, err := setupExplicitKubeconfig(kubeconfig)
+		if err != nil {
+			return nil, err
+		}
+		loadingRules.ExplicitPath = explicitPath
+	}
+
+	return loadingRules, nil
+}
+
+func setupExplicitKubeconfig(kubeconfig string) (string, error) {
 	currentUser, err := user.Current()
 	if err != nil {
 		return kubeconfig, err
 	}
-	switch {
-	case kubeconfig != "":
-		break
-	case os.Getenv("KUBECONFIG") != "":
-		kubeconfig = os.Getenv("KUBECONFIG")
-	default:
-		// if default kubeconfig is invalid,set kubeconfig null value and return it
-		defaultKubeconfig := path.Join(currentUser.HomeDir, ".kube", "config")
-		_, err = os.Stat(defaultKubeconfig)
-		if err != nil {
-			return kubeconfig, nil
-		}
-		kubeconfig = defaultKubeconfig
+
+	if len(kubeconfig) >= 2 && kubeconfig[:2] == "~/" {
+		kubeconfig = filepath.Join(currentUser.HomeDir, kubeconfig[2:])
+	} else if kubeconfig == "~" {
+		kubeconfig = currentUser.HomeDir
+	} else {
+		kubeconfig = filepath.Clean(kubeconfig)
 	}
-	// normalize path
-	kubeconfig = filepath.Clean(kubeconfig)
-	// change ~ to user home dir
-	kubeconfig = strings.ReplaceAll(kubeconfig, "~", currentUser.HomeDir)
-	_ = os.Setenv("KUBECONFIG", kubeconfig)
-	// set env
-	_, err = os.Stat(kubeconfig)
-	return kubeconfig, err
+
+	if _, err = os.Stat(kubeconfig); err != nil {
+		return kubeconfig, err
+	}
+	return kubeconfig, nil
 }
