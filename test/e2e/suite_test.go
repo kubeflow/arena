@@ -1,3 +1,5 @@
+//go:build v2e2e
+
 // Package e2e_test contains end-to-end tests for the arena v2 CLI.
 //
 // The lifecycle tests in this suite are CRUD smoke tests: they verify that
@@ -26,6 +28,15 @@ func TestArenaV2(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	operatorNamespace := os.Getenv("NAMESPACE")
+	if operatorNamespace == "" {
+		operatorNamespace = "kubeflow"
+	}
+	cmd := exec.Command("kubectl", "get", "deploy/training-operator", "-n", operatorNamespace)
+	if err := cmd.Run(); err != nil {
+		Fail(fmt.Sprintf("training-operator not found in %s namespace — run `make v2-e2e-setup-cluster` first", operatorNamespace))
+	}
+
 	localBin := filepath.Join("..", "..", "bin", "arena-v2")
 	if p, err := exec.LookPath(localBin); err == nil {
 		arenaV2Bin = p
@@ -91,4 +102,13 @@ func mpiJobStorageVersion() string {
 		Fail(fmt.Sprintf("failed to query MPIJob CRD storage version: %v — ensure mpijobs.kubeflow.org CRD is installed", err))
 	}
 	return "kubeflow.org/" + string(out)
+}
+
+// busyboxImage returns the busybox image for e2e tests. Override with
+// E2E_BUSYBOX_IMAGE for alternative registries (e.g. mirror registries).
+func busyboxImage() string {
+	if img := os.Getenv("E2E_BUSYBOX_IMAGE"); img != "" {
+		return img
+	}
+	return "docker.io/library/busybox:1.35"
 }

@@ -65,6 +65,7 @@ v2-test: ## Run arena v2 unit tests.
 v2-vet: ## Run go vet on arena v2 packages.
 	@echo "Running go vet on arena v2 packages..."
 	go vet $(V2_ALL_PACKAGES)
+	go vet -tags v2e2e ./test/e2e/
 
 .PHONY: v2-fmt
 v2-fmt: ## Run gofmt on arena v2 packages.
@@ -82,10 +83,32 @@ v2-install: ## Install arena v2 CLI to GOBIN.
 	@echo "Installing arena v2 CLI to $(GOBIN)..."
 	go install -ldflags '$(V2_LDFLAGS)' ./cmd/arena-v2/
 
+# E2E cluster configuration (overridable via environment or command line)
+TRAINER_REPO ?= https://github.com/kubeflow/training-operator.git
+TRAINER_REF ?= v1.9.3
+INSTALL_METHOD ?= kustomize
+K8S_VERSION ?= 1.32.3
+KIND_CLUSTER_NAME ?= arena-v2
+NAMESPACE ?= kubeflow
+
+.PHONY: v2-e2e-setup-cluster
+v2-e2e-setup-cluster: ## Create kind cluster and install training-operator for v2 e2e tests.
+	TRAINER_REPO=$(TRAINER_REPO) \
+	TRAINER_REF=$(TRAINER_REF) \
+	INSTALL_METHOD=$(INSTALL_METHOD) \
+	K8S_VERSION=$(K8S_VERSION) \
+	KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) \
+	NAMESPACE=$(NAMESPACE) \
+	./hack/e2e-setup-cluster.sh
+
 .PHONY: v2-e2e-test
-v2-e2e-test: arena-v2 ## Run arena v2 e2e tests (requires real K8s cluster with CRDs installed).
+v2-e2e-test: arena-v2 ## Run arena v2 e2e tests (requires cluster from v2-e2e-setup-cluster).
 	@echo "Running arena v2 e2e tests..."
-	go test ./test/e2e/ -v -ginkgo.v -timeout 30m
+	go test -tags v2e2e ./test/e2e/ -v -ginkgo.v -timeout 30m
+
+.PHONY: v2-e2e-teardown
+v2-e2e-teardown: ## Delete the kind cluster used for v2 e2e tests.
+	kind delete cluster --name $(KIND_CLUSTER_NAME)
 
 .PHONY: v2-release-snapshot
 v2-release-snapshot: ## Build arena v2 release snapshot locally (no tag required).

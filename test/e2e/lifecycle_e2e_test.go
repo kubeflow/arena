@@ -1,3 +1,5 @@
+//go:build v2e2e
+
 package e2e_test
 
 import (
@@ -37,7 +39,7 @@ var _ = Describe("Suspend and Resume", func() {
 		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "docker.io/library/busybox:1.36",
+			"--image", busyboxImage(),
 			"--workers", "1",
 			"sleep 300",
 		)
