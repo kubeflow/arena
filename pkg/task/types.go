@@ -38,7 +38,7 @@ var (
 	cleanPodPolicies    = map[string]bool{constants.CleanPodPolicyNone: true, constants.CleanPodPolicyRunning: true, constants.CleanPodPolicyAll: true}
 	restartPolicies     = map[string]bool{constants.RestartPolicyAlways: true, constants.RestartPolicyOnFailure: true, constants.RestartPolicyNever: true}
 	imagePullPolicies   = map[string]bool{"Always": true, "IfNotPresent": true, "Never": true}
-	successPolicies     = map[string]bool{"ChiefWorker": true, "AllWorkers": true}
+	successPolicies     = map[string]bool{constants.SuccessPolicyChiefWorkerAlias: true, constants.SuccessPolicyAllWorkers: true}
 	mpiImplementations  = map[string]bool{"OpenMPI": true, "Intel": true, "MPICH": true}
 	launcherPolicies    = map[string]bool{"AtStartup": true, "WaitForWorkersReady": true}
 	affinityPolicies    = map[string]bool{"spread": true, "binpack": true, "none": true}
@@ -526,7 +526,7 @@ func validateFramework(t *Task) error {
 	}
 	if t.Lifecycle.SuccessPolicy != "" {
 		if !successPolicies[t.Lifecycle.SuccessPolicy] {
-			return fmt.Errorf("invalid success_policy: %q (must be ChiefWorker or AllWorkers)", t.Lifecycle.SuccessPolicy)
+			return fmt.Errorf("invalid success_policy: %q (must be ChiefWorker or AllWorkers; ChiefWorker is an alias for the default \"\")", t.Lifecycle.SuccessPolicy)
 		}
 	}
 

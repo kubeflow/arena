@@ -3,6 +3,7 @@ package task
 import (
 	"testing"
 
+	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -115,14 +116,14 @@ func TestApplyOverrides_Lifecycle(t *testing.T) {
 		"active-deadline":    "2h",
 		"ttl-after-finished": "7d",
 		"backoff-limit":      3,
-		"success-policy":     "ChiefWorker",
+		"success-policy":     constants.SuccessPolicyChiefWorkerAlias,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Running", task.Lifecycle.CleanPodPolicy)
 	assert.Equal(t, "2h", task.Lifecycle.ActiveDeadline)
 	assert.Equal(t, "7d", task.Lifecycle.TTLAfterFinished)
 	assert.Equal(t, 3, *task.Lifecycle.BackoffLimit)
-	assert.Equal(t, "ChiefWorker", task.Lifecycle.SuccessPolicy)
+	assert.Equal(t, constants.SuccessPolicyChiefWorkerAlias, task.Lifecycle.SuccessPolicy)
 }
 
 func TestApplyOverrides_Runtime(t *testing.T) {

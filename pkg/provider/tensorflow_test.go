@@ -3,6 +3,7 @@ package provider
 import (
 	"testing"
 
+	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/task"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -241,7 +242,7 @@ func TestTensorFlowBuildCRDWithSuccessPolicy(t *testing.T) {
 		},
 		Worker: &task.Worker{Replicas: 2},
 		Lifecycle: task.Lifecycle{
-			SuccessPolicy: "AllWorkers",
+			SuccessPolicy: constants.SuccessPolicyAllWorkers,
 		},
 	}
 
@@ -250,7 +251,7 @@ func TestTensorFlowBuildCRDWithSuccessPolicy(t *testing.T) {
 	require.NoError(t, err)
 
 	spec := crd.Object["spec"].(map[string]interface{})
-	assert.Equal(t, "AllWorkers", spec["successPolicy"])
+	assert.Equal(t, constants.SuccessPolicyAllWorkers, spec["successPolicy"])
 }
 
 func TestTensorFlowBuildCRDInvalidFramework(t *testing.T) {
@@ -563,4 +564,28 @@ func TestTensorFlowBuildRBAC(t *testing.T) {
 	resources, err := provider.BuildRBAC(&task.Task{}, metav1.OwnerReference{})
 	require.NoError(t, err)
 	assert.Nil(t, resources)
+}
+
+func TestTensorFlowBuildCRDWithChiefWorkerAlias(t *testing.T) {
+	tk := &task.Task{
+		Name:  "tf-chief-alias",
+		Image: "tensorflow:2.15",
+		Run:   "python train.py",
+		Framework: task.Framework{
+			Name: "tensorflow",
+		},
+		Worker: &task.Worker{Replicas: 2},
+		Lifecycle: task.Lifecycle{
+			SuccessPolicy: constants.SuccessPolicyChiefWorkerAlias,
+		},
+	}
+
+	provider := &TensorFlowProvider{}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	_, hasSuccessPolicy := spec["successPolicy"]
+	assert.False(t, hasSuccessPolicy,
+		"successPolicy field should be absent when ChiefWorker is normalized to default \"\"")
 }

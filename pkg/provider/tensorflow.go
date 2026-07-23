@@ -119,8 +119,12 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 		"tfReplicaSpecs": replicaSpecs,
 	}
 
-	if t.Lifecycle.SuccessPolicy != "" {
-		spec["successPolicy"] = t.Lifecycle.SuccessPolicy
+	sp := t.Lifecycle.SuccessPolicy
+	if sp == constants.SuccessPolicyChiefWorkerAlias {
+		sp = constants.SuccessPolicyDefault
+	}
+	if sp != "" {
+		spec["successPolicy"] = sp
 	}
 
 	runPolicy, err := buildRunPolicy(t)

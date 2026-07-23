@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -314,11 +315,26 @@ func TestValidateSuccessPolicy(t *testing.T) {
 		Run:       "train",
 		Framework: Framework{Name: "pytorch"},
 		Worker:    &Worker{Replicas: 1},
-		Lifecycle: Lifecycle{SuccessPolicy: "ChiefWorker"},
+		Lifecycle: Lifecycle{SuccessPolicy: constants.SuccessPolicyChiefWorkerAlias},
 	}
 	err := Validate(task)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "success_policy is only valid for tensorflow")
+}
+
+func TestValidateSuccessPolicyInvalidValue(t *testing.T) {
+	task := &Task{
+		Name:      "t",
+		Image:     "x:1",
+		Run:       "train",
+		Framework: Framework{Name: "tensorflow"},
+		Worker:    &Worker{Replicas: 1},
+		Lifecycle: Lifecycle{SuccessPolicy: "foo"},
+	}
+	err := Validate(task)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid success_policy")
+	assert.Contains(t, err.Error(), "alias")
 }
 
 func TestValidateLifecycleDurations(t *testing.T) {

@@ -392,7 +392,7 @@ func init() {
 	submitCmd.Flags().StringVar(&submitActiveDeadline, "active-deadline", "", "active deadline (e.g. 2h, 7d)")
 	submitCmd.Flags().StringVar(&submitTTLAfterFinished, "ttl-after-finished", "", "TTL after finished (e.g. 7d)")
 	submitCmd.Flags().IntVar(&submitBackoffLimit, "backoff-limit", 0, "backoff limit for retries")
-	submitCmd.Flags().StringVar(&submitSuccessPolicy, "success-policy", "", "success policy (ChiefWorker, AllWorkers, TF only)")
+	submitCmd.Flags().StringVar(&submitSuccessPolicy, "success-policy", "", "success policy (ChiefWorker, AllWorkers, TF only). ChiefWorker is an alias for the default \"\"")
 
 	// Runtime
 	submitCmd.Flags().StringVar(&submitImagePullPolicy, "image-pull-policy", "", "image pull policy (Always, IfNotPresent, Never)")
