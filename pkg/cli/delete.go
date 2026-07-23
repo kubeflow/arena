@@ -61,5 +61,7 @@ var deleteCmd = &cobra.Command{
 
 func init() {
 	deleteCmd.Flags().StringVarP(&deleteFile, "file", "f", "", "path to YAML file")
+	deleteCmd.ValidArgsFunction = completeJobName
+	_ = deleteCmd.RegisterFlagCompletionFunc("file", completeFile)
 	jobCmd.AddCommand(deleteCmd)
 }

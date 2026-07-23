@@ -24,5 +24,6 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
+	versionCmd.ValidArgsFunction = cobra.NoFileCompletions
 	rootCmd.AddCommand(versionCmd)
 }

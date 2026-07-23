@@ -356,8 +356,8 @@ func buildSubmitFlags() map[string]interface{} {
 
 func init() {
 	// Required flags
-	submitCmd.Flags().StringVar(&submitName, "name", "", "job name (required)")
-	submitCmd.Flags().StringVar(&submitImage, "image", "", "container image (required)")
+	submitCmd.Flags().StringVar(&submitName, "name", "", "job name")
+	submitCmd.Flags().StringVar(&submitImage, "image", "", "container image")
 
 	// Worker configuration
 	submitCmd.Flags().IntVar(&submitWorkers, "workers", 1, "number of worker replicas")
@@ -433,6 +433,18 @@ func init() {
 
 	_ = submitCmd.MarkFlagRequired("name")
 	_ = submitCmd.MarkFlagRequired("image")
+
+	submitCmd.ValidArgsFunction = completeFrameworkType
+	_ = submitCmd.RegisterFlagCompletionFunc("clean-pod-policy", completeStaticChoices(
+		"None\tDo not clean pods", "Running\tClean running pods", "All\tClean all pods"))
+	_ = submitCmd.RegisterFlagCompletionFunc("image-pull-policy", completeStaticChoices(
+		"Always\tAlways pull", "IfNotPresent\tPull if not present", "Never\tNever pull"))
+	_ = submitCmd.RegisterFlagCompletionFunc("restart", completeStaticChoices(
+		"Always\tAlways restart", "OnFailure\tRestart on failure", "Never\tNever restart"))
+	_ = submitCmd.RegisterFlagCompletionFunc("success-policy", completeStaticChoices(
+		"ChiefWorker\tChief and worker succeed", "AllWorkers\tAll workers succeed"))
+	_ = submitCmd.RegisterFlagCompletionFunc("nproc-per-node", completeStaticChoices(
+		"auto\tAuto-detect", "gpu\tOne per GPU", "cpu\tOne per CPU"))
 
 	rootCmd.AddCommand(submitCmd)
 }

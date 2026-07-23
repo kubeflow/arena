@@ -85,5 +85,7 @@ func init() {
 	runCmd.Flags().StringArrayVar(&runSetExprs, "set", nil,
 		"override YAML field (Helm-style: key=value, repeatable)")
 
+	_ = runCmd.RegisterFlagCompletionFunc("file", completeFile)
+	runCmd.ValidArgsFunction = cobra.NoFileCompletions
 	jobCmd.AddCommand(runCmd)
 }

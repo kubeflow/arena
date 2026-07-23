@@ -697,7 +697,7 @@ func TestSupportedJobKinds(t *testing.T) {
 	assert.Equal(t, []string{"PyTorchJob", "TFJob", "MPIJob"}, supportedJobKinds)
 }
 
-// Verify the command is registered with job
+// Verify the job subcommands are registered
 func TestCommandsRegistered(t *testing.T) {
 	commands := jobCmd.Commands()
 	var names []string

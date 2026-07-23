@@ -24,5 +24,6 @@ func init() {
 		string(outputpkg.DefaultFormat),
 		outputpkg.FormatHelpText,
 	)
+	_ = jobCmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
 	rootCmd.AddCommand(jobCmd)
 }

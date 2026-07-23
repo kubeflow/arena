@@ -64,5 +64,6 @@ func resumeJob(ctx context.Context, k8sClient *client.Client, namespace, name st
 }
 
 func init() {
+	resumeCmd.ValidArgsFunction = completeJobName
 	jobCmd.AddCommand(resumeCmd)
 }

@@ -193,5 +193,6 @@ func init() {
 	logsCmd.Flags().IntVar(&logsTail, "tail", -1, "number of lines to show from end")
 	logsCmd.Flags().StringVar(&logsPod, "pod", "", "pod name (skip label selector)")
 	logsCmd.Flags().StringVar(&logsContainer, "container", "", "container name (default: first container)")
+	logsCmd.ValidArgsFunction = completeJobName
 	jobCmd.AddCommand(logsCmd)
 }

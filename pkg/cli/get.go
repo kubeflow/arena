@@ -114,6 +114,7 @@ var getCmd = &cobra.Command{
 func init() {
 	jobCmd.AddCommand(getCmd)
 	getCmd.Flags().BoolVar(&getDetails, "details", false, "show job configuration details")
+	getCmd.ValidArgsFunction = completeJobName
 }
 
 // providerForKind returns the Provider for a given CRD kind.

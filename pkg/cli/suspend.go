@@ -64,5 +64,6 @@ func suspendJob(ctx context.Context, k8sClient *client.Client, namespace, name s
 }
 
 func init() {
+	suspendCmd.ValidArgsFunction = completeJobName
 	jobCmd.AddCommand(suspendCmd)
 }

@@ -117,6 +117,8 @@ func init() {
 		string(outputpkg.DefaultFormat),
 		outputpkg.FormatHelpText,
 	)
+	topJobCmd.ValidArgsFunction = cobra.NoFileCompletions
+	_ = topJobCmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
 	topCmd.AddCommand(topJobCmd)
 	rootCmd.AddCommand(topCmd)
 }

@@ -236,5 +236,6 @@ func formatAge(creationTime time.Time) string {
 }
 
 func init() {
+	listCmd.ValidArgsFunction = cobra.NoFileCompletions
 	jobCmd.AddCommand(listCmd)
 }

@@ -14,4 +14,5 @@ var statusCmd = &cobra.Command{
 func init() {
 	jobCmd.AddCommand(statusCmd)
 	statusCmd.Flags().BoolVar(&getDetails, "details", false, "show job configuration details")
+	statusCmd.ValidArgsFunction = completeJobName
 }

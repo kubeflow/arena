@@ -120,5 +120,6 @@ func crdObjectName(kind string) string {
 }
 
 func init() {
+	checkCmd.ValidArgsFunction = cobra.NoFileCompletions
 	rootCmd.AddCommand(checkCmd)
 }

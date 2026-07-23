@@ -20,7 +20,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "arena",
+	Use:   "arena-v2",
 	Short: "Arena v2 - AI workload CLI for Kubernetes",
 	Long:  `Arena v2 is a lightweight CLI for submitting AI training jobs to Kubernetes.`,
 	PersistentPreRun: func(_ *cobra.Command, _ []string) {
@@ -65,4 +65,5 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Kubernetes namespace (priority: flag > YAML > kubeconfig context > default)")
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "enable debug mode with detailed error output")
 	rootCmd.PersistentFlags().Int32VarP(&verbose, "verbose", "v", 0, "verbosity level (higher = more detailed logs)")
+	_ = rootCmd.RegisterFlagCompletionFunc("kubeconfig", completeFile)
 }
