@@ -1,0 +1,55 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: none
+  enable:
+    - errcheck       # unchecked errors
+    - govet          # go vet checks
+    - ineffassign    # ineffectual assignments
+    - staticcheck    # comprehensive static analysis (includes gosimple in v2)
+    - unused         # unused code
+    - revive         # style/enhanced lint (replaces deprecated golint)
+    - gosec          # security
+    - misspell       # spelling mistakes
+    - gocritic       # best practices
+
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+
+  exclusions:
+    paths:
+      - cmd/arena        # v1 binary
+      - pkg/commands     # v1 commands
+      - pkg/apis         # v1 APIs
+      - pkg/training     # v1 training
+      - pkg/serving      # v1 serving
+      - pkg/argsbuilder  # v1 args builders
+    rules:
+      # fmt.Fprintf to stderr — error return is not actionable
+      - linters: [errcheck]
+        text: "fmt\\.Fprint"
+      # G304: file inclusion via variable — expected in a CLI that reads user-provided paths
+      - linters: [gosec]
+        text: "G304"
+      # Ignore errcheck in test files for cleanup calls (Close, Remove)
+      - linters: [errcheck]
+        path: _test\.go
+        text: "(Close|Remove)"
+      # G104: unhandled errors in test cleanup — not security-relevant
+      - linters: [gosec]
+        path: _test\.go
+        text: "G104"
+      # G101: hardcoded credentials — test fixtures with fake data, not real secrets
+      - linters: [gosec]
+        path: _test\.go
+        text: "G101"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

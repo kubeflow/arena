@@ -1,0 +1,33 @@
+# PyTorch job with TensorBoard mounts override
+# Demonstrates how to selectively mount storages in the TensorBoard pod.
+# All 3 storages become volumes, but only the "logs" storage is mounted
+# in the TensorBoard container (at the overridden /tb/logs path).
+# IMPORTANT: Replace the image below with your own training image.
+version: 0.1.0
+name: pytorch-tensorboard-example
+image: docker.io/pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+run: |
+  python train.py --logdir /tb/logs
+framework:
+  name: pytorch
+worker:
+  replicas: 2
+  resources:
+    nvidia.com/gpu: "1"
+storages:
+  - name: data
+    pvc: training-data-pvc
+    mount_path: /data
+  - name: logs
+    pvc: tensorboard-logs-pvc
+    mount_path: /logs
+  - name: cache
+    pvc: model-cache-pvc
+    mount_path: /cache
+logging:
+  tensorboard:
+    enabled: true
+    logdir: /tb/logs
+    mounts:
+      - name: logs
+        mount_path: /tb/logs
