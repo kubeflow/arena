@@ -52,6 +52,10 @@ func isLikelySecretKey(name string) bool {
 // the resources by finalizeJobResources after the CRD exists and its UID is known.
 // Returns the list of created/updated resources for rollback tracking and
 // ownerReference patching.
+//
+// Caveat: a hard crash before finalizeJobResources leaves RBAC resources owner-less;
+// Kubernetes GC will not reclaim them. A re-submit will correctly patch ownerReferences
+// onto the existing resources via CreateOrUpdate, so no manual cleanup is needed.
 func preCreateRBAC(
 	ctx context.Context,
 	t *task.Task,
