@@ -1,0 +1,13 @@
+# PyTorchJob: Simple MNIST training with Master+Worker topology (CPU)
+# Source: Kubeflow trainer examples — pytorch/simple.yaml
+version: 0.1.0
+name: pytorch-mnist
+image: docker.io/kubeflowkatib/pytorch-mnist:v1beta1-45c5727
+image_pull_policy: Always
+restart: OnFailure
+framework:
+  name: pytorch
+run: python3 -u /opt/pytorch-mnist/mnist.py --epochs=1
+master: {}
+worker:
+  replicas: 1

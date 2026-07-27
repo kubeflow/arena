@@ -1,0 +1,14 @@
+# PyTorchJob: Torchelastic echo test (Worker-only, CPU)
+# Source: Kubeflow trainer examples — pytorch/elastic/echo/echo.yaml
+# NOTE: elasticPolicy (rdzvBackend, minReplicas, maxReplicas, maxRestarts) is not in Arena v2's current schema. This runs as a fixed 2-worker job.
+version: 0.1.0
+name: pytorch-elastic-echo
+image: ghcr.io/kubeflow/training-v1/pytorch-elastic-example-echo:latest
+image_pull_policy: IfNotPresent
+framework:
+  name: pytorch
+envs:
+  LOGLEVEL: DEBUG
+run: python -m torch.distributed.run --rdzv_backend=c10d ./echo.py
+worker:
+  replicas: 2

@@ -1,0 +1,21 @@
+# MPIJob: Horovod distributed TensorFlow MNIST with mpirun (CPU)
+# Source: Kubeflow trainer examples/mpi/tensorflow-mnist.yaml
+version: 0.1.0
+name: mpi-horovod-mnist
+image: horovod/horovod:0.28.1
+framework:
+  name: mpi
+  options:
+    slots_per_worker: 1
+run: mpirun -np 2 --allow-run-as-root -bind-to none -map-by slot -x LD_LIBRARY_PATH -x PATH -mca pml ob1 -mca btl ^openib python /horovod/examples/tensorflow2/tensorflow2_mnist.py
+worker:
+  replicas: 2
+  resources:
+    cpu: "2"
+    memory: "4Gi"
+launcher:
+  resources:
+    cpu: "1"
+    memory: "2Gi"
+lifecycle:
+  clean_pod_policy: Running

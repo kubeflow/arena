@@ -1,0 +1,24 @@
+# MPIJob: Elastic Horovod distributed TensorFlow MNIST with horovodrun (CPU)
+# Source: Kubeflow trainer examples/mpi/tensorflow-mnist-elastic.yaml
+# NOTE: Elastic scaling (--min-np/--max-np) depends on the MPI Operator's
+# host-discovery mechanism. Arena v2 submits this as a standard MPIJob;
+# the operator handles elastic behavior at runtime.
+version: 0.1.0
+name: mpi-horovod-elastic
+image: horovod/horovod:0.20.0-tf2.3.0-torch1.6.0-mxnet1.5.0-py3.7-cpu
+framework:
+  name: mpi
+  options:
+    slots_per_worker: 1
+run: horovodrun -np 2 --min-np 1 --max-np 3 --host-discovery-script /etc/mpi/discover_hosts.sh python /examples/elastic/tensorflow2_mnist_elastic.py
+worker:
+  replicas: 2
+  resources:
+    cpu: "2"
+    memory: "4Gi"
+launcher:
+  resources:
+    cpu: "1"
+    memory: "2Gi"
+lifecycle:
+  clean_pod_policy: Running

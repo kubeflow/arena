@@ -1,0 +1,16 @@
+# TFJob: MNIST with TensorBoard summaries (CPU, no PVC)
+# Source: Kubeflow trainer - tensorflow/mnist_with_summaries/tf_job_mnist.yaml
+# Adapted to use local /tmp/logs instead of PVC for simpler testing.
+version: 0.1.0
+name: tf-mnist-summaries
+image: ghcr.io/kubeflow/training-v1/tf-mnist-with-summaries:latest
+framework:
+  name: tensorflow
+run: python /var/tf_mnist/mnist_with_summaries.py --log_dir=/tmp/logs --learning_rate=0.01 --batch_size=150
+restart: Never
+
+lifecycle:
+  clean_pod_policy: None
+
+worker:
+  replicas: 1

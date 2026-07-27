@@ -52,13 +52,13 @@ Also inherits [global flags](#global-flags) and `--output` from `arena job`.
 
 ```shell
 # Submit a PyTorch job from a YAML file
-$ arena job run -f examples/v2/pytorch-simple.yaml
+$ arena job run -f examples/v2/quickstart/pytorch-simple.yaml
 
 # Override a field with --set
-$ arena job run -f examples/v2/pytorch-simple.yaml --set worker.replicas=2
+$ arena job run -f examples/v2/quickstart/pytorch-simple.yaml --set worker.replicas=2
 
 # Dry-run: print the generated CRD without submitting
-$ arena job run -f examples/v2/pytorch-simple.yaml --dry-run
+$ arena job run -f examples/v2/quickstart/pytorch-simple.yaml --dry-run
 ```
 
 ### Output
@@ -118,7 +118,7 @@ Wide format (`-o wide`) adds `NAMESPACE`, `APIVERSION`, `FRAMEWORK`, and `GPU` c
 NAME              NAMESPACE   STATUS     APIVERSION          FRAMEWORK   GPU   REPLICAS   AGE
 pytorch-simple    default     Running    kubeflow.org/v1     pytorch     1     1/1        5m
 tf-distributed    default     Succeeded  kubeflow.org/v1     tensorflow  0     3/3        1h
-mpi-test          default     Pending    kubeflow.org/v2beta1  mpi       2     0/2        10s
+mpi-test          default     Pending    kubeflow.org/v1     mpi         2     0/2        10s
 ```
 
 When no jobs exist:
@@ -342,7 +342,7 @@ Also inherits [global flags](#global-flags) and `--output` from `arena job`.
 $ arena job delete pytorch-simple
 
 # Delete by YAML file
-$ arena job delete -f examples/v2/pytorch-simple.yaml
+$ arena job delete -f examples/v2/quickstart/pytorch-simple.yaml
 
 # Delete in a specific namespace
 $ arena job delete pytorch-simple -n kubeflow
@@ -399,7 +399,7 @@ Submit a training job using CLI flags instead of a YAML file.
 ### Syntax
 
 ```
-arena job submit <type> [flags] -- [command]
+arena submit <type> [flags] -- [command]
 ```
 
 Supported types (case-insensitive): `pytorch`, `tensorflow`, `tf`, `mpi`, `horovod`, `deepspeed`.
@@ -529,15 +529,15 @@ Also inherits [global flags](#global-flags) and `--output` from `arena job`.
 ```shell
 # Submit a PyTorch job with 2 workers and 1 GPU each
 $ arena job submit pytorch --name my-job --image pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime \
-    --workers 2 --gpus 1 -- python train.py --epochs 10
+    --workers 2 --gpus 1 -- python -c "import torch; print('CUDA:', torch.cuda.is_available())"
 
 # Submit a TensorFlow job with chief and parameter server
 $ arena job submit tensorflow --name tf-job --image tensorflow/tensorflow:2.16.1-gpu \
-    --workers 3 --gpus 1 --chief --ps-count 1 -- python train.py
+    --workers 3 --gpus 1 --chief --ps-count 1 -- python -c "import tensorflow as tf; print('TF:', tf.__version__)"
 
 # Submit an MPI job with deepspeed
 $ arena job submit deepspeed --name ds-job --image deepspeed/deepspeed \
-    --workers 4 --gpus 8 --slots-per-worker 8 -- python train_ds.py
+    --workers 4 --gpus 8 --slots-per-worker 8 -- python -c "print('DeepSpeed ready')"
 
 # Dry-run to inspect the generated CRD
 $ arena job submit pytorch --name my-job --image pytorch/pytorch --dry-run
@@ -580,9 +580,9 @@ When all CRDs are installed and compatible:
   versions: v1 (served, storage)
 ✓ TFJob: installed (expected: kubeflow.org/v1)
   versions: v1 (served, storage)
-✓ MPIJob: installed (expected: kubeflow.org/v2beta1)
-  versions: v2beta1 (served, storage)
-  compatible: ✓ (storage version v2beta1 supported by arena)
+✓ MPIJob: installed (expected: kubeflow.org/v1)
+  versions: v1 (served, storage)
+  compatible: ✓ (storage version v1 supported by arena)
 ```
 
 When a CRD is missing:
@@ -594,9 +594,9 @@ When a CRD is missing:
 When the MPIJob storage version is incompatible:
 
 ```text
-✓ MPIJob: installed (expected: kubeflow.org/v2beta1)
-  versions: v1 (served, storage)
-  compatible: ✗ (storage version v1, arena supports: v2beta1)
+✓ MPIJob: installed (expected: kubeflow.org/v2)
+  versions: v2 (served, storage)
+  compatible: ✗ (storage version v2, arena supports: v1, v2beta1)
 ```
 
 The command exits with a non-zero status if any CRD is missing or incompatible.
@@ -736,7 +736,7 @@ Wide format (`-o wide`) adds `NAMESPACE`, `APIVERSION`, and `FRAMEWORK` columns:
 ```text
 NAME              NAMESPACE   STATUS     APIVERSION            FRAMEWORK   GPU_REQUESTED   REPLICAS   AGE
 pytorch-simple    default     Running    kubeflow.org/v1       pytorch     1               1/1        5m
-mpi-test          default     Pending    kubeflow.org/v2beta1  mpi         2               0/2        10s
+mpi-test          default     Pending    kubeflow.org/v1       mpi         2               0/2        10s
 ```
 
 When no jobs exist:

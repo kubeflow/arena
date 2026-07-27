@@ -63,14 +63,32 @@ arena submit pytorch --name my-job --image pytorch:2.1 --gpus 1 --workers 4 "pyt
 ```yaml
 version: 0.1.0
 name: my-job
-image: pytorch:2.1
+image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 framework:
   name: pytorch
 worker:
   replicas: 3  # --workers 4 minus 1 for master
   resources:
-    nvidia.com/gpu: "1"
-run: python train.py
+    # nvidia.com/gpu: "1"  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: "8Gi"
+run: |
+  python -c "
+  import torch, torch.distributed as dist, torch.nn as nn
+  dist.init_process_group(backend='gloo')
+  rank = dist.get_rank()
+  model = nn.Linear(10, 1)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  for epoch in range(3):
+      x, y = torch.randn(64, 10), torch.randn(64, 1)
+      loss = nn.MSELoss()(model(x), y)
+      optimizer.zero_grad(); loss.backward(); optimizer.step()
+      if rank == 0:
+          print(f'Epoch {epoch+1}/3 - loss: {loss.item():.4f}')
+  if rank == 0:
+      print('Training complete.')
+  dist.destroy_process_group()
+  "
 ```
 
 Note the `replicas: 3` (not 4). The total GPU-using replicas is
@@ -158,10 +176,6 @@ Field names in v2 use `snake_case` per the schema specification.
 | `--affinity-constraint` | `scheduling.affinity.constraint` | `preferred` / `required`. |
 | `--queue` | `scheduling.queue` | String. |
 | `--rdma` | — | **Not planned.** |
-
-> **Note:** Scheduling fields exist in the v2 schema but are not yet
-> implemented in the Alpha release. See [Features in Schema but Not Yet
-> Implemented](#features-in-schema-but-not-yet-implemented).
 
 ### Data and Volumes
 
@@ -309,16 +323,12 @@ overriding storage mount points.
 
 ## Features in Schema but Not Yet Implemented
 
-These features have schema definitions in v2 but are not implemented in the
-Alpha release. They are targeted for the Beta phase or later.
+These features have schema definitions in v2 but are not yet implemented.
+They are targeted for future releases.
 
 | Feature | Status |
 |---------|--------|
-| Scheduling (`node_selector`, `tolerations`, `priority`, `priority_class_name`, `gang`, `scheduler_name`, `affinity`, `queue`) | Schema exists, not implemented in Alpha |
-| TensorFlow (TFJob) provider | Schema exists, provider not yet implemented |
 | Ray provider | Framework placeholder only, provider not yet implemented |
-| Horovod provider | Schema exists, provider not yet implemented |
-| DeepSpeed provider | Schema exists, provider not yet implemented |
 | Per-role selectors (`--ps-selector`, `--chief-selector`, `--evaluator-selector`, `--worker-selector`) | Not yet implemented |
 | Per-role affinity policies (`--ps-affinity-policy`, `--worker-affinity-policy`) | Not yet implemented |
 | Per-role images (`--ps-image`, `--worker-image`) | Not yet implemented |
@@ -346,14 +356,32 @@ arena submit pytorch \
 ```yaml
 version: 0.1.0
 name: my-job
-image: pytorch:2.1
+image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 framework:
   name: pytorch
 worker:
   replicas: 3  # --workers 4 minus 1 for master
   resources:
-    nvidia.com/gpu: "1"
-run: python train.py
+    # nvidia.com/gpu: "1"  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: "8Gi"
+run: |
+  python -c "
+  import torch, torch.distributed as dist, torch.nn as nn
+  dist.init_process_group(backend='gloo')
+  rank = dist.get_rank()
+  model = nn.Linear(10, 1)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  for epoch in range(3):
+      x, y = torch.randn(64, 10), torch.randn(64, 1)
+      loss = nn.MSELoss()(model(x), y)
+      optimizer.zero_grad(); loss.backward(); optimizer.step()
+      if rank == 0:
+          print(f'Epoch {epoch+1}/3 - loss: {loss.item():.4f}')
+  if rank == 0:
+      print('Training complete.')
+  dist.destroy_process_group()
+  "
 ```
 
 **Key change:** `--workers 4` becomes `worker.replicas: 3`. The master is an
@@ -390,12 +418,25 @@ name: tf-distributed
 image: docker.io/tensorflow/tensorflow:2.15.0
 framework:
   name: tensorflow
-run: python train.py
+run: |
+  python -c "
+  import tensorflow as tf
+  strategy = tf.distribute.MultiWorkerMirroredStrategy()
+  with strategy.scope():
+      model = tf.keras.Sequential([tf.keras.layers.Dense(1, input_shape=(10,))])
+      model.compile(optimizer='sgd', loss='mse')
+  x = tf.random.normal((128, 10))
+  y = tf.random.normal((128, 1))
+  for epoch in range(3):
+      history = model.fit(x, y, epochs=1, verbose=0)
+      print(f'Epoch {epoch+1}/3 - loss: {history.history[\"loss\"][0]:.4f}')
+  print('Training complete.')
+  "
 
 worker:
   replicas: 4
   resources:
-    nvidia.com/gpu: "2"
+    # nvidia.com/gpu: "2"  # Uncomment for GPU clusters
 
 chief:
   resources:
@@ -410,7 +451,9 @@ ps:
 
 evaluator:
   resources:
-    nvidia.com/gpu: "1"
+    # nvidia.com/gpu: "1"  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: 4Gi
 ```
 
 **Key changes:**
@@ -444,17 +487,19 @@ name: mpi-training
 image: docker.io/mpioperator/mpi-test:openmpi-4.1.0
 framework:
   name: mpi
-run: mpirun -np 16 python train.py
+run: mpirun -np 16 python -c "print('Hello from rank', __import__('os').environ.get('OMPI_COMM_WORLD_RANK', '0'))"
 
 worker:
   replicas: 4
   resources:
-    nvidia.com/gpu: "4"
+    # nvidia.com/gpu: "4"  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: "8Gi"
 
 launcher:
   resources:
-    cpu: "2"
-    memory: 4Gi
+    cpu: "1"
+    memory: "2Gi"
 ```
 
 **Key changes:**

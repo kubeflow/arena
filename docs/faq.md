@@ -12,7 +12,7 @@ Solution: Install the Kubeflow Training Operator, which includes all three CRDs.
 
 ### Q: `arena check` shows "compatible: ✗" for MPIJob
 Cause: The MPIJob CRD storage version on your cluster does not match what Arena supports. Arena supports `v1` and `v2beta1`.
-Solution: Check your MPIJob CRD storage version with `kubectl get crd mpijobs.kubeflow.org -o jsonpath='{.spec.versions[?(@.storage)].name}'`. Install a compatible MPI Operator version that serves `v1` or `v2beta1` as the storage version. See [installation.md](installation.md).
+Solution: Check your MPIJob CRD storage version with `kubectl get crd mpijobs.kubeflow.org -o jsonpath='{.spec.versions[?(@.storage)].name}'`. Install a compatible Training Operator version that serves `v1` or `v2beta1` as the MPIJob storage version. See [installation.md](installation.md).
 
 ### Q: `arena check` shows "? PyTorchJob: version not resolved"
 Cause: Arena could not resolve the API version for the CRD kind. This may indicate a partially installed or corrupted CRD.
@@ -50,7 +50,7 @@ Solution: Set `framework.name` to one of: `pytorch`, `tensorflow`, `mpi`, `horov
 
 ### Q: `--file is required`
 Cause: You ran `arena job run` without the `--file` (`-f`) flag.
-Solution: Provide a YAML file path: `arena job run -f examples/v2/pytorch-train.yaml`. Use `--dry-run` to preview without submitting.
+Solution: Provide a YAML file path: `arena job run -f examples/v2/quickstart/pytorch-simple.yaml`. Use `--dry-run` to preview without submitting.
 
 ### Q: `name is required`
 Cause: The `name` field is missing from your YAML configuration (or the `--name` flag was not provided for `submit`).
@@ -66,7 +66,7 @@ Solution: Add the `image` field to your YAML (e.g. `image: pytorch/pytorch:2.1.0
 
 ### Q: `run is required`
 Cause: No run command was specified. The `run` field tells the container what to execute.
-Solution: Add a `run` field to your YAML (e.g. `run: python train.py`), or pass the command after `--` in `arena submit`: `arena submit pytorch --name myjob --image pytorch:2.1 -- python train.py`.
+Solution: Add a `run` field to your YAML (e.g. `run: python -c "print('Hello')"`), or pass the command after `--` in `arena submit`: `arena submit pytorch --name myjob --image pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime -- python -c "print('Hello')"`.
 
 ### Q: How do I use `--set` with resource names containing dots (e.g. `nvidia.com/gpu`)?
 Use single quotes around the dotted segment:
@@ -194,7 +194,11 @@ No. `--rdma` is not planned for v2.
 No. ETJob is not planned for v2.
 
 ### Q: I configured scheduling fields but they don't work
-Scheduling fields (`node_selector`, `tolerations`, `priority`, `gang`, `affinity`) exist in the YAML schema but are NOT YET IMPLEMENTED in the Alpha release. They will be available in Beta. The fields are validated but not applied to the CRD.
+Scheduling fields (`node_selector`, `tolerations`, `priority`, `priority_class_name`, `gang`, `scheduler_name`, `affinity`, `queue`) are fully implemented. They are parsed from the YAML schema and applied to the generated CRD and pod specs. If scheduling does not seem to work, check that:
+- The field names match the schema (see [yaml-schema.md](yaml-schema.md)).
+- For gang scheduling, a gang-aware scheduler (Volcano or coscheduling) is installed on the cluster.
+- For `affinity`, the `policy`, `constraint`, `target`, and `rules` fields are all correctly specified.
+Use `--dry-run` to inspect the generated CRD and verify the scheduling fields are present.
 
 ### Q: Does TensorBoard have authentication?
 No. TensorBoard UI is accessible to any pod with network access to the job's namespace. Arena logs a warning at submission time: `TensorBoard has no built-in authentication; the UI will be accessible to any pod with network access to this namespace`. Do not expose the TensorBoard Service externally without additional protection (e.g. an authenticating reverse proxy). See [best-practices.md](best-practices.md).

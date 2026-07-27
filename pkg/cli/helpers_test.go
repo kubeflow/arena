@@ -146,10 +146,10 @@ func newFakeK8sClient(t *testing.T) *client.Client {
 	return c
 }
 
-// examplesDir resolves the path to examples/v2 relative to pkg/cli/.
+// examplesDir resolves the path to examples/v2/quickstart relative to pkg/cli/.
 func examplesDir(t *testing.T) string {
 	t.Helper()
 	wd, err := os.Getwd()
 	require.NoError(t, err)
-	return filepath.Join(wd, "..", "..", "examples", "v2")
+	return filepath.Join(wd, "..", "..", "examples", "v2", "quickstart")
 }

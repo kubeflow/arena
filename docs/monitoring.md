@@ -28,7 +28,7 @@ $ arena job list
 
 ```text
 NAME              STATUS    REPLICAS  AGE
-pytorch-example   Running   4/4       5m
+pytorch-example   Running   3/3       5m
 tf-mnist          Failed    0/2       12m
 mpi-resnet        Running   3/3       1h
 ```
@@ -43,7 +43,7 @@ $ arena job list -o wide
 
 ```text
 NAME              NAMESPACE   STATUS    APIVERSION       FRAMEWORK    GPU  REPLICAS  AGE
-pytorch-example   default     Running   kubeflow.org/v1  pytorch      4    4/4       5m
+pytorch-example   default     Running   kubeflow.org/v1  pytorch      0    3/3       5m
 mpi-resnet        default     Running   kubeflow.org/v1  mpi          2    3/3       1h
 ```
 
@@ -68,15 +68,14 @@ $ arena job get pytorch-example
 Name:      pytorch-example
 Namespace: default
 Status:    Running
-Replicas:  4/4
+Replicas:  3/3
 Age:       5m
 
 Pods:
   NAME                       STATUS     IP            NODE
-  pytorch-example-master-0   Running    10.244.1.12   node-gpu-01
-  pytorch-example-worker-0   Running    10.244.2.8    node-gpu-02
-  pytorch-example-worker-1   Running    10.244.2.9    node-gpu-02
-  pytorch-example-worker-2   Running    10.244.1.13   node-gpu-01
+  pytorch-example-master-0   Running    10.244.1.12   node-01
+  pytorch-example-worker-0   Running    10.244.2.8    node-02
+  pytorch-example-worker-1   Running    10.244.2.9    node-02
 ```
 
 The pod **STATUS** column mirrors `kubectl`'s logic: it shows container waiting reasons (e.g. `ImagePullBackOff`, `CrashLoopBackOff`, `ContainerCreating`) rather than just the coarse pod phase when a container is not yet running. Terminal phases (`Succeeded`, `Failed`) are returned as-is. This makes failures immediately visible without a separate `kubectl describe`.
@@ -180,7 +179,7 @@ $ arena top job
 
 ```text
 NAME              STATUS    GPU_REQUESTED  REPLICAS  AGE
-pytorch-example   Running   4              4/4       5m
+pytorch-example   Running   0              3/3       5m
 mpi-resnet        Running   2              3/3       1h
 ```
 
@@ -194,7 +193,7 @@ $ arena top job -o wide
 
 ```text
 NAME              NAMESPACE   STATUS    APIVERSION       FRAMEWORK    GPU_REQUESTED  REPLICAS  AGE
-pytorch-example   default     Running   kubeflow.org/v1  pytorch      4              4/4       5m
+pytorch-example   default     Running   kubeflow.org/v1  pytorch      0              3/3       5m
 ```
 
 > **Note:** `arena top job` shows **requested** GPUs from the CRD spec, not real-time utilization. It does not query running GPU metrics.
@@ -211,24 +210,27 @@ $ arena job get pytorch-example --details
 Name:      pytorch-example
 Namespace: default
 Status:    Running
-Replicas:  4/4
+Replicas:  3/3
 Age:       5m
 
 Pods:
   NAME                       STATUS    IP            NODE
-  pytorch-example-master-0   Running   10.244.1.12   node-gpu-01
+  pytorch-example-master-0   Running   10.244.1.12   node-01
   ...
 
 Configuration:
   name: pytorch-example
   framework:
     name: pytorch
-  image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-  run: python train.py --epochs 10
+  image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+  run: |
+    python -c "print('Training started.')"
   worker:
-    replicas: 3
+    replicas: 2
     resources:
-      nvidia.com/gpu: 1
+      # nvidia.com/gpu: 1  # Uncomment for GPU clusters
+      cpu: "2"
+      memory: "8Gi"
   ...
 ```
 
@@ -247,12 +249,12 @@ $ arena check
   versions: v1 (served, storage)
 ✓ TFJob: installed (expected: kubeflow.org/v1)
   versions: v1 (served, storage)
-✓ MPIJob: installed (expected: kubeflow.org/v2beta1)
-  versions: v2beta1 (served, storage)
-  compatible: ✓ (storage version v2beta1 supported by arena)
+✓ MPIJob: installed (expected: kubeflow.org/v1)
+  versions: v1 (served, storage)
+  compatible: ✓ (storage version v1 supported by arena)
 ```
 
-A missing or incompatible CRD is marked with `✗` and the command exits with an error. For MPIJob, Arena additionally checks that the CRD's storage version is one it supports (`v2beta1` or `v1`).
+A missing or incompatible CRD is marked with `✗` and the command exits with an error. For MPIJob, Arena additionally checks that the CRD's storage version is one it supports (`v1` or `v2beta1`).
 
 ## Suspending and Resuming
 

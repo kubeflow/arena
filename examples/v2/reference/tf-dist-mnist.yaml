@@ -1,0 +1,16 @@
+# TFJob: Distributed MNIST with MultiWorkerMirroredStrategy (Worker, CPU)
+# Source: Kubeflow trainer - tensorflow/dist-mnist/tf_job_mnist.yaml
+# NOTE: Original image ghcr.io/kubeflow/training-v1/tf-dist-mnist-test:latest has a
+# TensorFlow ABI bug (libtfkernel_sobol_op.so undefined symbol). Using the
+# tf-mnist-with-summaries image instead, which is ABI-compatible and provides
+# distributed MNIST training via MultiWorkerMirroredStrategy.
+version: 0.1.0
+name: tf-dist-mnist
+image: ghcr.io/kubeflow/training-v1/tf-mnist-with-summaries:latest
+framework:
+  name: tensorflow
+run: python /var/tf_mnist/mnist_with_summaries.py
+restart: Never
+
+worker:
+  replicas: 2

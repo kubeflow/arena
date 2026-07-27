@@ -479,7 +479,7 @@ func TestCRDReplicaSpecs_PyTorch(t *testing.T) {
 
 	assert.Equal(t, "pytorch-example", taskObj.Name)
 	assert.Equal(t, "pytorch", taskObj.Framework.Name)
-	assert.Equal(t, 4, taskObj.Worker.Replicas)
+	assert.Equal(t, 2, taskObj.Worker.Replicas)
 
 	p, err := getProvider(taskObj.Framework.Name)
 	require.NoError(t, err)
@@ -496,7 +496,7 @@ func TestCRDReplicaSpecs_PyTorch(t *testing.T) {
 	assert.Equal(t, int64(1), master["replicas"])
 
 	worker := replicaSpecs["Worker"].(map[string]interface{})
-	assert.Equal(t, int64(4), worker["replicas"])
+	assert.Equal(t, int64(2), worker["replicas"])
 
 	// Full CRUD lifecycle on fake client
 	ctx := context.Background()
@@ -545,7 +545,7 @@ func TestCRDReplicaSpecs_MPI(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "mpi", taskObj.Framework.Name)
-	assert.Equal(t, 4, taskObj.Worker.Replicas)
+	assert.Equal(t, 2, taskObj.Worker.Replicas)
 
 	p, err := getProvider(taskObj.Framework.Name)
 	require.NoError(t, err)
@@ -559,7 +559,7 @@ func TestCRDReplicaSpecs_MPI(t *testing.T) {
 	assert.Equal(t, "MPIJob", crd.GetKind())
 
 	spec := crd.Object["spec"].(map[string]interface{})
-	assert.Equal(t, int64(4), spec["slotsPerWorker"])
+	assert.Equal(t, int64(1), spec["slotsPerWorker"])
 
 	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
 
@@ -567,7 +567,7 @@ func TestCRDReplicaSpecs_MPI(t *testing.T) {
 	assert.Equal(t, int64(1), launcher["replicas"])
 
 	worker := replicaSpecs["Worker"].(map[string]interface{})
-	assert.Equal(t, int64(4), worker["replicas"])
+	assert.Equal(t, int64(2), worker["replicas"])
 }
 
 func TestApplyOverrides_Flags(t *testing.T) {

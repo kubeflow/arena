@@ -1,0 +1,35 @@
+# This example is self-contained and runnable with: arena job run -f examples/v2/quickstart/tensorflow-simple.yaml --dry-run
+version: 0.1.0
+name: tensorflow-example
+image: tensorflow/tensorflow:2.15.0
+framework:
+  name: tensorflow
+  options:
+    ps_count: 1
+worker:
+  replicas: 2
+  resources:
+    # nvidia.com/gpu: "1"  # GPU disabled for CPU testing
+run: |
+  python -c "
+  import tensorflow as tf
+
+  gpus = tf.config.list_physical_devices('GPU')
+  print(f'GPUs detected: {len(gpus)}')
+
+  strategy = tf.distribute.MultiWorkerMirroredStrategy()
+  print(f'Number of replicas: {strategy.num_replicas_in_sync}')
+
+  with strategy.scope():
+      model = tf.keras.Sequential([tf.keras.layers.Dense(1, input_shape=(10,))])
+      model.compile(optimizer='sgd', loss='mse')
+
+  x = tf.random.normal((128, 10))
+  y = tf.random.normal((128, 1))
+
+  for epoch in range(5):
+      history = model.fit(x, y, epochs=1, verbose=0)
+      print(f'Epoch {epoch+1}/5 - loss: {history.history[\"loss\"][0]:.4f}')
+
+  print('Training complete.')
+  "

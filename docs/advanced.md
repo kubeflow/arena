@@ -7,10 +7,6 @@ guidance, see [best-practices.md](best-practices.md).
 
 ## Scheduling
 
-> **NOTE:** Scheduling fields exist in the YAML schema but are NOT YET IMPLEMENTED
-> in the Alpha release. They will be available in Beta. YAML with scheduling
-> config will parse but not apply to pods.
-
 The `scheduling` block controls pod placement. It is optional and, when applied,
 is injected into all pods created for the job.
 
@@ -164,8 +160,8 @@ storages:
     mount_path: /ckpts
     pvc: ckpt-pvc
   - name: shm
+    mount_path: /dev/shm       # default for shm
     shm: 64Gi              # optional, default 2Gi
-    # mount_path defaults to /dev/shm
   - name: tmp
     tmp: 128Gi
     mount_path: /tmp

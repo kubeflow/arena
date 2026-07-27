@@ -15,14 +15,30 @@ framework:
   name: pytorch
   options:
     nproc_per_node: auto
-image: nvcr.io/nvidia/pytorch:23.10
-run: torchrun train.py --epochs 10
+image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+run: |
+  python -c "
+  import torch, torch.distributed as dist, torch.nn as nn
+  dist.init_process_group(backend='gloo')
+  rank = dist.get_rank()
+  model = nn.Linear(10, 1)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  for epoch in range(3):
+      x, y = torch.randn(64, 10), torch.randn(64, 1)
+      loss = nn.MSELoss()(model(x), y)
+      optimizer.zero_grad(); loss.backward(); optimizer.step()
+      if rank == 0:
+          print(f'Epoch {epoch+1}/3 - loss: {loss.item():.4f}')
+  if rank == 0:
+      print('Training complete.')
+  dist.destroy_process_group()
+  "
 worker:
-  replicas: 4
+  replicas: 2
   resources:
-    nvidia.com/gpu: 8
-    cpu: "32"
-    memory: 128Gi
+    # nvidia.com/gpu: 8  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: "8Gi"
 ```
 
 ### Use --set for quick experiments
@@ -78,7 +94,7 @@ Arena v2 writes every `resources` value to **both** `requests` and `limits` in t
 worker:
   replicas: 4
   resources:
-    nvidia.com/gpu: 8        # GPU request
+    # nvidia.com/gpu: 8      # Uncomment for GPU clusters
     cpu: "32"                # CPU request  → also becomes the limit
     memory: 128Gi            # Memory request → also becomes the limit
 ```
@@ -109,8 +125,8 @@ Multi-process frameworks (PyTorch DDP, DeepSpeed) rely on `/dev/shm` for inter-p
 ```yaml
 storages:
   - name: shm
+    mount_path: /dev/shm     # Optional. Default: /dev/shm
     shm: 64Gi                # Optional. Default: 2Gi
-    # mount_path: /dev/shm   # Optional. Default: /dev/shm
 ```
 
 ### Right-size resources to avoid waste
@@ -122,7 +138,7 @@ Over-allocating GPUs or CPU/memory wastes cluster capacity and increases queue t
 worker:
   replicas: 1
   resources:
-    nvidia.com/gpu: 1
+    # nvidia.com/gpu: 1  # Uncomment for GPU clusters
     cpu: "8"
     memory: 32Gi
 ```
@@ -136,14 +152,30 @@ framework:
   name: pytorch
   options:
     nproc_per_node: auto
-image: nvcr.io/nvidia/pytorch:23.10
-run: torchrun train.py --epochs 50 --batch-size 256
+image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+run: |
+  python -c "
+  import torch, torch.distributed as dist, torch.nn as nn
+  dist.init_process_group(backend='gloo')
+  rank = dist.get_rank()
+  model = nn.Linear(10, 1)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  for epoch in range(3):
+      x, y = torch.randn(64, 10), torch.randn(64, 1)
+      loss = nn.MSELoss()(model(x), y)
+      optimizer.zero_grad(); loss.backward(); optimizer.step()
+      if rank == 0:
+          print(f'Epoch {epoch+1}/3 - loss: {loss.item():.4f}')
+  if rank == 0:
+      print('Training complete.')
+  dist.destroy_process_group()
+  "
 worker:
-  replicas: 4
+  replicas: 2
   resources:
-    nvidia.com/gpu: 8
-    cpu: "48"
-    memory: 256Gi
+    # nvidia.com/gpu: 8  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: "8Gi"
 envs:
   NCCL_DEBUG: INFO
   NCCL_IB_DISABLE: "0"
@@ -152,13 +184,14 @@ storages:
     pvc: training-data-pvc
     mount_path: /data
   - name: shm
+    mount_path: /dev/shm
     shm: 64Gi
   - name: checkpoints
     pvc: ckpt-pvc
     mount_path: /ckpts
 scheduling:
   node_selector:
-    nvidia.com/gpu.product: "NVIDIA-A100-SXM4-40GB"
+    nvidia.com/gpu.product: "NVIDIA-A100-SXM4-40GB"  # Only effective with GPUs
 lifecycle:
   active_deadline: 24h
   ttl_after_finished: 7d
@@ -368,12 +401,24 @@ version: 0.1.0
 name: single-node-training
 framework:
   name: pytorch
-image: pytorch:2.1
-run: python train.py
+image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+run: |
+  python -c "
+  import torch, torch.nn as nn
+  model = nn.Linear(10, 1)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  for epoch in range(3):
+      x, y = torch.randn(64, 10), torch.randn(64, 1)
+      loss = nn.MSELoss()(model(x), y)
+      optimizer.zero_grad(); loss.backward(); optimizer.step()
+      print(f'Epoch {epoch+1}/3 - loss: {loss.item():.4f}')
+  print('Training complete.')
+  "
 master:
-  replicas: 1
   resources:
-    nvidia.com/gpu: 1
+    # nvidia.com/gpu: 1  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: "8Gi"
 ```
 
 For non-PyTorch frameworks (MPI, TensorFlow, etc.), `worker.replicas` maps directly with no master adjustment. See [yaml-schema.md](yaml-schema.md) for the full provider mapping table.

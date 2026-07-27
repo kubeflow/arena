@@ -1,0 +1,40 @@
+# TFJob with Chief, PS, and Evaluator roles
+# Demonstrates all three optional roles for TensorFlow training.
+version: 0.1.0
+name: tf-distributed
+framework:
+  name: tensorflow
+image: docker.io/tensorflow/tensorflow:2.15.0
+run: |
+  python -c "
+  import tensorflow as tf
+  print('TensorFlow:', tf.__version__)
+  strategy = tf.distribute.MultiWorkerMirroredStrategy()
+  with strategy.scope():
+      model = tf.keras.Sequential([tf.keras.layers.Dense(1, input_shape=(10,))])
+      model.compile(optimizer='sgd', loss='mse')
+  x = tf.random.normal((128, 10))
+  y = tf.random.normal((128, 1))
+  model.fit(x, y, epochs=1, verbose=0)
+  print('Training complete.')
+  "
+
+worker:
+  replicas: 4
+  resources:
+    # nvidia.com/gpu: 2  # GPU disabled for CPU testing
+
+chief:
+  resources:
+    cpu: "2"
+    memory: 4Gi
+
+ps:
+  replicas: 2
+  resources:
+    cpu: "4"
+    memory: 16Gi
+
+evaluator:
+  resources:
+    # nvidia.com/gpu: 1  # GPU disabled for CPU testing

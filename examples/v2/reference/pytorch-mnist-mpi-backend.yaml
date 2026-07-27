@@ -1,0 +1,13 @@
+# PyTorchJob: Distributed MNIST with MPI backend (CPU)
+# Source: Kubeflow trainer examples — pytorch/mnist/v1/pytorch_job_mnist_mpi.yaml
+# Adapted to CPU-only for simpler testing (mpi works on both CPU and GPU).
+version: 0.1.0
+name: pytorch-mnist-mpi
+image: ghcr.io/kubeflow/training-v1/pytorch-dist-mnist:latest
+restart: OnFailure
+framework:
+  name: pytorch
+run: python /opt/mnist/src/mnist.py --backend mpi
+master: {}
+worker:
+  replicas: 1

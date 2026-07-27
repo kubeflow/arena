@@ -12,7 +12,7 @@ Arena v2 supports standalone and distributed PyTorch training via the PyTorchJob
 
 When you want to run PyTorch on a single node with no distributed coordination, define a `master` section and omit `worker`. Arena creates a single master replica and no worker pods — the job runs entirely within one pod.
 
-Reference: [examples/v2/pytorch-standalone.yaml](../examples/v2/pytorch-standalone.yaml)
+Reference: [examples/v2/quickstart/pytorch-standalone.yaml](../examples/v2/quickstart/pytorch-standalone.yaml)
 
 ```yaml
 framework:
@@ -20,12 +20,22 @@ framework:
   options:
     nproc_per_node: auto
 master:
-  replicas: 1
   resources:
-    nvidia.com/gpu: "1"
+    # nvidia.com/gpu: "1"  # Uncomment for GPU clusters
     cpu: "2"
     memory: "8Gi"
-run: python train.py --epochs 10
+run: |
+  python -c "
+  import torch, torch.nn as nn
+  model = nn.Linear(10, 1)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  for epoch in range(3):
+      x, y = torch.randn(64, 10), torch.randn(64, 1)
+      loss = nn.MSELoss()(model(x), y)
+      optimizer.zero_grad(); loss.backward(); optimizer.step()
+      print(f'Epoch {epoch+1}/3 - loss: {loss.item():.4f}')
+  print('Training complete.')
+  "
 ```
 
 The `nproc_per_node: auto` option lets Arena detect the number of GPUs available on the node and launch that many processes. You can also set it to a specific number (e.g. `2`) to control process count manually.
@@ -34,7 +44,7 @@ The `nproc_per_node: auto` option lets Arena detect the number of GPUs available
 
 For multi-node training, define a `worker` section with the desired replica count. Arena always creates a Master replica (1 copy) alongside your workers — the master acts as the rendezvous point for the torchrun process group. If you do not explicitly configure `master`, it inherits the worker's resources and environment variables automatically.
 
-Reference: [examples/v2/pytorch-simple.yaml](../examples/v2/pytorch-simple.yaml)
+Reference: [examples/v2/quickstart/pytorch-simple.yaml](../examples/v2/quickstart/pytorch-simple.yaml)
 
 ```yaml
 framework:
@@ -42,31 +52,47 @@ framework:
   options:
     nproc_per_node: auto
 worker:
-  replicas: 4
+  replicas: 2
   resources:
-    nvidia.com/gpu: "1"
+    # nvidia.com/gpu: "1"  # Uncomment for GPU clusters
     cpu: "2"
     memory: "8Gi"
-run: python train.py --epochs 10
+run: |
+  python -c "
+  import torch, torch.distributed as dist, torch.nn as nn
+  dist.init_process_group(backend='gloo')
+  rank = dist.get_rank()
+  model = nn.Linear(10, 1)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  for epoch in range(3):
+      x, y = torch.randn(64, 10), torch.randn(64, 1)
+      loss = nn.MSELoss()(model(x), y)
+      optimizer.zero_grad(); loss.backward(); optimizer.step()
+      if rank == 0:
+          print(f'Epoch {epoch+1}/3 - loss: {loss.item():.4f}')
+  if rank == 0:
+      print('Distributed training complete.')
+  dist.destroy_process_group()
+  "
 ```
 
-Here 4 worker pods are created, each with 1 GPU. With `nproc_per_node: auto`, the total process count equals the number of GPUs across all workers.
+Here 2 worker pods are created, each with 1 GPU (when uncommented). With `nproc_per_node: auto`, the total process count equals the number of GPUs across all workers.
 
 If the master needs different resources or environment variables than the workers, define a `master` section explicitly. This overrides the inheritance behaviour so the master uses only the values you specify.
 
-Reference: [examples/v2/pytorch-with-master.yaml](../examples/v2/pytorch-with-master.yaml)
+Reference: [examples/v2/reference/pytorch-mnist.yaml](../examples/v2/reference/pytorch-mnist.yaml)
 
 ```yaml
 worker:
-  replicas: 4
+  replicas: 2
   resources:
-    nvidia.com/gpu: 1
+    # nvidia.com/gpu: 1  # Uncomment for GPU clusters
   envs:
     NCCL_DEBUG: INFO
 
 master:
   resources:
-    nvidia.com/gpu: 1
+    # nvidia.com/gpu: 1  # Uncomment for GPU clusters
   envs:
     ROLE: master
 ```
@@ -77,7 +103,7 @@ In this example workers set `NCCL_DEBUG: INFO` for collective debugging, while t
 
 You can attach a TensorBoard instance to your training job to visualise logs in real time. Define storages for your data and log directories, then enable TensorBoard under `logging.tensorboard`. The `mounts` key lets you selectively mount only the storages the TensorBoard container needs — all defined storages become volumes, but only those listed under `mounts` are mounted into the TensorBoard pod.
 
-Reference: [examples/v2/pytorch-tensorboard-mounts.yaml](../examples/v2/pytorch-tensorboard-mounts.yaml)
+Reference: [examples/v2/reference/pytorch-tensorboard-mounts.yaml](../examples/v2/reference/pytorch-tensorboard-mounts.yaml)
 
 ```yaml
 storages:
@@ -116,7 +142,7 @@ Arena v2 supports distributed TensorFlow training via the TFJob CRD (`kubeflow.o
 
 For straightforward parameter-server training, define only the `worker` section. Arena generates a TFJob with Worker replicas and handles the cluster spec.
 
-Reference: [examples/v2/tensorflow-simple.yaml](../examples/v2/tensorflow-simple.yaml)
+Reference: [examples/v2/quickstart/tensorflow-simple.yaml](../examples/v2/quickstart/tensorflow-simple.yaml)
 
 ```yaml
 framework:
@@ -126,27 +152,40 @@ framework:
 worker:
   replicas: 2
   resources:
-    nvidia.com/gpu: "1"
-run: python train.py
+    # nvidia.com/gpu: "1"  # Uncomment for GPU clusters
+run: |
+  python -c "
+  import tensorflow as tf
+  strategy = tf.distribute.MultiWorkerMirroredStrategy()
+  with strategy.scope():
+      model = tf.keras.Sequential([tf.keras.layers.Dense(1, input_shape=(10,))])
+      model.compile(optimizer='sgd', loss='mse')
+  x = tf.random.normal((128, 10))
+  y = tf.random.normal((128, 1))
+  for epoch in range(3):
+      history = model.fit(x, y, epochs=1, verbose=0)
+      print(f'Epoch {epoch+1}/3 - loss: {history.history[\"loss\"][0]:.4f}')
+  print('Training complete.')
+  "
 ```
 
-Here 2 worker pods each with 1 GPU handle training. The `ps_count` option indicates the expected number of parameter servers for the cluster configuration.
+Here 2 worker pods handle training. The `ps_count` option indicates the expected number of parameter servers for the cluster configuration.
 
 ### Role-based Configuration (PS/Worker/Chief)
 
 For full distributed TensorFlow, you can define Chief, PS, and Evaluator roles alongside Worker. Each role gets its own resources and replica count. The Chief role runs the chief replica (handles checkpoints and session coordination), PS runs parameter servers for variable storage, and Evaluator runs a separate evaluation pass.
 
-Reference: [examples/v2/tf-with-roles.yaml](../examples/v2/tf-with-roles.yaml)
+Reference: [examples/v2/reference/tf-with-roles.yaml](../examples/v2/reference/tf-with-roles.yaml)
 
 ```yaml
 worker:
   replicas: 4
   resources:
-    nvidia.com/gpu: 1
+    # nvidia.com/gpu: 1  # Uncomment for GPU clusters
 
 chief:
   resources:
-    nvidia.com/gpu: 2
+    # nvidia.com/gpu: 2  # Uncomment for GPU clusters
 
 ps:
   replicas: 2
@@ -161,8 +200,8 @@ evaluator:
 ```
 
 In this example:
-- **Worker** (4 replicas, 1 GPU each) performs gradient computation.
-- **Chief** (1 replica, 2 GPUs) coordinates training, saves checkpoints, and is the only role that writes summaries by default.
+- **Worker** (4 replicas) performs gradient computation. Add GPUs when available.
+- **Chief** (1 replica) coordinates training, saves checkpoints, and is the only role that writes summaries by default. Can use more GPUs than workers.
 - **PS** (2 replicas, CPU-only) stores and synchronises model parameters — no GPU needed.
 - **Evaluator** (1 replica, CPU-only) runs evaluation on a validation set in parallel with training.
 
@@ -184,7 +223,7 @@ Arena v2 supports MPI-based training via the MPIJob CRD. The MPI provider always
 
 For basic MPI training, define only the `worker` section. Arena auto-creates a CPU-only launcher pod that runs your `mpirun` command and coordinates the worker pods.
 
-Reference: [examples/v2/mpi-simple.yaml](../examples/v2/mpi-simple.yaml)
+Reference: [examples/v2/quickstart/mpi-simple.yaml](../examples/v2/quickstart/mpi-simple.yaml)
 
 ```yaml
 framework:
@@ -198,7 +237,7 @@ worker:
   resources:
     cpu: "2"
     memory: "8Gi"
-run: mpirun -n 16 python train.py
+run: mpirun -n 16 python -c "print('Hello from rank', __import__('os').environ.get('OMPI_COMM_WORLD_RANK', '0'))"
 ```
 
 Key options:
@@ -210,21 +249,23 @@ Key options:
 
 When the launcher needs specific resources (e.g. more CPU for orchestration, or GPUs for model initialization), define a `launcher` section explicitly. This overrides the default CPU-only behaviour.
 
-Reference: [examples/v2/mpi-with-launcher.yaml](../examples/v2/mpi-with-launcher.yaml)
+Reference: [examples/v2/reference/mpi-horovod-mnist.yaml](../examples/v2/reference/mpi-horovod-mnist.yaml)
 
 ```yaml
 worker:
-  replicas: 4
+  replicas: 2
   resources:
-    nvidia.com/gpu: 4
+    # nvidia.com/gpu: 4  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: "4Gi"
 
 launcher:
   resources:
-    cpu: "2"
-    memory: 4Gi
+    cpu: "1"
+    memory: "2Gi"
 ```
 
-Here workers each get 4 GPUs for training, while the launcher runs CPU-only with modest resources — it only orchestrates the `mpirun` command and does not participate in computation.
+Here workers handle the training computation (add GPUs when available), while the launcher runs CPU-only with modest resources — it only orchestrates the `mpirun` command and does not participate in computation.
 
 If you omit the `launcher` section, the launcher defaults to CPU-only. You can also set `framework.options.run_launcher_as_worker: true` to make the launcher inherit the worker's resources and environment variables instead.
 
@@ -236,20 +277,23 @@ DeepSpeed and Horovod are first-class framework names that map to the MPI provid
 framework:
   name: deepspeed
 worker:
-  replicas: 4
+  replicas: 2
   resources:
-    nvidia.com/gpu: 8
-run: deepspeed --num_gpus 32 train.py
+    nvidia.com/gpu: 1  # GPU required for DeepSpeed
 ```
+
+See [examples/v2/pretrain/deepspeed-bert.yaml](../examples/v2/pretrain/deepspeed-bert.yaml) for a verified end-to-end example (tested on 2x Tesla T4).
 
 ```yaml
 framework:
   name: horovod
 worker:
-  replicas: 4
+  replicas: 2
   resources:
-    nvidia.com/gpu: 1
-run: horovodrun -np 4 python train.py
+    # nvidia.com/gpu: 1  # Uncomment for GPU clusters
+    cpu: "2"
+    memory: "8Gi"
+run: mpirun -np 2 python -c "print('Horovod rank', __import__('os').environ.get('OMPI_COMM_WORLD_RANK', '0'))"
 ```
 
 Both produce an MPIJob with the same structure as `framework.name: mpi`. All MPI options (`slots_per_worker`, `mpi_implementation`, `launcher_creation_policy`, etc.) apply equally.

@@ -1,0 +1,18 @@
+# PyTorchJob: Distributed MNIST (originally NCCL backend, adapted to Gloo for CPU)
+# Source: Kubeflow trainer examples — pytorch/mnist/v1/pytorch_job_mnist_nccl.yaml
+# NOTE: NCCL backend requires GPU. For CPU-only testing, the backend was changed to Gloo
+# and GPU resources are commented out. To use NCCL, restore --backend nccl and GPU resources.
+version: 0.1.0
+name: pytorch-mnist-nccl
+image: ghcr.io/kubeflow/training-v1/pytorch-dist-mnist:latest
+restart: OnFailure
+framework:
+  name: pytorch
+run: python /opt/mnist/src/mnist.py --backend gloo
+master:
+  resources:
+    # nvidia.com/gpu: "1"  # GPU disabled for CPU testing
+worker:
+  replicas: 1
+  resources:
+    # nvidia.com/gpu: "1"  # GPU disabled for CPU testing

@@ -1,0 +1,48 @@
+# This example is self-contained and runnable with: arena job run -f examples/v2/quickstart/mpi-simple.yaml --dry-run
+version: 0.1.0
+name: mpi-example
+image: horovod/horovod:0.28.1-tf2.11.0-torch1.13.1-cuda11.8.0-cudnn8.6.0.163
+framework:
+  name: mpi
+  options:
+    slots_per_worker: 1
+    mpi_implementation: OpenMPI
+    launcher_creation_policy: AtStartup
+worker:
+  replicas: 2
+  resources:
+    # nvidia.com/gpu: "1"  # GPU disabled for CPU testing
+    cpu: "2"
+    memory: "8Gi"
+run: |
+  python -c "
+  import torch
+  import torch.nn as nn
+  import horovod.torch as hvd
+
+  hvd.init()
+  rank = hvd.rank()
+  size = hvd.size()
+  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+  model = nn.Linear(10, 1).to(device)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01 * size)
+  optimizer = hvd.DistributedOptimizer(optimizer, named_parameters=model.named_parameters())
+  hvd.broadcast_parameters(model.state_dict(), root_rank=0)
+  hvd.broadcast_optimizer_state(optimizer, root_rank=0)
+  loss_fn = nn.MSELoss()
+
+  for epoch in range(5):
+      x = torch.randn(64, 10, device=device)
+      y = torch.randn(64, 1, device=device)
+      optimizer.zero_grad()
+      pred = model(x)
+      loss = loss_fn(pred, y)
+      loss.backward()
+      optimizer.step()
+      if rank == 0:
+          print(f'[rank {rank}/{size}] Epoch {epoch+1}/5 - loss: {loss.item():.4f}')
+
+  if rank == 0:
+      print('Horovod training complete.')
+  "

@@ -11,8 +11,10 @@ Arena v2 uses a YAML-first configuration approach — you define your training j
 - **YAML-first job submission** with `--set` overrides for runtime customization
 - **Multi-framework support**: PyTorch, TensorFlow, MPI (DeepSpeed, Horovod)
 - **Full job lifecycle**: run, list, get, logs, suspend, resume, delete
+- **Scheduling controls**: node selectors, tolerations, affinity, gang scheduling, priority classes
 - **Dry-run mode** for inspecting generated CRDs before submission
-- **Output formats**: table (default), JSON, YAML
+- **Output formats**: table (default), wide, JSON, YAML
+- **Cluster checks**: `arena check` verifies required CRDs; `arena top job` shows GPU usage
 - **Shell completions**: bash, zsh, fish, powershell
 - **Backward-compatible** `arena submit` command for v1 users
 
@@ -34,7 +36,7 @@ Arena v2 uses a YAML-first configuration approach — you define your training j
 
 ### Build from source
 
-Prerequisites: [Go](https://go.dev/dl/) >= 1.25, [make](https://www.gnu.org/software/make/)
+Prerequisites: [Go](https://go.dev/dl/) >= 1.26.5, [make](https://www.gnu.org/software/make/)
 
 ```shell
 git clone https://github.com/kubeflow/arena.git
@@ -61,7 +63,7 @@ For full installation instructions including K8s operator setup, see the [Instal
 
 ```shell
 arena check                                          # verify CRDs are installed
-arena job run -f examples/v2/pytorch-simple.yaml     # submit a training job
+arena job run -f examples/v2/quickstart/pytorch-simple.yaml     # submit a training job
 arena job list                                        # view running jobs
 ```
 
@@ -72,8 +74,9 @@ See the [Quick Start guide](docs/quickstart.md) for a full walkthrough.
 ```shell
 make arena-v2              # build
 make v2-test               # unit tests
-make v2-vet                # lint
-make v2-integration-test   # integration tests (no cluster required)
+make v2-vet                # go vet
+make v2-fmt                # format code
+make v2-lint               # golangci-lint
 make v2-e2e-test           # e2e tests (requires K8s cluster)
 ```
 
