@@ -15,21 +15,29 @@ func TestVersionCmd_Output(t *testing.T) {
 	origVersion := version
 	origCommit := gitCommit
 	origDate := buildDate
+	origTag := gitTag
+	origTreeState := gitTreeState
 	defer func() {
 		version = origVersion
 		gitCommit = origCommit
 		buildDate = origDate
+		gitTag = origTag
+		gitTreeState = origTreeState
 	}()
 
 	version = "0.1.0"
 	gitCommit = "abc123"
 	buildDate = "2026-07-01T00:00:00Z"
+	gitTag = "v0.1.0"
+	gitTreeState = "clean"
 
 	// versionCmd uses fmt.Printf (stdout), not cmd.OutOrStdout(),
 	// so we test the variable values directly.
 	assert.Equal(t, "0.1.0", version)
 	assert.Equal(t, "abc123", gitCommit)
 	assert.Equal(t, "2026-07-01T00:00:00Z", buildDate)
+	assert.Equal(t, "v0.1.0", gitTag)
+	assert.Equal(t, "clean", gitTreeState)
 }
 
 func TestVersionCmd_RegisteredOnRoot(t *testing.T) {
@@ -53,4 +61,6 @@ func TestVersionCmd_DefaultValues(t *testing.T) {
 	assert.NotEmpty(t, version, "version should have a default value")
 	assert.NotEmpty(t, gitCommit, "gitCommit should have a default value")
 	assert.NotEmpty(t, buildDate, "buildDate should have a default value")
+	assert.Empty(t, gitTag, "gitTag should default to empty")
+	assert.Equal(t, "unknown", gitTreeState, "gitTreeState should default to unknown")
 }

@@ -1,0 +1,63 @@
+name: Tag Release (v2)
+
+on:
+  push:
+    branches: [develop-v2]
+    paths: [VERSION]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Create and push tag
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+          # Validate semver
+          SEMVER='^([0-9]+)\.([0-9]+)\.([0-9]+)(-rc\.([0-9]+))?$'
+          if [[ ! "${VERSION}" =~ ${SEMVER} ]]; then
+            echo "Invalid VERSION: ${VERSION}"
+            exit 1
+          fi
+
+          TAG="v${VERSION}"
+
+          # Check remote tags (not just local shallow clone)
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+            echo "Tag ${TAG} already exists on remote. Skipping."
+            echo "TAG_CREATED=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          if git push origin "${TAG}"; then
+            echo "TAG_CREATED=true" >> $GITHUB_ENV
+          else
+            echo "Tag ${TAG} was created by another run. Skipping."
+            echo "TAG_CREATED=false" >> $GITHUB_ENV
+          fi
+
+      - name: Trigger release workflow
+        if: env.TAG_CREATED == 'true'
+        run: gh workflow run goreleaser.yaml --ref develop-v2
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

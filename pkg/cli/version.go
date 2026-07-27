@@ -7,9 +7,11 @@ import (
 )
 
 var (
-	version   = "dev"
-	gitCommit = "unknown"
-	buildDate = "unknown"
+	version      = "dev"
+	gitCommit    = "unknown"
+	buildDate    = "unknown"
+	gitTag       = ""
+	gitTreeState = "unknown"
 )
 
 var versionCmd = &cobra.Command{
@@ -17,9 +19,11 @@ var versionCmd = &cobra.Command{
 	Short: "Print version information",
 	Run: func(_ *cobra.Command, _ []string) {
 		fmt.Printf("Arena v2\n")
-		fmt.Printf("  Version:    %s\n", version)
-		fmt.Printf("  Git Commit: %s\n", gitCommit)
-		fmt.Printf("  Build Date: %s\n", buildDate)
+		fmt.Printf("  Version:     %s\n", version)
+		fmt.Printf("  Git Commit:  %s\n", gitCommit)
+		fmt.Printf("  Git Tag:     %s\n", gitTag)
+		fmt.Printf("  Build Date:  %s\n", buildDate)
+		fmt.Printf("  Tree State:  %s\n", gitTreeState)
 	},
 }
 
