@@ -241,7 +241,7 @@ scheduling:
 | Storage type | Field | Key field | Description |
 |---|---|---|---|
 | PVC | `pvc` | — | Mount an existing PersistentVolumeClaim. |
-| Shared memory | `shm` | — | `emptyDir` with medium `Memory`. Default size: `2Gi`, default path: `/dev/shm`. |
+| Shared memory | `shm` | — | `emptyDir` with medium `Memory`. Size is required (e.g. `64Gi`). Mount path defaults to `/dev/shm` if omitted. |
 | Temporary | `tmp` | — | `emptyDir` with a size limit. |
 | Host path | `hostpath` | — | Mount a host directory. |
 | ConfigMap | `configmap` | `key` (optional) | Mount a ConfigMap. Omitting `key` mounts the entire ConfigMap as a directory. |
@@ -265,7 +265,7 @@ storages:
     mount_path: /ckpts
     pvc: ckpt-pvc
 
-  - name: shm                    # Shared memory (default 2Gi at /dev/shm)
+  - name: shm                    # Shared memory (size required, mounts at /dev/shm by default)
     shm: 64Gi
 
   - name: tmp                    # Temporary emptyDir

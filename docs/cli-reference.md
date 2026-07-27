@@ -528,19 +528,19 @@ Also inherits [global flags](#global-flags) and `--output` from `arena job`.
 
 ```shell
 # Submit a PyTorch job with 2 workers and 1 GPU each
-$ arena job submit pytorch --name my-job --image pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime \
+$ arena submit pytorch --name my-job --image pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime \
     --workers 2 --gpus 1 -- python -c "import torch; print('CUDA:', torch.cuda.is_available())"
 
 # Submit a TensorFlow job with chief and parameter server
-$ arena job submit tensorflow --name tf-job --image tensorflow/tensorflow:2.16.1-gpu \
+$ arena submit tensorflow --name tf-job --image tensorflow/tensorflow:2.16.1-gpu \
     --workers 3 --gpus 1 --chief --ps-count 1 -- python -c "import tensorflow as tf; print('TF:', tf.__version__)"
 
 # Submit an MPI job with deepspeed
-$ arena job submit deepspeed --name ds-job --image deepspeed/deepspeed \
+$ arena submit deepspeed --name ds-job --image deepspeed/deepspeed \
     --workers 4 --gpus 8 --slots-per-worker 8 -- python -c "print('DeepSpeed ready')"
 
 # Dry-run to inspect the generated CRD
-$ arena job submit pytorch --name my-job --image pytorch/pytorch --dry-run
+$ arena submit pytorch --name my-job --image pytorch/pytorch --dry-run
 ```
 
 ### Output

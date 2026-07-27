@@ -143,7 +143,7 @@ Confirm the Arena version:
 ```shell
 $ arena-v2 version
 Arena v2
-  Version:    0.15.4
+  Version:    0.1.0
   Git Commit: a1b2c3d
   Build Date: 2026-07-13T12:00:00Z
 ```

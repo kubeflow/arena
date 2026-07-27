@@ -280,9 +280,12 @@ worker:
   replicas: 2
   resources:
     nvidia.com/gpu: 1  # GPU required for DeepSpeed
+run: mpirun -np 2 python train_deepspeed.py
 ```
 
-See [examples/v2/pretrain/deepspeed-bert.yaml](../examples/v2/pretrain/deepspeed-bert.yaml) for a verified end-to-end example (tested on 2x Tesla T4).
+Both produce an MPIJob with the same structure as `framework.name: mpi`. All MPI options (`slots_per_worker`, `mpi_implementation`, `launcher_creation_policy`, etc.) apply equally.
+
+> **Note:** DeepSpeed can also run under a PyTorchJob by setting `framework.name: pytorch` and using `torchrun` as the launch command. This avoids the MPI dependency and is the approach used in [examples/v2/pretrain/deepspeed-bert.yaml](../examples/v2/pretrain/deepspeed-bert.yaml) (tested on 2x Tesla T4). Use `framework.name: deepspeed` when you need MPI-based orchestration; use `framework.name: pytorch` when you prefer torchrun-based launch.
 
 ```yaml
 framework:
@@ -295,8 +298,6 @@ worker:
     memory: "8Gi"
 run: mpirun -np 2 python -c "print('Horovod rank', __import__('os').environ.get('OMPI_COMM_WORLD_RANK', '0'))"
 ```
-
-Both produce an MPIJob with the same structure as `framework.name: mpi`. All MPI options (`slots_per_worker`, `mpi_implementation`, `launcher_creation_policy`, etc.) apply equally.
 
 ### Key Fields
 

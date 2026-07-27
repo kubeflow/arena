@@ -244,14 +244,11 @@ type Storage struct {
 	Key       string `yaml:"key,omitempty"`
 }
 
-// Validate checks that the Storage entry has a name, mount path, and exactly
-// one storage type declared.
+// Validate checks that the Storage entry has a name, mount path (except for
+// shm, which defaults to /dev/shm), and exactly one storage type declared.
 func (s *Storage) Validate() error {
 	if s.Name == "" {
 		return errors.New("storage name must not be empty")
-	}
-	if s.MountPath == "" {
-		return fmt.Errorf("storage %q: mountPath must not be empty", s.Name)
 	}
 
 	types := []struct {
@@ -280,6 +277,10 @@ func (s *Storage) Validate() error {
 		// OK
 	default:
 		return fmt.Errorf("storage %q: cannot specify multiple storage types (%s)", s.Name, strings.Join(set, ", "))
+	}
+
+	if s.MountPath == "" && s.SHM == "" {
+		return fmt.Errorf("storage %q: mountPath must not be empty", s.Name)
 	}
 
 	hasKey := s.Key != ""

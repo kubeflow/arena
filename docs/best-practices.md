@@ -125,8 +125,8 @@ Multi-process frameworks (PyTorch DDP, DeepSpeed) rely on `/dev/shm` for inter-p
 ```yaml
 storages:
   - name: shm
-    mount_path: /dev/shm     # Optional. Default: /dev/shm
-    shm: 64Gi                # Optional. Default: 2Gi
+    mount_path: /dev/shm     # Optional for shm. Default: /dev/shm
+    shm: 64Gi                # Required. Size of the shared memory volume
 ```
 
 ### Right-size resources to avoid waste

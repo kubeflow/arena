@@ -119,7 +119,7 @@ within a task.
 | Type | Field | Description |
 |---|---|---|
 | PVC | `pvc` | Reference an existing PersistentVolumeClaim by name. |
-| Shared memory | `shm` | `emptyDir` with `medium: Memory`. Default size `2Gi`, default mount `/dev/shm`. |
+| Shared memory | `shm` | `emptyDir` with `medium: Memory`. Size is required (e.g. `64Gi`). Mount path defaults to `/dev/shm` if omitted. |
 | Temporary | `tmp` | `emptyDir` with the given `sizeLimit`. |
 | Host path | `hostpath` | Mount a path from the host node. |
 | ConfigMap | `configmap` | Mount a ConfigMap. Use `key` to mount a single file. |
@@ -160,8 +160,8 @@ storages:
     mount_path: /ckpts
     pvc: ckpt-pvc
   - name: shm
-    mount_path: /dev/shm       # default for shm
-    shm: 64Gi              # optional, default 2Gi
+    mount_path: /dev/shm       # optional for shm, defaults to /dev/shm
+    shm: 64Gi                  # required, size of the shared memory volume
   - name: tmp
     tmp: 128Gi
     mount_path: /tmp

@@ -44,17 +44,18 @@ cd arena
 make arena-v2
 ```
 
-The binary is at `bin/arena-v2`. Add it to your `$PATH`:
+The binary is at `bin/arena-v2`. Add it to your `$PATH` and rename it to `arena` (all commands in this README assume the binary is named `arena`):
 
 ```shell
 export PATH=$(pwd)/bin:$PATH
-mv bin/arena-v2 bin/arena   # optional: rename to 'arena'
+mv bin/arena-v2 bin/arena
 ```
 
-Or install directly to `$GOPATH/bin`:
+Or install directly to `$GOPATH/bin` (includes the rename):
 
 ```shell
 make v2-install
+ln -s "$(go env GOPATH)/bin/arena-v2" "$(go env GOPATH)/bin/arena"
 ```
 
 For full installation instructions including K8s operator setup, see the [Installation guide](docs/installation.md).
