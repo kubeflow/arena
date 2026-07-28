@@ -1,10 +1,13 @@
 # Changelog
 
-## [v0.15.5](https://github.com/kubeflow/arena/tree/v0.15.5) (2026-07-14)
+## [v0.15.5](https://github.com/kubeflow/arena/tree/v0.15.5) (2026-07-29)
 
 ### Bug Fixes
 
+- fix: prevent nil pointer dereference in servingJob and lwsJob methods ([#1476](https://github.com/kubeflow/arena/pull/1476) by [@vishalmore90](https://github.com/vishalmore90))
+- fix: resolve real username for client-certificate kubeconfigs ([#1475](https://github.com/kubeflow/arena/pull/1475) by [@darrencrosz](https://github.com/darrencrosz))
 - fix(pytorch-operator): update pytorch-operator image tag to 2845db5-aliyun ([#1456](https://github.com/kubeflow/arena/pull/1456) by [@vicoooo26](https://github.com/vicoooo26))
+- fix: return distributed serving update errors ([#1445](https://github.com/kubeflow/arena/pull/1445) by [@immanuwell](https://github.com/immanuwell))
 - fix(workflow): make job deletion idempotent ([#1440](https://github.com/kubeflow/arena/pull/1440) by [@vicoooo26](https://github.com/vicoooo26))
 - fix: add ownerReferences to resources created by arena ([#1407](https://github.com/kubeflow/arena/pull/1407) by [@FAUST-BENCHOU](https://github.com/FAUST-BENCHOU))
 - fix(pytorch-operator): update pytorch-operator image tag to 4598b3e-aliyun ([#1406](https://github.com/kubeflow/arena/pull/1406) by [@ChenYi015](https://github.com/ChenYi015))
