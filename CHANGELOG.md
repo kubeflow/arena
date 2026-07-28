@@ -1,6 +1,6 @@
 # Changelog
 
-## [v0.15.5](https://github.com/kubeflow/arena/tree/v0.15.5) (2026-07-28)
+## [v0.15.5](https://github.com/kubeflow/arena/tree/v0.15.5) (2026-07-29)
 
 ### Bug Fixes
 

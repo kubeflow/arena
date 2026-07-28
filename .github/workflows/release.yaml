@@ -17,7 +17,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check_tag:
+    runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Check whether release tag already exists upstream
+        id: check
+        run: |
+          TAG="v$(cat VERSION)"
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "refs/tags/${TAG}"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${TAG} already exists -- release is immutable, downstream jobs will skip."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag ${TAG} does not exist yet."
+          fi
+
   package-arena-installer:
+    needs: check_tag
+    if: needs.check_tag.outputs.exists != 'true' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
     runs-on: ubuntu-latest
 
     strategy:
@@ -56,6 +78,8 @@ jobs:
 
   build-arena-image:
     name: Build Arena container image
+    needs: check_tag
+    if: needs.check_tag.outputs.exists != 'true' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release-'))
 
     runs-on: ubuntu-latest
 
@@ -199,6 +223,10 @@ jobs:
       - name: Create and push tag
         run: |
           TAG="v${VERSION}"
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "refs/tags/${TAG}"; then
+            echo "Tag ${TAG} already exists upstream -- skipping tag creation."
+            exit 0
+          fi
           git tag -a ${TAG} -m "Release v${VERSION}"
           git push origin ${TAG}
 
