@@ -1,0 +1,18 @@
+# PyTorchJob: Torchelastic ImageNet training (Worker-only, CPU)
+# Source: Kubeflow trainer examples — pytorch/elastic/imagenet/imagenet.yaml
+# NOTE: elasticPolicy (rdzvBackend, minReplicas, maxReplicas, maxRestarts, HPA metrics) is not in Arena v2's current schema. This runs as a fixed 2-worker job without autoscaling.
+version: 0.1.0
+name: pytorch-elastic-imagenet
+image: ghcr.io/kubeflow/training-v1/pytorch-elastic-example-imagenet:latest
+image_pull_policy: IfNotPresent
+restart: OnFailure
+framework:
+  name: pytorch
+envs:
+  LOGLEVEL: DEBUG
+run: |
+  python -m torch.distributed.run /workspace/examples/imagenet.py --arch=resnet18 --epochs=1 --batch-size=32 --workers=0 /workspace/data/tiny-imagenet-200
+worker:
+  replicas: 2
+  resources:
+    cpu: "4"

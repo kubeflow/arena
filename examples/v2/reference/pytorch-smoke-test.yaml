@@ -1,0 +1,12 @@
+# PyTorchJob: Send/recv smoke test for Master-Worker communication (CPU, 3 workers)
+# Source: Kubeflow trainer examples — pytorch/smoke-dist/pytorch_job_sendrecv.yaml
+version: 0.1.0
+name: pytorch-smoke-test
+image: ghcr.io/kubeflow/training-v1/pytorch-dist-sendrecv-test:latest
+restart: OnFailure
+framework:
+  name: pytorch
+run: python /opt/mlkube/dist_sendrecv.py
+master: {}
+worker:
+  replicas: 3

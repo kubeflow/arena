@@ -1,0 +1,12 @@
+# TFJob: Simple MNIST with 2 workers (CPU, MultiWorkerMirroredStrategy)
+# Source: Kubeflow trainer - tensorflow/simple.yaml
+version: 0.1.0
+name: tf-simple
+image: ghcr.io/kubeflow/training-v1/tf-mnist-with-summaries:latest
+framework:
+  name: tensorflow
+run: python /var/tf_mnist/mnist_with_summaries.py
+restart: OnFailure
+
+worker:
+  replicas: 2

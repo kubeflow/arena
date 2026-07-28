@@ -1,0 +1,25 @@
+# PyTorchJob: DeepSpeed BERT pre-training with ZeRO-1 optimizer offloading (GPU)
+# Source: Kubeflow trainer examples — pytorch/deepspeed-demo/pytorch_deepspeed_demo.yaml
+# NOTE: This example requires GPUs — DeepSpeed 0.7.2 depends on cuBLAS at runtime.
+# NOTE: HF_ENDPOINT and PIP_INDEX_URL are optional mirrors for clusters where
+# HuggingFace Hub or PyPI are not directly accessible. Override or remove as needed.
+version: 0.1.0
+name: deepspeed-bert
+image: ghcr.io/kubeflow/training-v1/pytorch-deepspeed-demo:latest
+restart: OnFailure
+framework:
+  name: pytorch
+run: |
+  pip install -q "huggingface_hub>=0.19.0" "datasets>=2.14.0" && \
+  python -c "from datasets import load_dataset; load_dataset('Salesforce/wikitext', 'wikitext-2-raw-v1')" && \
+  torchrun /train_bert_ds.py --checkpoint_dir /root/deepspeed_data
+envs:
+  HF_ENDPOINT: https://hf-mirror.com
+  PIP_INDEX_URL: https://mirrors.aliyun.com/pypi/simple/
+master:
+  resources:
+    nvidia.com/gpu: "1"
+worker:
+  replicas: 1
+  resources:
+    nvidia.com/gpu: "1"

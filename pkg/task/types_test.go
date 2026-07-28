@@ -1338,12 +1338,22 @@ func TestStorage_Validate(t *testing.T) {
 			wantErr: "",
 		},
 		{
+			name:    "valid shm without mount_path (defaults to /dev/shm)",
+			storage: Storage{Name: "shm", SHM: "8Gi"},
+			wantErr: "",
+		},
+		{
+			name:    "valid shm with mount_path",
+			storage: Storage{Name: "shm", SHM: "8Gi", MountPath: "/dev/shm"},
+			wantErr: "",
+		},
+		{
 			name:    "empty name",
 			storage: Storage{PVC: "my-pvc", MountPath: "/data"},
 			wantErr: "storage name must not be empty",
 		},
 		{
-			name:    "empty mount_path",
+			name:    "empty mount_path with pvc",
 			storage: Storage{Name: "data", PVC: "my-pvc"},
 			wantErr: "mountPath must not be empty",
 		},

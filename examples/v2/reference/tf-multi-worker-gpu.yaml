@@ -1,0 +1,25 @@
+# TFJob: MultiWorkerMirroredStrategy with PVC (CPU-adapted)
+# Source: Kubeflow trainer - tensorflow/distribution_strategy/multi_worker_tfjob.yaml
+# Run uses the Docker ENTRYPOINT (no command in source YAML).
+# NOTE: Create PVC 'strategy-volume' before submitting. See trainer repo: tensorflow/distribution_strategy/pvc.yaml
+# NOTE: GPU resources are commented out for CPU testing. Restore them for GPU clusters.
+version: 0.1.0
+name: tf-multi-worker-gpu
+image: ghcr.io/kubeflow/training-v1/tf-multi-worker-strategy:latest
+framework:
+  name: tensorflow
+run: python /multi_worker_strategy-with-keras.py --saved_model_dir /train/saved_model/ --checkpoint_dir /train/checkpoint
+restart: Never
+
+lifecycle:
+  clean_pod_policy: None
+
+worker:
+  replicas: 2
+  resources:
+    # nvidia.com/gpu: "1"  # GPU disabled for CPU testing
+
+storages:
+  - name: training-data
+    mount_path: /train
+    pvc: strategy-volume

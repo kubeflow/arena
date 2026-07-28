@@ -1,0 +1,47 @@
+# This example is self-contained and runnable with: arena job run -f examples/v2/quickstart/pytorch-simple.yaml --dry-run
+version: 0.1.0
+name: pytorch-example
+image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+framework:
+  name: pytorch
+  options:
+    nproc_per_node: auto
+worker:
+  replicas: 2
+  resources:
+    # nvidia.com/gpu: "1"  # GPU disabled for CPU testing
+    cpu: "2"
+    memory: "8Gi"
+envs:
+  NCCL_DEBUG: INFO
+run: |
+  python -c "
+  import os
+  import torch
+  import torch.distributed as dist
+  import torch.nn as nn
+
+  dist.init_process_group(backend='gloo')
+  rank = dist.get_rank()
+  world_size = dist.get_world_size()
+  device = torch.device('cpu')
+
+  model = nn.Linear(10, 1).to(device)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  loss_fn = nn.MSELoss()
+
+  for epoch in range(5):
+      x = torch.randn(64, 10, device=device)
+      y = torch.randn(64, 1, device=device)
+      optimizer.zero_grad()
+      pred = model(x)
+      loss = loss_fn(pred, y)
+      loss.backward()
+      optimizer.step()
+      if rank == 0:
+          print(f'[rank {rank}/{world_size}] Epoch {epoch+1}/5 - loss: {loss.item():.4f}')
+
+  if rank == 0:
+      print('Distributed training complete.')
+  dist.destroy_process_group()
+  "

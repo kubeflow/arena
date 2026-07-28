@@ -1,0 +1,39 @@
+# This example is self-contained and runnable with: arena job run -f examples/v2/quickstart/pytorch-standalone.yaml --dry-run
+version: 0.1.0
+name: pytorch-standalone
+image: pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+framework:
+  name: pytorch
+  options:
+    nproc_per_node: auto
+master:
+  resources:
+    # nvidia.com/gpu: "1"  # GPU disabled for CPU testing
+    cpu: "2"
+    memory: "8Gi"
+envs:
+  NCCL_DEBUG: INFO
+run: |
+  python -c "
+  import torch
+  import torch.nn as nn
+
+  print('CUDA available:', torch.cuda.is_available())
+  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+  model = nn.Linear(10, 1).to(device)
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+  loss_fn = nn.MSELoss()
+
+  for epoch in range(5):
+      x = torch.randn(64, 10, device=device)
+      y = torch.randn(64, 1, device=device)
+      optimizer.zero_grad()
+      pred = model(x)
+      loss = loss_fn(pred, y)
+      loss.backward()
+      optimizer.step()
+      print(f'Epoch {epoch+1}/5 - loss: {loss.item():.4f}')
+
+  print('Training complete.')
+  "

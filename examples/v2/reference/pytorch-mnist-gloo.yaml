@@ -1,0 +1,13 @@
+# PyTorchJob: Distributed MNIST with Gloo backend (CPU)
+# Source: Kubeflow trainer examples — pytorch/mnist/v1/pytorch_job_mnist_gloo.yaml
+# Adapted to CPU-only for simpler testing (gloo works on both CPU and GPU).
+version: 0.1.0
+name: pytorch-mnist-gloo
+image: ghcr.io/kubeflow/training-v1/pytorch-dist-mnist:latest
+restart: OnFailure
+framework:
+  name: pytorch
+run: python /opt/mnist/src/mnist.py --backend gloo
+master: {}
+worker:
+  replicas: 1
