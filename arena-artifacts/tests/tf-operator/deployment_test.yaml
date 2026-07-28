@@ -112,3 +112,89 @@ tests:
       - key: key4
         operator: Exists
         effect: NoSchedule
+
+- it: Should have livenessProbe with default values
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+      value: /metrics
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+      value: monitoring-port
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+      value: 15
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+      value: 30
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+      value: 3
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+      value: 3
+
+- it: Should have readinessProbe with default values
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+      value: /metrics
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+      value: monitoring-port
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.initialDelaySeconds
+      value: 10
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.periodSeconds
+      value: 15
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.timeoutSeconds
+      value: 3
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+      value: 3
+
+- it: Should allow customizing livenessProbe values
+  set:
+    tf:
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 60
+        timeoutSeconds: 5
+        failureThreshold: 5
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+      value: 30
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+      value: 60
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+      value: 5
+  - equal:
+      path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+      value: 5
+
+- it: Should allow customizing readinessProbe values
+  set:
+    tf:
+      readinessProbe:
+        initialDelaySeconds: 20
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 5
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.initialDelaySeconds
+      value: 20
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.periodSeconds
+      value: 30
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.timeoutSeconds
+      value: 5
+  - equal:
+      path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+      value: 5
