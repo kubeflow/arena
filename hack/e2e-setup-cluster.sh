@@ -71,11 +71,21 @@ kubectl wait deploy/training-operator \
   --for=condition=available \
   --timeout "${TIMEOUT}"
 
-# 4. Pre-load busybox image to avoid docker.io rate limits
-BUSYBOX_IMAGE="${E2E_BUSYBOX_IMAGE:-docker.io/library/busybox:1.35}"
-echo "Pre-loading ${BUSYBOX_IMAGE} into kind cluster..."
-docker pull "${BUSYBOX_IMAGE}"
-kind load docker-image "${BUSYBOX_IMAGE}" --name "${KIND_CLUSTER_NAME}"
+# 4. Pre-load images into kind to avoid docker.io rate limits
+kind_load_image() {
+  local image="$1"
+  echo "Pre-loading ${image} into kind cluster..."
+  docker pull "${image}"
+  kind load docker-image "${image}" --name "${KIND_CLUSTER_NAME}"
+}
+
+kind_load_image "${E2E_BUSYBOX_IMAGE:-docker.io/library/busybox:1.35}"
+
+# Extract and pre-load the training-operator image deployed by kustomize
+TRAINER_IMAGE=$(kubectl get deploy/training-operator \
+  -n "${NAMESPACE}" \
+  -o jsonpath='{.spec.template.spec.containers[0].image}')
+kind_load_image "${TRAINER_IMAGE}"
 
 # 5. Print cluster info
 echo ""
