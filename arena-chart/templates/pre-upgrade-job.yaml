@@ -1,0 +1,58 @@
+{{- /*
+Copyright 2025 The Kubeflow authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/ -}}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "arena.pre-upgrade.job.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "arena.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        {{- include "arena.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: hook
+        image: {{ include "arena.installer.image" . }}
+        imagePullPolicy: {{ .Values.binary.image.pullPolicy | default .Values.global.image.pullPolicy | default "IfNotPresent" }}
+        command:
+        - /bin/bash
+        - -c
+        args:
+        - |
+          set -eux
+          set -o pipefail
+
+          if arena-helm status -n arena-system arena-artifacts &>/dev/null; then
+              arena-helm delete -n arena-system arena-artifacts
+          elif HELM_DRIVER=configmap arena-helm status -n arena-system arena-artifacts &>/dev/null; then
+              HELM_DRIVER=configmap arena-helm delete -n arena-system arena-artifacts
+          else
+              arena-helm template arena-artifacts -n arena-system ~/arena-installer/arena-artifacts | arena-kubectl delete --ignore-not-found -f -
+          fi
+        securityContext:
+          seccompProfile:
+            type: RuntimeDefault
+      serviceAccountName: {{ include "arena.serviceAccount.name" . }}
+      restartPolicy: Never
