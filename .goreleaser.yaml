@@ -1,0 +1,48 @@
+version: 2
+
+project_name: arena-v2
+
+before:
+  hooks:
+    - make v2-vet
+
+builds:
+  - id: arena-v2
+    main: ./cmd/arena-v2/
+    binary: arena-v2
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    # Keep in sync with Makefile V2_LDFLAGS (Makefile uses shell vars, GoReleaser uses template vars)
+    ldflags:
+      - >-
+        -X github.com/kubeflow/arena/pkg/cli.version={{.Version}}
+        -X github.com/kubeflow/arena/pkg/cli.gitCommit={{.ShortCommit}}
+        -X github.com/kubeflow/arena/pkg/cli.buildDate={{.Date}}
+        -X github.com/kubeflow/arena/pkg/cli.gitTag={{.Tag}}
+        -X github.com/kubeflow/arena/pkg/cli.gitTreeState=clean
+
+archives:
+  - ids: [arena-v2]
+    formats: [tar.gz]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github-native
+  sort: asc
+
+release:
+  draft: true
+  prerelease: auto
+  name_template: '{{.Tag}}'
+
+snapshot:
+  version_template: '{{ incpatch .Version }}-dev'

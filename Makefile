@@ -19,6 +19,8 @@ ARCH ?= $(shell go env GOARCH)
 VERSION ?= $(shell cat VERSION 2>/dev/null || echo "0.0.0-dev")
 BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 GIT_SHORT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+GIT_TAG := $(shell if [ -z "`git status --porcelain`" ]; then git describe --exact-match --tags HEAD 2>/dev/null; fi)
+GIT_TREE_STATE := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean"; else echo "dirty"; fi)
 
 # Location to install binaries
 LOCALBIN ?= $(CURRENT_DIR)/bin
@@ -39,9 +41,12 @@ V2_ALL_PACKAGES := $(V2_PACKAGES) ./cmd/arena-v2/
 GOLANGCI_LINT_VERSION ?= v2.12.2
 
 # Version info injected via ldflags at build time
+# Keep in sync with .goreleaser.yaml ldflags (Makefile uses shell vars, GoReleaser uses template vars)
 V2_LDFLAGS := -X ${PACKAGE}/pkg/cli.version=${VERSION} \
   -X ${PACKAGE}/pkg/cli.gitCommit=${GIT_SHORT_COMMIT} \
-  -X ${PACKAGE}/pkg/cli.buildDate=${BUILD_DATE}
+  -X ${PACKAGE}/pkg/cli.buildDate=${BUILD_DATE} \
+  -X ${PACKAGE}/pkg/cli.gitTag=${GIT_TAG} \
+  -X ${PACKAGE}/pkg/cli.gitTreeState=${GIT_TREE_STATE}
 
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
@@ -81,3 +86,7 @@ v2-install: ## Install arena v2 CLI to GOBIN.
 v2-e2e-test: arena-v2 ## Run arena v2 e2e tests (requires real K8s cluster with CRDs installed).
 	@echo "Running arena v2 e2e tests..."
 	go test ./test/e2e/ -v -ginkgo.v -timeout 30m
+
+.PHONY: v2-release-snapshot
+v2-release-snapshot: ## Build arena v2 release snapshot locally (no tag required).
+	@goreleaser release --snapshot --clean

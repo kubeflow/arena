@@ -1,0 +1,28 @@
+feature:
+  - head-branch: ["^feat/", "^feature/"]
+
+bug:
+  - head-branch: ["^fix/", "^bug/", "^bugfix/"]
+
+breaking-changes:
+  - head-branch: ["^breaking/"]
+
+documentation:
+  - head-branch: ["^docs?/"]
+  - changed-files:
+      - any-glob-to-all-files: ["docs/**/*", "examples/**/*"]
+
+chore:
+  - head-branch: ["^chores?/"]
+
+refactor:
+  - head-branch: ["^refactor/"]
+
+skip-changelog:
+  - head-branch: ["^test/", "^ci/"]
+  - changed-files:
+      - any-glob-to-all-files: ["VERSION"]
+
+github-actions:
+  - changed-files:
+      - any-glob-to-all-files: [".github/**/*.yml", ".github/**/*.yaml"]

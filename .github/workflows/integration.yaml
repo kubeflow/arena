@@ -1,14 +1,37 @@
-name: Integration Test
+name: Integration Test (v2)
 
 on:
-  - push
-  - pull_request
+  push:
+    branches: [develop-v2]
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.actor }}
   cancel-in-progress: true
 
 jobs:
+  validate-version:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check VERSION isolation
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          CHANGED_FILES=$(git diff --name-only "origin/${BASE_REF}...HEAD")
+
+          if echo "${CHANGED_FILES}" | grep -q "^VERSION$"; then
+            OTHER_FILES=$(echo "${CHANGED_FILES}" | grep -v "^VERSION$" || true)
+            if [ -n "${OTHER_FILES}" ]; then
+              echo "::error::VERSION must be changed in isolation. Also changed:"
+              echo "${OTHER_FILES}"
+              exit 1
+            fi
+          fi
+
   build-arena-v2:
     runs-on: ubuntu-latest
     steps:

@@ -1,0 +1,27 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+      - github-actions
+  categories:
+    - title: 🚀 Features
+      labels:
+        - feature
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+    - title: 💥 Breaking Changes
+      labels:
+        - breaking-changes
+    - title: 📝 Documentation
+      labels:
+        - documentation
+    - title: 🔨 Maintenance
+      labels:
+        - chore
+    - title: ♻️ Refactoring
+      labels:
+        - refactor
+    - title: Other Changes
+      labels:
+        - "*"
