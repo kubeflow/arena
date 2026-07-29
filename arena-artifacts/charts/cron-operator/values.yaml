@@ -1,21 +1,90 @@
+#
+# Copyright 2026.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # Default values for cron-operator.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# -- Replicas of cron-operator deployment.
+# -- String to partially override release name.
+nameOverride: ""
+
+# -- String to fully override release name.
+fullnameOverride: ""
+
+image:
+  # -- Image registry.
+  registry: registry-cn-beijing.ack.aliyuncs.com
+  # -- Image repository.
+  repository: acs/cron-operator
+  # -- Image tag.
+  tag: ""
+  # -- Image pull policy.
+  pullPolicy: IfNotPresent
+  # -- Image pull secrets.
+  pullSecrets: []
+
+# -- Number of replicas.
 replicas: 1
+
+# -- Configure the encoder of logging, can be one of `console` or `json`.
+logEncoder: console
+
+# -- Configure the verbosity of logging, can be one of `debug`, `info`, `error`.
+logLevel: info
+
+leaderElection:
+  # -- Whether to enable leader election.
+  enable: true
+
+# -- Maximum number of concurrent reconciles.
+maxConcurrentReconciles: 10
+
+# -- Maximum QPS to the Kubernetes API server from this client.
+qps: 30
+
+# -- Maximum burst for throttle.
+burst: 50
 
 # -- Whether to use host timezone in the container.
 useHostTimezone: false
 
-# -- Resources for cron-operator pods.
+# -- Container resources.
 resources:
   requests:
     cpu: 100m
-    memory: 256Mi
+    memory: 128Mi
   limits:
-    cpu: 200m
-    memory: 2Gi
+    cpu: 400m
+    memory: 512Mi
 
-# -- Tolerations for cron-operator pods.
+# -- Container security context.
+securityContext: {}
+
+# -- Pod node selector.
+nodeSelector: {}
+
+# -- Pod affinity.
+affinity: {}
+
+# -- Pod tolerations.
 tolerations: []
+
+# -- Pod security context.
+podSecurityContext: {}
+
+service:
+  # -- Service type.
+  type: ClusterIP

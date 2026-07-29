@@ -32,7 +32,6 @@ dependencies:
   condition: tfdashboard.enabled,global.tfdashboard.enabled
 - name: cron-operator
   alias: cron
-  version: 0.1.0
   repository: "@cron-operator"
   condition: cron.enabled,global.cron.enabled
 - name: et-operator
