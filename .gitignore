@@ -18,7 +18,9 @@ __pycache__/
 cover.out
 
 # IDE files
+.cursor/
 .idea/
+.qoder/
 .vscode/
 
 # MacOS
