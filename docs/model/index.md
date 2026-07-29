@@ -1,14 +1,35 @@
-# Model Manage Guide
+# Model Management Guide
 
-Welcome to the Arena Model Manage Guide! This guide covers how to use the `arena model` subcommand to manage registered model and model versions. This page outlines the most common situations and questions that bring readers to this section.
+Welcome to the Arena Model Management Guide! This guide covers how to use the `arena model` subcommand to manage registered models and versions. Arena integrates model management into the entire ML workflow, from training through serving.
 
-## Who Should Use this Guide?
+## Overview
 
-If you want to use arena to manage models, this guide is for you. We have included detailed usages for managing models.
+Arena provides a unified model management system that helps you:
+
+- **Register Models** - Track models and versions during training
+- **Organize Models** - Use tags and descriptions for organization
+- **Version Control** - Maintain multiple model versions
+- **Integrate Training** - Automatically register models from training jobs
+- **Link to Serving** - Deploy models using model references
+- **Track Metadata** - Store model training details and performance metrics
+
+## Who Should Use This Guide?
+
+This guide is for you if you want to:
+
+- Track trained models and versions
+- Organize models with metadata and tags
+- Integrate model management with training pipelines
+- Deploy models from a central registry
+- Maintain audit trails for compliance
 
 ## Prerequisites
 
-Arena now use [MLflow](https://mlflow.org/) as model registry backend, so you first need to run MLflow tracking server with database as storage backend beforehand. See [MLflow Tracking Server](https://mlflow.org/docs/latest/tracking/server.html) for detailed information.
+Arena uses [MLflow](https://mlflow.org/) as the model registry backend. You must:
+
+1. **Set up MLflow Tracking Server** - See [MLflow Tracking Server Setup](https://mlflow.org/docs/latest/tracking/server.html)
+2. **Configure MLflow Connection** - Set up environment variables (see Setup section below)
+3. **Database Backend** - MLflow requires a database for persistent storage (PostgreSQL, MySQL, SQLite, etc.)
 
 ## Setup
 
@@ -345,3 +366,159 @@ Tags:
   arena.kubeflow.org/uid: 3399d840e8b371ed7ca45dda29debeb1
   modelName: my-model
 ```
+
+## Model Lifecycle Workflow
+
+### Complete ML Workflow Example
+
+This example shows the end-to-end model lifecycle from training to serving:
+
+#### Phase 1: Training with Automatic Model Registration
+
+```bash
+# Submit training job that automatically registers the model
+arena submit pytorchjob \
+  --name=mnist-training \
+  --gpus=1 \
+  --data=training-data:/data \
+  --model-name=mnist-classifier \
+  --model-source=pvc://default/trained-models/mnist \
+  --image=pytorch/pytorch:latest \
+  "python /workspace/train_mnist.py --output /trained-models/mnist"
+```
+
+#### Phase 2: Query the Registered Model
+
+```bash
+# View the registered model and its version
+arena model list
+arena model get --name mnist-classifier
+arena model get --name mnist-classifier --version 1
+```
+
+#### Phase 3: Deploy Using Model Reference
+
+```bash
+# Deploy using the registered model version
+arena serve custom \
+  --name=mnist-inference \
+  --model-name=mnist-classifier \
+  --model-version=1 \
+  --gpus=1 \
+  --image=pytorch/serve:latest
+```
+
+#### Phase 4: Monitor and Update
+
+```bash
+# Check which serving jobs use this model
+arena serve list
+arena serve get mnist-inference
+
+# Update model metadata if needed
+arena model update \
+  --name=mnist-classifier \
+  --tags accuracy=0.98,environment=production \
+  --description "Production MNIST classifier v1"
+```
+
+## Best Practices
+
+### 1. Naming Conventions
+
+```bash
+# Use clear, descriptive model names
+arena model create \
+  --name=product-recommender-v2024 \
+  --description="Product recommendation model (2024 version)"
+```
+
+### 2. Tagging Strategy
+
+```bash
+# Use meaningful tags for organization and filtering
+arena model update \
+  --name=my-model \
+  --tags dataset=imagenet,framework=pytorch,accuracy=0.95,status=production
+```
+
+### 3. Version Control
+
+```bash
+# Always specify versions explicitly when serving
+arena serve custom \
+  --name=my-service \
+  --model-name=my-model \
+  --model-version=5  # Explicit version for reproducibility
+```
+
+### 4. Cleanup
+
+```bash
+# Regularly clean up old model versions
+arena model delete --name=old-model --version=1
+
+# List unused models for cleanup
+arena model list
+```
+
+## Troubleshooting
+
+### Cannot Connect to MLflow
+
+```bash
+# Verify MLflow is running
+curl http://<mlflow-host>:<port>/api/2.0/mlflow/version
+
+# Check environment variables
+echo $MLFLOW_TRACKING_URI
+echo $MLFLOW_TRACKING_USERNAME
+
+# Manually connect to MLflow server
+export MLFLOW_TRACKING_URI=http://mlflow-server:5000
+arena model list
+```
+
+### Authentication Failures
+
+```bash
+# Set credentials for protected MLflow
+export MLFLOW_TRACKING_USERNAME=your-username
+export MLFLOW_TRACKING_PASSWORD=your-password
+arena model list
+```
+
+### Model Not Found
+
+```bash
+# List all models to verify existence
+arena model list
+
+# Check model versions
+arena model get --name your-model
+
+# List all versions explicitly
+arena model get --name your-model --version 1
+```
+
+## Integration Examples
+
+### With Training Pipeline
+
+See [Training Jobs Guide](../training/index.md) for examples of automatic model registration during training.
+
+### With Model Serving
+
+See [Model Serving Guide](../serving/index.md) for examples of deploying registered models.
+
+### With Monitoring
+
+See [Monitoring Guide](../top/index.md) for tracking model performance.
+
+## See Also
+
+- [Training Jobs Guide](../training/index.md) - Submit training jobs with model registration
+- [Model Serving Guide](../serving/index.md) - Deploy registered models
+- [CLI Reference](../cli/arena.md) - Full command reference
+- [MLflow Documentation](https://mlflow.org/docs/latest/index.html) - MLflow backend details
+- [FAQ & Troubleshooting](../faq/index.md) - Common issues and solutions
