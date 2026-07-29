@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -28,6 +29,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/strvals"
 )
 
 const (
@@ -203,6 +205,14 @@ func GenerateHelmTemplate(name string, namespace string, valuesFile string, char
 		return templateFileName, fmt.Errorf("failed to read values from file %s: %v", valuesFile, err)
 	}
 
+	if values == nil {
+		values = make(map[string]interface{})
+	}
+
+	if err := processSetFileOptions(values, options); err != nil {
+		return templateFileName, err
+	}
+
 	release, err := Template(name, namespace, chartPath, values)
 	if err != nil {
 		return templateFileName, fmt.Errorf("failed to generate helm manifests %s: %v", name, err)
@@ -236,4 +246,36 @@ func toYaml(values interface{}, file *os.File) error {
 		log.Errorf("Failed to write %v to %s due to %v", data, file.Name(), err)
 	}
 	return err
+}
+
+// processSetFileOptions parses options for --set-file and merges the file contents into the values map.
+// Callers must ensure that the options provided are safe, particularly the file paths, to prevent arbitrary file read vulnerabilities.
+func processSetFileOptions(values map[string]interface{}, options []string) error {
+	for i := 0; i < len(options); i++ {
+		opt := options[i]
+		var pair string
+		if strings.HasPrefix(opt, "--set-file ") {
+			pair = strings.TrimPrefix(opt, "--set-file ")
+		} else if strings.HasPrefix(opt, "--set-file=") {
+			pair = strings.TrimPrefix(opt, "--set-file=")
+		} else if opt == "--set-file" && i+1 < len(options) {
+			pair = options[i+1]
+			i++
+		} else {
+			continue
+		}
+
+		err := strvals.ParseIntoFile(pair, values, func(rs []rune) (interface{}, error) {
+			filePath := string(rs)
+			content, err := os.ReadFile(filePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read file for --set-file %s: %w", filePath, err)
+			}
+			return string(content), nil
+		})
+		if err != nil {
+			return fmt.Errorf("failed to process --set-file option %s: %w", pair, err)
+		}
+	}
+	return nil
 }
