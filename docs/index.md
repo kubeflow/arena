@@ -1,29 +1,55 @@
 # Arena
 
-A command-line tool of managing the machine learning training jobs.
+**Arena** is a command-line interface (CLI) designed for data scientists to efficiently manage machine learning workloads on Kubernetes clusters. It abstracts complex Kubernetes concepts, allowing users to focus on training and serving models without deep Kubernetes expertise.
 
----
+## Key Features
 
-## **Overview**
+### Simplified Training Management
 
-Arena is a command-line interface for the data scientists to run and monitor the machine learning training jobs and check their results in an easy way. Currently it supports solo/distributed TensorFlow training. In the backend, it is based on Kubernetes, helm and Kubeflow. But the data scientists can have very little knowledge about kubernetes.
+Support for multiple training frameworks and distributed training orchestration:
 
-Meanwhile, the end users require GPU resource and node management. Arena also provides top command to check available GPU resources in the Kubernetes cluster.
+- **TensorFlow** - Single and distributed training with TensorFlow jobs.
+- **PyTorch** - Distributed training and elastic training support.
+- **MPI** - High-performance computing with MPI jobs.
+- **Spark** - Distributed data processing with Spark.
+- **Ray** - Distributed machine learning with Ray.
+- **Elastic Training** - Fault-tolerant distributed training that scales dynamically.
+- **Horovod** - Distributed deep learning training.
+- **Volcano** - High-performance computing workloads.
 
-In one word, Arena's goal is to make the data scientists feel like to work on a single machine but with the Power of GPU clusters indeed.
+### Model Serving & Inference
 
-## **Host on Linux and MacOS**
+Deploy and manage inference services:
 
-Arena supports running on Linux and MacOS systems, please choose installation packages for different platforms to install.
+- **TensorFlow Serving** - Production-grade model serving.
+- **NVIDIA Triton** - Multi-framework inference server.
+- **KServe** - Kubernetes-native model serving.
+- **KFServing** - Kubeflow model serving framework.
+- **Custom Serving** - Deploy custom inference services.
+- **Distributed Serving** - Multi-node inference deployments.
 
-## **Easy to use**
+### Resource Management
 
-It is easy to use arena to manage your training jobs only needs you to run some commands.
+- **GPU Resource Monitoring** - Real-time GPU utilization tracking.
+- **Node Management** - View and manage cluster resources.
+- **Auto-scaling** - Scale training jobs in and out dynamically.
+- **Multiple Users** - Multi-tenant support with namespace isolation.
 
-## **Supports multiple types of training jobs**
+### Model Lifecycle
 
-You can use arena to submit multiple types of training jobs such as Tensorflow,MPI,Pytorch,Spark,Volcano,Xgboost...
+- **Model Registration** - Track model versions and metadata.
+- **Model Tagging** - Organize models with custom tags.
+- **Training Integration** - Automatically register models during training.
+- **Serving Integration** - Reference models in serving deployments.
 
-## **Supports multiple users**
+## Platform Support
 
-Arena depends on the kubeconfig file to submit the training jobs to the kubernetes cluster,so if you want to grant certain users different permissions to use arena, you can generate different kubeconfig files. 
+- **Operating Systems**: Linux and macOS.
+- **Kubernetes**: Version 1.11 and above.
+- **Frameworks**: TensorFlow, PyTorch, MPI, Spark, Ray, Horovod, and more.
+
+## Getting Help
+
+- Check [Installation Guide](./installation/index.md) for setup issues.
+- Review [FAQ & Troubleshooting](./faq/index.md) for common problems.
+- See [CLI Reference](./cli/arena.md) for command documentation.
