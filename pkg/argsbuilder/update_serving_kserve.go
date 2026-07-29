@@ -79,7 +79,7 @@ func (s *UpdateKServeArgsBuilder) AddCommandFlags(command *cobra.Command) {
 	command.Flags().StringVar(&s.args.ProtocolVersion, "protocol-version", "", "the protocol version to use by the predictor (i.e. v1 or v2 or grpc-v1 or grpc-v2)")
 
 	// ComponentExtension defines the deployment configuration for a given InferenceService component
-	command.Flags().IntVar(&s.args.MinReplicas, "min-replicas", 1, "minimum number of replicas, defaults to 1 but can be set to 0 to enable scale-to-zero")
+	command.Flags().IntVar(&s.args.MinReplicas, "min-replicas", -1, "minimum number of replicas, defaults to 1 but can be set to 0 to enable scale-to-zero. use -1 to keep existing value on update")
 	command.Flags().IntVar(&s.args.MaxReplicas, "max-replicas", 0, "maximum number of replicas for autoscaling")
 	command.Flags().IntVar(&s.args.ScaleTarget, "scale-target", 0, "specifies the integer target value of the metric type the Autoscaler watches for")
 	command.Flags().StringVar(&s.args.ScaleMetric, "scale-metric", "", "the scaling metric type watched by autoscaler. possible values are concurrency, rps, cpu, memory. concurrency, rps are supported via KPA")
