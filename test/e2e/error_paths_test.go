@@ -1,3 +1,5 @@
+//go:build v2e2e
+
 package e2e_test
 
 import (
@@ -114,7 +116,7 @@ run: python train.py
 		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "docker.io/library/busybox:1.36",
+			"--image", busyboxImage(),
 			"--workers", "1",
 			"sleep 300")
 		submitCmd.Stdout = &out
@@ -127,7 +129,7 @@ run: python train.py
 		submitCmd2 := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "docker.io/library/busybox:1.36",
+			"--image", busyboxImage(),
 			"--workers", "1",
 			"sleep 300")
 		submitCmd2.Stdout = &out
@@ -165,10 +167,10 @@ spec:
         spec:
           containers:
             - name: pytorch
-              image: docker.io/library/busybox:1.36
+              image: %s
               command: ["sleep", "300"]
           restartPolicy: OnFailure
-`, jobName)
+`, jobName, busyboxImage())
 
 		var out bytes.Buffer
 		kubectlCmd := exec.Command("kubectl", "apply", "-f", "-")

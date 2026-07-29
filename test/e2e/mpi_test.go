@@ -1,3 +1,5 @@
+//go:build v2e2e
+
 // MPI lifecycle tests: CRUD smoke tests that verify job submit, get, and
 // delete operations using placeholder images. These do not wait for pod
 // readiness or validate training outcomes.
@@ -124,14 +126,14 @@ var _ = Describe("MPI-based Jobs", func() {
 	}
 
 	It("MPI job lifecycle", func() {
-		frameworkLifecycle("mpi", "registry-cn-beijing.ack.aliyuncs.com/acs/busybox")
+		frameworkLifecycle("mpi", busyboxImage())
 	})
 
 	It("Horovod job lifecycle", func() {
-		frameworkLifecycle("horovod", "registry-cn-beijing.ack.aliyuncs.com/acs/busybox")
+		frameworkLifecycle("horovod", busyboxImage())
 	})
 
 	It("DeepSpeed job lifecycle", func() {
-		frameworkLifecycle("deepspeed", "registry-cn-beijing.ack.aliyuncs.com/acs/busybox")
+		frameworkLifecycle("deepspeed", busyboxImage())
 	})
 })

@@ -1,3 +1,5 @@
+//go:build v2e2e
+
 package e2e_test
 
 import (
@@ -10,8 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// TODO: Re-enable these tests after fixing the Kind cluster pod reconciling issue in GitHub workflows.
-var _ = Describe("Logs", Pending, func() {
+var _ = Describe("Logs", func() {
 	var (
 		jobName   string
 		namespace string
@@ -38,7 +39,7 @@ var _ = Describe("Logs", Pending, func() {
 		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "registry-cn-beijing.ack.aliyuncs.com/acs/busybox:1.35",
+			"--image", busyboxImage(),
 			"--workers", "1",
 			"sh -c 'echo hello-world; sleep 120'",
 		)
@@ -48,13 +49,24 @@ var _ = Describe("Logs", Pending, func() {
 		Expect(err).NotTo(HaveOccurred(), "submit output: %s", out.String())
 		out.Reset()
 
-		By("Waiting for pod to be ready")
-		waitCmd := exec.Command("kubectl", "wait", "--for=condition=PodReady",
+		By("Waiting for pod to be created")
+		createCmd := exec.Command("kubectl", "wait", "--for=create",
 			"pod", "-l", "training.kubeflow.org/job-name="+jobName,
 			"-n", namespace, "--timeout=120s")
-		waitCmd.Stdout = &out
-		waitCmd.Stderr = &out
-		_ = waitCmd.Run()
+		createCmd.Stdout = &out
+		createCmd.Stderr = &out
+		err = createCmd.Run()
+		Expect(err).NotTo(HaveOccurred(), "pod was not created: %s", out.String())
+		out.Reset()
+
+		By("Waiting for pod to be ready")
+		readyCmd := exec.Command("kubectl", "wait", "--for=condition=Ready",
+			"pod", "-l", "training.kubeflow.org/job-name="+jobName,
+			"-n", namespace, "--timeout=120s")
+		readyCmd.Stdout = &out
+		readyCmd.Stderr = &out
+		err = readyCmd.Run()
+		Expect(err).NotTo(HaveOccurred(), "pod did not become ready: %s", out.String())
 		out.Reset()
 
 		By("Fetching logs")
@@ -74,7 +86,7 @@ var _ = Describe("Logs", Pending, func() {
 		submitCmd := exec.Command(arenaV2Bin, "submit", "pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
-			"--image", "registry-cn-beijing.ack.aliyuncs.com/acs/busybox:1.35",
+			"--image", busyboxImage(),
 			"--workers", "1",
 			"sh -c 'for i in $(seq 1 20); do echo line-$i; done; sleep 120'",
 		)
@@ -84,13 +96,24 @@ var _ = Describe("Logs", Pending, func() {
 		Expect(err).NotTo(HaveOccurred(), "submit output: %s", out.String())
 		out.Reset()
 
-		By("Waiting for pod to be ready")
-		waitCmd := exec.Command("kubectl", "wait", "--for=condition=PodReady",
+		By("Waiting for pod to be created")
+		createCmd := exec.Command("kubectl", "wait", "--for=create",
 			"pod", "-l", "training.kubeflow.org/job-name="+jobName,
 			"-n", namespace, "--timeout=120s")
-		waitCmd.Stdout = &out
-		waitCmd.Stderr = &out
-		_ = waitCmd.Run()
+		createCmd.Stdout = &out
+		createCmd.Stderr = &out
+		err = createCmd.Run()
+		Expect(err).NotTo(HaveOccurred(), "pod was not created: %s", out.String())
+		out.Reset()
+
+		By("Waiting for pod to be ready")
+		readyCmd := exec.Command("kubectl", "wait", "--for=condition=Ready",
+			"pod", "-l", "training.kubeflow.org/job-name="+jobName,
+			"-n", namespace, "--timeout=120s")
+		readyCmd.Stdout = &out
+		readyCmd.Stderr = &out
+		err = readyCmd.Run()
+		Expect(err).NotTo(HaveOccurred(), "pod did not become ready: %s", out.String())
 		out.Reset()
 
 		By("Fetching logs with --tail 5")

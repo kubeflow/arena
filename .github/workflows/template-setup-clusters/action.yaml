@@ -1,0 +1,32 @@
+name: Setup E2E Cluster
+description: Creates a Kind cluster and installs Kubeflow Training Operator for Arena v2 e2e tests
+
+inputs:
+  kubernetes_version:
+    description: Kubernetes version for the kind cluster
+    required: false
+    default: '1.32.3'
+  training_operator_version:
+    description: Training Operator repo ref (tag or branch)
+    required: false
+    default: 'v1.9.3'
+  install_method:
+    description: Installation method for training-operator (kustomize or helm)
+    required: false
+    default: 'kustomize'
+
+runs:
+  using: composite
+  steps:
+    - name: Install kind
+      uses: helm/kind-action@v1
+      with:
+        install_only: true
+
+    - name: Setup cluster and install training-operator
+      shell: bash
+      run: |
+        make v2-e2e-setup-cluster \
+          K8S_VERSION=${{ inputs.kubernetes_version }} \
+          TRAINER_REF=${{ inputs.training_operator_version }} \
+          INSTALL_METHOD=${{ inputs.install_method }}

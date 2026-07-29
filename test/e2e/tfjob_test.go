@@ -1,3 +1,5 @@
+//go:build v2e2e
+
 // TensorFlow lifecycle tests: CRUD smoke tests that verify job submit, list,
 // get, and delete operations using placeholder images. These do not wait
 // for pod readiness or validate training outcomes.

@@ -1,0 +1,63 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [master, develop-v2]
+  push:
+    branches: [master, develop-v2]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.actor }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  cpu-e2e-test:
+    name: CPU E2E Test (${{ matrix.kubernetes-version }}, ${{ matrix.install-method }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      E2E_BUSYBOX_IMAGE: docker.io/library/busybox:1.35
+      NAMESPACE: kubeflow
+    strategy:
+      fail-fast: false
+      matrix:
+        kubernetes-version: ["1.32.3"]
+        install-method: ["kustomize"]
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Setup cluster and install training-operator
+        uses: ./.github/workflows/template-setup-clusters
+        with:
+          kubernetes_version: ${{ matrix.kubernetes-version }}
+          training_operator_version: v1.9.3
+          install_method: ${{ matrix.install-method }}
+
+      - name: Build arena-v2 binary
+        run: make arena-v2
+
+      - name: Run e2e tests
+        run: make v2-e2e-test
+
+      - name: Print cluster diagnostics on failure
+        if: failure()
+        run: |
+          kubectl get nodes -o wide
+          kubectl get pods -n "${NAMESPACE}"
+          kubectl describe deploy/training-operator -n "${NAMESPACE}"
+          kubectl logs -n "${NAMESPACE}" -l control-plane=kubeflow-training-operator --tail=100
+
+      - name: Cleanup cluster
+        if: always()
+        run: make v2-e2e-teardown || true
