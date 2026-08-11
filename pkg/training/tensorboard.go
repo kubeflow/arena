@@ -49,9 +49,15 @@ func tensorboardURL(name, namespace string, services []*corev1.Service, nodes []
 	// Get Address for loadbalancer
 	if service.Spec.Type == corev1.ServiceTypeLoadBalancer {
 		if len(service.Status.LoadBalancer.Ingress) > 0 {
-			return fmt.Sprintf("http://%s:%d",
-				service.Status.LoadBalancer.Ingress[0].IP,
-				service.Spec.Ports[0].Port), nil
+			address := service.Status.LoadBalancer.Ingress[0].IP
+			if address == "" {
+				address = service.Status.LoadBalancer.Ingress[0].Hostname
+			}
+			if address != "" {
+				return fmt.Sprintf("http://%s:%d",
+					address,
+					service.Spec.Ports[0].Port), nil
+			}
 		}
 	}
 
