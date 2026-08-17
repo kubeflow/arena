@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -190,30 +191,88 @@ func GenerateValueFile(values interface{}) (valueFileName string, err error) {
 
 // GenerateHelmTemplate generates helm manifests with the given valuesFile.
 func GenerateHelmTemplate(name string, namespace string, valuesFile string, chartPath string, options ...string) (templateFileName string, err error) {
-	tempName := fmt.Sprintf("%s.yaml", name)
-	templateFile, err := os.CreateTemp("", tempName)
-	if err != nil {
-		return templateFileName, err
-	}
-	defer templateFile.Close()
-	templateFileName = templateFile.Name()
+    tempName := fmt.Sprintf("%s.yaml", name)
+    templateFile, err := os.CreateTemp("", tempName)
+    if err != nil {
+        return templateFileName, err
+    }
+    defer templateFile.Close()
+    templateFileName = templateFile.Name()
 
-	values, err := chartutil.ReadValuesFile(valuesFile)
-	if err != nil {
-		return templateFileName, fmt.Errorf("failed to read values from file %s: %v", valuesFile, err)
-	}
+    values, err := chartutil.ReadValuesFile(valuesFile)
+    if err != nil {
+        return templateFileName, fmt.Errorf("failed to read values from file %s: %v", valuesFile, err)
+    }
 
-	release, err := Template(name, namespace, chartPath, values)
-	if err != nil {
-		return templateFileName, fmt.Errorf("failed to generate helm manifests %s: %v", name, err)
-	}
+    // Process --set-file options to read file contents into the values map
+    if len(options) > 0 {
+        if err := processSetFileOptions(values, options); err != nil {
+            return templateFileName, fmt.Errorf("failed to process set-file options: %v", err)
+        }
+    }
 
-	_, err = templateFile.WriteString(release.Manifest)
-	if err != nil {
-		return templateFileName, fmt.Errorf("failed to write helm manifests to file %s: %v", templateFileName, err)
-	}
+    release, err := Template(name, namespace, chartPath, values)
+    if err != nil {
+        return templateFileName, fmt.Errorf("failed to generate helm manifests %s: %v", name, err)
+    }
 
-	return templateFileName, nil
+    _, err = templateFile.WriteString(release.Manifest)
+    if err != nil {
+        return templateFileName, fmt.Errorf("failed to write helm manifests to file %s: %v", templateFileName, err)
+    }
+
+    return templateFileName, nil
+}
+
+// processSetFileOptions parses --set-file options, reads the file contents,
+// and merges them into the Helm values map.
+func processSetFileOptions(values map[string]interface{}, options []string) error {
+    for _, opt := range options {
+        // Strip the --set-file prefix if it is present
+        opt = strings.TrimPrefix(opt, "--set-file ")
+        opt = strings.TrimPrefix(opt, "--set-file=")
+
+        // Split into key and file path
+        parts := strings.SplitN(opt, "=", 2)
+        if len(parts) != 2 {
+            continue // Skip malformed options
+        }
+        key := parts[0]
+        filePath := parts[1]
+
+        // Read the file content
+        content, err := os.ReadFile(filePath)
+        if err != nil {
+            return fmt.Errorf("failed to read set-file %s: %v", filePath, err)
+        }
+
+        // Merge into values map at nested keys
+        setNestedValue(values, key, string(content))
+    }
+    return nil
+}
+
+// setNestedValue sets a value in a map at a given dotted key path (e.g. "a.b.c").
+func setNestedValue(values map[string]interface{}, key string, value interface{}) {
+    parts := strings.Split(key, ".")
+    current := values
+    for i, part := range parts {
+        if i == len(parts)-1 {
+            current[part] = value
+        } else {
+            if _, ok := current[part]; !ok {
+                current[part] = make(map[string]interface{})
+            }
+            if next, ok := current[part].(map[string]interface{}); ok {
+                current = next
+            } else {
+                // Overwrite non-map types with a map to proceed
+                newMap := make(map[string]interface{})
+                current[part] = newMap
+                current = newMap
+            }
+        }
+    }
 }
 
 // GetChartName returns the name of the chart.
