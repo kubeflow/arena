@@ -183,7 +183,7 @@ pytorch-example   Running   0              3/3       5m
 mpi-resnet        Running   2              3/3       1h
 ```
 
-The **GPU_REQUESTED** column is the total GPUs requested across all roles, calculated as `replicas × per-pod GPU` (from `resources.requests["nvidia.com/gpu"]` on the first container of each role). For example, a job with 2 workers each requesting 2 GPUs shows `4`.
+The **GPU_REQUESTED** column is the total GPUs requested across all roles, calculated as `replicas × per-pod GPU`. For example, a job with 2 workers each requesting 2 GPUs shows `4`.
 
 Use the wide format for namespace, framework, and API version detail:
 

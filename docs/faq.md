@@ -71,7 +71,7 @@ Solution: Add a `run` field to your YAML (e.g. `run: python -c "print('Hello')"`
 ### Q: How do I use `--set` with resource names containing dots (e.g. `nvidia.com/gpu`)?
 Use single quotes around the dotted segment:
 ```bash
-arena job run -f job.yaml --set worker.resources.'nvidia.com/gpu'=2
+arena job run -f job.yaml --set worker.resources.\'nvidia.com/gpu\'=2
 ```
 Single-quoted segments are treated as literal keys and not split on dots. See [yaml-schema.md](yaml-schema.md) for the full `--set` syntax.
 
@@ -81,7 +81,7 @@ Solution: Use the format `--set key=value`, e.g. `--set worker.replicas=4`.
 
 ### Q: `failed to parse --set "'foo": mismatched single quote in expression`
 Cause: A single-quoted segment in the `--set` expression is missing its closing quote.
-Solution: Ensure every opening single quote has a matching closing quote, e.g. `--set worker.resources.'nvidia.com/gpu'=2`.
+Solution: Ensure every opening single quote has a matching closing quote, e.g. `--set worker.resources.\'nvidia.com/gpu\'=2`.
 
 ### Q: What should the `version` field in YAML be?
 The current schema version is `0.1.0` (format: `MAJOR.MINOR.PATCH`). If omitted, it defaults to `0.1.0` automatically. Using a version newer than `0.1.x` produces: `version "0.2.0" is newer than supported (current: 0.1.x)`.
@@ -144,7 +144,7 @@ Solution: Check logs with `arena job logs <name>` to identify the application er
 
 ### Q: Pods stuck in "Pending"
 Cause: The Kubernetes scheduler cannot find suitable nodes for the pods. This is often due to GPU shortage, node selector mismatch, or insufficient resources.
-Solution: Run `kubectl describe pod <pod-name>` and check the Events section for scheduling failures. Verify GPU availability with `kubectl get nodes -o custom-columns=NAME:.metadata.name,GPUS:.status.capacity['nvidia\.com/gpu']`.
+Solution: Run `kubectl describe pod <pod-name>` and check the Events section for scheduling failures. Verify GPU availability with `kubectl get nodes -o "custom-columns=NAME:.metadata.name,GPUS:.status.capacity['nvidia\.com/gpu']"`.
 
 ### Q: Job status shows "Suspended"
 Cause: The job has the `suspend` lifecycle field set to `true`. Suspended jobs do not launch any pods.
