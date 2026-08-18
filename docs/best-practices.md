@@ -50,12 +50,12 @@ worker:
 arena job run -f train.yaml --set worker.replicas=8
 
 # Override GPU count — quote the resource key because it contains dots
-arena job run -f train.yaml --set worker.resources.'nvidia.com/gpu'=2
+arena job run -f train.yaml --set worker.resources.\'nvidia.com/gpu\'=2
 
 # Override multiple fields at once
 arena job run -f train.yaml \
   --set worker.replicas=2 \
-  --set worker.resources.'nvidia.com/gpu'=1 \
+  --set worker.resources.\'nvidia.com/gpu\'=1 \
   --set envs.NCCL_DEBUG=INFO
 ```
 
@@ -456,7 +456,7 @@ arena submit pytorchjob --name exp01 --workers 5 --gpus 2 --cpu 8 --memory 32Gi 
 arena job run -f train.yaml \
   --set name=exp01 \
   --set worker.replicas=4 \
-  --set worker.resources.'nvidia.com/gpu'=2
+  --set worker.resources.\'nvidia.com/gpu\'=2
 ```
 
 ### No Helm dependency in v2

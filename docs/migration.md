@@ -156,7 +156,7 @@ Field names in v2 use `snake_case` per the schema specification.
 
 | v1 Flag | v2 YAML Field | Notes |
 |---------|---------------|-------|
-| `--gpus` | `worker.resources.nvidia.com/gpu` | String value (e.g. `"1"`). |
+| `--gpus` | `worker.resources.'nvidia.com/gpu'` | String value (e.g. `"1"`). |
 | `--cpu` | `worker.resources.cpu` | String value. |
 | `--memory` | `worker.resources.memory` | String value (e.g. `"8Gi"`). |
 | `--device` | `worker.resources.<device-name>` | v1 `--device vendor.com/device=count` maps to v2 flat `vendor.com/device: count` in `resources`. e.g. `--device hugepages-2Mi=32Gi`. |
@@ -257,7 +257,7 @@ overriding storage mount points.
 | `--ps` (count) | `ps.replicas` | Integer. |
 | `--ps-cpu`, `--ps-cpu-limit` | `ps.resources.cpu` | |
 | `--ps-memory`, `--ps-memory-limit` | `ps.resources.memory` | |
-| `--ps-gpus` | `ps.resources.nvidia.com/gpu` | |
+| `--ps-gpus` | `ps.resources.'nvidia.com/gpu'` | |
 | `--chief` (bool) | `chief` | Presence of `chief` block enables the role. |
 | `--chief-cpu`, `--chief-memory`, etc. | `chief.resources` | |
 | `--evaluator` (bool) | `evaluator` | Presence of `evaluator` block enables the role. |
