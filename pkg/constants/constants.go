@@ -102,6 +102,7 @@ const (
 const (
 	EmptyDirMediumMemory = "Memory"
 	AffinityOperatorIn   = "In"
+	DefaultTopologyKey   = "kubernetes.io/hostname"
 )
 
 // Client configuration defaults.

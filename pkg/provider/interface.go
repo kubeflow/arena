@@ -427,43 +427,66 @@ func isMPIFamily(t *task.Task) bool {
 		t.Framework.Name == constants.FrameworkDeepSpeed
 }
 
+// toInterfaceSlice converts a []string to []interface{} for unstructured compatibility.
+// unstructured.DeepCopyJSONValue panics on []string; all slice values must be []interface{}.
+func toInterfaceSlice(s []string) []interface{} {
+	if len(s) == 0 {
+		return nil
+	}
+	result := make([]interface{}, len(s))
+	for i, v := range s {
+		result[i] = v
+	}
+	return result
+}
+
+// toInterfaceMap converts a map[string]string to map[string]interface{} for unstructured compatibility.
+func toInterfaceMap(m map[string]string) map[string]interface{} {
+	if len(m) == 0 {
+		return nil
+	}
+	result := make(map[string]interface{}, len(m))
+	for k, v := range m {
+		result[k] = v
+	}
+	return result
+}
+
 // buildAffinity creates a K8s Affinity map from the task's Affinity settings.
-// Supports two modes:
-// - Policy mode: policy×constraint generates podAffinity/podAntiAffinity or nodeAffinity (requires rules)
-// - Rules mode: custom rules applied to pod or node affinity based on target
-// Policy without rules is a no-op; task.Validate rejects that configuration.
-func buildAffinity(a *task.Affinity, _ string) (map[string]interface{}, error) {
+// An unset policy behaves like "none": nothing is generated and rules are
+// ignored (the CLI warns once per job in submitCRD).
+func buildAffinity(a *task.Affinity, jobName string) map[string]interface{} {
 	if a == nil {
-		return nil, nil
+		return nil
 	}
-	if a.Policy == "none" {
-		return nil, nil
-	}
-	if a.Policy == "" && len(a.Rules) == 0 {
-		return nil, nil
+	if a.Policy == "" || a.Policy == "none" {
+		return nil
 	}
 
 	affinity := map[string]interface{}{}
 
-	if len(a.Rules) > 0 {
-		switch a.Target {
-		case "pod":
-			if err := applyPodRules(affinity, a); err != nil {
-				return nil, err
-			}
-		case "node":
+	switch a.Target {
+	case "pod":
+		if len(a.Rules) > 0 {
+			applyPodRules(affinity, a)
+		}
+	case "node":
+		if a.Policy == "binpack" {
+			buildNodeBinpackAffinity(affinity, a, jobName)
+		}
+		if len(a.Rules) > 0 {
 			applyNodeRules(affinity, a)
 		}
 	}
 
 	if len(affinity) == 0 {
-		return nil, nil
+		return nil
 	}
-	return affinity, nil
+	return affinity
 }
 
 // applyPodRules applies affinity rules to podAffinity or podAntiAffinity based on policy.
-func applyPodRules(affinity map[string]interface{}, a *task.Affinity) error {
+func applyPodRules(affinity map[string]interface{}, a *task.Affinity) {
 	constraint := a.Constraint
 	if constraint == "" {
 		constraint = "preferred"
@@ -479,105 +502,124 @@ func applyPodRules(affinity map[string]interface{}, a *task.Affinity) error {
 		mode = "preferred"
 		fieldKey = "preferredDuringSchedulingIgnoredDuringExecution"
 	}
-	terms, err := buildPodAffinityTerms(a.Rules, mode)
-	if err != nil {
-		return err
-	}
+	terms := buildPodAffinityTerms(a.Rules, mode)
 	affinity[affinityType] = map[string]interface{}{fieldKey: terms}
-	return nil
 }
 
-// applyNodeRules applies affinity rules to nodeAffinity based on policy and constraint.
-// For binpack policy, rules attract pods to matching nodes (positive affinity).
-// For spread policy, operators are negated to repel pods from matching nodes.
+// applyNodeRules applies affinity rules to nodeAffinity based on constraint.
+// Both spread and binpack policies generate positive nodeAffinity (node selection).
+// For spread policy, topologySpreadConstraints (built separately by
+// buildTopologySpreadConstraints) handle the actual pod distribution.
 func applyNodeRules(affinity map[string]interface{}, a *task.Affinity) {
 	constraint := a.Constraint
 	if constraint == "" {
 		constraint = "preferred"
 	}
 
-	terms := buildNodeSelectorTerms(a.Rules)
-	if a.Policy == "spread" {
-		negateNodeSelectorTerms(terms)
-	}
-
 	if constraint == "preferred" {
+		preferredTerms := make([]interface{}, 0, len(a.Rules))
+		for _, rule := range a.Rules {
+			preferredTerms = append(preferredTerms, map[string]interface{}{
+				"weight":     int64(rule.Weight),
+				"preference": buildNodeSelectorTerm(rule),
+			})
+		}
 		affinity["nodeAffinity"] = map[string]interface{}{
-			"preferredDuringSchedulingIgnoredDuringExecution": terms,
+			"preferredDuringSchedulingIgnoredDuringExecution": preferredTerms,
 		}
 	} else { // required
 		affinity["nodeAffinity"] = map[string]interface{}{
 			"requiredDuringSchedulingIgnoredDuringExecution": map[string]interface{}{
-				"nodeSelectorTerms": terms,
+				"nodeSelectorTerms": buildNodeSelectorTerms(a.Rules),
 			},
 		}
 	}
 }
 
-// negateNodeSelectorTerms negates operators in node selector terms for spread policy.
-func negateNodeSelectorTerms(terms []interface{}) {
-	for _, term := range terms {
-		t, ok := term.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		negateOperatorList(t, "matchExpressions")
-		negateOperatorList(t, "matchFields")
+// selfAffinityTerm builds a pod affinity term that selects pods of the same job
+// (via the training.kubeflow.org/job-name label) on the hostname topology.
+// Shared by buildNodeBinpackAffinity (as a podAffinityTerm) and
+// buildTopologySpreadConstraints (as the base for a TSC, which adds maxSkew/whenUnsatisfiable).
+func selfAffinityTerm(jobName string) map[string]interface{} {
+	return map[string]interface{}{
+		"topologyKey": constants.DefaultTopologyKey,
+		"labelSelector": map[string]interface{}{
+			"matchLabels": map[string]interface{}{
+				constants.LabelJobName: jobName,
+			},
+		},
 	}
 }
 
-func negateOperatorList(term map[string]interface{}, field string) {
-	exprs, ok := term[field].([]interface{})
-	if !ok {
-		return
+// buildNodeBinpackAffinity generates podAffinity for target:node + policy:binpack.
+// Uses selfAffinityTerm to co-locate pods from the same job on the same node.
+// In preferred mode, the self term always uses weight 100 (strongest binpack
+// preference); rule weights only apply to the nodeAffinity preferences built
+// by applyNodeRules.
+// Required self-affinity does not deadlock the first pod: since at least K8s 1.6
+// the scheduler admits a pod whose own labels satisfy its required affinity terms
+// when no matching pod exists cluster-wide (inter-pod-affinity self-match
+// exception). This relies on the operator injecting the
+// training.kubeflow.org/job-name label onto pods (training-operator >= v1.5 and
+// mpi-operator v2beta1 both do; the legacy standalone mpi-operator v1 labels
+// pods "mpi-job-name" instead, so the self-selector never matches there).
+// Later pods still go Pending if the co-located node runs out of capacity —
+// inherent to required binpack.
+func buildNodeBinpackAffinity(affinity map[string]interface{}, a *task.Affinity, jobName string) {
+	constraint := a.Constraint
+	if constraint == "" {
+		constraint = "preferred"
 	}
+
+	term := selfAffinityTerm(jobName)
+
+	if constraint == "preferred" {
+		affinity["podAffinity"] = map[string]interface{}{
+			"preferredDuringSchedulingIgnoredDuringExecution": []interface{}{
+				map[string]interface{}{
+					"weight":          int64(100),
+					"podAffinityTerm": term,
+				},
+			},
+		}
+	} else {
+		affinity["podAffinity"] = map[string]interface{}{
+			"requiredDuringSchedulingIgnoredDuringExecution": []interface{}{term},
+		}
+	}
+}
+
+// buildMatchExpressions converts MatchExpressions to their unstructured form.
+func buildMatchExpressions(exprs []task.MatchExpression) []interface{} {
+	result := make([]interface{}, 0, len(exprs))
 	for _, e := range exprs {
-		expr, ok := e.(map[string]interface{})
-		if !ok {
-			continue
+		expr := map[string]interface{}{
+			"key":      e.Key,
+			"operator": e.Operator,
 		}
-		if op, ok := expr["operator"].(string); ok {
-			expr["operator"] = negateNodeOperator(op)
+		if len(e.Values) > 0 {
+			expr["values"] = toInterfaceSlice(e.Values)
 		}
+		result = append(result, expr)
 	}
-}
-
-func negateNodeOperator(op string) string {
-	switch op {
-	case "In":
-		return "NotIn"
-	case "NotIn":
-		return "In"
-	case "Exists":
-		return "DoesNotExist"
-	case "DoesNotExist":
-		return "Exists"
-	case "Gt":
-		return "Lt"
-	case "Lt":
-		return "Gt"
-	default:
-		return op
-	}
+	return result
 }
 
 // buildAffinityTerm builds a single pod affinity term from an AffinityRule.
 // In preferred mode, the term is wrapped in a WeightedPodAffinityTerm (weight at outer level).
 // In required mode, the term is returned directly (no weight).
-// Returns an error if preferred mode rules have weight outside 1-100.
-func buildAffinityTerm(rule task.AffinityRule, mode string) (map[string]interface{}, error) {
-	if mode == "preferred" {
-		if rule.Weight < 1 || rule.Weight > 100 {
-			return nil, fmt.Errorf("invalid affinity rule weight: %d (must be 1-100 for preferred scheduling)", rule.Weight)
-		}
+// Weight validity (1-100 for preferred) is enforced by validateScheduling.
+func buildAffinityTerm(rule task.AffinityRule, mode string) map[string]interface{} {
+	topologyKey := rule.TopologyKey
+	if topologyKey == "" {
+		topologyKey = constants.DefaultTopologyKey
 	}
-
 	term := map[string]interface{}{
-		"topologyKey": rule.TopologyKey,
+		"topologyKey": topologyKey,
 	}
 	if len(rule.MatchLabels) > 0 {
 		term["labelSelector"] = map[string]interface{}{
-			"matchLabels": rule.MatchLabels,
+			"matchLabels": toInterfaceMap(rule.MatchLabels),
 		}
 	}
 	// matchExpressions
@@ -587,129 +629,111 @@ func buildAffinityTerm(rule task.AffinityRule, mode string) (map[string]interfac
 			labelSelector = map[string]interface{}{}
 			term["labelSelector"] = labelSelector
 		}
-		exprs := make([]interface{}, 0, len(rule.MatchExpressions))
-		for _, e := range rule.MatchExpressions {
-			expr := map[string]interface{}{
-				"key":      e.Key,
-				"operator": e.Operator,
-			}
-			if len(e.Values) > 0 {
-				expr["values"] = e.Values
-			}
-			exprs = append(exprs, expr)
-		}
-		labelSelector["matchExpressions"] = exprs
+		labelSelector["matchExpressions"] = buildMatchExpressions(rule.MatchExpressions)
 	}
 	// namespaces
 	if len(rule.Namespaces) > 0 {
-		term["namespaces"] = rule.Namespaces
+		term["namespaces"] = toInterfaceSlice(rule.Namespaces)
 	}
 	// namespaceSelector
 	if rule.NamespaceSelector != nil {
 		ns := map[string]interface{}{}
 		if len(rule.NamespaceSelector.MatchLabels) > 0 {
-			ns["matchLabels"] = rule.NamespaceSelector.MatchLabels
+			ns["matchLabels"] = toInterfaceMap(rule.NamespaceSelector.MatchLabels)
 		}
 		if len(rule.NamespaceSelector.MatchExpressions) > 0 {
-			exprs := make([]interface{}, 0, len(rule.NamespaceSelector.MatchExpressions))
-			for _, e := range rule.NamespaceSelector.MatchExpressions {
-				expr := map[string]interface{}{
-					"key":      e.Key,
-					"operator": e.Operator,
-				}
-				if len(e.Values) > 0 {
-					expr["values"] = e.Values
-				}
-				exprs = append(exprs, expr)
-			}
-			ns["matchExpressions"] = exprs
+			ns["matchExpressions"] = buildMatchExpressions(rule.NamespaceSelector.MatchExpressions)
 		}
 		term["namespaceSelector"] = ns
 	}
 
 	if mode == "preferred" {
 		return map[string]interface{}{
-			"weight":          rule.Weight,
+			"weight":          int64(rule.Weight),
 			"podAffinityTerm": term,
-		}, nil
+		}
 	}
-	return term, nil
+	return term
 }
 
 // buildPodAffinityTerms converts AffinityRules to pod affinity terms.
 // In preferred mode, returns WeightedPodAffinityTerm structures (weight at outer level).
 // In required mode, returns PodAffinityTerm structures directly (no weight).
-// Returns an error if preferred mode rules have weight outside 1-100.
-func buildPodAffinityTerms(rules []task.AffinityRule, mode string) ([]interface{}, error) {
+func buildPodAffinityTerms(rules []task.AffinityRule, mode string) []interface{} {
 	terms := make([]interface{}, 0, len(rules))
 	for _, rule := range rules {
-		term, err := buildAffinityTerm(rule, mode)
-		if err != nil {
-			return nil, err
-		}
-		terms = append(terms, term)
+		terms = append(terms, buildAffinityTerm(rule, mode))
 	}
-	return terms, nil
+	return terms
 }
 
 // buildNodeSelectorTerms converts AffinityRules to node selector terms.
 func buildNodeSelectorTerms(rules []task.AffinityRule) []interface{} {
 	terms := make([]interface{}, 0, len(rules))
 	for _, rule := range rules {
-		term := map[string]interface{}{}
-		// Convert MatchExpressions
-		if len(rule.MatchExpressions) > 0 {
-			exprs := make([]interface{}, 0, len(rule.MatchExpressions))
-			for _, e := range rule.MatchExpressions {
-				expr := map[string]interface{}{
-					"key":      e.Key,
-					"operator": e.Operator,
-				}
-				if len(e.Values) > 0 {
-					expr["values"] = e.Values
-				}
-				exprs = append(exprs, expr)
-			}
-			term["matchExpressions"] = exprs
+		terms = append(terms, buildNodeSelectorTerm(rule))
+	}
+	return terms
+}
+
+// buildNodeSelectorTerm converts a single AffinityRule to a node selector term.
+func buildNodeSelectorTerm(rule task.AffinityRule) map[string]interface{} {
+	term := map[string]interface{}{}
+	// Convert MatchExpressions
+	if len(rule.MatchExpressions) > 0 {
+		term["matchExpressions"] = buildMatchExpressions(rule.MatchExpressions)
+	}
+	// Convert MatchLabels to matchExpressions with In operator
+	if len(rule.MatchLabels) > 0 {
+		exprs := make([]interface{}, 0, len(rule.MatchLabels))
+		for k, v := range rule.MatchLabels {
+			exprs = append(exprs, map[string]interface{}{
+				"key":      k,
+				"operator": constants.AffinityOperatorIn,
+				"values":   []interface{}{v},
+			})
 		}
-		// Convert MatchLabels to matchExpressions with In operator
-		if len(rule.MatchLabels) > 0 {
-			exprs := make([]interface{}, 0, len(rule.MatchLabels))
-			for k, v := range rule.MatchLabels {
-				exprs = append(exprs, map[string]interface{}{
-					"key":      k,
-					"operator": constants.AffinityOperatorIn,
-					"values":   []string{v},
-				})
-			}
-			if existing, ok := term["matchExpressions"]; ok {
-				if existingArr, ok := existing.([]interface{}); ok {
-					term["matchExpressions"] = append(existingArr, exprs...)
-				} else {
-					term["matchExpressions"] = exprs
-				}
+		if existing, ok := term["matchExpressions"]; ok {
+			if existingArr, ok := existing.([]interface{}); ok {
+				term["matchExpressions"] = append(existingArr, exprs...)
 			} else {
 				term["matchExpressions"] = exprs
 			}
+		} else {
+			term["matchExpressions"] = exprs
 		}
-		// Convert MatchFields
-		if len(rule.MatchFields) > 0 {
-			fields := make([]interface{}, 0, len(rule.MatchFields))
-			for _, f := range rule.MatchFields {
-				field := map[string]interface{}{
-					"key":      f.Key,
-					"operator": f.Operator,
-				}
-				if len(f.Values) > 0 {
-					field["values"] = f.Values
-				}
-				fields = append(fields, field)
-			}
-			term["matchFields"] = fields
-		}
-		terms = append(terms, term)
 	}
-	return terms
+	// Convert MatchFields
+	if len(rule.MatchFields) > 0 {
+		term["matchFields"] = buildMatchExpressions(rule.MatchFields)
+	}
+	return term
+}
+
+// buildTopologySpreadConstraints generates a single TopologySpreadConstraint for
+// node-target spread policy. Returns nil for any other policy/target combination.
+// The constraint uses a hardcoded topologyKey (kubernetes.io/hostname) and a
+// self-referential labelSelector matching the job name (injected by the Kubeflow
+// Training Operator onto all pods it creates). Rules do not affect TSC — they
+// only control nodeAffinity (node selection) via applyNodeRules.
+func buildTopologySpreadConstraints(a *task.Affinity, jobName string) []interface{} {
+	if a == nil || a.Policy != "spread" || a.Target != "node" {
+		return nil
+	}
+	constraint := a.Constraint
+	if constraint == "" {
+		constraint = "preferred"
+	}
+	whenUnsatisfiable := "DoNotSchedule"
+	if constraint == "preferred" {
+		whenUnsatisfiable = "ScheduleAnyway"
+	}
+
+	tsc := selfAffinityTerm(jobName)
+	tsc["maxSkew"] = int64(1)
+	tsc["whenUnsatisfiable"] = whenUnsatisfiable
+
+	return []interface{}{tsc}
 }
 
 // buildInitContainers creates init containers from task.Init and task.Sync.
@@ -1063,12 +1087,13 @@ func buildPodSpec(t *task.Task, container map[string]interface{}, includeVolumes
 	buildScheduling(t, podSpec)
 
 	// Affinity
-	affinity, err := buildAffinity(t.Scheduling.Affinity, t.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build affinity: %w", err)
-	}
-	if affinity != nil {
+	if affinity := buildAffinity(t.Scheduling.Affinity, t.Name); affinity != nil {
 		podSpec["affinity"] = affinity
+	}
+
+	// Topology spread constraints (node target + spread policy only)
+	if tsc := buildTopologySpreadConstraints(t.Scheduling.Affinity, t.Name); len(tsc) > 0 {
+		podSpec["topologySpreadConstraints"] = tsc
 	}
 
 	return podSpec, nil

@@ -190,6 +190,11 @@ func submitCRD(ctx context.Context, k8sClient *client.Client, t *task.Task, fram
 		return err
 	}
 
+	if a := t.Scheduling.Affinity; a != nil && (a.Policy == "" || a.Policy == "none") && len(a.Rules) > 0 {
+		log.Warning("affinity.policy is unset or 'none'; affinity rules are ignored and no affinity is generated",
+			"rules", len(a.Rules))
+	}
+
 	if isMPIFamily(t.Framework.Name) {
 		if mpiP, ok := p.(*provider.MPIProvider); ok {
 			if k8sClient != nil {

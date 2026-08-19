@@ -511,8 +511,10 @@ scheduling:
     constraint: preferred
     target: pod
     rules:
-      - topologyKey: kubernetes.io/hostname
+      - topology_key: kubernetes.io/hostname
         weight: 100
+        match_labels:
+          app: web
 `
 	tmpFile := writeTestYAML(t, yaml)
 	runFile = tmpFile

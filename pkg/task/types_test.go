@@ -606,7 +606,8 @@ func TestValidateAffinityInvalidTarget(t *testing.T) {
 	assert.Contains(t, err.Error(), "affinity.target must be 'pod' or 'node'")
 }
 
-func TestValidateAffinityPolicyWithNodeRequiresRules(t *testing.T) {
+func TestValidateAffinityPolicyWithPodRequiresRules(t *testing.T) {
+	// pod target with policy but no rules should fail (rules required for pod)
 	task := &Task{
 		Name:      "t",
 		Image:     "x:1",
@@ -615,7 +616,7 @@ func TestValidateAffinityPolicyWithNodeRequiresRules(t *testing.T) {
 		Worker:    &Worker{Replicas: 1},
 		Scheduling: Scheduling{
 			Affinity: &Affinity{
-				Target: "node",
+				Target: "pod",
 				Policy: "spread",
 			},
 		},
@@ -623,6 +624,36 @@ func TestValidateAffinityPolicyWithNodeRequiresRules(t *testing.T) {
 	err := Validate(task)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "requires at least one rule")
+}
+
+func TestValidateAffinityNodeTargetWithoutRules(t *testing.T) {
+	// target: node with policy but no rules should be valid (rules optional for node)
+	tests := []struct {
+		name   string
+		policy string
+	}{
+		{"spread without rules", "spread"},
+		{"binpack without rules", "binpack"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Scheduling: Scheduling{
+					Affinity: &Affinity{
+						Target: "node",
+						Policy: tt.policy,
+					},
+				},
+			}
+			err := Validate(task)
+			require.NoError(t, err, "target:node with %s policy should be valid without rules", tt.policy)
+		})
+	}
 }
 
 func TestValidateAffinityInvalidPolicy(t *testing.T) {
@@ -675,7 +706,7 @@ func TestValidateAffinityValidConfigurations(t *testing.T) {
 			Affinity: &Affinity{
 				Target: "pod",
 				Policy: "spread",
-				Rules:  []AffinityRule{{TopologyKey: "kubernetes.io/hostname", Weight: 50}},
+				Rules:  []AffinityRule{{TopologyKey: "kubernetes.io/hostname", Weight: 50, MatchLabels: map[string]string{"app": "web"}}},
 			},
 		},
 	}
@@ -698,7 +729,7 @@ func TestValidateAffinityValidConfigurations(t *testing.T) {
 		Target:     "pod",
 		Policy:     "spread",
 		Constraint: "required",
-		Rules:      []AffinityRule{{TopologyKey: "kubernetes.io/hostname"}},
+		Rules:      []AffinityRule{{TopologyKey: "kubernetes.io/hostname", MatchLabels: map[string]string{"app": "web"}}},
 	}
 	err = Validate(task)
 	require.NoError(t, err)
@@ -707,7 +738,7 @@ func TestValidateAffinityValidConfigurations(t *testing.T) {
 	task.Scheduling.Affinity = &Affinity{
 		Target: "pod",
 		Policy: "none",
-		Rules:  []AffinityRule{{TopologyKey: "kubernetes.io/hostname"}},
+		Rules:  []AffinityRule{{TopologyKey: "kubernetes.io/hostname", MatchLabels: map[string]string{"app": "web"}}},
 	}
 	err = Validate(task)
 	require.NoError(t, err)
@@ -741,7 +772,7 @@ func TestValidateAffinityWeight(t *testing.T) {
 						Target:     "pod",
 						Policy:     "spread",
 						Constraint: tt.constraint,
-						Rules:      []AffinityRule{{TopologyKey: "kubernetes.io/hostname", Weight: tt.weight}},
+						Rules:      []AffinityRule{{TopologyKey: "kubernetes.io/hostname", Weight: tt.weight, MatchLabels: map[string]string{"app": "web"}}},
 					},
 				},
 			}
@@ -754,6 +785,254 @@ func TestValidateAffinityWeight(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateAffinityTargetSpecificFields(t *testing.T) {
+	tests := []struct {
+		name      string
+		target    string
+		rule      AffinityRule
+		wantErr   bool
+		errSubstr string
+	}{
+		{"pod rule with match_fields rejected", "pod",
+			AffinityRule{TopologyKey: "kubernetes.io/hostname", Weight: 50,
+				MatchFields: []MatchExpression{{Key: "metadata.name", Operator: "In", Values: []string{"n1"}}}},
+			true, "match_fields is only valid for target: node"},
+		{"node rule with topology_key rejected", "node",
+			AffinityRule{TopologyKey: "kubernetes.io/hostname", Weight: 50},
+			true, "topology_key is only valid for target: pod"},
+		{"node rule with namespaces rejected", "node",
+			AffinityRule{Weight: 50, Namespaces: []string{"ns1"}},
+			true, "namespaces is only valid for target: pod"},
+		{"node rule with namespace_selector rejected", "node",
+			AffinityRule{Weight: 50, NamespaceSelector: &LabelSelector{MatchLabels: map[string]string{"env": "prod"}}},
+			true, "namespace_selector is only valid for target: pod"},
+		{"node rule with match_expressions valid", "node",
+			AffinityRule{Weight: 50, MatchExpressions: []MatchExpression{{Key: "gpu", Operator: "Exists"}}},
+			false, ""},
+		{"pod rule with namespaces valid", "pod",
+			AffinityRule{TopologyKey: "kubernetes.io/hostname", Weight: 50, Namespaces: []string{"ns1"},
+				MatchLabels: map[string]string{"app": "web"}},
+			false, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Scheduling: Scheduling{
+					Affinity: &Affinity{
+						Target:     tt.target,
+						Policy:     "spread",
+						Constraint: "preferred",
+						Rules:      []AffinityRule{tt.rule},
+					},
+				},
+			}
+			err := Validate(task)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errSubstr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateAffinityRuleSelectorsAndSyntax(t *testing.T) {
+	tests := []struct {
+		name      string
+		target    string
+		rule      AffinityRule
+		wantErr   bool
+		errSubstr string
+	}{
+		{"pod rule without any selector rejected", "pod",
+			AffinityRule{TopologyKey: "kubernetes.io/hostname", Weight: 50},
+			true, "at least one of match_labels, match_expressions, or match_fields"},
+		{"node rule without any selector rejected", "node",
+			AffinityRule{Weight: 50},
+			true, "at least one of match_labels, match_expressions, or match_fields"},
+		{"invalid label key rejected", "pod",
+			AffinityRule{Weight: 50, MatchLabels: map[string]string{"-bad key": "v"}},
+			true, "invalid label key"},
+		{"invalid label value rejected", "pod",
+			AffinityRule{Weight: 50, MatchLabels: map[string]string{"app": "bad value!"}},
+			true, "invalid label value"},
+		{"invalid topology_key rejected", "pod",
+			AffinityRule{TopologyKey: "bad//key", Weight: 50, MatchLabels: map[string]string{"app": "web"}},
+			true, "invalid topology_key"},
+		{"invalid namespace rejected", "pod",
+			AffinityRule{Weight: 50, MatchLabels: map[string]string{"app": "web"}, Namespaces: []string{"Bad_NS"}},
+			true, "invalid namespace"},
+		{"invalid expression key rejected", "node",
+			AffinityRule{Weight: 50, MatchExpressions: []MatchExpression{{Key: "bad key!", Operator: "Exists"}}},
+			true, "invalid key"},
+		{"namespace_selector invalid label key rejected", "pod",
+			AffinityRule{Weight: 50, MatchLabels: map[string]string{"app": "web"},
+				NamespaceSelector: &LabelSelector{MatchLabels: map[string]string{"bad key": "v"}}},
+			true, "namespace_selector.match_labels"},
+		{"valid dotted prefixed keys accepted", "pod",
+			AffinityRule{TopologyKey: "topology.kubernetes.io/zone", Weight: 50,
+				MatchLabels: map[string]string{"training.kubeflow.org/job-name": "my-job"}},
+			false, ""},
+		{"match_fields wrong key rejected", "node",
+			AffinityRule{Weight: 50, MatchFields: []MatchExpression{{Key: "spec.nodeName", Operator: "In", Values: []string{"n1"}}}},
+			true, `key must be "metadata.name"`},
+		{"match_fields Exists operator rejected", "node",
+			AffinityRule{Weight: 50, MatchFields: []MatchExpression{{Key: "metadata.name", Operator: "Exists"}}},
+			true, "operator must be In or NotIn"},
+		{"match_fields multiple values rejected", "node",
+			AffinityRule{Weight: 50, MatchFields: []MatchExpression{{Key: "metadata.name", Operator: "In", Values: []string{"n1", "n2"}}}},
+			true, "exactly one value is required"},
+		{"valid match_fields accepted", "node",
+			AffinityRule{Weight: 50, MatchFields: []MatchExpression{{Key: "metadata.name", Operator: "NotIn", Values: []string{"n1"}}}},
+			false, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			task := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Scheduling: Scheduling{
+					Affinity: &Affinity{
+						Target:     tt.target,
+						Policy:     "spread",
+						Constraint: "preferred",
+						Rules:      []AffinityRule{tt.rule},
+					},
+				},
+			}
+			err := Validate(task)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errSubstr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateAffinityWeightSkippedForInactivePolicy(t *testing.T) {
+	// Unset and "none" policy behave identically: rules are ignored,
+	// so the weight 1-100 requirement must not apply to either.
+	for _, policy := range []string{"", "none"} {
+		t.Run("policy_"+policy, func(t *testing.T) {
+			task := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Scheduling: Scheduling{
+					Affinity: &Affinity{
+						Target: "pod",
+						Policy: policy,
+						Rules:  []AffinityRule{{MatchLabels: map[string]string{"app": "web"}}}, // weight 0
+					},
+				},
+			}
+			require.NoError(t, Validate(task))
+		})
+	}
+}
+
+func TestValidateAffinityMatchExpressions(t *testing.T) {
+	tests := []struct {
+		name      string
+		target    string
+		exprs     []MatchExpression
+		wantErr   bool
+		errSubstr string
+	}{
+		{"valid In", "pod", []MatchExpression{{Key: "app", Operator: "In", Values: []string{"web"}}}, false, ""},
+		{"valid Exists", "node", []MatchExpression{{Key: "gpu", Operator: "Exists"}}, false, ""},
+		{"valid Gt on node", "node", []MatchExpression{{Key: "gpu-count", Operator: "Gt", Values: []string{"2"}}}, false, ""},
+		{"Gt rejected on pod", "pod", []MatchExpression{{Key: "gpu-count", Operator: "Gt", Values: []string{"2"}}},
+			true, "only valid for target: node"},
+		{"empty key rejected", "pod", []MatchExpression{{Operator: "In", Values: []string{"v"}}},
+			true, "key must not be empty"},
+		{"unknown operator rejected", "node", []MatchExpression{{Key: "k", Operator: "Contains", Values: []string{"v"}}},
+			true, "invalid operator"},
+		{"In without values rejected", "pod", []MatchExpression{{Key: "app", Operator: "In"}},
+			true, "requires at least one value"},
+		{"Exists with values rejected", "node", []MatchExpression{{Key: "gpu", Operator: "Exists", Values: []string{"1"}}},
+			true, "must not have values"},
+		{"Gt with multiple values rejected", "node", []MatchExpression{{Key: "gpu", Operator: "Gt", Values: []string{"1", "2"}}},
+			true, "requires exactly one value"},
+		{"Gt with non-integer rejected", "node", []MatchExpression{{Key: "gpu", Operator: "Gt", Values: []string{"many"}}},
+			true, "requires an integer value"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := AffinityRule{TopologyKey: "kubernetes.io/hostname", Weight: 50, MatchExpressions: tt.exprs}
+			if tt.target == "node" {
+				rule = AffinityRule{Weight: 50, MatchExpressions: tt.exprs}
+			}
+			task := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Scheduling: Scheduling{
+					Affinity: &Affinity{
+						Target:     tt.target,
+						Policy:     "spread",
+						Constraint: "preferred",
+						Rules:      []AffinityRule{rule},
+					},
+				},
+			}
+			err := Validate(task)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errSubstr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateAffinityNamespaceSelectorExpressions(t *testing.T) {
+	task := &Task{
+		Name:      "t",
+		Image:     "x:1",
+		Run:       "train",
+		Framework: Framework{Name: "pytorch"},
+		Worker:    &Worker{Replicas: 1},
+		Scheduling: Scheduling{
+			Affinity: &Affinity{
+				Target:     "pod",
+				Policy:     "spread",
+				Constraint: "preferred",
+				Rules: []AffinityRule{{
+					TopologyKey: "kubernetes.io/hostname",
+					Weight:      50,
+					NamespaceSelector: &LabelSelector{
+						MatchExpressions: []MatchExpression{{Key: "team", Operator: "In"}},
+					},
+				}},
+			},
+		},
+	}
+	err := Validate(task)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "namespace_selector.match_expressions[0]")
+	assert.Contains(t, err.Error(), "requires at least one value")
 }
 
 func TestValidateTolerations(t *testing.T) {

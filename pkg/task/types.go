@@ -601,8 +601,9 @@ func validateScheduling(t *Task) error {
 			if !affinityPolicies[a.Policy] {
 				return fmt.Errorf("affinity.policy must be 'spread', 'binpack', or 'none', got %q", a.Policy)
 			}
-			if len(a.Rules) == 0 {
-				return fmt.Errorf("affinity.policy %q requires at least one rule", a.Policy)
+			// rules required for pod target; optional for node target (topology and labelSelector are fixed)
+			if len(a.Rules) == 0 && a.Target != "node" {
+				return fmt.Errorf("affinity.policy %q requires at least one rule (or set target to node)", a.Policy)
 			}
 		}
 		// constraint validation
@@ -611,8 +612,9 @@ func validateScheduling(t *Task) error {
 				return fmt.Errorf("affinity.constraint must be 'preferred' or 'required', got %q", a.Constraint)
 			}
 		}
-		// weight validation: preferred mode requires weight 1-100 (skip for 'none' policy)
-		if a.Policy != "none" {
+		// weight validation: preferred mode requires weight 1-100
+		// (skipped for none/unset policy — rules are ignored there)
+		if a.Policy != "" && a.Policy != "none" {
 			constraint := a.Constraint
 			if constraint == "" {
 				constraint = "preferred"
@@ -623,6 +625,54 @@ func validateScheduling(t *Task) error {
 						return fmt.Errorf("affinity rule[%d]: weight must be 1-100 for preferred scheduling, got %d", i, rule.Weight)
 					}
 				}
+			}
+		}
+		// per-target field applicability and match expression validation
+		for i, rule := range a.Rules {
+			if err := validateLabels(rule.MatchLabels, fmt.Sprintf("affinity rule[%d].match_labels", i)); err != nil {
+				return err
+			}
+			switch a.Target {
+			case "pod":
+				if len(rule.MatchFields) > 0 {
+					return fmt.Errorf("affinity rule[%d]: match_fields is only valid for target: node", i)
+				}
+				if rule.TopologyKey != "" {
+					if errs := validation.IsQualifiedName(rule.TopologyKey); len(errs) > 0 {
+						return fmt.Errorf("affinity rule[%d]: invalid topology_key %q: %s", i, rule.TopologyKey, strings.Join(errs, ", "))
+					}
+				}
+				for _, ns := range rule.Namespaces {
+					if errs := validation.IsDNS1123Label(ns); len(errs) > 0 {
+						return fmt.Errorf("affinity rule[%d]: invalid namespace %q: %s", i, ns, strings.Join(errs, ", "))
+					}
+				}
+				if err := validateMatchExpressions(rule.MatchExpressions, "pod", fmt.Sprintf("affinity rule[%d].match_expressions", i)); err != nil {
+					return err
+				}
+				if err := validateLabelSelector(rule.NamespaceSelector, fmt.Sprintf("affinity rule[%d].namespace_selector", i)); err != nil {
+					return err
+				}
+			case "node":
+				if rule.TopologyKey != "" {
+					return fmt.Errorf("affinity rule[%d]: topology_key is only valid for target: pod", i)
+				}
+				if len(rule.Namespaces) > 0 {
+					return fmt.Errorf("affinity rule[%d]: namespaces is only valid for target: pod", i)
+				}
+				if rule.NamespaceSelector != nil {
+					return fmt.Errorf("affinity rule[%d]: namespace_selector is only valid for target: pod", i)
+				}
+				if err := validateMatchExpressions(rule.MatchExpressions, "node", fmt.Sprintf("affinity rule[%d].match_expressions", i)); err != nil {
+					return err
+				}
+				if err := validateMatchFields(rule.MatchFields, fmt.Sprintf("affinity rule[%d].match_fields", i)); err != nil {
+					return err
+				}
+			}
+			// An empty selector matches nothing and silently makes the job unschedulable.
+			if len(rule.MatchLabels) == 0 && len(rule.MatchExpressions) == 0 && len(rule.MatchFields) == 0 {
+				return fmt.Errorf("affinity rule[%d]: at least one of match_labels, match_expressions, or match_fields is required", i)
 			}
 		}
 	}
@@ -636,6 +686,85 @@ func validateScheduling(t *Task) error {
 		}
 		if tol.Operator == "Exists" && tol.Value != "" {
 			return fmt.Errorf("toleration[%d]: Exists operator must not have a value", i)
+		}
+	}
+	return nil
+}
+
+// validateMatchExpressions checks operator enum, values cardinality, and key presence.
+// Node-target selectors additionally allow Gt/Lt operators.
+func validateMatchExpressions(exprs []MatchExpression, target, field string) error {
+	for j, e := range exprs {
+		loc := fmt.Sprintf("%s[%d]", field, j)
+		if e.Key == "" {
+			return fmt.Errorf("%s: key must not be empty", loc)
+		}
+		if errs := validation.IsQualifiedName(e.Key); len(errs) > 0 {
+			return fmt.Errorf("%s: invalid key %q: %s", loc, e.Key, strings.Join(errs, ", "))
+		}
+		switch e.Operator {
+		case "In", "NotIn":
+			if len(e.Values) == 0 {
+				return fmt.Errorf("%s: operator %q requires at least one value", loc, e.Operator)
+			}
+		case "Exists", "DoesNotExist":
+			if len(e.Values) > 0 {
+				return fmt.Errorf("%s: operator %q must not have values", loc, e.Operator)
+			}
+		case "Gt", "Lt":
+			if target != "node" {
+				return fmt.Errorf("%s: operator %q is only valid for target: node", loc, e.Operator)
+			}
+			if len(e.Values) != 1 {
+				return fmt.Errorf("%s: operator %q requires exactly one value", loc, e.Operator)
+			}
+			if _, err := strconv.Atoi(e.Values[0]); err != nil {
+				return fmt.Errorf("%s: operator %q requires an integer value, got %q", loc, e.Operator, e.Values[0])
+			}
+		default:
+			return fmt.Errorf("%s: invalid operator %q", loc, e.Operator)
+		}
+	}
+	return nil
+}
+
+// validateMatchFields enforces the K8s apiserver rules for nodeSelectorTerm
+// matchFields: key must be "metadata.name", operator In or NotIn, exactly one value.
+func validateMatchFields(fields []MatchExpression, field string) error {
+	for j, f := range fields {
+		loc := fmt.Sprintf("%s[%d]", field, j)
+		if f.Key != "metadata.name" {
+			return fmt.Errorf("%s: key must be \"metadata.name\", got %q", loc, f.Key)
+		}
+		if f.Operator != "In" && f.Operator != "NotIn" {
+			return fmt.Errorf("%s: operator must be In or NotIn, got %q", loc, f.Operator)
+		}
+		if len(f.Values) != 1 {
+			return fmt.Errorf("%s: exactly one value is required, got %d", loc, len(f.Values))
+		}
+	}
+	return nil
+}
+
+// validateLabelSelector validates match_labels and match_expressions inside a label selector.
+func validateLabelSelector(sel *LabelSelector, field string) error {
+	if sel == nil {
+		return nil
+	}
+	if err := validateLabels(sel.MatchLabels, field+".match_labels"); err != nil {
+		return err
+	}
+	return validateMatchExpressions(sel.MatchExpressions, "pod", field+".match_expressions")
+}
+
+// validateLabels checks that label keys and values follow K8s label syntax.
+func validateLabels(labels map[string]string, field string) error {
+	for k, v := range labels {
+		if errs := validation.IsQualifiedName(k); len(errs) > 0 {
+			return fmt.Errorf("%s: invalid label key %q: %s", field, k, strings.Join(errs, ", "))
+		}
+		if errs := validation.IsValidLabelValue(v); len(errs) > 0 {
+			return fmt.Errorf("%s: invalid label value %q for key %q: %s", field, v, k, strings.Join(errs, ", "))
 		}
 	}
 	return nil

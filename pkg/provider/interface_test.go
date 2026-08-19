@@ -387,10 +387,7 @@ func TestBuildPodAffinityTerms_MatchExpressions(t *testing.T) {
 			},
 		},
 	}
-	terms, err := buildPodAffinityTerms(rules, "preferred")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	terms := buildPodAffinityTerms(rules, "preferred")
 	if len(terms) != 1 {
 		t.Fatalf("expected 1 term, got %d", len(terms))
 	}
@@ -405,8 +402,8 @@ func TestBuildPodAffinityTerms_MatchExpressions(t *testing.T) {
 	if expr0["key"] != "app" || expr0["operator"] != "In" {
 		t.Errorf("unexpected first expression: %v", expr0)
 	}
-	vals := expr0["values"].([]string)
-	if len(vals) != 2 || vals[0] != "web" {
+	vals := expr0["values"].([]interface{})
+	if len(vals) != 2 || vals[0].(string) != "web" {
 		t.Errorf("unexpected values: %v", vals)
 	}
 }
@@ -419,14 +416,11 @@ func TestBuildPodAffinityTerms_Namespaces(t *testing.T) {
 			Namespaces:  []string{"ns1", "ns2"},
 		},
 	}
-	terms, err := buildPodAffinityTerms(rules, "preferred")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	terms := buildPodAffinityTerms(rules, "preferred")
 	wt := terms[0].(map[string]interface{})
 	podTerm := wt["podAffinityTerm"].(map[string]interface{})
-	ns := podTerm["namespaces"].([]string)
-	if len(ns) != 2 || ns[0] != "ns1" || ns[1] != "ns2" {
+	ns := podTerm["namespaces"].([]interface{})
+	if len(ns) != 2 || ns[0].(string) != "ns1" || ns[1].(string) != "ns2" {
 		t.Errorf("expected namespaces [ns1, ns2], got %v", ns)
 	}
 }
@@ -444,14 +438,11 @@ func TestBuildPodAffinityTerms_NamespaceSelector(t *testing.T) {
 			},
 		},
 	}
-	terms, err := buildPodAffinityTerms(rules, "required")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	terms := buildPodAffinityTerms(rules, "required")
 	term := terms[0].(map[string]interface{})
 	nsSel := term["namespaceSelector"].(map[string]interface{})
-	ml := nsSel["matchLabels"].(map[string]string)
-	if ml["env"] != "prod" {
+	ml := nsSel["matchLabels"].(map[string]interface{})
+	if ml["env"].(string) != "prod" {
 		t.Errorf("expected namespaceSelector matchLabels env=prod, got %v", ml)
 	}
 	exprs := nsSel["matchExpressions"].([]interface{})
@@ -485,8 +476,8 @@ func TestBuildNodeSelectorTerms_MatchFields(t *testing.T) {
 	if field["key"] != "metadata.name" || field["operator"] != "In" {
 		t.Errorf("unexpected matchField: %v", field)
 	}
-	vals := field["values"].([]string)
-	if len(vals) != 1 || vals[0] != "node-1" {
+	vals := field["values"].([]interface{})
+	if len(vals) != 1 || vals[0].(string) != "node-1" {
 		t.Errorf("unexpected matchField values: %v", vals)
 	}
 }
