@@ -80,7 +80,7 @@ scheduling:
 		spec := crd["spec"].(map[string]interface{})
 		runPolicy := spec["runPolicy"].(map[string]interface{})
 		schedulingPolicy := runPolicy["schedulingPolicy"].(map[string]interface{})
-		Expect(schedulingPolicy["minAvailable"]).To(Equal(float64(2)))
+		Expect(schedulingPolicy["minAvailable"]).To(Equal(float64(3)))
 	})
 
 	It("should set queue in schedulingPolicy", func() {
