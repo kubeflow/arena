@@ -43,7 +43,7 @@ arena job run -f <file> [flags]
 | Flag | Shorthand | Type | Default | Description |
 |------|-----------|------|---------|-------------|
 | `--file` | `-f` | string | `""` | Path to YAML file (required) |
-| `--dry-run` | | bool | `false` | Print CRD as JSON without submitting |
+| `--dry-run` | | bool | `false` | Print CRD as JSON or YAML without submitting |
 | `--set` | | stringArray | `nil` | Override YAML field (Helm-style: `key=value`, repeatable) |
 
 Also inherits [global flags](#global-flags) and `--output` from `arena job`.
@@ -67,7 +67,7 @@ $ arena job run -f examples/v2/quickstart/pytorch-simple.yaml --dry-run
 Job pytorch-simple submitted successfully
 ```
 
-With `--dry-run`, the generated CRD is printed as indented JSON. If TensorBoard is enabled, the Deployment and Service resources are also printed, separated by `---`.
+With `--dry-run`, the generated CRD is printed as indented JSON (default) or YAML (`-o yaml`). If TensorBoard is enabled, the Deployment and Service resources are also printed, separated by `---`.
 
 ---
 
@@ -518,11 +518,12 @@ Trailing arguments after `--` are used as the run command.
 
 **Dry-run:**
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `--dry-run` | bool | `false` | Print CRD as JSON without submitting |
+| Flag | Shorthand | Type | Default | Description |
+|------|-----------|------|---------|-------------|
+| `--dry-run` | | bool | `false` | Print CRD as JSON or YAML without submitting |
+| `--output` | `-o` | string | `json` (when `--dry-run`) | Dry-run output format: `json` or `yaml` |
 
-Also inherits [global flags](#global-flags) and `--output` from `arena job`.
+Also inherits [global flags](#global-flags).
 
 ### Examples
 

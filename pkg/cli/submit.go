@@ -8,6 +8,7 @@ import (
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
+	outputpkg "github.com/kubeflow/arena/pkg/output"
 	"github.com/kubeflow/arena/pkg/task"
 )
 
@@ -77,6 +78,8 @@ Trailing arguments after -- are used as the run command.`,
 			return fmt.Errorf("unsupported framework type: %q (must be pytorch, tensorflow, mpi, horovod, deepspeed, or ray)",
 				args[0])
 		}
+
+		applyDryRunOutputDefault(cmd, submitDryRun)
 
 		// Trailing args after -- become the run command
 		trailingArgs := []string{}
@@ -429,7 +432,9 @@ func init() {
 	submitCmd.Flags().BoolVar(&submitMountsOnLauncher, "mounts-on-launcher", false, "MPI: mount volumes on launcher")
 
 	// Dry-run
-	submitCmd.Flags().BoolVar(&submitDryRun, "dry-run", false, "print CRD as JSON without submitting")
+	submitCmd.Flags().BoolVar(&submitDryRun, "dry-run", false, "print CRD as JSON (default) or YAML (-o yaml) without submitting")
+	submitCmd.Flags().StringVarP(&outputFormat, "output", "o", string(outputpkg.DefaultFormat), outputpkg.FormatHelpText)
+	_ = submitCmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
 
 	_ = submitCmd.MarkFlagRequired("name")
 	_ = submitCmd.MarkFlagRequired("image")

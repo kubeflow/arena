@@ -1287,9 +1287,10 @@ worker:
 	result, err := ApplySetOverrides(yamlData, []string{
 		"scheduling.affinity.policy=spread",
 		"scheduling.affinity.constraint=preferred",
-		"scheduling.affinity.target=node",
+		"scheduling.affinity.target=pod",
 		"scheduling.affinity.rules[0].topology_key=kubernetes.io/hostname",
 		"scheduling.affinity.rules[0].weight=100",
+		"scheduling.affinity.rules[0].match_labels.app=web",
 	})
 	require.NoError(t, err)
 
@@ -1298,10 +1299,11 @@ worker:
 	require.NotNil(t, tk.Scheduling.Affinity)
 	assert.Equal(t, "spread", tk.Scheduling.Affinity.Policy)
 	assert.Equal(t, "preferred", tk.Scheduling.Affinity.Constraint)
-	assert.Equal(t, "node", tk.Scheduling.Affinity.Target)
+	assert.Equal(t, "pod", tk.Scheduling.Affinity.Target)
 	require.Len(t, tk.Scheduling.Affinity.Rules, 1)
 	assert.Equal(t, "kubernetes.io/hostname", tk.Scheduling.Affinity.Rules[0].TopologyKey)
 	assert.Equal(t, 100, tk.Scheduling.Affinity.Rules[0].Weight)
+	assert.Equal(t, map[string]string{"app": "web"}, tk.Scheduling.Affinity.Rules[0].MatchLabels)
 }
 
 func TestApplySetOverrides_NodeSelector(t *testing.T) {

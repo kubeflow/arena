@@ -63,19 +63,77 @@ scheduling:
 
 ### affinity
 
-`affinity` uses an orthogonal `policy x constraint x target` design (see
-[yaml-schema.md](yaml-schema.md) for the design rationale):
+`affinity` uses an orthogonal `target × policy × constraint` design:
 
-- **policy** (`none` | `spread` | `binpack`): scheduling intent. Defaults to
-  `none`. When not `none`, `rules[]` is required.
+- **target** (`pod` | `node`): determines the topology domain. `pod` uses
+  `topology_key` (user-specified: hostname, zone, rack). `node` uses hostname
+  (fixed). Required when `policy` is not `none`.
+- **policy** (`none` | `spread` | `binpack`): distribution strategy. `spread`
+  distributes pods across topology domains; `binpack` concentrates them into
+  the same domain. Defaults to `none`. When `none` or unset, no affinity is
+  generated — any `rules` are ignored with a warning.
 - **constraint** (`preferred` | `required`): strength. Maps to Kubernetes
   preferred/required scheduling. Defaults to `preferred`. `preferred` rules must
   set `weight` between 1 and 100.
-- **target** (`pod` | `node`): generates podAffinity or nodeAffinity. Required
-  when `rules[]` is present.
-- **rules[]**: direct mapping of native Kubernetes affinity fields
-  (`topology_key`, `weight`, `match_expressions`, `match_fields`,
-  `match_labels`, `namespaces`, `namespace_selector`).
+- **rules[]**: scope selection. Required for `target: pod` (defines which pods
+  to match and the topology domain). Optional for `target: node` (adds
+  nodeAffinity to limit eligible nodes; omit to apply distribution to all
+  nodes).
+
+**K8s mechanisms generated:**
+
+| target | policy | K8s mechanism |
+|---|---|---|
+| pod | spread | podAntiAffinity |
+| pod | binpack | podAffinity |
+| node | spread | topologySpreadConstraints (+ optional nodeAffinity) |
+| node | binpack | podAffinity (+ optional nodeAffinity) |
+
+For `node` + `binpack` with `constraint: preferred`, the generated self
+podAffinity always uses weight 100; rule `weight` values only apply to the
+nodeAffinity preferences derived from `rules[]`.
+
+For `target: node`, the generated podAffinity/topologySpreadConstraints use a self-referential labelSelector and a hardcoded `kubernetes.io/hostname` topologyKey — see [YAML Schema — Scheduling](yaml-schema.md#scheduling) for details.
+
+**Multiple node rules are ORed.** Each rule becomes one `nodeSelectorTerm`, and
+Kubernetes treats multiple terms as OR (a node matching *any* rule is eligible),
+while `match_expressions` *within* one rule are ANDed. To require all
+conditions, put them in a single rule:
+
+```yaml
+# OR: nodes with A100 GPUs, OR nodes in us-east-1a
+rules:
+  - match_expressions:
+      - {key: gpu-type, operator: In, values: [A100]}
+  - match_expressions:
+      - {key: topology.kubernetes.io/zone, operator: In, values: [us-east-1a]}
+
+# AND: nodes with A100 GPUs in us-east-1a
+rules:
+  - match_expressions:
+      - {key: gpu-type, operator: In, values: [A100]}
+      - {key: topology.kubernetes.io/zone, operator: In, values: [us-east-1a]}
+```
+
+For OR over values of the *same* key, prefer a single expression with
+`operator: In` and multiple `values`.
+
+**How rules interact with spread.** With `constraint: required`, the scheduler
+first filters nodes by the rules-derived nodeAffinity, then computes spread skew
+only over the eligible nodes (the default `nodeAffinityPolicy: Honor` behavior).
+With `constraint: preferred`, nodeAffinity is a scoring preference and does not
+narrow the spread domains — both constraints are soft, so this only affects
+scoring, never schedulability.
+
+**All pods of the job count toward spread/binpack.** The self-referential
+labelSelector matches every pod carrying the job's
+`training.kubeflow.org/job-name` label — including the PyTorch master and the
+MPI launcher, not just workers. For MPI jobs, the launcher occupies one slot in
+the `maxSkew: 1` calculation, which can slightly skew worker distribution.
+This label is injected by training-operator (>= v1.5) and mpi-operator
+v2beta1; the legacy standalone mpi-operator v1 labels pods `mpi-job-name`
+instead, so `target: node` spread/binpack self-selectors silently never match
+there.
 
 ### Complete scheduling example
 
