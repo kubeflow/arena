@@ -30,6 +30,8 @@ Use --set to override YAML fields with Helm-style dot-notation paths.`,
 			return errors.New("--file is required")
 		}
 
+		applyDryRunOutputDefault(cmd, runDryRun)
+
 		log.Debug("loading task from file", "file", runFile)
 
 		// Read raw YAML
@@ -81,7 +83,7 @@ func getProvider(frameworkName string) (provider.Provider, error) {
 
 func init() {
 	runCmd.Flags().StringVarP(&runFile, "file", "f", "", "path to YAML file")
-	runCmd.Flags().BoolVar(&runDryRun, "dry-run", false, "print CRD as JSON without submitting")
+	runCmd.Flags().BoolVar(&runDryRun, "dry-run", false, "print CRD as JSON (default) or YAML (-o yaml) without submitting")
 	runCmd.Flags().StringArrayVar(&runSetExprs, "set", nil,
 		"override YAML field (Helm-style: key=value, repeatable)")
 

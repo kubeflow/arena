@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,7 +15,81 @@ import (
 	"k8s.io/client-go/dynamic/fake"
 
 	"github.com/kubeflow/arena/pkg/client"
+	outputpkg "github.com/kubeflow/arena/pkg/output"
 )
+
+func TestDryRunFormat(t *testing.T) {
+	orig := outputFormat
+	t.Cleanup(func() { outputFormat = orig })
+
+	tests := []struct {
+		format  string
+		want    outputpkg.Format
+		wantErr bool
+	}{
+		{"json", outputpkg.FormatJSON, false},
+		{"yaml", outputpkg.FormatYAML, false},
+		{"table", "", true},
+		{"wide", "", true},
+		{"", "", true},
+	}
+	for _, tt := range tests {
+		t.Run("format_"+tt.format, func(t *testing.T) {
+			outputFormat = tt.format
+			got, err := dryRunFormat()
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "dry-run only supports -o json or yaml")
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestPrintCRD_UnsupportedFormat(t *testing.T) {
+	crd := &unstructured.Unstructured{Object: map[string]interface{}{"kind": "PyTorchJob"}}
+	err := printCRD(crd, outputpkg.FormatTable)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported CRD output format")
+}
+
+func TestPrintCRD_YAMLAndJSON(t *testing.T) {
+	crd := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "kubeflow.org/v1",
+		"kind":       "PyTorchJob",
+	}}
+	require.NoError(t, printCRD(crd, outputpkg.FormatYAML))
+	require.NoError(t, printCRD(crd, outputpkg.FormatJSON))
+}
+
+func TestApplyDryRunOutputDefault(t *testing.T) {
+	orig := outputFormat
+	t.Cleanup(func() { outputFormat = orig })
+
+	newCmd := func() *cobra.Command {
+		cmd := &cobra.Command{Use: "x"}
+		cmd.Flags().StringVarP(&outputFormat, "output", "o", string(outputpkg.DefaultFormat), "")
+		return cmd
+	}
+
+	// dry-run without explicit -o: defaults to json
+	outputFormat = string(outputpkg.DefaultFormat)
+	applyDryRunOutputDefault(newCmd(), true)
+	assert.Equal(t, string(outputpkg.FormatJSON), outputFormat)
+
+	// dry-run with explicit -o yaml: kept
+	cmd := newCmd()
+	require.NoError(t, cmd.Flags().Set("output", "yaml"))
+	applyDryRunOutputDefault(cmd, true)
+	assert.Equal(t, "yaml", outputFormat)
+
+	// no dry-run: untouched
+	outputFormat = string(outputpkg.DefaultFormat)
+	applyDryRunOutputDefault(newCmd(), false)
+	assert.Equal(t, string(outputpkg.DefaultFormat), outputFormat)
+}
 
 func TestIsMPIFamily(t *testing.T) {
 	tests := []struct {

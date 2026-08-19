@@ -1,36 +1,82 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
 	"github.com/kubeflow/arena/pkg/log"
+	outputpkg "github.com/kubeflow/arena/pkg/output"
 	"github.com/kubeflow/arena/pkg/provider"
 	"github.com/kubeflow/arena/pkg/task"
 )
 
-// printCRD marshals a CRD as indented JSON and prints it to stdout.
-func printCRD(crd *unstructured.Unstructured) error {
-	data, err := json.MarshalIndent(crd.Object, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal CRD: %w", err)
+// dryRunFormat returns the output format for dry-run.
+// Only json and yaml are meaningful for CRD output.
+func dryRunFormat() (outputpkg.Format, error) {
+	f := outputpkg.Format(outputFormat)
+	switch f {
+	case outputpkg.FormatYAML, outputpkg.FormatJSON:
+		return f, nil
+	default:
+		return "", fmt.Errorf("dry-run only supports -o json or yaml, got %q", outputFormat)
 	}
-	fmt.Println(string(data))
+}
+
+// applyDryRunOutputDefault switches the shared output format from the table
+// default to json when --dry-run is set and the user did not pass -o/--output.
+func applyDryRunOutputDefault(cmd *cobra.Command, dryRun bool) {
+	if dryRun && !cmd.Flags().Changed("output") {
+		outputFormat = string(outputpkg.FormatJSON)
+	}
+}
+
+// printCRD marshals a CRD as indented JSON or YAML and prints it to stdout.
+func printCRD(crd *unstructured.Unstructured, format outputpkg.Format) error {
+	switch format {
+	case outputpkg.FormatYAML:
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
+		if err := enc.Encode(crd.Object); err != nil {
+			return fmt.Errorf("failed to marshal CRD as YAML: %w", err)
+		}
+		if err := enc.Close(); err != nil {
+			return fmt.Errorf("failed to close YAML encoder: %w", err)
+		}
+		fmt.Print(buf.String())
+	case outputpkg.FormatJSON:
+		data, err := json.MarshalIndent(crd.Object, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal CRD as JSON: %w", err)
+		}
+		fmt.Println(string(data))
+	default:
+		return fmt.Errorf("unsupported CRD output format %q", format)
+	}
 	return nil
 }
 
 // printDryRun prints the CRD and all auxiliary resources that would be created
 // during a real submission (TensorBoard Deployment and Service if enabled).
-// Each resource is printed as indented JSON separated by "---" for readability.
+// Output format respects -o/--output (json or yaml; defaults to json).
+// Multiple resources are separated by "---" for readability.
 func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
-	if err := printCRD(crd); err != nil {
+	format, err := dryRunFormat()
+	if err != nil {
+		return err
+	}
+
+	if err := printCRD(crd, format); err != nil {
 		return fmt.Errorf("failed to print CRD: %w", err)
 	}
 
@@ -63,7 +109,7 @@ func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
 			ownerRef,
 		)
 		fmt.Println("---")
-		if err := printCRD(deploy); err != nil {
+		if err := printCRD(deploy, format); err != nil {
 			return fmt.Errorf("failed to print TensorBoard Deployment: %w", err)
 		}
 
@@ -74,7 +120,7 @@ func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
 			ownerRef,
 		)
 		fmt.Println("---")
-		if err := printCRD(svc); err != nil {
+		if err := printCRD(svc, format); err != nil {
 			return fmt.Errorf("failed to print TensorBoard Service: %w", err)
 		}
 	}
