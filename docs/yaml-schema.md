@@ -203,35 +203,49 @@ scheduling:
 
 | Dimension | Values | Description |
 |---|---|---|
-| `policy` | `none`, `spread`, `binpack` | Scheduling intent. Default: `none`. |
+| `policy` | `none`, `spread`, `binpack` | Scheduling intent. Default: `none`. `spread` = distribute across topology domains; `binpack` = concentrate into same domain. When `none` or unset, no affinity is generated — any `rules` are ignored with a warning. |
 | `constraint` | `preferred`, `required` | Strength (preferred vs required). Default: `preferred`. |
-| `target` | `pod`, `node` | Generate podAffinity or nodeAffinity. Required when `policy` is not `none`. |
+| `target` | `pod`, `node` | Topology domain. `pod` = user-specified via `topology_key`; `node` = hostname (fixed). Required when `policy` is not `none`. |
 
-`rules[]` is required when `policy` is not `none` and maps directly to K8s affinity rule fields:
+`rules[]` is required when `policy` is not `none` and `target` is `pod`. For `target: node`, rules are optional (they add nodeAffinity to limit eligible nodes). Multiple node rules are ORed (a node matching any rule is eligible); conditions within one rule are ANDed — see [Advanced — affinity](advanced.md#affinity).
 
 | Rule field | Applies to | Description |
 |---|---|---|
 | `weight` | preferred constraint | Weight (1-100). |
-| `topology_key` | target: pod | Topology domain key. |
-| `match_labels` | both | Label match. |
+| `topology_key` | target: pod | Topology domain key (e.g. `kubernetes.io/hostname`, `topology.kubernetes.io/zone`). Defaults to `kubernetes.io/hostname` if omitted. |
+| `match_labels` | both | Label match. pod: match pods; node: select nodes (nodeAffinity). |
 | `match_expressions` | both | Label selector requirements (key, operator, values). |
-| `match_fields` | target: node | Node field selector. |
+| `match_fields` | target: node | Node field selector (e.g. `metadata.name`). |
 | `namespaces` | target: pod | Filter namespaces by name. |
 | `namespace_selector` | target: pod | Filter namespaces by label selector. |
+
+**K8s mechanism mapping:**
+
+| target | policy | K8s mechanism |
+|---|---|---|
+| pod | spread | podAntiAffinity |
+| pod | binpack | podAffinity |
+| node | spread | topologySpreadConstraints (+ optional nodeAffinity) |
+| node | binpack | podAffinity (+ optional nodeAffinity) |
+
+For `target: node`, the generated podAffinity (binpack) and topologySpreadConstraints (spread) use a **self-referential labelSelector** — they match pods carrying the `training.kubeflow.org/job-name` label (injected by the Kubeflow Training Operator onto all pods it creates) to co-locate or spread pods from the same job. The `topologyKey` is hardcoded to `kubernetes.io/hostname`.
 
 ```yaml
 scheduling:
   affinity:
-    policy: spread                   # Spread pods across topology domains
-    constraint: preferred            # Best-effort (not hard requirement)
-    target: node                     # Use nodeAffinity
+    policy: spread
+    constraint: preferred
+    target: node                     # Spread across nodes (hostname topology)
+    # rules optional for target: node — omit to spread across all nodes
     rules:
-      - weight: 1
+      - weight: 100
+        match_labels:
+          accelerator: nvidia
         match_fields:
           - key: metadata.name
             operator: In
             values:
-              - node-1
+              - node-gpu-01
 ```
 
 ### Storage

@@ -63,7 +63,7 @@ See [yaml-schema.md](yaml-schema.md) for the full field reference.
 
 ### Always dry-run before submitting
 
-`--dry-run` builds the CRD (and TensorBoard resources if enabled) and prints them as JSON without touching the cluster. Use it to validate field values, verify provider mapping, and catch schema errors early.
+`--dry-run` builds the CRD (and TensorBoard resources if enabled) and prints them as JSON or YAML without touching the cluster. Use it to validate field values, verify provider mapping, and catch schema errors early.
 
 ```shell
 arena job run -f train.yaml --dry-run
