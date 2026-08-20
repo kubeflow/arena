@@ -233,6 +233,7 @@ func (p *MPIProvider) buildMPICRD(t *task.Task, apiVersion string) (*unstructure
 // Global task envs (t.Envs) are always merged by buildEnvVars inside buildRoleReplicaSpec.
 func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map[string]interface{}, error) {
 	var resources task.Resources
+	var limits task.Resources
 	var envs map[string]task.EnvValue
 	var launcherRun string
 
@@ -240,31 +241,40 @@ func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map
 	case t.Launcher != nil:
 		// Launcher explicitly configured: use its own config only
 		resources = t.Launcher.Resources
+		limits = t.Launcher.Limits
 		envs = t.Launcher.Envs
 		launcherRun = t.Launcher.Run
 	case t.Framework.Options.RunLauncherAsWorker:
 		// No launcher config + run_launcher_as_worker: inherit from worker
 		resources = t.Worker.Resources
+		limits = t.Worker.Limits
 		envs = t.Worker.Envs
 	default:
 		// No launcher config + no run_launcher_as_worker: CPU-only
 		resources = nil
+		limits = nil
 		envs = nil
 	}
 
-	includeVolumes := t.Framework.Options.MountsOnLauncher
+	// Always build the launcher with all volumes; when mounts_on_launcher=false
+	// only the main container's volumeMounts are cleared — volumes stay declared
+	// so init containers keep working exactly as declared.
 	spec, err := buildRoleReplicaSpec(replicaSpecOptions{
-		ContainerName:  constants.FrameworkMPI,
-		Task:           t,
-		Resources:      resources,
-		Envs:           envs,
-		Replicas:       1,
-		RestartPolicy:  restartPolicy,
-		IncludeVolumes: includeVolumes,
-		Run:            effectiveRun(t, launcherRun),
+		ContainerName: constants.FrameworkMPI,
+		Task:          t,
+		Resources:     resources,
+		Limits:        limits,
+		Envs:          envs,
+		Replicas:      1,
+		RestartPolicy: restartPolicy,
+		Run:           effectiveRun(t, launcherRun),
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if !t.Framework.Options.MountsOnLauncher {
+		clearLauncherContainerMounts(spec)
 	}
 
 	// Inject launcher SA if user hasn't specified one.
@@ -281,6 +291,30 @@ func (p *MPIProvider) buildLauncherSpec(t *task.Task, restartPolicy string) (map
 	return spec, nil
 }
 
+// clearLauncherContainerMounts removes volumeMounts from the launcher main
+// container when mounts_on_launcher=false. Volumes stay declared in the pod
+// spec so init containers keep working exactly as the user declared them —
+// dangling mounts are impossible. The launcher main container only runs
+// mpirun over SSH on the workers; it does not execute user code, so it needs
+// no data volumes.
+func clearLauncherContainerMounts(spec map[string]interface{}) {
+	template, ok := spec["template"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	podSpec, ok := template["spec"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	containers, ok := podSpec["containers"].([]interface{})
+	if !ok || len(containers) == 0 {
+		return
+	}
+	if container, ok := containers[0].(map[string]interface{}); ok {
+		delete(container, "volumeMounts")
+	}
+}
+
 // buildWorkerReplicaSpec creates the Worker replica spec with full resources.
 // MPI workers run as SSH daemons for the launcher to dispatch commands to.
 // They must not receive the user's run command — only the launcher executes it.
@@ -290,11 +324,12 @@ func (p *MPIProvider) buildWorkerReplicaSpec(t *task.Task, replicas int64, resta
 		Image:     t.Image,
 		Task:      t,
 		Resources: t.Worker.Resources,
+		Limits:    t.Worker.Limits,
 		RoleEnvs:  t.Worker.Envs,
 		Run:       "",
 		Mounts:    nil,
 	})
-	podSpec, err := buildPodSpec(t, container, true)
+	podSpec, err := buildPodSpec(t, container)
 	if err != nil {
 		return nil, err
 	}

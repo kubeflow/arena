@@ -30,9 +30,13 @@ func completeFrameworkType(cmd *cobra.Command, args []string, toComplete string)
 		"tf\tTensorFlow",
 		"mpi\tMPI",
 		"mpijob\tMPI",
+		"mj\tMPI",
 		"horovod\tHorovod",
+		"horovodjob\tHorovod",
+		"hj\tHorovod",
 		"deepspeed\tDeepSpeed",
-		"ray\tRay",
+		"deepspeedjob\tDeepSpeed",
+		"dp\tDeepSpeed",
 	}, cobra.ShellCompDirectiveNoFileComp
 }
 

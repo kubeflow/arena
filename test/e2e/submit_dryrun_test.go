@@ -100,7 +100,7 @@ var _ = Describe("Submit flags (dry-run)", func() {
 			"--namespace", namespace,
 			"--image", "docker.io/library/tensorflow:2.15",
 			"--workers", "2",
-			"--ps-count", "1",
+			"--ps", "1",
 			"--chief",
 			"--evaluator",
 			"python train.py")
@@ -126,15 +126,15 @@ var _ = Describe("Submit flags (dry-run)", func() {
 		Expect(replicaSpecs).To(HaveKey("Launcher"))
 	})
 
-	It("submit with resource flags --gpus --cpus --mem", func() {
+	It("submit with resource flags --gpus --cpu --memory", func() {
 		crd := runSubmitDryRun("pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",
 			"--workers", "1",
 			"--gpus", "2",
-			"--cpus", "4",
-			"--mem", "8Gi",
+			"--cpu", "4",
+			"--memory", "8Gi",
 			"python train.py")
 
 		replicaSpecs := getReplicaSpecs(crd, "pytorchReplicaSpecs")
@@ -209,29 +209,29 @@ var _ = Describe("Submit flags (dry-run)", func() {
 		Expect(tol["effect"]).To(Equal("NoSchedule"))
 	})
 
-	It("submit with --priority", func() {
+	It("submit with --priority (priority class name)", func() {
 		crd := runSubmitDryRun("pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",
 			"--workers", "1",
-			"--priority", "10",
+			"--priority", "high-priority",
 			"python train.py")
 
 		replicaSpecs := getReplicaSpecs(crd, "pytorchReplicaSpecs")
 		master := replicaSpecs["Master"].(map[string]interface{})
 		template := master["template"].(map[string]interface{})
 		podSpec := template["spec"].(map[string]interface{})
-		Expect(podSpec["priority"]).To(BeNumerically("==", 10))
+		Expect(podSpec["priorityClassName"]).To(Equal("high-priority"))
 	})
 
-	It("submit with --scheduler-name", func() {
+	It("submit with --scheduler", func() {
 		crd := runSubmitDryRun("pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",
 			"--workers", "1",
-			"--scheduler-name", "volcano",
+			"--scheduler", "volcano",
 			"python train.py")
 
 		replicaSpecs := getReplicaSpecs(crd, "pytorchReplicaSpecs")
@@ -357,13 +357,13 @@ run: python train.py
 		Expect(foundMount).To(BeTrue(), "PVC volumeMount not found in container")
 	})
 
-	It("submit with --shm shared memory", func() {
+	It("submit with --share-memory shared memory", func() {
 		crd := runSubmitDryRun("pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",
 			"--workers", "1",
-			"--shm", "1Gi",
+			"--share-memory", "1Gi",
 			"python train.py")
 
 		replicaSpecs := getReplicaSpecs(crd, "pytorchReplicaSpecs")
@@ -397,13 +397,13 @@ run: python train.py
 		Expect(foundMount).To(BeTrue(), "SHM volumeMount not found in container")
 	})
 
-	It("submit with --host-network", func() {
+	It("submit with --hostNetwork", func() {
 		crd := runSubmitDryRun("pytorch",
 			"--name", jobName,
 			"--namespace", namespace,
 			"--image", "docker.io/library/pytorch:2.1",
 			"--workers", "1",
-			"--host-network",
+			"--hostNetwork",
 			"python train.py")
 
 		replicaSpecs := getReplicaSpecs(crd, "pytorchReplicaSpecs")
@@ -430,5 +430,63 @@ run: python train.py
 		Expect(secrets).To(HaveLen(1))
 		secret := secrets[0].(map[string]interface{})
 		Expect(secret["name"]).To(Equal("my-registry-secret"))
+	})
+
+	It("v1 two-part --data mounts the named PVC", func() {
+		crd := runSubmitDryRun("pytorch",
+			"--name", jobName,
+			"--namespace", namespace,
+			"--image", "docker.io/library/pytorch:2.1",
+			"--workers", "1",
+			"--data", "my-pvc:/data",
+			"python train.py")
+
+		replicaSpecs := getReplicaSpecs(crd, "pytorchReplicaSpecs")
+		master := replicaSpecs["Master"].(map[string]interface{})
+		template := master["template"].(map[string]interface{})
+		podSpec := template["spec"].(map[string]interface{})
+
+		volumes := podSpec["volumes"].([]interface{})
+		foundPVC := false
+		for _, v := range volumes {
+			vol := v.(map[string]interface{})
+			if vol["name"] == "my-pvc" {
+				pvc := vol["persistentVolumeClaim"].(map[string]interface{})
+				Expect(pvc["claimName"]).To(Equal("my-pvc"))
+				foundPVC = true
+			}
+		}
+		Expect(foundPVC).To(BeTrue(), "v1 --data should mount the PVC named by the first field")
+
+		container := getFirstContainer(master)
+		mounts := container["volumeMounts"].([]interface{})
+		foundMount := false
+		for _, m := range mounts {
+			mnt := m.(map[string]interface{})
+			if mnt["name"] == "my-pvc" {
+				Expect(mnt["mountPath"]).To(Equal("/data"))
+				foundMount = true
+			}
+		}
+		Expect(foundMount).To(BeTrue())
+	})
+
+	It("TF per-role -limit flags split requests and limits", func() {
+		crd := runSubmitDryRun("tensorflow",
+			"--name", jobName,
+			"--namespace", namespace,
+			"--image", "docker.io/library/tensorflow:2.15",
+			"--workers", "1",
+			"--worker-cpu", "1",
+			"--worker-cpu-limit", "2",
+			"python train.py")
+
+		replicaSpecs := getReplicaSpecs(crd, "tfReplicaSpecs")
+		worker := replicaSpecs["Worker"].(map[string]interface{})
+		container := getFirstContainer(worker)
+
+		resources := container["resources"].(map[string]interface{})
+		Expect(resources["requests"].(map[string]interface{})["cpu"]).To(Equal("1"))
+		Expect(resources["limits"].(map[string]interface{})["cpu"]).To(Equal("2"))
 	})
 })

@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -135,5 +136,147 @@ var _ = Describe("MPI-based Jobs", func() {
 
 	It("DeepSpeed job lifecycle", func() {
 		frameworkLifecycle("deepspeed", busyboxImage())
+	})
+})
+
+const mpiLauncherPVCYAML = `apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mpi-e2e-pvc
+  namespace: default
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+`
+
+// mounts_on_launcher=false: all volumes stay declared on the launcher pod
+// (init containers may reference them) but the launcher main container
+// mounts nothing.
+var _ = Describe("MPI launcher volume policy", func() {
+	var namespace string
+
+	BeforeEach(func() {
+		namespace = "default"
+		var out bytes.Buffer
+		cmd := exec.Command("kubectl", "apply", "-f", "-")
+		cmd.Stdin = bytes.NewReader([]byte(mpiLauncherPVCYAML))
+		cmd.Stdout = &out
+		cmd.Stderr = &out
+		Expect(cmd.Run()).NotTo(HaveOccurred(),
+			"kubectl apply pvc failed: %s", out.String())
+	})
+
+	AfterEach(func() {
+		var out bytes.Buffer
+		delCmd := exec.Command(arenaV2Bin, "job", "delete", "test-mpi-mounts",
+			"--namespace", namespace)
+		delCmd.Stdout = &out
+		delCmd.Stderr = &out
+		_ = delCmd.Run()
+
+		out.Reset()
+		pvcCmd := exec.Command("kubectl", "delete", "pvc", "mpi-e2e-pvc",
+			"-n", namespace, "--ignore-not-found")
+		pvcCmd.Stdout = &out
+		pvcCmd.Stderr = &out
+		_ = pvcCmd.Run()
+	})
+
+	names := func(field string, holder map[string]interface{}) []string {
+		items, ok := holder[field].([]interface{})
+		if !ok {
+			return nil
+		}
+		result := make([]string, 0, len(items))
+		for _, item := range items {
+			if m, ok := item.(map[string]interface{}); ok {
+				if name, ok := m["name"].(string); ok {
+					result = append(result, name)
+				}
+			}
+		}
+		return result
+	}
+
+	It("should keep volumes on launcher but clear main container mounts when mounts_on_launcher=false", func() {
+		jobYAML := fmt.Sprintf(`version: 0.1.0
+name: test-mpi-mounts
+framework:
+  name: mpi
+  options:
+    mounts_on_launcher: false
+image: %s
+run: sleep 3600
+worker:
+  replicas: 1
+  resources:
+    cpu: 1
+    memory: 1Gi
+storages:
+  - name: dataset
+    pvc: mpi-e2e-pvc
+    mount_path: /data
+  - name: cache
+    tmp: 1Gi
+    mount_path: /cache
+init:
+  - name: setup
+    image: %s
+    run: echo hi
+    mounts:
+      - name: dataset
+`, busyboxImage(), busyboxImage())
+
+		By("Submitting an MPI job with PVC + tmp storages")
+		yamlPath, err := createTempYAML(jobYAML)
+		Expect(err).NotTo(HaveOccurred())
+		defer os.Remove(yamlPath)
+
+		var out bytes.Buffer
+		runCmd := exec.Command(arenaV2Bin, "job", "run", "-f",
+			yamlPath, "--namespace", namespace)
+		runCmd.Stdout = &out
+		runCmd.Stderr = &out
+		Expect(runCmd.Run()).NotTo(HaveOccurred(),
+			"job run failed: %s", out.String())
+
+		By("Fetching the MPIJob CRD")
+		out.Reset()
+		getCmd := exec.Command("kubectl", "get", "mpijob", "test-mpi-mounts",
+			"-n", namespace, "-o", "json")
+		getCmd.Stdout = &out
+		getCmd.Stderr = &out
+		Expect(getCmd.Run()).NotTo(HaveOccurred(),
+			"kubectl get mpijob failed: %s", out.String())
+
+		var crd map[string]interface{}
+		Expect(json.Unmarshal(out.Bytes(), &crd)).NotTo(HaveOccurred())
+
+		spec := crd["spec"].(map[string]interface{})
+		replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+
+		By("Verifying launcher keeps all volumes but the main container mounts nothing")
+		launcher := replicaSpecs["Launcher"].(map[string]interface{})
+		launcherPod := launcher["template"].(map[string]interface{})["spec"].(map[string]interface{})
+		Expect(names("volumes", launcherPod)).To(ConsistOf("dataset", "cache"),
+			"launcher should keep all volumes declared (init containers may reference them)")
+
+		launcherContainers := launcherPod["containers"].([]interface{})
+		launcherMain := launcherContainers[0].(map[string]interface{})
+		Expect(names("volumeMounts", launcherMain)).To(BeEmpty(),
+			"launcher main container should have no volumeMounts when mounts_on_launcher=false")
+
+		launcherInits := launcherPod["initContainers"].([]interface{})
+		launcherInit := launcherInits[0].(map[string]interface{})
+		Expect(names("volumeMounts", launcherInit)).To(ConsistOf("dataset"),
+			"init container mounts must never be rewritten")
+
+		By("Verifying worker keeps all volumes")
+		worker := replicaSpecs["Worker"].(map[string]interface{})
+		workerPod := worker["template"].(map[string]interface{})["spec"].(map[string]interface{})
+		Expect(names("volumes", workerPod)).To(ConsistOf("dataset", "cache"),
+			"worker should keep both volumes")
 	})
 })

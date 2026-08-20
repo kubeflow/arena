@@ -394,7 +394,9 @@ Output is identical to [`arena job get`](#arena-job-get).
 
 Submit a training job using CLI flags instead of a YAML file.
 
-> **Note:** `arena job run` with a YAML file is the preferred method for v2. The `submit` command is provided for backward compatibility with v1 workflows.
+> **Note:** `arena job run` with a YAML file is the preferred method for v2. The `submit` command keeps the v1 flag interface so existing scripts work unchanged.
+
+> **Note:** Per-framework subcommands are also available: `arena submit pytorchjob`, `tfjob`, `mpijob`, `horovodjob`, and `deepspeedjob`, plus v1 aliases like `pytorch`, `tf`, and `mpi`. Each subcommand's `--help` shows only that framework's flags; the generic `arena submit <type>` form keeps working unchanged.
 
 ### Syntax
 
@@ -426,42 +428,43 @@ Trailing arguments after `--` are used as the run command.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--gpus` | int | `0` | Number of GPUs per worker |
-| `--cpus` | string | `""` | CPU request (e.g. `500m`, `2`) |
-| `--mem` | string | `""` | Memory request (e.g. `1Gi`, `512Mi`) |
+| `--cpu` | string | `""` | CPU request (e.g. `500m`, `2`) |
+| `--memory` | string | `""` | Memory request (e.g. `1Gi`, `512Mi`) |
 
 **Environment and data:**
 
 | Flag | Shorthand | Type | Default | Description |
 |------|-----------|------|---------|-------------|
-| `--env` | `-e` | stringSlice | `nil` | Environment variable (`key=value`, repeatable) |
-| `--data` | `-d` | stringSlice | `nil` | Data volume (`name:path:pvc`, repeatable) |
-| `--data-dir` | | stringSlice | `nil` | Host path volume (`name:path:hostpath`, repeatable) |
-| `--config-file` | | stringSlice | `nil` | ConfigMap volume (`name:path:configmap`, repeatable) |
-| `--label` | `-l` | stringSlice | `nil` | Label (`key=value`, repeatable) |
-| `--annotation` | `-a` | stringSlice | `nil` | Annotation (`key=value`, repeatable) |
+| `--env` | `-e` | stringArray | `nil` | Environment variable (`key=value`, repeatable) |
+| `--data` | `-d` | stringArray | `nil` | Data volume (`name:path:pvc`, repeatable); v1 form `<pvc>:<path>` also accepted (see migration guide) |
+| `--data-dir` | | stringArray | `nil` | Host path volume (`name:path:hostpath`, repeatable); v1 forms `<host_path>` / `<host_path>:<container_path>` also accepted (see migration guide) |
+| `--config-file` | | stringArray | `nil` | ConfigMap volume (`name:path:configmap`, repeatable); the v1 host-file form is rejected with guidance (see migration guide) |
+| `--label` | `-l` | stringArray | `nil` | Label (`key=value`, repeatable) |
+| `--annotation` | `-a` | stringArray | `nil` | Annotation (`key=value`, repeatable) |
 
 **Scheduling:**
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `--selector` | stringSlice | `nil` | Node selector (`key=value`, repeatable) |
-| `--toleration` | stringSlice | `nil` | Toleration (`key=value:effect`, repeatable) |
-| `--priority` | int | `0` | Pod priority value |
-| `--priority-class-name` | string | `""` | Priority class name |
-| `--gang` | bool | `false` | Enable gang scheduling |
-| `--scheduler-name` | string | `""` | Custom scheduler name |
-| `--affinity-policy` | string | `""` | Affinity policy |
-| `--affinity-constraint` | string | `""` | Affinity constraint |
-| `--queue` | string | `""` | Scheduling queue name |
+| Flag | Shorthand | Type | Default | Description |
+|------|-----------|------|---------|-------------|
+| `--selector` | | stringArray | `nil` | Node selector (`key=value`, repeatable) |
+| `--toleration` | | stringArray | `nil` | Toleration (`key=value:effect`, repeatable) |
+| `--priority` | `-p` | string | `""` | Priority class name (v1 semantics) |
+| `--gang` | | bool | `false` | Enable gang scheduling |
+| `--scheduler` | | string | `""` | Custom scheduler name |
+| `--affinity-policy` | | string | `""` | Affinity policy |
+| `--affinity-constraint` | | string | `""` | Affinity constraint |
+| `--affinity-target` | | string | `""` | Affinity target (pod or node) |
+| `--queue` | | bool | `false` | Suspend the job so an external queue manager (e.g. [kube-queue](https://github.com/kube-queue/kube-queue)) can schedule it |
 
 **Lifecycle:**
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--clean-pod-policy` | string | `""` | Clean pod policy (`None`, `Running`, `All`) |
-| `--active-deadline` | string | `""` | Active deadline (e.g. `2h`, `7d`) |
+| `--clean-task-policy` | string | `Running` | Clean pod policy (`None`, `Running`, `All`); pass an empty value to use the operator default |
+| `--running-timeout` | string | `""` | Running timeout (e.g. `2h`, `7d`) |
 | `--ttl-after-finished` | string | `""` | TTL after finished (e.g. `7d`) |
-| `--backoff-limit` | int | `0` | Backoff limit for retries |
+| `--job-backoff-limit` | int | `0` | Max restart count for the job |
+| `--retry` | int | `0` | Times to retry the job (same as `--job-backoff-limit`) |
 | `--success-policy` | string | `""` | Success policy (`ChiefWorker`, `AllWorkers`, TF only) |
 
 **Runtime:**
@@ -469,12 +472,12 @@ Trailing arguments after `--` are used as the run command.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--image-pull-policy` | string | `""` | Image pull policy (`Always`, `IfNotPresent`, `Never`) |
-| `--image-pull-secret` | stringSlice | `nil` | Image pull secret name (repeatable) |
+| `--image-pull-secret` | stringArray | `nil` | Image pull secret name (repeatable) |
 | `--service-account` | string | `""` | Service account name |
-| `--restart` | string | `""` | Restart policy (`Always`, `OnFailure`, `Never`) |
-| `--host-network` | bool | `false` | Use host network |
-| `--host-ipc` | bool | `false` | Use host IPC namespace |
-| `--host-pid` | bool | `false` | Use host PID namespace |
+| `--job-restart-policy` | string | `""` | Restart policy (`Always`, `OnFailure`, `Never`) |
+| `--hostNetwork` | bool | `false` | Use host network |
+| `--hostIPC` | bool | `false` | Use host IPC namespace |
+| `--hostPID` | bool | `false` | Use host PID namespace |
 
 **Task:**
 
@@ -482,8 +485,8 @@ Trailing arguments after `--` are used as the run command.
 |------|------|---------|-------------|
 | `--working-dir` | string | `""` | Working directory in container |
 | `--shell` | string | `""` | Shell to use (default `/bin/sh`) |
-| `--shm` | string | `""` | Shared memory size (e.g. `8Gi`) |
-| `--device` | stringSlice | `nil` | Extended resource (`name=count`, repeatable) |
+| `--share-memory` | string | `2Gi` | Shared memory size (e.g. `8Gi`); pass an empty value to skip the `/dev/shm` volume |
+| `--device` | stringArray | `nil` | Extended resource (`name=count`, repeatable) |
 | `--gpu-type` | string | `""` | GPU type (sets node selector `nvidia.com/gpu.product`) |
 
 **Logging / TensorBoard:**
@@ -491,7 +494,7 @@ Trailing arguments after `--` are used as the run command.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--tensorboard` | bool | `false` | Enable TensorBoard sidecar |
-| `--tensorboard-logdir` | string | `""` | TensorBoard log directory |
+| `--logdir` | string | `/training_logs` | TensorBoard log directory; pass an empty value to opt out of the default |
 | `--tensorboard-image` | string | `""` | TensorBoard container image |
 
 **PyTorch-specific:**
@@ -504,7 +507,7 @@ Trailing arguments after `--` are used as the run command.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--ps-count` | int | `0` | Number of parameter servers |
+| `--ps` | int | `0` | Number of parameter servers |
 | `--chief` | bool | `false` | Enable Chief worker |
 | `--evaluator` | bool | `false` | Enable Evaluator worker |
 
@@ -513,8 +516,48 @@ Trailing arguments after `--` are used as the run command.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--slots-per-worker` | int | `0` | Slots per worker |
-| `--gpu-topology` | bool | `false` | Enable GPU topology annotation |
-| `--mounts-on-launcher` | bool | `false` | Mount volumes on launcher |
+| `--gputopology` | bool | `false` | Enable GPU topology (sets host networking, `gpu-topology` labels, and the MPI annotation) |
+| `--mounts-on-launcher` | bool | `false` | MPI: when false the launcher main container gets no volumeMounts; volumes stay declared in the pod spec so init containers keep their mounts. |
+
+**Code sync (v1 compatibility):**
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--sync-mode` | string | `""` | Code sync mode: `git`, `rsync`, or `hdfs` |
+| `--sync-source` | string | `""` | Sync source URL/path (required when `--sync-mode` is set) |
+| `--sync-image` | string | `""` | Image used by the sync init container (defaults per mode: git-sync, rsync, or HDFS image) |
+
+Synced code lands in `<working-dir>/code` (default `/root/code`) as an init container. The code is exchanged through a shared `code-sync` emptyDir volume mounted by both the sync init container and the main container (size limit 10Gi; v1 used an unlimited emptyDir). The `--sync-mode` path always uses this per-pod ephemeral `code-sync` emptyDir and never targets persistent storage, so it is unaffected by the sync write-target validation (see the YAML schema docs).
+
+**Per-role resources (TensorFlow):**
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--ps-cpu` | string | `""` | CPU for PS pods |
+| `--ps-memory` | string | `""` | Memory for PS pods |
+| `--ps-gpus` | int | `0` | GPUs for PS pods |
+| `--chief-cpu` | string | `""` | CPU for Chief pods |
+| `--chief-memory` | string | `""` | Memory for Chief pods |
+| `--evaluator-cpu` | string | `""` | CPU for Evaluator pods |
+| `--evaluator-memory` | string | `""` | Memory for Evaluator pods |
+| `--worker-cpu` | string | `""` | CPU for worker pods (overrides `--cpu`) |
+| `--worker-memory` | string | `""` | Memory for worker pods (overrides `--memory`) |
+
+Resource values are applied as both requests and limits (Guaranteed QoS). Role-specific flags win over the generic `--cpu`/`--memory`.
+
+The v1 `-limit` variants of the per-role flags (`--ps-cpu-limit`, `--worker-memory-limit`, etc.) are also accepted. A `-limit` flag overrides only the limit — requests stay at the request flag — so `--worker-cpu 1 --worker-cpu-limit 2` yields requests cpu=1 / limits cpu=2 (Burstable QoS). Without `-limit` flags, requests equal limits (Guaranteed QoS).
+
+**Deprecated v1 flags:**
+
+The remaining v1-only flags are accepted as deprecated compatibility flags so existing scripts do not break; most have no effect — see the table for exceptions. Using them prints a deprecation warning.
+
+| Flag | Behavior |
+|------|----------|
+| `--config <path>` | works (bound to `--kubeconfig`); deprecated |
+| `--loglevel <level>` | mapped to verbosity (`--verbose`): debug=2, info=1, warn/error=0 |
+| `--rdma` | ignored; request RDMA hardware with `--device <resource>=<count>` |
+| `--{ps,worker,chief,evaluator,launcher}-selector`, `--{worker,launcher}-annotation`, `--{ps,worker}-image`, `--{ps,worker,chief,ssh}-port`, `--{ps,worker}-affinity-{policy,constraint}` | accepted with a warning, ignored (needs per-role RoleConfig extension) |
+| `--pprof`, `--trace`, `--helm-binary`, `--arena-namespace`, `--model-name`, `--model-source`, `--starting-timeout`, `--role-sequence`, `--ssh-secret` | accepted with a warning, no effect |
 
 **Dry-run:**
 
@@ -534,7 +577,7 @@ $ arena submit pytorch --name my-job --image pytorch/pytorch:2.3.0-cuda12.1-cudn
 
 # Submit a TensorFlow job with chief and parameter server
 $ arena submit tensorflow --name tf-job --image tensorflow/tensorflow:2.16.1-gpu \
-    --workers 3 --gpus 1 --chief --ps-count 1 -- python -c "import tensorflow as tf; print('TF:', tf.__version__)"
+    --workers 3 --gpus 1 --chief --ps 1 -- python -c "import tensorflow as tf; print('TF:', tf.__version__)"
 
 # Submit an MPI job with deepspeed
 $ arena submit deepspeed --name ds-job --image deepspeed/deepspeed \
@@ -542,6 +585,12 @@ $ arena submit deepspeed --name ds-job --image deepspeed/deepspeed \
 
 # Dry-run to inspect the generated CRD
 $ arena submit pytorch --name my-job --image pytorch/pytorch --dry-run
+
+# Git code sync with a priority class and per-worker resources
+$ arena submit pytorch --name sync-job --image pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime \
+    --workers 3 --gpus 1 --cpu 4 --memory 16Gi -p high \
+    --sync-mode git --sync-source https://github.com/example/repo.git \
+    -- python train.py --epochs 10
 ```
 
 ### Output

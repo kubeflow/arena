@@ -224,7 +224,6 @@ func submitCRD(ctx context.Context, k8sClient *client.Client, t *task.Task, fram
 	log.Debug("CRD built", "kind", crd.GetKind(), "name", crd.GetName(), "namespace", ns)
 
 	if dryRun {
-		log.Info("dry-run mode, not submitting")
 		return printDryRun(crd, t)
 	}
 

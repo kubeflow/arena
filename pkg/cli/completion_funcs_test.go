@@ -9,13 +9,14 @@ import (
 
 func TestCompleteFrameworkType(t *testing.T) {
 	completions, directive := completeFrameworkType(nil, nil, "")
-	assert.Len(t, completions, 10)
+	assert.Len(t, completions, 14)
 	assert.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 	expected := []string{
 		"pytorch\tPyTorch", "pytorchjob\tPyTorch",
 		"tensorflow\tTensorFlow", "tfjob\tTensorFlow", "tf\tTensorFlow",
-		"mpi\tMPI", "mpijob\tMPI",
-		"horovod\tHorovod", "deepspeed\tDeepSpeed", "ray\tRay",
+		"mpi\tMPI", "mpijob\tMPI", "mj\tMPI",
+		"horovod\tHorovod", "horovodjob\tHorovod", "hj\tHorovod",
+		"deepspeed\tDeepSpeed", "deepspeedjob\tDeepSpeed", "dp\tDeepSpeed",
 	}
 	assert.Equal(t, expected, completions)
 }

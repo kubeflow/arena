@@ -523,7 +523,7 @@ func TestBuildPodSpec_NodeTargetSpreadHasTopologySpreadConstraints(t *testing.T)
 		"name":  "mpi",
 		"image": "test:latest",
 	}
-	podSpec, err := buildPodSpec(job, container, false)
+	podSpec, err := buildPodSpec(job, container)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -594,7 +594,7 @@ func TestBuildPodSpec_NodeTargetBinpackNoTopologySpreadConstraints(t *testing.T)
 		"name":  "mpi",
 		"image": "test:latest",
 	}
-	podSpec, err := buildPodSpec(job, container, false)
+	podSpec, err := buildPodSpec(job, container)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -140,6 +140,55 @@ Helm Go SDK, no temp files, and no shell-outs to `kubectl`. This means:
 
 ---
 
+## Using v1 Commands with `arena submit`
+
+`arena-v2 submit` keeps the v1 flag interface. The v1 flag names are the
+registered flag names — no deprecation warnings, no renaming. Existing scripts
+work unchanged:
+
+```bash
+arena-v2 submit pytorch --name my-job --image pytorch:2.1 \
+  --workers 4 --gpus 1 --cpu 4 --memory 16Gi --share-memory 2Gi \
+  --sync-mode git --sync-source https://github.com/example/repo.git \
+  "python train.py"
+```
+
+**Fully supported:**
+
+- All renamed-in-v2-draft flags use their v1 names: `--cpu`, `--memory`,
+  `--scheduler`, `--logdir`, `--clean-task-policy`, `--running-timeout`,
+  `--share-memory`, `--job-restart-policy`, `--job-backoff-limit`, `--retry`,
+  `--ps`, `--gputopology`, `--hostNetwork`, `--hostIPC`, `--hostPID`.
+- Code sync: `--sync-mode`, `--sync-source`, `--sync-image`. Synced code lands
+  in `<working-dir>/code` (default `/root/code`) as an init container, matching
+  v1 behavior. The code is exchanged through a shared `code-sync` emptyDir
+  volume mounted by both the sync init container and the main container
+  (size limit 10Gi; v1 used an unlimited emptyDir). The v1 sync flags are applied
+  by `task.ApplyOverrides`, the same mechanism as every other submit flag.
+- Per-role resources (TFJob): `--ps-cpu`, `--ps-memory`, `--ps-gpus`,
+  `--chief-cpu`, `--chief-memory`, `--evaluator-cpu`, `--evaluator-memory`,
+  `--worker-cpu`, `--worker-memory` plus their v1 `-limit` variants
+  (`--ps-cpu-limit`, `--worker-memory-limit`, ...). A `-limit` flag overrides
+  only the limit — requests stay at the request flag — so `--worker-cpu 1
+  --worker-cpu-limit 2` yields requests cpu=1 / limits cpu=2. Role-specific
+  flags win over the generic `--cpu`/`--memory`.
+- `-p, --priority` takes a priority class name, as in v1.
+
+**Semantic differences from v1:**
+
+| Flag | v1 | v2 |
+|------|----|----|
+| `-p, --priority` | Priority class name (string) | Same in `arena submit`. The integer pod priority lives in YAML `scheduling.priority`. |
+| `--queue` | Boolean (suspend job for kube-queue) | Same in `arena submit` — sets `runPolicy.suspend`. The queue *name* (`scheduling.queue`) is YAML-only. |
+| `--workers N` (PyTorch) | N total processes (master included) | Same in `arena submit`; **differs in YAML** — see [worker.replicas Excludes Master](#workerreplicas-excludes-master) |
+| `--share-memory` | Default `"2Gi"` (PyTorch/TF) | Default `"2Gi"` on `submit`, uniform across job types; pass an empty value to skip the `/dev/shm` volume. |
+| `--logdir` | Default `"/training_logs"` | Default `"/training_logs"` on `submit`; pair it with `--tensorboard`. |
+
+See [arena submit (legacy)](cli-reference.md#arena-submit-legacy) in the CLI
+reference for the complete flag list.
+
+---
+
 ## Flag Mapping Table
 
 The following tables map v1 CLI flags to v2 YAML fields, organized by category.
@@ -168,13 +217,12 @@ Field names in v2 use `snake_case` per the schema specification.
 |---------|---------------|-------|
 | `--selector` | `scheduling.node_selector` | Array of `key=value` in v1; map in v2. |
 | `--toleration` | `scheduling.tolerations` | Array of toleration objects. |
-| `-p, --priority` | `scheduling.priority` | Integer. |
-| `--priority-class-name` | `scheduling.priority_class_name` | String. |
+| `-p, --priority` | `scheduling.priority_class_name` | v1 `--priority` took a **priority class name** (string), and `arena submit` preserves that. For an integer pod priority use `scheduling.priority` in YAML. |
 | `--gang` | `scheduling.gang.enabled` | Boolean. |
 | `--scheduler` | `scheduling.scheduler_name` | String. |
 | `--affinity-policy` | `scheduling.affinity.policy` | `none` / `spread` / `binpack`. |
 | `--affinity-constraint` | `scheduling.affinity.constraint` | `preferred` / `required`. |
-| `--queue` | `scheduling.queue` | String. |
+| `--queue` | `lifecycle.suspend` (flag) / `scheduling.queue` (YAML) | v1 boolean toggle suspends the job for kube-queue; the queue *name* is set via YAML only. |
 | `--rdma` | — | **Not planned.** |
 
 ### Data and Volumes
@@ -234,6 +282,9 @@ Each sync entry also supports `sync[].branch` (for Git), `sync[].local_path`
 (required — target path inside the container), and `sync[].mounts` for
 overriding storage mount points.
 
+These three flags are also accepted directly by `arena submit`, which fills in
+`local_path` as `<working-dir>/code` (default `/root/code`) to match v1.
+
 ### TensorBoard
 
 | v1 Flag | v2 YAML Field | Notes |
@@ -255,9 +306,9 @@ overriding storage mount points.
 | v1 Flag | v2 YAML Field | Notes |
 |---------|---------------|-------|
 | `--ps` (count) | `ps.replicas` | Integer. |
-| `--ps-cpu`, `--ps-cpu-limit` | `ps.resources.cpu` | |
-| `--ps-memory`, `--ps-memory-limit` | `ps.resources.memory` | |
-| `--ps-gpus` | `ps.resources.'nvidia.com/gpu'` | |
+| `--ps-cpu`, `--ps-cpu-limit` | `ps.resources.cpu` | Accepted by `arena submit`. |
+| `--ps-memory`, `--ps-memory-limit` | `ps.resources.memory` | Accepted by `arena submit`. |
+| `--ps-gpus` | `ps.resources.'nvidia.com/gpu'` | Accepted by `arena submit`. |
 | `--chief` (bool) | `chief` | Presence of `chief` block enables the role. |
 | `--chief-cpu`, `--chief-memory`, etc. | `chief.resources` | |
 | `--evaluator` (bool) | `evaluator` | Presence of `evaluator` block enables the role. |
@@ -282,7 +333,7 @@ overriding storage mount points.
 | `--cpu` | `worker.resources.cpu` | |
 | `--memory` | `worker.resources.memory` | |
 | `--gputopology` | `host_network` + `worker.resources` + `labels` | Sets `gpu-topology` / `gpu-topology-replica` labels. |
-| `--mounts-on-launcher` | `framework.options.mounts_on_launcher` | Boolean. |
+| `--mounts-on-launcher` | `framework.options.mounts_on_launcher` | When false, the launcher main container gets no volumeMounts; volumes stay declared so init containers keep their mounts. Unlike v1, non-PVC storages are no longer mounted on the launcher main container either. |
 | (no v1 flag) | `framework.options.run_launcher_as_worker` | v2-only field. |
 | (no v1 flag) | `framework.options.slots_per_worker` | v2-only field. |
 
@@ -305,6 +356,25 @@ overriding storage mount points.
 | `--ssh-secret` | — | **Not in schema.** MPI Operator handles SSH internally. |
 | `--launcher-annotation` | — | Not yet implemented. |
 | `--worker-annotation` | — | Not yet implemented. |
+
+### v1 flags accepted with changed or no effect
+
+| v1 flag | arena-v2 behavior |
+|---|---|
+| `--config <path>` | works (bound to `--kubeconfig`); deprecated |
+| `--loglevel <level>` | mapped to verbosity (`--verbose`): debug=2, info=1, warn/error=0 |
+| `--rdma` | ignored; request RDMA hardware with `--device <resource>=<count>` |
+| `--{ps,worker,chief,evaluator,launcher}-selector`, `--{worker,launcher}-annotation`, `--{ps,worker}-image`, `--{ps,worker,chief,ssh}-port`, `--{ps,worker}-affinity-{policy,constraint}` | accepted with a warning, ignored (needs per-role RoleConfig extension) |
+| `--pprof`, `--trace`, `--helm-binary`, `--arena-namespace`, `--model-name`, `--model-source`, `--starting-timeout`, `--role-sequence`, `--ssh-secret` | accepted with a warning, no effect |
+| `--data <pvc>:<path>` | supported (v1 form); v2 form is `--data <name>:<path>:<pvc>` |
+| `--data-dir <host>[:<container>]` | supported (v1 form); v2 form is `--data-dir <name>:<path>:<hostpath>` |
+| `--config-file <host>:<container>` | rejected with guidance — pre-create a configmap and use `--config-file <name>:<path>:<configmap>` |
+
+Defaults restored to v1 values on `submit`: `--share-memory 2Gi`, `--clean-task-policy Running`, `--logdir /training_logs` (uniform across job types; opt out by passing an empty value). Note: v1 `mpijob` defaulted `--clean-task-policy All` and had no `--share-memory`; v2 uses the uniform defaults.
+
+Repeatable flags (`--env`, `--data`, `--label`, ...) no longer split on commas — pass the flag once per value, as in v1.
+
+Per-role request/limit flags are independent again: `--worker-cpu 1 --worker-cpu-limit 2` produces requests=1/limits=2 (Burstable). Without `-limit` flags, requests equal limits (Guaranteed).
 
 ---
 
@@ -406,7 +476,6 @@ arena submit tfjob \
   --chief-cpu 2 \
   --chief-memory 4Gi \
   --evaluator \
-  --evaluator-gpus 1 \
   "python train.py"
 ```
 
@@ -508,10 +577,10 @@ launcher:
 - The `launcher` block is optional. If omitted, a default CPU-only launcher is
   used. When specified, it allows independent resource configuration for the
   launcher Pod.
-- v2-only fields `framework.options.mounts_on_launcher`,
-  `framework.options.run_launcher_as_worker`, and
+- v2-only fields `framework.options.run_launcher_as_worker` and
   `framework.options.slots_per_worker` are available for advanced MPI
-  configurations with no v1 equivalent.
+  configurations with no v1 equivalent. (`framework.options.mounts_on_launcher`
+  maps from the v1 `--mounts-on-launcher` flag; see the MPI flag table above.)
 
 ---
 

@@ -3,6 +3,7 @@ package task
 import (
 	"errors"
 	"fmt"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -128,6 +129,7 @@ type FrameworkConfig struct {
 type Worker struct {
 	Replicas  int                 `yaml:"replicas"`
 	Resources Resources           `yaml:"resources,omitempty"`
+	Limits    Resources           `yaml:"limits,omitempty"`
 	Envs      map[string]EnvValue `yaml:"envs,omitempty"`
 	Run       string              `yaml:"run,omitempty"`
 }
@@ -139,12 +141,14 @@ type RoleConfig struct {
 	// Constrained roles (master, chief, launcher, evaluator) force replicas=1.
 	Replicas  int                 `yaml:"replicas,omitempty"`
 	Resources Resources           `yaml:"resources,omitempty"`
+	Limits    Resources           `yaml:"limits,omitempty"`
 	Envs      map[string]EnvValue `yaml:"envs,omitempty"`
 	Run       string              `yaml:"run,omitempty"`
 }
 
 // Resources maps K8s resource names to quantities. Values are applied to
-// both requests and limits (Guaranteed QoS).
+// both requests and limits (Guaranteed QoS). A separate Limits map on the
+// role overrides individual limit entries without touching requests.
 type Resources map[string]string
 
 // GangConfig controls gang scheduling behavior.
@@ -842,6 +846,23 @@ func validateSync(t *Task) error {
 				}
 			}
 		}
+		// Sync is a per-pod temporary pull: every pod of the job runs this
+		// init container, so a write target on a persistent or shared storage
+		// (pvc/hostpath) means concurrent writes, and configmap/secret volumes
+		// are read-only. Detection is local_path-based — only the storage the
+		// write actually lands on matters, not which storages are mounted.
+		if st, mp := ResolveSyncWriteTarget(s, t.Storages); st != nil {
+			switch {
+			case st.PVC != "":
+				return fmt.Errorf("sync[%d].local_path %q resolves to pvc storage %q (mount_path %q): PVC is persistent storage — preload data onto the PVC instead of pulling it per-pod with sync; sync targets must be tmp or shm storages", i, s.LocalPath, st.Name, mp)
+			case st.HostPath != "":
+				return fmt.Errorf("sync[%d].local_path %q resolves to hostpath storage %q (mount_path %q): hostPath is node-local storage shared by same-node pods and outlives the pod — not a sync target; sync targets must be tmp or shm storages", i, s.LocalPath, st.Name, mp)
+			case st.ConfigMap != "":
+				return fmt.Errorf("sync[%d].local_path %q resolves to configmap storage %q (mount_path %q): configMap volumes are read-only — sync cannot write to them; sync targets must be tmp or shm storages", i, s.LocalPath, st.Name, mp)
+			case st.Secret != "":
+				return fmt.Errorf("sync[%d].local_path %q resolves to secret storage %q (mount_path %q): secret volumes are read-only — sync cannot write to them; sync targets must be tmp or shm storages", i, s.LocalPath, st.Name, mp)
+			}
+		}
 	}
 
 	// TensorBoard mounts validation (identical to sync mount validation)
@@ -863,6 +884,105 @@ func validateSync(t *Task) error {
 		}
 	}
 	return nil
+}
+
+// ResolveSyncWriteTarget returns the storage whose effective mount path
+// contains the sync entry's local_path (longest match wins; nested mounts
+// shadow outer ones), or nil when local_path matches no mount and the data
+// lands on ephemeral container storage. mountPath is the effective mount
+// path of the match, which may come from an explicit mount's mount_path
+// override rather than the storage itself.
+func ResolveSyncWriteTarget(s SyncEntry, storages []Storage) (*Storage, string) {
+	type candidate struct {
+		storage   *Storage
+		mountPath string
+	}
+	var candidates []candidate
+
+	if len(s.Mounts) > 0 {
+		storageMap := make(map[string]Storage, len(storages))
+		for i := range storages {
+			storageMap[storages[i].Name] = storages[i]
+		}
+		for _, m := range s.Mounts {
+			if m.Name == "" {
+				continue
+			}
+			st, ok := storageMap[m.Name]
+			if !ok {
+				continue
+			}
+			mountPath := m.MountPath
+			if mountPath == "" {
+				mountPath = st.MountPath
+			}
+			candidates = append(candidates, candidate{storage: &st, mountPath: normalizeMountPath(mountPath)})
+		}
+	} else {
+		for i := range storages {
+			st := storages[i]
+			mountPath := st.MountPath
+			if mountPath == "" && st.SHM != "" {
+				mountPath = constants.DefaultSHMMountPath
+			}
+			candidates = append(candidates, candidate{storage: &st, mountPath: normalizeMountPath(mountPath)})
+		}
+	}
+
+	var best *candidate
+	for j := range candidates {
+		c := &candidates[j]
+		if !pathContains(c.mountPath, s.LocalPath) {
+			continue
+		}
+		if best == nil || len(c.mountPath) > len(best.mountPath) {
+			best = c
+		} else if len(c.mountPath) == len(best.mountPath) && isBannedStorage(c.storage) {
+			best = c
+		}
+	}
+	if best == nil {
+		return nil, ""
+	}
+	return best.storage, best.mountPath
+}
+
+// normalizeMountPath cleans a declared mount path for containment matching.
+// Trailing slashes and dot-dot components are resolved lexically so a
+// local_path like /tmp/../data is matched against where it actually lands,
+// not against its literal string.
+func normalizeMountPath(p string) string {
+	if p == "" {
+		return ""
+	}
+	return path.Clean(p)
+}
+
+// pathContains reports whether target is inside dir: equal to dir, or a
+// component-wise subpath of it. An empty dir matches nothing; "/" matches
+// everything. Both sides are cleaned first so dot-dot components and
+// trailing slashes cannot skew the containment check.
+func pathContains(dir, target string) bool {
+	dir = normalizeMountPath(dir)
+	if dir == "" {
+		return false
+	}
+	target = path.Clean(target)
+	if dir == "/" {
+		return true
+	}
+	if target == dir {
+		return true
+	}
+	return strings.HasPrefix(target, dir+"/")
+}
+
+// isBannedStorage reports whether the storage type may never be a sync write
+// target: pvc/hostpath are persistent or shared, configmap/secret are
+// read-only. Classification is conservative for malformed storages that
+// declare multiple types: any banned field wins.
+func isBannedStorage(st *Storage) bool {
+	return st.PVC != "" || st.HostPath != "" || st.ConfigMap != "" || st.Secret != ""
 }
 
 // validateRoles validates master, chief, launcher, evaluator, and PS roles.

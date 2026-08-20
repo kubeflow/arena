@@ -737,9 +737,12 @@ func buildTopologySpreadConstraints(a *task.Affinity, jobName string) []interfac
 }
 
 // buildInitContainers creates init containers from task.Init and task.Sync.
-// Sync-generated init containers (arena-sync-N) are added first, followed by user-defined init containers.
-func buildInitContainers(t *task.Task) []map[string]interface{} {
-	containers := make([]map[string]interface{}, 0, len(t.Init)+len(t.Sync))
+// Sync-generated init containers (arena-sync-N) are added first, followed by
+// user-defined init containers. All slices embedded in an unstructured object
+// must be []interface{} — typed Go slices make apimachinery helpers (e.g.
+// NestedMap) panic on deep copy.
+func buildInitContainers(t *task.Task) []interface{} {
+	containers := make([]interface{}, 0, len(t.Init)+len(t.Sync))
 
 	if syncInits := buildSyncInitContainers(t); len(syncInits) > 0 {
 		containers = append(containers, syncInits...)
@@ -774,17 +777,32 @@ func buildInitContainers(t *task.Task) []map[string]interface{} {
 	return containers
 }
 
+// syncWritesToEphemeral reports whether the sync entry's local_path misses
+// every resolved mount, meaning the data lands on ephemeral container
+// storage. Containment follows task.ResolveSyncWriteTarget: a local_path
+// under a mount path (not just equal to it) writes to that volume.
+func syncWritesToEphemeral(s task.SyncEntry, t *task.Task) bool {
+	if s.LocalPath == "" {
+		return false
+	}
+	if len(ResolveContainerMounts(s.Mounts, t)) == 0 {
+		return false
+	}
+	st, _ := task.ResolveSyncWriteTarget(s, t.Storages)
+	return st == nil
+}
+
 // buildSyncInitContainers generates system init containers from all sync entries.
 // Supports git-sync, rsync, and hdfs modes. Each sync entry gets its own init container
 // named arena-sync-N. Volume mounts are resolved from storages via ResolveContainerMounts.
 // The sync command target path is always local_path; a warning is printed to stderr
 // when local_path does not match any resolved mount path.
-func buildSyncInitContainers(t *task.Task) []map[string]interface{} {
+func buildSyncInitContainers(t *task.Task) []interface{} {
 	if len(t.Sync) == 0 {
 		return nil
 	}
 
-	containers := make([]map[string]interface{}, 0, len(t.Sync))
+	containers := make([]interface{}, 0, len(t.Sync))
 	for i, s := range t.Sync {
 		containerName := "arena-sync-" + strconv.Itoa(i)
 
@@ -800,21 +818,9 @@ func buildSyncInitContainers(t *task.Task) []map[string]interface{} {
 			containers = append(containers, buildHDFSSyncContainer(s, containerName, volumeMounts))
 		}
 
-		// Warn when local_path does not match any resolved mount path
-		if s.LocalPath != "" && len(volumeMounts) > 0 {
-			matched := false
-			for _, vm := range volumeMounts {
-				if m, ok := vm.(map[string]interface{}); ok {
-					if mp, ok := m["mountPath"].(string); ok && mp == s.LocalPath {
-						matched = true
-						break
-					}
-				}
-			}
-			if !matched {
-				log.Warning("sync local_path does not match any mount path; data will be written to ephemeral storage",
-					"index", i, "local_path", s.LocalPath)
-			}
+		if syncWritesToEphemeral(s, t) {
+			log.Warning("sync local_path does not match any mount path; data will be written to ephemeral storage",
+				"index", i, "local_path", s.LocalPath)
 		}
 	}
 
@@ -897,7 +903,8 @@ func buildHDFSSyncContainer(sync task.SyncEntry, name string, volumeMounts []int
 // buildEnvWithOverrides merges default envs with user envs.
 // User envs with the same key override default values.
 // User envs with secret/configmap refs are appended.
-func buildEnvWithOverrides(defaults map[string]string, userEnvs map[string]task.EnvValue) []map[string]interface{} {
+// Returns JSON-native []interface{} for embedding in unstructured objects.
+func buildEnvWithOverrides(defaults map[string]string, userEnvs map[string]task.EnvValue) []interface{} {
 	// Start with defaults, userEnvs with same key override default value
 	merged := make(map[string]string, len(defaults))
 	for k, v := range defaults {
@@ -905,7 +912,7 @@ func buildEnvWithOverrides(defaults map[string]string, userEnvs map[string]task.
 	}
 
 	// Track which keys are handled by user envs with refs
-	refEnvs := make([]map[string]interface{}, 0, len(userEnvs))
+	refEnvs := make([]interface{}, 0, len(userEnvs))
 	for k, e := range userEnvs {
 		if e.Secret != nil || e.ConfigMap != nil {
 			// Env with secret/configmap ref - add to ref list
@@ -935,7 +942,7 @@ func buildEnvWithOverrides(defaults map[string]string, userEnvs map[string]task.
 	}
 
 	// Output: merged plain values (sorted for deterministic output) + ref envs (sorted by name)
-	result := make([]map[string]interface{}, 0, len(merged)+len(refEnvs))
+	result := make([]interface{}, 0, len(merged)+len(refEnvs))
 	mergedKeys := make([]string, 0, len(merged))
 	for k := range merged {
 		mergedKeys = append(mergedKeys, k)
@@ -947,8 +954,8 @@ func buildEnvWithOverrides(defaults map[string]string, userEnvs map[string]task.
 		})
 	}
 	sort.Slice(refEnvs, func(i, j int) bool {
-		nameI, _ := refEnvs[i]["name"].(string)
-		nameJ, _ := refEnvs[j]["name"].(string)
+		nameI, _ := refEnvs[i].(map[string]interface{})["name"].(string)
+		nameJ, _ := refEnvs[j].(map[string]interface{})["name"].(string)
 		return nameI < nameJ
 	})
 	result = append(result, refEnvs...)
@@ -986,23 +993,30 @@ func buildMetadata(t *task.Task) map[string]interface{} {
 	return meta
 }
 
-// buildResources creates a Guaranteed QoS resource block (requests == limits).
-func buildResources(r task.Resources) map[string]interface{} {
-	if len(r) == 0 {
+// buildResources creates a resource block with the limits overlay semantics:
+// requests come from r; limits are r overlaid with limits (limits entries win
+// on key conflicts). Returns nil when both maps are empty (no resources block).
+func buildResources(r, limits task.Resources) map[string]interface{} {
+	if len(r) == 0 && len(limits) == 0 {
 		return nil
 	}
-	reqs := make(map[string]interface{}, len(r))
-	for k, v := range r {
-		reqs[k] = v
+	res := map[string]interface{}{}
+	if len(r) > 0 {
+		reqs := make(map[string]interface{}, len(r))
+		for k, v := range r {
+			reqs[k] = v
+		}
+		res["requests"] = reqs
 	}
-	lims := make(map[string]interface{}, len(r))
+	lims := make(map[string]interface{}, len(r)+len(limits))
 	for k, v := range r {
 		lims[k] = v
 	}
-	return map[string]interface{}{
-		"requests": reqs,
-		"limits":   lims,
+	for k, v := range limits {
+		lims[k] = v
 	}
+	res["limits"] = lims
+	return res
 }
 
 // containerOptions holds parameters for buildContainer.
@@ -1011,6 +1025,7 @@ type containerOptions struct {
 	Image     string
 	Task      *task.Task
 	Resources task.Resources
+	Limits    task.Resources
 	RoleEnvs  map[string]task.EnvValue
 	Run       string
 	Mounts    []task.Mount
@@ -1024,7 +1039,7 @@ func buildContainer(opts containerOptions) map[string]interface{} {
 	}
 
 	// Resources
-	res := buildResources(opts.Resources)
+	res := buildResources(opts.Resources, opts.Limits)
 	if res != nil {
 		container["resources"] = res
 	}
@@ -1062,19 +1077,15 @@ func buildContainer(opts containerOptions) map[string]interface{} {
 }
 
 // buildPodSpec creates a pod spec with container, volumes, scheduling, affinity, and init containers.
-func buildPodSpec(t *task.Task, container map[string]interface{}, includeVolumes bool) (map[string]interface{}, error) {
+func buildPodSpec(t *task.Task, container map[string]interface{}) (map[string]interface{}, error) {
 	podSpec := map[string]interface{}{
 		"containers": []interface{}{container},
 	}
 
 	// Volumes from storages only (sync references storages, no separate sync volumes)
-	volumes := []interface{}{}
-	if includeVolumes {
-		storageVols, _ := BuildVolumes(t)
-		volumes = append(volumes, storageVols...)
-	}
-	if len(volumes) > 0 {
-		podSpec["volumes"] = volumes
+	storageVols, _ := BuildVolumes(t)
+	if len(storageVols) > 0 {
+		podSpec["volumes"] = storageVols
 	}
 
 	// Init containers (sync init + user-defined)
@@ -1101,14 +1112,14 @@ func buildPodSpec(t *task.Task, container map[string]interface{}, includeVolumes
 
 // replicaSpecOptions holds parameters for buildRoleReplicaSpec.
 type replicaSpecOptions struct {
-	ContainerName  string
-	Task           *task.Task
-	Resources      task.Resources
-	Envs           map[string]task.EnvValue
-	Replicas       int64
-	RestartPolicy  string
-	IncludeVolumes bool
-	Run            string
+	ContainerName string
+	Task          *task.Task
+	Resources     task.Resources
+	Limits        task.Resources
+	Envs          map[string]task.EnvValue
+	Replicas      int64
+	RestartPolicy string
+	Run           string
 }
 
 // buildRoleReplicaSpec creates a replica spec with custom container name, resources, envs, and replicas.
@@ -1119,7 +1130,7 @@ func buildRoleReplicaSpec(opts replicaSpecOptions) (map[string]interface{}, erro
 		"image": opts.Task.Image,
 	}
 
-	if res := buildResources(opts.Resources); res != nil {
+	if res := buildResources(opts.Resources, opts.Limits); res != nil {
 		container["resources"] = res
 	}
 
@@ -1134,13 +1145,9 @@ func buildRoleReplicaSpec(opts replicaSpecOptions) (map[string]interface{}, erro
 	}
 
 	// Volume mounts (from storages only — sync volumes live in storages now)
-	mounts := []interface{}{}
-	if opts.IncludeVolumes {
-		_, storageMounts := BuildVolumes(opts.Task)
-		mounts = append(mounts, storageMounts...)
-	}
-	if len(mounts) > 0 {
-		container["volumeMounts"] = mounts
+	_, storageMounts := BuildVolumes(opts.Task)
+	if len(storageMounts) > 0 {
+		container["volumeMounts"] = storageMounts
 	}
 
 	if opts.Task.ImagePullPolicy != "" {
@@ -1150,7 +1157,7 @@ func buildRoleReplicaSpec(opts replicaSpecOptions) (map[string]interface{}, erro
 		container["workingDir"] = opts.Task.WorkingDir
 	}
 
-	podSpec, err := buildPodSpec(opts.Task, container, opts.IncludeVolumes)
+	podSpec, err := buildPodSpec(opts.Task, container)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build replica spec for %s: %w", opts.ContainerName, err)
 	}

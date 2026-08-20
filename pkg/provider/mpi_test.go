@@ -7,6 +7,7 @@ import (
 	"github.com/kubeflow/arena/pkg/task"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestMPIBuildCRD(t *testing.T) {
@@ -321,6 +322,165 @@ func TestMPIBuildCRDMountsOnLauncher(t *testing.T) {
 	if ok {
 		assert.Len(t, volumes.([]interface{}), 1)
 	}
+}
+
+func TestMPIBuildCRDWithInitContainers(t *testing.T) {
+	tk := &task.Task{
+		Name:  "mpi-init",
+		Image: "openmpi:4.1",
+		Run:   "mpirun -np 2 ./train",
+		Framework: task.Framework{
+			Name: "mpi",
+		},
+		Worker: &task.Worker{Replicas: 2},
+		Init: []task.InitContainer{
+			{Name: "setup", Image: "busybox:1.35", Run: "echo setup"},
+		},
+	}
+
+	provider := &MPIProvider{APIVersion: MPIAPIVersionV2beta1}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+	launcher := replicaSpecs["Launcher"].(map[string]interface{})
+
+	// The launcher spec must be JSON-native so unstructured helpers can
+	// traverse it without panicking on typed Go slices.
+	podSpec, found, err := unstructured.NestedMap(launcher, "template", "spec")
+	require.NoError(t, err)
+	require.True(t, found, "launcher template.spec not found")
+
+	inits, found, err := unstructured.NestedSlice(podSpec, "initContainers")
+	require.NoError(t, err)
+	require.True(t, found, "launcher initContainers not found")
+	require.Len(t, inits, 1)
+
+	initContainer, ok := inits[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "setup", initContainer["name"])
+}
+
+// mounts_on_launcher=false contract: ALL volumes stay declared in the pod
+// spec (init containers may reference them), the launcher main container
+// gets no volumeMounts at all, and init containers are never rewritten.
+func TestMPIBuildCRDLauncherVolumesMountsOnLauncherFalse(t *testing.T) {
+	tk := &task.Task{
+		Name:  "mpi-volumes",
+		Image: "openmpi:4.1",
+		Run:   "mpirun -np 2 ./train",
+		Framework: task.Framework{
+			Name:    "mpi",
+			Options: task.FrameworkConfig{MountsOnLauncher: false},
+		},
+		Worker: &task.Worker{Replicas: 2},
+		Storages: []task.Storage{
+			{Name: "dataset", PVC: "data-pvc", MountPath: "/data"},
+			{Name: "cache", Tmp: "5Gi", MountPath: "/cache"},
+			{Name: "dshm", SHM: "2Gi"},
+		},
+		Init: []task.InitContainer{
+			{Name: "setup", Image: "busybox:1.35", Run: "echo setup",
+				Mounts: []task.Mount{{Name: "dataset"}}},
+		},
+	}
+
+	provider := &MPIProvider{APIVersion: MPIAPIVersionV2beta1}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+	launcher := replicaSpecs["Launcher"].(map[string]interface{})
+	podSpec, found, err := unstructured.NestedMap(launcher, "template", "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+
+	// Launcher keeps ALL volumes declared (PVC included) so init containers
+	// can reference them — no dangling mounts are possible.
+	volNames := volumeNames(podSpec["volumes"])
+	assert.ElementsMatch(t, []string{"dataset", "cache", "dshm"}, volNames,
+		"launcher should keep all volumes declared when mounts_on_launcher=false")
+
+	// The launcher main container mounts nothing.
+	main := podSpec["containers"].([]interface{})[0].(map[string]interface{})
+	assert.Empty(t, mountNames(main["volumeMounts"]),
+		"launcher main container should have no volumeMounts when mounts_on_launcher=false")
+
+	// Init container mounts are exactly as the user declared.
+	inits := podSpec["initContainers"].([]interface{})
+	require.Len(t, inits, 1)
+	initMounts := mountNames(inits[0].(map[string]interface{})["volumeMounts"])
+	assert.ElementsMatch(t, []string{"dataset"}, initMounts,
+		"init container mounts must never be rewritten")
+
+	// Worker keeps all volumes and mounts.
+	worker := replicaSpecs["Worker"].(map[string]interface{})
+	workerPod := worker["template"].(map[string]interface{})["spec"].(map[string]interface{})
+	assert.ElementsMatch(t, []string{"dataset", "cache", "dshm"}, volumeNames(workerPod["volumes"]))
+	workerMain := workerPod["containers"].([]interface{})[0].(map[string]interface{})
+	assert.ElementsMatch(t, []string{"dataset", "cache", "dshm"}, mountNames(workerMain["volumeMounts"]))
+}
+
+func TestMPIBuildCRDLauncherVolumesMountsOnLauncherTrue(t *testing.T) {
+	tk := &task.Task{
+		Name:  "mpi-volumes-on",
+		Image: "openmpi:4.1",
+		Run:   "mpirun -np 2 ./train",
+		Framework: task.Framework{
+			Name:    "mpi",
+			Options: task.FrameworkConfig{MountsOnLauncher: true},
+		},
+		Worker: &task.Worker{Replicas: 2},
+		Storages: []task.Storage{
+			{Name: "dataset", PVC: "data-pvc", MountPath: "/data"},
+			{Name: "cache", Tmp: "5Gi", MountPath: "/cache"},
+		},
+	}
+
+	provider := &MPIProvider{APIVersion: MPIAPIVersionV2beta1}
+	crd, err := provider.BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["mpiReplicaSpecs"].(map[string]interface{})
+	launcher := replicaSpecs["Launcher"].(map[string]interface{})
+	podSpec, found, err := unstructured.NestedMap(launcher, "template", "spec")
+	require.NoError(t, err)
+	require.True(t, found)
+
+	assert.ElementsMatch(t, []string{"dataset", "cache"}, volumeNames(podSpec["volumes"]))
+	main := podSpec["containers"].([]interface{})[0].(map[string]interface{})
+	assert.ElementsMatch(t, []string{"dataset", "cache"}, mountNames(main["volumeMounts"]))
+}
+
+func volumeNames(v interface{}) []string {
+	items, ok := v.([]interface{})
+	if !ok {
+		return nil
+	}
+	names := make([]string, 0, len(items))
+	for _, item := range items {
+		if m, ok := item.(map[string]interface{}); ok {
+			names = append(names, m["name"].(string))
+		}
+	}
+	return names
+}
+
+func mountNames(v interface{}) []string {
+	items, ok := v.([]interface{})
+	if !ok {
+		return nil
+	}
+	names := make([]string, 0, len(items))
+	for _, item := range items {
+		if m, ok := item.(map[string]interface{}); ok {
+			names = append(names, m["name"].(string))
+		}
+	}
+	return names
 }
 
 func TestMPIBuildCRDSuspendAndManagedBy(t *testing.T) {

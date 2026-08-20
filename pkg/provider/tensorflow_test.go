@@ -589,3 +589,71 @@ func TestTensorFlowBuildCRDWithChiefWorkerAlias(t *testing.T) {
 	assert.False(t, hasSuccessPolicy,
 		"successPolicy field should be absent when ChiefWorker is normalized to default \"\"")
 }
+
+func TestTensorFlowLimitsOverlayRendering(t *testing.T) {
+	tk := &task.Task{
+		Name:      "tf-limits",
+		Namespace: "default",
+		Image:     "tf:2.15",
+		Framework: task.Framework{Name: constants.FrameworkTensorFlow},
+		Run:       "python train.py",
+		Worker: &task.Worker{
+			Replicas:  1,
+			Resources: task.Resources{"cpu": "1"},
+			Limits:    task.Resources{"cpu": "2"},
+		},
+		PS: &task.RoleConfig{
+			Replicas:  1,
+			Resources: task.Resources{"cpu": "1"},
+			Limits:    task.Resources{"cpu": "3"},
+		},
+	}
+	crd, err := (&TensorFlowProvider{}).BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["tfReplicaSpecs"].(map[string]interface{})
+
+	containerOf := func(role string) map[string]interface{} {
+		rs := replicaSpecs[role].(map[string]interface{})
+		template := rs["template"].(map[string]interface{})
+		podSpec := template["spec"].(map[string]interface{})
+		containers := podSpec["containers"].([]interface{})
+		return containers[0].(map[string]interface{})
+	}
+
+	workerRes := containerOf("Worker")["resources"].(map[string]interface{})
+	assert.Equal(t, "1", workerRes["requests"].(map[string]interface{})["cpu"])
+	assert.Equal(t, "2", workerRes["limits"].(map[string]interface{})["cpu"])
+
+	psRes := containerOf("PS")["resources"].(map[string]interface{})
+	assert.Equal(t, "1", psRes["requests"].(map[string]interface{})["cpu"])
+	assert.Equal(t, "3", psRes["limits"].(map[string]interface{})["cpu"])
+}
+
+func TestTensorFlowLimitsOnlyRendering(t *testing.T) {
+	tk := &task.Task{
+		Name:      "tf-limits-only",
+		Namespace: "default",
+		Image:     "tf:2.15",
+		Framework: task.Framework{Name: constants.FrameworkTensorFlow},
+		Run:       "python train.py",
+		Worker: &task.Worker{
+			Replicas: 1,
+			Limits:   task.Resources{"nvidia.com/gpu": "2"},
+		},
+	}
+	crd, err := (&TensorFlowProvider{}).BuildCRD(tk)
+	require.NoError(t, err)
+
+	spec := crd.Object["spec"].(map[string]interface{})
+	replicaSpecs := spec["tfReplicaSpecs"].(map[string]interface{})
+	worker := replicaSpecs["Worker"].(map[string]interface{})
+	template := worker["template"].(map[string]interface{})
+	podSpec := template["spec"].(map[string]interface{})
+	containers := podSpec["containers"].([]interface{})
+	res := containers[0].(map[string]interface{})["resources"].(map[string]interface{})
+	assert.Equal(t, "2", res["limits"].(map[string]interface{})["nvidia.com/gpu"])
+	_, hasRequests := res["requests"]
+	assert.False(t, hasRequests, "requests should be omitted when only limits are set")
+}

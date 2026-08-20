@@ -16,13 +16,11 @@ import (
 	"github.com/kubeflow/arena/pkg/task"
 )
 
-func TestSubmitCmd_RequiresFrameworkArg(t *testing.T) {
-	err := submitCmd.Args(submitCmd, nil)
-	assert.Error(t, err)
-}
-
-func TestSubmitCmd_AcceptsSingleArg(t *testing.T) {
-	err := submitCmd.Args(submitCmd, []string{"pytorch"})
+func TestSubmitCmd_NoFrameworkArgPrintsHelp(t *testing.T) {
+	// RunE guards the empty-args case with help (the framework is the first
+	// positional argument); full stdout coverage lives in
+	// TestSubmitSubcommands_ParentFallbackBehaviors.
+	err := submitCmd.RunE(submitCmd, nil)
 	assert.NoError(t, err)
 }
 
@@ -38,7 +36,7 @@ func TestSubmitCmd_RegisteredWithRootCmd(t *testing.T) {
 }
 
 func TestSubmitCmd_HasRequiredFlags(t *testing.T) {
-	flagNames := []string{"name", "image", "workers", "gpus", "cpus", "mem"}
+	flagNames := []string{"name", "image", "workers", "gpus", "cpu", "memory"}
 	for _, name := range flagNames {
 		f := submitCmd.Flags().Lookup(name)
 		require.NotNil(t, f, "flag %q should be registered", name)
@@ -49,8 +47,8 @@ func TestSubmitCmd_HasFrameworkFlags(t *testing.T) {
 	f := submitCmd.Flags().Lookup("nproc-per-node")
 	assert.NotNil(t, f, "nproc-per-node flag should be registered")
 
-	f = submitCmd.Flags().Lookup("ps-count")
-	assert.NotNil(t, f, "ps-count flag should be registered")
+	f = submitCmd.Flags().Lookup("ps")
+	assert.NotNil(t, f, "ps flag should be registered")
 
 	f = submitCmd.Flags().Lookup("slots-per-worker")
 	assert.NotNil(t, f, "slots-per-worker flag should be registered")
@@ -63,13 +61,12 @@ func TestSubmitCmd_HasDryRunFlag(t *testing.T) {
 }
 
 func TestSubmitCmd_NameAndImageRequired(t *testing.T) {
+	resetSubmitCommandState(t)
 	resetSubmitFlags(t)
 
-	submitName = ""
-	submitImage = ""
 	err := submitCmd.RunE(submitCmd, []string{"pytorch"})
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "validation failed")
+	assert.Contains(t, err.Error(), "required flag")
 }
 
 func TestSubmitCmd_UnsupportedFramework(t *testing.T) {
@@ -84,27 +81,25 @@ func TestSubmitCmd_UnsupportedFramework(t *testing.T) {
 }
 
 func TestSubmitCmd_ValidationFailsWithoutName(t *testing.T) {
+	resetSubmitCommandState(t)
 	resetSubmitFlags(t)
 
-	submitName = ""
-	submitImage = "some-image:latest"
+	require.NoError(t, submitCmd.Flags().Parse([]string{"--image", "some-image:latest"}))
 
 	err := submitCmd.RunE(submitCmd, []string{"pytorch"})
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "validation failed")
-	assert.Contains(t, err.Error(), "name is required")
+	assert.Contains(t, err.Error(), `required flag(s) "name" not set`)
 }
 
 func TestSubmitCmd_ValidationFailsWithoutImage(t *testing.T) {
+	resetSubmitCommandState(t)
 	resetSubmitFlags(t)
 
-	submitName = "my-job"
-	submitImage = ""
+	require.NoError(t, submitCmd.Flags().Parse([]string{"--name", "my-job"}))
 
 	err := submitCmd.RunE(submitCmd, []string{"pytorch"})
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "validation failed")
-	assert.Contains(t, err.Error(), "image is required")
+	assert.Contains(t, err.Error(), `required flag(s) "image" not set`)
 }
 
 func TestBuildSubmitTask_PyTorchWorkersNMinusOne(t *testing.T) {
@@ -177,14 +172,45 @@ func TestBuildSubmitTask_ChiefEvaluatorPS(t *testing.T) {
 	submitWorkers = 2
 	submitChief = true
 	submitEvaluator = true
-	submitPSCount = 3
+	submitPS = 3
 
-	task := buildSubmitTask("tensorflow", nil)
+	// v1 per-role resource flags. These must flow through buildSubmitFlags
+	// into task.ApplyOverrides and land on each role's Resources — a dropped
+	// or misnamed flag key would silently break the v1 compat interface.
+	submitCPU = "2"
+	submitMemory = "4Gi"
+	submitPSCPU = "500m"
+	submitPSMemory = "1Gi"
+	submitPSGPUs = 1
+	submitChiefCPU = "1"
+	submitChiefMemory = "2Gi"
+	submitEvaluatorCPU = "250m"
+	submitEvaluatorMemory = "512Mi"
+	submitWorkerCPU = "8"
+	submitWorkerMemory = "32Gi"
 
-	require.NotNil(t, task.Chief, "chief should be set")
-	require.NotNil(t, task.Evaluator, "evaluator should be set")
-	require.NotNil(t, task.PS, "ps should be set")
-	assert.Equal(t, 3, task.PS.Replicas)
+	// Role sections are created by task.ApplyOverrides from the
+	// chief/evaluator/ps flag keys, not by buildSubmitTask.
+	tk := buildSubmitTask("tensorflow", nil)
+	require.NoError(t, task.ApplyOverrides(tk, buildSubmitFlags()))
+
+	require.NotNil(t, tk.Chief, "chief should be set")
+	require.NotNil(t, tk.Evaluator, "evaluator should be set")
+	require.NotNil(t, tk.PS, "ps should be set")
+	require.NotNil(t, tk.Worker, "worker should be set")
+	assert.Equal(t, 3, tk.PS.Replicas)
+
+	// Per-role resources land on their role and beat the generic
+	// --cpu/--memory (v1 precedence).
+	assert.Equal(t, "500m", tk.PS.Resources["cpu"])
+	assert.Equal(t, "1Gi", tk.PS.Resources["memory"])
+	assert.Equal(t, "1", tk.PS.Resources["nvidia.com/gpu"])
+	assert.Equal(t, "1", tk.Chief.Resources["cpu"])
+	assert.Equal(t, "2Gi", tk.Chief.Resources["memory"])
+	assert.Equal(t, "250m", tk.Evaluator.Resources["cpu"])
+	assert.Equal(t, "512Mi", tk.Evaluator.Resources["memory"])
+	assert.Equal(t, "8", tk.Worker.Resources["cpu"])
+	assert.Equal(t, "32Gi", tk.Worker.Resources["memory"])
 }
 
 func TestBuildSubmitTask_TrailingArgs(t *testing.T) {
@@ -217,8 +243,8 @@ func TestNormalizeFramework(t *testing.T) {
 		{"MPI", "mpi"},
 		{"mpijob", "mpi"},
 		{"MPIJob", "mpi"},
-		{"horovod", "mpi"},
-		{"Horovod", "mpi"},
+		{"horovod", "horovod"},
+		{"Horovod", "horovod"},
 		{"jax", ""},
 		{"", ""},
 	}
@@ -255,8 +281,8 @@ func TestBuildSubmitFlags(t *testing.T) {
 	submitName = "test-job"
 	submitImage = "test:latest"
 	submitGPUs = 2
-	submitCPUs = "4"
-	submitMem = "8Gi"
+	submitCPU = "4"
+	submitMemory = "8Gi"
 	submitEnvs = []string{"FOO=bar"}
 	submitWorkers = 3
 
@@ -264,15 +290,15 @@ func TestBuildSubmitFlags(t *testing.T) {
 
 	assert.Equal(t, "test-job", flags["name"])
 	assert.Equal(t, 2, flags["gpus"])
-	assert.Equal(t, "4", flags["cpus"])
-	assert.Equal(t, "8Gi", flags["mem"])
+	assert.Equal(t, "4", flags["cpu"])
+	assert.Equal(t, "8Gi", flags["memory"])
 	assert.Equal(t, []string{"FOO=bar"}, flags["env"])
 }
 
 func TestSubmitDeepSpeed(t *testing.T) {
 	fw := normalizeFramework("deepspeed")
-	if fw != "mpi" {
-		t.Errorf("expected mpi, got %s", fw)
+	if fw != "deepspeed" {
+		t.Errorf("expected deepspeed, got %s", fw)
 	}
 }
 
@@ -373,7 +399,7 @@ func TestSubmitCmd_MPIVersionIntegration_DeepSpeed(t *testing.T) {
 	submitWorkers = 2
 
 	framework := normalizeFramework("deepspeed")
-	require.Equal(t, "mpi", framework)
+	require.Equal(t, "deepspeed", framework)
 	assert.True(t, isMPIFamily(framework))
 
 	tk := buildSubmitTask(framework, []string{"deepspeed", "train.py"})
@@ -400,7 +426,7 @@ func TestSubmitCmd_MPIVersionIntegration_Horovod(t *testing.T) {
 	submitWorkers = 3
 
 	framework := normalizeFramework("horovod")
-	require.Equal(t, "mpi", framework)
+	require.Equal(t, "horovod", framework)
 
 	tk := buildSubmitTask(framework, []string{"mpirun", "train"})
 
@@ -424,39 +450,38 @@ func resetSubmitFlags(t *testing.T) {
 	submitImage = ""
 	submitWorkers = 1
 	submitGPUs = 0
-	submitCPUs = ""
-	submitMem = ""
+	submitCPU = ""
+	submitMemory = ""
 	submitEnvs = nil
 	submitData = nil
 	submitLabels = nil
 	submitAnnotations = nil
 	submitSelectors = nil
 	submitTolerations = nil
-	submitPriority = 0
 	submitPriorityClass = ""
 	submitGang = false
-	submitSchedulerName = ""
-	submitCleanPodPolicy = ""
-	submitActiveDeadline = ""
+	submitScheduler = ""
+	submitCleanTaskPolicy = "Running"
+	submitRunningTimeout = ""
 	submitTTLAfterFinished = ""
-	submitBackoffLimit = 0
+	submitJobBackoffLimit = 0
 	submitImagePullPolicy = ""
 	submitImagePullSecret = nil
 	submitServiceAccount = ""
-	submitRestart = ""
+	submitJobRestartPolicy = ""
 	submitHostNetwork = false
 	submitHostIPC = false
 	submitHostPID = false
 	submitWorkingDir = ""
 	submitShell = ""
-	submitSHM = ""
+	submitShareMemory = "2Gi"
 	submitDevice = nil
 	submitGPUType = ""
 	submitTensorBoard = false
-	submitTBLogDir = ""
+	submitLogDir = "/training_logs"
 	submitTBImage = ""
 	submitNprocPerNode = ""
-	submitPSCount = 0
+	submitPS = 0
 	submitChief = false
 	submitEvaluator = false
 	submitSlotsPerWorker = 0
@@ -467,9 +492,10 @@ func resetSubmitFlags(t *testing.T) {
 	submitAffinityTarget = ""
 	submitSuccessPolicy = ""
 	submitDryRun = false
-	submitQueue = ""
+	submitQueue = false
 	submitDataDir = nil
 	submitConfigFile = nil
+	resetSubmitCompatFlags()
 }
 
 func TestCRDReplicaSpecs_PyTorch(t *testing.T) {
@@ -582,8 +608,8 @@ func TestApplyOverrides_Flags(t *testing.T) {
 		"run":            "python train.py --lr 0.001",
 		"workers":        4,
 		"gpus":           2,
-		"cpus":           "4",
-		"mem":            "16Gi",
+		"cpu":            "4",
+		"memory":         "16Gi",
 		"framework":      "pytorch",
 		"nproc-per-node": "auto",
 	}
@@ -735,13 +761,16 @@ func TestProviderRejectsWrongFramework(t *testing.T) {
 }
 
 func TestSubmitCmd_DryRunCapturesOutput(t *testing.T) {
+	resetSubmitCommandState(t)
 	resetSubmitFlags(t)
 
-	submitName = "dryrun-test"
-	submitImage = "pytorch:2.1"
-	submitWorkers = 2
-	submitGPUs = 1
-	submitDryRun = true
+	require.NoError(t, submitCmd.Flags().Parse([]string{
+		"--name", "dryrun-test",
+		"--image", "pytorch:2.1",
+		"--workers", "2",
+		"--gpus", "1",
+		"--dry-run",
+	}))
 
 	// Capture stdout — printCRD uses fmt.Println which writes to os.Stdout.
 	// klog-based log output goes to stderr, so stdout should contain only the CRD JSON.
@@ -767,4 +796,169 @@ func TestSubmitCmd_DryRunCapturesOutput(t *testing.T) {
 		"output should be valid JSON")
 	assert.Equal(t, "PyTorchJob", crd["kind"])
 	assert.Equal(t, "dryrun-test", crd["metadata"].(map[string]interface{})["name"])
+}
+
+// The generated CRD must wire the shared volume into both containers: the
+// sync init container (writer) and the main container (reader).
+func TestSubmitCompat_SyncVolumeSharedWithMainContainer(t *testing.T) {
+	resetSubmitFlags(t)
+
+	v1Args := []string{
+		"--name", "sync-volume-e2e",
+		"--image", "pytorch:2.1",
+		"--sync-mode", "git",
+		"--sync-source", "https://github.com/kubeflow/arena.git",
+		"--dry-run",
+	}
+	require.NoError(t, submitCmd.Flags().Parse(v1Args))
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := submitCmd.RunE(submitCmd, []string{"pytorch", "python", "train.py"})
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, r)
+	output := buf.String()
+
+	require.NoError(t, err, "sync invocation should succeed in dry-run mode")
+
+	var crd map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(output), &crd), "dry-run should print valid JSON, got: %s", output)
+
+	spec := crd["spec"].(map[string]interface{})
+	replicaSpecs := spec["pytorchReplicaSpecs"].(map[string]interface{})
+	master := replicaSpecs["Master"].(map[string]interface{})
+	podSpec := master["template"].(map[string]interface{})["spec"].(map[string]interface{})
+
+	mountPaths := func(container map[string]interface{}) map[string]string {
+		result := map[string]string{}
+		for _, m := range container["volumeMounts"].([]interface{}) {
+			mm := m.(map[string]interface{})
+			result[mm["name"].(string)] = mm["mountPath"].(string)
+		}
+		return result
+	}
+
+	containers := podSpec["containers"].([]interface{})
+	mainMounts := mountPaths(containers[0].(map[string]interface{}))
+	assert.Equal(t, "/root/code", mainMounts["code-sync"],
+		"main container should mount the shared code-sync volume at $workingDir/code")
+
+	initContainers := podSpec["initContainers"].([]interface{})
+	require.Len(t, initContainers, 1)
+	initMounts := mountPaths(initContainers[0].(map[string]interface{}))
+	assert.Equal(t, "/root/code", initMounts["code-sync"],
+		"sync init container should write into the shared code-sync volume")
+}
+
+func TestSubmitCompat_V1CommandEndToEndDryRun(t *testing.T) {
+	resetSubmitFlags(t)
+
+	// A representative v1 invocation using only v1 flag names.
+	v1Args := []string{
+		"--name", "v1-compat-job",
+		"--image", "pytorch:2.1",
+		"--workers", "2",
+		"--cpu", "4",
+		"--memory", "8Gi",
+		"-p", "high",
+		"--share-memory", "2Gi",
+		"--running-timeout", "2h",
+		"--retry", "3",
+		"--sync-mode", "git",
+		"--sync-source", "https://github.com/kubeflow/arena.git",
+		"--dry-run",
+	}
+	require.NoError(t, submitCmd.Flags().Parse(v1Args))
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := submitCmd.RunE(submitCmd, []string{"pytorch", "python", "train.py"})
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, r)
+	output := buf.String()
+
+	require.NoError(t, err, "v1-style invocation should succeed in dry-run mode")
+
+	var crd map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(output), &crd), "dry-run should print valid JSON, got: %s", output)
+	assert.Equal(t, "PyTorchJob", crd["kind"])
+
+	spec := crd["spec"].(map[string]interface{})
+	runPolicy := spec["runPolicy"].(map[string]interface{})
+	assert.Equal(t, float64(7200), runPolicy["activeDeadlineSeconds"],
+		"--running-timeout 2h should map to runPolicy.activeDeadlineSeconds")
+	assert.Equal(t, float64(3), runPolicy["backoffLimit"],
+		"--retry 3 should map to runPolicy.backoffLimit")
+
+	replicaSpecs := spec["pytorchReplicaSpecs"].(map[string]interface{})
+	master := replicaSpecs["Master"].(map[string]interface{})
+	podSpec := master["template"].(map[string]interface{})["spec"].(map[string]interface{})
+
+	assert.Equal(t, "high", podSpec["priorityClassName"],
+		"-p should set the priority class name (v1 semantics)")
+
+	containers := podSpec["containers"].([]interface{})
+	container := containers[0].(map[string]interface{})
+	resources := container["resources"].(map[string]interface{})
+	requests := resources["requests"].(map[string]interface{})
+	assert.Equal(t, "4", requests["cpu"], "--cpu should map to the CPU request")
+	assert.Equal(t, "8Gi", requests["memory"], "--memory should map to the memory request")
+
+	initContainers := podSpec["initContainers"].([]interface{})
+	require.Len(t, initContainers, 1, "git sync should produce one init container")
+	init := initContainers[0].(map[string]interface{})
+	assert.Contains(t, init["name"], "arena-sync")
+}
+
+func TestSubmitCompat_UniformV1Defaults(t *testing.T) {
+	f := submitCmd.Flags().Lookup("share-memory")
+	require.NotNil(t, f)
+	assert.Equal(t, "2Gi", f.DefValue)
+	f = submitCmd.Flags().Lookup("clean-task-policy")
+	require.NotNil(t, f)
+	assert.Equal(t, "Running", f.DefValue)
+	f = submitCmd.Flags().Lookup("logdir")
+	require.NotNil(t, f)
+	assert.Equal(t, "/training_logs", f.DefValue)
+}
+
+func TestSubmitCompat_DefaultsReachTheTask(t *testing.T) {
+	resetSubmitFlags(t)
+	tk := buildSubmitTask("pytorch", nil)
+	flags := buildSubmitFlags()
+	require.NoError(t, task.ApplyOverrides(tk, flags))
+
+	assert.Equal(t, "Running", tk.Lifecycle.CleanPodPolicy)
+	require.NotNil(t, tk.Logging.TensorBoard)
+	assert.Equal(t, "/training_logs", tk.Logging.TensorBoard.LogDir)
+
+	foundSHM := false
+	for _, s := range tk.Storages {
+		if s.SHM != "" {
+			assert.Equal(t, "2Gi", s.SHM)
+			foundSHM = true
+		}
+	}
+	assert.True(t, foundSHM, "default 2Gi shm storage should be applied")
+}
+
+func TestSubmitCompat_DefaultsOptOutViaEmptyValue(t *testing.T) {
+	resetSubmitFlags(t)
+	require.NoError(t, submitCmd.Flags().Parse([]string{"--share-memory", "", "--clean-task-policy", "", "--logdir", ""}))
+	flags := buildSubmitFlags()
+	assert.NotContains(t, flags, "share-memory")
+	assert.NotContains(t, flags, "clean-task-policy")
+	assert.NotContains(t, flags, "logdir")
 }

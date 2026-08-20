@@ -38,7 +38,7 @@ var _ = Describe("TensorBoard", func() {
 			"--image", "docker.io/library/pytorch:2.1",
 			"--workers", "1",
 			"--tensorboard",
-			"--tensorboard-logdir", "/logs",
+			"--logdir", "/logs",
 			"--dry-run",
 			"python train.py")
 		cmd.Stdout = &stdout
