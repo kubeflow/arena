@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/kubeflow/arena/pkg/client"
 	"github.com/kubeflow/arena/pkg/constants"
@@ -13,31 +14,59 @@ import (
 	"github.com/kubeflow/arena/pkg/task"
 )
 
-var submitCmd = &cobra.Command{
-	Use:   "submit",
-	Short: "Submit a training job",
-	Long:  `Submit a training job using arena v1-compatible syntax`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return cmd.Help()
+func newSubmitCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "submit",
+		Short: "Submit a training job",
+		Long:  `Submit a training job using arena v1-compatible syntax`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return cmd.Help()
+			}
+			framework, v1TypeUnsupported := lookupFramework(args[0])
+			if v1TypeUnsupported {
+				return &CLIError{
+					Message:     fmt.Sprintf("framework type %q is an arena v1 type not supported by arena-v2 yet", args[0]),
+					ValidValues: v2FrameworkNames(),
+				}
+			}
+			if framework == "" {
+				return &CLIError{
+					Message:     fmt.Sprintf("unsupported framework type: %q", args[0]),
+					ValidValues: acceptedFrameworkTypes(),
+				}
+			}
+			// The parent cannot mark --name/--image required at registration
+			// (cobra would reject a bare `submit` before RunE prints help), so the
+			// fallback path validates them here, mirroring the subcommands' error.
+			if err := validateSubmitRequiredFlags(cmd); err != nil {
+				return err
+			}
+			return runSubmit(cmd, framework, originalFramework(args[0]), args[1:])
+		},
+	}
+
+	registerSubmitCommonFlags(cmd)
+	registerPyTorchSubmitFlags(cmd)
+	registerTFSubmitFlags(cmd)
+	registerMPISubmitFlags(cmd)
+	registerSubmitCompatFlags(cmd)
+
+	cmd.ValidArgsFunction = completeFrameworkType
+
+	// The parent keeps the full flag set — the fallback path and the test
+	// suite parse it — but hides it from help: `submit -h` lists only the
+	// framework subcommands, matching arena v1.
+	cmd.Flags().VisitAll(func(f *pflag.Flag) { f.Hidden = true })
+
+	for _, def := range frameworkRegistry {
+		if def.canonical == "" {
+			continue
 		}
-		framework, v1TypeUnsupported := lookupFramework(args[0])
-		if v1TypeUnsupported {
-			return fmt.Errorf("framework type %q is an arena v1 type not supported by arena-v2 yet (supported: pytorch, tensorflow, mpi, horovod, deepspeed)",
-				args[0])
-		}
-		if framework == "" {
-			return fmt.Errorf("unsupported framework type: %q (supported: pytorch/pytorchjob, tf/tfjob/tensorflow, mpi/mpijob/mj, horovod/horovodjob/hj, deepspeed/deepspeedjob/dp)",
-				args[0])
-		}
-		// The parent cannot mark --name/--image required at registration
-		// (cobra would reject a bare `submit` before RunE prints help), so the
-		// fallback path validates them here, mirroring the subcommands' error.
-		if err := validateSubmitRequiredFlags(cmd); err != nil {
-			return err
-		}
-		return runSubmit(cmd, framework, originalFramework(args[0]), args[1:])
-	},
+		cmd.AddCommand(newSubmitFrameworkSubcommand(def))
+	}
+
+	return cmd
 }
 
 // validateSubmitRequiredFlags reports unset --name/--image in the exact
@@ -67,6 +96,9 @@ func validateSubmitRequiredFlags(cmd *cobra.Command) error {
 // the per-framework subcommands. trailingArgs are the positional args that
 // follow the framework type; they become the run command.
 func runSubmit(cmd *cobra.Command, framework, originalFrameworkName string, trailingArgs []string) error {
+	if err := validateOutputFormat(); err != nil {
+		return err
+	}
 	if err := applyV1LogLevel(submitLogLevel); err != nil {
 		return err
 	}
@@ -99,7 +131,7 @@ func runSubmit(cmd *cobra.Command, framework, originalFrameworkName string, trai
 			return fmt.Errorf("failed to create K8s client: %w", err)
 		}
 	}
-	return submitCRD(cmdContext(cmd), k8sClient, t, originalFrameworkName, submitDryRun)
+	return submitCRD(cmdContext(cmd), cmd.OutOrStdout(), k8sClient, t, originalFrameworkName, submitDryRun)
 }
 
 // buildSubmitTask constructs a Task from submit CLI flags with framework-specific conversions.

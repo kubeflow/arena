@@ -17,6 +17,22 @@ const quotedKeyPrefix = "__ARENA_QK_"
 // items[999999999]=x, which would otherwise OOM the process.
 const maxIndex = 65536
 
+// SetSyntaxError reports a malformed --set expression. It carries the raw
+// expression and the underlying parse failure so callers can match with
+// errors.As while the rendered text stays stable.
+type SetSyntaxError struct {
+	Expr string
+	Err  error
+}
+
+func (e *SetSyntaxError) Error() string {
+	return fmt.Sprintf("failed to parse --set %q: %v", e.Expr, e.Err)
+}
+
+func (e *SetSyntaxError) Unwrap() error {
+	return e.Err
+}
+
 // pathSegment represents a single segment in a dotted key path.
 // It can be either a map key (isArr=false) or an array index (isArr=true).
 type pathSegment struct {
@@ -46,16 +62,16 @@ func ApplySetOverrides(yamlData []byte, expressions []string) ([]byte, error) {
 	for _, expr := range expressions {
 		// Validate that expression has a non-empty key
 		if len(expr) == 0 || expr[0] == '=' {
-			return nil, fmt.Errorf("failed to parse --set %q: empty key", expr)
+			return nil, &SetSyntaxError{Expr: expr, Err: errors.New("empty key")}
 		}
 
 		processed, quotedKeys, err := preprocessQuotedKeys(expr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse --set %q: %w", expr, err)
+			return nil, &SetSyntaxError{Expr: expr, Err: err}
 		}
 
 		if err := parseInto(processed, base); err != nil {
-			return nil, fmt.Errorf("failed to parse --set %q: %w", expr, err)
+			return nil, &SetSyntaxError{Expr: expr, Err: err}
 		}
 
 		if len(quotedKeys) > 0 {

@@ -4,36 +4,43 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/kubeflow/arena/pkg/client"
 )
 
-var resumeCmd = &cobra.Command{
-	Use:   "resume <name>",
-	Short: "Resume a suspended training job",
-	Long:  `Resume a suspended training job by setting spec.runPolicy.suspend to false.`,
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		name := args[0]
+func newResumeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "resume <name>",
+		Short: "Resume a suspended training job",
+		Long:  `Resume a suspended training job by setting spec.runPolicy.suspend to false.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateOutputFormat(); err != nil {
+				return err
+			}
+			name := args[0]
 
-		k8sClient, err := client.NewClient(kubeconfig, kubeContext)
-		if err != nil {
-			return fmt.Errorf("failed to create K8s client: %w", err)
-		}
+			k8sClient, err := client.NewClient(kubeconfig, kubeContext)
+			if err != nil {
+				return fmt.Errorf("failed to create K8s client: %w", err)
+			}
 
-		ns := resolveNS("")
+			ns := resolveNS("")
 
-		jobType, err := resumeJob(cmdContext(cmd), k8sClient, ns, name)
-		if err != nil {
-			return err
-		}
+			jobType, err := resumeJob(cmdContext(cmd), k8sClient, ns, name)
+			if err != nil {
+				return err
+			}
 
-		fmt.Printf("%s/%s resumed\n", strings.ToLower(jobType), name)
-		return nil
-	},
+			return printActionResult(cmd.OutOrStdout(), name, ns, jobType, "resumed")
+		},
+	}
+
+	registerOutputFlag(cmd)
+	cmd.ValidArgsFunction = completeJobName
+	return cmd
 }
 
 func resumeJob(ctx context.Context, k8sClient *client.Client, namespace, name string) (string, error) {
@@ -61,9 +68,4 @@ func resumeJob(ctx context.Context, k8sClient *client.Client, namespace, name st
 	}
 
 	return jobType, nil
-}
-
-func init() {
-	resumeCmd.ValidArgsFunction = completeJobName
-	jobCmd.AddCommand(resumeCmd)
 }

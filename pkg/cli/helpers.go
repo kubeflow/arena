@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -28,7 +29,10 @@ func dryRunFormat() (outputpkg.Format, error) {
 	case outputpkg.FormatYAML, outputpkg.FormatJSON:
 		return f, nil
 	default:
-		return "", fmt.Errorf("dry-run only supports -o json or yaml, got %q", outputFormat)
+		return "", &CLIError{
+			Message:     fmt.Sprintf("dry-run only supports -o json or yaml, got %q", outputFormat),
+			ValidValues: []string{"json", "yaml"},
+		}
 	}
 }
 
@@ -40,8 +44,16 @@ func applyDryRunOutputDefault(cmd *cobra.Command, dryRun bool) {
 	}
 }
 
-// printCRD marshals a CRD as indented JSON or YAML and prints it to stdout.
-func printCRD(crd *unstructured.Unstructured, format outputpkg.Format) error {
+// registerOutputFlag registers -o/--output on a leaf command, binding the
+// shared outputFormat global. Leaf-level registration keeps commands with no
+// structured output (e.g. job logs) free of the flag entirely.
+func registerOutputFlag(cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&outputFormat, "output", "o", string(outputpkg.DefaultFormat), outputpkg.FormatHelpText)
+	_ = cmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
+}
+
+// printCRD marshals a CRD as indented JSON or YAML and writes it to out.
+func printCRD(out io.Writer, crd *unstructured.Unstructured, format outputpkg.Format) error {
 	switch format {
 	case outputpkg.FormatYAML:
 		var buf bytes.Buffer
@@ -53,30 +65,30 @@ func printCRD(crd *unstructured.Unstructured, format outputpkg.Format) error {
 		if err := enc.Close(); err != nil {
 			return fmt.Errorf("failed to close YAML encoder: %w", err)
 		}
-		fmt.Print(buf.String())
+		fmt.Fprint(out, buf.String())
 	case outputpkg.FormatJSON:
 		data, err := json.MarshalIndent(crd.Object, "", "  ")
 		if err != nil {
 			return fmt.Errorf("failed to marshal CRD as JSON: %w", err)
 		}
-		fmt.Println(string(data))
+		fmt.Fprintln(out, string(data))
 	default:
 		return fmt.Errorf("unsupported CRD output format %q", format)
 	}
 	return nil
 }
 
-// printDryRun prints the CRD and all auxiliary resources that would be created
+// printDryRun writes the CRD and all auxiliary resources that would be created
 // during a real submission (TensorBoard Deployment and Service if enabled).
 // Output format respects -o/--output (json or yaml; defaults to json).
 // Multiple resources are separated by "---" for readability.
-func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
+func printDryRun(out io.Writer, crd *unstructured.Unstructured, t *task.Task) error {
 	format, err := dryRunFormat()
 	if err != nil {
 		return err
 	}
 
-	if err := printCRD(crd, format); err != nil {
+	if err := printCRD(out, crd, format); err != nil {
 		return fmt.Errorf("failed to print CRD: %w", err)
 	}
 
@@ -108,8 +120,8 @@ func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
 			t,
 			ownerRef,
 		)
-		fmt.Println("---")
-		if err := printCRD(deploy, format); err != nil {
+		fmt.Fprintln(out, "---")
+		if err := printCRD(out, deploy, format); err != nil {
 			return fmt.Errorf("failed to print TensorBoard Deployment: %w", err)
 		}
 
@@ -119,8 +131,8 @@ func printDryRun(crd *unstructured.Unstructured, t *task.Task) error {
 			crd.GetNamespace(),
 			ownerRef,
 		)
-		fmt.Println("---")
-		if err := printCRD(svc, format); err != nil {
+		fmt.Fprintln(out, "---")
+		if err := printCRD(out, svc, format); err != nil {
 			return fmt.Errorf("failed to print TensorBoard Service: %w", err)
 		}
 	}
@@ -142,6 +154,17 @@ func resolveNS(yamlNamespace string) string {
 		log.Warning("creating resources in system namespace — ensure this is intentional", "namespace", ns)
 	}
 	return ns
+}
+
+// resolveListNamespace returns the namespace scope for listing commands:
+// "" (all namespaces) when allNamespaces is set, otherwise the resolveNS
+// chain. -A/--all-namespaces silently takes precedence over -n, like kubectl.
+func resolveListNamespace(allNamespaces bool) string {
+	if allNamespaces {
+		log.Debug("listing across all namespaces; --namespace is ignored when set")
+		return ""
+	}
+	return resolveNS("")
 }
 
 // isSystemNamespace returns true for Kubernetes system namespaces where
@@ -184,7 +207,8 @@ func isMPIVersionSupportedByProvider(version string) bool {
 // provider lookup, MPI version detection, CRD build, namespace resolution,
 // dry-run, existence check, RBAC pre-creation, CRD submit, and auxiliary
 // resource finalisation (ConfigMap + ownerRef patching) with rollback on failure.
-func submitCRD(ctx context.Context, k8sClient *client.Client, t *task.Task, frameworkLabel string, dryRun bool) error {
+// All human- and machine-readable output goes to out.
+func submitCRD(ctx context.Context, out io.Writer, k8sClient *client.Client, t *task.Task, frameworkLabel string, dryRun bool) error {
 	p, err := getProvider(t.Framework.Name)
 	if err != nil {
 		return err
@@ -224,7 +248,7 @@ func submitCRD(ctx context.Context, k8sClient *client.Client, t *task.Task, fram
 	log.Debug("CRD built", "kind", crd.GetKind(), "name", crd.GetName(), "namespace", ns)
 
 	if dryRun {
-		return printDryRun(crd, t)
+		return printDryRun(out, crd, t)
 	}
 
 	log.Debug("checking if job exists", "name", t.Name, "namespace", ns)
@@ -257,6 +281,5 @@ func submitCRD(ctx context.Context, k8sClient *client.Client, t *task.Task, fram
 		return fmt.Errorf("failed to create auxiliary resources: %w", err)
 	}
 
-	fmt.Printf("Job %s submitted successfully\n", t.Name)
-	return nil
+	return printSubmitResult(out, t.Name, ns, crd.GetKind(), crd.GetAPIVersion())
 }

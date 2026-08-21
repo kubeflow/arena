@@ -14,20 +14,21 @@ var (
 	gitTreeState = "unknown"
 )
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print version information",
-	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Printf("Arena v2\n")
-		fmt.Printf("  Version:     %s\n", version)
-		fmt.Printf("  Git Commit:  %s\n", gitCommit)
-		fmt.Printf("  Git Tag:     %s\n", gitTag)
-		fmt.Printf("  Build Date:  %s\n", buildDate)
-		fmt.Printf("  Tree State:  %s\n", gitTreeState)
-	},
-}
-
-func init() {
-	versionCmd.ValidArgsFunction = cobra.NoFileCompletions
-	rootCmd.AddCommand(versionCmd)
+func newVersionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			out := cmd.OutOrStdout()
+			fmt.Fprintln(out, "Arena v2")
+			fmt.Fprintf(out, "  Version:     %s\n", version)
+			fmt.Fprintf(out, "  Git Commit:  %s\n", gitCommit)
+			fmt.Fprintf(out, "  Git Tag:     %s\n", gitTag)
+			fmt.Fprintf(out, "  Build Date:  %s\n", buildDate)
+			fmt.Fprintf(out, "  Tree State:  %s\n", gitTreeState)
+			return nil
+		},
+	}
+	cmd.ValidArgsFunction = cobra.NoFileCompletions
+	return cmd
 }

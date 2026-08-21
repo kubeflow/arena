@@ -11,29 +11,39 @@ import (
 
 func main() {
 	if err := cli.Execute(); err != nil {
-		fmt.Fprint(os.Stderr, formatError(err, cli.DebugMode()))
+		fmt.Fprint(os.Stderr, formatError(err, cli.DebugMode(), cli.JSONErrorRequested()))
 		os.Exit(1)
 	}
 }
 
-// formatError formats an error for display to the user.
-// If debug is true, includes full error chain.
-func formatError(err error, debug bool) string {
-	var sb strings.Builder
+// formatError formats an error for display to the user. In machine-readable
+// mode (-o json/yaml) every error renders as a JSON envelope so stderr stays
+// parseable; otherwise the error renders as prose. Debug mode appends the
+// full error chain.
+func formatError(err error, debug, jsonMode bool) string {
+	if jsonMode {
+		s := cli.ErrorEnvelope(err)
+		if debug {
+			s += errorChain(err)
+		}
+		return s
+	}
 
+	var sb strings.Builder
 	sb.WriteString("Error: ")
 	sb.WriteString(err.Error())
 	sb.WriteString("\n")
-
-	// In debug mode, show the full error chain
 	if debug {
-		sb.WriteString("\nFull error chain:\n")
-		current := err
-		for current != nil {
-			fmt.Fprintf(&sb, "  - %v\n", current)
-			current = errors.Unwrap(current)
-		}
+		sb.WriteString(errorChain(err))
 	}
+	return sb.String()
+}
 
+func errorChain(err error) string {
+	var sb strings.Builder
+	sb.WriteString("\nFull error chain:\n")
+	for current := err; current != nil; current = errors.Unwrap(current) {
+		fmt.Fprintf(&sb, "  - %v\n", current)
+	}
 	return sb.String()
 }

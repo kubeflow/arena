@@ -6,10 +6,8 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/kubeflow/arena/pkg/constants"
-	outputpkg "github.com/kubeflow/arena/pkg/output"
 )
 
 var (
@@ -87,23 +85,6 @@ var (
 	submitIgnoredBool          bool
 )
 
-func init() {
-	registerSubmitCommonFlags(submitCmd)
-	registerPyTorchSubmitFlags(submitCmd)
-	registerTFSubmitFlags(submitCmd)
-	registerMPISubmitFlags(submitCmd)
-	registerSubmitCompatFlags(submitCmd)
-
-	submitCmd.ValidArgsFunction = completeFrameworkType
-
-	// The parent keeps the full flag set — the fallback path and the test
-	// suite parse it — but hides it from help: `submit -h` lists only the
-	// framework subcommands, matching arena v1.
-	submitCmd.Flags().VisitAll(func(f *pflag.Flag) { f.Hidden = true })
-
-	rootCmd.AddCommand(submitCmd)
-}
-
 // registerSubmitCommonFlags registers the framework-agnostic submit flags on
 // cmd. Required marking of --name/--image is left to the caller: only the
 // per-framework subcommands enforce them at cobra level, the parent's flag
@@ -173,9 +154,8 @@ func registerSubmitCommonFlags(cmd *cobra.Command) {
 
 	// Dry-run
 	f.BoolVar(&submitDryRun, "dry-run", false, "print CRD as JSON (default) or YAML (-o yaml) without submitting")
-	f.StringVarP(&outputFormat, "output", "o", string(outputpkg.DefaultFormat), outputpkg.FormatHelpText)
+	registerOutputFlag(cmd)
 
-	_ = cmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
 	_ = cmd.RegisterFlagCompletionFunc("clean-task-policy", completeStaticChoices(
 		"None\tDo not clean pods", "Running\tClean running pods", "All\tClean all pods"))
 	_ = cmd.RegisterFlagCompletionFunc("image-pull-policy", completeStaticChoices(

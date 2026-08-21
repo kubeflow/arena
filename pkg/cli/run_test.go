@@ -90,21 +90,13 @@ func TestGetProvider(t *testing.T) {
 }
 
 func TestRunCmd_FileRequired(t *testing.T) {
-	original := runFile
-	defer func() { runFile = original }()
-
-	runFile = ""
-	err := runCmd.RunE(runCmd, nil)
+	err := ExecuteWithArgs([]string{"job", "run"})
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "--file is required")
+	assert.Contains(t, err.Error(), `required flag(s) "file" not set`)
 }
 
 func TestRunCmd_InvalidFile(t *testing.T) {
-	original := runFile
-	defer func() { runFile = original }()
-
-	runFile = "/nonexistent/path/to/file.yaml"
-	err := runCmd.RunE(runCmd, nil)
+	err := ExecuteWithArgs([]string{"job", "run", "-f", "/nonexistent/path/to/file.yaml"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to read file")
 }
@@ -115,11 +107,7 @@ func TestRunCmd_InvalidYAML(t *testing.T) {
 	err := os.WriteFile(tmpFile, []byte("not: valid: yaml: {{{"), 0600)
 	require.NoError(t, err)
 
-	original := runFile
-	defer func() { runFile = original }()
-
-	runFile = tmpFile
-	err = runCmd.RunE(runCmd, nil)
+	err = ExecuteWithArgs([]string{"job", "run", "-f", tmpFile})
 	assert.Error(t, err)
 }
 
@@ -137,11 +125,7 @@ worker:
 	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
-	original := runFile
-	defer func() { runFile = original }()
-
-	runFile = tmpFile
-	err = runCmd.RunE(runCmd, nil)
+	err = ExecuteWithArgs([]string{"job", "run", "-f", tmpFile})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to load task")
 }
@@ -160,11 +144,7 @@ worker:
 	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
-	original := runFile
-	defer func() { runFile = original }()
-
-	runFile = tmpFile
-	err = runCmd.RunE(runCmd, nil)
+	err = ExecuteWithArgs([]string{"job", "run", "-f", tmpFile})
 	assert.Error(t, err)
 }
 
@@ -182,33 +162,25 @@ worker:
 	err := os.WriteFile(tmpFile, []byte(content), 0600)
 	require.NoError(t, err)
 
-	originalFile := runFile
-	originalDryRun := runDryRun
-	defer func() {
-		runFile = originalFile
-		runDryRun = originalDryRun
-	}()
-
-	runFile = tmpFile
-	runDryRun = true
-	err = runCmd.RunE(runCmd, nil)
+	output, err := ExecuteWithArgsOutput([]string{"job", "run", "-f", tmpFile, "--dry-run"})
 	assert.NoError(t, err)
+	assert.Contains(t, output, "dry-run-test", "dry-run should print the CRD with the job name")
 }
 
 func TestRunCmd_HasDryRunFlag(t *testing.T) {
-	f := runCmd.Flags().Lookup("dry-run")
+	f := newRunCmd().Flags().Lookup("dry-run")
 	require.NotNil(t, f, "dry-run flag should be registered")
 	assert.Equal(t, "false", f.DefValue)
 }
 
 func TestRunCmd_HasSetFlag(t *testing.T) {
-	f := runCmd.Flags().Lookup("set")
+	f := newRunCmd().Flags().Lookup("set")
 	require.NotNil(t, f, "set flag should be registered")
 }
 
 func TestRunCmd_RegisteredWithJobCmd(t *testing.T) {
 	found := false
-	for _, cmd := range jobCmd.Commands() {
+	for _, cmd := range newJobCmd().Commands() {
 		if cmd.Name() == "run" {
 			found = true
 			break
@@ -312,14 +284,6 @@ func TestRunCmd_NamespaceSetOnCRD(t *testing.T) {
 	assert.Equal(t, "my-namespace", crd.GetNamespace())
 }
 
-// resetRunFlags resets run flag variables to their defaults for test isolation.
-func resetRunFlags(t *testing.T) {
-	t.Helper()
-	runFile = ""
-	runDryRun = false
-	runSetExprs = nil
-}
-
 // writeTestYAML creates a temporary YAML file for run command tests.
 func writeTestYAML(t *testing.T, content string) string {
 	t.Helper()
@@ -343,25 +307,23 @@ worker:
 `
 
 func TestRunCmd_NoOverrides_TaskMatchesFile(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 }
 
 func TestRunCmd_SetOverrideName(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"name=overridden-name"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 
 	// Verify merged value reaches the Task struct
@@ -375,14 +337,13 @@ func TestRunCmd_SetOverrideName(t *testing.T) {
 }
 
 func TestRunCmd_SetOverrideWorkers(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"worker.replicas=8"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 
 	yamlData, err := os.ReadFile(tmpFile)
@@ -395,14 +356,13 @@ func TestRunCmd_SetOverrideWorkers(t *testing.T) {
 }
 
 func TestRunCmd_SetOverrideGPUs(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"worker.resources.gpu=4"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 
 	yamlData, err := os.ReadFile(tmpFile)
@@ -415,14 +375,13 @@ func TestRunCmd_SetOverrideGPUs(t *testing.T) {
 }
 
 func TestRunCmd_SetOverrideEnvs(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"envs.MY_VAR=hello", "envs.OTHER=world"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 
 	yamlData, err := os.ReadFile(tmpFile)
@@ -436,9 +395,8 @@ func TestRunCmd_SetOverrideEnvs(t *testing.T) {
 }
 
 func TestRunCmd_SetMultipleOverrides(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{
@@ -451,7 +409,7 @@ func TestRunCmd_SetMultipleOverrides(t *testing.T) {
 		"scheduling.gang.enabled=true",
 	}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 
 	yamlData, err := os.ReadFile(tmpFile)
@@ -470,34 +428,37 @@ func TestRunCmd_SetMultipleOverrides(t *testing.T) {
 }
 
 func TestRunCmd_SetOverrideInvalidValue(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"restart=InvalidPolicy"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
 }
 
 func TestRunCmd_SetOverrideInvalidSyntax(t *testing.T) {
-	resetRunFlags(t)
+	origFormat := outputFormat
+	t.Cleanup(func() { outputFormat = origFormat })
+	outputFormat = "table"
 
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"=nokey"}
 
-	err := runCmd.RunE(runCmd, nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to apply --set")
+	err := cmd.RunE(cmd, nil)
+	require.Error(t, err)
+	var cliErr *CLIError
+	require.True(t, errors.As(err, &cliErr))
+	assert.Contains(t, err.Error(), `failed to apply --set: failed to parse --set "=nokey": empty key`)
+	assert.Contains(t, cliErr.Hint, "worker.replicas=4")
 }
 
 func TestRunCmd_SetOverrideDeeplyNested(t *testing.T) {
-	resetRunFlags(t)
-
 	yaml := `name: deep-test
 image: pytorch:2.1
 run: python train.py
@@ -517,11 +478,12 @@ scheduling:
           app: web
 `
 	tmpFile := writeTestYAML(t, yaml)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"scheduling.affinity.policy=binpack"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 
 	yamlData, err := os.ReadFile(tmpFile)
@@ -535,14 +497,13 @@ scheduling:
 }
 
 func TestRunCmd_DryRunWithSetOverridesEndToEnd(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"name=e2e-override", "worker.resources.gpu=2"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 
 	yamlData, err := os.ReadFile(tmpFile)
@@ -556,8 +517,6 @@ func TestRunCmd_DryRunWithSetOverridesEndToEnd(t *testing.T) {
 }
 
 func TestRunCmd_SetOverrideValueAssertion(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
 
 	yamlData, err := os.ReadFile(tmpFile)
@@ -684,8 +643,6 @@ worker:
 }
 
 func TestRunCmd_SetOverrideQuotedKeyValueAssertion(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
 
 	yamlData, err := os.ReadFile(tmpFile)
@@ -701,14 +658,13 @@ func TestRunCmd_SetOverrideQuotedKeyValueAssertion(t *testing.T) {
 }
 
 func TestRunCmd_SetOverrideTypeMismatch(t *testing.T) {
-	resetRunFlags(t)
-
 	tmpFile := writeTestYAML(t, testRunYAML)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"worker.replicas=notanint"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.Error(t, err)
 	// The --set parser stores "notanint" as a string; YAML unmarshal into int field fails
 	// during LoadFromBytes, which wraps the error.
@@ -716,16 +672,15 @@ func TestRunCmd_SetOverrideTypeMismatch(t *testing.T) {
 }
 
 func TestRunCmd_SetOverrideWithNamespace(t *testing.T) {
-	resetRunFlags(t)
-
 	// Add namespace to the YAML
 	yamlWithNS := "namespace: my-ns\n" + testRunYAML
 	tmpFile := writeTestYAML(t, yamlWithNS)
+	cmd := newRunCmd()
 	runFile = tmpFile
 	runDryRun = true
 	runSetExprs = []string{"name=ns-override"}
 
-	err := runCmd.RunE(runCmd, nil)
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 
 	// Verify both the override and the namespace reach the Task

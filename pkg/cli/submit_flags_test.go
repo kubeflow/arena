@@ -11,33 +11,6 @@ import (
 	"github.com/kubeflow/arena/pkg/task"
 )
 
-// resetSubmitCompatFlags resets v1-compat flag variables to their defaults.
-func resetSubmitCompatFlags() {
-	submitSyncMode = ""
-	submitSyncSource = ""
-	submitSyncImage = ""
-	submitPSCPU = ""
-	submitPSMemory = ""
-	submitPSGPUs = 0
-	submitChiefCPU = ""
-	submitChiefMemory = ""
-	submitEvaluatorCPU = ""
-	submitEvaluatorMemory = ""
-	submitWorkerCPU = ""
-	submitWorkerMemory = ""
-	submitPSCPULimit = ""
-	submitPSMemoryLimit = ""
-	submitChiefCPULimit = ""
-	submitChiefMemoryLimit = ""
-	submitEvaluatorCPULimit = ""
-	submitEvaluatorMemoryLimit = ""
-	submitWorkerCPULimit = ""
-	submitWorkerMemoryLimit = ""
-	submitLogLevel = ""
-	submitIgnoredString = ""
-	submitIgnoredBool = false
-}
-
 // v1RenamedFlags are v1 flag names that must be registered on the submit
 // command.
 var v1RenamedFlags = []string{
@@ -84,20 +57,23 @@ var wrongV2Names = []string{
 }
 
 func TestSubmitCompat_V1FlagNamesRegistered(t *testing.T) {
+	cmd := newSubmitCmd()
 	for _, name := range v1RenamedFlags {
-		f := submitCmd.Flags().Lookup(name)
+		f := cmd.Flags().Lookup(name)
 		require.NotNil(t, f, "v1 flag --%s should be registered", name)
 	}
 }
 
 func TestSubmitCompat_WrongV2FlagNamesRemoved(t *testing.T) {
+	cmd := newSubmitCmd()
 	for _, name := range wrongV2Names {
-		assert.Nil(t, submitCmd.Flags().Lookup(name),
+		assert.Nil(t, cmd.Flags().Lookup(name),
 			"--%s must not be registered; the v1 name is the correct name", name)
 	}
 }
 
 func TestSubmitCompat_V1LimitVariantsRegistered(t *testing.T) {
+	cmd := newSubmitCmd()
 	// v1 TFJob exposed -limit variants for per-role resources. They bind to their own variables and override only limits; requests come from the request flag.
 	limits := map[string]string{
 		"ps-cpu-limit":           "ps-cpu",
@@ -110,9 +86,9 @@ func TestSubmitCompat_V1LimitVariantsRegistered(t *testing.T) {
 		"worker-memory-limit":    "worker-memory",
 	}
 	for limit, base := range limits {
-		f := submitCmd.Flags().Lookup(limit)
+		f := cmd.Flags().Lookup(limit)
 		require.NotNil(t, f, "v1 flag --%s should be registered", limit)
-		assert.NotNil(t, submitCmd.Flags().Lookup(base), "--%s should also be registered", base)
+		assert.NotNil(t, cmd.Flags().Lookup(base), "--%s should also be registered", base)
 	}
 }
 
@@ -227,8 +203,8 @@ func TestSubmitCompat_V1FlagsBindToVariables(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetSubmitFlags(t)
-			err := submitCmd.Flags().Parse(tt.args)
+			cmd := newSubmitCmd()
+			err := cmd.Flags().Parse(tt.args)
 			if tt.parseErr {
 				require.Error(t, err)
 				return
@@ -241,19 +217,19 @@ func TestSubmitCompat_V1FlagsBindToVariables(t *testing.T) {
 
 func TestSubmitCompat_PriorityIsV1ClassName(t *testing.T) {
 	t.Run("--priority takes a class name like v1", func(t *testing.T) {
-		resetSubmitFlags(t)
-		require.NoError(t, submitCmd.Flags().Parse([]string{"--priority", "high-priority"}))
+		cmd := newSubmitCmd()
+		require.NoError(t, cmd.Flags().Parse([]string{"--priority", "high-priority"}))
 		assert.Equal(t, "high-priority", submitPriorityClass)
 	})
 
 	t.Run("-p shorthand is preserved", func(t *testing.T) {
-		resetSubmitFlags(t)
-		require.NoError(t, submitCmd.Flags().Parse([]string{"-p", "high"}))
+		cmd := newSubmitCmd()
+		require.NoError(t, cmd.Flags().Parse([]string{"-p", "high"}))
 		assert.Equal(t, "high", submitPriorityClass)
 	})
 
 	t.Run("--priority is a string flag", func(t *testing.T) {
-		f := submitCmd.Flags().Lookup("priority")
+		f := newSubmitCmd().Flags().Lookup("priority")
 		require.NotNil(t, f)
 		assert.Equal(t, "string", f.Value.Type())
 	})
@@ -261,20 +237,20 @@ func TestSubmitCompat_PriorityIsV1ClassName(t *testing.T) {
 
 func TestSubmitCompat_QueueIsV1Bool(t *testing.T) {
 	t.Run("--queue is a bool flag like v1", func(t *testing.T) {
-		f := submitCmd.Flags().Lookup("queue")
+		f := newSubmitCmd().Flags().Lookup("queue")
 		require.NotNil(t, f)
 		assert.Equal(t, "bool", f.Value.Type())
 	})
 
 	t.Run("bare --queue parses like a v1 invocation", func(t *testing.T) {
-		resetSubmitFlags(t)
-		require.NoError(t, submitCmd.Flags().Parse([]string{"--queue"}))
+		cmd := newSubmitCmd()
+		require.NoError(t, cmd.Flags().Parse([]string{"--queue"}))
 		assert.True(t, submitQueue)
 	})
 
 	t.Run("--queue suspends the job for kube-queue", func(t *testing.T) {
-		resetSubmitFlags(t)
-		require.NoError(t, submitCmd.Flags().Parse([]string{"--queue"}))
+		cmd := newSubmitCmd()
+		require.NoError(t, cmd.Flags().Parse([]string{"--queue"}))
 
 		tk := buildSubmitTask("pytorch", nil)
 		flags := buildSubmitFlags()
@@ -286,13 +262,14 @@ func TestSubmitCompat_QueueIsV1Bool(t *testing.T) {
 }
 
 func TestSubmitCompat_RepeatableFlagsAreStringArrays(t *testing.T) {
+	cmd := newSubmitCmd()
 	names := []string{
 		"env", "data", "data-dir", "config-file",
 		"label", "annotation", "selector", "toleration",
 		"device", "image-pull-secret",
 	}
 	for _, name := range names {
-		f := submitCmd.Flags().Lookup(name)
+		f := cmd.Flags().Lookup(name)
 		require.NotNil(t, f, "--%s should be registered", name)
 		assert.Equal(t, "stringArray", f.Value.Type(),
 			"--%s must be a stringArray flag (v1 semantics, no comma splitting)", name)
@@ -300,8 +277,8 @@ func TestSubmitCompat_RepeatableFlagsAreStringArrays(t *testing.T) {
 }
 
 func TestSubmitCompat_CommaValuesNotSplit(t *testing.T) {
-	resetSubmitFlags(t)
-	require.NoError(t, submitCmd.Flags().Parse([]string{
+	cmd := newSubmitCmd()
+	require.NoError(t, cmd.Flags().Parse([]string{
 		"--env", "A=1,2",
 		"--data", "ds:/data",
 	}))
@@ -312,9 +289,8 @@ func TestSubmitCompat_CommaValuesNotSplit(t *testing.T) {
 }
 
 func TestSubmitCompat_LimitFlagsHaveOwnVariables(t *testing.T) {
-	resetSubmitFlags(t)
-	resetSubmitCompatFlags()
-	require.NoError(t, submitCmd.Flags().Parse([]string{
+	cmd := newSubmitCmd()
+	require.NoError(t, cmd.Flags().Parse([]string{
 		"--ps-cpu", "1", "--ps-cpu-limit", "2",
 		"--worker-cpu", "1", "--worker-cpu-limit", "3",
 	}))
@@ -342,8 +318,9 @@ var v1OfficialMissingFlags = []string{
 }
 
 func TestSubmitCompat_V1OfficialFlagsRegistered(t *testing.T) {
+	cmd := newSubmitCmd()
 	for _, name := range v1OfficialMissingFlags {
-		f := submitCmd.Flags().Lookup(name)
+		f := cmd.Flags().Lookup(name)
 		require.NotNil(t, f, "v1 official flag --%s should be registered", name)
 		assert.True(t, f.Hidden, "--%s is deprecated and must be hidden from help", name)
 	}
@@ -353,15 +330,14 @@ func TestSubmitCompat_ConfigBindsKubeconfig(t *testing.T) {
 	oldKubeconfig := kubeconfig
 	t.Cleanup(func() { kubeconfig = oldKubeconfig })
 
-	resetSubmitFlags(t)
-	require.NoError(t, submitCmd.Flags().Parse([]string{"--config", "/tmp/kube-config"}))
+	cmd := newSubmitCmd()
+	require.NoError(t, cmd.Flags().Parse([]string{"--config", "/tmp/kube-config"}))
 	assert.Equal(t, "/tmp/kube-config", kubeconfig)
 }
 
 func TestSubmitCompat_DeprecatedFlagsParse(t *testing.T) {
-	resetSubmitFlags(t)
-	resetSubmitCompatFlags()
-	require.NoError(t, submitCmd.Flags().Parse([]string{
+	cmd := newSubmitCmd()
+	require.NoError(t, cmd.Flags().Parse([]string{
 		"--rdma",
 		"--ps-selector", "gpu=a100",
 		"--worker-image", "tf:2.15",

@@ -15,10 +15,11 @@ import (
 
 // maxJobListWidths caps column widths in the job list table to prevent excessively wide output.
 var maxJobListWidths = map[string]int{
-	"NAME":     50,
-	"STATUS":   20,
-	"REPLICAS": 15,
-	"AGE":      15,
+	"NAME":      50,
+	"NAMESPACE": 20,
+	"STATUS":    20,
+	"REPLICAS":  15,
+	"AGE":       15,
 }
 
 // maxPodWidths caps column widths in the pod table to prevent excessively wide output.
@@ -44,6 +45,7 @@ var maxJobListWideWidths = map[string]int{
 // maxTopJobWidths caps column widths in the top job table.
 var maxTopJobWidths = map[string]int{
 	"NAME":          50,
+	"NAMESPACE":     20,
 	"STATUS":        20,
 	"GPU_REQUESTED": 15,
 	"REPLICAS":      15,
@@ -74,16 +76,33 @@ func NewTableRenderer() *TableRenderer {
 // Column widths expand dynamically to fit content, up to the caps defined in maxJobListWidths.
 // Returns "No jobs found" when the input slice is nil or empty.
 func (r *TableRenderer) RenderJobList(jobs []client.JobStatus) string {
+	return r.renderJobList(jobs, false)
+}
+
+// RenderJobListAllNamespaces renders the job list with a leading NAMESPACE
+// column, for listings that span all namespaces.
+func (r *TableRenderer) RenderJobListAllNamespaces(jobs []client.JobStatus) string {
+	return r.renderJobList(jobs, true)
+}
+
+func (r *TableRenderer) renderJobList(jobs []client.JobStatus, includeNamespace bool) string {
 	if len(jobs) == 0 {
 		return "No jobs found\n"
 	}
 
 	headers := []string{"NAME", "STATUS", "REPLICAS", "AGE"}
+	if includeNamespace {
+		headers = append([]string{"NAMESPACE"}, headers...)
+	}
 	rows := make([][]string, 0, len(jobs))
 	for _, job := range jobs {
-		rows = append(rows, []string{
-			job.Name, job.Status, fmt.Sprintf("%d/%d", job.Ready, job.Replicas), job.Age,
-		})
+		row := make([]string, 0, len(headers))
+		if includeNamespace {
+			row = append(row, job.Namespace)
+		}
+		row = append(row, job.Name)
+		row = append(row, job.Status, fmt.Sprintf("%d/%d", job.Ready, job.Replicas), job.Age)
+		rows = append(rows, row)
 	}
 
 	widths := calculateWidths(headers, rows, maxJobListWidths)
@@ -125,17 +144,34 @@ func (r *TableRenderer) RenderJobListWide(jobs []client.JobStatus) string {
 // RenderTopJob renders a table of job GPU requests with columns: NAME, STATUS, GPU_REQUESTED, REPLICAS, AGE.
 // Returns "No jobs found" when the input slice is nil or empty.
 func (r *TableRenderer) RenderTopJob(jobs []client.JobStatus) string {
+	return r.renderTopJob(jobs, false)
+}
+
+// RenderTopJobAllNamespaces renders the top job table with a leading NAMESPACE
+// column, for listings that span all namespaces.
+func (r *TableRenderer) RenderTopJobAllNamespaces(jobs []client.JobStatus) string {
+	return r.renderTopJob(jobs, true)
+}
+
+func (r *TableRenderer) renderTopJob(jobs []client.JobStatus, includeNamespace bool) string {
 	if len(jobs) == 0 {
 		return "No jobs found\n"
 	}
 
 	headers := []string{"NAME", "STATUS", "GPU_REQUESTED", "REPLICAS", "AGE"}
+	if includeNamespace {
+		headers = append([]string{"NAMESPACE"}, headers...)
+	}
 	rows := make([][]string, 0, len(jobs))
 	for _, job := range jobs {
-		rows = append(rows, []string{
-			job.Name, job.Status, strconv.Itoa(job.GPURequested),
-			fmt.Sprintf("%d/%d", job.Ready, job.Replicas), job.Age,
-		})
+		row := make([]string, 0, len(headers))
+		if includeNamespace {
+			row = append(row, job.Namespace)
+		}
+		row = append(row, job.Name)
+		row = append(row, job.Status, strconv.Itoa(job.GPURequested),
+			fmt.Sprintf("%d/%d", job.Ready, job.Replicas), job.Age)
+		rows = append(rows, row)
 	}
 
 	widths := calculateWidths(headers, rows, maxTopJobWidths)

@@ -17,24 +17,27 @@ import (
 )
 
 func TestDeleteCmd_AcceptsOneArg(t *testing.T) {
-	err := deleteCmd.Args(deleteCmd, []string{"my-job"})
+	cmd := newDeleteCmd()
+	err := cmd.Args(cmd, []string{"my-job"})
 	assert.NoError(t, err)
 }
 
 func TestDeleteCmd_AcceptsZeroArgs(t *testing.T) {
 	// With -f flag support, zero positional args is valid (name comes from file).
-	err := deleteCmd.Args(deleteCmd, []string{})
+	cmd := newDeleteCmd()
+	err := cmd.Args(cmd, []string{})
 	assert.NoError(t, err)
 }
 
 func TestDeleteCmd_RejectsExtraArgs(t *testing.T) {
-	err := deleteCmd.Args(deleteCmd, []string{"a", "b"})
+	cmd := newDeleteCmd()
+	err := cmd.Args(cmd, []string{"a", "b"})
 	assert.Error(t, err)
 }
 
 func TestDeleteCmd_RegisteredWithJob(t *testing.T) {
 	found := false
-	for _, cmd := range jobCmd.Commands() {
+	for _, cmd := range newJobCmd().Commands() {
 		if cmd.Name() == "delete" {
 			found = true
 			break
@@ -44,12 +47,12 @@ func TestDeleteCmd_RegisteredWithJob(t *testing.T) {
 }
 
 func TestDeleteCmd_HasCorrectMetadata(t *testing.T) {
-	assert.Equal(t, "delete [name]", deleteCmd.Use)
-	assert.NotEmpty(t, deleteCmd.Short)
+	assert.Equal(t, "delete [name]", newDeleteCmd().Use)
+	assert.NotEmpty(t, newDeleteCmd().Short)
 }
 
 func TestDeleteCmd_HasFileFlag(t *testing.T) {
-	f := deleteCmd.Flags().Lookup("file")
+	f := newDeleteCmd().Flags().Lookup("file")
 	require.NotNil(t, f, "delete command should have a --file flag")
 	assert.Equal(t, "f", f.Shorthand)
 }
@@ -60,7 +63,8 @@ func TestDeleteCmd_NotFound(t *testing.T) {
 
 	t.Setenv("KUBECONFIG", "/nonexistent/env-kubeconfig")
 	kubeconfig = "/nonexistent/kubeconfig"
-	err := deleteCmd.RunE(deleteCmd, []string{"nonexistent-job"})
+	cmd := newDeleteCmd()
+	err := cmd.RunE(cmd, []string{"nonexistent-job"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create K8s client")
 }
@@ -128,7 +132,8 @@ func TestDelete_ByName(t *testing.T) {
 	defer func() { deleteFile = origFile }()
 	deleteFile = ""
 
-	err := deleteCmd.RunE(deleteCmd, []string{"my-job"})
+	cmd := newDeleteCmd()
+	err := cmd.RunE(cmd, []string{"my-job"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create K8s client")
 }
@@ -157,9 +162,10 @@ worker:
 
 	origFile := deleteFile
 	defer func() { deleteFile = origFile }()
-	deleteFile = tmpFile
 
-	err = deleteCmd.RunE(deleteCmd, nil)
+	cmd := newDeleteCmd()
+	deleteFile = tmpFile
+	err = cmd.RunE(cmd, nil)
 	assert.Error(t, err)
 	// Should get past file loading and fail at client creation.
 	assert.Contains(t, err.Error(), "failed to create K8s client")
@@ -168,14 +174,15 @@ worker:
 func TestDelete_FileNotFound(t *testing.T) {
 	origFile := deleteFile
 	defer func() { deleteFile = origFile }()
-	deleteFile = "/nonexistent/path/to/missing.yaml"
 
 	orig := kubeconfig
 	defer func() { kubeconfig = orig }()
 	t.Setenv("KUBECONFIG", "/nonexistent/env-kubeconfig")
 	kubeconfig = "/nonexistent/kubeconfig"
 
-	err := deleteCmd.RunE(deleteCmd, nil)
+	cmd := newDeleteCmd()
+	deleteFile = "/nonexistent/path/to/missing.yaml"
+	err := cmd.RunE(cmd, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to load file")
 }
@@ -185,7 +192,7 @@ func TestDelete_NoNameNoFile(t *testing.T) {
 	defer func() { deleteFile = origFile }()
 	deleteFile = ""
 
-	err := deleteCmd.RunE(deleteCmd, nil)
+	err := newDeleteCmd().RunE(newDeleteCmd(), nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "either job name or -f flag is required")
 }
@@ -207,9 +214,11 @@ worker:
 
 	origFile := deleteFile
 	defer func() { deleteFile = origFile }()
+
+	cmd := newDeleteCmd()
 	deleteFile = tmpFile
 
-	err = deleteCmd.RunE(deleteCmd, nil)
+	err = cmd.RunE(cmd, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to load file")
 }

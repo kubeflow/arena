@@ -1,6 +1,7 @@
 package task
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1438,4 +1439,38 @@ worker:
 	assert.Equal(t, "training job v2", tk.Description)
 	assert.Equal(t, "/app", tk.WorkingDir)
 	assert.Equal(t, "/bin/bash", tk.Shell)
+}
+
+func TestSetSyntaxError_ErrorAndUnwrap(t *testing.T) {
+	inner := errors.New("boom")
+	serr := &SetSyntaxError{Expr: "a=", Err: inner}
+	assert.Equal(t, `failed to parse --set "a=": boom`, serr.Error())
+	assert.ErrorIs(t, serr, inner)
+}
+
+func TestApplySetOverrides_ParseErrorIsSetSyntaxError(t *testing.T) {
+	yamlData := []byte("name: test\n")
+	_, err := ApplySetOverrides(yamlData, []string{"foo[abc]=value"})
+	require.Error(t, err)
+	var serr *SetSyntaxError
+	require.True(t, errors.As(err, &serr), "error should be *SetSyntaxError, got %T", err)
+	assert.Equal(t, "foo[abc]=value", serr.Expr)
+	assert.Error(t, serr.Err)
+	assert.Contains(t, err.Error(), "failed to parse --set")
+}
+
+func TestApplySetOverrides_EmptyKeyIsSetSyntaxError(t *testing.T) {
+	yamlData := []byte("name: test\n")
+	_, err := ApplySetOverrides(yamlData, []string{"=nokey"})
+	require.Error(t, err)
+	var serr *SetSyntaxError
+	require.True(t, errors.As(err, &serr))
+	assert.Equal(t, "=nokey", serr.Expr)
+}
+
+func TestApplySetOverrides_YAMLErrorIsNotSetSyntaxError(t *testing.T) {
+	_, err := ApplySetOverrides([]byte("name: [unclosed"), []string{"a=b"})
+	require.Error(t, err)
+	var serr *SetSyntaxError
+	assert.False(t, errors.As(err, &serr), "YAML parse failure must not be a SetSyntaxError")
 }
