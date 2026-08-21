@@ -44,9 +44,10 @@ func TestLogsCmd_RegisteredOnJob(t *testing.T) {
 }
 
 func TestLogsCmd_RunE_FailsWithInvalidKubeconfig(t *testing.T) {
-	orig := kubeconfig
-	defer func() { kubeconfig = orig }()
+	orig, origKubeconfig := outputFormat, kubeconfig
+	t.Cleanup(func() { outputFormat, kubeconfig = orig, origKubeconfig })
 
+	outputFormat = "table"
 	kubeconfig = "/nonexistent/kubeconfig"
 	cmd := newLogsCmd()
 	err := cmd.RunE(cmd, []string{"my-job"})
@@ -60,11 +61,12 @@ func TestLogsCmd_HasCorrectUse(t *testing.T) {
 }
 
 func TestLogsCmd_RunE_RequiresKubeconfig(t *testing.T) {
-	orig := kubeconfig
-	defer func() { kubeconfig = orig }()
+	orig, origKubeconfig := outputFormat, kubeconfig
+	t.Cleanup(func() { outputFormat, kubeconfig = orig, origKubeconfig })
 
-	t.Setenv("KUBECONFIG", "/nonexistent/env-kubeconfig")
+	outputFormat = "table"
 	kubeconfig = ""
+	t.Setenv("KUBECONFIG", "/nonexistent/env-kubeconfig")
 	cmd := newLogsCmd()
 	err := cmd.RunE(cmd, []string{"my-job"})
 	// Without a valid kubeconfig, client creation or REST config should fail.
@@ -925,4 +927,61 @@ func TestProviderSelectorsWithJobNameWithDashes(t *testing.T) {
 	}
 	assert.True(t, selector.Matches(podLabels),
 		"selector should match pod with dashed job name")
+}
+
+func TestLogsCmd_RejectsOutputFlag(t *testing.T) {
+	for _, args := range [][]string{
+		{"job", "logs", "my-job", "-o", "json"},
+		{"job", "logs", "my-job", "-o", "table"},
+		{"job", "logs", "my-job", "--output", "yaml"},
+	} {
+		err := ExecuteWithArgs(args)
+		require.Error(t, err, "%v should be rejected as an unknown flag", args)
+		assert.Contains(t, err.Error(), "unknown", "%v: -o must be unknown on job logs", args)
+	}
+}
+
+func TestJobSubcommands_OutputFlagRegistration(t *testing.T) {
+	jobCmd := newJobCmd()
+	assert.Nil(t, jobCmd.PersistentFlags().Lookup("output"), "job group must not register a persistent -o")
+	assert.Nil(t, jobCmd.Flags().Lookup("output"), "job group must not register a local -o")
+
+	wantOutput := map[string]bool{
+		"run": true, "get": true, "status": true, "list": true,
+		"delete": true, "suspend": true, "resume": true,
+		"logs": false,
+	}
+	for _, sub := range jobCmd.Commands() {
+		want, ok := wantOutput[sub.Name()]
+		if !ok {
+			continue
+		}
+		flag := sub.Flags().Lookup("output")
+		if want {
+			require.NotNil(t, flag, "job %s must register -o", sub.Name())
+			assert.Equal(t, "o", flag.Shorthand)
+		} else {
+			assert.Nil(t, flag, "job %s must not register -o", sub.Name())
+		}
+	}
+}
+
+func TestJobLeafCommands_OutputFlagParsesAtLeaf(t *testing.T) {
+	for _, args := range [][]string{
+		{"job", "list", "-o", "bogus"},
+		{"job", "get", "x", "-o", "bogus"},
+		{"job", "run", "-f", "x.yaml", "-o", "bogus"},
+		{"submit", "pytorch", "--name", "t", "--image", "img", "-o", "bogus"},
+	} {
+		err := ExecuteWithArgs(args)
+		require.Error(t, err, "%v should fail", args)
+		assert.Contains(t, err.Error(), "invalid output format", "%v: -o must parse at the leaf and hit format validation", args)
+	}
+}
+
+func TestJobGroup_InterspersedOutputFlagStillParses(t *testing.T) {
+	err := ExecuteWithArgs([]string{"job", "-o", "json", "list", "--kubeconfig", "/nonexistent/kubeconfig"})
+	require.Error(t, err, "nonexistent kubeconfig must fail the run")
+	assert.NotContains(t, err.Error(), "unknown flag")
+	assert.Contains(t, err.Error(), "failed to create K8s client")
 }

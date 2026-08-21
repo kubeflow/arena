@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -18,6 +17,9 @@ func newResumeCmd() *cobra.Command {
 		Long:  `Resume a suspended training job by setting spec.runPolicy.suspend to false.`,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateOutputFormat(); err != nil {
+				return err
+			}
 			name := args[0]
 
 			k8sClient, err := client.NewClient(kubeconfig, kubeContext)
@@ -32,11 +34,11 @@ func newResumeCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "%s/%s resumed\n", strings.ToLower(jobType), name)
-			return nil
+			return printActionResult(cmd.OutOrStdout(), name, ns, jobType, "resumed")
 		},
 	}
 
+	registerOutputFlag(cmd)
 	cmd.ValidArgsFunction = completeJobName
 	return cmd
 }

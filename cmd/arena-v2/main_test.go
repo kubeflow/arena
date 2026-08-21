@@ -3,33 +3,58 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kubeflow/arena/pkg/cli"
 )
 
-func TestFormatError_BasicError(t *testing.T) {
-	err := errors.New("simple error")
-
-	result := formatError(err, false)
-	assert.Equal(t, "Error: simple error\n", result)
+func TestFormatError_PlainError(t *testing.T) {
+	assert.Equal(t, "Error: boom\n", formatError(errors.New("boom"), false, false))
 }
 
-func TestFormatError_WrappedError(t *testing.T) {
-	innerErr := errors.New("connection refused")
-	middleErr := fmt.Errorf("failed to connect: %w", innerErr)
-	outerErr := fmt.Errorf("failed to create client: %w", middleErr)
-
-	result := formatError(outerErr, false)
-	assert.Contains(t, result, "Error: failed to create client")
-	assert.Contains(t, result, "failed to connect")
-	assert.Contains(t, result, "connection refused")
+func TestFormatError_CLIErrorText(t *testing.T) {
+	err := &cli.CLIError{Message: "invalid value", ValidValues: []string{"a", "b"}}
+	assert.Equal(t, "Error: invalid value; must be one of: a, b\n", formatError(err, false, false))
 }
 
-func TestFormatError_DebugMode(t *testing.T) {
-	err := errors.New("test error")
+func TestFormatError_CLIErrorJSONEnvelope(t *testing.T) {
+	err := &cli.CLIError{Message: "invalid value", ValidValues: []string{"json", "yaml"}}
+	out := formatError(err, false, true)
+	assert.Contains(t, out, `"message": "invalid value"`)
+	assert.Contains(t, out, `"validValues": [`)
+	assert.NotContains(t, out, "Error:")
+	assert.True(t, strings.HasSuffix(out, "\n"), "envelope ends with newline")
+}
 
-	result := formatError(err, true)
-	assert.Contains(t, result, "Error: test error")
-	assert.Contains(t, result, "Full error chain:")
+func TestFormatError_NonCLIErrorInJSONModeRendersEnvelope(t *testing.T) {
+	out := formatError(errors.New("api failure"), false, true)
+	assert.Contains(t, out, `"message": "api failure"`)
+	assert.NotContains(t, out, "Error:", "JSON mode must not render prose errors")
+	assert.True(t, strings.HasSuffix(out, "\n"), "envelope ends with newline")
+}
+
+func TestFormatError_WrappedErrorInJSONModeRendersEnvelope(t *testing.T) {
+	err := fmt.Errorf("failed to create K8s client: %w", errors.New("no such file"))
+	out := formatError(err, false, true)
+	assert.Contains(t, out, `"message": "failed to create K8s client: no such file"`)
+	assert.NotContains(t, out, "Error:")
+}
+
+func TestFormatError_DebugChain(t *testing.T) {
+	err := fmt.Errorf("outer: %w", errors.New("root cause"))
+	out := formatError(err, true, false)
+	assert.Contains(t, out, "Error: outer: root cause\n")
+	assert.Contains(t, out, "Full error chain:")
+	assert.Contains(t, out, "  - outer: root cause\n")
+	assert.Contains(t, out, "  - root cause\n")
+}
+
+func TestFormatError_CLIErrorJSONWithDebugChain(t *testing.T) {
+	err := &cli.CLIError{Message: "invalid value"}
+	out := formatError(err, true, true)
+	assert.Contains(t, out, `"message": "invalid value"`)
+	assert.Contains(t, out, "Full error chain:")
 }

@@ -1,28 +1,29 @@
 package cli
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestTopJobCommand_InvalidFormat(t *testing.T) {
-	// Save and restore the output format variable
-	origFormat := topOutputFormat
-	defer func() { topOutputFormat = origFormat }()
+	origFormat := outputFormat
+	t.Cleanup(func() { outputFormat = origFormat })
 
-	// Construct first (flag registration resets bound variables), then override.
 	cmd := newTopJobCmd()
-	topOutputFormat = "invalid"
+	outputFormat = "invalid"
 
-	// Call RunE directly to test format validation
 	err := cmd.RunE(cmd, []string{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid output format")
-	assert.Contains(t, err.Error(), "invalid")
+	var cliErr *CLIError
+	require.Error(t, err)
+	require.True(t, errors.As(err, &cliErr), "top format error should be a CLIError, got %T: %v", err, err)
+	assert.Equal(t, []string{"table", "wide", "json", "yaml"}, cliErr.ValidValues)
+	assert.Contains(t, err.Error(), `invalid output format "invalid" for --output`)
 }
 
 func TestTopCmd_Help(t *testing.T) {
@@ -308,4 +309,17 @@ func TestFormatAge_Units(t *testing.T) {
 			assert.Contains(t, got, tt.contains)
 		})
 	}
+}
+
+func TestTopJobCmd_AllNamespacesFlagRegistered(t *testing.T) {
+	flag := newTopJobCmd().Flags().Lookup("all-namespaces")
+	require.NotNil(t, flag, "top job must register --all-namespaces")
+	assert.Equal(t, "A", flag.Shorthand)
+}
+
+func TestTopJobCmd_AllNamespacesParses(t *testing.T) {
+	err := ExecuteWithArgs([]string{"top", "job", "-A", "--kubeconfig", "/nonexistent/kubeconfig"})
+	require.Error(t, err, "nonexistent kubeconfig must fail the run")
+	assert.NotContains(t, err.Error(), "unknown", "-A must parse as a known flag")
+	assert.Contains(t, err.Error(), "failed to create K8s client")
 }

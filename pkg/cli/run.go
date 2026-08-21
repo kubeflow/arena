@@ -27,6 +27,9 @@ func newRunCmd() *cobra.Command {
 		Long: `Submit a training job to Kubernetes by loading a YAML specification file.
 Use --set to override YAML fields with Helm-style dot-notation paths.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if err := validateOutputFormat(); err != nil {
+				return err
+			}
 			applyDryRunOutputDefault(cmd, runDryRun)
 
 			log.Debug("loading task from file", "file", runFile)
@@ -40,6 +43,13 @@ Use --set to override YAML fields with Helm-style dot-notation paths.`,
 			// Apply --set overrides on raw YAML before parsing
 			mergedData, err := task.ApplySetOverrides(yamlData, runSetExprs)
 			if err != nil {
+				var serr *task.SetSyntaxError
+				if errors.As(err, &serr) {
+					return &CLIError{
+						Message: fmt.Sprintf("failed to apply --set: %v", serr),
+						Hint:    "expected key=value with dot-notation paths, e.g. --set worker.replicas=4",
+					}
+				}
 				return fmt.Errorf("failed to apply --set overrides: %w", err)
 			}
 
@@ -69,6 +79,7 @@ Use --set to override YAML fields with Helm-style dot-notation paths.`,
 
 	_ = cmd.MarkFlagRequired("file")
 	_ = cmd.RegisterFlagCompletionFunc("file", completeFile)
+	registerOutputFlag(cmd)
 	cmd.ValidArgsFunction = cobra.NoFileCompletions
 	return cmd
 }

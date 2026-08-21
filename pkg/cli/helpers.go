@@ -29,7 +29,10 @@ func dryRunFormat() (outputpkg.Format, error) {
 	case outputpkg.FormatYAML, outputpkg.FormatJSON:
 		return f, nil
 	default:
-		return "", fmt.Errorf("dry-run only supports -o json or yaml, got %q", outputFormat)
+		return "", &CLIError{
+			Message:     fmt.Sprintf("dry-run only supports -o json or yaml, got %q", outputFormat),
+			ValidValues: []string{"json", "yaml"},
+		}
 	}
 }
 
@@ -39,6 +42,14 @@ func applyDryRunOutputDefault(cmd *cobra.Command, dryRun bool) {
 	if dryRun && !cmd.Flags().Changed("output") {
 		outputFormat = string(outputpkg.FormatJSON)
 	}
+}
+
+// registerOutputFlag registers -o/--output on a leaf command, binding the
+// shared outputFormat global. Leaf-level registration keeps commands with no
+// structured output (e.g. job logs) free of the flag entirely.
+func registerOutputFlag(cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&outputFormat, "output", "o", string(outputpkg.DefaultFormat), outputpkg.FormatHelpText)
+	_ = cmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
 }
 
 // printCRD marshals a CRD as indented JSON or YAML and writes it to out.
@@ -143,6 +154,17 @@ func resolveNS(yamlNamespace string) string {
 		log.Warning("creating resources in system namespace — ensure this is intentional", "namespace", ns)
 	}
 	return ns
+}
+
+// resolveListNamespace returns the namespace scope for listing commands:
+// "" (all namespaces) when allNamespaces is set, otherwise the resolveNS
+// chain. -A/--all-namespaces silently takes precedence over -n, like kubectl.
+func resolveListNamespace(allNamespaces bool) string {
+	if allNamespaces {
+		log.Debug("listing across all namespaces; --namespace is ignored when set")
+		return ""
+	}
+	return resolveNS("")
 }
 
 // isSystemNamespace returns true for Kubernetes system namespaces where
@@ -259,6 +281,5 @@ func submitCRD(ctx context.Context, out io.Writer, k8sClient *client.Client, t *
 		return fmt.Errorf("failed to create auxiliary resources: %w", err)
 	}
 
-	fmt.Fprintf(out, "Job %s submitted successfully\n", t.Name)
-	return nil
+	return printSubmitResult(out, t.Name, ns, crd.GetKind(), crd.GetAPIVersion())
 }

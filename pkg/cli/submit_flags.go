@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kubeflow/arena/pkg/constants"
-	outputpkg "github.com/kubeflow/arena/pkg/output"
 )
 
 var (
@@ -155,9 +154,8 @@ func registerSubmitCommonFlags(cmd *cobra.Command) {
 
 	// Dry-run
 	f.BoolVar(&submitDryRun, "dry-run", false, "print CRD as JSON (default) or YAML (-o yaml) without submitting")
-	f.StringVarP(&outputFormat, "output", "o", string(outputpkg.DefaultFormat), outputpkg.FormatHelpText)
+	registerOutputFlag(cmd)
 
-	_ = cmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
 	_ = cmd.RegisterFlagCompletionFunc("clean-task-policy", completeStaticChoices(
 		"None\tDo not clean pods", "Running\tClean running pods", "All\tClean all pods"))
 	_ = cmd.RegisterFlagCompletionFunc("image-pull-policy", completeStaticChoices(

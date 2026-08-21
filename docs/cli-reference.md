@@ -18,11 +18,9 @@ These flags are available on all commands.
 
 ## arena job
 
-Parent command for managing training jobs. All subcommands inherit the following persistent flag.
+Parent command for managing training jobs. The group defines no persistent flags of its own.
 
-| Flag | Shorthand | Type | Default | Description |
-|------|-----------|------|---------|-------------|
-| `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
+Each leaf command that produces structured output registers its own local `-o/--output` flag (`table`, `wide`, `json`, `yaml`; default `table`): `job run`, `job get`, `job status`, `job list`, `job delete`, `job suspend`, `job resume`, and the `arena submit` framework subcommands. `arena job logs` deliberately has no `-o` flag — it streams raw log content directly.
 
 Supported frameworks: `pytorch`, `tensorflow`, `mpi`, `horovod`, `deepspeed`.
 
@@ -45,8 +43,9 @@ arena job run -f <file> [flags]
 | `--file` | `-f` | string | `""` | Path to YAML file (required) |
 | `--dry-run` | | bool | `false` | Print CRD as JSON or YAML without submitting |
 | `--set` | | stringArray | `nil` | Override YAML field (Helm-style: `key=value`, repeatable) |
+| `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
 
-Also inherits [global flags](#global-flags) and `--output` from `arena job`.
+Also inherits [global flags](#global-flags).
 
 ### Examples
 
@@ -67,7 +66,7 @@ $ arena job run -f examples/v2/quickstart/pytorch-simple.yaml --dry-run
 Job pytorch-simple submitted successfully
 ```
 
-With `--dry-run`, the generated CRD is printed as indented JSON (default) or YAML (`-o yaml`). If TensorBoard is enabled, the Deployment and Service resources are also printed, separated by `---`.
+With `--dry-run`, the generated CRD is printed as indented JSON (default) or YAML (`-o yaml`). If TensorBoard is enabled, the Deployment and Service resources are also printed, separated by `---`. Without `--dry-run`, `-o json` or `-o yaml` renders a structured submit result instead of the one-line confirmation.
 
 ---
 
@@ -83,7 +82,16 @@ arena job list [flags]
 
 ### Flags
 
-This command has no flags of its own. It inherits [global flags](#global-flags) and `--output` from `arena job`.
+| Flag | Shorthand | Type | Default | Description |
+|------|-----------|------|---------|-------------|
+| `--all-namespaces` | `-A` | bool | `false` | List jobs across all namespaces; silently overrides `-n` and adds a leading `NAMESPACE` column to table output |
+| `--selector` | `-l` | string | `""` | Label selector (kubectl syntax, AND-combined with arena's job scope) |
+| `--type` | | string | `""` | Show only jobs of this framework type |
+| `--status` | | string | `""` | Show only jobs in this status phase |
+| `--last` | | int | `50` | Number of most recent jobs to show (0 = unlimited) |
+| `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
+
+Also inherits [global flags](#global-flags).
 
 ### Examples
 
@@ -93,6 +101,17 @@ $ arena job list
 
 # List jobs in a specific namespace
 $ arena job list -n kubeflow
+
+# List jobs across all namespaces (overrides -n; adds a NAMESPACE column)
+$ arena job list -A
+
+# Narrow by framework type, status phase, or label selector
+$ arena job list --type pytorch
+$ arena job list --status Running
+$ arena job list -l env=prod
+
+# Show only the 10 most recent jobs
+$ arena job list --last 10
 
 # Wide output with additional columns
 $ arena job list -o wide
@@ -112,6 +131,14 @@ tf-distributed    Succeeded  3/3        1h
 mpi-test          Pending    0/2        10s
 ```
 
+With `-A/--all-namespaces`, a leading `NAMESPACE` column is added:
+
+```text
+NAMESPACE   NAME              STATUS     REPLICAS   AGE
+default     pytorch-simple    Running    1/1        5m
+kubeflow    tf-distributed    Succeeded  3/3        1h
+```
+
 Wide format (`-o wide`) adds `NAMESPACE`, `APIVERSION`, `FRAMEWORK`, and `GPU` columns:
 
 ```text
@@ -120,6 +147,8 @@ pytorch-simple    default     Running    kubeflow.org/v1     pytorch     1     1
 tf-distributed    default     Succeeded  kubeflow.org/v1     tensorflow  0     3/3        1h
 mpi-test          default     Pending    kubeflow.org/v1     mpi         2     0/2        10s
 ```
+
+By default the 50 most recent jobs are shown (`--last`, `0` = unlimited). When entries are dropped, a narrowing hint (`Showing N of M jobs...`) is printed to stderr.
 
 When no jobs exist:
 
@@ -150,8 +179,9 @@ arena job get <name> [flags]
 | Flag | Shorthand | Type | Default | Description |
 |------|-----------|------|---------|-------------|
 | `--details` | | bool | `false` | Show job configuration details (from the stored YAML) |
+| `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
 
-Also inherits [global flags](#global-flags) and `--output` from `arena job`.
+Also inherits [global flags](#global-flags).
 
 ### Examples
 
@@ -218,7 +248,7 @@ arena job logs <name> [flags]
 | `--pod` | | string | `""` | Pod name (skip label selector) |
 | `--container` | | string | `""` | Container name (default: first container) |
 
-Also inherits [global flags](#global-flags) and `--output` from `arena job`.
+Also inherits [global flags](#global-flags). Unlike the other `job` subcommands, `logs` has no `-o/--output` flag — the raw log content is streamed directly, so `arena job logs <name> -o json` is rejected.
 
 ### Examples
 
@@ -260,7 +290,11 @@ arena job suspend <name>
 
 ### Flags
 
-This command has no flags of its own. It inherits [global flags](#global-flags) and `--output` from `arena job`.
+| Flag | Shorthand | Type | Default | Description |
+|------|-----------|------|---------|-------------|
+| `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
+
+Also inherits [global flags](#global-flags). With `-o json` or `-o yaml`, a structured action result is rendered instead of the one-line confirmation.
 
 ### Examples
 
@@ -294,7 +328,11 @@ arena job resume <name>
 
 ### Flags
 
-This command has no flags of its own. It inherits [global flags](#global-flags) and `--output` from `arena job`.
+| Flag | Shorthand | Type | Default | Description |
+|------|-----------|------|---------|-------------|
+| `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
+
+Also inherits [global flags](#global-flags). With `-o json` or `-o yaml`, a structured action result is rendered instead of the one-line confirmation.
 
 ### Examples
 
@@ -332,8 +370,9 @@ arena job delete -f <file> [flags]
 | Flag | Shorthand | Type | Default | Description |
 |------|-----------|------|---------|-------------|
 | `--file` | `-f` | string | `""` | Path to YAML file (extracts job name from file) |
+| `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
 
-Also inherits [global flags](#global-flags) and `--output` from `arena job`.
+Also inherits [global flags](#global-flags). With `-o json` or `-o yaml`, a structured action result is rendered instead of the one-line confirmation.
 
 ### Examples
 
@@ -377,8 +416,9 @@ arena job status <name> [flags]
 | Flag | Shorthand | Type | Default | Description |
 |------|-----------|------|---------|-------------|
 | `--details` | | bool | `false` | Show job configuration details |
+| `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
 
-Also inherits [global flags](#global-flags) and `--output` from `arena job`.
+Also inherits [global flags](#global-flags).
 
 ### Examples
 
@@ -754,6 +794,7 @@ arena top job [flags]
 
 | Flag | Shorthand | Type | Default | Description |
 |------|-----------|------|---------|-------------|
+| `--all-namespaces` | `-A` | bool | `false` | List jobs across all namespaces; silently overrides `-n` and adds a leading `NAMESPACE` column to table output |
 | `--output` | `-o` | string | `table` | Output format: `table`, `wide`, `json`, `yaml` |
 
 Also inherits [global flags](#global-flags).
@@ -763,6 +804,9 @@ Also inherits [global flags](#global-flags).
 ```shell
 # Show GPU usage of all jobs
 $ arena top job
+
+# Show GPU usage across all namespaces (overrides -n; adds a NAMESPACE column)
+$ arena top job -A
 
 # Wide output with additional columns
 $ arena top job -o wide
@@ -779,6 +823,14 @@ Default table format:
 NAME              STATUS     GPU_REQUESTED   REPLICAS   AGE
 pytorch-simple    Running    1               1/1        5m
 mpi-test          Pending    2               0/2        10s
+```
+
+With `-A/--all-namespaces`, a leading `NAMESPACE` column is added:
+
+```text
+NAMESPACE   NAME              STATUS     GPU_REQUESTED   REPLICAS   AGE
+default     pytorch-simple    Running    1               1/1        5m
+kubeflow    mpi-test          Pending    2               0/2        10s
 ```
 
 Wide format (`-o wide`) adds `NAMESPACE`, `APIVERSION`, and `FRAMEWORK` columns:
@@ -816,7 +868,7 @@ The `STATUS` column in `list`, `get`, and `top job` output reflects the CRD's co
 
 ## Output Formats
 
-The `-o/--output` flag controls the output format for `arena job list`, `arena job get`, and `arena top job`.
+Each command that renders structured output registers its own local `-o/--output` flag: the `arena job` leaf commands (`run`, `get`, `status`, `list`, `delete`, `suspend`, `resume`), the `arena submit` framework subcommands, and `arena top job`. `arena job logs` has no `-o` flag.
 
 | Format | Description |
 |--------|-------------|
@@ -838,4 +890,4 @@ Arena resolves the target Kubernetes namespace using a 4-level priority chain:
 3. Namespace from the kubeconfig context
 4. `default` (lowest priority)
 
-All commands that interact with the cluster use this resolution. For `arena job run`, the YAML namespace is overridable with `-n`. For other commands (`list`, `get`, `logs`, `suspend`, `resume`, `delete`), the namespace comes from the flag or kubeconfig context.
+All commands that interact with the cluster use this resolution. For `arena job run`, the YAML namespace is overridable with `-n`. For other commands (`list`, `get`, `logs`, `suspend`, `resume`, `delete`), the namespace comes from the flag or kubeconfig context. The `-A/--all-namespaces` flag on `job list` and `top job` bypasses this resolution and lists across every namespace (a leading `NAMESPACE` column is added to table output).

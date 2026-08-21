@@ -31,6 +31,7 @@ func newGetCmd() *cobra.Command {
 		RunE:  runGet,
 	}
 	cmd.Flags().BoolVar(&getDetails, "details", false, "show job configuration details")
+	registerOutputFlag(cmd)
 	cmd.ValidArgsFunction = completeJobName
 	return cmd
 }
@@ -38,8 +39,7 @@ func newGetCmd() *cobra.Command {
 // runGet backs both `job get` and `job status`; it reads the --details flag
 // from whichever command is executing.
 func runGet(cmd *cobra.Command, args []string) error {
-	// Validate format
-	if err := outputpkg.Format(outputFormat).Validate(); err != nil {
+	if err := validateOutputFormat(); err != nil {
 		return err
 	}
 

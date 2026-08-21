@@ -12,7 +12,9 @@ import (
 	outputpkg "github.com/kubeflow/arena/pkg/output"
 )
 
-var topOutputFormat string
+var (
+	topAllNamespaces bool
+)
 
 // newTopCmd builds the `top` group. It has no Run hook on purpose: cobra
 // prints the group's help automatically when the bare command is invoked.
@@ -34,8 +36,7 @@ func newTopJobCmd() *cobra.Command {
 		Use:   "job",
 		Short: "Display Resource (GPU) usage of jobs.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			// Validate format
-			if err := outputpkg.Format(topOutputFormat).Validate(); err != nil {
+			if err := validateOutputFormat(); err != nil {
 				return err
 			}
 
@@ -50,7 +51,7 @@ func newTopJobCmd() *cobra.Command {
 				mpiAvailable = false
 			}
 
-			ns := resolveNS("")
+			ns := resolveListNamespace(topAllNamespaces)
 			allJobs := make([]client.JobStatus, 0)
 			anySucceeded := false
 			failedKindCount := 0
@@ -97,7 +98,10 @@ func newTopJobCmd() *cobra.Command {
 				TableFn: func() string { return renderer.RenderTopJob(allJobs) },
 				WideFn:  func() string { return renderer.RenderTopJobWide(allJobs) },
 			}
-			if err := outputpkg.Format(topOutputFormat).Render(cmd.OutOrStdout(), allJobs, opts); err != nil {
+			if topAllNamespaces {
+				opts.TableFn = func() string { return renderer.RenderTopJobAllNamespaces(allJobs) }
+			}
+			if err := outputpkg.Format(outputFormat).Render(cmd.OutOrStdout(), allJobs, opts); err != nil {
 				return err
 			}
 			// Warn the user when some job types could not be listed so they
@@ -113,14 +117,8 @@ func newTopJobCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(
-		&topOutputFormat,
-		"output",
-		"o",
-		string(outputpkg.DefaultFormat),
-		outputpkg.FormatHelpText,
-	)
+	registerOutputFlag(cmd)
+	cmd.Flags().BoolVarP(&topAllNamespaces, "all-namespaces", "A", false, "list jobs across all namespaces")
 	cmd.ValidArgsFunction = cobra.NoFileCompletions
-	_ = cmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
 	return cmd
 }
