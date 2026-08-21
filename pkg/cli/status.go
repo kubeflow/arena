@@ -12,6 +12,7 @@ func newStatusCmd() *cobra.Command {
 		RunE:  runGet,
 	}
 	cmd.Flags().BoolVar(&getDetails, "details", false, "show job configuration details")
+	registerOutputFlag(cmd)
 	cmd.ValidArgsFunction = completeJobName
 	return cmd
 }

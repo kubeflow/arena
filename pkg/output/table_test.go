@@ -397,3 +397,56 @@ func TestIndentLines(t *testing.T) {
 		})
 	}
 }
+
+func TestRenderJobListAllNamespaces(t *testing.T) {
+	jobs := []client.JobStatus{
+		{Name: "job-1", Namespace: "team-a", Status: "Running", Replicas: 4, Ready: 3, Age: "5m"},
+		{Name: "job-2", Namespace: "team-b", Status: "Succeeded", Replicas: 2, Ready: 0, Age: "1h"},
+	}
+
+	output := (&TableRenderer{}).RenderJobListAllNamespaces(jobs)
+
+	headerLine := strings.SplitN(output, "\n", 2)[0]
+	assert.Equal(t, []string{"NAMESPACE", "NAME", "STATUS", "REPLICAS", "AGE"}, strings.Fields(headerLine))
+	dataLine := strings.SplitN(output, "\n", 3)[1]
+	assert.Equal(t, []string{"team-a", "job-1", "Running", "3/4", "5m"}, strings.Fields(dataLine),
+		"values must align with headers: NAMESPACE first")
+	assert.Contains(t, output, "team-a")
+	assert.Contains(t, output, "team-b")
+}
+
+func TestRenderJobListAllNamespacesEmpty(t *testing.T) {
+	assert.Contains(t, (&TableRenderer{}).RenderJobListAllNamespaces(nil), "No jobs found")
+}
+
+func TestRenderTopJobAllNamespaces(t *testing.T) {
+	jobs := []client.JobStatus{
+		{Name: "job-1", Namespace: "team-a", Status: "Running", GPURequested: 4, Replicas: 2, Ready: 2, Age: "5m"},
+	}
+
+	output := (&TableRenderer{}).RenderTopJobAllNamespaces(jobs)
+
+	headerLine := strings.SplitN(output, "\n", 2)[0]
+	assert.Equal(t, []string{"NAMESPACE", "NAME", "STATUS", "GPU_REQUESTED", "REPLICAS", "AGE"}, strings.Fields(headerLine))
+	dataLine := strings.SplitN(output, "\n", 3)[1]
+	assert.Equal(t, []string{"team-a", "job-1", "Running", "4", "2/2", "5m"}, strings.Fields(dataLine),
+		"values must align with headers: NAMESPACE first")
+	assert.Contains(t, output, "team-a")
+}
+
+func TestRenderTopJobAllNamespacesEmpty(t *testing.T) {
+	assert.Contains(t, (&TableRenderer{}).RenderTopJobAllNamespaces(nil), "No jobs found")
+}
+
+// 以下两个是重构守卫:plain 渲染不得因变体重构而混入 NAMESPACE 列。
+func TestRenderJobList_PlainKeepsNoNamespaceColumn(t *testing.T) {
+	jobs := []client.JobStatus{{Name: "job-1", Namespace: "team-a", Status: "Running", Replicas: 1, Ready: 1, Age: "5m"}}
+	headerLine := strings.SplitN((&TableRenderer{}).RenderJobList(jobs), "\n", 2)[0]
+	assert.Equal(t, []string{"NAME", "STATUS", "REPLICAS", "AGE"}, strings.Fields(headerLine))
+}
+
+func TestRenderTopJob_PlainKeepsNoNamespaceColumn(t *testing.T) {
+	jobs := []client.JobStatus{{Name: "job-1", Namespace: "team-a", Status: "Running", GPURequested: 2, Replicas: 1, Ready: 1, Age: "5m"}}
+	headerLine := strings.SplitN((&TableRenderer{}).RenderTopJob(jobs), "\n", 2)[0]
+	assert.Equal(t, []string{"NAME", "STATUS", "GPU_REQUESTED", "REPLICAS", "AGE"}, strings.Fields(headerLine))
+}

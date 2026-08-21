@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -20,6 +19,9 @@ func newDeleteCmd() *cobra.Command {
 		Long:  `Delete a training job by name or YAML file (similar to kubectl delete -f).`,
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateOutputFormat(); err != nil {
+				return err
+			}
 			var name string
 
 			var yamlNS string
@@ -55,12 +57,12 @@ func newDeleteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "%s/%s deleted\n", strings.ToLower(jobType), name)
-			return nil
+			return printActionResult(cmd.OutOrStdout(), name, ns, jobType, "deleted")
 		},
 	}
 
 	cmd.Flags().StringVarP(&deleteFile, "file", "f", "", "path to YAML file")
+	registerOutputFlag(cmd)
 	cmd.ValidArgsFunction = completeJobName
 	_ = cmd.RegisterFlagCompletionFunc("file", completeFile)
 	return cmd

@@ -25,7 +25,9 @@ var frameworkRegistry = []frameworkDef{
 		aliases: []string{constants.FrameworkPyTorch, "pytorchjob"}},
 	{canonical: constants.FrameworkTensorFlow, original: constants.FrameworkTensorFlow, kind: constants.KindTFJob,
 		cmdName: "tfjob",
-		aliases: []string{constants.FrameworkTensorFlow, "tfjob", "tf"}},
+		// Alias order is user-visible: acceptedFrameworkTypes() renders it in
+		// the unsupported-type error, matching v1's tf/tfjob/tensorflow list.
+		aliases: []string{"tf", "tfjob", constants.FrameworkTensorFlow}},
 	{canonical: constants.FrameworkMPI, original: constants.FrameworkMPI, kind: constants.KindMPIJob,
 		cmdName: "mpijob",
 		aliases: []string{constants.FrameworkMPI, "mpijob", "mj"}},
@@ -108,4 +110,28 @@ func isMPIFamily(framework string) bool {
 	return framework == constants.FrameworkMPI ||
 		framework == constants.FrameworkHorovod ||
 		framework == constants.FrameworkDeepSpeed
+}
+
+// v2FrameworkNames returns the canonical framework names arena-v2 supports,
+// in registry order.
+func v2FrameworkNames() []string {
+	names := make([]string, 0, len(frameworkRegistry))
+	for _, def := range frameworkRegistry {
+		if def.canonical != "" {
+			names = append(names, def.canonical)
+		}
+	}
+	return names
+}
+
+// acceptedFrameworkTypes returns every framework type string the submit
+// command line accepts, across all v2-supported aliases.
+func acceptedFrameworkTypes() []string {
+	var types []string
+	for _, def := range frameworkRegistry {
+		if def.canonical != "" {
+			types = append(types, def.aliases...)
+		}
+	}
+	return types
 }

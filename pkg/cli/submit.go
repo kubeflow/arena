@@ -25,12 +25,16 @@ func newSubmitCmd() *cobra.Command {
 			}
 			framework, v1TypeUnsupported := lookupFramework(args[0])
 			if v1TypeUnsupported {
-				return fmt.Errorf("framework type %q is an arena v1 type not supported by arena-v2 yet (supported: pytorch, tensorflow, mpi, horovod, deepspeed)",
-					args[0])
+				return &CLIError{
+					Message:     fmt.Sprintf("framework type %q is an arena v1 type not supported by arena-v2 yet", args[0]),
+					ValidValues: v2FrameworkNames(),
+				}
 			}
 			if framework == "" {
-				return fmt.Errorf("unsupported framework type: %q (supported: pytorch/pytorchjob, tf/tfjob/tensorflow, mpi/mpijob/mj, horovod/horovodjob/hj, deepspeed/deepspeedjob/dp)",
-					args[0])
+				return &CLIError{
+					Message:     fmt.Sprintf("unsupported framework type: %q", args[0]),
+					ValidValues: acceptedFrameworkTypes(),
+				}
 			}
 			// The parent cannot mark --name/--image required at registration
 			// (cobra would reject a bare `submit` before RunE prints help), so the
@@ -92,6 +96,9 @@ func validateSubmitRequiredFlags(cmd *cobra.Command) error {
 // the per-framework subcommands. trailingArgs are the positional args that
 // follow the framework type; they become the run command.
 func runSubmit(cmd *cobra.Command, framework, originalFrameworkName string, trailingArgs []string) error {
+	if err := validateOutputFormat(); err != nil {
+		return err
+	}
 	if err := applyV1LogLevel(submitLogLevel); err != nil {
 		return err
 	}

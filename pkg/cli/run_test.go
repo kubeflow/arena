@@ -440,6 +440,10 @@ func TestRunCmd_SetOverrideInvalidValue(t *testing.T) {
 }
 
 func TestRunCmd_SetOverrideInvalidSyntax(t *testing.T) {
+	origFormat := outputFormat
+	t.Cleanup(func() { outputFormat = origFormat })
+	outputFormat = "table"
+
 	tmpFile := writeTestYAML(t, testRunYAML)
 	cmd := newRunCmd()
 	runFile = tmpFile
@@ -447,8 +451,11 @@ func TestRunCmd_SetOverrideInvalidSyntax(t *testing.T) {
 	runSetExprs = []string{"=nokey"}
 
 	err := cmd.RunE(cmd, nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to apply --set")
+	require.Error(t, err)
+	var cliErr *CLIError
+	require.True(t, errors.As(err, &cliErr))
+	assert.Contains(t, err.Error(), `failed to apply --set: failed to parse --set "=nokey": empty key`)
+	assert.Contains(t, cliErr.Hint, "worker.replicas=4")
 }
 
 func TestRunCmd_SetOverrideDeeplyNested(t *testing.T) {
