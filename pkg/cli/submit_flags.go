@@ -6,7 +6,6 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"github.com/kubeflow/arena/pkg/constants"
 	outputpkg "github.com/kubeflow/arena/pkg/output"
@@ -86,23 +85,6 @@ var (
 	submitIgnoredString        string
 	submitIgnoredBool          bool
 )
-
-func init() {
-	registerSubmitCommonFlags(submitCmd)
-	registerPyTorchSubmitFlags(submitCmd)
-	registerTFSubmitFlags(submitCmd)
-	registerMPISubmitFlags(submitCmd)
-	registerSubmitCompatFlags(submitCmd)
-
-	submitCmd.ValidArgsFunction = completeFrameworkType
-
-	// The parent keeps the full flag set — the fallback path and the test
-	// suite parse it — but hides it from help: `submit -h` lists only the
-	// framework subcommands, matching arena v1.
-	submitCmd.Flags().VisitAll(func(f *pflag.Flag) { f.Hidden = true })
-
-	rootCmd.AddCommand(submitCmd)
-}
 
 // registerSubmitCommonFlags registers the framework-agnostic submit flags on
 // cmd. Required marking of --name/--image is left to the caller: only the

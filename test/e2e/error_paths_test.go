@@ -50,7 +50,7 @@ var _ = Describe("Error paths", func() {
 		cmd.Stderr = &out
 		err := cmd.Run()
 		Expect(err).To(HaveOccurred(), "run without --file should error")
-		Expect(out.String()).To(ContainSubstring("--file is required"))
+		Expect(out.String()).To(ContainSubstring(`required flag(s) "file" not set`))
 	})
 
 	It("should error on invalid YAML", func() {

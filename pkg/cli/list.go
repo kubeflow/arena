@@ -18,65 +18,67 @@ import (
 // supportedJobKinds lists the CRD kinds that arena manages.
 var supportedJobKinds = []string{constants.KindPyTorchJob, constants.KindTFJob, constants.KindMPIJob}
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all training jobs",
-	Long:  `List all training jobs across PyTorchJob, TFJob, and MPIJob CRD kinds.`,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		// Validate format
-		if err := outputpkg.Format(outputFormat).Validate(); err != nil {
-			return err
-		}
-
-		k8sClient, err := client.NewClient(kubeconfig, kubeContext)
-		if err != nil {
-			return fmt.Errorf("failed to create K8s client: %w", err)
-		}
-
-		mpiAvailable := true
-		if err := k8sClient.ResolveMPIVersion(cmdContext(cmd)); err != nil {
-			log.Debug("MPIJob CRD not available", "error", err.Error())
-			mpiAvailable = false
-		}
-
-		ns := resolveNS("")
-		allJobs := make([]client.JobStatus, 0)
-		for _, kind := range supportedJobKinds {
-			if kind == constants.KindMPIJob && !mpiAvailable {
-				continue
+func newListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all training jobs",
+		Long:  `List all training jobs across PyTorchJob, TFJob, and MPIJob CRD kinds.`,
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			// Validate format
+			if err := outputpkg.Format(outputFormat).Validate(); err != nil {
+				return err
 			}
-			jobs, err := k8sClient.List(cmdContext(cmd), kind, ns, v2LabelSelector)
+
+			k8sClient, err := client.NewClient(kubeconfig, kubeContext)
 			if err != nil {
-				if apierrors.IsNotFound(err) {
-					log.Debug("CRD not installed", "kind", kind)
+				return fmt.Errorf("failed to create K8s client: %w", err)
+			}
+
+			mpiAvailable := true
+			if err := k8sClient.ResolveMPIVersion(cmdContext(cmd)); err != nil {
+				log.Debug("MPIJob CRD not available", "error", err.Error())
+				mpiAvailable = false
+			}
+
+			ns := resolveNS("")
+			allJobs := make([]client.JobStatus, 0)
+			for _, kind := range supportedJobKinds {
+				if kind == constants.KindMPIJob && !mpiAvailable {
 					continue
 				}
-				apiVer, _ := k8sClient.KindToAPIVersion(kind)
-				log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
-				continue
-			}
-			for _, job := range jobs {
-				status := extractJobStatus(job, kind)
-				if fw, ok := job.GetLabels()[frameworkLabel]; ok && fw != "" {
-					status.Framework = fw
-				} else {
-					status.Framework = kindToFramework(kind)
+				jobs, err := k8sClient.List(cmdContext(cmd), kind, ns, v2LabelSelector)
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						log.Debug("CRD not installed", "kind", kind)
+						continue
+					}
+					apiVer, _ := k8sClient.KindToAPIVersion(kind)
+					log.Warning("failed to list CRD kind", "kind", kind, "apiVersion", apiVer, "error", err.Error())
+					continue
 				}
-				status.GPURequested = extractGPURequested(job)
-				allJobs = append(allJobs, status)
+				for _, job := range jobs {
+					status := extractJobStatus(job, kind)
+					if fw, ok := job.GetLabels()[frameworkLabel]; ok && fw != "" {
+						status.Framework = fw
+					} else {
+						status.Framework = kindToFramework(kind)
+					}
+					status.GPURequested = extractGPURequested(job)
+					allJobs = append(allJobs, status)
+				}
 			}
-		}
 
-		renderer := &outputpkg.TableRenderer{}
-		opts := outputpkg.RenderOptions{
-			TableFn: func() string { return renderer.RenderJobList(allJobs) },
-			WideFn:  func() string { return renderer.RenderJobListWide(allJobs) },
-		}
-		if err := outputpkg.Format(outputFormat).Render(allJobs, opts); err != nil {
-			return err
-		}
-		return nil
-	},
+			renderer := &outputpkg.TableRenderer{}
+			opts := outputpkg.RenderOptions{
+				TableFn: func() string { return renderer.RenderJobList(allJobs) },
+				WideFn:  func() string { return renderer.RenderJobListWide(allJobs) },
+			}
+			return outputpkg.Format(outputFormat).Render(cmd.OutOrStdout(), allJobs, opts)
+		},
+	}
+	cmd.ValidArgsFunction = cobra.NoFileCompletions
+	return cmd
 }
 
 // extractJobStatus converts an unstructured CRD object into a JobStatus.
@@ -233,9 +235,4 @@ func formatAge(creationTime time.Time) string {
 		return "<unknown>"
 	}
 	return duration.HumanDuration(time.Since(creationTime))
-}
-
-func init() {
-	listCmd.ValidArgsFunction = cobra.NoFileCompletions
-	jobCmd.AddCommand(listCmd)
 }

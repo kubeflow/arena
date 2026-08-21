@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"path/filepath"
@@ -50,7 +51,8 @@ func TestDryRunFormat(t *testing.T) {
 
 func TestPrintCRD_UnsupportedFormat(t *testing.T) {
 	crd := &unstructured.Unstructured{Object: map[string]interface{}{"kind": "PyTorchJob"}}
-	err := printCRD(crd, outputpkg.FormatTable)
+	var buf bytes.Buffer
+	err := printCRD(&buf, crd, outputpkg.FormatTable)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported CRD output format")
 }
@@ -60,8 +62,13 @@ func TestPrintCRD_YAMLAndJSON(t *testing.T) {
 		"apiVersion": "kubeflow.org/v1",
 		"kind":       "PyTorchJob",
 	}}
-	require.NoError(t, printCRD(crd, outputpkg.FormatYAML))
-	require.NoError(t, printCRD(crd, outputpkg.FormatJSON))
+	var yamlBuf bytes.Buffer
+	require.NoError(t, printCRD(&yamlBuf, crd, outputpkg.FormatYAML))
+	assert.Contains(t, yamlBuf.String(), "kind: PyTorchJob")
+
+	var jsonBuf bytes.Buffer
+	require.NoError(t, printCRD(&jsonBuf, crd, outputpkg.FormatJSON))
+	assert.Contains(t, jsonBuf.String(), `"kind": "PyTorchJob"`)
 }
 
 func TestApplyDryRunOutputDefault(t *testing.T) {

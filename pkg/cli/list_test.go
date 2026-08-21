@@ -620,26 +620,30 @@ func TestFormatAge(t *testing.T) {
 }
 
 func TestListCmd_Help(t *testing.T) {
-	assert.Equal(t, "list", listCmd.Use)
-	assert.NotEmpty(t, listCmd.Short)
+	cmd := newListCmd()
+	assert.Equal(t, "list", cmd.Use)
+	assert.NotEmpty(t, cmd.Short)
 }
 
 func TestGetCmd_RequiresArg(t *testing.T) {
-	err := getCmd.Args(getCmd, []string{})
+	cmd := newGetCmd()
+	err := cmd.Args(cmd, []string{})
 	assert.Error(t, err)
 }
 
 func TestGetCmd_AcceptsOneArg(t *testing.T) {
-	err := getCmd.Args(getCmd, []string{"my-job"})
+	cmd := newGetCmd()
+	err := cmd.Args(cmd, []string{"my-job"})
 	assert.NoError(t, err)
 }
 
 func TestGetCmd_NotFound(t *testing.T) {
+	cmd := newGetCmd()
 	orig := kubeconfig
 	defer func() { kubeconfig = orig }()
 
 	kubeconfig = "/nonexistent/kubeconfig"
-	err := getCmd.RunE(getCmd, []string{"nonexistent-job"})
+	err := cmd.RunE(cmd, []string{"nonexistent-job"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create K8s client")
 }
@@ -699,7 +703,7 @@ func TestSupportedJobKinds(t *testing.T) {
 
 // Verify the job subcommands are registered
 func TestCommandsRegistered(t *testing.T) {
-	commands := jobCmd.Commands()
+	commands := newJobCmd().Commands()
 	var names []string
 	for _, cmd := range commands {
 		names = append(names, cmd.Name())
@@ -710,7 +714,7 @@ func TestCommandsRegistered(t *testing.T) {
 
 	// submit is a top-level command, not under job
 	rootNames := []string{}
-	for _, cmd := range rootCmd.Commands() {
+	for _, cmd := range NewRootCommand().Commands() {
 		rootNames = append(rootNames, cmd.Name())
 	}
 	assert.Contains(t, rootNames, "submit")

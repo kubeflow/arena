@@ -13,27 +13,28 @@ import (
 )
 
 func TestLogsCmd_ArgsValidator(t *testing.T) {
-	assert.Error(t, logsCmd.Args(logsCmd, []string{}))
-	assert.NoError(t, logsCmd.Args(logsCmd, []string{"my-job"}))
-	assert.Error(t, logsCmd.Args(logsCmd, []string{"a", "b"}))
+	cmd := newLogsCmd()
+	assert.Error(t, cmd.Args(cmd, []string{}))
+	assert.NoError(t, cmd.Args(cmd, []string{"my-job"}))
+	assert.Error(t, cmd.Args(cmd, []string{"a", "b"}))
 }
 
 func TestLogsCmd_FollowFlag(t *testing.T) {
-	f := logsCmd.Flags().Lookup("follow")
+	f := newLogsCmd().Flags().Lookup("follow")
 	require.NotNil(t, f, "expected --follow flag to be registered")
 	assert.Equal(t, "f", f.Shorthand)
 	assert.Equal(t, "false", f.DefValue)
 }
 
 func TestLogsCmd_TailFlag(t *testing.T) {
-	f := logsCmd.Flags().Lookup("tail")
+	f := newLogsCmd().Flags().Lookup("tail")
 	require.NotNil(t, f, "expected --tail flag to be registered")
 	assert.Equal(t, "-1", f.DefValue)
 }
 
 func TestLogsCmd_RegisteredOnJob(t *testing.T) {
 	found := false
-	for _, cmd := range jobCmd.Commands() {
+	for _, cmd := range newJobCmd().Commands() {
 		if cmd.Use == "logs <name>" {
 			found = true
 			break
@@ -47,14 +48,15 @@ func TestLogsCmd_RunE_FailsWithInvalidKubeconfig(t *testing.T) {
 	defer func() { kubeconfig = orig }()
 
 	kubeconfig = "/nonexistent/kubeconfig"
-	err := logsCmd.RunE(logsCmd, []string{"my-job"})
+	cmd := newLogsCmd()
+	err := cmd.RunE(cmd, []string{"my-job"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to build config")
 }
 
 func TestLogsCmd_HasCorrectUse(t *testing.T) {
-	assert.Equal(t, "logs <name>", logsCmd.Use)
-	assert.NotEmpty(t, logsCmd.Short)
+	assert.Equal(t, "logs <name>", newLogsCmd().Use)
+	assert.NotEmpty(t, newLogsCmd().Short)
 }
 
 func TestLogsCmd_RunE_RequiresKubeconfig(t *testing.T) {
@@ -63,19 +65,20 @@ func TestLogsCmd_RunE_RequiresKubeconfig(t *testing.T) {
 
 	t.Setenv("KUBECONFIG", "/nonexistent/env-kubeconfig")
 	kubeconfig = ""
-	err := logsCmd.RunE(logsCmd, []string{"my-job"})
+	cmd := newLogsCmd()
+	err := cmd.RunE(cmd, []string{"my-job"})
 	// Without a valid kubeconfig, client creation or REST config should fail.
 	assert.Error(t, err)
 }
 
 func TestLogsCmd_PodFlag(t *testing.T) {
-	f := logsCmd.Flags().Lookup("pod")
+	f := newLogsCmd().Flags().Lookup("pod")
 	require.NotNil(t, f, "expected --pod flag to be registered")
 	assert.Equal(t, "", f.DefValue)
 }
 
 func TestLogsCmd_ContainerFlag(t *testing.T) {
-	f := logsCmd.Flags().Lookup("container")
+	f := newLogsCmd().Flags().Lookup("container")
 	require.NotNil(t, f, "expected --container flag to be registered")
 	assert.Equal(t, "", f.DefValue)
 }
@@ -602,13 +605,13 @@ func TestLogsCmd_BufferConfiguration(t *testing.T) {
 	// Verify that the logs command exists and has proper configuration
 	// The actual buffer size is set in the RunE function, but we can verify
 	// the command structure is correct
-	assert.Equal(t, "logs <name>", logsCmd.Use)
-	assert.NotNil(t, logsCmd.RunE)
+	assert.Equal(t, "logs <name>", newLogsCmd().Use)
+	assert.NotNil(t, newLogsCmd().RunE)
 
 	// Verify all expected flags are present
 	flags := []string{"follow", "tail", "pod", "container"}
 	for _, flagName := range flags {
-		f := logsCmd.Flags().Lookup(flagName)
+		f := newLogsCmd().Flags().Lookup(flagName)
 		require.NotNil(t, f, "expected flag %s to be registered", flagName)
 	}
 }
