@@ -1,73 +1,23 @@
 package cli
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
-	"os"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// resetSubmitCommandState restores the cobra-side flag state of the submit
-// command tree (the parent and every framework subcommand) after earlier
-// ExecuteWithArgs calls in the same process. pflag never clears a flag's
-// Changed bit — nor the implicit --help flag's value — between Parse calls,
-// so a subcommand that once saw --name/--image would skip cobra's
-// required-flag validation forever, and a command whose --help ran once
-// would print help on every later execution. resetSubmitFlags covers the
-// bound package variables; this covers the state pflag keeps on the shared
-// command objects.
-//
-// The flags are reached through Lookup on each command's flag set: the
-// leaked state lives on per-command pflag.Flag objects — every command in
-// the tree registers its own --name and --image, plus cobra's implicit
-// --help — so each of the three flags is looked up by name on every
-// command, and Lookup's nil return lets the loop skip commands that have
-// not (yet) defined one.
-func resetSubmitCommandState(t *testing.T) {
-	t.Helper()
-	cmds := append([]*cobra.Command{submitCmd}, submitCmd.Commands()...)
-	for _, cmd := range cmds {
-		for _, name := range []string{"name", "image", "help"} {
-			f := cmd.Flags().Lookup(name)
-			if f == nil {
-				continue
-			}
-			if name == "help" {
-				// Cobra checks the help flag's value, not its Changed bit, so
-				// resetting the value through the flag's Value is enough.
-				_ = f.Value.Set("false")
-			}
-			f.Changed = false
-		}
-	}
-}
-
-// executeSubmitForJSON runs the CLI with the given args, captures stdout, and
-// unmarshals the CRD JSON printed by a --dry-run submit.
+// executeSubmitForJSON runs the CLI with the given args and unmarshals the
+// CRD JSON printed by a --dry-run submit.
 func executeSubmitForJSON(t *testing.T, args ...string) map[string]interface{} {
 	t.Helper()
-	resetSubmitCommandState(t)
-
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-	err := ExecuteWithArgs(args)
-	w.Close()
-	os.Stdout = oldStdout
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-
-	require.NoError(t, err, "submit should succeed, stdout: %s", buf.String())
+	out, err := ExecuteWithArgsOutput(args)
+	require.NoError(t, err, "submit should succeed, stdout: %s", out)
 
 	var crd map[string]interface{}
-	require.NoError(t, json.Unmarshal(buf.Bytes(), &crd),
-		"dry-run output should be valid JSON, got: %s", buf.String())
+	require.NoError(t, json.Unmarshal([]byte(out), &crd),
+		"dry-run output should be valid JSON, got: %s", out)
 	return crd
 }
 
@@ -75,20 +25,9 @@ func executeSubmitForJSON(t *testing.T, args ...string) map[string]interface{} {
 // everything written to stdout (used for --help output).
 func executeSubmitCaptureStdout(t *testing.T, args ...string) string {
 	t.Helper()
-	resetSubmitCommandState(t)
-
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-	err := ExecuteWithArgs(args)
-	w.Close()
-	os.Stdout = oldStdout
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-
+	out, err := ExecuteWithArgsOutput(args)
 	require.NoError(t, err)
-	return buf.String()
+	return out
 }
 
 func TestSubmitSubcommands_DispatchDryRun(t *testing.T) {
@@ -104,7 +43,6 @@ func TestSubmitSubcommands_DispatchDryRun(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.subcommand, func(t *testing.T) {
-			resetSubmitFlags(t)
 			crd := executeSubmitForJSON(t, "submit", tt.subcommand,
 				"--name", "subcmd-test", "--image", "test:latest",
 				"--workers", "2", "--dry-run", "echo", "hi")
@@ -118,7 +56,6 @@ func TestSubmitSubcommands_DispatchDryRun(t *testing.T) {
 // carry the run command (trailing args) and the parsed --workers flag through
 // the shared runSubmit core into the CRD.
 func TestSubmitSubcommands_SubcommandPathCarriesRunConfig(t *testing.T) {
-	resetSubmitFlags(t)
 	crd := executeSubmitForJSON(t, "submit", "pytorchjob",
 		"--name", "cfg-test", "--image", "test:latest",
 		"--workers", "2", "--dry-run", "python", "train.py")
@@ -168,7 +105,6 @@ func TestSubmitSubcommands_RejectForeignFlags(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetSubmitFlags(t)
 			err := ExecuteWithArgs(tt.args)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "unknown flag")
@@ -210,7 +146,6 @@ func TestSubmitSubcommands_HelpShowsOnlyRelevantFlags(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.subcommand, func(t *testing.T) {
-			resetSubmitFlags(t)
 			help := executeSubmitCaptureStdout(t, "submit", tt.subcommand, "--help")
 			for _, want := range tt.contains {
 				assert.Contains(t, help, want)
@@ -244,7 +179,6 @@ func TestSubmitSubcommands_AliasMatrixDispatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.alias, func(t *testing.T) {
-			resetSubmitFlags(t)
 			crd := executeSubmitForJSON(t, "submit", tt.alias,
 				"--name", "alias-test", "--image", "test:latest", "--dry-run", "echo", "hi")
 			assert.Equal(t, tt.kind, crd["kind"])
@@ -269,7 +203,6 @@ func TestSubmitSubcommands_FrameworkLabelIsCanonical(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.typed, func(t *testing.T) {
-			resetSubmitFlags(t)
 			crd := executeSubmitForJSON(t, "submit", tt.typed,
 				"--name", "label-test", "--image", "test:latest", "--dry-run", "echo", "hi")
 			labels, ok := crd["metadata"].(map[string]interface{})["labels"].(map[string]interface{})
@@ -281,36 +214,30 @@ func TestSubmitSubcommands_FrameworkLabelIsCanonical(t *testing.T) {
 
 func TestSubmitSubcommands_ParentFallbackBehaviors(t *testing.T) {
 	t.Run("v1-only type with flags still gets the dedicated error", func(t *testing.T) {
-		resetSubmitFlags(t)
 		err := ExecuteWithArgs([]string{"submit", "ray", "--name", "x", "--image", "y", "python", "train.py"})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not supported by arena-v2 yet")
 	})
 
 	t.Run("unknown type still gets the unsupported error", func(t *testing.T) {
-		resetSubmitFlags(t)
 		err := ExecuteWithArgs([]string{"submit", "bogus", "--name", "x", "--image", "y", "python", "train.py"})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unsupported framework type")
 	})
 
 	t.Run("case variant falls back to the parent and still submits", func(t *testing.T) {
-		resetSubmitFlags(t)
 		crd := executeSubmitForJSON(t, "submit", "PyTorch",
 			"--name", "case-test", "--image", "test:latest", "--dry-run", "echo", "hi")
 		assert.Equal(t, "PyTorchJob", crd["kind"])
 	})
 
 	t.Run("fallback path missing required flags matches the subcommand error", func(t *testing.T) {
-		resetSubmitCommandState(t)
-		resetSubmitFlags(t)
 		err := ExecuteWithArgs([]string{"submit", "PyTorch", "python", "train.py"})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), `required flag(s) "image", "name" not set`)
 	})
 
 	t.Run("bare submit prints help instead of erroring", func(t *testing.T) {
-		resetSubmitFlags(t)
 		help := executeSubmitCaptureStdout(t, "submit")
 		for _, sub := range []string{"pytorchjob", "tfjob", "mpijob", "horovodjob", "deepspeedjob"} {
 			assert.Contains(t, help, sub, "bare submit help should list the %s subcommand", sub)
@@ -318,7 +245,6 @@ func TestSubmitSubcommands_ParentFallbackBehaviors(t *testing.T) {
 	})
 
 	t.Run("flags but no framework prints help instead of erroring", func(t *testing.T) {
-		resetSubmitFlags(t)
 		help := executeSubmitCaptureStdout(t, "submit", "--name", "x", "--image", "y")
 		assert.Contains(t, help, "Available Commands:")
 	})
@@ -331,15 +257,12 @@ func TestSubmitSubcommands_ParentFallbackBehaviors(t *testing.T) {
 		// if that state leaked in. Reset it so this subtest passes regardless
 		// of ordering. (Parent-path missing --name is covered by
 		// TestSubmitCmd_NameAndImageRequired via task validation.)
-		resetSubmitCommandState(t)
-		resetSubmitFlags(t)
 		err := ExecuteWithArgs([]string{"submit", "pytorchjob", "python", "train.py"})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "required flag")
 	})
 
 	t.Run("flags before the type still route to the subcommand", func(t *testing.T) {
-		resetSubmitFlags(t)
 		crd := executeSubmitForJSON(t, "submit",
 			"--name", "order-test", "--image", "test:latest",
 			"pytorchjob", "--dry-run", "echo", "hi")
@@ -348,7 +271,6 @@ func TestSubmitSubcommands_ParentFallbackBehaviors(t *testing.T) {
 }
 
 func TestSubmitParentHelp_ListsSubcommandsOnly(t *testing.T) {
-	resetSubmitFlags(t)
 	help := executeSubmitCaptureStdout(t, "submit", "--help")
 
 	for _, sub := range []string{"pytorchjob", "tfjob", "mpijob", "horovodjob", "deepspeedjob"} {

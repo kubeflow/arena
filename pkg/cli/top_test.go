@@ -14,23 +14,24 @@ func TestTopJobCommand_InvalidFormat(t *testing.T) {
 	origFormat := topOutputFormat
 	defer func() { topOutputFormat = origFormat }()
 
-	// Set invalid format directly (bypassing flag parsing)
+	// Construct first (flag registration resets bound variables), then override.
+	cmd := newTopJobCmd()
 	topOutputFormat = "invalid"
 
 	// Call RunE directly to test format validation
-	err := topJobCmd.RunE(topJobCmd, []string{})
+	err := cmd.RunE(cmd, []string{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid output format")
 	assert.Contains(t, err.Error(), "invalid")
 }
 
 func TestTopCmd_Help(t *testing.T) {
-	assert.Equal(t, "top", topCmd.Use)
-	assert.NotEmpty(t, topCmd.Short)
+	assert.Equal(t, "top", newTopCmd().Use)
+	assert.NotEmpty(t, newTopCmd().Short)
 }
 
 func TestTopJobCmd_Registered(t *testing.T) {
-	commands := topCmd.Commands()
+	commands := newTopCmd().Commands()
 	var names []string
 	for _, cmd := range commands {
 		names = append(names, cmd.Name())
@@ -39,7 +40,7 @@ func TestTopJobCmd_Registered(t *testing.T) {
 }
 
 func TestTopCmd_RegisteredOnRoot(t *testing.T) {
-	commands := rootCmd.Commands()
+	commands := NewRootCommand().Commands()
 	var names []string
 	for _, cmd := range commands {
 		names = append(names, cmd.Name())

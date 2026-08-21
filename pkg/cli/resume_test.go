@@ -14,23 +14,26 @@ import (
 )
 
 func TestResumeCmd_RequiresArg(t *testing.T) {
-	err := resumeCmd.Args(resumeCmd, []string{})
+	cmd := newResumeCmd()
+	err := cmd.Args(cmd, []string{})
 	assert.Error(t, err)
 }
 
 func TestResumeCmd_AcceptsOneArg(t *testing.T) {
-	err := resumeCmd.Args(resumeCmd, []string{"my-job"})
+	cmd := newResumeCmd()
+	err := cmd.Args(cmd, []string{"my-job"})
 	assert.NoError(t, err)
 }
 
 func TestResumeCmd_RejectsExtraArgs(t *testing.T) {
-	err := resumeCmd.Args(resumeCmd, []string{"job1", "job2"})
+	cmd := newResumeCmd()
+	err := cmd.Args(cmd, []string{"job1", "job2"})
 	assert.Error(t, err)
 }
 
 func TestResumeCmd_RegisteredWithJob(t *testing.T) {
 	found := false
-	for _, cmd := range jobCmd.Commands() {
+	for _, cmd := range newJobCmd().Commands() {
 		if cmd.Name() == "resume" {
 			found = true
 			break
@@ -44,14 +47,15 @@ func TestResumeCmd_NotFound(t *testing.T) {
 	defer func() { kubeconfig = orig }()
 
 	kubeconfig = "/nonexistent/kubeconfig"
-	err := resumeCmd.RunE(resumeCmd, []string{"nonexistent-job"})
+	cmd := newResumeCmd()
+	err := cmd.RunE(cmd, []string{"nonexistent-job"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create K8s client")
 }
 
 func TestResumeCmd_HasCorrectMetadata(t *testing.T) {
-	assert.Equal(t, "resume <name>", resumeCmd.Use)
-	assert.NotEmpty(t, resumeCmd.Short)
+	assert.Equal(t, "resume <name>", newResumeCmd().Use)
+	assert.NotEmpty(t, newResumeCmd().Short)
 }
 
 func TestResumeCmd_ClearsSuspendField(t *testing.T) {

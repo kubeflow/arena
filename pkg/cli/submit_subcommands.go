@@ -43,12 +43,3 @@ func newSubmitFrameworkSubcommand(def frameworkDef) *cobra.Command {
 	registerSubmitCompatFlags(cmd)
 	return cmd
 }
-
-func init() {
-	for _, def := range frameworkRegistry {
-		if def.canonical == "" {
-			continue
-		}
-		submitCmd.AddCommand(newSubmitFrameworkSubcommand(def))
-	}
-}

@@ -10,20 +10,30 @@ var (
 	outputFormat string
 )
 
-var jobCmd = &cobra.Command{
-	Use:   "job",
-	Short: "Manage training jobs",
-	Long:  `Commands for submitting, listing, inspecting, and managing training jobs.`,
-}
-
-func init() {
-	jobCmd.PersistentFlags().StringVarP(
+func newJobCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "job",
+		Short: "Manage training jobs",
+		Long:  `Commands for submitting, listing, inspecting, and managing training jobs.`,
+	}
+	cmd.PersistentFlags().StringVarP(
 		&outputFormat,
 		"output",
 		"o",
 		string(outputpkg.DefaultFormat),
 		outputpkg.FormatHelpText,
 	)
-	_ = jobCmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
-	rootCmd.AddCommand(jobCmd)
+	_ = cmd.RegisterFlagCompletionFunc("output", completeOutputFormat)
+
+	cmd.AddCommand(
+		newRunCmd(),
+		newGetCmd(),
+		newStatusCmd(),
+		newListCmd(),
+		newLogsCmd(),
+		newDeleteCmd(),
+		newSuspendCmd(),
+		newResumeCmd(),
+	)
+	return cmd
 }

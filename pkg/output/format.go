@@ -3,6 +3,7 @@ package output
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"gopkg.in/yaml.v3"
 )
@@ -47,7 +48,8 @@ func (f Format) Validate() error {
 	return fmt.Errorf("invalid output format: %q (supported: %s)", f, FormatSupported)
 }
 
-// Render dispatches to the appropriate rendering path for this format.
+// Render dispatches to the appropriate rendering path for this format and
+// writes the result to w.
 //
 //   - JSON:  marshals data with 2-space indentation and prints it followed
 //     by a newline.
@@ -55,31 +57,31 @@ func (f Format) Validate() error {
 //     trailing newline).
 //   - Wide:  calls WideFn when non-nil, otherwise falls back to TableFn.
 //   - Table: calls TableFn.
-func (f Format) Render(data interface{}, opts RenderOptions) error {
+func (f Format) Render(w io.Writer, data interface{}, opts RenderOptions) error {
 	switch f {
 	case FormatJSON:
 		b, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
 			return fmt.Errorf("failed to marshal JSON: %w", err)
 		}
-		fmt.Println(string(b))
+		fmt.Fprintln(w, string(b))
 	case FormatYAML:
 		b, err := yaml.Marshal(data)
 		if err != nil {
 			return fmt.Errorf("failed to marshal YAML: %w", err)
 		}
-		fmt.Print(string(b))
+		fmt.Fprint(w, string(b))
 	case FormatWide:
 		fn := opts.WideFn
 		if fn == nil {
 			fn = opts.TableFn
 		}
 		if fn != nil {
-			fmt.Print(fn())
+			fmt.Fprint(w, fn())
 		}
 	case FormatTable:
 		if opts.TableFn != nil {
-			fmt.Print(opts.TableFn())
+			fmt.Fprint(w, opts.TableFn())
 		}
 	}
 	return nil

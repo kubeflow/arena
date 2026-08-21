@@ -3,8 +3,6 @@ package output
 import (
 	"bytes"
 	"encoding/json"
-	"io"
-	"os"
 	"strings"
 	"testing"
 
@@ -16,38 +14,6 @@ import (
 type sampleJob struct {
 	Name   string `json:"name" yaml:"name"`
 	Status string `json:"status" yaml:"status"`
-}
-
-// captureStdout runs fn while redirecting os.Stdout to a pipe, returning the
-// captured text. This lets us assert on what Render prints.
-func captureStdout(t *testing.T, fn func()) string {
-	t.Helper()
-	orig := os.Stdout
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("os.Pipe: %v", err)
-	}
-	os.Stdout = w
-
-	t.Cleanup(func() {
-		os.Stdout = orig
-		w.Close()
-	})
-
-	outCh := make(chan string, 1)
-	go func() {
-		var buf bytes.Buffer
-		_, _ = io.Copy(&buf, r)
-		outCh <- buf.String()
-	}()
-
-	fn()
-
-	// Close the write end so io.Copy in the goroutine sees EOF and sends the
-	// captured output. t.Cleanup still restores stdout and closes w (a harmless
-	// double close) as a safety net for panic/FailNow paths that skip this line.
-	w.Close()
-	return <-outCh
 }
 
 // --- Validate() tests ---
@@ -75,31 +41,29 @@ func TestValidateRejectsInvalidFormat(t *testing.T) {
 
 func TestRenderJSON(t *testing.T) {
 	job := sampleJob{Name: "job-1", Status: "Running"}
-	out := captureStdout(t, func() {
-		err := FormatJSON.Render(job, RenderOptions{})
-		assert.NoError(t, err)
-	})
+	var buf bytes.Buffer
+	err := FormatJSON.Render(&buf, job, RenderOptions{})
+	assert.NoError(t, err)
 
-	// Trim trailing newline added by fmt.Println, then verify valid JSON.
+	// Trim trailing newline added by Fprintln, then verify valid JSON.
 	var got sampleJob
-	err := json.Unmarshal([]byte(strings.TrimSpace(out)), &got)
+	err = json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &got)
 	assert.NoError(t, err, "output should be valid JSON")
 	assert.Equal(t, job, got)
 
 	// 2-space indent: a multi-field JSON object will contain "\n  " (newline + 2 spaces).
-	assert.Contains(t, out, "\n  ", "output should use 2-space indentation")
+	assert.Contains(t, buf.String(), "\n  ", "output should use 2-space indentation")
 }
 
 func TestRenderYAML(t *testing.T) {
 	job := sampleJob{Name: "job-1", Status: "Running"}
-	out := captureStdout(t, func() {
-		err := FormatYAML.Render(job, RenderOptions{})
-		assert.NoError(t, err)
-	})
+	var buf bytes.Buffer
+	err := FormatYAML.Render(&buf, job, RenderOptions{})
+	assert.NoError(t, err)
 
 	// Verify valid YAML by unmarshalling back.
 	var got sampleJob
-	err := yaml.Unmarshal([]byte(out), &got)
+	err = yaml.Unmarshal(buf.Bytes(), &got)
 	assert.NoError(t, err, "output should be valid YAML")
 	assert.Equal(t, job, got)
 }
@@ -112,12 +76,11 @@ func TestRenderTableCallsTableFn(t *testing.T) {
 			return "TABLE OUTPUT\n"
 		},
 	}
-	out := captureStdout(t, func() {
-		err := FormatTable.Render(nil, opts)
-		assert.NoError(t, err)
-	})
+	var buf bytes.Buffer
+	err := FormatTable.Render(&buf, nil, opts)
+	assert.NoError(t, err)
 	assert.True(t, called, "TableFn should be called for FormatTable")
-	assert.Contains(t, out, "TABLE OUTPUT", "TableFn output should be printed")
+	assert.Contains(t, buf.String(), "TABLE OUTPUT", "TableFn output should be printed")
 }
 
 func TestRenderWideCallsWideFn(t *testing.T) {
@@ -133,13 +96,12 @@ func TestRenderWideCallsWideFn(t *testing.T) {
 			return "WIDE OUTPUT\n"
 		},
 	}
-	out := captureStdout(t, func() {
-		err := FormatWide.Render(nil, opts)
-		assert.NoError(t, err)
-	})
+	var buf bytes.Buffer
+	err := FormatWide.Render(&buf, nil, opts)
+	assert.NoError(t, err)
 	assert.True(t, wideCalled, "WideFn should be called when provided")
 	assert.False(t, tableCalled, "TableFn should NOT be called when WideFn is provided")
-	assert.Contains(t, out, "WIDE OUTPUT", "WideFn output should be printed")
+	assert.Contains(t, buf.String(), "WIDE OUTPUT", "WideFn output should be printed")
 }
 
 func TestRenderWideFallsBackToTableFnWhenWideFnNil(t *testing.T) {
@@ -151,12 +113,11 @@ func TestRenderWideFallsBackToTableFnWhenWideFnNil(t *testing.T) {
 		},
 		WideFn: nil,
 	}
-	out := captureStdout(t, func() {
-		err := FormatWide.Render(nil, opts)
-		assert.NoError(t, err)
-	})
+	var buf bytes.Buffer
+	err := FormatWide.Render(&buf, nil, opts)
+	assert.NoError(t, err)
 	assert.True(t, tableCalled, "TableFn should be called as fallback when WideFn is nil")
-	assert.Contains(t, out, "TABLE OUTPUT", "TableFn output should be printed as fallback")
+	assert.Contains(t, buf.String(), "TABLE OUTPUT", "TableFn output should be printed as fallback")
 }
 
 // --- Constant tests ---

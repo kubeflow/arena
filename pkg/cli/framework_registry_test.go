@@ -198,11 +198,12 @@ func TestLookupFramework_Unknown(t *testing.T) {
 }
 
 func TestSubmitFrameworkTypeErrors(t *testing.T) {
-	err := submitCmd.RunE(submitCmd, []string{"rayjob"})
+	cmd := newSubmitCmd()
+	err := cmd.RunE(cmd, []string{"rayjob"})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not supported by arena-v2 yet")
 
-	err = submitCmd.RunE(submitCmd, []string{"bogus"})
+	err = cmd.RunE(cmd, []string{"bogus"})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported framework type")
 }

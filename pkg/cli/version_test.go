@@ -5,12 +5,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVersionCmd_Output(t *testing.T) {
-	buf := new(bytes.Buffer)
-	versionCmd.SetOut(buf)
-
 	// Save and restore version variables
 	origVersion := version
 	origCommit := gitCommit
@@ -31,18 +29,22 @@ func TestVersionCmd_Output(t *testing.T) {
 	gitTag = "v0.1.0"
 	gitTreeState = "clean"
 
-	// versionCmd uses fmt.Printf (stdout), not cmd.OutOrStdout(),
-	// so we test the variable values directly.
-	assert.Equal(t, "0.1.0", version)
-	assert.Equal(t, "abc123", gitCommit)
-	assert.Equal(t, "2026-07-01T00:00:00Z", buildDate)
-	assert.Equal(t, "v0.1.0", gitTag)
-	assert.Equal(t, "clean", gitTreeState)
+	cmd := newVersionCmd()
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	require.NoError(t, cmd.RunE(cmd, nil))
+
+	assert.Contains(t, buf.String(), "Arena v2")
+	assert.Contains(t, buf.String(), "Version:     0.1.0")
+	assert.Contains(t, buf.String(), "Git Commit:  abc123")
+	assert.Contains(t, buf.String(), "Build Date:  2026-07-01T00:00:00Z")
+	assert.Contains(t, buf.String(), "Git Tag:     v0.1.0")
+	assert.Contains(t, buf.String(), "Tree State:  clean")
 }
 
 func TestVersionCmd_RegisteredOnRoot(t *testing.T) {
 	found := false
-	for _, cmd := range rootCmd.Commands() {
+	for _, cmd := range NewRootCommand().Commands() {
 		if cmd.Name() == "version" {
 			found = true
 			break
@@ -52,8 +54,9 @@ func TestVersionCmd_RegisteredOnRoot(t *testing.T) {
 }
 
 func TestVersionCmd_HasCorrectUse(t *testing.T) {
-	assert.Equal(t, "version", versionCmd.Use)
-	assert.NotEmpty(t, versionCmd.Short)
+	cmd := newVersionCmd()
+	assert.Equal(t, "version", cmd.Use)
+	assert.NotEmpty(t, cmd.Short)
 }
 
 func TestVersionCmd_DefaultValues(t *testing.T) {

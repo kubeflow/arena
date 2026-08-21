@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -20,13 +18,14 @@ func TestSubmitCmd_NoFrameworkArgPrintsHelp(t *testing.T) {
 	// RunE guards the empty-args case with help (the framework is the first
 	// positional argument); full stdout coverage lives in
 	// TestSubmitSubcommands_ParentFallbackBehaviors.
-	err := submitCmd.RunE(submitCmd, nil)
+	cmd := newSubmitCmd()
+	err := cmd.RunE(cmd, nil)
 	assert.NoError(t, err)
 }
 
 func TestSubmitCmd_RegisteredWithRootCmd(t *testing.T) {
 	found := false
-	for _, cmd := range rootCmd.Commands() {
+	for _, cmd := range NewRootCommand().Commands() {
 		if cmd.Name() == "submit" {
 			found = true
 			break
@@ -36,68 +35,64 @@ func TestSubmitCmd_RegisteredWithRootCmd(t *testing.T) {
 }
 
 func TestSubmitCmd_HasRequiredFlags(t *testing.T) {
+	cmd := newSubmitCmd()
 	flagNames := []string{"name", "image", "workers", "gpus", "cpu", "memory"}
 	for _, name := range flagNames {
-		f := submitCmd.Flags().Lookup(name)
+		f := cmd.Flags().Lookup(name)
 		require.NotNil(t, f, "flag %q should be registered", name)
 	}
 }
 
 func TestSubmitCmd_HasFrameworkFlags(t *testing.T) {
-	f := submitCmd.Flags().Lookup("nproc-per-node")
+	cmd := newSubmitCmd()
+	f := cmd.Flags().Lookup("nproc-per-node")
 	assert.NotNil(t, f, "nproc-per-node flag should be registered")
 
-	f = submitCmd.Flags().Lookup("ps")
+	f = cmd.Flags().Lookup("ps")
 	assert.NotNil(t, f, "ps flag should be registered")
 
-	f = submitCmd.Flags().Lookup("slots-per-worker")
+	f = cmd.Flags().Lookup("slots-per-worker")
 	assert.NotNil(t, f, "slots-per-worker flag should be registered")
 }
 
 func TestSubmitCmd_HasDryRunFlag(t *testing.T) {
-	f := submitCmd.Flags().Lookup("dry-run")
+	cmd := newSubmitCmd()
+	f := cmd.Flags().Lookup("dry-run")
 	require.NotNil(t, f, "dry-run flag should be registered")
 	assert.Equal(t, "false", f.DefValue)
 }
 
 func TestSubmitCmd_NameAndImageRequired(t *testing.T) {
-	resetSubmitCommandState(t)
-	resetSubmitFlags(t)
-
-	err := submitCmd.RunE(submitCmd, []string{"pytorch"})
+	cmd := newSubmitCmd()
+	err := cmd.RunE(cmd, []string{"pytorch"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "required flag")
 }
 
 func TestSubmitCmd_UnsupportedFramework(t *testing.T) {
-	resetSubmitFlags(t)
-
+	cmd := newSubmitCmd()
 	submitName = "test-job"
 	submitImage = "test-image:latest"
 
-	err := submitCmd.RunE(submitCmd, []string{"jax"})
+	err := cmd.RunE(cmd, []string{"jax"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported framework")
 }
 
 func TestSubmitCmd_ValidationFailsWithoutName(t *testing.T) {
-	resetSubmitCommandState(t)
-	resetSubmitFlags(t)
+	cmd := newSubmitCmd()
+	require.NoError(t, cmd.Flags().Parse([]string{"--image", "some-image:latest"}))
 
-	require.NoError(t, submitCmd.Flags().Parse([]string{"--image", "some-image:latest"}))
-
-	err := submitCmd.RunE(submitCmd, []string{"pytorch"})
+	err := cmd.RunE(cmd, []string{"pytorch"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), `required flag(s) "name" not set`)
 }
 
 func TestSubmitCmd_ValidationFailsWithoutImage(t *testing.T) {
-	resetSubmitCommandState(t)
-	resetSubmitFlags(t)
+	cmd := newSubmitCmd()
+	require.NoError(t, cmd.Flags().Parse([]string{"--name", "my-job"}))
 
-	require.NoError(t, submitCmd.Flags().Parse([]string{"--name", "my-job"}))
-
-	err := submitCmd.RunE(submitCmd, []string{"pytorch"})
+	err := cmd.RunE(cmd, []string{"pytorch"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), `required flag(s) "image" not set`)
 }
@@ -146,7 +141,7 @@ func TestBuildSubmitTask_PyTorchWorkersNMinusOne(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resetSubmitFlags(t)
+			resetSubmitGlobals(t)
 			submitName = "test-job"
 			submitImage = "test:latest"
 			submitWorkers = tt.workers
@@ -166,7 +161,7 @@ func TestBuildSubmitTask_PyTorchWorkersNMinusOne(t *testing.T) {
 }
 
 func TestBuildSubmitTask_ChiefEvaluatorPS(t *testing.T) {
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 	submitName = "test-job"
 	submitImage = "test:latest"
 	submitWorkers = 2
@@ -214,7 +209,7 @@ func TestBuildSubmitTask_ChiefEvaluatorPS(t *testing.T) {
 }
 
 func TestBuildSubmitTask_TrailingArgs(t *testing.T) {
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 	submitName = "test-job"
 	submitImage = "test:latest"
 	submitWorkers = 1
@@ -257,7 +252,7 @@ func TestNormalizeFramework(t *testing.T) {
 }
 
 func TestBuildSubmitFlags_IncludesTolerations(t *testing.T) {
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 	submitTolerations = []string{"key1=value1:NoSchedule", "key2=value2:NoExecute"}
 
 	flags := buildSubmitFlags()
@@ -267,7 +262,7 @@ func TestBuildSubmitFlags_IncludesTolerations(t *testing.T) {
 }
 
 func TestBuildSubmitFlags_EmptyTolerations(t *testing.T) {
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 	submitTolerations = nil
 
 	flags := buildSubmitFlags()
@@ -276,7 +271,7 @@ func TestBuildSubmitFlags_EmptyTolerations(t *testing.T) {
 }
 
 func TestBuildSubmitFlags(t *testing.T) {
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 
 	submitName = "test-job"
 	submitImage = "test:latest"
@@ -325,7 +320,7 @@ func TestOriginalFramework(t *testing.T) {
 func TestSubmitCmd_MPIVersionIntegration_V1FromCluster(t *testing.T) {
 	// Simulates the submit command flow when the cluster has MPIJob CRD with
 	// storage version v1. Verifies that the generated CR uses kubeflow.org/v1.
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 
 	submitName = "mpi-v1-submit"
 	submitImage = "openmpi:4.1"
@@ -362,7 +357,7 @@ func TestSubmitCmd_MPIVersionIntegration_V1FromCluster(t *testing.T) {
 func TestSubmitCmd_MPIVersionIntegration_V2beta1Default(t *testing.T) {
 	// Simulates the submit command flow in dry-run mode (no cluster).
 	// With the removal of the default fallback, APIVersion must be explicitly set.
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 
 	submitName = "mpi-v2beta1-submit"
 	submitImage = "openmpi:4.1"
@@ -392,7 +387,7 @@ func TestSubmitCmd_MPIVersionIntegration_V2beta1Default(t *testing.T) {
 
 func TestSubmitCmd_MPIVersionIntegration_DeepSpeed(t *testing.T) {
 	// Verifies that deepspeed (MPI-family) also uses the detected version.
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 
 	submitName = "deepspeed-v1"
 	submitImage = "deepspeed:latest"
@@ -419,7 +414,7 @@ func TestSubmitCmd_MPIVersionIntegration_DeepSpeed(t *testing.T) {
 
 func TestSubmitCmd_MPIVersionIntegration_Horovod(t *testing.T) {
 	// Verifies that horovod (MPI-family) also uses the detected version.
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 
 	submitName = "horovod-v1"
 	submitImage = "horovod:latest"
@@ -443,59 +438,12 @@ func TestSubmitCmd_MPIVersionIntegration_Horovod(t *testing.T) {
 	assert.Equal(t, "kubeflow.org/v1", crd.GetAPIVersion())
 }
 
-// resetSubmitFlags resets all submit flag variables to their defaults
-func resetSubmitFlags(t *testing.T) {
+// resetSubmitGlobals rebinds every submit flag variable to its default by
+// constructing a fresh submit command: pflag writes the default into the
+// bound variable at registration time, so a fresh tree is a full reset.
+func resetSubmitGlobals(t *testing.T) {
 	t.Helper()
-	submitName = ""
-	submitImage = ""
-	submitWorkers = 1
-	submitGPUs = 0
-	submitCPU = ""
-	submitMemory = ""
-	submitEnvs = nil
-	submitData = nil
-	submitLabels = nil
-	submitAnnotations = nil
-	submitSelectors = nil
-	submitTolerations = nil
-	submitPriorityClass = ""
-	submitGang = false
-	submitScheduler = ""
-	submitCleanTaskPolicy = "Running"
-	submitRunningTimeout = ""
-	submitTTLAfterFinished = ""
-	submitJobBackoffLimit = 0
-	submitImagePullPolicy = ""
-	submitImagePullSecret = nil
-	submitServiceAccount = ""
-	submitJobRestartPolicy = ""
-	submitHostNetwork = false
-	submitHostIPC = false
-	submitHostPID = false
-	submitWorkingDir = ""
-	submitShell = ""
-	submitShareMemory = "2Gi"
-	submitDevice = nil
-	submitGPUType = ""
-	submitTensorBoard = false
-	submitLogDir = "/training_logs"
-	submitTBImage = ""
-	submitNprocPerNode = ""
-	submitPS = 0
-	submitChief = false
-	submitEvaluator = false
-	submitSlotsPerWorker = 0
-	submitGPUTopology = false
-	submitMountsOnLauncher = false
-	submitAffinityPolicy = ""
-	submitAffinityConstraint = ""
-	submitAffinityTarget = ""
-	submitSuccessPolicy = ""
-	submitDryRun = false
-	submitQueue = false
-	submitDataDir = nil
-	submitConfigFile = nil
-	resetSubmitCompatFlags()
+	newSubmitCmd()
 }
 
 func TestCRDReplicaSpecs_PyTorch(t *testing.T) {
@@ -761,10 +709,8 @@ func TestProviderRejectsWrongFramework(t *testing.T) {
 }
 
 func TestSubmitCmd_DryRunCapturesOutput(t *testing.T) {
-	resetSubmitCommandState(t)
-	resetSubmitFlags(t)
-
-	require.NoError(t, submitCmd.Flags().Parse([]string{
+	cmd := newSubmitCmd()
+	require.NoError(t, cmd.Flags().Parse([]string{
 		"--name", "dryrun-test",
 		"--image", "pytorch:2.1",
 		"--workers", "2",
@@ -772,23 +718,14 @@ func TestSubmitCmd_DryRunCapturesOutput(t *testing.T) {
 		"--dry-run",
 	}))
 
-	// Capture stdout — printCRD uses fmt.Println which writes to os.Stdout.
-	// klog-based log output goes to stderr, so stdout should contain only the CRD JSON.
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	var buf bytes.Buffer
+	cmd.SetOut(&buf)
 
 	// Trailing args "python train.py" become the run command (required by validation).
-	err := submitCmd.RunE(submitCmd, []string{"pytorch", "python", "train.py"})
-
-	w.Close()
-	os.Stdout = oldStdout
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-	output := buf.String()
+	err := cmd.RunE(cmd, []string{"pytorch", "python", "train.py"})
 
 	require.NoError(t, err, "dry-run should succeed without a cluster")
+	output := buf.String()
 	require.NotEmpty(t, output, "dry-run should produce JSON output")
 
 	var crd map[string]interface{}
@@ -801,8 +738,7 @@ func TestSubmitCmd_DryRunCapturesOutput(t *testing.T) {
 // The generated CRD must wire the shared volume into both containers: the
 // sync init container (writer) and the main container (reader).
 func TestSubmitCompat_SyncVolumeSharedWithMainContainer(t *testing.T) {
-	resetSubmitFlags(t)
-
+	cmd := newSubmitCmd()
 	v1Args := []string{
 		"--name", "sync-volume-e2e",
 		"--image", "pytorch:2.1",
@@ -810,21 +746,13 @@ func TestSubmitCompat_SyncVolumeSharedWithMainContainer(t *testing.T) {
 		"--sync-source", "https://github.com/kubeflow/arena.git",
 		"--dry-run",
 	}
-	require.NoError(t, submitCmd.Flags().Parse(v1Args))
-
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	err := submitCmd.RunE(submitCmd, []string{"pytorch", "python", "train.py"})
-
-	w.Close()
-	os.Stdout = oldStdout
+	require.NoError(t, cmd.Flags().Parse(v1Args))
 
 	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-	output := buf.String()
+	cmd.SetOut(&buf)
+	err := cmd.RunE(cmd, []string{"pytorch", "python", "train.py"})
 
+	output := buf.String()
 	require.NoError(t, err, "sync invocation should succeed in dry-run mode")
 
 	var crd map[string]interface{}
@@ -857,7 +785,7 @@ func TestSubmitCompat_SyncVolumeSharedWithMainContainer(t *testing.T) {
 }
 
 func TestSubmitCompat_V1CommandEndToEndDryRun(t *testing.T) {
-	resetSubmitFlags(t)
+	cmd := newSubmitCmd()
 
 	// A representative v1 invocation using only v1 flag names.
 	v1Args := []string{
@@ -874,21 +802,13 @@ func TestSubmitCompat_V1CommandEndToEndDryRun(t *testing.T) {
 		"--sync-source", "https://github.com/kubeflow/arena.git",
 		"--dry-run",
 	}
-	require.NoError(t, submitCmd.Flags().Parse(v1Args))
-
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	err := submitCmd.RunE(submitCmd, []string{"pytorch", "python", "train.py"})
-
-	w.Close()
-	os.Stdout = oldStdout
+	require.NoError(t, cmd.Flags().Parse(v1Args))
 
 	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-	output := buf.String()
+	cmd.SetOut(&buf)
+	err := cmd.RunE(cmd, []string{"pytorch", "python", "train.py"})
 
+	output := buf.String()
 	require.NoError(t, err, "v1-style invocation should succeed in dry-run mode")
 
 	var crd map[string]interface{}
@@ -923,19 +843,20 @@ func TestSubmitCompat_V1CommandEndToEndDryRun(t *testing.T) {
 }
 
 func TestSubmitCompat_UniformV1Defaults(t *testing.T) {
-	f := submitCmd.Flags().Lookup("share-memory")
+	cmd := newSubmitCmd()
+	f := cmd.Flags().Lookup("share-memory")
 	require.NotNil(t, f)
 	assert.Equal(t, "2Gi", f.DefValue)
-	f = submitCmd.Flags().Lookup("clean-task-policy")
+	f = cmd.Flags().Lookup("clean-task-policy")
 	require.NotNil(t, f)
 	assert.Equal(t, "Running", f.DefValue)
-	f = submitCmd.Flags().Lookup("logdir")
+	f = cmd.Flags().Lookup("logdir")
 	require.NotNil(t, f)
 	assert.Equal(t, "/training_logs", f.DefValue)
 }
 
 func TestSubmitCompat_DefaultsReachTheTask(t *testing.T) {
-	resetSubmitFlags(t)
+	resetSubmitGlobals(t)
 	tk := buildSubmitTask("pytorch", nil)
 	flags := buildSubmitFlags()
 	require.NoError(t, task.ApplyOverrides(tk, flags))
@@ -955,8 +876,8 @@ func TestSubmitCompat_DefaultsReachTheTask(t *testing.T) {
 }
 
 func TestSubmitCompat_DefaultsOptOutViaEmptyValue(t *testing.T) {
-	resetSubmitFlags(t)
-	require.NoError(t, submitCmd.Flags().Parse([]string{"--share-memory", "", "--clean-task-policy", "", "--logdir", ""}))
+	cmd := newSubmitCmd()
+	require.NoError(t, cmd.Flags().Parse([]string{"--share-memory", "", "--clean-task-policy", "", "--logdir", ""}))
 	flags := buildSubmitFlags()
 	assert.NotContains(t, flags, "share-memory")
 	assert.NotContains(t, flags, "clean-task-policy")

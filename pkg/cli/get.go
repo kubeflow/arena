@@ -22,99 +22,99 @@ import (
 
 var getDetails bool
 
-var getCmd = &cobra.Command{
-	Use:   "get <name>",
-	Short: "Get detailed information about a training job",
-	Long:  `Retrieve and display detailed information about a training job, including its status and pod details.`,
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// Validate format
-		if err := outputpkg.Format(outputFormat).Validate(); err != nil {
-			return err
-		}
+func newGetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get <name>",
+		Short: "Get detailed information about a training job",
+		Long:  `Retrieve and display detailed information about a training job, including its status and pod details.`,
+		Args:  cobra.ExactArgs(1),
+		RunE:  runGet,
+	}
+	cmd.Flags().BoolVar(&getDetails, "details", false, "show job configuration details")
+	cmd.ValidArgsFunction = completeJobName
+	return cmd
+}
 
-		name := args[0]
+// runGet backs both `job get` and `job status`; it reads the --details flag
+// from whichever command is executing.
+func runGet(cmd *cobra.Command, args []string) error {
+	// Validate format
+	if err := outputpkg.Format(outputFormat).Validate(); err != nil {
+		return err
+	}
 
-		k8sClient, err := client.NewClient(kubeconfig, kubeContext)
-		if err != nil {
-			return fmt.Errorf("failed to create K8s client: %w", err)
-		}
+	name := args[0]
 
-		ns := resolveNS("")
-		jobKind, err := detectJobType(cmdContext(cmd), k8sClient, ns, name)
-		if err != nil {
-			return err
-		}
+	k8sClient, err := client.NewClient(kubeconfig, kubeContext)
+	if err != nil {
+		return fmt.Errorf("failed to create K8s client: %w", err)
+	}
 
-		job, err := k8sClient.Get(cmdContext(cmd), jobKind, ns, name)
-		if err != nil {
-			return err
-		}
+	ns := resolveNS("")
+	jobKind, err := detectJobType(cmdContext(cmd), k8sClient, ns, name)
+	if err != nil {
+		return err
+	}
 
-		status := extractJobStatus(job, jobKind)
-		if fw, ok := job.GetLabels()[frameworkLabel]; ok && fw != "" {
-			status.Framework = fw
-		} else {
-			status.Framework = kindToFramework(jobKind)
-		}
-		status.GPURequested = extractGPURequested(job)
+	job, err := k8sClient.Get(cmdContext(cmd), jobKind, ns, name)
+	if err != nil {
+		return err
+	}
 
-		// Get real pods via typed client using provider selector
-		p, pErr := providerForKind(jobKind)
-		podList := make([]client.PodInfo, 0)
-		if pErr == nil {
-			selector := p.GetJobPodSelector(name)
-			podList = getRealPods(cmdContext(cmd), ns, selector)
-		}
-		// Fallback to synthetic pods from CRD spec if no real pods found
-		if len(podList) == 0 {
-			podList = extractPods(job)
-		}
+	status := extractJobStatus(job, jobKind)
+	if fw, ok := job.GetLabels()[frameworkLabel]; ok && fw != "" {
+		status.Framework = fw
+	} else {
+		status.Framework = kindToFramework(jobKind)
+	}
+	status.GPURequested = extractGPURequested(job)
 
-		info := &client.JobInfo{
-			Status: status,
-			Pods:   podList,
-		}
+	// Get real pods via typed client using provider selector
+	p, pErr := providerForKind(jobKind)
+	podList := make([]client.PodInfo, 0)
+	if pErr == nil {
+		selector := p.GetJobPodSelector(name)
+		podList = getRealPods(cmdContext(cmd), ns, selector)
+	}
+	// Fallback to synthetic pods from CRD spec if no real pods found
+	if len(podList) == 0 {
+		podList = extractPods(job)
+	}
 
-		if getDetails {
-			cm, err := k8sClient.Get(cmdContext(cmd), "ConfigMap", ns, name)
-			if err != nil && !apierrors.IsNotFound(err) {
-				return fmt.Errorf("failed to get ConfigMap: %w", err)
+	info := &client.JobInfo{
+		Status: status,
+		Pods:   podList,
+	}
+
+	if getDetails {
+		cm, err := k8sClient.Get(cmdContext(cmd), "ConfigMap", ns, name)
+		if err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("failed to get ConfigMap: %w", err)
+		}
+		if err == nil {
+			data, found, dErr := unstructured.NestedMap(cm.Object, "data")
+			if dErr != nil {
+				log.Warning("failed to read ConfigMap data", "namespace", ns, "name", name, "error", dErr.Error())
 			}
-			if err == nil {
-				data, found, dErr := unstructured.NestedMap(cm.Object, "data")
-				if dErr != nil {
-					log.Warning("failed to read ConfigMap data", "namespace", ns, "name", name, "error", dErr.Error())
-				}
-				if dErr == nil && found {
-					yamlContent, ok := data["arena-v2.yaml"].(string)
-					if ok && yamlContent != "" {
-						var config task.Task
-						if uErr := yaml.Unmarshal([]byte(yamlContent), &config); uErr != nil {
-							log.Warning("failed to unmarshal task config", "namespace", ns, "name", name, "error", uErr.Error())
-						} else {
-							info.Configuration = &config
-						}
+			if dErr == nil && found {
+				yamlContent, ok := data["arena-v2.yaml"].(string)
+				if ok && yamlContent != "" {
+					var config task.Task
+					if uErr := yaml.Unmarshal([]byte(yamlContent), &config); uErr != nil {
+						log.Warning("failed to unmarshal task config", "namespace", ns, "name", name, "error", uErr.Error())
+					} else {
+						info.Configuration = &config
 					}
 				}
 			}
 		}
+	}
 
-		renderer := &outputpkg.TableRenderer{}
-		opts := outputpkg.RenderOptions{
-			TableFn: func() string { return renderer.RenderJobDetail(info) },
-		}
-		if err := outputpkg.Format(outputFormat).Render(info, opts); err != nil {
-			return err
-		}
-		return nil
-	},
-}
-
-func init() {
-	jobCmd.AddCommand(getCmd)
-	getCmd.Flags().BoolVar(&getDetails, "details", false, "show job configuration details")
-	getCmd.ValidArgsFunction = completeJobName
+	renderer := &outputpkg.TableRenderer{}
+	opts := outputpkg.RenderOptions{
+		TableFn: func() string { return renderer.RenderJobDetail(info) },
+	}
+	return outputpkg.Format(outputFormat).Render(cmd.OutOrStdout(), info, opts)
 }
 
 // providerForKind returns the Provider for a given CRD kind.

@@ -12,13 +12,13 @@ import (
 )
 
 func TestGetCmd_HasDetailsFlag(t *testing.T) {
-	flag := getCmd.Flags().Lookup("details")
+	flag := newGetCmd().Flags().Lookup("details")
 	assert.NotNil(t, flag, "get command should have --details flag")
 	assert.Equal(t, "false", flag.DefValue, "--details default should be false")
 }
 
 func TestGetCmd_DetailsFlagDescription(t *testing.T) {
-	flag := getCmd.Flags().Lookup("details")
+	flag := newGetCmd().Flags().Lookup("details")
 	assert.NotNil(t, flag)
 	assert.Equal(t, "show job configuration details", flag.Usage)
 }
