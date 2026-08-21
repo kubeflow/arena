@@ -100,6 +100,7 @@ Each replica block supports the same sub-fields:
 |---|---|---|---|
 | `replicas` | int | yes (for `worker` and `ps`) | Number of pods. Must be > 0 for `worker`. Fixed to 1 for `master`, `chief`, `launcher`, and `evaluator`. |
 | `resources` | map | no | Resource requests/limits (applied identically to both). Omit to leave pod resources unset. |
+| `limits` | map of resource name to quantity | no | Overrides individual limit entries derived from `resources`; requests are unaffected. Example: `limits: {cpu: "2"}` with `resources: {cpu: "1"}` yields requests cpu=1, limits cpu=2. |
 | `envs` | map | no | Per-role environment variables. Merged with top-level `envs`; role-level values override top-level. |
 
 **Role blocks:**
@@ -321,38 +322,53 @@ storages:
 
 Each entry in `mounts` references a storage by `name` and can override its `mount_path` and `sub_path`. The referenced storage must be defined in `storages`.
 
+#### Sync write targets
+
+`local_path` must resolve to a **`tmp` or `shm` storage**. Sync is a per-pod
+temporary pull — every pod of the job runs the sync init container — so
+persistent or read-only storages are rejected at submit time:
+
+| Storage type | Rejected because |
+|---|---|
+| `pvc` | Persistent and shared across pods: concurrent syncs race on the same volume (RWO sticks pods in `Pending`; RWX corrupts silently). Preload the data onto the PVC instead of syncing it per-pod. |
+| `hostpath` | Node-local, shared by same-node pods, and outlives the pod. |
+| `configmap` / `secret` | Mounted read-only by Kubernetes — sync writes fail immediately. |
+
+Matching is containment-based: a `local_path` equal to or *under* a mount
+path writes to that volume (the longest matching `mount_path` wins). When
+`mounts` is omitted, all storages are mounted into the sync init container,
+so the rule applies to every declared storage.
+
 ```yaml
 storages:
   - name: dataset
-    mount_path: /data              # Default mount path
+    mount_path: /data              # Main container reads the dataset from this PVC
     pvc: dataset-pvc
   - name: code
     mount_path: /workspace
     tmp: 1Gi                       # emptyDir for synced code
-  - name: checkpoints
+  - name: models
     mount_path: /models
-    pvc: ckpt-pvc
+    tmp: 2Gi                       # emptyDir for synced model files
 
 sync:
   - git: https://github.com/org/training-code.git
     branch: main
     local_path: /workspace
     mounts:
-      - name: code                 # References storages entry
+      - name: code                 # tmp storage — allowed sync target
         mount_path: /workspace
-
-  - rsync: 10.88.29.56::backup/data/dataset.zip
-    local_path: /dataset
-    mounts:
-      - name: dataset              # Overrides storages mount_path
-        mount_path: /dataset
 
   - hdfs: hdfs://namenode:8020/models/resnet
     local_path: /models
     mounts:
-      - name: checkpoints
+      - name: models               # tmp storage — allowed sync target
         mount_path: /models
 ```
+
+Data that must live on a PVC (like `dataset` above) is preloaded outside
+arena — for example with a one-off copy job — rather than pulled per-pod
+with `sync`.
 
 ### Init
 
@@ -563,7 +579,7 @@ See: [examples/v2/quickstart/tensorflow-simple.yaml](../examples/v2/quickstart/t
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `slots_per_worker` | int | — | MPI slots per worker node. |
-| `mounts_on_launcher` | bool | `false` | Launcher also mounts PVCs. |
+| `mounts_on_launcher` | bool | `false` | When false the launcher main container gets no volumeMounts. Volumes stay declared in the pod spec (init containers keep their mounts); only the main container's mounts are cleared. |
 | `run_launcher_as_worker` | bool | `false` | Launcher also runs as a worker. |
 | `gpu_topology` | bool | `false` | Enable GPU topology awareness. |
 | `mpi_implementation` | string | — | `OpenMPI`, `Intel`, or `MPICH`. |

@@ -243,6 +243,8 @@ This is a single API call in v2, compared to v1's three-step delete process (rea
 
 The `sync` block generates init containers that run before the main training container. Use `git` for source code, `rsync` for remote files, and `hdfs` for HDFS-stored datasets. Each entry creates a named init container (`arena-sync-0`, `arena-sync-1`, ...).
 
+Sync write targets must be `tmp` or `shm` storages: a `local_path` that resolves to a `pvc`, `hostpath`, `configmap`, or `secret` storage is rejected at submit time. If the data already lives on a PVC, mount the PVC directly instead of pulling it per-pod with sync.
+
 ```yaml
 sync:
   - git: https://github.com/org/training-code.git
@@ -306,7 +308,7 @@ sync:
 
 ### Watch for local_path / mount mismatches
 
-If a sync entry's `local_path` does not match any resolved mount path, the synced data is written to the container's ephemeral storage and will be lost when the pod restarts. Arena prints a warning to stderr when this happens. Always ensure `local_path` matches a `mount_path` in the same entry's `mounts` list or in the referenced storage.
+If a sync entry's `local_path` is not equal to or under a resolved mount path, the synced data is written to the container's ephemeral storage and will be lost when the pod restarts. Arena prints a warning to stderr when this happens. Always ensure `local_path` matches a `mount_path` in the same entry's `mounts` list or in the referenced storage.
 
 ```yaml
 # Correct: local_path matches the mount_path
@@ -317,6 +319,19 @@ sync:
       - name: code
         mount_path: /code      # ← matches local_path
 ```
+
+### User-defined init containers are not validated
+
+The sync storage validation only covers `sync` entries. `init` entries run in
+every pod of the job too, but Arena does not validate what they write — an
+init container that mounts a `pvc` or `hostpath` storage and writes to it
+reintroduces exactly the concurrent-write hazard the sync validation rejects:
+multiple pods writing the same volume at once (git/rsync races on shared
+directories, RWO volumes sticking pods in `Pending` across nodes, silent
+corruption on RWX volumes). Arena cannot infer a container's write intent, so
+it does not block these configurations — you are responsible for ensuring
+your init containers write only to per-pod ephemeral storage, or coordinate
+shared-volume writes yourself.
 
 ## TensorBoard Integration
 
@@ -449,7 +464,7 @@ Instead of remembering 40+ CLI flags, define your job in YAML and use `--set` fo
 ```shell
 # v1 style (many flags)
 arena submit pytorchjob --name exp01 --workers 5 --gpus 2 --cpu 8 --memory 32Gi \
-  --data dataset:/data:training-pvc --tensorboard --tensorboard-logdir /logs \
+  --data dataset:/data:training-pvc --tensorboard --logdir /logs \
   "python train.py"
 
 # v2 equivalent (YAML + --set)

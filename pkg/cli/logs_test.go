@@ -390,7 +390,7 @@ func TestFrameworkToKind(t *testing.T) {
 		{constants.FrameworkMPI, constants.KindMPIJob},
 		{constants.FrameworkHorovod, constants.KindMPIJob},
 		{constants.FrameworkDeepSpeed, constants.KindMPIJob},
-		{"tf", constants.KindTFJob},
+		{"tf", ""},
 		{"unknown", ""},
 	}
 

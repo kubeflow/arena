@@ -46,14 +46,14 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 
 	// Worker: always present (validated)
 	workerSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
-		ContainerName:  constants.FrameworkTensorFlow,
-		Task:           t,
-		Resources:      t.Worker.Resources,
-		Envs:           t.Worker.Envs,
-		Replicas:       int64(t.Worker.Replicas),
-		RestartPolicy:  restartPolicy,
-		IncludeVolumes: true,
-		Run:            effectiveRun(t, t.Worker.Run),
+		ContainerName: constants.FrameworkTensorFlow,
+		Task:          t,
+		Resources:     t.Worker.Resources,
+		Limits:        t.Worker.Limits,
+		Envs:          t.Worker.Envs,
+		Replicas:      int64(t.Worker.Replicas),
+		RestartPolicy: restartPolicy,
+		Run:           effectiveRun(t, t.Worker.Run),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to build worker replica spec: %w", err)
@@ -63,14 +63,14 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 	// Chief: only if section present
 	if t.Chief != nil {
 		chiefSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
-			ContainerName:  constants.FrameworkTensorFlow,
-			Task:           t,
-			Resources:      t.Chief.Resources,
-			Envs:           t.Chief.Envs,
-			Replicas:       1,
-			RestartPolicy:  restartPolicy,
-			IncludeVolumes: true,
-			Run:            effectiveRun(t, t.Chief.Run),
+			ContainerName: constants.FrameworkTensorFlow,
+			Task:          t,
+			Resources:     t.Chief.Resources,
+			Limits:        t.Chief.Limits,
+			Envs:          t.Chief.Envs,
+			Replicas:      1,
+			RestartPolicy: restartPolicy,
+			Run:           effectiveRun(t, t.Chief.Run),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build chief replica spec: %w", err)
@@ -82,14 +82,14 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 	// Validator guarantees PS.Replicas >= 1.
 	if t.PS != nil {
 		psSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
-			ContainerName:  constants.FrameworkTensorFlow,
-			Task:           t,
-			Resources:      t.PS.Resources,
-			Envs:           t.PS.Envs,
-			Replicas:       int64(t.PS.Replicas),
-			RestartPolicy:  restartPolicy,
-			IncludeVolumes: true,
-			Run:            effectiveRun(t, t.PS.Run),
+			ContainerName: constants.FrameworkTensorFlow,
+			Task:          t,
+			Resources:     t.PS.Resources,
+			Limits:        t.PS.Limits,
+			Envs:          t.PS.Envs,
+			Replicas:      int64(t.PS.Replicas),
+			RestartPolicy: restartPolicy,
+			Run:           effectiveRun(t, t.PS.Run),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build PS replica spec: %w", err)
@@ -100,14 +100,14 @@ func (p *TensorFlowProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured,
 	// Evaluator: only if section present, uses own config only
 	if t.Evaluator != nil {
 		evalSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
-			ContainerName:  constants.FrameworkTensorFlow,
-			Task:           t,
-			Resources:      t.Evaluator.Resources,
-			Envs:           t.Evaluator.Envs,
-			Replicas:       1,
-			RestartPolicy:  restartPolicy,
-			IncludeVolumes: true,
-			Run:            effectiveRun(t, t.Evaluator.Run),
+			ContainerName: constants.FrameworkTensorFlow,
+			Task:          t,
+			Resources:     t.Evaluator.Resources,
+			Limits:        t.Evaluator.Limits,
+			Envs:          t.Evaluator.Envs,
+			Replicas:      1,
+			RestartPolicy: restartPolicy,
+			Run:           effectiveRun(t, t.Evaluator.Run),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build evaluator replica spec: %w", err)

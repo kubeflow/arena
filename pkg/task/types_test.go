@@ -2175,3 +2175,305 @@ func TestParseDuration_InvalidInputs(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveSyncWriteTarget(t *testing.T) {
+	storages := []Storage{
+		{Name: "dataset", MountPath: "/data", PVC: "data-pvc"},
+		{Name: "code", MountPath: "/workspace", Tmp: "5Gi"},
+	}
+
+	t.Run("exact match", func(t *testing.T) {
+		st, mp := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/workspace"}, storages)
+		require.NotNil(t, st)
+		assert.Equal(t, "code", st.Name)
+		assert.Equal(t, "/workspace", mp)
+	})
+
+	t.Run("subpath match", func(t *testing.T) {
+		st, mp := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/data/code"}, storages)
+		require.NotNil(t, st)
+		assert.Equal(t, "dataset", st.Name)
+		assert.Equal(t, "/data", mp)
+	})
+
+	t.Run("no match returns nil", func(t *testing.T) {
+		st, mp := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/ephemeral"}, storages)
+		assert.Nil(t, st)
+		assert.Equal(t, "", mp)
+	})
+
+	t.Run("sibling path does not match", func(t *testing.T) {
+		st, _ := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/database"}, storages)
+		assert.Nil(t, st, "prefix matching must be component-wise, not string-wise")
+	})
+
+	t.Run("longest match wins", func(t *testing.T) {
+		nested := []Storage{
+			{Name: "dataset", MountPath: "/data", PVC: "data-pvc"},
+			{Name: "code", MountPath: "/workspace", Tmp: "5Gi"},
+			{Name: "inner", MountPath: "/data/inner", Tmp: "1Gi"},
+		}
+		st, mp := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/data/inner/x"}, nested)
+		require.NotNil(t, st)
+		assert.Equal(t, "inner", st.Name)
+		assert.Equal(t, "/data/inner", mp)
+	})
+
+	t.Run("explicit mount overrides mount path", func(t *testing.T) {
+		entry := SyncEntry{
+			LocalPath: "/code",
+			Mounts:    []Mount{{Name: "dataset", MountPath: "/code"}},
+		}
+		st, mp := ResolveSyncWriteTarget(entry, storages)
+		require.NotNil(t, st)
+		assert.Equal(t, "dataset", st.Name)
+		assert.Equal(t, "/code", mp)
+	})
+
+	t.Run("explicit mount falls back to storage mount path", func(t *testing.T) {
+		entry := SyncEntry{
+			LocalPath: "/workspace/src",
+			Mounts:    []Mount{{Name: "code"}},
+		}
+		st, mp := ResolveSyncWriteTarget(entry, storages)
+		require.NotNil(t, st)
+		assert.Equal(t, "code", st.Name)
+		assert.Equal(t, "/workspace", mp)
+	})
+
+	t.Run("explicit mounts exclude other storages", func(t *testing.T) {
+		entry := SyncEntry{
+			LocalPath: "/data/repo",
+			Mounts:    []Mount{{Name: "code"}},
+		}
+		st, _ := ResolveSyncWriteTarget(entry, storages)
+		assert.Nil(t, st, "only explicitly mounted storages are candidates")
+	})
+
+	t.Run("no mounts falls back to all storages", func(t *testing.T) {
+		st, _ := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/data/repo"}, storages)
+		require.NotNil(t, st)
+		assert.Equal(t, "dataset", st.Name)
+	})
+
+	t.Run("shm defaults to /dev/shm in fallback", func(t *testing.T) {
+		shmOnly := []Storage{{Name: "shm", SHM: "1Gi"}}
+		st, mp := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/dev/shm/x"}, shmOnly)
+		require.NotNil(t, st)
+		assert.Equal(t, "shm", st.Name)
+		assert.Equal(t, "/dev/shm", mp)
+	})
+
+	t.Run("no storages returns nil", func(t *testing.T) {
+		st, mp := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/data"}, nil)
+		assert.Nil(t, st)
+		assert.Equal(t, "", mp)
+	})
+
+	t.Run("equal-length tie prefers banned storage", func(t *testing.T) {
+		tied := []Storage{
+			{Name: "a", MountPath: "/data", Tmp: "1Gi"},
+			{Name: "b", MountPath: "/data", PVC: "pvc"},
+		}
+		st, _ := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/data/x"}, tied)
+		require.NotNil(t, st)
+		assert.Equal(t, "b", st.Name, "tie at equal mount path length must resolve to the banned storage")
+	})
+
+	t.Run("root mount matches everything", func(t *testing.T) {
+		root := []Storage{{Name: "root", MountPath: "/", PVC: "root-pvc"}}
+		st, mp := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/anything"}, root)
+		require.NotNil(t, st)
+		assert.Equal(t, "root", st.Name)
+		assert.Equal(t, "/", mp)
+	})
+
+	t.Run("dot-dot in local_path resolves through the cleaned path", func(t *testing.T) {
+		st, _ := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/tmp/../data"}, storages)
+		require.NotNil(t, st)
+		assert.Equal(t, "dataset", st.Name, "lexical resolution: /tmp/../data lands on /data (pvc), not /tmp")
+	})
+
+	t.Run("dot-dot in local_path staying inside the same mount still matches", func(t *testing.T) {
+		st, _ := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/workspace/a/../b"}, storages)
+		require.NotNil(t, st)
+		assert.Equal(t, "code", st.Name)
+	})
+
+	t.Run("trailing slash on mount path still matches subpaths", func(t *testing.T) {
+		slash := []Storage{{Name: "dataset", MountPath: "/data/", PVC: "data-pvc"}}
+		st, mp := ResolveSyncWriteTarget(SyncEntry{LocalPath: "/data/code"}, slash)
+		require.NotNil(t, st)
+		assert.Equal(t, "dataset", st.Name)
+		assert.Equal(t, "/data", mp)
+	})
+}
+
+func TestValidateSyncBannedStorageTypes(t *testing.T) {
+	cases := []struct {
+		name    string
+		storage Storage
+		wantErr string
+	}{
+		{
+			name:    "pvc",
+			storage: Storage{Name: "dataset", MountPath: "/data", PVC: "data-pvc"},
+			wantErr: `sync[0].local_path "/data/code" resolves to pvc storage "dataset" (mount_path "/data"): PVC is persistent storage — preload data onto the PVC instead of pulling it per-pod with sync; sync targets must be tmp or shm storages`,
+		},
+		{
+			name:    "hostpath",
+			storage: Storage{Name: "local", MountPath: "/data", HostPath: "/mnt/ssd"},
+			wantErr: `sync[0].local_path "/data/code" resolves to hostpath storage "local" (mount_path "/data"): hostPath is node-local storage shared by same-node pods and outlives the pod — not a sync target; sync targets must be tmp or shm storages`,
+		},
+		{
+			name:    "configmap",
+			storage: Storage{Name: "cfg", MountPath: "/data", ConfigMap: "my-cm"},
+			wantErr: `sync[0].local_path "/data/code" resolves to configmap storage "cfg" (mount_path "/data"): configMap volumes are read-only — sync cannot write to them; sync targets must be tmp or shm storages`,
+		},
+		{
+			name:    "secret",
+			storage: Storage{Name: "sec", MountPath: "/data", Secret: "my-secret"},
+			wantErr: `sync[0].local_path "/data/code" resolves to secret storage "sec" (mount_path "/data"): secret volumes are read-only — sync cannot write to them; sync targets must be tmp or shm storages`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tk := &Task{
+				Name:      "t",
+				Image:     "x:1",
+				Run:       "train",
+				Framework: Framework{Name: "pytorch"},
+				Worker:    &Worker{Replicas: 1},
+				Storages:  []Storage{tc.storage},
+				Sync:      []SyncEntry{{Git: "https://github.com/org/repo.git", LocalPath: "/data/code"}},
+			}
+			err := Validate(tk)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.wantErr)
+		})
+	}
+}
+
+func TestValidateSyncStorageRules(t *testing.T) {
+	newTask := func(storages []Storage, sync []SyncEntry) *Task {
+		return &Task{
+			Name:      "t",
+			Image:     "x:1",
+			Run:       "train",
+			Framework: Framework{Name: "pytorch"},
+			Worker:    &Worker{Replicas: 1},
+			Storages:  storages,
+			Sync:      sync,
+		}
+	}
+	git := func(localPath string, mounts ...Mount) SyncEntry {
+		return SyncEntry{Git: "https://github.com/org/repo.git", LocalPath: localPath, Mounts: mounts}
+	}
+
+	t.Run("tmp storage allowed", func(t *testing.T) {
+		err := Validate(newTask(
+			[]Storage{{Name: "code", MountPath: "/workspace", Tmp: "5Gi"}},
+			[]SyncEntry{git("/workspace/src")},
+		))
+		assert.NoError(t, err)
+	})
+
+	t.Run("shm storage allowed", func(t *testing.T) {
+		err := Validate(newTask(
+			[]Storage{{Name: "shm", SHM: "1Gi"}},
+			[]SyncEntry{git("/dev/shm/code")},
+		))
+		assert.NoError(t, err)
+	})
+
+	t.Run("mount referencing pvc with local_path elsewhere is allowed", func(t *testing.T) {
+		err := Validate(newTask(
+			[]Storage{{Name: "dataset", MountPath: "/data", PVC: "data-pvc"}},
+			[]SyncEntry{git("/ephemeral/code", Mount{Name: "dataset"})},
+		))
+		assert.NoError(t, err, "detection is write-target-based; a mounted-but-unwritten pvc is not an error")
+	})
+
+	t.Run("fallback mounts pvc and local_path lands on it", func(t *testing.T) {
+		err := Validate(newTask(
+			[]Storage{
+				{Name: "dataset", MountPath: "/data", PVC: "data-pvc"},
+				{Name: "code", MountPath: "/workspace", Tmp: "5Gi"},
+			},
+			[]SyncEntry{git("/data/repo")},
+		))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `resolves to pvc storage "dataset"`)
+	})
+
+	t.Run("fallback mounts pvc but local_path elsewhere is allowed", func(t *testing.T) {
+		err := Validate(newTask(
+			[]Storage{
+				{Name: "dataset", MountPath: "/data", PVC: "data-pvc"},
+				{Name: "code", MountPath: "/workspace", Tmp: "5Gi"},
+			},
+			[]SyncEntry{git("/workspace/repo")},
+		))
+		assert.NoError(t, err)
+	})
+
+	t.Run("nested tmp beats outer pvc", func(t *testing.T) {
+		err := Validate(newTask(
+			[]Storage{
+				{Name: "dataset", MountPath: "/data", PVC: "data-pvc"},
+				{Name: "inner", MountPath: "/data/inner", Tmp: "1Gi"},
+			},
+			[]SyncEntry{git("/data/inner/repo")},
+		))
+		assert.NoError(t, err)
+	})
+
+	t.Run("error reports the offending sync index", func(t *testing.T) {
+		err := Validate(newTask(
+			[]Storage{{Name: "dataset", MountPath: "/data", PVC: "data-pvc"}},
+			[]SyncEntry{git("/ephemeral/code"), git("/data/repo")},
+		))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "sync[1].local_path")
+	})
+
+	t.Run("mount_path override is reported in the error", func(t *testing.T) {
+		err := Validate(newTask(
+			[]Storage{{Name: "dataset", MountPath: "/data", PVC: "data-pvc"}},
+			[]SyncEntry{git("/workspace/repo", Mount{Name: "dataset", MountPath: "/workspace"})},
+		))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `(mount_path "/workspace")`)
+	})
+}
+
+func TestTaskYAML_LimitsOverlay(t *testing.T) {
+	yamlContent := `version: 0.1.0
+name: limits-job
+image: pytorch:2.1
+framework:
+  name: pytorch
+worker:
+  replicas: 2
+  resources:
+    cpu: "1"
+    memory: 4Gi
+  limits:
+    cpu: "2"
+master:
+  resources:
+    cpu: "1"
+  limits:
+    memory: 8Gi
+run: python train.py
+`
+	var tk Task
+	err := yaml.Unmarshal([]byte(yamlContent), &tk)
+	require.NoError(t, err)
+	require.NotNil(t, tk.Worker)
+	assert.Equal(t, Resources{"cpu": "1", "memory": "4Gi"}, tk.Worker.Resources)
+	assert.Equal(t, Resources{"cpu": "2"}, tk.Worker.Limits)
+	require.NotNil(t, tk.Master)
+	assert.Equal(t, Resources{"cpu": "1"}, tk.Master.Resources)
+	assert.Equal(t, Resources{"memory": "8Gi"}, tk.Master.Limits)
+}

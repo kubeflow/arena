@@ -9,6 +9,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// mustGetInitContainer returns the container at index i of an init-container
+// slice as a map, failing the test if the entry is not a map.
+func mustGetInitContainer(t *testing.T, result []interface{}, i int) map[string]interface{} {
+	t.Helper()
+	c, ok := result[i].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected init container %d to be map[string]interface{}, got %T", i, result[i])
+	}
+	return c
+}
+
 func TestBuildSchedulingPolicy_WithQueue(t *testing.T) {
 	tt := &task.Task{
 		Scheduling: task.Scheduling{
@@ -152,11 +163,11 @@ func TestBuildInitContainers_SingleUserDefined(t *testing.T) {
 	if len(result) != 1 {
 		t.Fatalf("expected 1 init container, got %d", len(result))
 	}
-	if result[0]["name"] != "setup" {
-		t.Errorf("expected name=setup, got %v", result[0]["name"])
+	if mustGetInitContainer(t, result, 0)["name"] != "setup" {
+		t.Errorf("expected name=setup, got %v", mustGetInitContainer(t, result, 0)["name"])
 	}
-	if result[0]["image"] != "busybox" {
-		t.Errorf("expected image=busybox, got %v", result[0]["image"])
+	if mustGetInitContainer(t, result, 0)["image"] != "busybox" {
+		t.Errorf("expected image=busybox, got %v", mustGetInitContainer(t, result, 0)["image"])
 	}
 }
 
@@ -169,7 +180,7 @@ func TestBuildInitContainers_ShellFallback(t *testing.T) {
 		Sync: []task.SyncEntry{},
 	}
 	result := buildInitContainers(tt)
-	cmd := result[0]["command"].([]interface{})
+	cmd := mustGetInitContainer(t, result, 0)["command"].([]interface{})
 	if cmd[0] != "/bin/bash" {
 		t.Errorf("expected shell=/bin/bash from init, got %v", cmd[0])
 	}
@@ -183,7 +194,7 @@ func TestBuildInitContainers_ShellFallback(t *testing.T) {
 		Sync: []task.SyncEntry{},
 	}
 	result = buildInitContainers(tt)
-	cmd = result[0]["command"].([]interface{})
+	cmd = mustGetInitContainer(t, result, 0)["command"].([]interface{})
 	if cmd[0] != "/bin/zsh" {
 		t.Errorf("expected shell=/bin/zsh from task, got %v", cmd[0])
 	}
@@ -196,7 +207,7 @@ func TestBuildInitContainers_ShellFallback(t *testing.T) {
 		Sync: []task.SyncEntry{},
 	}
 	result = buildInitContainers(tt)
-	cmd = result[0]["command"].([]interface{})
+	cmd = mustGetInitContainer(t, result, 0)["command"].([]interface{})
 	if cmd[0] != "/bin/sh" {
 		t.Errorf("expected shell=/bin/sh default, got %v", cmd[0])
 	}
@@ -214,11 +225,11 @@ func TestBuildInitContainers_Multiple(t *testing.T) {
 	if len(result) != 2 {
 		t.Fatalf("expected 2 init containers, got %d", len(result))
 	}
-	if result[0]["name"] != "init1" {
-		t.Errorf("expected first init name=init1, got %v", result[0]["name"])
+	if mustGetInitContainer(t, result, 0)["name"] != "init1" {
+		t.Errorf("expected first init name=init1, got %v", mustGetInitContainer(t, result, 0)["name"])
 	}
-	if result[1]["name"] != "init2" {
-		t.Errorf("expected second init name=init2, got %v", result[1]["name"])
+	if mustGetInitContainer(t, result, 1)["name"] != "init2" {
+		t.Errorf("expected second init name=init2, got %v", mustGetInitContainer(t, result, 1)["name"])
 	}
 }
 
@@ -253,13 +264,14 @@ func TestBuildSyncInitContainers_Git(t *testing.T) {
 	if len(result) != 1 {
 		t.Fatalf("expected 1 init container, got %d", len(result))
 	}
-	if result[0]["name"] != "arena-sync-0" {
-		t.Errorf("expected name=arena-sync-0, got %v", result[0]["name"])
+	if mustGetInitContainer(t, result, 0)["name"] != "arena-sync-0" {
+		t.Errorf("expected name=arena-sync-0, got %v", mustGetInitContainer(t, result, 0)["name"])
 	}
-	envs := result[0]["env"].([]map[string]interface{})
+	envs := mustGetInitContainer(t, result, 0)["env"].([]interface{})
 	found := map[string]string{}
 	for _, e := range envs {
-		found[e["name"].(string)] = e["value"].(string)
+		em := e.(map[string]interface{})
+		found[em["name"].(string)] = em["value"].(string)
 	}
 	if found["GIT_SYNC_REPO"] != "https://github.com/kubeflow/training-operator.git" {
 		t.Errorf("expected GIT_SYNC_REPO, got %v", found["GIT_SYNC_REPO"])
@@ -286,10 +298,10 @@ func TestBuildSyncInitContainers_Rsync(t *testing.T) {
 	if len(result) != 1 {
 		t.Fatalf("expected 1 init container, got %d", len(result))
 	}
-	if result[0]["name"] != "arena-sync-0" {
-		t.Errorf("expected name=arena-sync-0, got %v", result[0]["name"])
+	if mustGetInitContainer(t, result, 0)["name"] != "arena-sync-0" {
+		t.Errorf("expected name=arena-sync-0, got %v", mustGetInitContainer(t, result, 0)["name"])
 	}
-	cmd := result[0]["command"].([]interface{})
+	cmd := mustGetInitContainer(t, result, 0)["command"].([]interface{})
 	if len(cmd) != 4 {
 		t.Fatalf("expected 4 command args, got %d", len(cmd))
 	}
@@ -309,13 +321,13 @@ func TestBuildSyncInitContainers_HDFS(t *testing.T) {
 	if len(result) != 1 {
 		t.Fatalf("expected 1 init container, got %d", len(result))
 	}
-	if result[0]["name"] != "arena-sync-0" {
-		t.Errorf("expected name=arena-sync-0, got %v", result[0]["name"])
+	if mustGetInitContainer(t, result, 0)["name"] != "arena-sync-0" {
+		t.Errorf("expected name=arena-sync-0, got %v", mustGetInitContainer(t, result, 0)["name"])
 	}
-	if result[0]["image"] != "docker.io/apache/hadoop:3.5.0" {
-		t.Errorf("expected default hdfs image, got %v", result[0]["image"])
+	if mustGetInitContainer(t, result, 0)["image"] != "docker.io/apache/hadoop:3.5.0" {
+		t.Errorf("expected default hdfs image, got %v", mustGetInitContainer(t, result, 0)["image"])
 	}
-	cmd := result[0]["command"].([]interface{})
+	cmd := mustGetInitContainer(t, result, 0)["command"].([]interface{})
 	if len(cmd) != 5 {
 		t.Fatalf("expected 5 command args, got %d", len(cmd))
 	}
@@ -342,14 +354,14 @@ func TestBuildSyncInitContainers_CustomImages(t *testing.T) {
 	if len(result) != 3 {
 		t.Fatalf("expected 3 init containers, got %d", len(result))
 	}
-	if result[0]["image"] != "custom/git-sync:v4" {
-		t.Errorf("expected custom git image, got %v", result[0]["image"])
+	if mustGetInitContainer(t, result, 0)["image"] != "custom/git-sync:v4" {
+		t.Errorf("expected custom git image, got %v", mustGetInitContainer(t, result, 0)["image"])
 	}
-	if result[1]["image"] != "custom/rsync:2.0" {
-		t.Errorf("expected custom rsync image, got %v", result[1]["image"])
+	if mustGetInitContainer(t, result, 1)["image"] != "custom/rsync:2.0" {
+		t.Errorf("expected custom rsync image, got %v", mustGetInitContainer(t, result, 1)["image"])
 	}
-	if result[2]["image"] != "custom/hadoop:3.4" {
-		t.Errorf("expected custom hdfs image, got %v", result[2]["image"])
+	if mustGetInitContainer(t, result, 2)["image"] != "custom/hadoop:3.4" {
+		t.Errorf("expected custom hdfs image, got %v", mustGetInitContainer(t, result, 2)["image"])
 	}
 }
 
@@ -365,14 +377,14 @@ func TestBuildSyncInitContainers_MultipleEntries(t *testing.T) {
 	if len(result) != 3 {
 		t.Fatalf("expected 3 init containers, got %d", len(result))
 	}
-	if result[0]["name"] != "arena-sync-0" {
-		t.Errorf("expected first container name=arena-sync-0, got %v", result[0]["name"])
+	if mustGetInitContainer(t, result, 0)["name"] != "arena-sync-0" {
+		t.Errorf("expected first container name=arena-sync-0, got %v", mustGetInitContainer(t, result, 0)["name"])
 	}
-	if result[1]["name"] != "arena-sync-1" {
-		t.Errorf("expected second container name=arena-sync-1, got %v", result[1]["name"])
+	if mustGetInitContainer(t, result, 1)["name"] != "arena-sync-1" {
+		t.Errorf("expected second container name=arena-sync-1, got %v", mustGetInitContainer(t, result, 1)["name"])
 	}
-	if result[2]["name"] != "arena-sync-2" {
-		t.Errorf("expected third container name=arena-sync-2, got %v", result[2]["name"])
+	if mustGetInitContainer(t, result, 2)["name"] != "arena-sync-2" {
+		t.Errorf("expected third container name=arena-sync-2, got %v", mustGetInitContainer(t, result, 2)["name"])
 	}
 }
 
@@ -615,7 +627,7 @@ func TestBuildInitContainersWithMounts(t *testing.T) {
 	containers := buildInitContainers(tt)
 	require.Len(t, containers, 1)
 
-	mounts, ok := containers[0]["volumeMounts"].([]interface{})
+	mounts, ok := mustGetInitContainer(t, containers, 0)["volumeMounts"].([]interface{})
 	require.True(t, ok, "init container should have volumeMounts")
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
@@ -643,7 +655,7 @@ func TestBuildInitContainersWithMountsSubPath(t *testing.T) {
 	containers := buildInitContainers(tt)
 	require.Len(t, containers, 1)
 
-	mounts, ok := containers[0]["volumeMounts"].([]interface{})
+	mounts, ok := mustGetInitContainer(t, containers, 0)["volumeMounts"].([]interface{})
 	require.True(t, ok, "init container should have volumeMounts")
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
@@ -666,7 +678,7 @@ func TestBuildInitContainersWithNoMounts(t *testing.T) {
 	containers := buildInitContainers(tt)
 	require.Len(t, containers, 1)
 
-	_, hasVolumeMounts := containers[0]["volumeMounts"]
+	_, hasVolumeMounts := mustGetInitContainer(t, containers, 0)["volumeMounts"]
 	assert.False(t, hasVolumeMounts, "init container without mounts should not have volumeMounts")
 }
 
@@ -681,7 +693,7 @@ func TestBuildInitContainers_SubPathFallback(t *testing.T) {
 	}
 	result := buildInitContainers(tt)
 	require.Len(t, result, 1)
-	mounts := result[0]["volumeMounts"].([]interface{})
+	mounts := mustGetInitContainer(t, result, 0)["volumeMounts"].([]interface{})
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
 	assert.Equal(t, "ssh", m0["name"])
@@ -700,7 +712,7 @@ func TestBuildInitContainers_MountPathOverride(t *testing.T) {
 	}
 	result := buildInitContainers(tt)
 	require.Len(t, result, 1)
-	mounts := result[0]["volumeMounts"].([]interface{})
+	mounts := mustGetInitContainer(t, result, 0)["volumeMounts"].([]interface{})
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
 	assert.Equal(t, "/custom-data", m0["mountPath"])
@@ -749,7 +761,7 @@ func TestBuildSyncInitContainersWithMountsOverride(t *testing.T) {
 	require.Len(t, containers, 1)
 
 	// Init container should mount the overridden "code" volume at /workspace, not /default-code
-	mounts, ok := containers[0]["volumeMounts"].([]interface{})
+	mounts, ok := mustGetInitContainer(t, containers, 0)["volumeMounts"].([]interface{})
 	require.True(t, ok)
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
@@ -782,7 +794,7 @@ func TestBuildSyncInitContainers_RsyncWithMountsOverride(t *testing.T) {
 	require.Len(t, containers, 1)
 
 	// Check volume mount uses the override path
-	mounts, ok := containers[0]["volumeMounts"].([]interface{})
+	mounts, ok := mustGetInitContainer(t, containers, 0)["volumeMounts"].([]interface{})
 	require.True(t, ok)
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
@@ -790,7 +802,7 @@ func TestBuildSyncInitContainers_RsyncWithMountsOverride(t *testing.T) {
 	assert.Equal(t, "/data", m0["mountPath"])
 
 	// Check command destination uses LocalPath (/old-path), not mountPath (/data)
-	cmd := containers[0]["command"].([]interface{})
+	cmd := mustGetInitContainer(t, containers, 0)["command"].([]interface{})
 	require.Len(t, cmd, 4)
 	assert.Equal(t, "rsync", cmd[0])
 	assert.Equal(t, "-avP", cmd[1])
@@ -823,7 +835,7 @@ func TestBuildSyncInitContainers_HDFSWithMountsOverride(t *testing.T) {
 	require.Len(t, containers, 1)
 
 	// Check volume mount uses the override path
-	mounts, ok := containers[0]["volumeMounts"].([]interface{})
+	mounts, ok := mustGetInitContainer(t, containers, 0)["volumeMounts"].([]interface{})
 	require.True(t, ok)
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
@@ -831,7 +843,7 @@ func TestBuildSyncInitContainers_HDFSWithMountsOverride(t *testing.T) {
 	assert.Equal(t, "/models", m0["mountPath"])
 
 	// Check command destination uses LocalPath (/old-path), not mountPath (/models)
-	cmd := containers[0]["command"].([]interface{})
+	cmd := mustGetInitContainer(t, containers, 0)["command"].([]interface{})
 	require.Len(t, cmd, 5)
 	assert.Equal(t, "hdfs", cmd[0])
 	assert.Equal(t, "dfs", cmd[1])
@@ -989,9 +1001,9 @@ func TestBuildSyncInitContainers_NewNaming(t *testing.T) {
 	}
 	result := buildSyncInitContainers(tt)
 	require.Len(t, result, 3)
-	assert.Equal(t, "arena-sync-0", result[0]["name"])
-	assert.Equal(t, "arena-sync-1", result[1]["name"])
-	assert.Equal(t, "arena-sync-2", result[2]["name"])
+	assert.Equal(t, "arena-sync-0", mustGetInitContainer(t, result, 0)["name"])
+	assert.Equal(t, "arena-sync-1", mustGetInitContainer(t, result, 1)["name"])
+	assert.Equal(t, "arena-sync-2", mustGetInitContainer(t, result, 2)["name"])
 }
 
 func TestBuildSyncInitContainers_GitUsesLocalPath(t *testing.T) {
@@ -1010,15 +1022,16 @@ func TestBuildSyncInitContainers_GitUsesLocalPath(t *testing.T) {
 	require.Len(t, result, 1)
 
 	// GIT_SYNC_ROOT uses local_path, not mount_path
-	envs := result[0]["env"].([]map[string]interface{})
+	envs := mustGetInitContainer(t, result, 0)["env"].([]interface{})
 	found := map[string]string{}
 	for _, e := range envs {
-		found[e["name"].(string)] = e["value"].(string)
+		em := e.(map[string]interface{})
+		found[em["name"].(string)] = em["value"].(string)
 	}
 	assert.Equal(t, "/code", found["GIT_SYNC_ROOT"])
 
 	// Volume mount references storage by name, uses storage's mount_path
-	mounts := result[0]["volumeMounts"].([]interface{})
+	mounts := mustGetInitContainer(t, result, 0)["volumeMounts"].([]interface{})
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
 	assert.Equal(t, "code", m0["name"])
@@ -1040,7 +1053,7 @@ func TestBuildSyncInitContainers_RsyncUsesLocalPath(t *testing.T) {
 	require.Len(t, result, 1)
 
 	// Rsync dest uses local_path, not mount_path
-	cmd := result[0]["command"].([]interface{})
+	cmd := mustGetInitContainer(t, result, 0)["command"].([]interface{})
 	require.Len(t, cmd, 4)
 	assert.Equal(t, "/old-path", cmd[3])
 }
@@ -1060,7 +1073,7 @@ func TestBuildSyncInitContainers_HDFSUsesLocalPath(t *testing.T) {
 	require.Len(t, result, 1)
 
 	// HDFS dest uses local_path, not mount_path
-	cmd := result[0]["command"].([]interface{})
+	cmd := mustGetInitContainer(t, result, 0)["command"].([]interface{})
 	require.Len(t, cmd, 5)
 	assert.Equal(t, "/local-models", cmd[4])
 }
@@ -1073,10 +1086,10 @@ func TestBuildSyncInitContainers_NoMounts(t *testing.T) {
 	}
 	result := buildSyncInitContainers(tt)
 	require.Len(t, result, 1)
-	assert.Equal(t, "arena-sync-0", result[0]["name"])
+	assert.Equal(t, "arena-sync-0", mustGetInitContainer(t, result, 0)["name"])
 
 	// No volumeMounts when sync has no mounts
-	_, hasMounts := result[0]["volumeMounts"]
+	_, hasMounts := mustGetInitContainer(t, result, 0)["volumeMounts"]
 	assert.False(t, hasMounts)
 }
 
@@ -1094,7 +1107,7 @@ func TestBuildSyncInitContainers_FallsBackToAllStorages(t *testing.T) {
 	require.Len(t, result, 1)
 
 	// With storages but no mounts, all storages should be mounted
-	mounts, ok := result[0]["volumeMounts"].([]interface{})
+	mounts, ok := mustGetInitContainer(t, result, 0)["volumeMounts"].([]interface{})
 	require.True(t, ok, "sync container should have volumeMounts when storages exist")
 	require.Len(t, mounts, 2)
 	m0 := mounts[0].(map[string]interface{})
@@ -1118,7 +1131,7 @@ func TestBuildInitContainers_FallsBackToAllStorages(t *testing.T) {
 	require.Len(t, result, 1)
 
 	// With storages but no mounts, all storages should be mounted
-	mounts, ok := result[0]["volumeMounts"].([]interface{})
+	mounts, ok := mustGetInitContainer(t, result, 0)["volumeMounts"].([]interface{})
 	require.True(t, ok, "init container should have volumeMounts when storages exist")
 	require.Len(t, mounts, 1)
 	m0 := mounts[0].(map[string]interface{})
@@ -1391,4 +1404,40 @@ func TestTotalReplicas_EdgeCases(t *testing.T) {
 			assert.Equal(t, tt.expected, totalReplicas(tt.task))
 		})
 	}
+}
+
+func TestSyncWritesToEphemeral(t *testing.T) {
+	tt := &task.Task{
+		Storages: []task.Storage{{Name: "code", MountPath: "/workspace", Tmp: "5Gi"}},
+		Sync: []task.SyncEntry{
+			{Git: "https://github.com/org/repo.git", LocalPath: "/workspace"},
+		},
+	}
+	assert.False(t, syncWritesToEphemeral(tt.Sync[0], tt),
+		"local_path equal to the mount path must not warn")
+
+	tt.Sync[0].LocalPath = "/workspace/src"
+	assert.False(t, syncWritesToEphemeral(tt.Sync[0], tt),
+		"local_path under the mount path must not warn (containment, not equality)")
+
+	tt.Sync[0].LocalPath = "/elsewhere"
+	assert.True(t, syncWritesToEphemeral(tt.Sync[0], tt),
+		"local_path outside every mount must warn")
+
+	pvcTask := &task.Task{
+		Storages: []task.Storage{{Name: "dataset", MountPath: "/data", PVC: "data-pvc"}},
+		Sync: []task.SyncEntry{
+			{Git: "https://github.com/org/repo.git", LocalPath: "/data/code"},
+		},
+	}
+	assert.False(t, syncWritesToEphemeral(pvcTask.Sync[0], pvcTask),
+		"warning is about mount mismatch only; banned targets are rejected by validation")
+
+	noStorages := &task.Task{
+		Sync: []task.SyncEntry{
+			{Git: "https://github.com/org/repo.git", LocalPath: "/code"},
+		},
+	}
+	assert.False(t, syncWritesToEphemeral(noStorages.Sync[0], noStorages),
+		"no resolved mounts keeps the existing silent behavior")
 }

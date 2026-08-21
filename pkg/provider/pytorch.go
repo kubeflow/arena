@@ -58,14 +58,14 @@ func (p *PyTorchProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, er
 	if t.Worker == nil {
 		// Master-only mode: single-node training
 		masterSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
-			ContainerName:  constants.FrameworkPyTorch,
-			Task:           t,
-			Resources:      t.Master.Resources,
-			Envs:           t.Master.Envs,
-			Replicas:       1,
-			RestartPolicy:  restartPolicy,
-			IncludeVolumes: true,
-			Run:            effectiveRun(t, t.Master.Run),
+			ContainerName: constants.FrameworkPyTorch,
+			Task:          t,
+			Resources:     t.Master.Resources,
+			Limits:        t.Master.Limits,
+			Envs:          t.Master.Envs,
+			Replicas:      1,
+			RestartPolicy: restartPolicy,
+			Run:           effectiveRun(t, t.Master.Run),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build master replica spec: %w", err)
@@ -74,14 +74,14 @@ func (p *PyTorchProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, er
 	} else {
 		// Worker present: always generate Worker replicaSpec
 		workerSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
-			ContainerName:  constants.FrameworkPyTorch,
-			Task:           t,
-			Resources:      t.Worker.Resources,
-			Envs:           t.Worker.Envs,
-			Replicas:       int64(t.Worker.Replicas),
-			RestartPolicy:  restartPolicy,
-			IncludeVolumes: true,
-			Run:            effectiveRun(t, t.Worker.Run),
+			ContainerName: constants.FrameworkPyTorch,
+			Task:          t,
+			Resources:     t.Worker.Resources,
+			Limits:        t.Worker.Limits,
+			Envs:          t.Worker.Envs,
+			Replicas:      int64(t.Worker.Replicas),
+			RestartPolicy: restartPolicy,
+			Run:           effectiveRun(t, t.Worker.Run),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build worker replica spec: %w", err)
@@ -90,27 +90,30 @@ func (p *PyTorchProvider) BuildCRD(t *task.Task) (*unstructured.Unstructured, er
 
 		// Master: inherit from worker if not explicitly configured
 		var masterResources task.Resources
+		var masterLimits task.Resources
 		var masterEnvs map[string]task.EnvValue
 		var masterRun string
 		if t.Master != nil {
 			masterResources = t.Master.Resources
+			masterLimits = t.Master.Limits
 			masterEnvs = t.Master.Envs
 			masterRun = t.Master.Run
 		} else {
 			masterResources = t.Worker.Resources
+			masterLimits = t.Worker.Limits
 			masterEnvs = t.Worker.Envs
 			masterRun = t.Worker.Run
 		}
 
 		masterSpec, err := buildRoleReplicaSpec(replicaSpecOptions{
-			ContainerName:  constants.FrameworkPyTorch,
-			Task:           t,
-			Resources:      masterResources,
-			Envs:           masterEnvs,
-			Replicas:       1,
-			RestartPolicy:  restartPolicy,
-			IncludeVolumes: true,
-			Run:            effectiveRun(t, masterRun),
+			ContainerName: constants.FrameworkPyTorch,
+			Task:          t,
+			Resources:     masterResources,
+			Limits:        masterLimits,
+			Envs:          masterEnvs,
+			Replicas:      1,
+			RestartPolicy: restartPolicy,
+			Run:           effectiveRun(t, masterRun),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to build master replica spec: %w", err)

@@ -46,11 +46,11 @@ func TestApplyOverrides_GPUType(t *testing.T) {
 	assert.Equal(t, "A100", task.Scheduling.NodeSelector["nvidia.com/gpu.product"])
 }
 
-func TestApplyOverrides_CPUsAndMemory(t *testing.T) {
+func TestApplyOverrides_CPUAndMemory(t *testing.T) {
 	task := &Task{}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"cpus": "4",
-		"mem":  "16Gi",
+		"cpu":    "4",
+		"memory": "16Gi",
 	})
 	require.NoError(t, err)
 	require.NotNil(t, task.Worker, "Worker should be auto-created by CPU/memory override")
@@ -60,7 +60,7 @@ func TestApplyOverrides_CPUsAndMemory(t *testing.T) {
 
 func TestApplyOverrides_SHM(t *testing.T) {
 	task := &Task{}
-	err := ApplyOverrides(task, map[string]interface{}{"shm": "8Gi"})
+	err := ApplyOverrides(task, map[string]interface{}{"share-memory": "8Gi"})
 	require.NoError(t, err)
 	require.Len(t, task.Storages, 1)
 	assert.Equal(t, "shm", task.Storages[0].Name)
@@ -81,18 +81,24 @@ func TestApplyOverrides_Envs(t *testing.T) {
 func TestApplyOverrides_Scheduling(t *testing.T) {
 	task := &Task{}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"priority":            100,
-		"priority-class-name": "high",
-		"gang":                true,
-		"scheduler-name":      "volcano",
-		"selector":            []string{"zone=us-west-2a"},
+		"priority":  "high",
+		"gang":      true,
+		"scheduler": "volcano",
+		"selector":  []string{"zone=us-west-2a"},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, 100, task.Scheduling.Priority)
 	assert.Equal(t, "high", task.Scheduling.PriorityClassName)
 	assert.True(t, task.Scheduling.Gang.Enabled)
 	assert.Equal(t, "volcano", task.Scheduling.SchedulerName)
 	assert.Equal(t, "us-west-2a", task.Scheduling.NodeSelector["zone"])
+}
+
+func TestApplyOverrides_QueueSuspendsJob(t *testing.T) {
+	task := &Task{}
+	err := ApplyOverrides(task, map[string]interface{}{"queue": true})
+	require.NoError(t, err)
+	require.NotNil(t, task.Lifecycle.Suspend, "v1 --queue should suspend the job")
+	assert.True(t, *task.Lifecycle.Suspend)
 }
 
 func TestApplyOverrides_Affinity(t *testing.T) {
@@ -112,10 +118,10 @@ func TestApplyOverrides_Affinity(t *testing.T) {
 func TestApplyOverrides_Lifecycle(t *testing.T) {
 	task := &Task{}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"clean-pod-policy":   "Running",
-		"active-deadline":    "2h",
+		"clean-task-policy":  "Running",
+		"running-timeout":    "2h",
 		"ttl-after-finished": "7d",
-		"backoff-limit":      3,
+		"job-backoff-limit":  3,
 		"success-policy":     constants.SuccessPolicyChiefWorkerAlias,
 	})
 	require.NoError(t, err)
@@ -129,13 +135,13 @@ func TestApplyOverrides_Lifecycle(t *testing.T) {
 func TestApplyOverrides_Runtime(t *testing.T) {
 	task := &Task{}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"image-pull-policy": "IfNotPresent",
-		"image-pull-secret": []string{"reg-secret"},
-		"service-account":   "training-sa",
-		"restart":           "OnFailure",
-		"host-network":      true,
-		"host-ipc":          true,
-		"host-pid":          false,
+		"image-pull-policy":  "IfNotPresent",
+		"image-pull-secret":  []string{"reg-secret"},
+		"service-account":    "training-sa",
+		"job-restart-policy": "OnFailure",
+		"hostNetwork":        true,
+		"hostIPC":            true,
+		"hostPID":            false,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "IfNotPresent", task.ImagePullPolicy)
@@ -152,7 +158,7 @@ func TestApplyOverrides_FrameworkOptions(t *testing.T) {
 	err := ApplyOverrides(task, map[string]interface{}{
 		"nproc-per-node":     "auto",
 		"slots-per-worker":   4,
-		"gpu-topology":       true,
+		"gputopology":        true,
 		"mounts-on-launcher": true,
 	})
 	require.NoError(t, err)
@@ -165,9 +171,9 @@ func TestApplyOverrides_FrameworkOptions(t *testing.T) {
 func TestApplyOverrides_Logging(t *testing.T) {
 	task := &Task{}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"tensorboard":        true,
-		"tensorboard-logdir": "/logs",
-		"tensorboard-image":  "custom/tb:latest",
+		"tensorboard":       true,
+		"logdir":            "/logs",
+		"tensorboard-image": "custom/tb:latest",
 	})
 	require.NoError(t, err)
 	require.NotNil(t, task.Logging.TensorBoard)
@@ -223,13 +229,13 @@ func TestApplyOverrides_WrongTypeReturnsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "flag \"name\"")
 	assert.Contains(t, err.Error(), "expected string")
 
-	// Pass wrong type for priority (string instead of int)
+	// Pass wrong type for priority (int instead of string)
 	err = ApplyOverrides(task, map[string]interface{}{
-		"priority": "not-an-int",
+		"priority": 12345,
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "flag \"priority\"")
-	assert.Contains(t, err.Error(), "expected int")
+	assert.Contains(t, err.Error(), "expected string")
 
 	// Pass wrong type for run (int instead of string)
 	err = ApplyOverrides(task, map[string]interface{}{
@@ -239,12 +245,12 @@ func TestApplyOverrides_WrongTypeReturnsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "flag \"run\"")
 	assert.Contains(t, err.Error(), "expected string")
 
-	// Pass wrong type for backoff-limit (string instead of int)
+	// Pass wrong type for job-backoff-limit (string instead of int)
 	err = ApplyOverrides(task, map[string]interface{}{
-		"backoff-limit": "not-an-int",
+		"job-backoff-limit": "not-an-int",
 	})
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "flag \"backoff-limit\"")
+	assert.Contains(t, err.Error(), "flag \"job-backoff-limit\"")
 	assert.Contains(t, err.Error(), "expected int")
 
 	// Name should be unchanged
@@ -254,7 +260,7 @@ func TestApplyOverrides_WrongTypeReturnsError(t *testing.T) {
 func TestApplyOverrides_WrongBoolTypeReturnsError(t *testing.T) {
 	task := &Task{}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"host-network": "yes",
+		"hostNetwork": "yes",
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "expected bool")
@@ -276,7 +282,7 @@ func TestApplyOverrides_RoleSections(t *testing.T) {
 	err := ApplyOverrides(task, map[string]interface{}{
 		"chief":     true,
 		"evaluator": true,
-		"ps-count":  2,
+		"ps":        2,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, task.Chief)
@@ -285,10 +291,10 @@ func TestApplyOverrides_RoleSections(t *testing.T) {
 	assert.Equal(t, 2, task.PS.Replicas)
 }
 
-func TestApplyOverrides_PSCountCreatesSection(t *testing.T) {
+func TestApplyOverrides_PSCreatesSection(t *testing.T) {
 	task := &Task{}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"ps-count": 3,
+		"ps": 3,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, task.PS)
@@ -313,10 +319,10 @@ func TestApplyOverrides_EvaluatorFalseNoSection(t *testing.T) {
 	assert.Nil(t, task.Evaluator)
 }
 
-func TestApplyOverrides_PSCountZeroNoSection(t *testing.T) {
+func TestApplyOverrides_PSZeroNoSection(t *testing.T) {
 	task := &Task{}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"ps-count": 0,
+		"ps": 0,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, task.PS)
@@ -328,8 +334,8 @@ func TestApplyOverrides_RoleSectionsPreserveExisting(t *testing.T) {
 		PS:    &RoleConfig{Replicas: 5},
 	}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"chief":    true,
-		"ps-count": 3,
+		"chief": true,
+		"ps":    3,
 	})
 	require.NoError(t, err)
 	// Chief should still be non-nil (not overwritten)
@@ -537,8 +543,8 @@ func TestApplyOverrides_PytorchSingleNodeGpus_RoutesToMaster(t *testing.T) {
 func TestApplyOverrides_PytorchSingleNodeCPUMem_RoutesToMaster(t *testing.T) {
 	task := &Task{Master: &RoleConfig{}}
 	err := ApplyOverrides(task, map[string]interface{}{
-		"cpus": "4",
-		"mem":  "16Gi",
+		"cpu":    "4",
+		"memory": "16Gi",
 	})
 	require.NoError(t, err)
 	assert.Nil(t, task.Worker, "Worker should remain nil for single-node PyTorch")
@@ -575,4 +581,320 @@ func TestApplyOverrides_NoWorkerNoMaster_GpusCreatesWorkerWithReplicas1(t *testi
 	require.NotNil(t, task.Worker, "Worker should be auto-created")
 	assert.Equal(t, 1, task.Worker.Replicas, "auto-created Worker should have Replicas=1")
 	assert.Equal(t, "1", task.Worker.Resources["nvidia.com/gpu"])
+}
+
+func TestApplyOverrides_PerRoleResources(t *testing.T) {
+	tk := &Task{Worker: &Worker{Replicas: 2}}
+	err := ApplyOverrides(tk, map[string]interface{}{
+		"ps": 1, "chief": true, "evaluator": true,
+		"ps-cpu": "2", "ps-memory": "4Gi", "ps-gpus": 1,
+		"chief-cpu": "4", "chief-memory": "16Gi",
+		"evaluator-cpu": "1", "evaluator-memory": "2Gi",
+		"worker-cpu": "8", "worker-memory": "32Gi",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, tk.PS)
+	assert.Equal(t, "2", tk.PS.Resources["cpu"])
+	assert.Equal(t, "4Gi", tk.PS.Resources["memory"])
+	assert.Equal(t, "1", tk.PS.Resources["nvidia.com/gpu"])
+	require.NotNil(t, tk.Chief)
+	assert.Equal(t, "4", tk.Chief.Resources["cpu"])
+	assert.Equal(t, "16Gi", tk.Chief.Resources["memory"])
+	require.NotNil(t, tk.Evaluator)
+	assert.Equal(t, "1", tk.Evaluator.Resources["cpu"])
+	assert.Equal(t, "2Gi", tk.Evaluator.Resources["memory"])
+	assert.Equal(t, "8", tk.Worker.Resources["cpu"])
+	assert.Equal(t, "32Gi", tk.Worker.Resources["memory"])
+}
+
+func TestApplyOverrides_PerRoleBeatsGenericResources(t *testing.T) {
+	tk := &Task{Worker: &Worker{Replicas: 2}}
+	err := ApplyOverrides(tk, map[string]interface{}{
+		"cpu":        "2",
+		"worker-cpu": "8",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "8", tk.Worker.Resources["cpu"], "worker-cpu must override the generic --cpu value")
+}
+
+func TestApplyOverrides_WorkerResourcesOnMasterOnlyPyTorch(t *testing.T) {
+	tk := &Task{Master: &RoleConfig{}}
+	err := ApplyOverrides(tk, map[string]interface{}{
+		"worker-cpu":    "4",
+		"worker-memory": "8Gi",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "4", tk.Master.Resources["cpu"])
+	assert.Equal(t, "8Gi", tk.Master.Resources["memory"])
+}
+
+func TestApplyOverrides_SyncCreatesSharedStorage(t *testing.T) {
+	tk := &Task{Worker: &Worker{Replicas: 1}}
+	err := ApplyOverrides(tk, map[string]interface{}{
+		"sync-mode":   "git",
+		"sync-source": "https://github.com/kubeflow/arena.git",
+		"sync-image":  "alpine/git:latest",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, tk.Sync, 1)
+	entry := tk.Sync[0]
+	assert.Equal(t, "https://github.com/kubeflow/arena.git", entry.Git)
+	assert.Equal(t, "alpine/git:latest", entry.Image)
+	// v1 semantics: code lands in $workingDir/code (default /root)
+	assert.Equal(t, "/root/code", entry.LocalPath)
+
+	var codeSync *Storage
+	for i := range tk.Storages {
+		if tk.Storages[i].Name == "code-sync" {
+			codeSync = &tk.Storages[i]
+		}
+	}
+	require.NotNil(t, codeSync, "sync should create a code-sync storage")
+	assert.Equal(t, entry.LocalPath, codeSync.MountPath,
+		"code-sync must mount at the sync local_path so the main container sees the files")
+	assert.Equal(t, "10Gi", codeSync.Tmp, "code-sync should be a size-limited emptyDir storage")
+	require.Len(t, entry.Mounts, 1)
+	assert.Equal(t, "code-sync", entry.Mounts[0].Name,
+		"sync entry must mount code-sync so the init container writes into the volume")
+}
+
+func TestApplyOverrides_SyncModes(t *testing.T) {
+	t.Run("rsync", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{
+			"sync-mode":   "rsync",
+			"sync-source": "10.88.29.56::backup/data.zip",
+		})
+		require.NoError(t, err)
+		require.Len(t, tk.Sync, 1)
+		assert.Equal(t, "10.88.29.56::backup/data.zip", tk.Sync[0].Rsync)
+	})
+	t.Run("hdfs", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{
+			"sync-mode":   "hdfs",
+			"sync-source": "hdfs://namenode:9000/data",
+		})
+		require.NoError(t, err)
+		require.Len(t, tk.Sync, 1)
+		assert.Equal(t, "hdfs://namenode:9000/data", tk.Sync[0].HDFS)
+	})
+}
+
+func TestApplyOverrides_SyncLocalPathFollowsWorkingDir(t *testing.T) {
+	tk := &Task{}
+	err := ApplyOverrides(tk, map[string]interface{}{
+		"sync-mode":   "git",
+		"sync-source": "https://github.com/kubeflow/arena.git",
+		"working-dir": "/workspace",
+	})
+	require.NoError(t, err)
+	require.Len(t, tk.Sync, 1)
+	assert.Equal(t, "/workspace/code", tk.Sync[0].LocalPath)
+}
+
+func TestApplyOverrides_SyncModeValidation(t *testing.T) {
+	t.Run("missing source", func(t *testing.T) {
+		err := ApplyOverrides(&Task{}, map[string]interface{}{"sync-mode": "git"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "--sync-source is required when --sync-mode is set")
+	})
+	t.Run("invalid mode", func(t *testing.T) {
+		err := ApplyOverrides(&Task{}, map[string]interface{}{
+			"sync-mode":   "svn",
+			"sync-source": "https://example.com/repo",
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `invalid --sync-mode "svn": must be git, rsync, or hdfs`)
+	})
+}
+
+func TestApplyOverrides_GPUTopology(t *testing.T) {
+	t.Run("implies host networking and topology labels", func(t *testing.T) {
+		tk := &Task{Worker: &Worker{Replicas: 2}}
+		err := ApplyOverrides(tk, map[string]interface{}{"gputopology": true})
+		require.NoError(t, err)
+		assert.True(t, tk.Framework.Options.GPUTopology)
+		assert.True(t, tk.HostNetwork, "gputopology implies host networking (v1 semantics)")
+		assert.Equal(t, "true", tk.Labels["gpu-topology"])
+		assert.Equal(t, "true", tk.Labels["gpu-topology-replica"])
+	})
+
+	t.Run("beats conflicting user label", func(t *testing.T) {
+		// User labels are applied before the gputopology branch, which sets
+		// the topology labels unconditionally — so gputopology must win over
+		// a user-supplied conflicting --label value.
+		tk := &Task{Worker: &Worker{Replicas: 2}}
+		err := ApplyOverrides(tk, map[string]interface{}{
+			"label":       []string{"gpu-topology=false"},
+			"gputopology": true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "true", tk.Labels["gpu-topology"],
+			"gputopology must beat a conflicting user-supplied label")
+		assert.Equal(t, "true", tk.Labels["gpu-topology-replica"])
+	})
+}
+
+func TestApplyOverrides_V1DataSyntax(t *testing.T) {
+	t.Run("v1 two-part data mounts the named pvc", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data": []string{"my-pvc:/data"}})
+		require.NoError(t, err)
+		require.Len(t, tk.Storages, 1)
+		s := tk.Storages[0]
+		assert.Equal(t, "my-pvc", s.Name)
+		assert.Equal(t, "my-pvc", s.PVC)
+		assert.Equal(t, "/data", s.MountPath)
+	})
+
+	t.Run("v2 three-part data unchanged", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data": []string{"training-data:/data:my-pvc"}})
+		require.NoError(t, err)
+		require.Len(t, tk.Storages, 1)
+		s := tk.Storages[0]
+		assert.Equal(t, "training-data", s.Name)
+		assert.Equal(t, "my-pvc", s.PVC)
+		assert.Equal(t, "/data", s.MountPath)
+	})
+
+	t.Run("one-part data errors", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data": []string{"justaname"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "justaname")
+	})
+
+	t.Run("relative mount path errors", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data": []string{"my-pvc:data"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "absolute")
+	})
+
+	t.Run("v2 three-part data with relative mount path errors", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data": []string{"training-data:data:my-pvc"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "absolute")
+	})
+}
+
+func TestApplyOverrides_V1DataDirSyntax(t *testing.T) {
+	t.Run("v1 one-part data-dir mounts hostpath at same path", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data-dir": []string{"/data"}})
+		require.NoError(t, err)
+		require.Len(t, tk.Storages, 1)
+		s := tk.Storages[0]
+		assert.Equal(t, "training-data-0", s.Name)
+		assert.Equal(t, "/data", s.HostPath)
+		assert.Equal(t, "/data", s.MountPath)
+	})
+
+	t.Run("v1 two-part data-dir splits host and container paths", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data-dir": []string{"/host/data:/container/data"}})
+		require.NoError(t, err)
+		require.Len(t, tk.Storages, 1)
+		s := tk.Storages[0]
+		assert.Equal(t, "training-data-0", s.Name)
+		assert.Equal(t, "/host/data", s.HostPath)
+		assert.Equal(t, "/container/data", s.MountPath)
+	})
+
+	t.Run("v2 three-part data-dir unchanged", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data-dir": []string{"d:/c:/host"}})
+		require.NoError(t, err)
+		require.Len(t, tk.Storages, 1)
+		s := tk.Storages[0]
+		assert.Equal(t, "d", s.Name)
+		assert.Equal(t, "/host", s.HostPath)
+		assert.Equal(t, "/c", s.MountPath)
+	})
+
+	t.Run("relative host path errors", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data-dir": []string{"data"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "absolute")
+	})
+
+	t.Run("v2 three-part data-dir with relative mount path errors", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data-dir": []string{"d:c:/host"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "absolute")
+	})
+
+	t.Run("v2 three-part data-dir with relative host path errors", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"data-dir": []string{"d:/c:host"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "absolute")
+	})
+}
+
+func TestApplyOverrides_V1ConfigFileSyntax(t *testing.T) {
+	t.Run("v2 three-part configmap unchanged", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"config-file": []string{"cfg:/etc/app:my-cm"}})
+		require.NoError(t, err)
+		require.Len(t, tk.Storages, 1)
+		s := tk.Storages[0]
+		assert.Equal(t, "cfg", s.Name)
+		assert.Equal(t, "my-cm", s.ConfigMap)
+		assert.Equal(t, "/etc/app", s.MountPath)
+	})
+
+	t.Run("v2 three-part config-file with relative mount path errors", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"config-file": []string{"cfg:etc/app:my-cm"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "absolute")
+	})
+
+	t.Run("v1 two-part host file form errors with configmap guidance", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"config-file": []string{"/host/file.conf:/etc/file.conf"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not supported")
+		assert.Contains(t, err.Error(), "configmap")
+	})
+
+	t.Run("one-part config-file errors", func(t *testing.T) {
+		tk := &Task{}
+		err := ApplyOverrides(tk, map[string]interface{}{"config-file": []string{"/host/file.conf"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not supported")
+	})
+}
+
+func TestApplyOverrides_PerRoleLimitFlags(t *testing.T) {
+	tk := &Task{Framework: Framework{Name: "tensorflow"}, Worker: &Worker{Replicas: 1}}
+	err := ApplyOverrides(tk, map[string]interface{}{
+		"ps-cpu":           "1",
+		"ps-cpu-limit":     "2",
+		"worker-cpu":       "1",
+		"worker-cpu-limit": "3",
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, tk.PS)
+	assert.Equal(t, Resources{"cpu": "1"}, tk.PS.Resources)
+	assert.Equal(t, Resources{"cpu": "2"}, tk.PS.Limits)
+
+	assert.Equal(t, Resources{"cpu": "1"}, tk.Worker.Resources)
+	assert.Equal(t, Resources{"cpu": "3"}, tk.Worker.Limits)
+}
+
+func TestApplyOverrides_LimitFlagAlone(t *testing.T) {
+	tk := &Task{Framework: Framework{Name: "tensorflow"}, Worker: &Worker{Replicas: 1}}
+	err := ApplyOverrides(tk, map[string]interface{}{"worker-memory-limit": "16Gi"})
+	require.NoError(t, err)
+	assert.Empty(t, tk.Worker.Resources)
+	assert.Equal(t, Resources{"memory": "16Gi"}, tk.Worker.Limits)
 }

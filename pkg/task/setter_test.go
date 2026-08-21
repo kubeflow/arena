@@ -915,7 +915,7 @@ worker:
 storages:
   - name: code
     mount_path: /workspace
-    pvc: code-pvc
+    tmp: 5Gi
 sync:
   - git: https://github.com/example/repo.git
     local_path: /workspace
@@ -994,7 +994,7 @@ worker:
 storages:
   - name: code
     mount_path: /workspace
-    pvc: code-pvc
+    tmp: 5Gi
 `)
 	result, err := ApplySetOverrides(yamlData, []string{
 		"sync[0].git=https://github.com/example/repo.git",
