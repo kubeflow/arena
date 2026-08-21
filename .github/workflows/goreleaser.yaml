@@ -1,10 +1,14 @@
 name: Release (v2)
 
 on:
+  push:
+    branches: [develop-v2]
+    paths:
+      - VERSION
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: release-v2
   cancel-in-progress: false
 
 jobs:
@@ -18,17 +22,47 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Checkout tag
+      - name: Resolve tag and release state
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(cat VERSION)
-          git checkout "v${VERSION}"
+          SEMVER='^([0-9]+)\.([0-9]+)\.([0-9]+)(-rc\.([0-9]+))?$'
+          if [[ ! "${VERSION}" =~ ${SEMVER} ]]; then
+            echo "Invalid VERSION: ${VERSION}"
+            exit 1
+          fi
+          TAG="v${VERSION}"
+          echo "TAG=${TAG}" >> "$GITHUB_ENV"
+
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+            echo "Tag ${TAG} already exists on remote."
+            if gh release view "${TAG}" >/dev/null 2>&1; then
+              echo "SKIP=true" >> "$GITHUB_ENV"
+            fi
+          else
+            git config user.name "$GITHUB_ACTOR"
+            git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+            git tag -a "${TAG}" -m "Release ${TAG}"
+            echo "CREATE_TAG=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Push tag
+        if: env.CREATE_TAG == 'true'
+        run: git push origin "${TAG}"
+
+      - name: Checkout tag
+        if: env.SKIP != 'true'
+        run: git checkout "${TAG}"
 
       - name: Set up Go
+        if: env.SKIP != 'true'
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
 
       - name: Run GoReleaser
+        if: env.SKIP != 'true'
         uses: goreleaser/goreleaser-action@v6
         with:
           version: v2.17.1
