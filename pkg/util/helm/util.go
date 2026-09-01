@@ -15,9 +15,11 @@
 package helm
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -203,6 +205,13 @@ func GenerateHelmTemplate(name string, namespace string, valuesFile string, char
 		return templateFileName, fmt.Errorf("failed to read values from file %s: %v", valuesFile, err)
 	}
 
+	// Process --set-file options to read file contents into the values map
+	if len(options) > 0 {
+		if err := processSetFileOptions(values, options); err != nil {
+			return templateFileName, fmt.Errorf("failed to process set-file options: %w", err)
+		}
+	}
+
 	release, err := Template(name, namespace, chartPath, values)
 	if err != nil {
 		return templateFileName, fmt.Errorf("failed to generate helm manifests %s: %v", name, err)
@@ -237,3 +246,99 @@ func toYaml(values interface{}, file *os.File) error {
 	}
 	return err
 }
+
+// processSetFileOptions parses --set-file options from the given slice,
+// reads the referenced file contents from disk, and merges them into the
+// supplied values map. Only options whose token begins with "--set-file"
+// are processed; any other entries (e.g. --set, --namespace) are ignored
+// so callers may pass a mixed slice of Helm options safely.
+//
+// Each --set-file entry must be in one of the following forms:
+//
+//	--set-file key=path
+//	--set-file=key=path
+//
+// where "key" is a dotted path into the values map (e.g.
+// "configFiles.<hash>.config-N.content") and "path" points to a file on
+// disk whose contents will be injected as a string value.
+//
+// If an intermediate key in the dotted path already exists in the values
+// map but is not itself a map[string]interface{}, processSetFileOptions
+// returns an error to avoid silently dropping user-supplied values.
+// Malformed options and unreadable files also produce errors.
+func processSetFileOptions(values map[string]interface{}, options []string) error {
+	for _, opt := range options {
+		if !strings.HasPrefix(opt, "--set-file") {
+			continue
+		}
+
+		var assignment string
+		switch {
+		case strings.HasPrefix(opt, "--set-file="):
+			assignment = strings.TrimPrefix(opt, "--set-file=")
+		case opt == "--set-file":
+			return fmt.Errorf("malformed --set-file option %q: expected key=path", opt)
+		default:
+			// "--set-file key=path" form: strip the flag token and any
+			// whitespace separating it from the key=value assignment.
+			assignment = strings.TrimSpace(strings.TrimPrefix(opt, "--set-file"))
+		}
+
+		idx := strings.Index(assignment, "=")
+		if idx <= 0 || idx == len(assignment)-1 {
+			return fmt.Errorf("malformed --set-file option %q: expected key=path", opt)
+		}
+		key := strings.TrimSpace(assignment[:idx])
+		filePath := strings.TrimSpace(assignment[idx+1:])
+		if key == "" || filePath == "" {
+			return fmt.Errorf("malformed --set-file option %q: expected key=path", opt)
+		}
+
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to read --set-file %q: %w", filePath, err)
+		}
+
+		if err := setNestedValue(values, key, string(content)); err != nil {
+			return fmt.Errorf("failed to set --set-file value for %q: %w", key, err)
+		}
+	}
+	return nil
+}
+
+// setNestedValue sets a value in a map at a given dotted key path (e.g. "a.b.c").
+// If an intermediate key already exists in the values map but is not a
+// map[string]interface{}, an error is returned to prevent silent data loss.
+func setNestedValue(values map[string]interface{}, key string, value interface{}) error {
+	parts := strings.Split(key, ".")
+	current := values
+
+	for i, part := range parts {
+		if part == "" {
+			return fmt.Errorf("empty key segment in %q", key)
+		}
+
+		isLast := i == len(parts)-1
+		if isLast {
+			current[part] = value
+			return nil
+		}
+
+		next, ok := current[part]
+		if !ok {
+			child := map[string]interface{}{}
+			current[part] = child
+			current = child
+			continue
+		}
+
+		child, ok := next.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("cannot set %q: intermediate key %q is not a map (got %T): %w", key, part, next, errIntermediateNotMap)
+		}
+		current = child
+	}
+	return nil
+}
+
+var errIntermediateNotMap = errors.New("intermediate value is not a map")
