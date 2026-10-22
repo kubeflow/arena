@@ -46,18 +46,22 @@ func tensorboardURL(name, namespace string, services []*corev1.Service, nodes []
 		return "", nil
 	}
 
-	// Get Address for loadbalancer
 	if service.Spec.Type == corev1.ServiceTypeLoadBalancer {
 		if len(service.Status.LoadBalancer.Ingress) > 0 {
-			return fmt.Sprintf("http://%s:%d",
-				service.Status.LoadBalancer.Ingress[0].IP,
-				service.Spec.Ports[0].Port), nil
+			address := service.Status.LoadBalancer.Ingress[0].IP
+			if address == "" {
+				address = service.Status.LoadBalancer.Ingress[0].Hostname
+			}
+			if address != "" {
+				return fmt.Sprintf("http://%s:%d",
+					address,
+					service.Spec.Ports[0].Port), nil
+			}
 		}
 	}
 
 	port = portList[0].NodePort
 
-	// 2. Get address
 	var node *corev1.Node
 
 	for _, n := range nodes {
@@ -87,7 +91,6 @@ func isNodeReady(node corev1.Node) bool {
 func getNodeInternalAddress(node corev1.Node) string {
 	address := "unknown"
 	if len(node.Status.Addresses) > 0 {
-		//address = nodeInfo.node.Status.Addresses[0].Address
 		for _, addr := range node.Status.Addresses {
 			if addr.Type == corev1.NodeInternalIP {
 				address = addr.Address
