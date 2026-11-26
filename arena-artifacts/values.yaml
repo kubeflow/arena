@@ -72,7 +72,7 @@ tfdashboard:
 mpi:
   enabled: true
   image: acs/mpi-operator
-  tag: aliyun-03b5e76
+  tag: aliyun-ad94640
   kubectlDelivery:
     image: acs/kubectl-delivery
     tag: v0.1.0
@@ -90,7 +90,7 @@ mpi:
 pytorch:
   enabled: true
   image: acs/pytorch-operator
-  tag: 2845db5-aliyun
+  tag: ee09992-aliyun
   imagePullPolicy: IfNotPresent
   resources:
     limits:
@@ -118,7 +118,7 @@ et:
   enabled: true
   createSSHSecret: false
   image: acs/et-operator
-  tag: aliyun-96806fb
+  tag: aliyun-25fd652
   imagePullPolicy: IfNotPresent
   resources:
     limits:
